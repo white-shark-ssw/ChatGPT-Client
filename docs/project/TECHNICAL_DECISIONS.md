@@ -32,7 +32,7 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Affected modules**: Application architecture and all future product modules.
 - **Validation level**: User-confirmed product requirement + Code written + CI passed + Artifact produced + Runtime/manual/real-device tested for the foundation baseline.
 - **Supersedes**: None.
-- **Notes**: Concrete foundation framework/deployment choices are recorded in TD-006. Authentication remains a later evidence-driven task.
+- **Notes**: Concrete foundation framework/deployment choices are recorded in TD-006. Authentication remains evidence-driven.
 
 ### TD-002 — Previous-project history is reference-only evidence
 
@@ -76,19 +76,19 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Supersedes**: None.
 - **Notes**: Future modules should extend this same diagnostics authority rather than create competing log stores.
 
-### TD-005 — Current Google-based authentication must be revalidated before protocol implementation
+### TD-005 — Current Google-based authentication is evidence-driven; tested embedded route currently works
 
 - **Status**: Confirmed
 - **Date**: 2026-08-26
-- **Scope**: Authentication sequencing / historical evidence boundary
-- **Decision**: Authentication is a dedicated verification stage before native private-protocol work. The first auth implementation should reproduce the user's actual Google-based ChatGPT sign-in on a real device, beginning from the simplest current web-login bootstrap. Historical Web IPA success is evidence that the route worked previously, but it is not a current contract. If embedded login is blocked today, capture the current failure/redirect evidence before choosing the smallest supported system-browser/auth handoff; do not prebuild multiple fallback schemes.
-- **Evidence**: User reports the previous Web IPA successfully logged into ChatGPT through web login and that their account uses Google. Current Google OAuth documentation warns embedded user-agents such as `WKWebView` may be rejected with `disallowed_useragent`; current OpenAI help documents continue to support Google social sign-in.
-- **Alternatives considered**: Assume the old embedded-WebView Google path still works; design a custom token/login system without reproducing current behavior; build several speculative fallback routes at once.
-- **Rejected / do-not-repeat**: Do not assume WebKit cookies, system browser auth state and native `URLSession` state are interchangeable. Do not store or log login credentials/secrets. Do not implement ChatGPT private API clients before authenticated-session evidence exists.
-- **Affected modules**: Future authentication bootstrap, session store, account context, network transport, protocol evidence work.
-- **Validation level**: Sequencing/evidence rule confirmed; current real-device login behavior remains untested.
-- **Supersedes**: None.
-- **Notes**: `DEV-app-foundation` intentionally contains no auth/session/private-protocol implementation. `DEV-auth-bootstrap` is the next serial phase after foundation merge.
+- **Scope**: Authentication sequencing / web-login route / historical evidence boundary
+- **Decision**: Authentication remains a dedicated evidence stage before native private-protocol work. The current tested route begins with the simplest embedded `WKWebView` ChatGPT login at `https://chatgpt.com/auth/login`. On `DEV-auth-bootstrap-0.1.0-b2`, the user successfully completed Continue with Google on the intended real device, so no system-browser fallback is currently justified. The next evidence target is session persistence, authoritative authenticated/account state, and native consumption; successful WebView login must not be equated with native `URLSession` authentication.
+- **Evidence**: Current candidate `DEV-auth-bootstrap-0.1.0-b2` passed CI in run `32886019320`, produced artifact ID `9577612707` and IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`. The user then installed/tested the candidate and explicitly reported successful ChatGPT login via Continue with Google in the embedded web flow on iPhone / iOS 17.0. Earlier external guidance warned embedded OAuth may be rejected, but that risk did not reproduce on this tested path/device.
+- **Alternatives considered**: Assume embedded login would fail and add system-browser/auth-session fallback before testing; assume successful WebView login automatically supplies native request credentials; design a custom token/login system from historical knowledge.
+- **Rejected / do-not-repeat**: Do not add a system-browser fallback merely because embedded OAuth can fail in other contexts; current tested route works. Do not assume WebKit cookies, system-browser auth state and native `URLSession` state are interchangeable. Do not store/log authentication secrets. Do not begin conversation protocol implementation until authenticated session/account context needed by native requests is separately evidenced.
+- **Affected modules**: `AuthWebViewController`, future authentication/session owner, account context, network transport and protocol evidence work.
+- **Validation level**: Code written + CI passed + Artifact produced + Runtime/manual/real-device tested for embedded ChatGPT/Google web login on iPhone / iOS 17.0. Session persistence, authenticated-state detection and native session consumption remain Unknown / Unverified.
+- **Supersedes**: Earlier untested risk assumption within this decision that a system-browser handoff might be required.
+- **Notes**: Keep the current route minimal until a concrete new failure or session-consumption requirement justifies change.
 
 ### TD-006 — Foundation baseline is Swift/UIKit with iOS 14.0 minimum
 

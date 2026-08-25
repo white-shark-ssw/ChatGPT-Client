@@ -4,53 +4,49 @@ _Last updated: 2026-08-26._
 
 ## Current accepted baseline
 
-The first real product foundation is merged into `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`.
+The first product foundation is merged into `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`. The accepted Stable foundation runtime candidate is `DEV-app-foundation-0.1.0-b1`, built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7` and real-device tested through TrollStore on iPhone / iOS 17.0.
 
-The accepted Stable foundation runtime candidate is `DEV-app-foundation-0.1.0-b1`, built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`. It was installed and launched successfully through TrollStore on an iPhone running iOS 17.0, and its diagnostics/settings/persistence path was manually validated.
+Authentication work remains Active on `dev/auth-bootstrap-20260826` / draft PR #6. b2 established embedded Continue with Google and persistent WebKit login across force-close/relaunch. b3 has now established real-device native-session consumption for the tested authentication route: current ChatGPT/OpenAI WebKit cookies copied transiently into an ephemeral `URLSession` were accepted by `https://chatgpt.com/auth/login` and resolved to authenticated `chatgpt.com` HTTP 200.
 
-Authentication work remains Active on `dev/auth-bootstrap-20260826` / draft PR #6. `DEV-auth-bootstrap-0.1.0-b2` validated the current embedded ChatGPT Continue with Google route and persistent WebKit login across force-close/relaunch on the intended iPhone / iOS 17.0 environment. `DEV-auth-bootstrap-0.1.0-b3` now adds the narrow native-session-consumption probe; its exact push candidate has passed CI and produced an IPA, but the native probe has not yet been runtime tested.
-
-The product goal remains an **iOS native ChatGPT client** distributed as an IPA for TrollStore. The intended user-device environment does not exceed iOS 17.0, while compatibility with lower iOS versions is preferred where practical.
+The product goal remains an **iOS native ChatGPT client** distributed as a TrollStore IPA. Intended user OS does not exceed iOS 17.0; lower compatibility remains preferred where practical.
 
 ## Accepted foundation baseline
 
 `DEV-app-foundation-0.1.0-b1` establishes Swift 5 + UIKit, iOS 14.0 deployment target, no third-party dependencies, application shell/settings, build/runtime identity, structured bounded local diagnostics/redacted export, reproducible unsigned IPA packaging and GitHub Actions build/artifact production. Foundation modules are Stable, not Frozen.
 
-## Active authentication evidence
+## Authentication evidence
 
 ### b2 — embedded web login and persistence
 
-- Candidate: `DEV-auth-bootstrap-0.1.0-b2`, product source `809fa03e673afded87cb47fb755c998ab1b58e12`.
+- Candidate `DEV-auth-bootstrap-0.1.0-b2`, product source `809fa03e673afded87cb47fb755c998ab1b58e12`.
 - CI run `32886019320` passed; artifact ID `9577612707`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
-- User completed Continue with Google successfully in the embedded `WKWebView` on iPhone / iOS 17.0.
-- After force-close/relaunch, the user remained signed in. The supplied b2 diagnostic export corroborates this: opening `/auth/login` redirected directly to non-auth `chatgpt.com` HTTP 200 with no Google navigation.
-- Default persistent `WKWebsiteDataStore` is therefore the current evidenced persistent web-session authority on the tested environment.
-- No system-browser fallback is currently justified.
+- User completed Continue with Google successfully in embedded `WKWebView` on iPhone / iOS 17.0.
+- Force-close/relaunch retained login; diagnostics corroborated direct `/auth/login` -> logged-in `chatgpt.com` HTTP 200 without Google navigation.
+- Default persistent `WKWebsiteDataStore` is the current evidenced persistent auth-secret authority. No system-browser fallback is justified.
 
-### b3 — native session-consumption candidate
+### b3 — native session consumption accepted
 
-- Candidate: `DEV-auth-bootstrap-0.1.0-b3`, product source `0fcf040012c0698d0e3ce1628fec9865237eba3b`.
-- Push run `32889095904` passed on Xcode 16.4 and produced artifact ID `9578766019` / `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b3`.
-- IPA: `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`; SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`.
-- `AuthSessionStore` now owns safe auth evidence state only. WebKit remains the sole persistent secret authority.
-- After authenticated WebView navigation, b3 transiently copies ChatGPT/OpenAI cookies into an **ephemeral** native `URLSession` and requests the already-verified `/auth/login` route. Only final safe destination/status/count/error metadata is logged; Cookie/token/Authorization values are not persisted or logged.
-- **Runtime status: pending.** CI/artifact success does not prove native authentication acceptance.
+- Candidate `DEV-auth-bootstrap-0.1.0-b3`, exact runtime product source `0fcf040012c0698d0e3ce1628fec9865237eba3b`.
+- Authoritative push run `32889095904` passed on Xcode 16.4 and produced artifact ID `9578766019`, IPA `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`, SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`.
+- `AuthSessionStore` owns safe auth evidence state only; WebKit remains the sole persistent secret authority.
+- On the intended iPhone / iOS 17.0 device, the user observed `网页登录成功 · 原生会话通过`.
+- Supplied b3 diagnostics identify `DEV-auth-bootstrap-0.1.0-b3`, build `3`, source `0fcf040012c0`, iPhone / iOS 17.0 and record `session.webState=authenticated`, 54 WebKit cookies with 35 matching ChatGPT/OpenAI domains for the transient probe, `session.nativeState=verified`, and `nativeSessionProbe.end` at `chatgpt.com` / destination `chatgpt`, HTTP 200, `status=ok`, duration `1203.68 ms`.
+- The copied Cookie values are not persisted by `AuthSessionStore`; the supplied probe diagnostics expose counts/state/status rather than authentication-secret values.
 
-Still unverified within authentication/session:
+This is **Runtime/manual/real-device evidence that an ephemeral native `URLSession` can consume the current authenticated WebKit context for the tested `/auth/login` route**. It is not evidence that conversation/private endpoints require only those cookies or that account/workspace context is already established.
 
-- whether the exact b3 native probe resolves as authenticated on the real device;
-- current account/workspace context ownership;
-- any additional current headers/context required by later native ChatGPT requests.
+Still unverified within Phase 2:
 
-A successful WebView login and successful b3 build must not be described as proof that private/internal conversation requests are authenticated.
+- current account/workspace identity/context required by later native requests;
+- exact current account/session endpoint/path, method, response shape and any additional request context needed by later private protocol calls.
 
 ## Durable development plan
 
 The ordered roadmap remains:
 
 1. `DEV-app-foundation` — Completed / merged / Stable.
-2. `DEV-auth-bootstrap` — Active; web login + persistence passed, native consumption runtime test and account/workspace context remain.
-3. `DEV-protocol-read` — only after auth/session/account context needed by native requests is evidenced.
+2. `DEV-auth-bootstrap` — Active; web login, persistence and tested native-session bridge passed; account/workspace context remains.
+3. `DEV-protocol-read` — only after current native-authenticated account/workspace context is evidenced.
 4. `DEV-native-read-path`.
 5. `DEV-send-stream`.
 6. `DEV-long-conversation`.
@@ -70,9 +66,9 @@ Diagnostics/logging remains a Stable foundation capability: structured OSLog eve
 - `AppBuildInfo` owns build/runtime identity presentation.
 - `DiagnosticsLogger` / `DiagnosticsStore` / `DiagnosticsExporter` own diagnostics state/export.
 - `AuthWebViewController` owns login UI/navigation lifecycle and uses default persistent `WKWebsiteDataStore`.
-- `AuthSessionStore` owns only web/native auth **evidence state** and the transient native probe; it does not own persistent authentication secrets.
-- WebKit default data store is the current persistent auth-secret authority until stronger current evidence justifies changing that contract.
-- Account/workspace context owner remains Unknown / Unverified.
+- `AuthSessionStore` owns safe web/native auth evidence state and the accepted transient native bridge; it does not own persistent authentication secrets.
+- WebKit default data store remains the persistent auth-secret authority.
+- Account/workspace context owner remains Unknown / Unverified and is the next state-ownership target.
 
 ## Compatibility direction
 
@@ -82,8 +78,8 @@ Current deployment target remains iOS 14.0; artifacts are arm64 and declare iPho
 
 - Bundle ID is accepted but not Frozen as a permanent signing identity.
 - No unit/UI test target yet; automated validation is Release compile, app validation, IPA packaging/inspection and artifact upload.
-- b3 native-session acceptance is not runtime-proven yet.
 - Account/workspace context and private/internal protocol remain Unknown / Unverified.
+- b3 proves native consumption only for the tested authentication route and environment; do not generalize it to conversation protocol behavior without current evidence.
 
 ## Evidence rule
 

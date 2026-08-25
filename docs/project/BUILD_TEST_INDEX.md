@@ -4,9 +4,13 @@ This file is the durable index for testable identities and evidence.
 
 ## Current identity scheme
 
-**Unknown / Unverified for product builds and test candidates.**
+**Unknown / Unverified for product version/build/test candidate numbering.**
 
 No product version source, build-number source, CI artifact convention, release/tag convention, or test-candidate convention was present in the repository at bootstrap. Establish a minimal unambiguous scheme only when real product configuration or a testable artifact requirement exists.
+
+Verified distribution requirement: runnable/distributable product artifacts are expected to be **IPA files suitable for installation through TrollStore**. Exact signing/packaging commands and artifact naming remain Unknown / Unverified until an Xcode project/build pipeline exists.
+
+Compatibility evidence for future artifacts must record the actual deployment target and the iOS versions/devices on which runtime testing was performed. The intended user environment does not exceed iOS 17.0, and lower-version compatibility is preferred where practical.
 
 ## Candidate table
 

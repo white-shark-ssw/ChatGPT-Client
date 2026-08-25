@@ -8,7 +8,7 @@ Default-branch planning/governance baseline at `DEV-app-foundation` start: `main
 
 The product goal is an **iOS native ChatGPT client** distributed as an IPA for TrollStore. The intended user-device environment does not exceed iOS 17.0, while compatibility with lower iOS versions is preferred where practical.
 
-The first real product foundation is now runtime-accepted as `DEV-app-foundation-0.1.0-b1`. It was built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`, installed and launched successfully through TrollStore on an iPhone running iOS 17.0, and its diagnostics/settings/persistence path was manually validated. PR #5 contains this foundation plus documentation updates and is the merge vehicle for the accepted baseline.
+The first real product foundation is runtime-accepted as `DEV-app-foundation-0.1.0-b1`. It was built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`, installed and launched successfully through TrollStore on an iPhone running iOS 17.0, and its diagnostics/settings/persistence path was manually validated. PR #5 contains this foundation plus completion documentation and is ready for final merge after repository/CI recheck.
 
 ## Accepted foundation baseline
 
@@ -42,7 +42,7 @@ The ordered implementation roadmap is recorded in `docs/project/DEVELOPMENT_PLAN
 
 Current intended sequence:
 
-1. `DEV-app-foundation` — **Accepted / completing merge**; real Xcode/iOS baseline, TrollStore IPA path, build identity and safe diagnostics/logging foundation are implemented and runtime-tested on iPhone / iOS 17.0.
+1. `DEV-app-foundation` — **Accepted / Stable; merge completion in progress**.
 2. `DEV-auth-bootstrap` — next serial phase: reproduce the user's current Google-based ChatGPT login on-device and establish real authenticated-session evidence.
 3. `DEV-protocol-read` — establish current conversation-list/detail/account-context protocol evidence.
 4. `DEV-native-read-path` — build native conversation navigation, authoritative conversation state and native message rendering.
@@ -58,11 +58,11 @@ The strongly dependent core (`app foundation -> auth -> protocol read -> native 
 
 The user reports that a previous Web-based IPA successfully used ChatGPT web login and that their account uses **Continue with Google**. This remains historical evidence only. `DEV-app-foundation` intentionally does not implement authentication/session/protocol behavior.
 
-Current Google OAuth guidance warns that authorization endpoints shown in embedded user-agents such as `WKWebView` can be rejected with `disallowed_useragent`. Therefore `DEV-auth-bootstrap` must reproduce current behavior on-device first and only choose an alternate supported browser/auth handoff if current evidence requires it.
+`DEV-auth-bootstrap` must reproduce current behavior on-device first, capture safe navigation/auth evidence, and only choose an alternate supported browser/auth handoff if current evidence requires it. Do not assume WebKit, system-browser and native `URLSession` auth state are interchangeable.
 
 ## Diagnostics state
 
-Diagnostics/logging is now an accepted Stable foundation capability:
+Diagnostics/logging is an accepted Stable foundation capability:
 
 - app lifecycle and UI/settings actions emit structured local events;
 - async operations can use trace IDs and timing spans;

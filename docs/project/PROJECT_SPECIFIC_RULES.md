@@ -9,7 +9,7 @@ This file contains rules specific to this repository/product. Populate/change th
 - The durable ordered implementation roadmap lives in `docs/project/DEVELOPMENT_PLAN.md`.
 - `DEV-app-foundation-0.1.0-b1` is the accepted Stable foundation baseline.
 - `DEV-auth-bootstrap-0.1.0-b2` proves the tested embedded ChatGPT Continue with Google route and WebKit login persistence across force-close/relaunch on iPhone / iOS 17.0.
-- `DEV-auth-bootstrap-0.1.0-b3` is the current native-session-consumption test candidate. CI/artifact success does not prove its runtime result.
+- `DEV-auth-bootstrap-0.1.0-b3` proves the tested transient native session bridge can consume the current authenticated WebKit context for `https://chatgpt.com/auth/login` on the intended iPhone / iOS 17.0 environment.
 
 ## Repository governance contract
 
@@ -22,17 +22,19 @@ This file contains rules specific to this repository/product. Populate/change th
 - Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old shapes or memory alone.
 - Before implementing a protocol capability, establish current evidence for URL/path, method, authentication/account context, headers, body, response/stream shape, IDs/state semantics and failure behavior as applicable.
 - Current evidence wins over historical notes.
-- Production private-protocol work must not begin until authenticated session/account context actually usable by the native request path is evidenced.
+- `DEV-protocol-read` must not begin until the current account/workspace context actually required by the native request path is evidenced and assigned one explicit owner.
+- b3 native-session success on `/auth/login` is authentication transport evidence only; it is not proof of current conversation-list/detail endpoints or their required headers/context.
 
 ## Authentication contract
 
-- Current tested login entry is the embedded `WKWebView` route at `https://chatgpt.com/auth/login`.
-- Continue with Google succeeds on the tested b2 iPhone / iOS 17.0 candidate.
-- The default persistent `WKWebsiteDataStore` retained authenticated state across force-close/relaunch on b2 and is the current **persistent authentication-secret authority**.
+- Current tested login entry is embedded `WKWebView` at `https://chatgpt.com/auth/login`.
+- Continue with Google succeeds on the tested iPhone / iOS 17.0 environment.
+- Default persistent `WKWebsiteDataStore` retains authenticated state across force-close/relaunch and remains the current **persistent authentication-secret authority**.
 - Do **not** add a system-browser/auth-session fallback while the tested embedded route works; a fallback requires a concrete current failure.
-- Do **not** create a second persistent Cookie/token/session authority. If native transport must consume WebKit state, copy only what current evidence requires and keep the copy transient/in-memory unless a later verified requirement justifies a different secure owner.
-- Current b3 evidence probe may transiently copy ChatGPT/OpenAI WebKit cookies into an **ephemeral `URLSession`** to test server acceptance. This is a diagnostic/session-consumption probe, not proof of production native authentication until real-device tested.
-- `AuthSessionStore` owns safe web/native auth evidence state, not persistent credentials.
+- Do **not** create a second persistent Cookie/token/session authority.
+- Current b3 runtime evidence accepts this narrow native consumption mechanism: read current WebKit cookies, filter ChatGPT/OpenAI domains, copy matching cookies transiently into an **ephemeral `URLSession`**, then perform the evidenced native request. The copy must not be persisted by `AuthSessionStore`.
+- `AuthSessionStore` owns safe web/native auth evidence state and the tested transient bridge; it does not own persistent credentials.
+- b3 real-device acceptance requires exact candidate identity and is satisfied on the tested device: screenshot `网页登录成功 · 原生会话通过`; diagnostics `session.nativeState=verified`; final `chatgpt.com` HTTP 200.
 - Account/workspace context remains a separate evidence target and must receive one explicit owner before protocol-read implementation depends on it.
 - Never log or export passwords, OAuth authorization codes, access/refresh/session tokens, Cookie values, full Cookie/Authorization headers or equivalent authentication secrets.
 
@@ -58,12 +60,12 @@ This file contains rules specific to this repository/product. Populate/change th
 - Current WebView use is limited to the evidence-backed login/bootstrap role; native chat architecture remains the product direction.
 - Future session/account/conversation/message-stream/upload identities must have explicit state owners; UI text/titles are consumers, not authorities.
 - CI/artifact success must never be described as runtime proof.
-- Successful WebKit login/persistence must not be described as proof that native `URLSession` or private-protocol calls are authenticated.
-- b3 runtime evidence must be tied to the **push artifact** built from product source `0fcf040012c0698d0e3ce1628fec9865237eba3b`, not the separate temporary PR-merge artifact.
+- b3 runtime evidence must be tied to the authoritative push artifact from product source `0fcf040012c0698d0e3ce1628fec9865237eba3b`, not a temporary PR-merge artifact.
+- Native `/auth/login` success must not be generalized into private conversation-protocol success.
 
 ## Frozen business or architecture rules
 
-None recorded yet. Foundation modules are Stable, not Frozen. Embedded web login/persistence is accepted Stable on the tested environment, not Frozen. Native session bridge remains Candidate.
+None recorded yet. Foundation modules, embedded web login/persistence and the tested transient native auth bridge are Stable for their accepted scope, not Frozen. Account/workspace context remains Unknown / Unverified.
 
 ## Code style / naming constraints
 
@@ -73,10 +75,11 @@ Follow existing repository style until explicit project-specific constraints are
 
 - Do not add speculative timers, watchdogs, DOM scans, shadow WebViews, retry loops or authentication fallback chains without a concrete current failure mode.
 - Do not add a system-browser authentication fallback while the tested embedded route works.
-- Do not persist b3's copied Cookie values outside WebKit.
+- Do not persist copied Cookie values outside WebKit.
 - Do not use UI text/title matching as a production identity authority.
 - Do not raise the iOS 14.0 minimum merely because CI uses a newer SDK.
 - Do not add silent auth/network/protocol recovery that hides original failure evidence.
+- Do not guess account/workspace or conversation endpoints from historical notes; establish current evidence first.
 
 ## Historical reference
 

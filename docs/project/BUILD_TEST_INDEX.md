@@ -12,6 +12,12 @@ Verified distribution requirement: runnable/distributable product artifacts are 
 
 Compatibility evidence for future artifacts must record the actual deployment target and the iOS versions/devices on which runtime testing was performed. The intended user environment does not exceed iOS 17.0, and lower-version compatibility is preferred where practical.
 
+## Diagnostic identity requirement
+
+Starting with the first executable product candidate, exported diagnostic bundles/logs must identify the exact test candidate strongly enough to avoid mixing evidence between builds. Record at least the available app version/build/candidate identity and source commit/branch where practical, together with device/iOS/runtime metadata. A log without candidate identity must not be treated as conclusive evidence for a different build.
+
+Diagnostic evidence must remain privacy-safe: never require passwords, OAuth codes, tokens, Cookie values, full auth headers, full chat content or attachment contents to identify a build/runtime issue.
+
 ## Candidate table
 
 | Candidate | Work ID | Version / Build / Tag | Branch / PR | Commit | Validation | Artifact | Runtime result | Status |

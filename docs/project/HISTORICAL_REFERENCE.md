@@ -1,6 +1,6 @@
 # Historical Reference — Previous iOS ChatGPT Client Experience
 
-_Last summarized: 2026-08-25._
+_Last summarized: 2026-08-26._
 
 ## Source package
 
@@ -11,15 +11,22 @@ _Last summarized: 2026-08-25._
 
 This archive came from a previous project. It is **reference-only**. It is not current source code, current ChatGPT protocol documentation, or proof that a historical design is correct for the new client.
 
+## Additional user-confirmed historical result
+
+On 2026-08-26 the user clarified that the previous Web-based IPA had already completed a working web-login flow for ChatGPT, and that the user's account signs in through **Google**. This is stronger evidence than a historical architecture suggestion: it confirms that this path worked in the previous app/runtime at that time.
+
+It still does **not** prove that current Google/OpenAI authentication will accept the same embedded WebView flow today. Current Google OAuth guidance warns that authorization in embedded user-agents such as `WKWebView` can be rejected with `disallowed_useragent`. The new client must therefore reproduce the current login flow on-device and treat present runtime behavior as authoritative.
+
 ## Evidence boundary
 
 Use the historical material in this order:
 
 1. Old user runtime feedback is useful for identifying real failure classes and UX pain.
-2. Old repository/source evidence can prove that an implementation existed at that time only.
-3. Old CI/artifact results prove build/package success only, not runtime correctness.
-4. Historical diagnoses and architecture suggestions are hypotheses/experience until revalidated.
-5. Historical private ChatGPT endpoint names, headers, request bodies, response shapes, streaming events, auth context, and conversation semantics are **not current contracts**.
+2. Old user-confirmed successful flows (including the previous Web IPA Google-based login) prove that the old implementation/runtime path worked at that time only.
+3. Old repository/source evidence can prove that an implementation existed at that time only.
+4. Old CI/artifact results prove build/package success only, not runtime correctness.
+5. Historical diagnoses and architecture suggestions are hypotheses/experience until revalidated.
+6. Historical private ChatGPT endpoint names, headers, request bodies, response shapes, streaming events, auth context, and conversation semantics are **not current contracts**.
 
 Current user requirements, current repository source, current network/protocol evidence, current CI/artifacts, and current runtime testing always outrank this document.
 
@@ -70,14 +77,19 @@ Before implementing list/detail/send/stream/upload/edit/regenerate or related fu
 
 ### 5. Authentication should be separated from chat UI architecture
 
-The old handoff suggested that a Web-based login/bootstrap might remain useful even when chat UI becomes native. That is a **candidate**, not a current decision.
+The previous Web IPA successfully used web login for the user's Google-based ChatGPT account. That result makes web-based bootstrap a high-value route to test first, but not an automatically accepted current implementation.
 
 The durable lesson is to decouple:
 
 - how session/auth context is established,
 - from how conversation/navigation/message UI is rendered.
 
-Any future login approach must be selected from current evidence.
+For the new client:
+
+- reproduce the current Google-based login on-device first;
+- if embedded Google authorization is rejected, capture the exact current evidence before selecting a supported system-browser/auth handoff;
+- do not assume browser/WebKit/native-network session state can be copied or shared without current evidence;
+- never log authentication secrets.
 
 ### 6. Attachments should be native-first and diagnosable
 
@@ -106,9 +118,11 @@ Historical WebView development accumulated timers, watchdogs, DOM observers, rel
 
 Carry forward the governance rule: do not add retry/fallback/watchdog/recovery mechanisms without a concrete current failure mode, a known state owner, a clear termination condition, and evidence that the normal path is insufficient.
 
-### 9. Performance must be validated on real devices
+### 9. Performance and diagnostics must be validated on real devices
 
-Historical CI/artifact success did not answer the important runtime questions. For future native-client performance work, real-device measurement should distinguish at least:
+Historical CI/artifact success did not answer the important runtime questions. The new project explicitly requires structured logging/diagnostics from the first executable build so future real-device failures can be reconstructed instead of inferred.
+
+For future native-client work, distinguish at least:
 
 - source written
 - local/static checks
@@ -125,9 +139,11 @@ The previous-project handoff suggested proving a narrow vertical loop first:
 
 `login -> conversation list -> open conversation -> native long-conversation rendering -> send text -> streaming reply -> attachment upload`
 
-It also suggested native Markdown, export, and later expansion into Projects and other features.
+The current durable roadmap refines that into:
 
-This is retained as a planning reference only. A future Development/Feature session must create its own Work ID/checkpoint and confirm current scope before implementation.
+`app/diagnostics foundation -> auth bootstrap -> protocol read -> native read -> send/stream -> long conversation -> attachments`
+
+See `docs/project/DEVELOPMENT_PLAN.md`. This remains a dependency plan; each implementation phase still requires its own Development/Feature Work ID/checkpoint.
 
 ## Do-not-repeat reminders
 
@@ -146,6 +162,6 @@ If a future current task has concrete evidence that one of these techniques is a
 
 ## How future sessions should use this file
 
-Consult this file when work touches authentication, protocol research, conversation state, long-conversation performance, streaming, attachments, export, recovery, or WebView/native boundaries.
+Consult this file when work touches authentication, protocol research, conversation state, long-conversation performance, streaming, attachments, export, recovery, diagnostics, or WebView/native boundaries.
 
 Then verify the current source/protocol/runtime evidence before making implementation decisions. Do not ask the user to reconstruct these old lessons from chat history unless a specific missing detail is not represented here.

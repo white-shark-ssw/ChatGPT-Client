@@ -10,8 +10,8 @@ Bootstrap inspection completed against the real repository state. Verified facts
 
 - **Project name**: ChatGPT-Client
 - **Repository**: `white-shark-ssw/ChatGPT-Client`
-- **Project purpose**: Unknown / Unverified for the application/product itself. The repository is currently bootstrapped with the AI Governance Rules package.
-- **Product type**: Unknown / Unverified
+- **Project purpose**: ChatGPT third-party custom client, as stated by the GitHub repository description.
+- **Product type**: Third-party client application.
 - **Primary users/runtime**: Unknown / Unverified
 
 ## Technology stack
@@ -52,7 +52,7 @@ Bootstrap inspection completed against the real repository state. Verified facts
 
 ## Documentation evidence
 
-- GitHub repository metadata: repository `white-shark-ssw/ChatGPT-Client`, default branch `main`.
+- GitHub repository metadata: repository `white-shark-ssw/ChatGPT-Client`, default branch `main`, description `ChatGPT Third-party custom client`.
 - Pre-bootstrap source baseline: `main@91f58c10cb44477b3130527f3037bb4365ea3cf5`.
 - Pre-bootstrap repository tree contained only `占位文件.txt`; no product source, manifest, test, CI, version, or deployment files were present.
 - Governance package contents are documented by root `README.md`, `AGENTS.md`, `.github/copilot-instructions.md`, and `docs/project/START_HERE.md`.

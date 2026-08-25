@@ -80,7 +80,7 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Affected modules**: `AuthWebViewController`, `AuthSessionStore`, future account/session/network transport.
 - **Validation level**: Embedded login + WebKit persistence: Code + CI + Artifact + Runtime/manual/real-device tested. b3 native bridge: Code + CI + Artifact only; runtime pending.
 - **Supersedes**: Earlier untested concerns that the embedded route might require a browser handoff or that WebKit state might not survive relaunch.
-- **Notes**: If b3 runtime probe succeeds, account/workspace context is the next evidence gate before protocol-read work.
+- **Notes**: The embedded web-login/persistence route is accepted for the tested environment, but broader authentication/session is not Stable until native consumption/account context is evidenced. If b3 runtime probe succeeds, account/workspace context is the next evidence gate before protocol-read work.
 
 ### TD-006 — Foundation baseline is Swift/UIKit with iOS 14.0 minimum
 

@@ -14,6 +14,8 @@ CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-auth-bootstrap-0.1.0-b2}"
 rm -rf "$BUILD_DIR"
 mkdir -p "$ARTIFACT_DIR" "$STAGING_DIR/Payload"
 
+bash "$ROOT_DIR/scripts/reconstruct_app_icon.sh"
+
 xcodebuild \
   -project "$PROJECT" \
   -scheme "$SCHEME" \

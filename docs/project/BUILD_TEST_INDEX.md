@@ -14,7 +14,7 @@ The first executable product candidate establishes the following minimal scheme:
 
 Every new testable Active task/candidate must allocate a unique candidate/build identity before artifact production. Do not reuse a build number, exact version/build tuple, candidate ID, artifact name or release tag across Active tasks.
 
-Verified distribution requirement: runnable/distributable product artifacts are IPA files intended for installation through TrollStore. The current foundation pipeline builds an unsigned/foundation IPA candidate with Xcode signing disabled and packages `Payload/ChatGPTClient.app`; actual TrollStore installation/resigning/launch behavior remains a runtime validation gate rather than a CI assumption.
+Verified distribution requirement: runnable/distributable product artifacts are IPA files intended for installation through TrollStore. The foundation pipeline builds an unsigned IPA candidate with Xcode signing disabled and packages `Payload/ChatGPTClient.app`; `DEV-app-foundation-0.1.0-b1` was successfully installed and launched through TrollStore on iPhone / iOS 17.0.
 
 ## Diagnostic identity requirement
 
@@ -26,19 +26,21 @@ Diagnostic evidence must remain privacy-safe: never require passwords, OAuth cod
 
 | Candidate | Work ID | Version / Build / Tag | Branch / PR | Commit | Validation | Artifact | Runtime result | Status |
 |---|---|---|---|---|---|---|---|---|
-| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 | CI-proven product/workflow head `89b29434e4d81486d395b8ddb093a031f6f919a7`; PR opened at documentation head `d64b882f123c57cd4f01a613c195a97ba87a16ba` | Code written; GitHub Actions run `32876352123` passed on Xcode 16.4; generated app validated by Xcode build utility | GitHub artifact ID `9574034381`, `ChatGPTClient-DEV-app-foundation-0.1.0-b1`; IPA payload name `ChatGPTClient-0.1.0-b1-dev-app-foundation.ipa` | TrollStore install/launch, settings interaction, persistence and diagnostic export not yet real-device tested | Candidate / runtime pending |
+| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 | Runtime-tested product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`; later branch commits are docs/checkpoint only | Code written; CI passed; artifact produced; runtime/manual/real-device tested | GitHub artifact ID `9574034381`, `ChatGPTClient-DEV-app-foundation-0.1.0-b1`; IPA `ChatGPTClient-0.1.0-b1-dev-app-foundation.ipa`; SHA-256 `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | User installed/launched via TrollStore on iPhone / iOS 17.0 with no reported problem; Settings/sample/export passed; restart preserved prior events; supplied diagnostic export matched candidate/source/runtime identity and showed no observed password/token/Cookie/Authorization/OAuth secret fields | Stable / accepted foundation |
 
-## Current foundation artifact facts
+## Foundation artifact and runtime facts
 
 - CI runner: GitHub-hosted `macos-15`.
 - Xcode: 16.4 (`16F6`).
 - iPhoneOS SDK used by CI: 18.5.
 - Compile target: `arm64-apple-ios14.0`.
-- Generated IPA metadata inspected after CI: bundle ID `com.whitesharkssw.chatgptclient`, version `0.1.0`, build `1`, `MinimumOSVersion=14.0`, candidate `DEV-app-foundation-0.1.0-b1`, Release configuration, arm64 executable.
-- Run `32876300208` IPA SHA-256: `dbb1b26b3f8f2d8a67ccbda325386560dbc7fbe1cdad78460ad242bcb920a6eb` for source commit `288853965a58`.
-- Run `32876352123` at `89b29434...` also succeeded and produced artifact ID `9574034381`. The extracted latest IPA SHA-256 is `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`, and its embedded source commit is `89b29434e4d8`.
-- PR #5 targets unchanged `main@bd9727e7...`; pre-PR compare showed this branch ahead with `behind_by=0`, and no other Active development checkpoint existed on `main`.
-- CI success and artifact production do **not** prove TrollStore runtime behavior.
+- Generated IPA metadata: bundle ID `com.whitesharkssw.chatgptclient`, version `0.1.0`, build `1`, `MinimumOSVersion=14.0`, candidate `DEV-app-foundation-0.1.0-b1`, Release configuration, arm64 executable.
+- Run `32876352123` at `89b29434...` succeeded and produced artifact ID `9574034381`; extracted accepted IPA SHA-256 is `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`, embedded source commit `89b29434e4d8`.
+- Final material PR head `aa3233de...` revalidated successfully in run `32877096378` with build, artifact inspection and upload all passing.
+- Real-device diagnostic metadata: version `0.1.0 (1)`, candidate `DEV-app-foundation-0.1.0-b1`, Release, deployment target `14.0`, device class `iPhone`, iOS `17.0`, source `89b29434e4d8`.
+- Supplied export contains two app launch sequences. A `diagnostics/sample.event` at `2026-08-25T17:22:14Z` remains in the export produced after the second launch at `2026-08-25T17:22:35Z`, which is accepted evidence that persistent diagnostic history survived relaunch for this candidate.
+- Successful export events reported `19` events / `5493` bytes before relaunch and `30` events / `8487` bytes after relaunch.
+- Runtime validation currently covers one iPhone on iOS 17.0; it does not prove lower iOS versions or iPad runtime compatibility.
 
 ## Uniqueness rule
 

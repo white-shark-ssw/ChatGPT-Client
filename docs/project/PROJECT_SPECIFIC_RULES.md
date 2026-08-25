@@ -24,12 +24,18 @@ Populate/change these rules only from explicit user requirements, verified produ
 ## Compatibility / deployment constraints
 
 - Platform direction: iOS native application.
-- Exact minimum iOS version, device matrix, distribution/install method, and framework choices remain Unknown / Unverified until explicitly decided or evidenced.
+- Distribution/install form: IPA installed through TrollStore.
+- Intended user-device OS versions do not exceed iOS 17.0. Do not introduce a required API, dependency, framework setting, or deployment configuration that makes iOS > 17.0 mandatory unless the user explicitly changes this requirement.
+- iOS 17.0 is an environment ceiling, **not** the minimum deployment target.
+- Prefer the lowest practical minimum deployment target compatible with the real required features/APIs/dependencies and validated runtime behavior.
+- Until an Xcode project and concrete dependencies exist, the exact minimum deployment target remains `Unknown / Unverified`; do not guess a numeric floor.
+- Exact iPhone/iPad device-family support remains Unknown / Unverified.
 
 ## Critical invariants
 
 - Historical WebView code must not become the new source baseline merely because it existed in the previous project.
 - Any future WebView use, including login/bootstrap use, must be justified by the current task and current evidence; no chat-WebView architecture is inherited automatically.
+- A future build/config change that raises the minimum supported iOS version must be treated as a compatibility change and justified against this project's “lower is better” requirement.
 
 ## Frozen business or architecture rules
 
@@ -43,6 +49,7 @@ Follow existing repository style until explicit project-specific constraints are
 
 - Do not revive old WebView compensation mechanisms such as speculative timers, watchdogs, DOM scans, Shadow WebView recovery, or fallback chains without a current concrete failure mode and evidence.
 - Do not use UI text or title matching as a substitute for a verified conversation identity/state owner when the native implementation is introduced.
+- Do not select iOS 17.0 as the deployment target merely because the user's highest target OS is iOS 17.0.
 
 ## Historical reference
 

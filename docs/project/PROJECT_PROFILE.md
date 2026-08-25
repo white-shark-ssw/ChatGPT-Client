@@ -12,7 +12,7 @@ Bootstrap inspection completed against the real repository state. Verified facts
 - **Repository**: `white-shark-ssw/ChatGPT-Client`
 - **Project purpose**: Develop an iOS native ChatGPT client.
 - **Product type**: Native iOS third-party ChatGPT client application.
-- **Primary users/runtime**: iOS users; exact minimum iOS version and device support are Unknown / Unverified.
+- **Primary users/runtime**: iOS users. The intended user-device environment does not exceed iOS 17.0; compatibility with lower iOS versions is preferred where practical.
 
 ## Technology stack
 
@@ -34,7 +34,7 @@ Bootstrap inspection completed against the real repository state. Verified facts
 - **Test command(s)**: Unknown / Unverified; no test configuration evidenced.
 - **Lint/static checks**: Unknown / Unverified; no lint/static configuration evidenced.
 - **CI workflows**: None evidenced at bootstrap.
-- **Artifact/package output**: Unknown / Unverified.
+- **Artifact/package output**: User-required distributable form is an IPA suitable for installation through TrollStore. Exact signing/packaging/build pipeline is Unknown / Unverified until product build configuration exists.
 
 ## Versioning and candidate identity
 
@@ -46,8 +46,10 @@ Bootstrap inspection completed against the real repository state. Verified facts
 
 ## Runtime / deployment
 
-- **Supported runtime/OS/platform**: iOS native application; exact deployment target Unknown / Unverified.
-- **Deployment target(s)**: iPhone/iPad support and distribution/install method are Unknown / Unverified.
+- **Supported runtime/OS/platform**: Native iOS application. The target user environment must not require an OS newer than iOS 17.0.
+- **Minimum deployment target**: Unknown / Unverified. Choose the lowest practical target supported by the actual required APIs/dependencies and validated runtime behavior; do not infer `17.0` as the minimum merely because the user environment tops out at iOS 17.0.
+- **Deployment / installation**: IPA installed through TrollStore.
+- **Device family**: Exact iPhone/iPad support matrix is Unknown / Unverified.
 - **Environment/configuration sources**: Unknown / Unverified.
 
 ## Historical reference material
@@ -57,10 +59,12 @@ The user supplied `ChatGPT_iOS_Native_Client_History_Pack_2026-08-25.zip` as exp
 ## Documentation evidence
 
 - User explicit requirement on 2026-08-25: current project theme is development of an iOS native ChatGPT client.
+- User explicit deployment/compatibility requirement on 2026-08-25: install the IPA through TrollStore; intended iOS systems do not exceed iOS 17.0; prefer compatibility with lower iOS versions.
 - GitHub repository metadata: repository `white-shark-ssw/ChatGPT-Client`, default branch `main`, description `ChatGPT Third-party custom client`.
 - Pre-bootstrap source baseline: `main@91f58c10cb44477b3130527f3037bb4365ea3cf5`.
 - Governance baseline after initial rules merge: `main@f4ba767fde90c0258da19a92283e9f337532ca35`.
-- No product source, manifest, tests, CI, version/build source, or deployment config is present yet.
+- Native-project context baseline: `main@bf71cb1152c2b114559af0ae1d74384566cc2a64`.
+- No product source, manifest, tests, CI, version/build source, or concrete deployment-target config is present yet.
 
 ## Auto-refresh rule
 

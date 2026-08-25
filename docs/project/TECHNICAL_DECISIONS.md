@@ -48,6 +48,20 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Supersedes**: None.
 - **Notes**: Distilled reference lessons are stored in `HISTORICAL_REFERENCE.md`.
 
+### TD-003 — TrollStore IPA distribution with iOS 17.0 ceiling and lowest-practical deployment target
+
+- **Status**: Confirmed
+- **Date**: 2026-08-25
+- **Scope**: Runtime compatibility / deployment / artifact distribution
+- **Decision**: The client is distributed as an IPA for installation through TrollStore. The intended user-device OS environment does not exceed iOS 17.0. The future Xcode deployment target should be set as low as practical while still supporting the real required features, APIs, dependencies, and stable runtime behavior.
+- **Evidence**: User explicit requirement in the current conversation: TrollStore-installed IPA; iOS systems at most 17.0; lower compatibility is preferred.
+- **Alternatives considered**: Set the minimum deployment target to iOS 17.0 by default; optimize only for the newest target OS.
+- **Rejected / do-not-repeat**: Do not interpret the iOS 17.0 environment ceiling as `IPHONEOS_DEPLOYMENT_TARGET = 17.0`. Do not choose a numeric minimum before actual source/toolchain/API constraints can be verified.
+- **Affected modules**: Future Xcode project/build settings, dependency choices, API availability guards, packaging/signing pipeline, runtime compatibility testing.
+- **Validation level**: User-confirmed deployment/compatibility requirement; no product build or runtime validation exists yet.
+- **Supersedes**: None.
+- **Notes**: The exact minimum iOS version remains Unknown / Unverified until implementation exists. Any future change that raises it must be treated as a compatibility-impacting decision and documented with evidence.
+
 ## Rule
 
 Do not write speculation here as fact. A historical plan is not proof of implementation.

@@ -26,11 +26,11 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Date**: 2026-08-25
 - **Scope**: Product direction / architecture baseline
 - **Decision**: The current repository will be developed as an iOS native ChatGPT client. Product code starts from a new native-client baseline rather than treating the previous WebView client as the source to convert.
-- **Evidence**: User explicit requirement; repository purpose; current `DEV-app-foundation` source now provides a real native Swift/UIKit candidate.
+- **Evidence**: User explicit requirement; repository purpose; accepted `DEV-app-foundation-0.1.0-b1` provides a real native Swift/UIKit baseline and was installed/launched successfully through TrollStore on iPhone / iOS 17.0.
 - **Alternatives considered**: Continue the previous WebView client as the primary chat runtime.
 - **Rejected / do-not-repeat**: Do not inherit the old WebView chat implementation as the new source baseline by default.
 - **Affected modules**: Application architecture and all future product modules.
-- **Validation level**: User-confirmed product requirement; native foundation Code written + CI passed + Artifact produced. Product runtime acceptance remains pending real-device validation.
+- **Validation level**: User-confirmed product requirement + Code written + CI passed + Artifact produced + Runtime/manual/real-device tested for the foundation baseline.
 - **Supersedes**: None.
 - **Notes**: Concrete foundation framework/deployment choices are recorded in TD-006. Authentication remains a later evidence-driven task.
 
@@ -54,11 +54,11 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Date**: 2026-08-25
 - **Scope**: Runtime compatibility / deployment / artifact distribution
 - **Decision**: The client is distributed as an IPA for installation through TrollStore. The intended user-device OS environment does not exceed iOS 17.0. The deployment target should remain as low as practical while still supporting real required features, APIs, dependencies, and stable runtime behavior.
-- **Evidence**: User explicit requirement; `DEV-app-foundation` now builds with iOS 14.0 as the verified minimum for the dependency-free foundation. CI compiled `arm64-apple-ios14.0`, and generated IPA metadata reports `MinimumOSVersion=14.0`.
+- **Evidence**: User explicit requirement; `DEV-app-foundation` builds with iOS 14.0 as the verified minimum for the dependency-free foundation. CI compiled `arm64-apple-ios14.0`, generated IPA metadata reports `MinimumOSVersion=14.0`, and the accepted candidate installed/launched successfully through TrollStore on iPhone / iOS 17.0.
 - **Alternatives considered**: Set the minimum deployment target to iOS 17.0 by default; optimize only for the newest target OS.
 - **Rejected / do-not-repeat**: Do not interpret the iOS 17.0 environment ceiling as a 17.0 minimum. Do not raise the current 14.0 target merely because CI uses a newer Xcode/SDK.
 - **Affected modules**: Xcode project/build settings, dependency choices, API availability, packaging/signing pipeline, runtime compatibility testing.
-- **Validation level**: iOS 14.0 is verified at source/build/artifact level; TrollStore install/launch and actual lower-OS runtime compatibility are pending real-device evidence.
+- **Validation level**: iOS 14.0 is verified at source/build/artifact level; TrollStore install/launch is runtime-validated on iPhone / iOS 17.0. Runtime compatibility on lower iOS versions and iPad remains unverified.
 - **Supersedes**: None.
 - **Notes**: Any future minimum-OS increase is compatibility-impacting and must be documented with concrete evidence.
 
@@ -68,13 +68,13 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Date**: 2026-08-26
 - **Scope**: Observability / debugging / performance evidence
 - **Decision**: Structured local diagnostics are present from the first executable product candidate. Important auth, network, protocol, conversation, streaming, rendering, attachment and lifecycle operations must be traceable with correlated events and timing as those modules are introduced. The app maintains bounded persistent diagnostic history and provides a redacted user-triggered diagnostic export path.
-- **Evidence**: User explicitly requested logging/instrumentation for future diagnosis; current `Diagnostics.swift` implements OSLog events, rolling JSONL persistence, trace/span timing, secret filtering and redacted export; Settings exposes sample-event and export actions; CI compiles and packages this implementation.
+- **Evidence**: User explicitly requested logging/instrumentation for future diagnosis; `Diagnostics.swift` implements OSLog events, rolling JSONL persistence, trace/span timing, secret filtering and redacted export; Settings exposes sample-event and export actions; CI compiles/packages the implementation. User real-device testing of `DEV-app-foundation-0.1.0-b1` reported no problems and confirmed data persisted after restart. The supplied export records two launch sequences, successful sample/export operations, pre-restart events after relaunch, correct candidate/runtime metadata and no observed password/token/Cookie/Authorization/OAuth secret fields.
 - **Alternatives considered**: Add logs only after specific bugs appear; rely only on Xcode console output; add remote analytics immediately.
 - **Rejected / do-not-repeat**: Do not postpone observability. Do not log passwords, OAuth codes, access/session tokens, Cookie values, full auth headers, full chat bodies or attachment contents by default. Do not introduce remote telemetry/upload implicitly.
 - **Affected modules**: App foundation and all future async/network/state/render/upload modules.
-- **Validation level**: Code written + CI passed + Artifact produced. Persistence across launches, Settings interaction, exported contents and share flow remain Runtime/manual/real-device untested.
+- **Validation level**: Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0; diagnostics foundation accepted Stable, not Frozen.
 - **Supersedes**: None.
-- **Notes**: Current implementation is Candidate, not Stable/Frozen.
+- **Notes**: Future modules should extend this same diagnostics authority rather than create competing log stores.
 
 ### TD-005 — Current Google-based authentication must be revalidated before protocol implementation
 
@@ -88,21 +88,21 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Affected modules**: Future authentication bootstrap, session store, account context, network transport, protocol evidence work.
 - **Validation level**: Sequencing/evidence rule confirmed; current real-device login behavior remains untested.
 - **Supersedes**: None.
-- **Notes**: `DEV-app-foundation` intentionally contains no auth/session/private-protocol implementation.
+- **Notes**: `DEV-app-foundation` intentionally contains no auth/session/private-protocol implementation. `DEV-auth-bootstrap` is the next serial phase after foundation merge.
 
 ### TD-006 — Foundation baseline is Swift/UIKit with iOS 14.0 minimum
 
 - **Status**: Confirmed
 - **Date**: 2026-08-26
 - **Scope**: App foundation / UI framework / dependency / deployment baseline
-- **Decision**: The first native product baseline uses Swift 5 + UIKit, Foundation, OSLog and CryptoKit with no third-party dependencies, and sets `IPHONEOS_DEPLOYMENT_TARGET=14.0`. This is the current compatibility baseline for subsequent work unless a real required API/dependency/runtime constraint justifies changing it.
-- **Evidence**: Current Xcode source and project configuration; Apple's iOS 14 logging API availability for structured `Logger`; TrollStore's documented support range includes iOS 14 through the project's iOS 17.0 ceiling; GitHub Actions Xcode 16.4 successfully compiled `arm64-apple-ios14.0`; generated IPA reports `MinimumOSVersion=14.0`.
+- **Decision**: The native product baseline uses Swift 5 + UIKit, Foundation, OSLog and CryptoKit with no third-party dependencies, and sets `IPHONEOS_DEPLOYMENT_TARGET=14.0`. This is the current compatibility baseline for subsequent work unless a real required API/dependency/runtime constraint justifies changing it.
+- **Evidence**: Xcode source/project configuration; Apple's iOS 14 logging API availability for structured `Logger`; TrollStore support range includes iOS 14 through the project's iOS 17.0 ceiling; GitHub Actions Xcode 16.4 compiled `arm64-apple-ios14.0`; generated IPA reports `MinimumOSVersion=14.0`; accepted `DEV-app-foundation-0.1.0-b1` installed/launched and exercised diagnostics successfully through TrollStore on iPhone / iOS 17.0.
 - **Alternatives considered**: SwiftUI-first foundation; setting iOS 17.0 as minimum; adding third-party logging/project scaffolding before a concrete need exists.
 - **Rejected / do-not-repeat**: Do not raise the minimum OS for convenience, CI SDK age or speculative future features. Do not add a third-party framework merely to replace sufficient system APIs in the current foundation.
 - **Affected modules**: Xcode project, application shell, diagnostics, build/CI packaging, future feature availability decisions.
-- **Validation level**: Code written + CI passed + Artifact produced. Runtime/manual/real-device validation is pending.
+- **Validation level**: Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0. Foundation is Stable, not Frozen; lower iOS runtime remains unverified.
 - **Supersedes**: None.
-- **Notes**: The current bundle ID is a foundation identity but is not Frozen as a permanent signing/product identity.
+- **Notes**: The current bundle ID is accepted for the foundation but is not Frozen as a permanent signing/product identity.
 
 ## Rule
 

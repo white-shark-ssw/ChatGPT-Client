@@ -4,7 +4,7 @@
 
 **Initialized — 2026-08-25; product baseline refreshed 2026-08-26**
 
-Bootstrap inspection completed against the real repository state. Product implementation facts below are now backed by the accepted `DEV-app-foundation-0.1.0-b1` candidate where stated; unsupported compatibility details remain `Unknown / Unverified`.
+Bootstrap inspection completed against the real repository state. Product implementation facts below are backed by the accepted and merged `DEV-app-foundation-0.1.0-b1` candidate where stated; unsupported compatibility details remain `Unknown / Unverified`.
 
 ## Identity
 
@@ -62,11 +62,12 @@ Bootstrap inspection completed against the real repository state. Product implem
 
 ## Current source/candidate baselines
 
-- Default branch at `DEV-app-foundation` start: `main@bd9727e7a20c48c88944eff8a0f5fd0d23925ff6`.
-- Foundation development branch / PR: `dev/app-foundation-20260826` / PR #5.
+- Foundation merged to `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`.
 - Runtime-tested product/workflow source: `89b29434e4d81486d395b8ddb093a031f6f919a7`; exported diagnostic identity reports `89b29434e4d8`.
-- GitHub Actions run `32876352123` succeeded and produced artifact ID `9574034381` for `DEV-app-foundation-0.1.0-b1`; later PR material head also passed CI run `32877096378`.
+- GitHub Actions run `32876352123` succeeded and produced artifact ID `9574034381` for `DEV-app-foundation-0.1.0-b1`.
+- Later PR material/completion heads passed CI runs `32877096378` and `32878347358`; completion-only commits did not change the runtime-tested product/workflow files.
 - Accepted runtime evidence: user-confirmed TrollStore install/launch and no observed problems; exported diagnostics show two launch sequences, successful Settings/sample/export operations and pre-restart events still present after relaunch.
+- No Active `DEV-app-foundation` checkpoint remains after merge; the next serial development phase is `DEV-auth-bootstrap`.
 
 ## Historical reference material
 

@@ -18,7 +18,7 @@ Current product constraints:
 ## Development principles
 
 1. **Diagnosability before complexity**: the executable app foundation includes structured local diagnostics/logging from the start.
-2. **Authentication before private protocol assumptions**: establish a real current authenticated session before building conversation API clients.
+2. **Authentication before private protocol assumptions**: establish a real current authenticated session/account context usable by the native path before building conversation API clients.
 3. **Protocol evidence before data models**: do not generate a large model layer from old endpoint memory. Capture current list/detail/send/stream shapes first.
 4. **One state owner per identity**: session/account/conversation/message-stream/upload identities must have explicit owners; UI labels are consumers, not authorities.
 5. **Native data model separate from visible views**: keep complete conversation state independent from the currently mounted/rendered message views.
@@ -56,39 +56,50 @@ Create the smallest real Xcode/iOS baseline that can be built into a TrollStore-
 
 ## Phase 2 — `DEV-auth-bootstrap`
 
+### Status
+
+**Active. Embedded web-login subgate passed; authenticated session/account/native-consumption gate remains open.**
+
+Current candidate `DEV-auth-bootstrap-0.1.0-b2` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested for the embedded ChatGPT Continue with Google login route on iPhone / iOS 17.0. CI run `32886019320` produced artifact ID `9577612707`; IPA SHA-256 is `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
+
 ### Goal
 
 Prove a current login/session bootstrap on real hardware before implementing native conversation APIs.
 
-### Historical evidence
+### Current evidence
 
-The user reports that the previous Web-based IPA successfully used ChatGPT web login and that their account uses **Continue with Google**. This proves that the historical implementation worked at that time only.
+- The minimal embedded `WKWebView` login bootstrap at `https://chatgpt.com/auth/login` is implemented.
+- The user installed/tested b2 and successfully completed their actual Continue with Google ChatGPT login.
+- Therefore a system-browser fallback is not justified by current evidence; the earlier embedded-user-agent rejection concern did not reproduce on this tested route/device.
+- Privacy-safe auth/navigation diagnostics are present without logging password/OAuth-code/token/Cookie/Authorization values.
+- Successful WebView login does **not** prove that native `URLSession` can use the same authenticated state.
 
-### Current verification order
+### Remaining verification order
 
-1. Start from the simplest current ChatGPT web-login bootstrap and reproduce the real navigation on-device.
-2. Attempt the user's normal Google sign-in route and record navigation/auth state transitions with safe logging.
-3. If current Google OAuth blocks an embedded `WKWebView`/embedded user-agent, capture the exact current failure/redirect evidence first. Do not immediately add multiple fallback paths.
-4. Only then evaluate the smallest supported system-browser/auth handoff needed to complete login, based on current behavior.
-5. After successful login, determine from evidence how the authenticated ChatGPT session can be consumed by the native client. Do not assume WebKit cookie stores, `URLSession`, system browser cookies or token state are interchangeable.
-6. Verify session persistence/re-entry behavior after app relaunch while the server session is still valid.
-
-### Current external risk
-
-Google OAuth guidance warns that authorization endpoints in embedded user-agents such as `WKWebView` may fail with `disallowed_useragent` and recommends supported system/SDK authentication flows. Historical success therefore does not remove the need for a current real-device verification.
+1. Force-close/reopen b2 and verify whether the logged-in WebKit session persists/re-enters without requiring a new Google login while the server session remains valid.
+2. Export the existing redacted diagnostic JSON to pin the successful/re-entry navigation behavior to exact candidate/runtime identity.
+3. Establish an evidence-backed authenticated-vs-unauthenticated state signal. Do not rely on arbitrary UI text/title matching.
+4. Establish the account/workspace context required by later native requests and assign an explicit state owner.
+5. Determine from current evidence how authenticated context can be consumed by the native transport. Do not assume WebKit cookie stores, system-browser state and `URLSession` are interchangeable.
+6. Only if a concrete new login failure appears should a supported browser/auth handoff be evaluated; do not prebuild fallback chains.
 
 ### Acceptance gate
 
-- User can complete their actual Google-based ChatGPT login on the test device.
-- Client has a verified way to determine authenticated vs unauthenticated state.
-- Session/account context used by later native network requests is evidenced and documented.
-- No password, OAuth code, access token, session cookie or equivalent secret is written to logs.
+- User can complete their actual Google-based ChatGPT login on the test device — **passed on b2**.
+- Client has a verified way to determine authenticated vs unauthenticated state — **pending**.
+- Session persistence/re-entry behavior is verified on real device — **pending**.
+- Session/account context used by later native network requests is evidenced and documented — **pending**.
+- No password, OAuth code, access token, session cookie or equivalent secret is written to logs — **implemented by current diagnostics contract; continue to verify in exports**.
 
 ## Phase 3 — `DEV-protocol-read`
 
 ### Goal
 
 Establish the current authenticated read protocol before native UI depends on it.
+
+### Entry gate
+
+Do not start production protocol implementation until Phase 2 has evidenced the authenticated/session/account context that the native request path will actually use. Successful WebView login by itself is not enough.
 
 ### Evidence targets
 
@@ -298,6 +309,6 @@ The first five implementation phases share authentication/session/protocol/conve
 
 After the core conversation model/store and transport contracts are stable, attachments, export and independent settings/diagnostics UX may become candidates for parallel work, subject to the normal conflict check.
 
-# Next implementation task
+# Next implementation action
 
-The foundation gate is accepted. The next serial product-code Work is **`DEV-auth-bootstrap`**: reproduce the user's current Google-based ChatGPT login path on-device, capture safe auth/navigation evidence, and establish current authenticated session/account context before any private ChatGPT conversation protocol implementation begins.
+Continue **`DEV-auth-bootstrap`** rather than opening `DEV-protocol-read` yet. The immediate evidence step is to force-close/reopen the exact b2 candidate, verify whether the authenticated WebKit session persists/re-enters, export the privacy-safe diagnostics, and then establish authenticated/session/account ownership and native-consumption evidence. Only after that gate is satisfied should the serial roadmap advance to `DEV-protocol-read`.

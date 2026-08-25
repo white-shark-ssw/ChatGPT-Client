@@ -4,8 +4,6 @@ This file is the durable index for testable identities and evidence.
 
 ## Current identity scheme
 
-The first executable product candidate establishes the following minimal scheme:
-
 - **Marketing version source**: `MARKETING_VERSION` in `ChatGPTClient.xcodeproj/project.pbxproj`.
 - **Build number source**: `CURRENT_PROJECT_VERSION` in the same Xcode target settings.
 - **Candidate ID**: `DEV-<work-slug>-<marketing-version>-b<build>`.
@@ -14,62 +12,44 @@ The first executable product candidate establishes the following minimal scheme:
 
 Every new testable Active task/candidate must allocate a unique candidate/build identity before artifact production. Do not reuse a build number, exact version/build tuple, candidate ID, artifact name or release tag across Active tasks.
 
-Verified distribution requirement: runnable/distributable product artifacts are IPA files intended for installation through TrollStore. The foundation pipeline builds an unsigned IPA candidate with Xcode signing disabled and packages `Payload/ChatGPTClient.app`; `DEV-app-foundation-0.1.0-b1` was successfully installed and launched through TrollStore on iPhone / iOS 17.0.
-
-## Diagnostic identity requirement
-
-Starting with the first executable product candidate, exported diagnostic bundles/logs must identify the exact test candidate strongly enough to avoid mixing evidence between builds. Record at least app version/build/candidate identity and source commit/branch where practical, together with device/iOS/runtime metadata. A log without candidate identity must not be treated as conclusive evidence for a different build.
-
-Diagnostic evidence must remain privacy-safe: never require passwords, OAuth codes, tokens, Cookie values, full auth headers, full chat content or attachment contents to identify a build/runtime issue.
+Runnable/distributable product artifacts are IPA files intended for TrollStore. Diagnostic exports must include exact candidate/version/build/source/runtime identity and must not expose passwords, OAuth codes, tokens, Cookie values, Authorization values, full chat content or attachment contents.
 
 ## Candidate table
 
-| Candidate | Work ID | Version / Build / Tag | Branch / PR | Commit | Validation | Artifact | Runtime result | Status |
+| Candidate | Work ID | Version / Build | Branch / PR | Product source | Validation | Artifact | Runtime result | Status |
 |---|---|---|---|---|---|---|---|---|
-| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 merged | Runtime-tested product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`; PR merge commit `9e7a06801715b0002d3e9a720d57041e830b776e` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | GitHub artifact ID `9574034381`, `ChatGPTClient-DEV-app-foundation-0.1.0-b1`; IPA `ChatGPTClient-0.1.0-b1-dev-app-foundation.ipa`; SHA-256 `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | User installed/launched via TrollStore on iPhone / iOS 17.0 with no reported problem; Settings/sample/export passed; restart preserved prior events; supplied diagnostic export matched candidate/source/runtime identity and showed no observed password/token/Cookie/Authorization/OAuth secret fields | Stable / accepted / merged foundation |
-| `DEV-auth-bootstrap-0.1.0-b2` | `DEV-auth-bootstrap` | `0.1.0 (2)` | `dev/auth-bootstrap-20260826` / draft PR #6 | Runtime-tested product/build-input source `809fa03e673afded87cb47fb755c998ab1b58e12` | Code written; CI passed; artifact produced; runtime/manual/real-device tested for embedded web/Google login and WebKit persistence | GitHub Actions run `32886019320`; artifact ID `9577612707`, `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b2`; IPA `ChatGPTClient-0.1.0-b2-dev-auth-bootstrap.ipa`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465` | User completed Continue with Google. After force-close/relaunch, `/auth/login` redirected directly to logged-in ChatGPT with HTTP 200 and no Google navigation. Supplied diagnostics matched exact b2/source/iPhone iOS 17.0 identity and contained no observed password/token/Cookie/Authorization fields | Superseded runtime evidence candidate; web login + persistence accepted |
-| `DEV-auth-bootstrap-0.1.0-b3` | `DEV-auth-bootstrap` | `0.1.0 (3)` | `dev/auth-bootstrap-20260826` / draft PR #6 | Product implementation in progress; exact artifact source pending final b3 head | Code written for explicit auth state owner + ephemeral native session probe; CI pending | Intended artifact `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b3`; intended IPA `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`; checksum pending | Not runtime tested. Goal is to determine whether a native ephemeral `URLSession`, populated transiently from current WebKit ChatGPT/OpenAI cookies, is accepted by the already-verified `/auth/login` route | Active / allocated / reserved |
+| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 merged | `89b29434e4d81486d395b8ddb093a031f6f919a7` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Artifact ID `9574034381`; IPA SHA-256 `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | TrollStore install/launch, Settings/export/persistence accepted on iPhone / iOS 17.0 | Stable / accepted / merged foundation |
+| `DEV-auth-bootstrap-0.1.0-b2` | `DEV-auth-bootstrap` | `0.1.0 (2)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `809fa03e673afded87cb47fb755c998ab1b58e12` | Code written; CI passed; artifact produced; runtime/manual/real-device tested for embedded login + WebKit persistence | Run `32886019320`; artifact ID `9577612707`; IPA `ChatGPTClient-0.1.0-b2-dev-auth-bootstrap.ipa`; SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465` | Continue with Google succeeded. After force-close/relaunch, `/auth/login` returned directly to logged-in `chatgpt.com` HTTP 200 with no Google navigation. Supplied diagnostic export matched b2/source/iPhone iOS 17.0 identity and exposed no observed auth-secret fields | Superseded runtime evidence candidate; web login + persistence accepted |
+| `DEV-auth-bootstrap-0.1.0-b3` | `DEV-auth-bootstrap` | `0.1.0 (3)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `0fcf040012c0698d0e3ce1628fec9865237eba3b` | Code written; CI passed; artifact produced; runtime/manual/real-device native probe pending | **Authoritative push run `32889095904`**; artifact ID `9578766019`; artifact `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b3`; IPA `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`; IPA SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`; artifact ZIP digest `sha256:780162246c5288433fa96a640781ac94f8f82088cb2d0ca437f7f570fcc63d1c` | Not runtime tested yet. Goal: determine whether transiently copying current WebKit ChatGPT/OpenAI cookies into an ephemeral native `URLSession` makes the already-verified `/auth/login` route resolve as authenticated | Active / test artifact ready |
 
-## Foundation artifact and runtime facts
+## Foundation facts
 
-- CI runner: GitHub-hosted `macos-15`.
-- Xcode: 16.4 (`16F6`).
-- iPhoneOS SDK used by CI: 18.5.
-- Compile target: `arm64-apple-ios14.0`.
-- Generated IPA metadata: bundle ID `com.whitesharkssw.chatgptclient`, version `0.1.0`, build `1`, `MinimumOSVersion=14.0`, candidate `DEV-app-foundation-0.1.0-b1`, Release configuration, arm64 executable.
-- Run `32876352123` at `89b29434...` succeeded and produced artifact ID `9574034381`; extracted accepted IPA SHA-256 is `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`, embedded source commit `89b29434e4d8`.
-- Final material PR head `aa3233de...` passed run `32877096378` with build, artifact inspection and upload all passing.
-- Final completion head `c3a9437c...` passed run `32878347358` before merge. Its later changes were documentation/completion records only; runtime-tested product/workflow files remained unchanged.
-- PR #5 merged into `main` at `9e7a06801715b0002d3e9a720d57041e830b776e`.
-- Real-device diagnostic metadata: version `0.1.0 (1)`, candidate `DEV-app-foundation-0.1.0-b1`, Release, deployment target `14.0`, device class `iPhone`, iOS `17.0`, source `89b29434e4d8`.
-- Supplied export contains two app launch sequences. A `diagnostics/sample.event` at `2026-08-25T17:22:14Z` remains in the export produced after the second launch at `2026-08-25T17:22:35Z`, accepted evidence that persistent diagnostic history survived relaunch for this candidate.
-- Successful export events reported `19` events / `5493` bytes before relaunch and `30` events / `8487` bytes after relaunch.
-- Runtime validation currently covers one iPhone on iOS 17.0; it does not prove lower iOS versions or iPad runtime compatibility.
+- CI runner: GitHub-hosted `macos-15`; Xcode 16.4 (`16F6`); CI iPhoneOS SDK 18.5.
+- Current compile target remains `arm64-apple-ios14.0`.
+- Foundation PR #5 merged at `9e7a06801715b0002d3e9a720d57041e830b776e`.
+- Foundation runtime validation covers one iPhone on iOS 17.0; lower iOS versions and iPad runtime remain unverified.
 
-## Auth-bootstrap candidate facts
+## Auth-bootstrap facts
 
-### b2 — embedded login and persistence evidence
+### b2 — embedded login and persistence
 
-- Runtime-tested product/build-input head: `809fa03e673afded87cb47fb755c998ab1b58e12`.
-- CI run `32886019320` passed on Xcode 16.4, including app-icon reconstruction/checksum, asset compilation, Swift Release compilation, app validation, IPA packaging/inspection and artifact upload.
-- Artifact ID `9577612707`; artifact name `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b2`; IPA `ChatGPTClient-0.1.0-b2-dev-auth-bootstrap.ipa`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
-- User completed Continue with Google in the embedded WebKit flow on iPhone / iOS 17.0.
-- Supplied diagnostic export identifies `0.1.0 (2)`, `DEV-auth-bootstrap-0.1.0-b2`, source `809fa03e673a`, iPhone / iOS 17.0. Initial login navigated through `auth.openai.com` and `accounts.google.com`, then to non-auth `chatgpt.com` with HTTP 200. After force-close/relaunch, opening `/auth/login` redirected directly to non-auth `chatgpt.com` with HTTP 200 and no Google navigation, corroborating persisted authenticated WebKit state.
-- No error/fault auth events and no observed password/token/Cookie/Authorization secret fields were present in the supplied export.
-- The user-supplied app icon is reconstructed during build and verified against SHA-256 `205ab2c7952781ffc05c68fdf8bbb621ac065093c3216c3f30b4a2c551f802a6` before Xcode compilation.
+- Initial login diagnostics show `chatgpt.com/auth/login` -> `auth.openai.com` -> `accounts.google.com` -> `auth.openai.com` -> non-auth `chatgpt.com` HTTP 200.
+- After force-close/relaunch, the same auth entry immediately reached non-auth `chatgpt.com` HTTP 200 with no Google navigation, corroborating the user's report that login persisted.
+- Default persistent `WKWebsiteDataStore` is therefore the current evidenced web-session persistence authority on the tested b2 device/candidate.
+- The user-supplied app icon is reconstructed during build and verified against PNG SHA-256 `205ab2c7952781ffc05c68fdf8bbb621ac065093c3216c3f30b4a2c551f802a6` before Xcode compilation.
 
 ### b3 — native session-consumption probe
 
-- Reserved candidate: `DEV-auth-bootstrap-0.1.0-b3`, version/build `0.1.0 (3)`.
-- Scope is deliberately narrow: retain WebKit default data store as the only persistent auth-secret authority; after the WebView reaches authenticated ChatGPT, copy only current ChatGPT/OpenAI cookies transiently into an ephemeral in-memory `URLSession`; request the same already-evidenced `/auth/login` route; judge success only from final safe destination/status metadata.
-- Diagnostics may record state, total/matched item counts, final host/destination, HTTP status and errors. Cookie names/values, tokens and Authorization values are not logged or persisted by the new state owner/probe.
-- CI/artifact/runtime evidence remain pending until separately verified.
+- `AuthSessionStore` owns only safe web/native auth evidence state. It does not persist Cookie/token/header secrets.
+- WebKit default data store remains the only persistent auth-secret authority.
+- After authenticated WebView navigation, b3 reads the current WebKit cookie store, filters ChatGPT/OpenAI domains, copies matching cookies only transiently into an ephemeral `URLSession`, and requests `https://chatgpt.com/auth/login`.
+- Diagnostics record only safe state, total/matched item counts, final host/destination/status and errors. Cookie names/values, tokens and Authorization values are not logged by the probe.
+- Push run `32889095904` is the authoritative runtime candidate because it built exact branch product source `0fcf040012c0698d0e3ce1628fec9865237eba3b` and embeds `SOURCE_COMMIT=0fcf040012c0`.
+- A separate PR workflow also passed but checked out a temporary PR merge commit and therefore produced a different embedded source identity/checksum. That PR artifact must not be mixed with b3 runtime evidence.
 
 ## Uniqueness rule
 
-Different Active tasks must not reuse the same exact candidate identity, build number, version/build tuple, release tag, artifact name, or candidate ID.
-
-Once allocated, an Active candidate identity is reserved until explicitly completed/released and documented.
+Different Active tasks must not reuse the same exact candidate identity, build number, version/build tuple, release tag, artifact name, or candidate ID. Once allocated, an Active candidate identity is reserved until explicitly completed/released and documented.
 
 ## Evidence labels
 

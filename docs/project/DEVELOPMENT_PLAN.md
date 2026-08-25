@@ -32,47 +32,45 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 
 ### Status
 
-**Active. Embedded Google login and WebKit persistence passed; native-session consumption runtime gate remains open.**
+**Active. Embedded Google login, WebKit persistence, and the tested transient native-session bridge have passed on real device. Account/workspace context is the remaining gate.**
 
 ### Accepted b2 evidence
 
 - `DEV-auth-bootstrap-0.1.0-b2`, product source `809fa03e673afded87cb47fb755c998ab1b58e12`.
 - Run `32886019320` passed; artifact ID `9577612707`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
 - User completed Continue with Google in embedded `WKWebView` on iPhone / iOS 17.0.
-- Force-close/relaunch retained authenticated state. Supplied diagnostics corroborate `/auth/login` immediately resolving to non-auth `chatgpt.com` HTTP 200 with no Google navigation.
-- Default persistent `WKWebsiteDataStore` is the current persistent web-auth authority on the tested environment.
-- No system-browser fallback is currently justified.
+- Force-close/relaunch retained authenticated state; diagnostics corroborated direct `/auth/login` -> logged-in `chatgpt.com` HTTP 200 with no Google navigation.
+- Default persistent `WKWebsiteDataStore` is the persistent auth-secret authority for the tested environment. No system-browser fallback is justified.
 
-### Current b3 evidence step
+### Accepted b3 evidence
 
-`DEV-auth-bootstrap-0.1.0-b3` adds one narrow native-session-consumption probe:
+`DEV-auth-bootstrap-0.1.0-b3` validates one narrow native-session-consumption mechanism:
 
-- `AuthSessionStore` owns safe auth evidence state only; it does not persist auth secrets.
-- After authenticated WebView navigation, current ChatGPT/OpenAI WebKit cookies are copied transiently into an ephemeral `URLSession`.
-- That native session requests the already-verified `https://chatgpt.com/auth/login` route.
-- Success is judged from final safe destination/status only; Cookie/token/Authorization values are never logged or persisted by the probe.
-- Exact product source `0fcf040012c0698d0e3ce1628fec9865237eba3b` passed push run `32889095904` and produced artifact ID `9578766019`.
+- `AuthSessionStore` owns safe auth evidence state and the transient bridge; it does not persist auth secrets.
+- Current ChatGPT/OpenAI WebKit cookies are filtered and copied transiently into an ephemeral `URLSession`.
+- Exact product source `0fcf040012c0698d0e3ce1628fec9865237eba3b` passed authoritative push run `32889095904` and produced artifact ID `9578766019`.
 - IPA `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`; SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`.
-- **Runtime native-session result is pending.**
+- User real-device screenshot shows `网页登录成功 · 原生会话通过`.
+- Supplied b3 diagnostics identify build `3`, source `0fcf040012c0`, iPhone / iOS 17.0; record `session.webState=authenticated`, 54 total / 35 matched WebKit cookies, `session.nativeState=verified`, and final `chatgpt.com` HTTP 200 / `status=ok` in `1203.68 ms`.
+- This proves the tested native transport can consume the current WebKit-authenticated context for `/auth/login`. It does not prove account/workspace or conversation-protocol behavior.
 
 ### Immediate verification order
 
-1. Install exact b3 push artifact and open `开始登录与原生会话验证`.
-2. Verify the WebView remains authenticated or complete login if needed.
-3. Record whether the native probe ends at `网页登录成功 · 原生会话通过`, `...未通过`, or `...验证失败`.
-4. Export b3 redacted diagnostics and confirm `session.nativeState` plus safe final destination/status.
-5. If native session consumption succeeds, establish current account/workspace context and one explicit owner.
-6. Only then advance to `DEV-protocol-read`.
-7. If the probe fails, diagnose the exact current failure. Do not add speculative fallback/retry chains.
+1. Establish a **current** account/session-context request from current evidence: exact URL/path, method, safe response shape and required request context. Do not use historical endpoint names as facts.
+2. Assign one explicit owner for account/workspace context.
+3. If runtime code is needed, implement the smallest privacy-safe authenticated account/workspace probe on `DEV-auth-bootstrap` and allocate a new unique candidate/build identity before producing an IPA.
+4. Real-device validate the exact candidate and export safe diagnostics containing state/status and redacted/hashed account/workspace references only where required.
+5. If account/workspace context is successfully established for the native path, complete Phase 2 and only then open `DEV-protocol-read`.
+6. If the account-context probe fails, diagnose the exact current failure without speculative fallback/retry chains.
 
 ### Phase 2 acceptance gate
 
 - Actual Google login on real device — **passed b2**.
 - WebKit session persistence/re-entry — **passed b2**.
-- Explicit safe authentication evidence owner — **implemented b3; runtime behavior pending**.
-- Native transport can consume current authenticated context — **pending b3 runtime**.
+- Explicit safe authentication evidence owner — **passed b3**.
+- Native transport can consume current authenticated context for the tested auth route — **passed b3**.
 - Account/workspace context needed by later native requests — **pending**.
-- Auth secrets excluded from logs/export — **implemented; continue runtime verification**.
+- Auth secrets excluded from logs/export — **implemented and preserved in supplied b2/b3 evidence**.
 
 ## Phase 3 — `DEV-protocol-read`
 
@@ -82,7 +80,7 @@ Do not start production protocol implementation until Phase 2 has evidenced auth
 
 ### Goal / evidence targets
 
-Establish current user/account/workspace context, conversation-list request/pagination/metadata, conversation-detail shape, node/message/branch semantics, status/error behavior and required safe request context before production models depend on them.
+Establish current conversation-list request/pagination/metadata, conversation-detail shape, node/message/branch semantics, status/error behavior and required safe request context before production models depend on them.
 
 ### Acceptance gate
 
@@ -126,4 +124,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Continue `DEV-auth-bootstrap`: real-device test exact b3 push artifact, then use that evidence to either establish native-auth consumption and account/workspace context or diagnose the concrete failure. Do not open `DEV-protocol-read` yet.
+Continue `DEV-auth-bootstrap`: establish a current account/session-context request from evidence, then add only the minimal account/workspace probe/owner required to close the auth gate. Do not open `DEV-protocol-read` yet.

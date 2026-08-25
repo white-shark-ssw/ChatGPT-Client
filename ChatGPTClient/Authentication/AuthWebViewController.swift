@@ -9,6 +9,7 @@ final class AuthWebViewController: UIViewController {
     private let webView: WKWebView
     private var bootstrapSpan: DiagnosticsSpan?
     private var nativeProbeStarted = false
+    private var accountProbeStarted = false
 
     init() {
         let configuration = WKWebViewConfiguration()
@@ -46,6 +47,7 @@ final class AuthWebViewController: UIViewController {
 
     private func startLogin() {
         nativeProbeStarted = false
+        accountProbeStarted = false
         title = "登录验证"
         bootstrapSpan?.end(status: "restarted")
         bootstrapSpan = diagnostics.startSpan(category: "auth", name: "webBootstrap", fields: ["entry": "chatgpt_login"])
@@ -69,10 +71,33 @@ final class AuthWebViewController: UIViewController {
                 switch state {
                 case .verified:
                     self.title = "网页登录成功 · 原生会话通过"
+                    self.startAccountProbeIfNeeded()
                 case .notAuthenticated:
                     self.title = "网页登录成功 · 原生会话未通过"
                 case .failed:
                     self.title = "网页登录成功 · 原生验证失败"
+                case .unknown, .probing:
+                    break
+                }
+            }
+        }
+    }
+
+    private func startAccountProbeIfNeeded() {
+        guard !accountProbeStarted else { return }
+        accountProbeStarted = true
+        title = "原生会话通过 · 账户验证中"
+        diagnostics.info(category: "auth", name: "accountContextProbe.requested")
+        sessionStore.probeAccountContext(using: webView.configuration.websiteDataStore.httpCookieStore) { [weak self] state in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                switch state {
+                case .verified:
+                    self.title = "登录会话 · 账户上下文通过"
+                case .notAvailable:
+                    self.title = "原生会话通过 · 账户上下文未通过"
+                case .failed:
+                    self.title = "原生会话通过 · 账户验证失败"
                 case .unknown, .probing:
                     break
                 }

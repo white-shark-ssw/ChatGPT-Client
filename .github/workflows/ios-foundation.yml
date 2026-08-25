@@ -1,0 +1,42 @@
+name: iOS Foundation
+
+on:
+  push:
+    branches:
+      - dev/app-foundation-20260826
+  pull_request:
+    paths:
+      - "ChatGPTClient/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/build_ipa.sh"
+      - ".github/workflows/ios-foundation.yml"
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Build unsigned TrollStore IPA candidate
+        run: bash scripts/build_ipa.sh
+
+      - name: Inspect artifact
+        run: |
+          ls -lh build/artifacts
+          unzip -l build/artifacts/*.ipa | head -n 40
+
+      - name: Upload IPA candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPTClient-DEV-app-foundation-0.1.0-b1
+          path: |
+            build/artifacts/*.ipa
+            build/artifacts/*.sha256
+          if-no-files-found: error
+          retention-days: 14

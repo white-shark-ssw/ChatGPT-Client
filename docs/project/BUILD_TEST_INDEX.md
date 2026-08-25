@@ -27,6 +27,7 @@ Diagnostic evidence must remain privacy-safe: never require passwords, OAuth cod
 | Candidate | Work ID | Version / Build / Tag | Branch / PR | Commit | Validation | Artifact | Runtime result | Status |
 |---|---|---|---|---|---|---|---|---|
 | `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 merged | Runtime-tested product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`; PR merge commit `9e7a06801715b0002d3e9a720d57041e830b776e` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | GitHub artifact ID `9574034381`, `ChatGPTClient-DEV-app-foundation-0.1.0-b1`; IPA `ChatGPTClient-0.1.0-b1-dev-app-foundation.ipa`; SHA-256 `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | User installed/launched via TrollStore on iPhone / iOS 17.0 with no reported problem; Settings/sample/export passed; restart preserved prior events; supplied diagnostic export matched candidate/source/runtime identity and showed no observed password/token/Cookie/Authorization/OAuth secret fields | Stable / accepted / merged foundation |
+| `DEV-auth-bootstrap-0.1.0-b2` | `DEV-auth-bootstrap` | `0.1.0 (2)` | `dev/auth-bootstrap-20260826` / draft PR #6 | Implementation/build-input milestone `2ba8f8b610b20a776bbc35c9da7e46f2d228aa03`; later checkpoint/index-only commits may advance head | Code written; CI pending; artifact not yet verified; runtime not tested | Intended GitHub artifact `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b2`; intended IPA `ChatGPTClient-0.1.0-b2-dev-auth-bootstrap.ipa`; checksum pending | Not runtime tested. Embedded ChatGPT web login / Continue with Google behavior remains to be verified on the exact b2 candidate | Active / allocated / reserved |
 
 ## Foundation artifact and runtime facts
 
@@ -43,6 +44,15 @@ Diagnostic evidence must remain privacy-safe: never require passwords, OAuth cod
 - Supplied export contains two app launch sequences. A `diagnostics/sample.event` at `2026-08-25T17:22:14Z` remains in the export produced after the second launch at `2026-08-25T17:22:35Z`, accepted evidence that persistent diagnostic history survived relaunch for this candidate.
 - Successful export events reported `19` events / `5493` bytes before relaunch and `30` events / `8487` bytes after relaunch.
 - Runtime validation currently covers one iPhone on iOS 17.0; it does not prove lower iOS versions or iPad runtime compatibility.
+
+## Auth-bootstrap candidate facts
+
+- Reserved candidate: `DEV-auth-bootstrap-0.1.0-b2`, version/build `0.1.0 (2)`.
+- Branch: `dev/auth-bootstrap-20260826`; draft PR #6.
+- Scope: evidence-only embedded ChatGPT web-login verification first, including Continue with Google; no native private-protocol implementation yet.
+- Build source includes a deterministic reconstruction step for the user-supplied app icon before Xcode compilation; the reconstructed PNG must match SHA-256 `205ab2c7952781ffc05c68fdf8bbb621ac065093c3216c3f30b4a2c551f802a6` or the build exits before Xcode.
+- Privacy-safe auth diagnostics record navigation destination/host/status/error metadata but not passwords, OAuth codes, token values, Cookie values or Authorization values.
+- CI, artifact checksum/identity and real-device behavior remain pending until separately evidenced.
 
 ## Uniqueness rule
 

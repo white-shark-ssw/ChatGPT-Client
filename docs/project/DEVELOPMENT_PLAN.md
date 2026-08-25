@@ -4,311 +4,126 @@ _Last updated: 2026-08-26._
 
 ## Purpose
 
-This is the durable implementation sequence for the new iOS-native ChatGPT client. It defines dependency order and acceptance gates; implementation status must be backed by current source/CI/runtime evidence.
+This is the durable implementation sequence for the new iOS-native ChatGPT client. Status must be backed by current source/CI/artifact/runtime evidence.
 
-Current product constraints:
-
-- native iOS client;
-- distributable as an IPA installed through TrollStore;
-- intended user OS environment does not exceed iOS 17.0;
-- prefer the lowest practical deployment target supported by real requirements and validation;
-- historical WebView project material is experience/reference only;
-- current ChatGPT private/internal protocol behavior must be revalidated from current evidence.
+Current constraints: native iOS client; TrollStore IPA distribution; intended user OS ceiling iOS 17.0; lowest practical deployment target; historical WebView material reference-only; current ChatGPT private/internal behavior must be revalidated.
 
 ## Development principles
 
-1. **Diagnosability before complexity**: the executable app foundation includes structured local diagnostics/logging from the start.
-2. **Authentication before private protocol assumptions**: establish a real current authenticated session/account context usable by the native path before building conversation API clients.
-3. **Protocol evidence before data models**: do not generate a large model layer from old endpoint memory. Capture current list/detail/send/stream shapes first.
-4. **One state owner per identity**: session/account/conversation/message-stream/upload identities must have explicit owners; UI labels are consumers, not authorities.
-5. **Native data model separate from visible views**: keep complete conversation state independent from the currently mounted/rendered message views.
-6. **Serial core, parallel edges**: app foundation -> auth -> protocol read -> native read -> send/stream are strongly dependent and should normally be completed in order. Later features may parallelize only after conflict checks.
-7. **Real-device evidence matters**: artifact/CI success is not runtime proof. Each runnable milestone should be tested through TrollStore on the intended iOS environment.
+1. **Diagnosability before complexity**.
+2. **Authentication before private protocol assumptions**.
+3. **Protocol evidence before data models**.
+4. **One state owner per identity**.
+5. **Native data model separate from visible views**.
+6. **Serial core, parallel edges**.
+7. **Real-device evidence matters; CI/artifact is not runtime proof**.
 
 ## Phase 1 — `DEV-app-foundation`
 
 ### Status
 
-**Accepted / Stable foundation.** `DEV-app-foundation-0.1.0-b1` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0. The foundation modules are Stable, not Frozen. Lower iOS versions and iPad runtime remain unverified.
+**Accepted / Stable foundation.** `DEV-app-foundation-0.1.0-b1` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0. Foundation is Stable, not Frozen.
 
-### Goal
+### Established scope
 
-Create the smallest real Xcode/iOS baseline that can be built into a TrollStore-installable IPA and can produce useful diagnostics before any ChatGPT-specific implementation is added.
-
-### Implemented scope
-
-- Swift 5 + UIKit Xcode project/application target with no third-party dependencies.
-- iOS 14.0 deployment target, chosen from current system-API requirements rather than defaulting to iOS 17.0.
-- Basic app shell, Settings entry and build/runtime metadata display.
-- Reproducible unsigned IPA packaging path for TrollStore validation.
-- Structured OSLog diagnostics, bounded persistent JSONL history, trace/span timing, secret-field filtering and user-triggered redacted diagnostic JSON export.
-- GitHub Actions Xcode/IPA build and artifact validation.
-
-### Acceptance evidence
-
-- Xcode 16.4 CI built `arm64-apple-ios14.0` successfully.
-- Accepted candidate: `DEV-app-foundation-0.1.0-b1`, version `0.1.0 (1)`.
-- Accepted IPA SHA-256: `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`.
-- User installed/launched the candidate through TrollStore on iPhone / iOS 17.0 with no reported problem.
-- Settings/sample diagnostic event/export worked.
-- Exported diagnostics contain correct build/device/runtime identity and demonstrate persistent events surviving app relaunch.
-- No password/token/Cookie/Authorization/OAuth secret fields were observed in the supplied export.
+Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell/settings, build/runtime identity, bounded local diagnostics/redacted export, reproducible unsigned IPA packaging and GitHub Actions build/artifact path.
 
 ## Phase 2 — `DEV-auth-bootstrap`
 
 ### Status
 
-**Active. Embedded web-login subgate passed; authenticated session/account/native-consumption gate remains open.**
+**Active. Embedded Google login and WebKit persistence passed; native-session consumption runtime gate remains open.**
 
-Current candidate `DEV-auth-bootstrap-0.1.0-b2` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested for the embedded ChatGPT Continue with Google login route on iPhone / iOS 17.0. CI run `32886019320` produced artifact ID `9577612707`; IPA SHA-256 is `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
+### Accepted b2 evidence
 
-### Goal
+- `DEV-auth-bootstrap-0.1.0-b2`, product source `809fa03e673afded87cb47fb755c998ab1b58e12`.
+- Run `32886019320` passed; artifact ID `9577612707`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
+- User completed Continue with Google in embedded `WKWebView` on iPhone / iOS 17.0.
+- Force-close/relaunch retained authenticated state. Supplied diagnostics corroborate `/auth/login` immediately resolving to non-auth `chatgpt.com` HTTP 200 with no Google navigation.
+- Default persistent `WKWebsiteDataStore` is the current persistent web-auth authority on the tested environment.
+- No system-browser fallback is currently justified.
 
-Prove a current login/session bootstrap on real hardware before implementing native conversation APIs.
+### Current b3 evidence step
 
-### Current evidence
+`DEV-auth-bootstrap-0.1.0-b3` adds one narrow native-session-consumption probe:
 
-- The minimal embedded `WKWebView` login bootstrap at `https://chatgpt.com/auth/login` is implemented.
-- The user installed/tested b2 and successfully completed their actual Continue with Google ChatGPT login.
-- Therefore a system-browser fallback is not justified by current evidence; the earlier embedded-user-agent rejection concern did not reproduce on this tested route/device.
-- Privacy-safe auth/navigation diagnostics are present without logging password/OAuth-code/token/Cookie/Authorization values.
-- Successful WebView login does **not** prove that native `URLSession` can use the same authenticated state.
+- `AuthSessionStore` owns safe auth evidence state only; it does not persist auth secrets.
+- After authenticated WebView navigation, current ChatGPT/OpenAI WebKit cookies are copied transiently into an ephemeral `URLSession`.
+- That native session requests the already-verified `https://chatgpt.com/auth/login` route.
+- Success is judged from final safe destination/status only; Cookie/token/Authorization values are never logged or persisted by the probe.
+- Exact product source `0fcf040012c0698d0e3ce1628fec9865237eba3b` passed push run `32889095904` and produced artifact ID `9578766019`.
+- IPA `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`; SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`.
+- **Runtime native-session result is pending.**
 
-### Remaining verification order
+### Immediate verification order
 
-1. Force-close/reopen b2 and verify whether the logged-in WebKit session persists/re-enters without requiring a new Google login while the server session remains valid.
-2. Export the existing redacted diagnostic JSON to pin the successful/re-entry navigation behavior to exact candidate/runtime identity.
-3. Establish an evidence-backed authenticated-vs-unauthenticated state signal. Do not rely on arbitrary UI text/title matching.
-4. Establish the account/workspace context required by later native requests and assign an explicit state owner.
-5. Determine from current evidence how authenticated context can be consumed by the native transport. Do not assume WebKit cookie stores, system-browser state and `URLSession` are interchangeable.
-6. Only if a concrete new login failure appears should a supported browser/auth handoff be evaluated; do not prebuild fallback chains.
+1. Install exact b3 push artifact and open `开始登录与原生会话验证`.
+2. Verify the WebView remains authenticated or complete login if needed.
+3. Record whether the native probe ends at `网页登录成功 · 原生会话通过`, `...未通过`, or `...验证失败`.
+4. Export b3 redacted diagnostics and confirm `session.nativeState` plus safe final destination/status.
+5. If native session consumption succeeds, establish current account/workspace context and one explicit owner.
+6. Only then advance to `DEV-protocol-read`.
+7. If the probe fails, diagnose the exact current failure. Do not add speculative fallback/retry chains.
 
-### Acceptance gate
+### Phase 2 acceptance gate
 
-- User can complete their actual Google-based ChatGPT login on the test device — **passed on b2**.
-- Client has a verified way to determine authenticated vs unauthenticated state — **pending**.
-- Session persistence/re-entry behavior is verified on real device — **pending**.
-- Session/account context used by later native network requests is evidenced and documented — **pending**.
-- No password, OAuth code, access token, session cookie or equivalent secret is written to logs — **implemented by current diagnostics contract; continue to verify in exports**.
+- Actual Google login on real device — **passed b2**.
+- WebKit session persistence/re-entry — **passed b2**.
+- Explicit safe authentication evidence owner — **implemented b3; runtime behavior pending**.
+- Native transport can consume current authenticated context — **pending b3 runtime**.
+- Account/workspace context needed by later native requests — **pending**.
+- Auth secrets excluded from logs/export — **implemented; continue runtime verification**.
 
 ## Phase 3 — `DEV-protocol-read`
 
-### Goal
-
-Establish the current authenticated read protocol before native UI depends on it.
-
 ### Entry gate
 
-Do not start production protocol implementation until Phase 2 has evidenced the authenticated/session/account context that the native request path will actually use. Successful WebView login by itself is not enough.
+Do not start production protocol implementation until Phase 2 has evidenced authenticated/session/account context actually usable by native requests.
 
-### Evidence targets
+### Goal / evidence targets
 
-- current user/account/workspace context required for requests;
-- conversation-list request, pagination/cursor behavior and essential metadata;
-- conversation-detail request and current response shape;
-- node/message identity and active-branch semantics;
-- status/error behavior;
-- headers/context required for successful requests, with secret values excluded from durable docs/logs.
+Establish current user/account/workspace context, conversation-list request/pagination/metadata, conversation-detail shape, node/message/branch semantics, status/error behavior and required safe request context before production models depend on them.
 
 ### Acceptance gate
 
-A minimal authenticated diagnostic harness can load conversation list and one conversation detail on-device, with request/response metadata and timing visible in safe logs. Current protocol evidence is documented before production models are expanded.
+A minimal authenticated diagnostic harness loads conversation list and one detail on-device with safe request/response/timing evidence.
 
 ## Phase 4 — `DEV-native-read-path`
 
-### Goal
-
-Build the first fully native read-only chat experience.
-
-### Scope
-
-- Native conversation list/navigation.
-- Single authoritative selected-conversation identity.
-- Conversation repository/store.
-- Message tree / active-branch resolver based on current evidence.
-- Native message list with incremental/virtualized view creation.
-- Markdown/code rendering sufficient for real conversations.
-- Preserve scroll anchor while loading older history where the current protocol supports pagination/history loading.
-
-### Acceptance gate
-
-- Switch repeatedly between two real conversations without identity mixing.
-- Open short and long real conversations.
-- Return to a conversation with correct state/scroll behavior according to the implemented contract.
-- Logs can trace navigation -> selected conversation -> network request -> model update -> first visible content using correlated identifiers.
+Build native conversation list/navigation, authoritative selected-conversation identity, conversation repository/store, message-tree active-branch resolver and virtualized native message rendering. Acceptance requires repeated real-conversation switching and long-conversation reads without identity mixing.
 
 ## Phase 5 — `DEV-send-stream`
 
-### Goal
-
-Complete the core daily-use text-chat vertical loop.
-
-### Scope
-
-- New conversation / existing conversation send path as supported by current protocol evidence.
-- Composer state.
-- User message state transition.
-- Streaming parser and stream lifecycle.
-- Incremental assistant-message update without broad list reload.
-- Stop/cancel if current protocol supports it.
-- Clear failure state and retry policy only where current evidence justifies it.
-
-### Acceptance gate
-
-- Send text successfully in existing and newly created conversations as applicable.
-- Stream appears incrementally and finalizes to the correct conversation/message node.
-- Rapid conversation switching cannot redirect a stream into the wrong conversation.
-- Logs include send-to-first-event, send-to-first-visible-token/update, stream duration, event count, bytes, terminal reason and error status without logging message bodies by default.
+Implement text send/new conversation as current protocol permits, composer/user-message state, streaming lifecycle/incremental assistant updates and evidence-backed cancel/failure behavior. Streams must remain owned by the correct conversation under rapid switching.
 
 ## Phase 6 — `DEV-long-conversation`
 
-### Goal
-
-Make long conversations a first-class performance target instead of a later patch.
-
-### Scope / measurements
-
-- bounded visible view/cell population;
-- message model and rendered-view separation;
-- incremental stream updates;
-- branch-aware active path;
-- load/parse/model/render timing;
-- first visible content timing;
-- memory growth and memory-warning behavior;
-- input latency and scroll hitch investigation;
-- background/foreground behavior.
-
-### Acceptance gate
-
-Real-device long-conversation tests show usable scrolling/input/streaming behavior with measured evidence. CI or IPA production alone is not sufficient.
+Measure and stabilize bounded visible views, model/render separation, incremental stream updates, memory growth, input latency, scrolling, first-visible timing and background/foreground behavior on real device.
 
 ## Phase 7 — `DEV-attachments`
 
-### Goal
-
-Add native-first attachment handling after text chat and conversation ownership are stable.
-
-### Scope
-
-- Files, photos and videos including iOS screen recordings where current backend behavior permits them.
-- Upload task state separate from message-send state.
-- Streaming/chunk/file URL handling that avoids loading large videos fully into memory unnecessarily.
-- Upload progress, failure diagnosis and temporary-file cleanup ownership.
-- Current protocol evidence for upload identity/metadata and message attachment references.
-
-### Acceptance gate
-
-At least one photo, one regular file and one video/screen-recording flow are validated where supported by current ChatGPT behavior, with safe progress/error logs.
+Add native photo/file/video attachment flows only after text chat/state ownership is stable. Upload state remains separate from send state; large video paths must avoid unnecessary full-memory loading.
 
 ## Phase 8 — Daily-use conversation features
 
-Split into separate Work IDs rather than one oversized branch when implementation begins. Likely sequence:
-
-- conversation search;
-- rename / archive / delete;
-- edit / regenerate / branch navigation;
-- export from the authoritative conversation model, never from only visible UI;
-- model selection / temporary-chat behavior when current protocol evidence is available;
-- settings and diagnostics UX refinement.
+Split search, rename/archive/delete, edit/regenerate/branch navigation, export, model/temporary-chat behavior and settings/diagnostics refinement into separate Work IDs when dependencies are stable.
 
 ## Phase 9 — Advanced capabilities
 
-Only after the core client is stable and current protocol evidence is available:
-
-- Projects;
-- web search;
-- image generation / richer multimodal presentation;
-- Voice;
-- Memory management;
-- Deep Research;
-- GPTs and other current ChatGPT-specific capabilities.
-
-These are roadmap candidates, not current scope commitments.
+Projects, web search, image generation, Voice, Memory, Deep Research, GPTs and other current ChatGPT-specific capabilities are later roadmap candidates, not current commitments.
 
 # Diagnostics / logging contract
 
-## Goal
+Every important async path should show what started, which owner handled it, what safe request/stream/upload it mapped to, timing, terminal result and safe error/status metadata.
 
-Every important asynchronous path must leave enough local evidence to answer: **what action started, which state owner handled it, which request/stream/upload it mapped to, how long each stage took, where it terminated, and what safe error/status evidence exists.**
+Never log passwords, OAuth codes, access/refresh/session tokens, Cookie values/full Cookie headers, Authorization values, full chat bodies or attachment contents. Prefer counts, sizes, statuses, timings and redacted/hashed identifiers.
 
-The default implementation is local diagnostics, not remote analytics/telemetry. No server-side telemetry/upload service is implied unless explicitly added later.
-
-## Event shape
-
-Use the accepted structured event envelope concepts:
-
-- timestamp;
-- severity;
-- category;
-- event name;
-- app version/build/candidate;
-- runtime iOS/device metadata where appropriate;
-- action/trace correlation ID;
-- safe request/stream/upload correlation ID;
-- safe/redacted conversation/message reference when needed for state debugging;
-- duration / byte count / item count / status / error domain+code where relevant.
-
-## Required categories
-
-At minimum cover as modules are introduced:
-
-- app lifecycle / startup;
-- authentication / web-login navigation state;
-- session/account context state transitions;
-- network request start/end/status/timing/size;
-- protocol parse/validation;
-- conversation selection and repository/store updates;
-- streaming lifecycle;
-- message render/performance spans;
-- attachment selection/upload/cleanup;
-- persistence/cache where introduced;
-- build/artifact/runtime diagnostic metadata;
-- errors and invariant violations.
-
-## Privacy and secret handling
-
-Never log by default:
-
-- passwords;
-- OAuth authorization codes;
-- access/refresh/session tokens;
-- Cookie values or full `Cookie`/`Authorization` headers;
-- full chat message text;
-- full request/response bodies containing user content;
-- attachment file contents.
-
-Prefer metadata such as byte length, MIME/type, node counts, status codes and timings. Identifiers needed for local state debugging may be stored locally under the app's private container, but diagnostic export should redact/hash sensitive identifiers and must not export authentication secrets.
-
-## Persistence
-
-Use the accepted bounded persistent rolling diagnostic store in addition to normal developer console/unified logging, because failures may occur on a TrollStore-installed device away from Xcode. Retention must remain size/count bounded; logs must not grow without limit.
-
-## Diagnostic export
-
-The accepted foundation provides user-triggered diagnostic JSON export containing app/build/candidate/source identity, deployment/runtime metadata and recent redacted structured logs. Future tasks may add additional safe performance counters/reason metadata when justified, but must not expose login secrets or full chat content by default.
-
-## Performance milestones
-
-Instrument from the start so later work can compare candidates rather than rely on impressions. Important spans include:
-
-- cold/warm app startup;
-- login bootstrap duration;
-- conversation-list load;
-- conversation-detail load and parse;
-- model construction;
-- first visible message content;
-- send -> first stream event;
-- send -> first visible assistant update;
-- stream completion;
-- attachment upload throughput/duration;
-- long-conversation memory/performance observations.
+Use the accepted bounded local diagnostics store/export authority; do not create a competing store without a concrete need.
 
 # Parallel-development guidance
 
-The first five implementation phases share authentication/session/protocol/conversation state and should normally be serialized. Do not open independent branches for `auth`, `protocol`, `native read` and `send/stream` simultaneously unless the earlier contracts are already merged and stable enough to avoid duplicated state owners.
-
-After the core conversation model/store and transport contracts are stable, attachments, export and independent settings/diagnostics UX may become candidates for parallel work, subject to the normal conflict check.
+The core chain `foundation -> auth -> protocol read -> native read -> send/stream` remains serialized. Parallel feature work is appropriate only after state owners/contracts are stable and conflict checks pass.
 
 # Next implementation action
 
-Continue **`DEV-auth-bootstrap`** rather than opening `DEV-protocol-read` yet. The immediate evidence step is to force-close/reopen the exact b2 candidate, verify whether the authenticated WebKit session persists/re-enters, export the privacy-safe diagnostics, and then establish authenticated/session/account ownership and native-consumption evidence. Only after that gate is satisfied should the serial roadmap advance to `DEV-protocol-read`.
+Continue `DEV-auth-bootstrap`: real-device test exact b3 push artifact, then use that evidence to either establish native-auth consumption and account/workspace context or diagnose the concrete failure. Do not open `DEV-protocol-read` yet.

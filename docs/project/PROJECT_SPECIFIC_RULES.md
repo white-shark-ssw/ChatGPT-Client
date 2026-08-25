@@ -8,6 +8,7 @@ Populate/change these rules only from explicit user requirements, verified produ
 
 - The current product goal is an **iOS native ChatGPT client**.
 - The previous-project history pack is reference material only. It is not current product source, current protocol documentation, or proof that a historical implementation should be reused.
+- The durable ordered implementation roadmap lives in `docs/project/DEVELOPMENT_PLAN.md`.
 
 ## Repository governance contract
 
@@ -20,6 +21,29 @@ Populate/change these rules only from explicit user requirements, verified produ
 - Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old request shapes, or memory alone.
 - Before implementing a protocol capability, establish current evidence for the relevant URL/path, method, authentication/account context, headers, request body, response/stream shape, IDs/state semantics, and failure behavior as applicable.
 - If current evidence contradicts historical notes, current evidence wins and durable docs must be corrected.
+- Do not begin native private-protocol implementation until a current authenticated ChatGPT session/context has been reproduced and evidenced on-device.
+
+## Authentication contract
+
+- The user's previous Web-based IPA successfully used ChatGPT web login, and their account uses Google sign-in. Treat this as historical success evidence only.
+- The current app must revalidate the real Google-based login path on-device before adopting an authentication architecture.
+- Start with the simplest current web-login bootstrap and capture safe navigation/auth-state evidence.
+- If current Google OAuth rejects an embedded `WKWebView`/embedded user-agent, capture the actual current failure/redirect evidence first; then choose the smallest supported system-browser/auth handoff justified by that evidence.
+- Do not prebuild speculative multi-route authentication fallback chains.
+- Do not assume WebKit cookies, system-browser cookies/session state and native `URLSession` authentication state are interchangeable.
+- Never persist or log user passwords, OAuth authorization codes, access/refresh/session tokens, Cookie values or equivalent authentication secrets outside the real secure/session mechanism required by the implemented path.
+
+## Diagnostics / logging contract
+
+- Structured diagnostics/logging is required from the **first executable product build**; it is not a later debugging enhancement.
+- Important app lifecycle, authentication, session/account, network, protocol, conversation selection/state, streaming, rendering/performance, attachment and persistence operations must emit correlated diagnostic events sufficient to reconstruct the operation path.
+- Include timing/count/size/status/error metadata where useful, while keeping the event schema stable enough to compare different test candidates.
+- Maintain a bounded persistent local diagnostic history suitable for TrollStore-installed real-device debugging away from Xcode. Logs must not grow without limit.
+- Provide a user-triggered redacted diagnostic export path once the first executable app foundation is built.
+- By default, do **not** log passwords, OAuth codes, tokens, Cookie values, full `Authorization`/`Cookie` headers, complete chat-message text, full user-content request/response bodies, or attachment contents.
+- Prefer safe metadata such as method/path category, HTTP status, elapsed time, byte count, MIME/type, node/item count and terminal reason.
+- Identifiers required to diagnose state ownership may be kept inside the app's private local diagnostics when justified, but exported diagnostics must redact/hash sensitive identifiers and must never export auth secrets.
+- Remote analytics/telemetry or automatic log upload is **not** implied by the logging requirement; add it only if explicitly required later.
 
 ## Compatibility / deployment constraints
 
@@ -36,6 +60,7 @@ Populate/change these rules only from explicit user requirements, verified produ
 - Historical WebView code must not become the new source baseline merely because it existed in the previous project.
 - Any future WebView use, including login/bootstrap use, must be justified by the current task and current evidence; no chat-WebView architecture is inherited automatically.
 - A future build/config change that raises the minimum supported iOS version must be treated as a compatibility change and justified against this project's “lower is better” requirement.
+- Future conversation/session/account/stream/upload identities must have explicit state owners; UI text/titles are consumers and must not become competing identity authorities.
 
 ## Frozen business or architecture rules
 
@@ -50,6 +75,7 @@ Follow existing repository style until explicit project-specific constraints are
 - Do not revive old WebView compensation mechanisms such as speculative timers, watchdogs, DOM scans, Shadow WebView recovery, or fallback chains without a current concrete failure mode and evidence.
 - Do not use UI text or title matching as a substitute for a verified conversation identity/state owner when the native implementation is introduced.
 - Do not select iOS 17.0 as the deployment target merely because the user's highest target OS is iOS 17.0.
+- Do not add silent auth/network/protocol recovery that hides the original failure from diagnostics.
 
 ## Historical reference
 
@@ -57,4 +83,4 @@ See `docs/project/HISTORICAL_REFERENCE.md` for distilled previous-project lesson
 
 ## Rule maintenance
 
-Rules work may update this file proactively when a durable project-specific constraint is confirmed. Never turn a temporary hypothesis or historical suggestion into a permanent current rule.
+Rules work may update this file proactively when a durable project-specific constraint is confirmed. Development work may update it when a current product task establishes a new explicit durable contract from user requirements or verified evidence. Never turn a temporary hypothesis or historical suggestion into a permanent current rule.

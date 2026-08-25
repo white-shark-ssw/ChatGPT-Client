@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - dev/app-foundation-20260826
+    paths:
+      - "ChatGPTClient/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/build_ipa.sh"
+      - ".github/workflows/ios-foundation.yml"
   pull_request:
     paths:
       - "ChatGPTClient/**"

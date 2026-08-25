@@ -62,6 +62,34 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Supersedes**: None.
 - **Notes**: The exact minimum iOS version remains Unknown / Unverified until implementation exists. Any future change that raises it must be treated as a compatibility-impacting decision and documented with evidence.
 
+### TD-004 — Diagnostics/logging is part of the application foundation
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Observability / debugging / performance evidence
+- **Decision**: Structured local diagnostics must be present from the first executable product build. Important auth, network, protocol, conversation, streaming, rendering, attachment and lifecycle operations must be traceable with correlated events and timing. The app must maintain bounded persistent diagnostic history suitable for real-device investigation and provide a redacted user-triggered diagnostic export path.
+- **Evidence**: User explicitly requested logging/instrumentation to make future problem diagnosis easier; historical work showed many important failures were runtime-only and could not be proven by CI/artifact results.
+- **Alternatives considered**: Add logs only after specific bugs appear; rely only on Xcode console output; add remote analytics immediately.
+- **Rejected / do-not-repeat**: Do not postpone observability until the client becomes complex. Do not log passwords, OAuth codes, access/session tokens, Cookie values, full auth headers, full chat bodies or attachment contents by default. Do not introduce remote telemetry/upload as an implicit requirement.
+- **Affected modules**: Future app foundation, auth/session, networking, protocol, conversation state, streaming, rendering/performance, attachments, diagnostics UI/export.
+- **Validation level**: User-confirmed product requirement; implementation/runtime validation pending `DEV-app-foundation`.
+- **Supersedes**: None.
+- **Notes**: Exact logger type/function names are intentionally not frozen before source exists. The durable contract is described in `DEVELOPMENT_PLAN.md` and `PROJECT_SPECIFIC_RULES.md`.
+
+### TD-005 — Current Google-based authentication must be revalidated before protocol implementation
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Authentication sequencing / historical evidence boundary
+- **Decision**: Authentication is a dedicated verification stage before native private-protocol work. The first auth implementation should reproduce the user's actual Google-based ChatGPT sign-in on a real device, beginning from the simplest current web-login bootstrap. Historical Web IPA success is evidence that the route worked previously, but it is not a current contract. If embedded login is blocked today, capture the current failure/redirect evidence before choosing the smallest supported system-browser/auth handoff; do not prebuild multiple fallback schemes.
+- **Evidence**: User reports the previous Web IPA successfully logged into ChatGPT through web login and that their account uses Google. Current Google OAuth documentation warns embedded user-agents such as `WKWebView` may be rejected with `disallowed_useragent`; current OpenAI help documents continue to support Google social sign-in.
+- **Alternatives considered**: Assume the old embedded-WebView Google path still works; design a custom token/login system without reproducing current behavior; build several speculative fallback routes at once.
+- **Rejected / do-not-repeat**: Do not assume WebKit cookies, system browser auth state and native `URLSession` state are interchangeable. Do not store or log login credentials/secrets. Do not implement ChatGPT private API clients before authenticated-session evidence exists.
+- **Affected modules**: Future authentication bootstrap, session store, account context, network transport, protocol evidence work.
+- **Validation level**: Sequencing/evidence rule confirmed; current real-device login behavior remains untested.
+- **Supersedes**: None.
+- **Notes**: The exact login mechanism remains intentionally unselected until `DEV-auth-bootstrap` produces current runtime evidence.
+
 ## Rule
 
 Do not write speculation here as fact. A historical plan is not proof of implementation.

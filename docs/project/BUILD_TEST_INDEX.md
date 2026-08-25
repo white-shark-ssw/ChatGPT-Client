@@ -26,7 +26,7 @@ Diagnostic evidence must remain privacy-safe: never require passwords, OAuth cod
 
 | Candidate | Work ID | Version / Build / Tag | Branch / PR | Commit | Validation | Artifact | Runtime result | Status |
 |---|---|---|---|---|---|---|---|---|
-| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR pending at record time | CI-proven product/workflow head `89b29434e4d81486d395b8ddb093a031f6f919a7` | Code written; GitHub Actions run `32876352123` passed on Xcode 16.4; generated app validated by Xcode build utility | GitHub artifact ID `9574034381`, `ChatGPTClient-DEV-app-foundation-0.1.0-b1`; IPA payload name `ChatGPTClient-0.1.0-b1-dev-app-foundation.ipa` | TrollStore install/launch, settings interaction, persistence and diagnostic export not yet real-device tested | Candidate / runtime pending |
+| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 | CI-proven product/workflow head `89b29434e4d81486d395b8ddb093a031f6f919a7`; PR opened at documentation head `d64b882f123c57cd4f01a613c195a97ba87a16ba` | Code written; GitHub Actions run `32876352123` passed on Xcode 16.4; generated app validated by Xcode build utility | GitHub artifact ID `9574034381`, `ChatGPTClient-DEV-app-foundation-0.1.0-b1`; IPA payload name `ChatGPTClient-0.1.0-b1-dev-app-foundation.ipa` | TrollStore install/launch, settings interaction, persistence and diagnostic export not yet real-device tested | Candidate / runtime pending |
 
 ## Current foundation artifact facts
 
@@ -35,7 +35,9 @@ Diagnostic evidence must remain privacy-safe: never require passwords, OAuth cod
 - iPhoneOS SDK used by CI: 18.5.
 - Compile target: `arm64-apple-ios14.0`.
 - Generated IPA metadata inspected after CI: bundle ID `com.whitesharkssw.chatgptclient`, version `0.1.0`, build `1`, `MinimumOSVersion=14.0`, candidate `DEV-app-foundation-0.1.0-b1`, Release configuration, arm64 executable.
-- Run `32876300208` IPA SHA-256: `dbb1b26b3f8f2d8a67ccbda325386560dbc7fbe1cdad78460ad242bcb920a6eb` for source commit `288853965a58`; a subsequent clean CI run at `89b29434...` also succeeded and produced the same candidate identity as artifact ID `9574034381`.
+- Run `32876300208` IPA SHA-256: `dbb1b26b3f8f2d8a67ccbda325386560dbc7fbe1cdad78460ad242bcb920a6eb` for source commit `288853965a58`.
+- Run `32876352123` at `89b29434...` also succeeded and produced artifact ID `9574034381`. The extracted latest IPA SHA-256 is `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`, and its embedded source commit is `89b29434e4d8`.
+- PR #5 targets unchanged `main@bd9727e7...`; pre-PR compare showed this branch ahead with `behind_by=0`, and no other Active development checkpoint existed on `main`.
 - CI success and artifact production do **not** prove TrollStore runtime behavior.
 
 ## Uniqueness rule

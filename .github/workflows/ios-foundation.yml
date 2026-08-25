@@ -8,12 +8,16 @@ on:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
       - "scripts/build_ipa.sh"
+      - "scripts/reconstruct_app_icon.sh"
+      - "scripts/assets/**"
       - ".github/workflows/ios-foundation.yml"
   pull_request:
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
       - "scripts/build_ipa.sh"
+      - "scripts/reconstruct_app_icon.sh"
+      - "scripts/assets/**"
       - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 

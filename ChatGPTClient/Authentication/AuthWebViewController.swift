@@ -5,8 +5,10 @@ final class AuthWebViewController: UIViewController {
     private static let loginURL = URL(string: "https://chatgpt.com/auth/login")!
 
     private let diagnostics = DiagnosticsLogger.shared
+    private let sessionStore = AuthSessionStore.shared
     private let webView: WKWebView
     private var bootstrapSpan: DiagnosticsSpan?
+    private var nativeProbeStarted = false
 
     init() {
         let configuration = WKWebViewConfiguration()
@@ -43,6 +45,8 @@ final class AuthWebViewController: UIViewController {
     }
 
     private func startLogin() {
+        nativeProbeStarted = false
+        title = "登录验证"
         bootstrapSpan?.end(status: "restarted")
         bootstrapSpan = diagnostics.startSpan(category: "auth", name: "webBootstrap", fields: ["entry": "chatgpt_login"])
         diagnostics.info(category: "auth", name: "webBootstrap.load", traceID: bootstrapSpan?.traceID, fields: Self.safeLocationFields(Self.loginURL))
@@ -52,6 +56,28 @@ final class AuthWebViewController: UIViewController {
     @objc private func restartLogin() {
         diagnostics.info(category: "auth", name: "webBootstrap.restart")
         startLogin()
+    }
+
+    private func startNativeProbeIfNeeded() {
+        guard !nativeProbeStarted else { return }
+        nativeProbeStarted = true
+        title = "网页登录成功 · 原生验证中"
+        diagnostics.info(category: "auth", name: "nativeSessionProbe.requested")
+        sessionStore.probeNativeSession(using: webView.configuration.websiteDataStore.httpCookieStore) { [weak self] state in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                switch state {
+                case .verified:
+                    self.title = "网页登录成功 · 原生会话通过"
+                case .notAuthenticated:
+                    self.title = "网页登录成功 · 原生会话未通过"
+                case .failed:
+                    self.title = "网页登录成功 · 原生验证失败"
+                case .unknown, .probing:
+                    break
+                }
+            }
+        }
     }
 
     private static func safeLocationFields(_ url: URL?) -> [String: String] {
@@ -101,10 +127,12 @@ extension AuthWebViewController: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         diagnostics.info(category: "auth", name: "web.navigation.finished", fields: Self.safeLocationFields(webView.url))
+        let webState = sessionStore.observeWebLocation(webView.url)
         if let bootstrapSpan {
             bootstrapSpan.end(fields: Self.safeLocationFields(webView.url))
             self.bootstrapSpan = nil
         }
+        if webState == .authenticated { startNativeProbeIfNeeded() }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

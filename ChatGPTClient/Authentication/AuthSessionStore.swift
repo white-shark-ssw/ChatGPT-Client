@@ -15,15 +15,33 @@ enum AuthNativeSessionState: String {
     case failed
 }
 
+enum AuthAccountContextState: String {
+    case unknown
+    case probing
+    case verified
+    case notAvailable
+    case failed
+}
+
+struct AuthAccountContext {
+    let userID: String
+    let accountID: String
+    let planType: String?
+    let structure: String?
+}
+
 final class AuthSessionStore {
     static let shared = AuthSessionStore()
 
     private static let loginURL = URL(string: "https://chatgpt.com/auth/login")!
+    private static let sessionURL = URL(string: "https://chatgpt.com/api/auth/session")!
 
     private let diagnostics = DiagnosticsLogger.shared
     private let lock = NSLock()
     private var webState: AuthWebSessionState = .unknown
     private var nativeState: AuthNativeSessionState = .unknown
+    private var accountState: AuthAccountContextState = .unknown
+    private var accountContext: AuthAccountContext?
 
     private init() { }
 
@@ -86,11 +104,101 @@ final class AuthSessionStore {
         }
     }
 
+    func probeAccountContext(using cookieStore: WKHTTPCookieStore, completion: @escaping (AuthAccountContextState) -> Void) {
+        setAccountState(.probing)
+        let span = diagnostics.startSpan(category: "auth", name: "accountContextProbe")
+        cookieStore.getAllCookies { [weak self] cookies in
+            guard let self else { return }
+            let matchedCookies = cookies.filter(Self.isAuthCookieDomain)
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.httpShouldSetCookies = true
+            guard let storage = configuration.httpCookieStorage else {
+                self.finishAccountProbe(.failed, span: span, fields: ["reason": "missing_http_cookie_storage"], completion: completion)
+                return
+            }
+            for cookie in matchedCookies { storage.setCookie(cookie) }
+
+            let session = URLSession(configuration: configuration)
+            session.dataTask(with: URLRequest(url: Self.sessionURL)) { [weak self] data, response, error in
+                guard let self else { return }
+                if let error {
+                    session.finishTasksAndInvalidate()
+                    self.diagnostics.error(category: "auth", name: "accountContextProbe.sessionFailed", traceID: span.traceID, error: error)
+                    self.finishAccountProbe(.failed, span: span, completion: completion)
+                    return
+                }
+                guard let response = response as? HTTPURLResponse, let data, (200..<300).contains(response.statusCode) else {
+                    session.finishTasksAndInvalidate()
+                    let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "none"
+                    self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "session", "httpStatus": status], completion: completion)
+                    return
+                }
+                guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let user = payload["user"] as? [String: Any], let userID = user["id"] as? String, !userID.isEmpty, let accessToken = payload["accessToken"] as? String, !accessToken.isEmpty else {
+                    session.finishTasksAndInvalidate()
+                    self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "session", "httpStatus": String(response.statusCode), "reason": "missing_required_session_fields"], completion: completion)
+                    return
+                }
+
+                self.diagnostics.info(category: "auth", name: "accountContextProbe.session", traceID: span.traceID, fields: ["httpStatus": String(response.statusCode), "userID": userID])
+                let offsetMinutes = -TimeZone.current.secondsFromGMT() / 60
+                guard let accountsURL = URL(string: "https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27?timezone_offset_min=\(offsetMinutes)") else {
+                    session.finishTasksAndInvalidate()
+                    self.finishAccountProbe(.failed, span: span, fields: ["reason": "invalid_accounts_url"], completion: completion)
+                    return
+                }
+                var request = URLRequest(url: accountsURL)
+                request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+                session.dataTask(with: request) { [weak self] data, response, error in
+                    defer { session.finishTasksAndInvalidate() }
+                    guard let self else { return }
+                    if let error {
+                        self.diagnostics.error(category: "auth", name: "accountContextProbe.accountsFailed", traceID: span.traceID, error: error)
+                        self.finishAccountProbe(.failed, span: span, completion: completion)
+                        return
+                    }
+                    guard let response = response as? HTTPURLResponse, let data, (200..<300).contains(response.statusCode) else {
+                        let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "none"
+                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": status], completion: completion)
+                        return
+                    }
+                    guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let accounts = payload["accounts"] as? [String: Any], let defaultEntry = accounts["default"] as? [String: Any], let account = defaultEntry["account"] as? [String: Any], let accountID = account["id"] as? String, !accountID.isEmpty else {
+                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": String(response.statusCode), "reason": "missing_default_account"], completion: completion)
+                        return
+                    }
+
+                    let context = AuthAccountContext(userID: userID, accountID: accountID, planType: account["plan_type"] as? String, structure: account["structure"] as? String)
+                    self.lock.lock()
+                    self.accountContext = context
+                    self.lock.unlock()
+                    var fields = ["httpStatus": String(response.statusCode), "userID": userID, "accountID": accountID]
+                    if let planType = context.planType { fields["planType"] = planType }
+                    if let structure = context.structure { fields["structure"] = structure }
+                    self.diagnostics.info(category: "auth", name: "accountContextProbe.accounts", traceID: span.traceID, fields: fields)
+                    self.finishAccountProbe(.verified, span: span, fields: fields, completion: completion)
+                }.resume()
+            }.resume()
+        }
+    }
+
+    private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], completion: @escaping (AuthAccountContextState) -> Void) {
+        setAccountState(state)
+        span.end(status: state == .verified ? "ok" : state == .notAvailable ? "not_available" : "failed", fields: fields)
+        completion(state)
+    }
+
     private func setNativeState(_ state: AuthNativeSessionState) {
         lock.lock()
         nativeState = state
         lock.unlock()
         diagnostics.info(category: "auth", name: "session.nativeState", fields: ["state": state.rawValue])
+    }
+
+    private func setAccountState(_ state: AuthAccountContextState) {
+        lock.lock()
+        accountState = state
+        if state != .verified { accountContext = nil }
+        lock.unlock()
+        diagnostics.info(category: "auth", name: "session.accountState", fields: ["state": state.rawValue])
     }
 
     private static func webState(for url: URL?) -> AuthWebSessionState {

@@ -4,7 +4,7 @@ _Last updated: 2026-08-26._
 
 ## Purpose
 
-This is the durable implementation sequence for the new iOS-native ChatGPT client. It defines dependency order and acceptance gates; it is not proof that a phase is implemented.
+This is the durable implementation sequence for the new iOS-native ChatGPT client. It defines dependency order and acceptance gates; implementation status must be backed by current source/CI/runtime evidence.
 
 Current product constraints:
 
@@ -17,7 +17,7 @@ Current product constraints:
 
 ## Development principles
 
-1. **Diagnosability before complexity**: the first executable app foundation includes structured local diagnostics/logging. Do not wait for bugs before adding observability.
+1. **Diagnosability before complexity**: the executable app foundation includes structured local diagnostics/logging from the start.
 2. **Authentication before private protocol assumptions**: establish a real current authenticated session before building conversation API clients.
 3. **Protocol evidence before data models**: do not generate a large model layer from old endpoint memory. Capture current list/detail/send/stream shapes first.
 4. **One state owner per identity**: session/account/conversation/message-stream/upload identities must have explicit owners; UI labels are consumers, not authorities.
@@ -27,26 +27,32 @@ Current product constraints:
 
 ## Phase 1 — `DEV-app-foundation`
 
+### Status
+
+**Accepted / Stable foundation.** `DEV-app-foundation-0.1.0-b1` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0. The foundation modules are Stable, not Frozen. Lower iOS versions and iPad runtime remain unverified.
+
 ### Goal
 
 Create the smallest real Xcode/iOS baseline that can be built into a TrollStore-installable IPA and can produce useful diagnostics before any ChatGPT-specific implementation is added.
 
-### Scope
+### Implemented scope
 
-- Xcode project/application target.
-- Establish actual Swift/framework choice from compatibility evidence. UIKit-first remains a planning preference for precise list/scroll control, but is not frozen until this task verifies source/toolchain needs.
-- Choose the lowest practical deployment target from real API/dependency requirements; do not default to iOS 17.0.
-- Basic app shell / settings entry / build metadata display.
-- IPA build/package path suitable for TrollStore.
-- Diagnostics foundation described in the logging contract below.
+- Swift 5 + UIKit Xcode project/application target with no third-party dependencies.
+- iOS 14.0 deployment target, chosen from current system-API requirements rather than defaulting to iOS 17.0.
+- Basic app shell, Settings entry and build/runtime metadata display.
+- Reproducible unsigned IPA packaging path for TrollStore validation.
+- Structured OSLog diagnostics, bounded persistent JSONL history, trace/span timing, secret-field filtering and user-triggered redacted diagnostic JSON export.
+- GitHub Actions Xcode/IPA build and artifact validation.
 
-### Acceptance gate
+### Acceptance evidence
 
-- App builds from recorded commands/toolchain.
-- IPA is produced with a unique candidate identity.
-- IPA installs and launches through TrollStore on at least one target device.
-- App can display/export a local diagnostic bundle containing build/device/runtime metadata and sample structured events without leaking secrets.
-- `PROJECT_PROFILE.md`, `BUILD_TEST_INDEX.md`, module ownership, build commands, deployment target, artifact naming and runtime result are updated from real evidence.
+- Xcode 16.4 CI built `arm64-apple-ios14.0` successfully.
+- Accepted candidate: `DEV-app-foundation-0.1.0-b1`, version `0.1.0 (1)`.
+- Accepted IPA SHA-256: `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`.
+- User installed/launched the candidate through TrollStore on iPhone / iOS 17.0 with no reported problem.
+- Settings/sample diagnostic event/export worked.
+- Exported diagnostics contain correct build/device/runtime identity and demonstrate persistent events surviving app relaunch.
+- No password/token/Cookie/Authorization/OAuth secret fields were observed in the supplied export.
 
 ## Phase 2 — `DEV-auth-bootstrap`
 
@@ -69,7 +75,7 @@ The user reports that the previous Web-based IPA successfully used ChatGPT web l
 
 ### Current external risk
 
-Google's current OAuth documentation states that authorization endpoints in embedded user-agents such as `WKWebView` may fail with `disallowed_useragent` and recommends supported system/SDK authentication flows. OpenAI currently supports Google social sign-in. Therefore historical success does not remove the need for a current real-device verification.
+Google OAuth guidance warns that authorization endpoints in embedded user-agents such as `WKWebView` may fail with `disallowed_useragent` and recommends supported system/SDK authentication flows. Historical success therefore does not remove the need for a current real-device verification.
 
 ### Acceptance gate
 
@@ -218,7 +224,7 @@ The default implementation is local diagnostics, not remote analytics/telemetry.
 
 ## Event shape
 
-Use a structured event envelope conceptually containing fields such as:
+Use the accepted structured event envelope concepts:
 
 - timestamp;
 - severity;
@@ -231,11 +237,9 @@ Use a structured event envelope conceptually containing fields such as:
 - safe/redacted conversation/message reference when needed for state debugging;
 - duration / byte count / item count / status / error domain+code where relevant.
 
-Exact type/function names are not frozen before source exists.
-
 ## Required categories
 
-At minimum cover:
+At minimum cover as modules are introduced:
 
 - app lifecycle / startup;
 - authentication / web-login navigation state;
@@ -266,20 +270,11 @@ Prefer metadata such as byte length, MIME/type, node counts, status codes and ti
 
 ## Persistence
 
-The implementation task should provide a bounded persistent rolling diagnostic store in addition to normal developer console/unified logging, because many failures occur on a real TrollStore-installed device away from Xcode. Retention must be size/count bounded; logs must not grow without limit.
+Use the accepted bounded persistent rolling diagnostic store in addition to normal developer console/unified logging, because failures may occur on a TrollStore-installed device away from Xcode. Retention must remain size/count bounded; logs must not grow without limit.
 
 ## Diagnostic export
 
-Provide a user-triggered diagnostic bundle containing, at minimum:
-
-- app version/build/candidate/commit when available;
-- deployment target/build configuration;
-- device model class and iOS version;
-- recent redacted structured logs;
-- key performance metrics/counters;
-- a short reason/trigger selected by the user if implemented later.
-
-The bundle must be reviewable/shareable without exposing login secrets or full chat content by default.
+The accepted foundation provides user-triggered diagnostic JSON export containing app/build/candidate/source identity, deployment/runtime metadata and recent redacted structured logs. Future tasks may add additional safe performance counters/reason metadata when justified, but must not expose login secrets or full chat content by default.
 
 ## Performance milestones
 
@@ -299,10 +294,10 @@ Instrument from the start so later work can compare candidates rather than rely 
 
 # Parallel-development guidance
 
-The first five implementation phases share authentication/session/protocol/conversation state and should normally be serialized. Do not open independent branches for `auth`, `protocol`, `native read` and `send/stream` simultaneously unless the earlier contracts are already merged and frozen enough to avoid duplicated state owners.
+The first five implementation phases share authentication/session/protocol/conversation state and should normally be serialized. Do not open independent branches for `auth`, `protocol`, `native read` and `send/stream` simultaneously unless the earlier contracts are already merged and stable enough to avoid duplicated state owners.
 
 After the core conversation model/store and transport contracts are stable, attachments, export and independent settings/diagnostics UX may become candidates for parallel work, subject to the normal conflict check.
 
 # Next implementation task
 
-After this planning Work is merged, the recommended first product-code Work is **`DEV-app-foundation`**. Its first deliverable is not a ChatGPT feature: it is a real installable skeleton IPA with build identity and safe diagnostics. The following Work is **`DEV-auth-bootstrap`**, which reproduces the user's current Google-based login path on-device and establishes current session evidence before private protocol work begins.
+The foundation gate is accepted. The next serial product-code Work is **`DEV-auth-bootstrap`**: reproduce the user's current Google-based ChatGPT login path on-device, capture safe auth/navigation evidence, and establish current authenticated session/account context before any private ChatGPT conversation protocol implementation begins.

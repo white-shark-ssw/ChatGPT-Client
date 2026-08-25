@@ -32,7 +32,7 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 
 ### Status
 
-**Active. Embedded Google login, WebKit persistence, and the tested transient native-session bridge have passed on real device. Account/workspace context is the remaining gate.**
+**Active. Embedded Google login, WebKit persistence, and the tested transient native-session bridge passed on real device. Account/workspace context has an identity-correct b4 candidate awaiting real-device validation.**
 
 ### Accepted b2 evidence
 
@@ -44,24 +44,32 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 
 ### Accepted b3 evidence
 
-`DEV-auth-bootstrap-0.1.0-b3` validates one narrow native-session-consumption mechanism:
-
-- `AuthSessionStore` owns safe auth evidence state and the transient bridge; it does not persist auth secrets.
-- Current ChatGPT/OpenAI WebKit cookies are filtered and copied transiently into an ephemeral `URLSession`.
-- Exact product source `0fcf040012c0698d0e3ce1628fec9865237eba3b` passed authoritative push run `32889095904` and produced artifact ID `9578766019`.
-- IPA `ChatGPTClient-0.1.0-b3-dev-auth-bootstrap.ipa`; SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`.
-- User real-device screenshot shows `网页登录成功 · 原生会话通过`.
+- `DEV-auth-bootstrap-0.1.0-b3`, exact product source `0fcf040012c0698d0e3ce1628fec9865237eba3b`.
+- Authoritative push run `32889095904`; artifact ID `9578766019`; IPA SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860`.
+- User screenshot shows `网页登录成功 · 原生会话通过`.
 - Supplied b3 diagnostics identify build `3`, source `0fcf040012c0`, iPhone / iOS 17.0; record `session.webState=authenticated`, 54 total / 35 matched WebKit cookies, `session.nativeState=verified`, and final `chatgpt.com` HTTP 200 / `status=ok` in `1203.68 ms`.
 - This proves the tested native transport can consume the current WebKit-authenticated context for `/auth/login`. It does not prove account/workspace or conversation-protocol behavior.
 
+### Current b4 account-context candidate
+
+- Current evidence established a narrow account-context path suitable for a diagnostic probe: authenticated `/api/auth/session`, transient session bearer, then `/backend-api/accounts/check/v4-2023-04-27` for default account context. This remains current-evidence-driven and is not a general private-protocol model.
+- `AuthSessionStore` now owns an **in-memory Candidate** account context and uses a fresh ephemeral session. The bearer is a local transient value only and is not logged or persisted. Response bodies are not logged. Exported `userID` / `accountID` use existing identifier hashing.
+- `AuthWebViewController` chains account verification only after the already-accepted native-session probe succeeds.
+- The first b4 artifact from run `32891478482` is rejected because a stale build-script default embedded candidate b3 despite b4 filename/artifact identity. Do not test artifact ID `9579620441`.
+- Commit `33ea1b96f755bdf21fdd7691a9f1084a6d624908` fixes only the stale candidate default.
+- **Valid b4 candidate**: `DEV-auth-bootstrap-0.1.0-b4`, `0.1.0 (4)`, product source `33ea1b96f755bdf21fdd7691a9f1084a6d624908`.
+- Corrected push run `32891798350` passed Xcode 16.4 and explicitly embedded b4 candidate/source identity.
+- Artifact ID `9579720453`; IPA `ChatGPTClient-0.1.0-b4-dev-auth-bootstrap.ipa`; IPA SHA-256 `f918b1f5762458e55e89a1f0d23e5c2bf46be11d7f4599c692627a07043dab03`; ZIP digest `sha256:a11819f7473472ec074fc09ee7c0bed4101d3288d92edd9fbe2880d9e666c001`.
+- b4 is **Code written + CI passed + Artifact produced; Runtime/manual/real-device not yet tested**.
+
 ### Immediate verification order
 
-1. Establish a **current** account/session-context request from current evidence: exact URL/path, method, safe response shape and required request context. Do not use historical endpoint names as facts.
-2. Assign one explicit owner for account/workspace context.
-3. If runtime code is needed, implement the smallest privacy-safe authenticated account/workspace probe on `DEV-auth-bootstrap` and allocate a new unique candidate/build identity before producing an IPA.
-4. Real-device validate the exact candidate and export safe diagnostics containing state/status and redacted/hashed account/workspace references only where required.
-5. If account/workspace context is successfully established for the native path, complete Phase 2 and only then open `DEV-protocol-read`.
-6. If the account-context probe fails, diagnose the exact current failure without speculative fallback/retry chains.
+1. Install exact valid b4 artifact ID `9579720453` on the intended iPhone / iOS 17.0.
+2. Run the existing login/auth verification flow. Native-session verification should pass first; then account-context probe runs automatically.
+3. Final success title is `登录会话 · 账户上下文通过`. Failure titles distinguish not-available vs request failure; do not add fallback endpoints before reading exact diagnostics.
+4. Export the b4 privacy-safe diagnostic JSON. Verify candidate `DEV-auth-bootstrap-0.1.0-b4`, build `4`, source `33ea1b96f755`, `session.accountState`, safe HTTP statuses, and hashed `userID` / `accountID` where success provides them.
+5. If b4 account context passes, complete Phase 2 and only then open `DEV-protocol-read`.
+6. If it fails, diagnose the exact current response/status/shape without speculative retry/fallback chains.
 
 ### Phase 2 acceptance gate
 
@@ -69,14 +77,14 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 - WebKit session persistence/re-entry — **passed b2**.
 - Explicit safe authentication evidence owner — **passed b3**.
 - Native transport can consume current authenticated context for the tested auth route — **passed b3**.
-- Account/workspace context needed by later native requests — **pending**.
-- Auth secrets excluded from logs/export — **implemented and preserved in supplied b2/b3 evidence**.
+- Account/workspace context owner/probe implemented — **Code written + CI passed + Artifact produced b4; runtime pending**.
+- Auth secrets excluded from logs/export — **implemented; continue validating in b4 export**.
 
 ## Phase 3 — `DEV-protocol-read`
 
 ### Entry gate
 
-Do not start production protocol implementation until Phase 2 has evidenced authenticated/session/account context actually usable by native requests.
+Do not start production protocol implementation until Phase 2 has runtime-evidenced authenticated/session/account context actually usable by native requests.
 
 ### Goal / evidence targets
 
@@ -124,4 +132,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Continue `DEV-auth-bootstrap`: establish a current account/session-context request from evidence, then add only the minimal account/workspace probe/owner required to close the auth gate. Do not open `DEV-protocol-read` yet.
+Real-device test exact identity-correct `DEV-auth-bootstrap-0.1.0-b4` artifact ID `9579720453`, then use its final title and exported diagnostics to either close the account-context gate or diagnose the exact current failure. Do not open `DEV-protocol-read` yet.

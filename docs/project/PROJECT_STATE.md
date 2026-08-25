@@ -4,11 +4,11 @@ _Last updated: 2026-08-26._
 
 ## Current accepted baseline
 
-Default-branch planning/governance baseline at `DEV-app-foundation` start: `main@bd9727e7a20c48c88944eff8a0f5fd0d23925ff6`.
+The first real product foundation is merged into `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`.
 
-The product goal is an **iOS native ChatGPT client** distributed as an IPA for TrollStore. The intended user-device environment does not exceed iOS 17.0, while compatibility with lower iOS versions is preferred where practical.
+The accepted runtime candidate is `DEV-app-foundation-0.1.0-b1`, built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`. It was installed and launched successfully through TrollStore on an iPhone running iOS 17.0, and its diagnostics/settings/persistence path was manually validated.
 
-The first real product foundation is runtime-accepted as `DEV-app-foundation-0.1.0-b1`. It was built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7`, installed and launched successfully through TrollStore on an iPhone running iOS 17.0, and its diagnostics/settings/persistence path was manually validated. PR #5 contains this foundation plus completion documentation and is ready for final merge after repository/CI recheck.
+The product goal remains an **iOS native ChatGPT client** distributed as an IPA for TrollStore. The intended user-device environment does not exceed iOS 17.0, while compatibility with lower iOS versions is preferred where practical.
 
 ## Accepted foundation baseline
 
@@ -25,7 +25,12 @@ The first real product foundation is runtime-accepted as `DEV-app-foundation-0.1
 - reproducible `scripts/build_ipa.sh` packaging path;
 - GitHub Actions macOS build/IPA artifact workflow.
 
-GitHub Actions run `32876352123` passed on Xcode 16.4 and produced artifact ID `9574034381`; later final material PR head `aa3233de...` passed run `32877096378`. The accepted IPA SHA-256 is `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`.
+Automated evidence:
+
+- GitHub Actions run `32876352123` passed on Xcode 16.4 and produced artifact ID `9574034381`.
+- Final material PR head `aa3233de...` passed run `32877096378`.
+- Final PR completion head `c3a9437c...` passed run `32878347358` before merge.
+- Accepted IPA SHA-256: `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760`.
 
 Runtime evidence from the user and exported diagnostic JSON confirms:
 
@@ -42,7 +47,7 @@ The ordered implementation roadmap is recorded in `docs/project/DEVELOPMENT_PLAN
 
 Current intended sequence:
 
-1. `DEV-app-foundation` — **Accepted / Stable; merge completion in progress**.
+1. `DEV-app-foundation` — **Completed / merged / Stable foundation**.
 2. `DEV-auth-bootstrap` — next serial phase: reproduce the user's current Google-based ChatGPT login on-device and establish real authenticated-session evidence.
 3. `DEV-protocol-read` — establish current conversation-list/detail/account-context protocol evidence.
 4. `DEV-native-read-path` — build native conversation navigation, authoritative conversation state and native message rendering.
@@ -56,7 +61,7 @@ The strongly dependent core (`app foundation -> auth -> protocol read -> native 
 
 ## Authentication evidence
 
-The user reports that a previous Web-based IPA successfully used ChatGPT web login and that their account uses **Continue with Google**. This remains historical evidence only. `DEV-app-foundation` intentionally does not implement authentication/session/protocol behavior.
+The user reports that a previous Web-based IPA successfully used ChatGPT web login and that their account uses **Continue with Google**. This remains historical evidence only. Foundation intentionally contains no authentication/session/private-protocol implementation.
 
 `DEV-auth-bootstrap` must reproduce current behavior on-device first, capture safe navigation/auth evidence, and only choose an alternate supported browser/auth handoff if current evidence requires it. Do not assume WebKit, system-browser and native `URLSession` auth state are interchangeable.
 

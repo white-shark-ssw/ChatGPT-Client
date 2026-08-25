@@ -10,6 +10,7 @@ Populate/change these rules only from explicit user requirements, verified produ
 - The previous-project history pack is reference material only. It is not current product source, current protocol documentation, or proof that a historical implementation should be reused.
 - The durable ordered implementation roadmap lives in `docs/project/DEVELOPMENT_PLAN.md`.
 - `DEV-app-foundation-0.1.0-b1` is the accepted Stable foundation baseline after CI/artifact validation and successful TrollStore real-device testing on iPhone / iOS 17.0. Stable does not mean Frozen; lower-iOS/iPad runtime remains unverified.
+- `DEV-auth-bootstrap-0.1.0-b2` has current real-device evidence that the embedded ChatGPT web-login route can complete Continue with Google on the tested iPhone / iOS 17.0 device. This validates that route only; broader session/account/native-auth behavior remains unverified.
 
 ## Repository governance contract
 
@@ -22,21 +23,21 @@ Populate/change these rules only from explicit user requirements, verified produ
 - Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old request shapes, or memory alone.
 - Before implementing a protocol capability, establish current evidence for the relevant URL/path, method, authentication/account context, headers, request body, response/stream shape, IDs/state semantics, and failure behavior as applicable.
 - If current evidence contradicts historical notes, current evidence wins and durable docs must be corrected.
-- Do not begin native private-protocol implementation until a current authenticated ChatGPT session/context has been reproduced and evidenced on-device.
+- Successful WebView login alone is not sufficient evidence to begin production native private-protocol implementation. First establish how authenticated/session/account context required by native requests is owned and consumed.
 
 ## Authentication contract
 
-- The user's previous Web-based IPA successfully used ChatGPT web login, and their account uses Google sign-in. Treat this as historical success evidence only.
-- The current app must revalidate the real Google-based login path on-device before adopting an authentication architecture.
-- Start with the simplest current web-login bootstrap and capture safe navigation/auth-state evidence.
-- If current Google OAuth rejects an embedded `WKWebView`/embedded user-agent, capture the actual current failure/redirect evidence first; then choose the smallest supported system-browser/auth handoff justified by that evidence.
-- Do not prebuild speculative multi-route authentication fallback chains.
+- Historical Web-based IPA login success is reference-only; current authentication decisions use current candidate/runtime evidence.
+- Current `DEV-auth-bootstrap-0.1.0-b2` real-device evidence shows that the embedded `WKWebView` flow at the current ChatGPT login path can successfully complete Continue with Google on the tested iPhone / iOS 17.0 device.
+- Do **not** add a system-browser/auth-session fallback merely because embedded Google OAuth can fail in other contexts. The tested embedded route currently works; a fallback requires a concrete current failure.
+- Next authentication evidence must cover session persistence/re-entry, an authoritative authenticated-vs-unauthenticated state signal, account/workspace context ownership, and the mechanism by which later native requests consume authenticated context.
 - Do not assume WebKit cookies, system-browser cookies/session state and native `URLSession` authentication state are interchangeable.
+- Do not duplicate authentication/session authority. Establish one explicit production owner when the evidence supports it.
 - Never persist or log user passwords, OAuth authorization codes, access/refresh/session tokens, Cookie values or equivalent authentication secrets outside the real secure/session mechanism required by the implemented path.
 
 ## Diagnostics / logging contract
 
-- Structured diagnostics/logging is required from the **first executable product build** and is now implemented/accepted as part of the Stable foundation baseline.
+- Structured diagnostics/logging is required from the **first executable product build** and is implemented/accepted as part of the Stable foundation baseline.
 - Important app lifecycle, authentication, session/account, network, protocol, conversation selection/state, streaming, rendering/performance, attachment and persistence operations must emit correlated diagnostic events sufficient to reconstruct the operation path.
 - Include timing/count/size/status/error metadata where useful, while keeping the event schema stable enough to compare different test candidates.
 - Maintain a bounded persistent local diagnostic history suitable for TrollStore-installed real-device debugging away from Xcode. Logs must not grow without limit. The accepted foundation uses a 2 MiB current JSONL file plus up to three rotated archives.
@@ -54,19 +55,20 @@ Populate/change these rules only from explicit user requirements, verified produ
 - Intended user-device OS versions do not exceed iOS 17.0. Do not introduce a required API, dependency, framework setting, or deployment configuration that makes iOS > 17.0 mandatory unless the user explicitly changes this requirement.
 - iOS 17.0 is an environment ceiling, **not** the minimum deployment target.
 - Current accepted minimum deployment target is iOS 14.0 for the Swift/UIKit dependency-free foundation. Do not raise it without a concrete required API/dependency/runtime reason and corresponding documentation update.
-- `DEV-app-foundation-0.1.0-b1` is real-device validated through TrollStore on iPhone / iOS 17.0. Do not claim runtime compatibility for iOS 14.x–16.x or iPad until separately evidenced.
+- `DEV-app-foundation-0.1.0-b1` is real-device validated through TrollStore on iPhone / iOS 17.0. `DEV-auth-bootstrap-0.1.0-b2` also has real-device web-login validation on that environment. Do not claim runtime compatibility for iOS 14.x–16.x or iPad until separately evidenced.
 
 ## Critical invariants
 
 - Historical WebView code must not become the new source baseline merely because it existed in the previous project.
-- Any future WebView use, including login/bootstrap use, must be justified by the current task and current evidence; no chat-WebView architecture is inherited automatically.
+- Current WebView use is limited to the evidence-backed login/bootstrap role; no chat-WebView architecture is inherited automatically.
 - A future build/config change that raises the minimum supported iOS version must be treated as a compatibility change and justified against this project's “lower is better” requirement.
 - Future conversation/session/account/stream/upload identities must have explicit state owners; UI text/titles are consumers and must not become competing identity authorities.
 - CI/artifact success must never be described as runtime proof; candidate/runtime evidence stays associated with the exact build identity recorded in `BUILD_TEST_INDEX.md`.
+- Current successful embedded login must not be described as proof that native `URLSession` or future private-protocol calls are authenticated.
 
 ## Frozen business or architecture rules
 
-None recorded yet. Foundation modules are Stable, not Frozen.
+None recorded yet. Foundation modules are Stable, not Frozen. Embedded web login is a runtime-validated Candidate, not Frozen.
 
 ## Code style / naming constraints
 
@@ -75,6 +77,7 @@ Follow existing repository style until explicit project-specific constraints are
 ## Prohibited routes / known dangerous regressions
 
 - Do not revive old WebView compensation mechanisms such as speculative timers, watchdogs, DOM scans, Shadow WebView recovery, or fallback chains without a current concrete failure mode and evidence.
+- Do not add a system-browser authentication fallback while the current embedded login route works unless a new concrete runtime failure justifies it.
 - Do not use UI text or title matching as a substitute for a verified conversation identity/state owner when the native implementation is introduced.
 - Do not raise the current iOS 14.0 minimum merely because the user's highest target OS is iOS 17.0 or CI uses a newer SDK.
 - Do not add silent auth/network/protocol recovery that hides the original failure from diagnostics.

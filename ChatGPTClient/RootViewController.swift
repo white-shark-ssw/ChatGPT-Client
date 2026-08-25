@@ -11,17 +11,17 @@ final class RootViewController: UIViewController {
 
         let titleLabel = UILabel()
         titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
-        titleLabel.text = "网页登录验证"
+        titleLabel.text = "登录与原生会话验证"
         titleLabel.numberOfLines = 0
 
         let detailLabel = UILabel()
         detailLabel.font = .preferredFont(forTextStyle: .body)
         detailLabel.textColor = .secondaryLabel
         detailLabel.numberOfLines = 0
-        detailLabel.text = "当前阶段只验证 ChatGPT 现行网页登录与 Continue with Google 路径。请进入登录页并按你平时的方式选择 Google 登录；如果出现阻止或错误页面，保持现场并从设置导出诊断 JSON。"
+        detailLabel.text = "当前已验证 Continue with Google 与网页登录持久化。本候选会在网页确认已登录后，自动把当前 WebKit 会话临时复制到内存中的原生 URLSession，再请求同一个登录入口验证服务器是否接受原生会话。不会记录 Cookie、Token 或 Authorization 值。"
 
         let loginButton = UIButton(type: .system)
-        loginButton.setTitle("开始网页登录验证", for: .normal)
+        loginButton.setTitle("开始登录与原生会话验证", for: .normal)
         loginButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         loginButton.addTarget(self, action: #selector(openLoginVerification), for: .touchUpInside)
 

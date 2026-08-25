@@ -11,14 +11,19 @@ final class RootViewController: UIViewController {
 
         let titleLabel = UILabel()
         titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
-        titleLabel.text = "应用基础已就绪"
+        titleLabel.text = "网页登录验证"
         titleLabel.numberOfLines = 0
 
         let detailLabel = UILabel()
         detailLabel.font = .preferredFont(forTextStyle: .body)
         detailLabel.textColor = .secondaryLabel
         detailLabel.numberOfLines = 0
-        detailLabel.text = "当前阶段只建立原生应用骨架、构建身份和安全诊断能力。登录、ChatGPT 私有协议与聊天功能将在后续独立任务中实现。"
+        detailLabel.text = "当前阶段只验证 ChatGPT 现行网页登录与 Continue with Google 路径。请进入登录页并按你平时的方式选择 Google 登录；如果出现阻止或错误页面，保持现场并从设置导出诊断 JSON。"
+
+        let loginButton = UIButton(type: .system)
+        loginButton.setTitle("开始网页登录验证", for: .normal)
+        loginButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        loginButton.addTarget(self, action: #selector(openLoginVerification), for: .touchUpInside)
 
         let buildLabel = UILabel()
         buildLabel.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
@@ -26,7 +31,7 @@ final class RootViewController: UIViewController {
         buildLabel.numberOfLines = 0
         buildLabel.text = AppBuildInfo.current.displayText
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, detailLabel, buildLabel])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, detailLabel, loginButton, buildLabel])
         stack.axis = .vertical
         stack.spacing = 20
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -39,6 +44,11 @@ final class RootViewController: UIViewController {
         ])
 
         diagnostics.info(category: "ui", name: "root.loaded")
+    }
+
+    @objc private func openLoginVerification() {
+        diagnostics.info(category: "navigation", name: "authVerification.open")
+        navigationController?.pushViewController(AuthWebViewController(), animated: true)
     }
 
     @objc private func openSettings() {

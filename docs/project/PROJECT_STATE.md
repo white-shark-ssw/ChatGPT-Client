@@ -22,7 +22,7 @@ Governance architecture: root `AGENTS.md` → `docs/project/START_HERE.md` → s
 
 ## Current development direction
 
-Unknown / Unverified. Product source has not yet been added to this repository.
+Repository metadata identifies the intended product as a ChatGPT third-party custom client. Product implementation/source has not yet been added, so architecture, runtime target, framework, and concrete feature baseline remain Unknown / Unverified.
 
 ## Known issues / constraints
 

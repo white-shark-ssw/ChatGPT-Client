@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-26._
+_Last updated: 2026-08-27._
 
 ## Current accepted baseline
 
@@ -11,83 +11,85 @@ _Last updated: 2026-08-26._
 
 ## Current active candidate
 
-`DEV-conversation-recovery-0.1.0-b11`, version `0.1.0 (11)`, is the active final recovery UX candidate on `dev/conversation-recovery-20260826` / PR #10.
+`DEV-conversation-recovery-0.1.0-b12`, version `0.1.0 (12)`, is the active recovery candidate on `dev/conversation-recovery-20260826` / PR #10.
 
-- Final CI run: **`32988700796` success**.
-- PR head tested: `c3490eb67f8d8218281b30560a5c20b3d846c931` through GitHub synthetic merge `7fe8ca7693e9e8daa5fa80c9b8c600215e443cf3`.
-- Branch head and tested merge have the same tree SHA: **`80cd8e60977bbcc8dc2dc83881a58afb29a51bde`**. This proves the CI tested the same source/config content as the branch head.
-- Artifact ID: **`9613806931`**; artifact name `ChatGPTClient-DEV-conversation-recovery-0.1.0-b11`.
-- IPA: `ChatGPTClient-0.1.0-b11-dev-conversation-recovery.ipa`.
-- IPA SHA-256: **`6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`**; sidecar matches independently calculated SHA.
-- GitHub ZIP digest: `sha256:70bb214d01bcf7f2a57df25f10c2280f5dce5482d06b545a168b4963f3b2ee2f`.
-- Embedded identity verified: `0.1.0 (11)`, candidate `DEV-conversation-recovery-0.1.0-b11`, source `7fe8ca7693e9`, minimum OS `14.0`, device families `[1,2]`, Mach-O arm64.
-- Validation: **Code written + static/source diff reviewed + CI passed + Artifact produced**. Runtime/manual b11 feedback confirmation remains pending, so b11 is not Stable/merged yet.
-- b11 product behavior only adds non-blocking manual latest-sync feedback: `正在同步最新消息…` then `已是最新` or `已同步最新消息`. Repository/network/auth/recovery semantics remain unchanged.
+- Exact product/config PR head: `fd9fb3ac7a09eafa8dfd33918d114c7d3fee474f`.
+- CI run `32993589071`: **success**.
+- GitHub synthetic merge used by CI: `4a7380b913ff5bd847c676fceab31adafdeecb3f`.
+- Branch head and tested merge share exact tree `81c801284b1e83f68043c30b9c75f47e76640128`.
+- Artifact ID `9615588166`; artifact `ChatGPTClient-DEV-conversation-recovery-0.1.0-b12`.
+- IPA `ChatGPTClient-0.1.0-b12-dev-conversation-recovery.ipa`.
+- IPA SHA-256 `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab`; generated sidecar matches independently calculated SHA.
+- GitHub ZIP digest `sha256:867c256314f7581f5550717287a604f22c6f55ba60ce659638406e5d34082aac`.
+- Embedded package identity verified: `0.1.0 (12)`, candidate `DEV-conversation-recovery-0.1.0-b12`, source `4a7380b913ff`, min iOS `14.0`, device families `[1,2]`, Mach-O arm64.
+- Validation: **Code written + static/source review + CI passed + Artifact produced**. Runtime/manual/real-device b12 evidence is pending; b12 is not Stable/merged.
 
-Intermediate run `32987959118` is rejected as final b11 evidence: it checked out `512a2c...` before final build-number/workflow metadata and produced an inconsistent identity (`CFBundleVersion=10`, candidate b11, artifact named b10). Do not distribute/reuse that artifact.
+### b12 product scope
 
-## Accepted b10 runtime inside the same Work
+- Manual latest-sync feedback is now an unmistakable **screen-centered toast** rather than `navigationItem.prompt`.
+- Sync progress shows `正在同步最新消息…`; success shows `已是最新` or `已同步最新消息` for 2 seconds.
+- `AuthSessionStore` now has a public-API default WebKit data-store warm-up (`WKWebsiteDataStore.default()` + data-record fetch + cookie counts).
+- `RootViewController` completes that warm-up before installing the sidebar/detail shell. The sidebar then performs the same single existing account-context probe when its first list load starts.
+- Existing auth endpoints, parser, headers, transient-session ownership and default WebKit persistent-secret authority remain unchanged.
+- No hidden/shadow WebView, copied persistent token/cookie store, automatic retry/watchdog, resend/regenerate or fallback endpoint path was added.
 
-`DEV-conversation-recovery-0.1.0-b10` remains the accepted core recovery runtime evidence while b11 closes the feedback UX gap.
+## Recovery runtime history
 
-- Source `89129913cb29a35db9dec7a6d5670d1b3b76bc23`; CI run `32982836557` passed; artifact `9612167843`; IPA SHA-256 `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e`.
-- User tested exact b10 on iPhone / iOS 17.0 and reported no functional recovery problems.
-- Full reload visibly cleared the content, showed the reload state, then rebuilt the same conversation.
-- Diagnostics confirm two loaded-state latest-syncs and two full reloads all completed `status=ok`; both syncs had zero visible differences. No resend/duplicate observed.
+### b10 — accepted core recovery behavior
 
-## Delivery direction
+- Source `89129913cb29a35db9dec7a6d5670d1b3b76bc23`; run `32982836557`; artifact `9612167843`; IPA SHA `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e`.
+- iPhone/iOS 17.0: loaded-state latest-sync and full current-conversation reload worked. Full reload visibly cleared content, showed reload state and rebuilt the same conversation. Diagnostics proved two syncs and two reloads `status=ok`; no resend/duplicate observed.
 
-- **V0.1 read-use**: native shell + list/detail/message rendering + manual latest-message sync/current-conversation reload. Core recovery runtime is accepted on b10; b11 now has Code+CI+Artifact and needs only the quick feedback UI device check before final merge.
-- **V0.2 chat-use**: V0.1 + send/new conversation + streaming + stop + visible reasoning interaction + reasoning-to-final haptics + recovery integration.
-- **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and other daily-use features.
+### b11 — request path accepted, feedback presentation rejected
 
-`DEV-conversation-round-count` remains planned serially after recovery unless the latest conflict scan changes ordering.
+- Run `32988700796`; artifact `9613806931`; IPA SHA `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`.
+- Exact b11 export on iPhone/iOS 17.0 proved four latest-sync requests completed `status=ok` with 275 visible messages and zero added/removed/changed messages; one full reload also succeeded.
+- User saw no visible sync feedback. The navigation-bar prompt presentation is rejected and superseded by b12's centered toast.
+- b11 cold launch still required tapping `登录 / 账户验证`; b11 intentionally did not change auth.
 
-## Authentication evidence / next separate problem
+## Cold-start authentication evidence and ownership
 
-Embedded Google login and default persistent `WKWebsiteDataStore` remain the accepted architecture. `AuthSessionStore` remains the in-memory account-context owner; copied WebKit cookies/session bearer are transient.
+Current main governance explicitly assigns cold-start login-state recovery to `DEV-conversation-recovery`; **do not create a separate `DEV-auth-resume` Work**.
 
-b10 diagnostics give concrete cold-start evidence: default WebKit cookie store starts `0/0`; `/api/auth/session` returns HTTP 200 but lacks required session fields; after a real visible `WKWebView` navigation, the same default store hydrates to dozens of cookies and account verification succeeds. User requires normal cold-start recovery to be background/invisible.
+Evidence:
 
-This auth-resume work is separate from recovery. After recovery completes, the first experiment must test public `WKWebsiteDataStore.default()` background data-store warm-up/data-record + cookie-store initialization followed by one normal account probe. No hidden/shadow WebView, no persisted copied Cookie/token/session secrets, no retry/watchdog loop. Visible official verification is fallback only if background warm-up is proven insufficient.
+- Prior cold launches can expose the default WebKit cookie store as 0/0 and `/api/auth/session` without usable session fields until real WebKit activity hydrates the persistent default store.
+- In the b11 export after visible WebKit login navigation, cookie counts were already 47/28 and 49/30; three immediate normal account probes failed at session transport with `NSURLErrorDomain -1005`; a later list-triggered normal probe succeeded with 48/29 cookies, valid session HTTP 200, Plus/personal account context, then list HTTP 200 28/29.
+- This does not justify an automatic retry loop. b12 tests only the narrower hypothesis that public default-data-store initialization should happen before the first native probe.
+- If b12 background warm-up + one normal probe still fails, preserve diagnostics and keep the existing visible `登录 / 账户验证` UI as explicit fallback. Do not silently navigate a WebView.
 
 ## Current architecture
 
 - `AppDelegate`: lifecycle/root setup.
-- `RootViewController`: production split shell.
+- `RootViewController`: production split shell and b12 cold-start WebKit data-store warm-up sequencing.
 - `ConversationRepository`: production conversation summaries, selected identity, loaded detail, current visible branch, latest-message sync and full selected-conversation reload semantics.
 - `ConversationSidebarViewController`: list presentation plus settings/login/list reload entry points.
-- `ConversationDetailViewController`: detail/message presentation and manual recovery UI; consumer of repository state.
-- `AuthWebViewController`: login UI/navigation.
+- `ConversationDetailViewController`: detail/message presentation, recovery menu and centered sync feedback.
+- `AuthWebViewController`: explicit visible login/verification UI only.
 - Default `WKWebsiteDataStore`: sole persistent auth-secret authority.
-- `AuthSessionStore`: account context and short-lived authorized native transport.
+- `AuthSessionStore`: account context, b12 data-store warm-up and short-lived authorized native transport.
 - `ProtocolReadProbe`: diagnostic-only.
 
-## Durable development plan
+## Delivery / serial development direction
 
-1. `DEV-app-foundation` — Completed / merged / Stable.
-2. `DEV-auth-bootstrap` — Completed / merged / Stable.
-3. `DEV-protocol-read` — Completed / merged / Stable for tested diagnostic read scope.
-4. `DEV-native-read-path` — Completed / merged / Stable for tested b9 scope.
-5. `DEV-conversation-recovery` — **Active b11; Code + static review + CI + Artifact; runtime feedback check pending**.
-6. `DEV-conversation-round-count` — planned serial UI/data-derived task after recovery.
-7. `DEV-send-stream`.
-8. `DEV-markdown-export`.
-9. `DEV-long-conversation`.
-10. `DEV-attachments`.
-11. Daily-use conversation features.
-12. Advanced capabilities.
+Latest project planning establishes the post-recovery order:
 
-Core state-owner work remains serialized; parallel edges require normal conflict scanning.
+1. `DEV-conversation-recovery` — **Active b12; Code + static review + CI + Artifact; Runtime pending**. Includes cold-start login-state recovery.
+2. `DEV-multi-conversation-state` — planned next to establish stable multi-conversation session/runtime ownership before send/stream.
+3. `DEV-conversation-round-count` / preferences integration — after multi-conversation state unless conflict scanning proves otherwise.
+4. `DEV-send-stream` — after the state-owner baseline is ready.
+5. Markdown export, long-conversation tuning, attachments and remaining daily-use capabilities follow their current dependency plans.
+
+Core state-owner work remains serialized. Parallel edge work requires normal file/state-owner/dependency conflict scanning.
 
 ## Known issues / constraints
 
 - No unit/UI test target; automated validation is Release compile, IPA packaging/inspection and artifact upload.
-- b11 feedback UI still needs one quick real-device confirmation before recovery can be called Stable/merged.
-- Cold-start usable-auth persistence/recovery remains Unverified with concrete 0-cookie evidence; separate auth-resume work is planned after recovery.
+- **b12 cold-start background recovery is not runtime-proven yet.** Code/CI/Artifact does not mean the login issue is solved.
+- b12 centered sync toast is also not runtime-proven yet.
 - b9's large tested conversation took 20.74 s end-to-end; performance decomposition remains Unverified.
-- Send, streaming, attachments, non-personal workspace behavior, lower iOS runtime and iPad runtime remain Unknown / Unverified.
+- Send, streaming, multi-conversation runtime ownership, attachments, non-personal workspace behavior, lower iOS runtime and iPad runtime remain Unknown / Unverified as applicable.
 
 ## Evidence rule
 
-Always distinguish Code written, checks/CI passed, Artifact produced, Runtime/manual/real-device tested, and Stable/Frozen acceptance. Current real-device evidence outranks historical assumptions.
+Always distinguish Code written, static/local checks, CI passed, Artifact produced, Runtime/manual/real-device tested, and Stable/Frozen acceptance. Current user/device evidence outranks older assumptions.

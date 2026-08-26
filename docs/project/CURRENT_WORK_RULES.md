@@ -31,4 +31,4 @@ The conversation/context limit is unpredictable. Once the rules problem and usab
 
 ## Completion
 
-When complete, move durable rules to permanent files, reset only this file to `Idle`, and do not modify/delete/reset any Active development checkpoint merely to finish rules work.
+When complete, move durable rules to permanent rule files, reset only this file to `Idle`, and do not modify/delete/reset any Active development checkpoint merely to finish rules work.

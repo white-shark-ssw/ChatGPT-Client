@@ -19,10 +19,14 @@ final class RootViewController: UISplitViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground
         preferredDisplayMode = .oneBesideSecondary
         preferredSplitBehavior = .tile
         presentsWithGesture = true
+        AuthSessionStore.shared.warmDefaultWebDataStore { [weak self] in self?.configureConversationShell() }
+    }
 
+    private func configureConversationShell() {
         let sidebarNavigationController = UINavigationController(rootViewController: sidebarViewController)
         let detailNavigationController = UINavigationController(rootViewController: detailViewController)
         setViewController(sidebarNavigationController, for: .primary)

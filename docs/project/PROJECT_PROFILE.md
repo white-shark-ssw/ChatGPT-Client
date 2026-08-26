@@ -33,7 +33,8 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore`, accepted from real-device evidence.
 - **Safe auth evidence/account-context owner**: `ChatGPTClient/Authentication/AuthSessionStore.swift`; copied WebKit auth context and `/api/auth/session` bearer are transient only. Native `/auth/login` remains historical route-specific evidence and is not a current account-context gate.
 - **Account/workspace context owner**: accepted b6 in-memory context in `AuthSessionStore`. Current parser uses `account_ordering` + keyed `accounts` + nested `account.account_id` and is real-device verified for the tested account.
-- **Conversation/private protocol owner**: Not established yet; `DEV-protocol-read` must establish current request/response evidence before production state ownership is introduced.
+- **Protocol-read diagnostic owner**: `ChatGPTClient/Protocol/ProtocolReadProbe.swift` in active `DEV-protocol-read`. It is diagnostic-only, persists no conversation payload/model/repository, and does not become the production conversation state owner.
+- **Production conversation/private protocol owner**: Not established yet; current list/detail runtime evidence must be accepted before `DEV-native-read-path` introduces production conversation ownership.
 - **Test roots**: None yet.
 
 ## Build and validation
@@ -41,9 +42,9 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Primary packaging command**: `bash scripts/build_ipa.sh` on macOS with Xcode.
 - **Underlying build**: `xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Release -sdk iphoneos ... build` with signing disabled for TrollStore candidate packaging.
 - **Lint/static checks**: No separate lint tool configured.
-- **CI workflow**: `.github/workflows/ios-foundation.yml` on GitHub-hosted `macos-15`; accepted b6 push run used Xcode 16.4 / iPhoneOS 18.5 SDK and compiled for `arm64-apple-ios14.0`.
+- **CI workflow**: `.github/workflows/ios-foundation.yml` on GitHub-hosted `macos-15`. Current protocol-read candidate b7 passed an exact-branch push build with Xcode 16.4 / iPhoneOS 18.5 SDK and `arm64-apple-ios14.0`.
 - **Artifact/package output**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` plus `.sha256`.
-- **Current validation level**: foundation, embedded login/persistence, direct session/accounts transport and ordered account-context parsing are runtime accepted on iPhone / iOS 17.0 through b6. Conversation/private protocol remains Unknown / Unverified.
+- **Current validation level**: Foundation/auth/account context are runtime accepted on iPhone / iOS 17.0 through b6. `DEV-protocol-read-0.1.0-b7` has **Code written + CI passed + Artifact produced** for the current minimal list/detail diagnostic harness, but conversation-list/detail runtime behavior remains Unknown / Unverified until device testing.
 
 ## Versioning and candidate identity
 
@@ -54,7 +55,7 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Historical native `/auth/login` success/failure evidence**: b3/b4.
 - **Direct native session/accounts transport evidence**: b5/b6.
 - **Merged auth/account-context runtime baseline**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
-- **Next test-candidate identity**: Not allocated. `DEV-protocol-read` must inspect `BUILD_TEST_INDEX.md` and all Active checkpoints immediately before producing its first artifact.
+- **Active protocol-read candidate**: `0.1.0 (7)` / `DEV-protocol-read-0.1.0-b7`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`; authoritative push run `32938912018`; artifact ID `9595827498`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`; runtime pending.
 - **Parallel test-candidate scheme**: `DEV-<work-slug>-<marketing-version>-b<build>`; identities must remain unique across Active tasks.
 - **Artifact naming rule**: `ChatGPTClient-<marketing-version>-b<build>-<work-slug>.ipa`.
 - **Current bundle identifier**: `com.whitesharkssw.chatgptclient`; accepted but not Frozen as a permanent signing/product contract.
@@ -75,8 +76,8 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - b2 source `809fa03e673afded87cb47fb755c998ab1b58e12` established Google login + WebKit persistence.
 - b3 source `0fcf040012c0698d0e3ce1628fec9865237eba3b` established one successful native `/auth/login` result; b4 source `33ea1b96f755bdf21fdd7691a9f1084a6d624908` later showed native Cloudflare HTTP 403 while WebKit remained authenticated.
 - b5 source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` established a successful direct session/accounts HTTP 200 path and exposed the old parser.
-- b6 exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; run `32934821144`; artifact ID `9594474567`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; artifact ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`.
-- b6 runtime export matches build 6/source `19c0cd22923d`, iPhone / iOS 17.0. First account probe returned session HTTP 403; after explicit user `重新开始`, second probe returned session HTTP 200, accounts-check HTTP 200, ordered account context verified (`plus`, `personal`) and `status=ok`.
+- b6 exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; run `32934821144`; artifact ID `9594474567`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`.
+- b7 exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`; push run `32938912018`; artifact ID `9595827498`; IPA `ChatGPTClient-0.1.0-b7-dev-protocol-read.ipa`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`; artifact ZIP digest `sha256:c1d851dc949a43587f94fffd34b35c233ff5f35a2c8eef3399d2e722a9f7833f`. Downloaded ZIP and IPA hashes were independently rechecked. Commits after `44a137...` currently modify project docs only and do not change the tested product/workflow code.
 
 ## Historical reference material
 
@@ -86,9 +87,9 @@ The previous-project history pack is experience/reference only. It is not the cu
 
 - Runtime success on iOS 17.0 does not prove runtime compatibility on all systems down to the compiled iOS 14.0 minimum.
 - Native `/auth/login` results are route/time-specific and not a durable prerequisite contract.
-- Direct `/api/auth/session` can return HTTP 403 under observed challenge conditions; current code intentionally has no speculative automatic retry. b6 accepted success came from a later user-triggered verification attempt.
-- b6 auth/account success does not prove any conversation-list/detail/streaming protocol behavior.
-- Current private conversation protocol must be established from current evidence before implementation.
+- Direct `/api/auth/session` can return HTTP 403 under observed challenge conditions; current code intentionally has no speculative automatic retry.
+- b6 auth/account success does not prove conversation-list/detail/streaming behavior.
+- b7 CI/artifact success proves build/package identity only. Conversation-list/detail protocol must still be established from current real-device evidence before becoming a production contract.
 
 ## Auto-refresh rule
 

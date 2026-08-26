@@ -43,10 +43,13 @@ final class AuthTransientSession {
         self.accessToken = accessToken
     }
 
-    func dataTask(with request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
+    @discardableResult
+    func dataTask(with request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
         var authorizedRequest = request
         authorizedRequest.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        session.dataTask(with: authorizedRequest, completionHandler: completion).resume()
+        let task = session.dataTask(with: authorizedRequest, completionHandler: completion)
+        task.resume()
+        return task
     }
 
     func finishTasksAndInvalidate() {
@@ -79,6 +82,33 @@ final class AuthSessionStore {
         lock.unlock()
         if changed { diagnostics.info(category: "auth", name: "session.webState", fields: ["state": state.rawValue]) }
         return state
+    }
+
+    func warmDefaultWebDataStore(completion: @escaping () -> Void) {
+        let dataStore = WKWebsiteDataStore.default()
+        let cookieStore = dataStore.httpCookieStore
+        let span = diagnostics.startSpan(category: "auth", name: "webDataWarmup")
+        cookieStore.getAllCookies { [weak self] beforeCookies in
+            guard let self else { return }
+            let beforeMatched = beforeCookies.filter(Self.isAuthCookieDomain)
+            let beforeFields = ["itemCount": String(beforeCookies.count), "matchedItemCount": String(beforeMatched.count)]
+            self.diagnostics.info(category: "auth", name: "webDataWarmup.before", traceID: span.traceID, fields: beforeFields)
+            dataStore.fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+                cookieStore.getAllCookies { afterCookies in
+                    let afterMatched = afterCookies.filter(Self.isAuthCookieDomain)
+                    let fields = [
+                        "beforeItemCount": String(beforeCookies.count),
+                        "beforeMatchedItemCount": String(beforeMatched.count),
+                        "websiteDataRecordCount": String(records.count),
+                        "afterItemCount": String(afterCookies.count),
+                        "afterMatchedItemCount": String(afterMatched.count)
+                    ]
+                    self.diagnostics.info(category: "auth", name: "webDataWarmup.after", traceID: span.traceID, fields: fields)
+                    span.end(status: "ok", fields: fields)
+                    DispatchQueue.main.async { completion() }
+                }
+            }
+        }
     }
 
     func probeNativeSession(using cookieStore: WKHTTPCookieStore, completion: @escaping (AuthNativeSessionState) -> Void) {

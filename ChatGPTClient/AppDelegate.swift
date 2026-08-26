@@ -9,11 +9,18 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let launchSpan = diagnostics.startSpan(category: "app", name: "launch", fields: ["launchOptionsPresent": launchOptions == nil ? "false" : "true"])
         let window = UIWindow(frame: UIScreen.main.bounds)
-        window.rootViewController = RootViewController()
+        let startupViewController = UIViewController()
+        startupViewController.view.backgroundColor = .systemBackground
+        window.rootViewController = startupViewController
         window.makeKeyAndVisible()
         self.window = window
-        diagnostics.info(category: "app", name: "ready", fields: ["root": "RootViewController", "candidate": AppBuildInfo.current.candidate])
-        launchSpan.end()
+
+        AuthSessionStore.shared.warmDefaultWebDataStore { [weak self] in
+            guard let self, let window = self.window else { return }
+            window.rootViewController = RootViewController()
+            self.diagnostics.info(category: "app", name: "ready", fields: ["root": "RootViewController", "candidate": AppBuildInfo.current.candidate])
+            launchSpan.end()
+        }
         return true
     }
 

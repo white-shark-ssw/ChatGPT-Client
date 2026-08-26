@@ -1,6 +1,6 @@
 import UIKit
 
-final class RootViewController: UISplitViewController {
+final class RootViewController: UISplitViewController, UISplitViewControllerDelegate {
     private let diagnostics = DiagnosticsLogger.shared
     private let repository = ConversationRepository()
     private let sidebarViewController: ConversationSidebarViewController
@@ -10,6 +10,18 @@ final class RootViewController: UISplitViewController {
         sidebarViewController = ConversationSidebarViewController(repository: repository)
         detailViewController = ConversationDetailViewController(repository: repository)
         super.init(style: .doubleColumn)
+        delegate = self
+
+        let sidebarNavigationController = UINavigationController(rootViewController: sidebarViewController)
+        let detailNavigationController = UINavigationController(rootViewController: detailViewController)
+        setViewController(sidebarNavigationController, for: .primary)
+        setViewController(detailNavigationController, for: .secondary)
+
+        sidebarViewController.onSelectConversation = { [weak self] id in
+            guard let self else { return }
+            self.detailViewController.showConversation(id: id)
+            self.show(.secondary)
+        }
     }
 
     @available(*, unavailable)
@@ -19,23 +31,14 @@ final class RootViewController: UISplitViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground
         preferredDisplayMode = .oneBesideSecondary
         preferredSplitBehavior = .tile
         presentsWithGesture = true
-
-        let sidebarNavigationController = UINavigationController(rootViewController: sidebarViewController)
-        let detailNavigationController = UINavigationController(rootViewController: detailViewController)
-        setViewController(sidebarNavigationController, for: .primary)
-        setViewController(detailNavigationController, for: .secondary)
-        detailViewController.navigationItem.leftItemsSupplementBackButton = true
-        detailViewController.navigationItem.leftBarButtonItem = displayModeButtonItem
-
-        sidebarViewController.onSelectConversation = { [weak self] id in
-            guard let self else { return }
-            self.detailViewController.showConversation(id: id)
-            self.show(.secondary)
-        }
-
         diagnostics.info(category: "ui", name: "nativeConversationShell.loaded")
+    }
+
+    func splitViewController(_ svc: UISplitViewController, topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {
+        repository.selectedConversationID == nil ? .primary : .secondary
     }
 }

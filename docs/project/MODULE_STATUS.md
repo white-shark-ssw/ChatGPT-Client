@@ -3,35 +3,32 @@
 | Module | Status | Owner / baseline | Notes |
 |---|---|---|---|
 | Repository AI governance | Active | `AGENTS.md` + `docs/project/` | Governance bootstrap remains authoritative. |
-| Native application shell | **Stable for tested scope** | `AppDelegate.swift`, `RootViewController.swift`; `DEV-native-read-path-0.1.0-b9` | Split sidebar/detail shell and two selected conversation reads were real-device accepted on iPhone/iOS 17.0. PR #9 merged at `467ea885d120fa59809c95c914b1ac670d76ee05`. Compact-width breadth beyond tested path remains Unverified. Not Frozen. |
-| Build/runtime metadata | Stable | `AppBuildInfo.swift`, Xcode settings, `Info.plist` | b9 exact version/build/source/runtime identity matched exported diagnostics. Not Frozen. |
-| Diagnostics / logging | Stable | `Diagnostics.swift` | Structured OSLog + bounded JSONL + redacted export + clear control. b9 `conversationHash` + list position correlated two distinct real-device selections without raw conversation IDs/bodies. Not Frozen. |
-| IPA build / CI packaging | Stable | `scripts/build_ipa.sh`, `.github/workflows/ios-foundation.yml` | b9 source `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7` run `32978476582` passed; artifact ID `9610449216`; IPA SHA-256 `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e`. Not Frozen. |
-| Embedded web login | Stable | `AuthWebViewController.swift`; b2+ | Embedded Google login remains accepted. b9 began with 0/0 WebKit cookies and required explicit login verification, so install/update auth persistence remains Unverified. Not Frozen. |
-| Authentication/account context | Stable | `AuthSessionStore.swift`; b6/b7 + b9 production reuse evidence | Plus/personal account context verified in b9 after explicit login; native reads reused the same owner. No automatic retry. Not Frozen. |
-| Protocol-read diagnostic transport | **Stable for accepted diagnostic scope** | `AuthTransientSession` + `ProtocolReadProbe.swift`; `DEV-protocol-read-0.1.0-b7` | **Code + CI + Artifact + real-device tested.** Diagnostic-only; not production state owner. Not Frozen. |
-| Conversation-list/detail protocol evidence | **Stable for tested scope** | b7 diagnostic + b9 production runtime evidence | b9 confirms current production list/detail transport can succeed for two distinct Plus/personal conversations. Earlier b8 one-off HTTP 500 is not evidence of a systematic current failure. Not Frozen. |
-| Native conversation read path | **Stable for tested scope** | `ConversationRepository` + sidebar/detail/message UI; `DEV-native-read-path-0.1.0-b9` | **Code + CI + Artifact + real-device tested** for shell/list/two-detail/current visible branch on iPhone/iOS 17.0. Position 1: 1.53 MB / 337 mapping / 154 visible / 5.67 s; position 13: 7.50 MB / 2023 mapping / 843 visible / 20.74 s. PR #9 merged. Terminal manual reload was not triggered; its failure-path runtime behavior remains Unverified. Not Frozen. |
-| Streaming / send / attachments | Unknown / Unverified | Future development tasks | Not proven by b7-b9 read work. |
-
-## Allowed statuses
-
-Use concise statuses such as Active, Candidate, Accepted Candidate, Stable, Frozen, Experimental, Deprecated, or Unknown / Unverified.
-
-## Frozen rule
-
-Before changing a Frozen or Stable core module for an unrelated task, verify the task truly requires it and record the evidence. Stable does not mean Frozen.
+| Native application shell | **Stable b9 scope / b14 compact startup accepted** | `AppDelegate.swift`, `RootViewController.swift`; b9 + b12-b14 | b12 warm-up runtime-proven; b13 fixed immediate list initiation but compact navigation failed. Exact b14 is real-device accepted on iPhone/iOS17 for initial primary/list root, removal of duplicate sidebar controls and native list/detail navigation. b15 does not change shell behavior. Not Frozen. |
+| Build/runtime metadata | Stable capability / **b15 active artifact** | `AppBuildInfo.swift`, Xcode settings, `Info.plist` | b15 verifies `0.1.0 (15)`, candidate b15, source `fb0c6d75362e`, min iOS14, arm64. Not Frozen. |
+| Diagnostics / logging | Stable | `Diagnostics.swift` + auth/recovery call sites | Existing privacy-safe warm-up/freshness diagnostics remain. b15 adds only `detail.cancel.requested` / `detail.cancelled` generation metadata; no raw IDs/bodies/secrets. Not Frozen. |
+| IPA build / CI packaging | Stable capability; **b15 produced** | `scripts/build_ipa.sh`, workflow | Run `33004536664` passed; artifact `9619988065`; IPA SHA `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`; tested tree `7a988bcad27d023eac77683985c5d7d92b22c176`. Not Frozen. |
+| Embedded web login | Stable explicit fallback | `AuthWebViewController.swift`; b2+ | Visible Login remains fallback only. No hidden/shadow WebView. Not Frozen. |
+| Authentication/account context | **Stable baseline + accepted public warm-up** | `AuthSessionStore.swift`; b6 + b12/b13 runtime | b15 does not change auth/account semantics. `AuthTransientSession.dataTask` only returns the same already-created/resumed transient `URLSessionDataTask` handle so the conversation owner can cancel a detail request. Authorization/cookie/endpoint behavior is unchanged. Not Frozen. |
+| Protocol-read diagnostic transport | **Stable accepted diagnostic scope** | `AuthTransientSession` + `ProtocolReadProbe.swift`; b7 | Diagnostic-only; existing callers ignore the new discardable task return exactly as before. Not Frozen. |
+| Conversation-list/detail protocol evidence | **Stable tested scope** | b7 + b9-b13 runtime | Current list/detail endpoints/parsers/headers are unchanged by b15. Not Frozen. |
+| Native conversation read path | **Stable b9 scope / b14 shell accepted / b15 lifecycle candidate** | `ConversationRepository` + sidebar/detail UI | b13 generation rejection is runtime-proven; b14 compact navigation accepted. b15 adds selected-detail task ownership so explicit manual replacement can cancel the old network task while retaining freshness generation. Runtime pending. Not Frozen. |
+| Manual conversation recovery | **Active — b15 Artifact ready / Runtime pending** | `ConversationRepository` + detail UI + shell | b10 core recovery accepted; b12 centered toast accepted; b14 compact shell accepted. b13 exposed HTTP429 when replacement detail requests overlapped an old in-flight request. b15 tracks/cancels the old selected-detail task before manual replacement and preserves generation rejection. Code + static review + CI + Artifact; Runtime pending. PR #10 open. Not Frozen. |
+| Multi-conversation state ownership | Planned / Unverified | future `DEV-multi-conversation-state` | Starts only after recovery is accepted/merged; will generalize current single-selected freshness/request lifecycle into account-scoped resident per-conversation state. |
+| Streaming / send / attachments | Unknown / Unverified | Future Work | Not proven by b7-b15 read/recovery work. |
 
 ## Current acceptance boundary
 
-- `DEV-app-foundation-0.1.0-b1`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**; foundation Stable, not Frozen.
-- `DEV-auth-bootstrap-0.1.0-b6`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**; auth/account context Stable for tested iPhone/iOS 17.0 scope.
-- `DEV-protocol-read-0.1.0-b7`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**; Plus/personal list + one-detail diagnostic protocol accepted.
-- `DEV-native-read-path-0.1.0-b8`: **Code + CI + Artifact + real-device tested, partial/failing acceptance**; historical predecessor with one detail HTTP 500 before parse/render.
-- `DEV-native-read-path-0.1.0-b9`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** for native shell/list/two-detail/current-branch message rendering; merged and Stable for tested scope. Terminal detail reload and install/update auth persistence remain separately Unverified.
+- b1/b6/b7/b9 are Stable/accepted for their recorded scopes.
+- b10 accepted core manual recovery.
+- b11 feedback presentation rejected.
+- b12 = Code + CI + Artifact + Runtime partial acceptance: centered sync feedback and WebKit warm-up accepted; initial list sequencing rejected.
+- b13 = Code + CI + Artifact + Runtime partial/failing: immediate list initiation and stale generation accepted; compact navigation failed; concurrent replacement requests produced HTTP429.
+- b14 = **Code + static/source review + CI + Artifact + Runtime/manual accepted for compact startup/navigation**.
+- b15 = **Code + static/source review + CI + Artifact; Runtime/manual pending** for selected-detail cancellation/replacement.
+- `DEV-conversation-recovery` remains **Active / not Stable / not merged** until b15 real-device acceptance.
 
-Runtime compatibility below iOS 17.0, iPad, non-personal workspace behavior, send/streaming and attachments remain unverified.
+Runtime below iOS17, iPad, non-personal workspace, b15 selected-detail replacement behavior, multi-conversation ownership, send/streaming and attachments remain unverified.
 
-## Auto-refresh rule
+## Frozen / auto-refresh rule
 
-Update this matrix when modules are added, ownership changes, a module becomes stable/frozen, a frozen decision is reopened, or a new candidate supersedes an old baseline.
+Stable does not mean Frozen. Update this matrix when ownership, candidate evidence, accepted runtime behavior or stability changes.

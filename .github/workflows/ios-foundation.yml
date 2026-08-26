@@ -1,9 +1,10 @@
-name: iOS Native Read Path
+# Candidate: DEV-conversation-recovery-0.1.0-b15
+name: iOS Conversation Recovery
 
 on:
   push:
     branches:
-      - dev/native-read-path-20260826
+      - dev/conversation-recovery-20260826
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
@@ -43,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-native-read-path-0.1.0-b9
+          name: ChatGPTClient-DEV-conversation-recovery-0.1.0-b15
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

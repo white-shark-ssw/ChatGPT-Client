@@ -8,175 +8,122 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Previous-project history is reference-only, not current protocol authority.
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
-- Product delivery priority: **reach a genuinely usable TrollStore client as early as possible, then iterate in real-device candidates instead of waiting for the whole roadmap to finish**.
-- Accepted foundation baseline: `DEV-app-foundation-0.1.0-b1`.
-- Accepted auth/account baseline: `DEV-auth-bootstrap-0.1.0-b6`, merged through PR #6.
-- Accepted diagnostic conversation-read baseline: `DEV-protocol-read-0.1.0-b7` for the tested Plus/personal list + one-detail path on iPhone / iOS 17.0, merged through PR #7 at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
-- Accepted production native-read baseline: `DEV-native-read-path-0.1.0-b9` for the tested Plus/personal native shell/list/two-detail/current-visible-branch scope on iPhone / iOS 17.0, merged through PR #9 at `467ea885d120fa59809c95c914b1ac670d76ee05`. Stable for tested scope, not Frozen.
+- Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device candidates.
+- Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for the tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
 
 ## UI / interaction contract
 
-- The **official ChatGPT iOS interaction model is the default baseline** where the user considers it acceptable. Do not invent a separate UI language merely to be different.
-- This is an interaction/behavior baseline, not a pixel-perfect copying requirement. Prefer native UIKit/system behavior compatible with the current deployment target.
-- The user's recordings are visual reference for sidebar/navigation, conversation layout, composer, send/stop state, assistant message layout/actions, menus/sheets, project-style navigation patterns, and reasoning presentation.
-- `导出 Markdown` visible in the user's recording is **not an official-App feature**; it came from the user's injected dylib. Treat Markdown export as our enhancement, not official interaction evidence.
-- Preserve the official-style reasoning interaction when current protocol supplies user-visible reasoning status/detail: subdued gray active state with shimmer/flowing-light treatment; tappable expand/collapse detail; completed static summary such as `思考了 Xs` when duration is available; final answer below.
-- Only display reasoning summary/detail/tool-status explicitly returned for user display. Never manufacture, infer or expose hidden chain-of-thought.
-- The user explicitly requires the official-style **two short haptic pulses** at the real-time reasoning -> final-answer transition. Exact intensity/spacing must be real-device tuned; trigger from response lifecycle state, not cell redraw, and do not replay merely because completed content is reloaded.
-- Keep ordinary conversation actions inside official-style overflow/context menus rather than crowding the main navigation bar.
-- UI text/title remains a consumer, never an identity authority.
+- Official ChatGPT iOS interaction is the default baseline where acceptable; use native UIKit/system behavior, not a second UI language.
+- UI text/title is a consumer, never identity authority.
+- Ordinary conversation actions live in official-style overflow/context menus.
+- On compact iPhone with no selected conversation, initial product surface is the conversation list; opening/revealing a sidebar must not start the initial list request.
+- UISplitViewController/native navigation is the sole compact list/detail navigation owner for the accepted b14 shell; do not add a duplicate custom sidebar button.
+- `导出 Markdown` is our enhancement, not official-App evidence.
+- Preserve user-required reasoning interaction/haptics only when current protocol supplies explicit user-visible material; never expose hidden chain-of-thought.
 
 ## Fast usable candidate contract
 
-- Do not hold usable functionality until all roadmap phases are complete.
-- As soon as a coherent minimal user loop reaches its real artifact/test gate, produce a uniquely identified TrollStore candidate and let real-device evidence guide subsequent work.
-- First planned usability milestones are:
-  - **V0.1 read-use**: official-style native shell + conversation list/detail/message rendering + manual sync/reload.
-  - **V0.2 chat-use**: V0.1 + text send/new conversation + streaming + stop + user-visible reasoning interaction + reasoning-to-final haptics + manual recovery integration.
-  - **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and daily-use conversation features.
-- Candidate labels must still obey `BUILD_TEST_INDEX.md` uniqueness and evidence separation; speed does not justify mixing identities or calling CI/artifact success runtime proof.
+- Do not hold usable functionality until all roadmap phases complete.
+- Every testable candidate has a unique build/candidate/artifact identity and keeps Code / CI / Artifact / Runtime / Stable evidence separate.
 
 ## Manual recovery contract
 
 ### `同步最新消息`
 
-- This is an explicit user-triggered recovery tool for when server state may be ahead of local stream/thinking state, including the observed class where the server has completed and a completion notification may have arrived while the client still shows thinking/streaming.
-- Use the current authoritative conversation identity to fetch current server detail and reconcile through the production conversation owner.
-- It must not resend the user's prompt, regenerate, create a new conversation or enter an automatic retry loop.
-- If server detail shows completion, stale local thinking/streaming UI should be replaced by the current server-backed completed state.
+- Explicit user-triggered recovery through authoritative `ConversationRepository` for stale/incomplete local state.
+- Uses current authoritative conversation identity and current server detail; never resends/regenerates/creates another conversation.
+- Preserve an already loaded detail on sync failure when applicable.
+- Keep this action available while the ordinary initial detail request is still loading; a stuck ordinary load is itself a valid reason for one explicit manual recovery attempt.
+- b12 accepted feedback: centered `正在同步最新消息…`; then centered `已是最新` or `已同步最新消息` for about 2 seconds.
 
 ### `重载当前会话`
 
-- This is a user-triggered recovery tool for current-conversation load failure, timeout, blank/spinning state or otherwise unusable local conversation state.
-- Re-request current conversation detail and rebuild that conversation through the authoritative conversation owner.
-- Provide a direct `重新加载` action in terminal load-error UI; a manual conversation-menu entry may also exist for loaded-but-broken/stale state.
-- Preserve unsent composer draft when practical; never resend existing messages.
-- Do not turn reload into an automatic retry/watchdog chain.
+- Explicit user-triggered recovery for failed, timed-out, blank/spinning, stale or otherwise unusable current conversation.
+- Terminal load-error UI provides direct `重新加载`.
+- Keep overflow `重载当前会话` available during ordinary initial detail loading, not only after successful load.
+- Reload clears/rebuilds selected authoritative detail from one fresh server request; never resends existing messages.
+- Duplicate manual recovery taps may be disabled while the manual action itself is active.
 
-### Recovery diagnostics
+### Replacement request lifecycle
 
-- Log safe start/end/status/timing/count/diff/state-transition evidence sufficient to distinguish server-state, local merge/store and UI-render failures.
-- Never log message bodies, raw payloads or auth secrets.
+- If a newer explicit manual sync/reload replaces an older selected-detail request that is still in flight, `ConversationRepository` must **cancel/replace the older selected-detail network task before starting the replacement request**.
+- Retain operation-generation/freshness rejection so a late callback from an obsolete task cannot mutate or surface stale state after the newer operation owns the selected detail.
+- This cancellation/task handle is request-lifecycle ownership inside the same authoritative repository; it must not become a second conversation-data authority.
+- b13 runtime is the evidence for this rule: the stale generation was correctly discarded, while concurrently started replacement requests returned HTTP429.
+- b15 implements this lifecycle at the authoritative owner and has Code + static/source review + CI + Artifact evidence; Runtime/manual acceptance is still required before calling the overlap defect solved.
 
-## Markdown export contract
+### Recovery diagnostics / prohibited behavior
 
-- `导出 Markdown` is a project enhancement historically useful to the user through an injected dylib, not an official ChatGPT iOS feature.
-- Export from the authoritative conversation model/current user-visible branch, never from mounted UI cells.
-- Preserve useful Markdown structure/code blocks and supported visible attachment references.
-- Do not export hidden/internal reasoning/tool content that is not user-visible.
-- Place the action naturally in the official-style conversation menu and use normal iOS share/file presentation.
+- Log safe timing/count/diff/state/freshness evidence only; no raw IDs, message bodies, payloads or auth secrets.
+- No automatic retry/watchdog/timer/resend/regenerate/fallback chain.
+- A request-generation/freshness guard and request-task cancellation are allowed at the authoritative owner; neither initiates automatic retries or creates a second store.
 
-## Background execution / completion-notification contract
+## Cold-start authentication contract
 
-- Durable plan: `docs/project/BACKGROUND_EXECUTION_PLAN.md`.
-- Background continuation is **response-scoped**. Do not keep the app artificially alive when no response is actively reasoning/streaming.
-- After `DEV-send-stream` establishes the real response owner, first implement `DEV-background-notify`: continue the same response using normal iOS background-task time and issue a local `回答已完成` notification if final state arrives while backgrounded.
-- Public iOS APIs do not provide a reliable user-selectable `30分钟 / 1小时` execution guarantee. Do not expose such a setting as though the duration were controllable.
-- If normal background time expires before completion, do not resend, regenerate or create another stream. End the background assertion cleanly and use `同步最新消息` on foreground recovery.
-- `DEV-trollstore-true-background` is a separate TrollStore-only experiment after the normal background baseline. Do not let this experiment block the first daily-chat candidate.
-- Public distribution material for `巨魔真后台` identifies developer `bswbw` and TrollStore/iOS 14–17 support, but no public source was found in the 2026-08-26 investigation. Its internal mechanism therefore remains Unknown / Unverified.
-- Open-source TrollSpeed/UIDaemon-derived code is reference evidence that privileged TrollStore processes can use root persona, private memorystatus/jetsam controls and non-freezable process behavior. It does **not** prove that those techniques can be copied directly into this client or that an authenticated stream will survive unchanged.
-- Do not blanket-copy `platform-application`, `no-sandbox`, jetsam/memorystatus or other broad private entitlements into the main authenticated client. A dedicated real-device experiment must prove the smallest necessary mechanism first.
-- If privileged process control is required, prefer a minimal isolated helper. Keep ChatGPT cookies, bearer tokens, message bodies and actual authenticated stream content out of helper IPC whenever feasible; the normal production response/conversation owner remains authoritative.
-- Do not move the ChatGPT stream into a privileged helper merely for convenience.
-- Any accepted TrollStore true-background mode must release elevated/background-preservation state immediately on final answer, cancel/stop, terminal error or user disable. Explicit user force-quit should stop rather than silently respawn the client unless a later explicit requirement changes that rule.
-- Treat 5/15/30/60-minute runs as **real-device validation targets**, not promises. Do not claim 30- or 60-minute support until the exact candidate survives those tests with acceptable battery/thermal behavior.
-- Default local notification content should remain privacy-safe and concise; do not include full prompts/answers or secrets by default.
-
-## Repository governance contract
-
-- Repository AI Governance Rules are dynamic authority.
-- Every new work session reads root `AGENTS.md`, then `docs/project/START_HERE.md`.
-- Material source/CI/artifact/runtime/architecture/status changes require same-cycle checkpoint and durable-doc updates.
+- Tested login entry remains embedded `WKWebView`; default persistent `WKWebsiteDataStore` is sole persistent auth-secret authority.
+- Do not persist copied cookies/tokens/session values outside WebKit; transient native copies remain ephemeral.
+- Native `/auth/login` is not an account-context prerequisite. Sequencing remains current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
+- b12 real-device evidence proves one public `WKWebsiteDataStore.default()` warm-up can hydrate usable persisted auth for the tested iPhone/iOS17 cold start.
+- This tested-scope result does not justify retry loops or hidden/shadow WebViews and does not prove all install/update/session states.
+- After warm-up, initial conversation-list loading must begin independently of any manual sidebar reveal.
 
 ## Protocol evidence contract
 
-- Do not implement private/internal Web API behavior from historical names, shapes or memory alone.
-- Establish current evidence for path/method/auth/account context/headers/body/response/stream/state/failure behavior as applicable before making a protocol capability authoritative.
-- Current real-device evidence outranks history and CI-only evidence.
-- **Accepted b7 personal-account diagnostic read path**: transient native transport with copied ephemeral WebKit cookies + transient bearer; `GET /backend-api/conversations?offset=0&limit=28&order=updated`; then `GET /backend-api/conversation/{conversation_id}` for a returned ID.
-- In the accepted b7 Plus/personal run, no `chatgpt-account-id` or extra browser-only header set was required. This is a tested-scope fact, not a universal rule for other workspace structures.
-- Accepted b7 list result: HTTP 200, 28 items / total 29, response limit 28, offset 0.
-- Accepted b7 first-detail result: HTTP 200, 13,152,411 bytes, mapping 2068 / message nodes 2067; current node present+mapped; returned conversation identity present+matching. Role counts summed exactly to all message nodes.
-- **Accepted b9 production native-read path**: `ConversationRepository` is the production owner for summaries, selected identity, loaded detail and current visible branch. It reuses the same transient auth owner/path and list/detail routes rather than `ProtocolReadProbe` state.
-- Accepted b9 runtime result on iPhone/iOS 17.0 after explicit login verification: production list HTTP 200, 28/29. Two distinct selected conversations both completed detail/current-branch/render: position 1 = 1,529,866 bytes / mapping 337 / visible messages 154 / 5,668.41 ms; position 13 = 7,503,328 bytes / mapping 2023 / visible messages 843 / 20,742.89 ms. The user confirmed both were fully readable.
-- b9's privacy-safe `conversationHash` + 1-based `listPosition` is an accepted correlation mechanism for production conversation diagnostics. Never log raw conversation IDs, full titles, message bodies/parts or payload dumps.
-- b7/b9 read success does **not** establish send/streaming/attachments, non-personal workspace behavior, iPad or lower-iOS runtime.
-- Terminal detail `重新加载` exists in b9 but was not exercised because both b9 details succeeded; its failure-path runtime behavior remains Unverified and must not be described as real-device proven.
-- `ProtocolReadProbe` remains diagnostic-only. Do not turn it into the production repository by convenience.
-
-## Authentication contract
-
-- Tested login entry remains embedded `WKWebView` at `https://chatgpt.com/auth/login`.
-- Continue with Google succeeds in the tested iPhone / iOS 17.0 environment.
-- Default persistent `WKWebsiteDataStore` is the sole persistent authentication-secret authority.
-- Do not create a second persistent Cookie/token/session authority.
-- `AuthSessionStore` may copy matching WebKit cookies transiently into an **ephemeral `URLSession`** for evidence-backed requests; copied values must not be persisted.
-- Native `/auth/login` is not an account-context prerequisite.
-- Account sequencing: authenticated WebKit -> ephemeral current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
-- Preserve challenge sensitivity: b5, b6 and b7 each showed a direct `/api/auth/session` HTTP 403 in at least one attempt followed by a later user-triggered successful verification. Current code intentionally has no speculative automatic retry.
-- b9 additionally showed a fresh app launch with 0 total / 0 matched WebKit cookies and missing required session fields; after explicit login verification, 48/29 then 49/30 total/matched cookies and Plus/personal account context succeeded. Therefore install/update authentication persistence remains Unknown / Unverified; do not silently add recovery until its state owner/failure mode is proven.
-- Accepted account parser uses non-empty `account_ordering`, keyed `accounts`, first ordered accessible entry, and nested `account.account_id`.
-- If future session/account requests fail, record exact stage/status/reason first. Do not immediately add retries, UA spoofing, Cloudflare bypass, alternate endpoints, browser-script token extraction or speculative parser fallbacks.
-- Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie values, full Cookie/Authorization headers or equivalent secrets.
+- Do not implement private/internal Web API behavior from history/memory alone.
+- Accepted tested read path remains transient bearer + ephemeral WebKit cookies with current conversation list/detail routes documented in project evidence.
+- Do not preemptively add `chatgpt-account-id`, duplicate browser headers, alternate endpoints or compatibility shims without concrete current failure.
+- `ProtocolReadProbe` remains diagnostic-only; `ConversationRepository` remains production conversation owner.
 
 ## Diagnostics / logging contract
 
-- Use the accepted `DiagnosticsLogger`/store/export authority for lifecycle/auth/network/protocol/conversation/stream/render/upload/persistence evidence.
-- Maintain bounded local history and redacted user-triggered export.
-- Repeated testing uses the existing **clear local diagnostics** control; clearing must not affect WebKit/authentication state.
-- Prefer method/path category, HTTP status, elapsed time, byte/item counts, pagination, MIME/type and terminal reason over payload contents.
-- Safe cookie diagnostics may record total/matched counts only, not Cookie names/values.
-- Production conversation diagnostics may use the accepted short irreversible `conversationHash` plus 1-based `listPosition`; raw conversation IDs remain prohibited.
-- Do not create competing diagnostics persistence/export/clear authority without concrete evidence.
+- Use existing `DiagnosticsLogger`/store/export authority.
+- Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
+- Safe auth diagnostics may record cookie total/matched counts only.
+- Safe production conversation diagnostics may use short irreversible conversation hash + list position and operation-generation/discard/cancellation reason.
+
+## Multi-conversation / state-owner direction
+
+- Current freshness generation and replacement task lifecycle are intentionally scoped to the current single-selected conversation model.
+- `DEV-multi-conversation-state` starts only after recovery acceptance/merge and will establish account-scoped per-conversation resident state/freshness before production send/stream.
+- Do not create a separate repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
+
+## Markdown export contract
+
+- Export authoritative current user-visible branch to Markdown, not mounted cells.
+- Never export hidden/internal reasoning/tool content.
+
+## Background execution contract
+
+- Durable plan: `docs/project/BACKGROUND_EXECUTION_PLAN.md`.
+- Background continuation is response-scoped; no automatic resend or second stream/store.
+- Public iOS APIs do not guarantee user-selected 30m/1h execution windows.
+- TrollStore true-background remains a later isolated experiment and must not grant broad private entitlements to the main authenticated app without evidence.
 
 ## Compatibility / deployment constraints
 
 - Native iOS; TrollStore IPA.
-- Intended device OS does not exceed iOS 17.0; this is a ceiling, not a minimum.
-- Current build deployment target remains iOS 14.0; do not raise without concrete API/dependency/runtime need.
-- Runtime evidence currently covers iPhone / iOS 17.0 only; do not infer iOS 14–16 or iPad runtime compatibility.
+- Intended environment ceiling iOS17; current build minimum iOS14.
+- Current runtime evidence covers iPhone/iOS17 only unless explicitly stated otherwise.
 
-## Critical invariants
+## Repository governance contract
 
-- Historical WebView chat code is not the native product baseline.
-- WebView use remains limited to the evidence-backed authentication/bootstrap role; native chat remains the product direction.
-- UI text/titles are consumers, not identity authorities.
-- `ConversationRepository` is the accepted production conversation read owner for the b9 tested scope; `ProtocolReadProbe` stays diagnostic-only.
+- Repository AI Governance Rules are dynamic authority.
+- Every work session reads root `AGENTS.md`, then `docs/project/START_HERE.md`.
+- Material source/CI/artifact/runtime/architecture/status changes update current checkpoint and durable docs in the same work cycle.
+
+## Critical invariants / prohibited routes
+
+- Historical WebView chat code is not native product baseline; WebView remains authentication/bootstrap only.
+- `ConversationRepository` is production conversation read/recovery owner; UI titles/text are never identity.
 - CI/artifact success is not runtime proof.
-- Auth route results remain tied to their tested route/time conditions.
-- b7 first account HTTP 403 must not erase the accepted explicit-restart success; b7 success must not erase challenge sensitivity.
-- b9 two-detail success means the earlier b8 one-off HTTP 500 is not proof of a systematic current native-read implementation failure; its exact cause remains unproven.
-- b7/b9 list/detail success must not be generalized to send/streaming/attachments or non-personal workspaces.
-- The observed 13.57 s b7 diagnostic total and 20.74 s b9 7.50 MB production detail are end-to-end only. Do not label network, parsing or rendering as the bottleneck without phase-specific timing evidence.
-- The observed 13.15 MB / 2068-node b7 detail and 7.50 MB / 2023-node b9 production detail are real-world inputs. Do not assume tiny conversations or naive all-view materialization.
-- Manual sync/reload must operate through the production conversation state owner rather than creating competing stores or identities.
-- Response transition haptics must be tied to lifecycle state transitions rather than rendering callbacks.
-- Background continuation must preserve the same authoritative response lifecycle; no second stream/request/store is allowed merely to keep work alive.
-
-## Frozen business or architecture rules
-
-None recorded yet. Foundation, auth/account context, diagnostics, tested protocol-read diagnostic scope, and b9 production native-read scope are Stable for their accepted scope, not Frozen. Send/streaming remain Unverified.
+- Manual sync/reload never create competing state stores or automatic retry machinery.
+- No speculative timers, watchdogs, shadow WebViews, retry loops, auth fallback chains, persisted copied auth secrets, UA spoofing, Cloudflare bypass, fallback conversation endpoints or speculative parser/header compatibility.
+- Do not raise iOS14 minimum without concrete need.
+- Stable does not mean Frozen; no Frozen business/architecture rules are currently recorded.
 
 ## Code style / naming constraints
 
-Follow existing repository style until explicit project-specific constraints are verified.
-
-## Prohibited routes / known dangerous regressions
-
-- No speculative timers, watchdogs, DOM scans, shadow WebViews, retry loops or auth fallback chains without concrete current failure evidence.
-- No system-browser auth fallback while the accepted embedded route works.
-- Do not persist copied Cookie/token values outside the accepted WebKit authority.
-- Do not use UI title/text matching as production identity authority.
-- Do not raise iOS 14.0 minimum merely because CI uses newer SDK.
-- Do not add silent auth/network/protocol recovery that hides original failures.
-- Do not reintroduce `accounts.default.account.id` without new evidence.
-- Do not preemptively add `chatgpt-account-id`, duplicate browser headers, fallback conversation endpoints or compatibility shims to the accepted personal-account read path.
-- Do not turn the diagnostic `ProtocolReadProbe` into the production conversation repository by convenience.
-- Do not treat the injected Markdown menu shown in the reference recording as official-App behavior.
-- Do not block the first usable client on Projects, Voice, attachments, advanced search or broad future feature completeness.
-- Do not fake long-running background work through silent audio/location as the default route, and do not present public iOS background APIs as a guaranteed 30m/1h timer.
-- Do not grant broad TrollStore private entitlements to the main authenticated app or expose auth/chat content to a privileged helper without dedicated evidence and real-device validation.
+Follow existing repository style and established APIs/names. Do not rename interfaces or variables without source-backed need.
 
 ## Historical reference
 
@@ -184,4 +131,4 @@ See `docs/project/HISTORICAL_REFERENCE.md` for advisory previous-project lessons
 
 ## Rule maintenance
 
-Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses stay in an active task checkpoint.
+Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses stay in the active checkpoint.

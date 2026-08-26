@@ -119,6 +119,13 @@ private final class DiagnosticsStore {
         queue.sync { }
     }
 
+    func clear() throws {
+        try queue.sync {
+            let urls = [currentURL] + (1...maxArchiveCount).map(archiveURL)
+            for url in urls where fileManager.fileExists(atPath: url.path) { try fileManager.removeItem(at: url) }
+        }
+    }
+
     private func rotateIfNeeded(additionalBytes: Int) throws {
         let attributes = try? fileManager.attributesOfItem(atPath: currentURL.path)
         let currentSize = (attributes?[.size] as? NSNumber)?.intValue ?? 0
@@ -188,6 +195,10 @@ final class DiagnosticsLogger {
 
     func flush() {
         store.flush()
+    }
+
+    func clearStoredLogs() throws {
+        try store.clear()
     }
 
     fileprivate func log(level: DiagnosticsLevel, category: String, name: String, traceID: String?, fields: [String: String]) {

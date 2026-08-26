@@ -9,10 +9,12 @@ STAGING_DIR="$BUILD_DIR/ipa-staging"
 PROJECT="$ROOT_DIR/ChatGPTClient.xcodeproj"
 SCHEME="ChatGPTClient"
 SOURCE_COMMIT="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
-CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-app-foundation-0.1.0-b1}"
+CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-auth-bootstrap-0.1.0-b6}"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$ARTIFACT_DIR" "$STAGING_DIR/Payload"
+
+bash "$ROOT_DIR/scripts/reconstruct_app_icon.sh"
 
 xcodebuild \
   -project "$PROJECT" \
@@ -36,7 +38,7 @@ cp -R "$APP_PATH" "$STAGING_DIR/Payload/"
 PLIST="$APP_PATH/Info.plist"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
 BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PLIST")"
-IPA_NAME="ChatGPTClient-${VERSION}-b${BUILD_NUMBER}-dev-app-foundation.ipa"
+IPA_NAME="ChatGPTClient-${VERSION}-b${BUILD_NUMBER}-dev-auth-bootstrap.ipa"
 IPA_PATH="$ARTIFACT_DIR/$IPA_NAME"
 
 (

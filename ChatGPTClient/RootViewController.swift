@@ -11,14 +11,19 @@ final class RootViewController: UIViewController {
 
         let titleLabel = UILabel()
         titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
-        titleLabel.text = "应用基础已就绪"
+        titleLabel.text = "登录与原生会话验证"
         titleLabel.numberOfLines = 0
 
         let detailLabel = UILabel()
         detailLabel.font = .preferredFont(forTextStyle: .body)
         detailLabel.textColor = .secondaryLabel
         detailLabel.numberOfLines = 0
-        detailLabel.text = "当前阶段只建立原生应用骨架、构建身份和安全诊断能力。登录、ChatGPT 私有协议与聊天功能将在后续独立任务中实现。"
+        detailLabel.text = "当前已验证 Continue with Google 与网页登录持久化。本候选会在网页确认已登录后，自动把当前 WebKit 会话临时复制到内存中的原生 URLSession，再请求同一个登录入口验证服务器是否接受原生会话。不会记录 Cookie、Token 或 Authorization 值。"
+
+        let loginButton = UIButton(type: .system)
+        loginButton.setTitle("开始登录与原生会话验证", for: .normal)
+        loginButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        loginButton.addTarget(self, action: #selector(openLoginVerification), for: .touchUpInside)
 
         let buildLabel = UILabel()
         buildLabel.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
@@ -26,7 +31,7 @@ final class RootViewController: UIViewController {
         buildLabel.numberOfLines = 0
         buildLabel.text = AppBuildInfo.current.displayText
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, detailLabel, buildLabel])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, detailLabel, loginButton, buildLabel])
         stack.axis = .vertical
         stack.spacing = 20
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -39,6 +44,11 @@ final class RootViewController: UIViewController {
         ])
 
         diagnostics.info(category: "ui", name: "root.loaded")
+    }
+
+    @objc private func openLoginVerification() {
+        diagnostics.info(category: "navigation", name: "authVerification.open")
+        navigationController?.pushViewController(AuthWebViewController(), animated: true)
     }
 
     @objc private func openSettings() {

@@ -1,72 +1,77 @@
 # Project-Specific Rules
 
-This file contains rules specific to this repository/product. Do not copy assumptions from another project into this file.
-
-Populate/change these rules only from explicit user requirements, verified product/runtime constraints, real source architecture, accepted test results, confirmed compatibility/deployment requirements, or durable technical decisions.
+This file contains rules specific to this repository/product. Populate/change these rules only from explicit user requirements, verified runtime constraints, current source, accepted test results or durable technical decisions.
 
 ## Product contracts
 
 - The current product goal is an **iOS native ChatGPT client**.
-- The previous-project history pack is reference material only. It is not current product source, current protocol documentation, or proof that a historical implementation should be reused.
+- The previous-project history pack is reference material only; it is not current source or current protocol documentation.
 - The durable ordered implementation roadmap lives in `docs/project/DEVELOPMENT_PLAN.md`.
-- `DEV-app-foundation-0.1.0-b1` is the accepted Stable foundation baseline after CI/artifact validation and successful TrollStore real-device testing on iPhone / iOS 17.0. Stable does not mean Frozen; lower-iOS/iPad runtime remains unverified.
+- `DEV-app-foundation-0.1.0-b1` is the accepted Stable foundation baseline.
+- `DEV-auth-bootstrap-0.1.0-b6` is the accepted current authentication/account-context runtime candidate for iPhone / iOS 17.0, pending PR #6 integration.
 
 ## Repository governance contract
 
-- The repository uses the AI Governance Rules as the dynamic authority for AI-assisted work.
-- Every new work session must read root `AGENTS.md` first and then `docs/project/START_HERE.md` before substantive work.
-- When repository evidence changes materially, the corresponding checkpoint and durable `docs/project/` records must be refreshed in the same work cycle.
+- Repository AI Governance Rules are dynamic authority for AI-assisted work.
+- Every new work session reads root `AGENTS.md`, then `docs/project/START_HERE.md` before substantive work.
+- Material source/CI/artifact/runtime/architecture/status changes require same-cycle checkpoint and durable-doc updates.
 
 ## Protocol evidence contract
 
-- Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old request shapes, or memory alone.
-- Before implementing a protocol capability, establish current evidence for the relevant URL/path, method, authentication/account context, headers, request body, response/stream shape, IDs/state semantics, and failure behavior as applicable.
-- If current evidence contradicts historical notes, current evidence wins and durable docs must be corrected.
-- Do not begin native private-protocol implementation until a current authenticated ChatGPT session/context has been reproduced and evidenced on-device.
+- Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old shapes or memory alone.
+- Before implementing a protocol capability, establish current evidence for URL/path, method, authentication/account context, headers, body, response/stream shape, IDs/state semantics and failure behavior as applicable.
+- Current evidence wins over historical notes.
+- The auth/account-context entry gate for future `DEV-protocol-read` is satisfied by accepted b6 evidence, but conversation-list/detail/streaming protocol remains Unknown / Unverified until separately tested.
+- Native `/auth/login` success/failure is authentication-route evidence only; it is not proof of conversation-list/detail endpoints or their required context.
 
 ## Authentication contract
 
-- The user's previous Web-based IPA successfully used ChatGPT web login, and their account uses Google sign-in. Treat this as historical success evidence only.
-- The current app must revalidate the real Google-based login path on-device before adopting an authentication architecture.
-- Start with the simplest current web-login bootstrap and capture safe navigation/auth-state evidence.
-- If current Google OAuth rejects an embedded `WKWebView`/embedded user-agent, capture the actual current failure/redirect evidence first; then choose the smallest supported system-browser/auth handoff justified by that evidence.
-- Do not prebuild speculative multi-route authentication fallback chains.
-- Do not assume WebKit cookies, system-browser cookies/session state and native `URLSession` authentication state are interchangeable.
-- Never persist or log user passwords, OAuth authorization codes, access/refresh/session tokens, Cookie values or equivalent authentication secrets outside the real secure/session mechanism required by the implemented path.
+- Current tested login entry is embedded `WKWebView` at `https://chatgpt.com/auth/login`.
+- Continue with Google succeeds on the tested iPhone / iOS 17.0 environment.
+- Default persistent `WKWebsiteDataStore` retains authenticated state and remains the current **persistent authentication-secret authority**.
+- Do **not** add a system-browser/auth-session fallback while the tested embedded route works; a fallback requires a concrete current failure.
+- Do **not** create a second persistent Cookie/token/session authority.
+- `AuthSessionStore` may read current WebKit cookies and copy matching ChatGPT/OpenAI cookies transiently into an **ephemeral `URLSession`** for a specifically evidenced request. The copy must not be persisted.
+- Native `/auth/login` is **not** a current account-context prerequisite or authentication state authority.
+- Current account-context sequencing begins after WebKit reaches authenticated ChatGPT: ephemeral current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
+- Preserve challenge sensitivity as an observed fact: b5 and b6 both had a direct `/api/auth/session` HTTP 403 in one attempt, followed by a later user-triggered verification attempt that returned HTTP 200. Current app code intentionally does not add a speculative automatic retry for this.
+- The accepted accounts-check parser uses non-empty `account_ordering`, keyed `accounts`, the first ordered entry not explicitly inaccessible with session, and nested `account.account_id`. Optional `plan_type` / `structure` are metadata only.
+- b6 real-device evidence: second user-triggered attempt returned `/api/auth/session` HTTP 200 + accounts-check HTTP 200, observed accountCount=2/orderCount=1, selected plus/personal account context, set `session.accountState=verified`, and ended `status=ok`. This is the accepted current account-context contract for the tested environment.
+- If a direct session/account request fails in later work, record the exact stage/status/reason first. Do not immediately add retries, User-Agent spoofing, Cloudflare bypass logic, alternate endpoints, browser-script token extraction or speculative multi-shape parser fallbacks.
+- Never log or export passwords, OAuth authorization codes, access/refresh/session tokens, Cookie values, full Cookie/Authorization headers or equivalent authentication secrets.
 
 ## Diagnostics / logging contract
 
-- Structured diagnostics/logging is required from the **first executable product build** and is now implemented/accepted as part of the Stable foundation baseline.
-- Important app lifecycle, authentication, session/account, network, protocol, conversation selection/state, streaming, rendering/performance, attachment and persistence operations must emit correlated diagnostic events sufficient to reconstruct the operation path.
-- Include timing/count/size/status/error metadata where useful, while keeping the event schema stable enough to compare different test candidates.
-- Maintain a bounded persistent local diagnostic history suitable for TrollStore-installed real-device debugging away from Xcode. Logs must not grow without limit. The accepted foundation uses a 2 MiB current JSONL file plus up to three rotated archives.
-- Provide user-triggered redacted diagnostic export. The accepted foundation exposes this from Settings and real-device validation confirmed export plus persistence across relaunch.
-- By default, do **not** log passwords, OAuth codes, tokens, Cookie values, full `Authorization`/`Cookie` headers, complete chat-message text, full user-content request/response bodies, or attachment contents.
-- Prefer safe metadata such as method/path category, HTTP status, elapsed time, byte count, MIME/type, node/item count and terminal reason.
-- Identifiers required to diagnose state ownership may be kept inside the app's private local diagnostics when justified, but exported diagnostics must redact/hash sensitive identifiers and must never export auth secrets.
-- Remote analytics/telemetry or automatic log upload is **not** implied by the logging requirement; add it only if explicitly required later.
-- Future tasks must extend the existing diagnostics authority rather than create an unrelated competing log store without concrete evidence that the current owner is insufficient.
+- Structured diagnostics/logging is required from the first executable product build and uses the accepted `DiagnosticsLogger`/store/export authority.
+- Important lifecycle/auth/session/network/protocol/conversation/stream/render/upload/persistence operations must emit correlated safe metadata sufficient to reconstruct the operation path.
+- Maintain bounded persistent local history; the accepted foundation uses a 2 MiB current JSONL file plus up to three rotated archives.
+- User-triggered diagnostic export must remain redacted/privacy-safe.
+- Prefer method/path category, HTTP status, elapsed time, byte/item counts, MIME/type and terminal reason over payload contents.
+- Safe cookie diagnostics may record only total/matched counts, never Cookie names/values when names themselves could reveal security mechanisms unnecessarily.
+- Repeated device testing provides an explicit **clear local diagnostics** control through the existing diagnostics authority. Clearing removes the store's current JSONL and configured rotated archives; it must not create another store or clear WebKit/authentication state.
+- Do not create a competing diagnostics persistence/export/clear authority without evidence that the current owner is insufficient.
 
 ## Compatibility / deployment constraints
 
-- Platform direction: iOS native application.
-- Distribution/install form: IPA installed through TrollStore.
-- Intended user-device OS versions do not exceed iOS 17.0. Do not introduce a required API, dependency, framework setting, or deployment configuration that makes iOS > 17.0 mandatory unless the user explicitly changes this requirement.
-- iOS 17.0 is an environment ceiling, **not** the minimum deployment target.
-- Current accepted minimum deployment target is iOS 14.0 for the Swift/UIKit dependency-free foundation. Do not raise it without a concrete required API/dependency/runtime reason and corresponding documentation update.
-- `DEV-app-foundation-0.1.0-b1` is real-device validated through TrollStore on iPhone / iOS 17.0. Do not claim runtime compatibility for iOS 14.x–16.x or iPad until separately evidenced.
+- Platform: iOS native app; distribution: TrollStore IPA.
+- Intended user-device OS does not exceed iOS 17.0. This is a ceiling, not a minimum.
+- Current accepted minimum deployment target remains iOS 14.0; do not raise it without a concrete required API/dependency/runtime reason.
+- Runtime evidence currently covers iPhone / iOS 17.0; do not infer iOS 14.x–16.x or iPad runtime compatibility from build settings alone.
 
 ## Critical invariants
 
-- Historical WebView code must not become the new source baseline merely because it existed in the previous project.
-- Any future WebView use, including login/bootstrap use, must be justified by the current task and current evidence; no chat-WebView architecture is inherited automatically.
-- A future build/config change that raises the minimum supported iOS version must be treated as a compatibility change and justified against this project's “lower is better” requirement.
-- Future conversation/session/account/stream/upload identities must have explicit state owners; UI text/titles are consumers and must not become competing identity authorities.
-- CI/artifact success must never be described as runtime proof; candidate/runtime evidence stays associated with the exact build identity recorded in `BUILD_TEST_INDEX.md`.
+- Historical WebView chat code does not become the new source baseline merely because it existed.
+- Current WebView use is limited to the evidence-backed login/bootstrap role; native chat architecture remains the product direction.
+- Future session/account/conversation/message-stream/upload identities must have explicit state owners; UI text/titles are consumers, not authorities.
+- CI/artifact success must never be described as runtime proof.
+- b3/b4/b5/b6 route behavior remains tied to exact runtime evidence; do not generalize auth results into private conversation protocol behavior.
+- b4 must not be labeled an account-context endpoint failure because its account probe never ran.
+- b5 second-run accounts HTTP 200 must not be labeled an auth failure; its terminal failure was the old response parser.
+- b6 first HTTP 403 must not erase the accepted second-attempt success, and b6 success must not erase the observed challenge sensitivity.
 
 ## Frozen business or architecture rules
 
-None recorded yet. Foundation modules are Stable, not Frozen.
+None recorded yet. Foundation modules, embedded web login/persistence, diagnostics, and current account-context ownership are Stable for their accepted scope, not Frozen. Conversation/private protocol remains Unverified.
 
 ## Code style / naming constraints
 
@@ -74,16 +79,20 @@ Follow existing repository style until explicit project-specific constraints are
 
 ## Prohibited routes / known dangerous regressions
 
-- Do not revive old WebView compensation mechanisms such as speculative timers, watchdogs, DOM scans, Shadow WebView recovery, or fallback chains without a current concrete failure mode and evidence.
-- Do not use UI text or title matching as a substitute for a verified conversation identity/state owner when the native implementation is introduced.
-- Do not raise the current iOS 14.0 minimum merely because the user's highest target OS is iOS 17.0 or CI uses a newer SDK.
-- Do not add silent auth/network/protocol recovery that hides the original failure from diagnostics.
-- Do not add a second diagnostics persistence/export authority beside the accepted foundation without evidence that the current owner cannot satisfy a concrete requirement.
+- Do not add speculative timers, watchdogs, DOM scans, shadow WebViews, retry loops or authentication fallback chains without a concrete current failure mode.
+- Do not add a system-browser authentication fallback while the tested embedded route works.
+- Do not persist copied Cookie values outside WebKit.
+- Do not use UI text/title matching as a production identity authority.
+- Do not raise the iOS 14.0 minimum merely because CI uses a newer SDK.
+- Do not add silent auth/network/protocol recovery that hides original failure evidence.
+- Do not guess conversation endpoints from historical notes; establish current evidence first.
+- Do not treat native `/auth/login` as a mandatory gate for actual account/session requests.
+- Do not restore `accounts.default.account.id` as current authority without new current evidence.
 
 ## Historical reference
 
-See `docs/project/HISTORICAL_REFERENCE.md` for distilled previous-project lessons. That document is advisory evidence, not a current implementation contract.
+See `docs/project/HISTORICAL_REFERENCE.md` for advisory previous-project lessons.
 
 ## Rule maintenance
 
-Rules work may update this file proactively when a durable project-specific constraint is confirmed. Development work may update it when a current product task establishes a new explicit durable contract from user requirements or verified evidence. Never turn a temporary hypothesis or historical suggestion into a permanent current rule.
+Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses remain in the active checkpoint, not here.

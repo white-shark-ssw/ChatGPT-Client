@@ -24,11 +24,11 @@ Runnable/distributable product artifacts are IPA files intended for TrollStore. 
 | `DEV-auth-bootstrap-0.1.0-b4` | `DEV-auth-bootstrap` | `0.1.0 (4)` | `dev/auth-bootstrap-20260826` / PR #6 merged | `33ea1b96f755bdf21fdd7691a9f1084a6d624908` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32891798350`; artifact ID `9579720453`; IPA SHA-256 `f918b1f5762458e55e89a1f0d23e5c2bf46be11d7f4599c692627a07043dab03` | WebKit remained authenticated after Cloudflare while separate native `/auth/login` returned HTTP 403; account probe never started. | Failed diagnostic gate; not account-context failure |
 | `DEV-auth-bootstrap-0.1.0-b5` | `DEV-auth-bootstrap` | `0.1.0 (5)` | `dev/auth-bootstrap-20260826` / PR #6 merged | `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32932389742`; artifact ID `9593649485`; IPA SHA-256 `d9a22635cc6ac05d2ba09a0a627eaa74d38d1a690b5e9affe2f318d2aa204f15` | First direct session probe HTTP 403; later direct probe `/api/auth/session` HTTP 200 + accounts-check HTTP 200, then obsolete parser failed `missing_default_account`. | Transport evidence accepted; parser superseded |
 | `DEV-auth-bootstrap-0.1.0-b6` | `DEV-auth-bootstrap` | `0.1.0 (6)` | `dev/auth-bootstrap-20260826` / PR #6 merged | **`19c0cd22923d8c6f4c96e676258b31814d02a942`** | **Code written; CI passed; artifact produced; runtime/manual/real-device tested** | **Run `32934821144`; artifact ID `9594474567`; artifact `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b6`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`** | Exact b6 export on iPhone / iOS 17.0: first attempt `/api/auth/session` HTTP 403; after user-triggered `重新开始`, second attempt `/api/auth/session` HTTP 200 + accounts-check HTTP 200; parser observed accountCount=2/orderCount=1, selected plus/personal account, `session.accountState=verified`, `accountContextProbe.end status=ok` in 1289.71 ms. Screenshot title `登录会话 · 账户上下文通过`. | **Stable / accepted / merged auth-account baseline** |
-| `DEV-protocol-read-0.1.0-b7` | `DEV-protocol-read` | `0.1.0 (7)` | `dev/protocol-read-20260826` / draft PR #7 | Pending final workflow/source commit | Code written; CI pending | Intended artifact `ChatGPTClient-DEV-protocol-read-0.1.0-b7`; intended IPA `ChatGPTClient-0.1.0-b7-dev-protocol-read.ipa`; checksum pending | Runtime pending: current conversation list + one detail structural probe | **Reserved / Active candidate** |
+| `DEV-protocol-read-0.1.0-b7` | `DEV-protocol-read` | `0.1.0 (7)` | `dev/protocol-read-20260826` / draft PR #7 | **`44a137b973e29e2a313e9114fdacb7727dccefb9`** | **Code written; CI passed; artifact produced; runtime pending** | **Authoritative push run `32938912018`; artifact ID `9595827498`; artifact `ChatGPTClient-DEV-protocol-read-0.1.0-b7`; IPA `ChatGPTClient-0.1.0-b7-dev-protocol-read.ipa`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`; artifact ZIP digest `sha256:c1d851dc949a43587f94fffd34b35c233ff5f35a2c8eef3399d2e722a9f7833f`** | Pending one clean iPhone run of current conversation list + first-detail structural probe and diagnostics export. | **Active candidate / runtime pending** |
 
 ## Foundation facts
 
-- CI runner: GitHub-hosted `macos-15`; b6 run used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
+- CI runner: GitHub-hosted `macos-15`; accepted b6 and b7 runs used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
 - Compile target remains `arm64-apple-ios14.0`.
 - Foundation PR #5 merged at `9e7a06801715b0002d3e9a720d57041e830b776e`.
 - Foundation runtime validation covers one iPhone on iOS 17.0; lower iOS versions and iPad runtime remain unverified.
@@ -57,11 +57,15 @@ A successful b5 direct run returned `/api/auth/session` HTTP 200 and bearer-auth
 - Settings includes `清理诊断日志`, operating on the existing diagnostics store only. The supplied b6 export contains only the fresh 05:50 test cycle, consistent with clean-log operation.
 - PR #6 merged the accepted implementation into `main` at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
 
-## Protocol-read b7 reservation
+## Protocol-read b7 facts
 
-- Candidate `DEV-protocol-read-0.1.0-b7` is the next unique version/build identity after merged b6 and the only Active development checkpoint at allocation time.
-- Xcode target settings are reserved at `0.1.0 (7)` / `DEV-protocol-read-0.1.0-b7`; packaging default/name is `ChatGPTClient-0.1.0-b7-dev-protocol-read.ipa`.
-- Product code exists, but CI/artifact/runtime evidence must remain pending until the protocol workflow is enabled and passes at an exact source commit.
+- Candidate identity is `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, and remains unique across Active tasks.
+- First CI run `32938007843` failed because Swift could not type-check a large protocol-read closure; second run `32938132841` exposed the same compiler class on one large diagnostics dictionary. Both were compile-only failures and ran no protocol request.
+- Product source `44a137b973e29e2a313e9114fdacb7727dccefb9` preserves the protocol behavior and only splits diagnostics construction for compiler tractability.
+- Authoritative push run `32938912018` built exact branch source `44a137b973e2`, embedded `DIAGNOSTICS_CANDIDATE=DEV-protocol-read-0.1.0-b7`, compiled `arm64-apple-ios14.0`, and ended `BUILD SUCCEEDED`.
+- Downloaded artifact ID `9595827498` was independently unpacked: ZIP SHA-256 matches GitHub artifact digest `c1d851dc949a43587f94fffd34b35c233ff5f35a2c8eef3399d2e722a9f7833f`; IPA SHA-256 independently matches the CI sidecar `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`.
+- A PR merge-ref run also passed, but its merge-source identity is supplemental; the exact branch push run above is the authoritative device candidate.
+- Commits after product source `44a137...` currently touch project documentation only, so they do not invalidate the product artifact. Runtime conversation protocol evidence remains pending.
 
 ## Uniqueness rule
 

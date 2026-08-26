@@ -43,7 +43,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-auth-bootstrap-0.1.0-b4
+          name: ChatGPTClient-DEV-auth-bootstrap-0.1.0-b5
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

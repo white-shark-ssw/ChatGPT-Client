@@ -1,4 +1,4 @@
-# Candidate: DEV-conversation-recovery-0.1.0-b11
+# Candidate: DEV-conversation-recovery-0.1.0-b12
 name: iOS Conversation Recovery
 
 on:
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-conversation-recovery-0.1.0-b11
+          name: ChatGPTClient-DEV-conversation-recovery-0.1.0-b12
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

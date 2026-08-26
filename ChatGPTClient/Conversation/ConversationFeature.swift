@@ -62,6 +62,7 @@ final class ConversationRepository {
     private let diagnostics = DiagnosticsLogger.shared
     private let authSessionStore = AuthSessionStore.shared
     private var transientSession: AuthTransientSession?
+    private var selectedDetailOperationGeneration = 0
 
     private(set) var conversations: [ConversationSummary] = []
     private(set) var selectedConversationID: String?
@@ -158,15 +159,19 @@ final class ConversationRepository {
 
     func loadConversation(id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         selectedConversationID = id
-        let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: diagnosticsFields(for: id))
+        selectedDetailOperationGeneration += 1
+        let operationGeneration = selectedDetailOperationGeneration
+        var fields = diagnosticsFields(for: id)
+        fields["operationGeneration"] = String(operationGeneration)
+        let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: fields)
         withTransientSession { [weak self] result in
             guard let self else { return }
             switch result {
             case .failure(let error):
                 span.end(status: "failed", fields: ["stage": "auth"])
-                self.finishOnMain(.failure(error), completion: completion)
+                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(error), completion: completion)
             case .success(let session):
-                self.requestConversationDetail(id: id, using: session, span: span, completion: completion)
+                self.requestConversationDetail(id: id, operationGeneration: operationGeneration, using: session, span: span, completion: completion)
             }
         }
     }
@@ -233,11 +238,12 @@ final class ConversationRepository {
         }
     }
 
-    private func requestConversationDetail(id: String, using session: AuthTransientSession, span: DiagnosticsSpan, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+    private func requestConversationDetail(id: String, operationGeneration: Int, using session: AuthTransientSession, span: DiagnosticsSpan, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         let detailURL = URL(string: "https://chatgpt.com/backend-api/conversation")!.appendingPathComponent(id)
         var requestFields = diagnosticsFields(for: id)
         requestFields["method"] = "GET"
         requestFields["route"] = "conversation_detail"
+        requestFields["operationGeneration"] = String(operationGeneration)
         diagnostics.info(category: "conversation", name: "detail.request", traceID: span.traceID, fields: requestFields)
         var request = URLRequest(url: detailURL)
         request.httpMethod = "GET"
@@ -246,27 +252,27 @@ final class ConversationRepository {
             if let error {
                 self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: self.diagnosticsFields(for: id))
                 span.end(status: "failed", fields: ["stage": "network"])
-                self.finishOnMain(.failure(error), completion: completion)
+                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(error), completion: completion)
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
                 span.end(status: "failed", fields: ["stage": "response", "reason": "non_http_response"])
-                self.finishOnMain(.failure(ConversationRepositoryError.invalidResponse), completion: completion)
+                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.invalidResponse), completion: completion)
                 return
             }
             guard (200..<300).contains(response.statusCode) else {
                 span.end(status: "failed", fields: ["stage": "response", "httpStatus": String(response.statusCode)])
-                self.finishOnMain(.failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
+                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
                 return
             }
             guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let mapping = payload["mapping"] as? [String: Any], let currentNode = payload["current_node"] as? String, !currentNode.isEmpty else {
                 span.end(status: "failed", fields: ["stage": "parse", "reason": "missing_mapping_or_current_node"])
-                self.finishOnMain(.failure(ConversationRepositoryError.missingCurrentNode), completion: completion)
+                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.missingCurrentNode), completion: completion)
                 return
             }
             if let returnedID = payload["conversation_id"] as? String, !returnedID.isEmpty, returnedID != id {
                 span.end(status: "failed", fields: ["stage": "identity", "reason": "conversation_identity_mismatch"])
-                self.finishOnMain(.failure(ConversationRepositoryError.conversationIdentityMismatch), completion: completion)
+                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.conversationIdentityMismatch), completion: completion)
                 return
             }
 
@@ -278,19 +284,34 @@ final class ConversationRepository {
             fields["byteCount"] = String(data.count)
             fields["mappingCount"] = String(mapping.count)
             fields["visibleMessageCount"] = String(messages.count)
+            fields["operationGeneration"] = String(operationGeneration)
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
-            DispatchQueue.main.async {
-                guard self.selectedConversationID == id else {
-                    var fields = self.diagnosticsFields(for: id)
-                    fields["reason"] = "selection_changed"
-                    self.diagnostics.info(category: "conversation", name: "detail.discarded", fields: fields)
-                    return
-                }
-                self.selectedConversation = detail
-                self.finishOnMain(.success(detail), completion: completion)
-            }
+            self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .success(detail), completion: completion)
         }
+    }
+
+    private func finishDetailOperation(id: String, operationGeneration: Int, result: Result<ConversationDetail, Error>, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        DispatchQueue.main.async {
+            guard self.selectedConversationID == id else {
+                self.logDiscardedDetail(id: id, operationGeneration: operationGeneration, reason: "selection_changed")
+                return
+            }
+            guard self.selectedDetailOperationGeneration == operationGeneration else {
+                self.logDiscardedDetail(id: id, operationGeneration: operationGeneration, reason: "operation_superseded")
+                return
+            }
+            if case .success(let detail) = result { self.selectedConversation = detail }
+            completion(result)
+        }
+    }
+
+    private func logDiscardedDetail(id: String, operationGeneration: Int, reason: String) {
+        var fields = diagnosticsFields(for: id)
+        fields["operationGeneration"] = String(operationGeneration)
+        fields["currentOperationGeneration"] = String(selectedDetailOperationGeneration)
+        fields["reason"] = reason
+        diagnostics.info(category: "conversation", name: "detail.discarded", fields: fields)
     }
 
     private func recoveryDiffFields(previous: ConversationDetail?, current: ConversationDetail) -> [String: String] {
@@ -497,6 +518,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var syncToastHideWorkItem: DispatchWorkItem?
     private var messages: [ConversationMessage] = []
     private var loadingConversationID: String?
+    private var recoveryActionInProgress = false
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -581,6 +603,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     func showConversation(id: String) {
         guard loadingConversationID != id || repository.selectedConversation?.id != id else { return }
         hideSyncToast()
+        recoveryActionInProgress = false
         repository.selectConversation(id: id)
         loadingConversationID = id
         messages = []
@@ -612,29 +635,30 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func updateConversationMenu() {
-        let hasConversation = repository.selectedConversationID != nil
-        let canSync = hasConversation && repository.selectedConversation != nil && loadingConversationID == nil
-        let canReload = hasConversation && loadingConversationID == nil
-        let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
-        let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
-        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
-        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: reloadAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
+        let canRecover = repository.selectedConversationID != nil && !recoveryActionInProgress
+        let recoveryAttributes: UIMenuElement.Attributes = canRecover ? [] : [.disabled]
+        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: recoveryAttributes) { [weak self] _ in self?.syncLatestMessages() }
+        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: recoveryAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), primaryAction: nil, menu: UIMenu(children: [syncAction, reloadAction]))
     }
 
     private func syncLatestMessages() {
-        guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
+        guard let id = repository.selectedConversationID, !recoveryActionInProgress else { return }
         let previousMessages = messages
+        let hadLoadedDetail = repository.selectedConversation?.id == id
+        recoveryActionInProgress = true
         diagnostics.info(category: "navigation", name: "conversation.latestSync.requested", fields: repository.diagnosticsFields(for: id))
-        navigationItem.rightBarButtonItem?.isEnabled = false
+        updateConversationMenu()
         showSyncToast("正在同步最新消息…")
         repository.syncLatestMessages { [weak self] result in
             guard let self else { return }
             guard self.repository.selectedConversationID == id else {
                 self.hideSyncToast()
-                self.updateConversationMenu()
                 return
             }
+            self.recoveryActionInProgress = false
+            self.loadingConversationID = nil
+            self.activityIndicator.stopAnimating()
             switch result {
             case .success(let detail):
                 let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
@@ -647,6 +671,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
                 self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0)
             case .failure(let error):
                 self.hideSyncToast()
+                if !hadLoadedDetail {
+                    self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
+                    self.stateLabel.isHidden = false
+                    self.retryButton.isHidden = false
+                }
                 let alert = UIAlertController(title: "同步失败", message: error.localizedDescription, preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "好", style: .default))
                 self.present(alert, animated: true)
@@ -681,7 +710,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     @objc private func reloadCurrentConversation() {
-        guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
+        guard let id = repository.selectedConversationID, !recoveryActionInProgress else { return }
+        recoveryActionInProgress = true
         hideSyncToast()
         diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
         loadingConversationID = id
@@ -694,6 +724,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         updateConversationMenu()
         repository.reloadSelectedConversation { [weak self] result in
             guard let self, self.repository.selectedConversationID == id else { return }
+            self.recoveryActionInProgress = false
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
             switch result {

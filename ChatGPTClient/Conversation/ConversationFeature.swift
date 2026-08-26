@@ -104,6 +104,58 @@ final class ConversationRepository {
         loadConversation(id: id, completion: completion)
     }
 
+    func syncLatestMessages(completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        guard let id = selectedConversationID else {
+            finishOnMain(.failure(ConversationRepositoryError.invalidPayload), completion: completion)
+            return
+        }
+        let previous = selectedConversation
+        var fields = diagnosticsFields(for: id)
+        fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
+        fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
+        let span = diagnostics.startSpan(category: "conversation", name: "latestSync", fields: fields)
+        loadConversation(id: id) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let detail):
+                var fields = self.recoveryDiffFields(previous: previous, current: detail)
+                fields["localStateAfter"] = "server_backed"
+                span.end(status: "ok", fields: fields)
+                completion(.success(detail))
+            case .failure(let error):
+                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": previous == nil ? "empty" : "preserved"])
+                completion(.failure(error))
+            }
+        }
+    }
+
+    func reloadSelectedConversation(completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        guard let id = selectedConversationID else {
+            finishOnMain(.failure(ConversationRepositoryError.invalidPayload), completion: completion)
+            return
+        }
+        let previous = selectedConversation
+        var fields = diagnosticsFields(for: id)
+        fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
+        fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
+        let span = diagnostics.startSpan(category: "conversation", name: "conversationReload", fields: fields)
+        selectedConversation = nil
+        diagnostics.info(category: "conversation", name: "conversationReload.stateCleared", traceID: span.traceID, fields: diagnosticsFields(for: id))
+        loadConversation(id: id) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let detail):
+                var fields = self.recoveryDiffFields(previous: previous, current: detail)
+                fields["localStateAfter"] = "server_backed"
+                span.end(status: "ok", fields: fields)
+                completion(.success(detail))
+            case .failure(let error):
+                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": "empty"])
+                completion(.failure(error))
+            }
+        }
+    }
+
     func loadConversation(id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         selectedConversationID = id
         let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: diagnosticsFields(for: id))
@@ -239,6 +291,27 @@ final class ConversationRepository {
                 self.finishOnMain(.success(detail), completion: completion)
             }
         }
+    }
+
+    private func recoveryDiffFields(previous: ConversationDetail?, current: ConversationDetail) -> [String: String] {
+        let previousMessages = previous?.messages ?? []
+        var previousByID: [String: ConversationMessage] = [:]
+        var currentByID: [String: ConversationMessage] = [:]
+        for message in previousMessages { previousByID[message.id] = message }
+        for message in current.messages { currentByID[message.id] = message }
+        let addedCount = currentByID.keys.reduce(0) { $0 + (previousByID[$1] == nil ? 1 : 0) }
+        let removedCount = previousByID.keys.reduce(0) { $0 + (currentByID[$1] == nil ? 1 : 0) }
+        let changedCount = current.messages.reduce(0) { count, message in
+            guard let old = previousByID[message.id] else { return count }
+            return count + ((old.role != message.role || old.text != message.text || old.createTime != message.createTime) ? 1 : 0)
+        }
+        return [
+            "previousVisibleMessageCount": String(previousMessages.count),
+            "currentVisibleMessageCount": String(current.messages.count),
+            "addedVisibleMessageCount": String(addedCount),
+            "removedVisibleMessageCount": String(removedCount),
+            "changedVisibleMessageCount": String(changedCount)
+        ]
     }
 
     private func finishOnMain<T>(_ result: Result<T, Error>, completion: @escaping (Result<T, Error>) -> Void) {
@@ -479,6 +552,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -36)
         ])
+        updateConversationMenu()
     }
 
     func showConversation(id: String) {
@@ -491,6 +565,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         stateLabel.isHidden = false
         retryButton.isHidden = true
         activityIndicator.startAnimating()
+        updateConversationMenu()
         repository.loadConversation(id: id) { [weak self] result in
             guard let self, self.repository.selectedConversationID == id else { return }
             self.loadingConversationID = nil
@@ -508,13 +583,78 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
                 self.stateLabel.isHidden = false
                 self.retryButton.isHidden = false
             }
+            self.updateConversationMenu()
+        }
+    }
+
+    private func updateConversationMenu() {
+        let hasConversation = repository.selectedConversationID != nil
+        let canSync = hasConversation && repository.selectedConversation != nil && loadingConversationID == nil
+        let canReload = hasConversation && loadingConversationID == nil
+        let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
+        let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
+        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
+        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: reloadAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), primaryAction: nil, menu: UIMenu(children: [syncAction, reloadAction]))
+    }
+
+    private func syncLatestMessages() {
+        guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
+        diagnostics.info(category: "navigation", name: "conversation.latestSync.requested", fields: repository.diagnosticsFields(for: id))
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        repository.syncLatestMessages { [weak self] result in
+            guard let self else { return }
+            guard self.repository.selectedConversationID == id else {
+                self.updateConversationMenu()
+                return
+            }
+            switch result {
+            case .success(let detail):
+                self.title = detail.title
+                self.messages = detail.messages
+                self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
+                self.stateLabel.isHidden = !detail.messages.isEmpty
+                self.retryButton.isHidden = true
+                self.tableView.reloadData()
+            case .failure(let error):
+                let alert = UIAlertController(title: "同步失败", message: error.localizedDescription, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "好", style: .default))
+                self.present(alert, animated: true)
+            }
+            self.updateConversationMenu()
         }
     }
 
     @objc private func reloadCurrentConversation() {
-        guard let id = repository.selectedConversationID else { return }
+        guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
         diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
-        showConversation(id: id)
+        loadingConversationID = id
+        messages = []
+        tableView.reloadData()
+        stateLabel.text = "正在重新加载会话…"
+        stateLabel.isHidden = false
+        retryButton.isHidden = true
+        activityIndicator.startAnimating()
+        updateConversationMenu()
+        repository.reloadSelectedConversation { [weak self] result in
+            guard let self, self.repository.selectedConversationID == id else { return }
+            self.loadingConversationID = nil
+            self.activityIndicator.stopAnimating()
+            switch result {
+            case .success(let detail):
+                self.title = detail.title
+                self.messages = detail.messages
+                self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
+                self.stateLabel.isHidden = !detail.messages.isEmpty
+                self.retryButton.isHidden = true
+                self.tableView.reloadData()
+            case .failure(let error):
+                self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
+                self.stateLabel.isHidden = false
+                self.retryButton.isHidden = false
+            }
+            self.updateConversationMenu()
+        }
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

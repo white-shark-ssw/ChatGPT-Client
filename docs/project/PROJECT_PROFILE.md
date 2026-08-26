@@ -50,7 +50,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Accepted foundation**: `0.1.0 (1)` / `DEV-app-foundation-0.1.0-b1`.
 - **Accepted auth/account baseline**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`; source `19c0cd22923d8c6f4c96e676258b31814d02a942`.
 - **Accepted diagnostic protocol-read baseline**: `0.1.0 (7)` / `DEV-protocol-read-0.1.0-b7`; source `44a137b973e29e2a313e9114fdacb7727dccefb9`; run `32938912018`; artifact `9595827498`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`; PR #7 merged at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
-- **Runtime-accepted production native-read candidate**: `0.1.0 (9)` / `DEV-native-read-path-0.1.0-b9`; source `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7`; run `32978476582`; artifact `9610449216`; IPA SHA-256 `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e`; PR #9 pending merge at this revision.
+- **Accepted production native-read baseline**: `0.1.0 (9)` / `DEV-native-read-path-0.1.0-b9`; source `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7`; run `32978476582`; artifact `9610449216`; IPA SHA-256 `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e`; PR #9 merged at `467ea885d120fa59809c95c914b1ac670d76ee05`. Stable for tested scope, not Frozen.
 - **Candidate scheme**: `DEV-<work-slug>-<marketing-version>-b<build>`.
 - **Bundle ID**: `com.whitesharkssw.chatgptclient`; accepted, not Frozen.
 
@@ -68,6 +68,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Foundation PR #5 merged at `9e7a06801715b0002d3e9a720d57041e830b776e`.
 - Auth PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
 - Protocol-read PR #7 merged at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
+- Native-read PR #9 merged at `467ea885d120fa59809c95c914b1ac670d76ee05`.
 - b6 source `19c0cd22923d8c6f4c96e676258b31814d02a942` accepted Plus/personal account context.
 - b7 source `44a137b973e29e2a313e9114fdacb7727dccefb9` accepted the tested personal-account diagnostic list + first-detail path: list HTTP 200 28/29; detail HTTP 200 13,152,411 bytes, mapping 2068 / messages 2067, identity matched; `status=ok` 13,573.66 ms.
 - b8 source `e312acc3dd17cdcdb01746bb76f70556510a0304` established the first production native shell/repository candidate but one detail returned HTTP 500 after 30,935.12 ms before parse/render. Initial b8 launch had 0/0 WebKit cookies.

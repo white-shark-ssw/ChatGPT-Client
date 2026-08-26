@@ -1,325 +1,347 @@
 # Multi-Conversation State / Residency Plan
 
-_Last updated: 2026-08-27._
+_Last updated: 2026-08-27; source-level review refreshed from merged b15 recovery baseline._
 
 ## Purpose
 
-Support the user's normal workflow of keeping several ChatGPT development conversations in use at the same time without making UI navigation destroy already-loaded conversation state.
+Support normal use of several ChatGPT development conversations at the same time without making UI navigation destroy already-loaded state.
 
-The key invariant is:
+Core invariant:
 
-> Selecting conversation B changes what is visible; it does not destroy conversation A's authoritative local state, cancel A's owned response, or force A to reload merely because it is no longer selected.
+> Selecting conversation B changes what is visible; it does not destroy conversation A's authoritative local state, cancel A's owned work, or force A to reload merely because A is no longer selected.
 
-This plan is a prerequisite for robust multi-conversation send/stream behavior.
+This Work is the structural prerequisite for production send/stream ownership.
 
-See also `docs/project/CLIENT_ARCHITECTURE_GAP_REVIEW.md` for the broader pre-send/stream gap review and current post-recovery sequencing.
+See also `CLIENT_ARCHITECTURE_GAP_REVIEW.md` for the broader pre-send requirements.
 
-## Current evidence / problem
+## Current accepted baseline
 
-The current b9/main repository and active recovery PR #10 use a single-slot model:
+`DEV-conversation-recovery-0.1.0-b15` is merged Stable for the recorded Plus/personal iPhone/iOS17 recovery scope. Current `main` baseline is `f155ddb873540f7c80d6e66ebbfeb59ded26f011` after recovery checkpoint completion.
 
-- `selectedConversationID` identifies the foreground conversation;
-- `selectedConversation` holds only one detail;
-- `selectConversation(id:)` clears that detail when another ID is selected;
-- if a detail request for A finishes after selection changed to B, the result is discarded as `selection_changed`;
-- current detail parsing derives visible messages from `mapping/current_node` but does not retain `current_node`/graph relationships in the resident `ConversationDetail` result.
+The accepted b15 source still intentionally uses a single-selected conversation model:
 
-That behavior was acceptable for proving the first native-read path but is not the desired daily-use architecture.
+- `selectedConversationID` = foreground identity;
+- `selectedConversation` = one loaded detail;
+- one global `selectedDetailOperationGeneration`;
+- one global selected-detail task/generation slot;
+- one cached `AuthTransientSession` not yet bound to a repository-visible account-scope identity.
 
-## Planned Work
+b15 proved same-conversation explicit recovery replacement: the newer generation takes ownership, cancels the old selected-detail task, and stale callbacks cannot mutate current state. Multi-conversation must generalize that accepted lifecycle rather than replace it with retry/fallback machinery.
 
-### Work ID
+## Work identity / ordering
 
-`DEV-multi-conversation-state`
+- **Work ID**: `DEV-multi-conversation-state`
+- **User-facing name**: **多会话驻留与快速切换**
+- **Current branch**: `dev/multi-conversation-state-20260827`
+- **Dependency**: merged b15 recovery baseline.
+- **Next serialized tasks**: `DEV-conversation-round-count` -> `DEV-send-stream`.
 
-### User-facing name
+Do not create a separate auth-resume task; cold-start WebKit warm-up is already accepted inside the recovery baseline.
 
-**多会话驻留与快速切换**
+## Concrete source gaps found before implementation
 
-### Scheduling
+### 1. Foreground selection currently has multiple write paths
 
-Implement after the current manual recovery work is merged and before production send/stream becomes authoritative.
+Current source mutates selection from all of these paths:
 
-The intended ordering is:
+- sidebar row selection calls `repository.selectConversation(id:)`;
+- detail `showConversation(id:)` calls `repository.selectConversation(id:)` again;
+- repository `loadConversation(id:)` directly assigns `selectedConversationID = id`.
 
-1. `DEV-conversation-recovery` — including the user's cold-start background login-state verification requirement;
-2. `DEV-multi-conversation-state`;
-3. `DEV-conversation-round-count`;
-4. `DEV-send-stream`.
+That is unsafe once hidden conversations may continue loading.
 
-Do **not** create a separate `DEV-auth-resume` task. The user's latest requirement assigns that cold-start verification/recovery path to the active conversation-recovery work: background/invisible WebKit-store verification first, visible foreground verification only after background failure evidence.
+Required invariant:
 
-If the recovery branch later materially changes ownership/files, run the normal conflict scan before starting this Work.
+- exactly one explicit UI/navigation transition owns foreground selection;
+- loading, syncing, reloading or later streaming **by conversation ID must never change foreground selection as a side effect**;
+- capture/persist any outgoing lightweight UI state before the selected ID changes;
+- do not let duplicate selection calls become LRU/access-generation side effects.
 
-## State ownership
+### 2. Repository mutable state needs one execution domain
 
-### Account/workspace scope
-
-Resident state must be scoped to the currently verified account/workspace context, not only a bare conversation ID.
-
-Conceptually:
-
-`account/workspace context + conversationID -> resident conversation state`
-
-On explicit logout/account-context change:
-
-- invalidate the old transient native session;
-- clear old-account resident conversation/message/draft/response state;
-- reject late callbacks that belong to the old account/context;
-- never display old-account resident content under a newly verified account.
-
-Exact account-scope key/type is not frozen here; use the accepted authentication/account owner when implemented.
-
-### Conversation data
-
-`ConversationRepository` remains the production conversation-data authority, but it must evolve from one loaded-detail slot to **per-conversation state keyed by authoritative identity inside the current account/workspace scope**.
-
-Each resident entry may own:
-
-- parsed/current conversation data needed to render that conversation;
-- minimum current-branch/node identity needed by current protocol evidence;
-- load/recovery freshness metadata owned by the repository;
-- future response lifecycle linkage.
-
-Exact Swift type/property names are not frozen by this planning document.
-
-### Authoritative node identity
-
-The user-visible message list is a projection, not the entire authoritative conversation representation.
-
-Before production send/stream, retain the minimum detail identity proven necessary by the send protocol, such as `current_node`/parent/message-node identity if current evidence requires it.
-
-Rules:
-
-- do not throw away required identity and then issue a fresh detail request merely to recover it;
-- do not retain raw multi-megabyte HTTP JSON payloads merely for convenience;
-- normalize only evidence-backed node/branch metadata;
-- keep visible messages derived from the authoritative conversation state.
-
-### Foreground selection
-
-The selected conversation ID remains only the **presentation selection**.
-
-Changing selected ID must not mean deleting another conversation's model.
-
-### UI/view state
-
-Do not use retained view controllers/cells as the cache.
-
-Lightweight per-conversation presentation state may be owned separately where needed, for example:
-
-- unsent composer draft;
-- semantic scroll anchor / last visible message identity;
-- reasoning-detail expanded/collapsed presentation where appropriate;
-- local hidden-completion/unseen presentation state after send/stream exists.
-
-Use semantic message/anchor identity rather than only raw pixel offset when long content can grow.
-
-Do not persist chat drafts/bodies to disk merely because in-memory residency exists. Cross-process persistence requires a separate privacy/storage decision.
-
-### Future response/stream lifecycle
-
-A response lifecycle must be keyed to its real conversation/message identity, never to whichever conversation is currently visible.
-
-Example:
-
-- A starts reasoning/streaming;
-- user switches to B;
-- A continues through the same response owner;
-- B can be read or can later start its own independent response if current protocol/runtime evidence allows;
-- A updates A's resident model while hidden;
-- returning to A shows current A state without reconstructing the response from UI state.
-
-Switching UI selection must never call stop/cancel on another conversation's response simply because it became hidden.
-
-Initial concurrency rule:
-
-- architecturally support independent responses in different conversations;
-- assume at most one active response per conversation unless current protocol/runtime evidence explicitly proves same-conversation overlap is valid;
-- actual simultaneous A/B server-stream support remains Unknown / Unverified until `DEV-send-stream` real-device testing;
-- Stop targets one exact response/conversation, never a global streaming flag.
-
-## Async freshness / race protection
-
-Removing the old `selection_changed` discard is necessary but not sufficient.
-
-A valid old operation must not regress a newer authoritative state.
-
-Examples:
-
-- ordinary load A starts, then explicit reload A starts; old load must not overwrite the newer reload result;
-- sync A starts while A is streaming; an older server snapshot must not blindly overwrite later local stream progress;
-- stop/cancel becomes terminal; late stream callbacks must not resurrect the response;
-- account changes while an old request is in flight; old-account data must never populate the new context.
+Current URLSession/account callbacks and UI calls can touch request/session bookkeeping from different callback contexts. A resident dictionary/LRU/request registry must not rely on incidental thread timing.
 
 Required direction:
 
-- bind every async operation to its account/context + target conversation identity;
-- use a per-conversation load/reload generation, operation token or another single-owner freshness mechanism to reject obsolete completions;
-- this freshness guard is not a second conversation state authority;
-- selection change alone is not a discard reason;
-- coalesce equivalent in-flight detail loads where the current owner can do so cleanly instead of issuing duplicate requests;
-- no arbitrary timer/watchdog/retry loop is introduced for this purpose.
+- choose one authoritative execution domain for mutable repository state, preferably consistent with existing main-thread UI ownership unless implementation evidence justifies a dedicated serial owner;
+- resident entries, operation generations/tasks, LRU metadata, account-scope binding and cached-session state mutate only on that domain;
+- network transfer and expensive JSON parsing may occur off-main;
+- commit parsed results back through the one repository owner.
 
-## Read/load behavior
+Do not create a second cache/state authority merely for thread safety.
 
-### First open
+### 3. Account/session acquisition must be scope-bound and single-flight
 
-If a conversation has no resident detail, request it normally and store the successful result under that conversation ID/account scope.
+Current `withTransientSession` can start more than one `probeAccountContext` if A/B requests arrive before the cached transient session exists. Multi-conversation makes that race realistic.
 
-If an equivalent load is already in flight, reuse/coalesce that operation instead of starting another equivalent request when practical.
+Required direction:
 
-### Switch while request is in flight
+- only one account-context/transient-session acquisition may be in flight for the repository at a time;
+- concurrent conversation loads wait for/share that result rather than independently creating sessions;
+- the cached transient session is bound to the verified account/workspace scope that created it;
+- when a newly verified account/workspace scope differs, invalidate the old transient session, resident/list state and old operations before new data is committed;
+- old-scope callbacks are rejected even if a conversation ID string matches;
+- WebKit remains the sole persistent auth-secret authority; no copied-secret persistence.
 
-If A is loading and the user selects B:
+`AuthSessionStore` currently keeps `accountContext` private, so implementation needs the smallest read-only/snapshot or change signal required for repository isolation. Do not move account ownership into `ConversationRepository`.
 
-- A's request may continue;
-- B may start/load independently;
-- successful A data is stored under A even though A is no longer foreground;
-- returning to A uses the stored result rather than starting a duplicate request.
+### 4. Detail operation ownership becomes per conversation
 
-A stale request must still be rejected if it fails identity/account/freshness checks, but **selection change alone is not a reason to discard valid data**.
+Replace the single selected-detail generation/task slot with conversation-targeted operation ownership.
 
-### Return to an already resident conversation
+Required semantics:
 
-Render the resident model immediately.
+- A and B may have independent detail operations;
+- selecting B does not cancel A;
+- explicit Reload/Sync A may supersede/cancel only A's older detail operation;
+- B is untouched;
+- an equivalent missing-detail request for A is coalesced instead of duplicated;
+- a late obsolete A result cannot overwrite newer A state;
+- operation identity includes account scope + conversation ID + generation/token.
 
-Do not issue a fresh detail request solely because the user navigated A -> B -> A.
+Do not impose an arbitrary global concurrency limit before current service/runtime evidence.
 
-Freshness remains explicit:
+### 5. Coalescing must have a terminal-result contract
 
-- `同步最新消息` = reconcile that conversation with current server state;
-- `重载当前会话` = discard/rebuild that conversation deliberately.
+If A is already loading and the user navigates A -> B -> A before A completes, returning to A must attach to/render the existing operation.
 
-This avoids turning ordinary navigation into hidden network traffic.
+Coalescing is not allowed to strand a caller or spinner.
 
-### Resident server freshness signal
+Implementation may use waiters or repository state observation, but there must be one clear contract:
 
-The conversation list already exposes `update_time`.
+- all still-relevant consumers see the terminal loaded/failed state;
+- hidden A completion is stored under A and does not mutate B's presentation;
+- obsolete/superseded consumers terminate cleanly.
 
-A later implementation may use a newer list `update_time` as a **stale hint** for a resident conversation, but not as permission to silently reload it.
+### 6. Resident entries need explicit load state, not only optional detail
 
-- mark/diagnose potential staleness if evidence supports it;
-- `同步最新消息` remains the explicit reconciliation action unless a later product rule accepts automatic freshness behavior.
+A missing `ConversationDetail?` cannot represent all cases safely once navigation no longer reloads every time.
 
-## Recovery semantics in the multi-conversation model
+Resident state must distinguish at least the semantics of:
 
-Recovery actions always target the authoritative conversation ID that the user invoked them on.
+- not loaded / locally evicted;
+- loading;
+- loaded;
+- terminal load failure;
+- explicit reload/rebuild in progress.
 
-- Sync A updates A only.
-- Reload A clears/rebuilds A only.
-- B/C resident states remain untouched.
-- A recovery must not change another conversation's selection, stream or draft.
+Exact Swift enum/type names are not frozen.
 
-### Sync while A is active
+Important behavior:
 
-- sync may fetch server detail without resending the prompt;
-- reconciliation must not regress newer local authoritative progress;
-- if server evidence proves A is already complete, the local stale response can transition to that server-backed terminal state and obsolete callbacks must no longer mutate it;
-- if server still reports an in-progress state, keep the response owner unless current protocol evidence provides a terminal reason.
+- returning to a previously failed A shows A's retained failure and explicit Reload;
+- ordinary navigation must not become an implicit network retry;
+- returning to an evicted A may perform a normal load because eviction is not a prior server/network failure;
+- Sync failure preserves an already loaded A when current recovery semantics require preservation.
 
-### Reload while A is active
+### 7. Current recovery presentation state is global to the visible detail controller
 
-Reload is stronger and user-explicit.
+`ConversationDetailViewController` currently has one `recoveryActionInProgress`, one toast, one hide work item and one visible `messages` projection.
 
-- define one clear response-owner transition so an old stream cannot later overwrite/revive the reloaded state;
-- do not resend/regenerate;
-- exact cancel/detach behavior must follow actual send/stream protocol evidence rather than being guessed before `DEV-send-stream`.
+In a multi-conversation world, a late hidden A completion must never hide/reset B's toast, menu state, spinner, title or visible messages.
 
-## Hidden-conversation status
+Required direction:
 
-After production streaming exists, the sidebar may derive lightweight status from the response owner:
+- target feedback by selected conversation + operation identity, or derive it from the selected resident operation state;
+- a completion for hidden A updates A's repository state only;
+- UIKit-local `messages` remains a render projection of the selected resident state, never a second conversation authority.
 
-- thinking/generating indicator while a hidden conversation has an active response;
-- completed/unseen marker when a hidden response reaches final state;
-- clear according to accepted UI behavior when the user views that conversation.
+### 8. `current_node` is validated then discarded
 
-This is presentation state only. It is not an OpenAI server-side unread authority and must not own the response lifecycle.
+Current parsing validates `current_node` and uses it to derive the active branch, then `ConversationDetail` stores only ID/title/visible messages.
+
+For this Work, retain the directly evidenced active branch-tip/current-node identity as small authoritative metadata in the resident detail/state.
+
+Do **not** store the raw multi-megabyte mapping or invent a complete send/branch graph before Send protocol evidence proves what else is required.
+
+### 9. List results also need account/freshness isolation
+
+Conversation-list state belongs to the same verified account/workspace boundary.
+
+Required behavior:
+
+- an old-account list response cannot repopulate the repository after account scope changes;
+- list operation freshness is deterministic if future refreshes overlap;
+- first-page refresh/reordering does not destroy resident details merely because an ID is absent from the current 28-item page;
+- list position remains diagnostic metadata only, never conversation identity.
+
+Pagination remains its own later Work.
+
+### 10. In-flight work participates in residency/eviction policy
+
+Ordinary LRU capacity eviction must not silently drop:
+
+- the foreground conversation;
+- a conversation with an active detail/recovery operation;
+- a future conversation with an active response/stream.
+
+If severe memory pressure later requires cancelling a hidden in-flight detail load, that path must have an explicit cancellation/consumer-terminal policy and diagnostics. Do not silently remove its operation record and leave UI waiters hanging.
+
+### 11. Memory-warning plumbing is currently missing
+
+`AppDelegate.applicationDidReceiveMemoryWarning` currently only logs. The repository itself is owned inside `RootViewController`.
+
+This Work must route the system memory-pressure signal to the authoritative repository so it can trim only eligible resident entries. The signal route must not create a second cache owner.
+
+### 12. Different-conversation concurrency needs real-device evidence
+
+b15's HTTP429 evidence concerned overlapping replacement requests for the same selected conversation; b15 fixed that by cancelling the obsolete request before replacement.
+
+Multi-conversation intentionally allows A/B detail requests to coexist. Therefore real-device acceptance must include rapid A -> B -> C selection while earlier details are still in flight.
+
+Record:
+
+- HTTP status per hashed conversation target;
+- cancellation/replacement reason;
+- whether A/B/C complete and remain resident;
+- any HTTP429/rate-pressure signal;
+- memory/first-return timing.
+
+If a cross-conversation concurrency limit later becomes necessary, it must be justified by that evidence. No speculative retry or arbitrary global serialization now.
+
+## State ownership model
+
+Conceptually:
+
+`verified account/workspace scope -> conversation ID -> resident conversation state`
+
+`ConversationRepository` remains the sole production conversation-data authority.
+
+A resident entry may own only the data needed for current requirements:
+
+- current parsed/detail state;
+- directly evidenced current-node/branch-tip identity;
+- load/recovery operation state and freshness token;
+- last-access/LRU metadata;
+- lightweight future response linkage;
+- lightweight presentation state only where the architecture chooses a single clear owner.
+
+Mounted cells/view controllers are never the resident cache. Raw HTTP payloads are discarded after parsing unless later evidence establishes a concrete need.
+
+## Selection and rendering
+
+Foreground `selectedConversationID` is presentation state only.
+
+On A -> B:
+
+1. capture A's lightweight presentation state if current scope implements it;
+2. update selection once;
+3. inspect B's resident state;
+4. if B is loaded, render immediately with no detail request;
+5. if B is loading, render B's loading state and join/observe the existing operation;
+6. if B previously failed, render B's retained failure and explicit Reload;
+7. if B is not loaded/was evicted, start one normal B load.
+
+Returning B -> A follows the same rules; resident A is shown immediately.
+
+## Recovery semantics
+
+Recovery remains target-specific and user-explicit.
+
+### Sync A
+
+- targets A captured at invocation;
+- never changes selection as a request side effect;
+- may replace only A's older equivalent detail operation according to b15-style same-target ownership;
+- preserves loaded A on failure where accepted recovery semantics require it;
+- does not mutate B/C.
+
+### Reload A
+
+- targets A captured at invocation;
+- deliberately rebuilds A from server state;
+- may clear A's loaded detail according to accepted reload semantics;
+- supersedes/cancels only A's older detail operation;
+- never resends/regenerates;
+- B/C stay resident and untouched.
+
+Future active-response Sync/Reload transitions remain defined by current Send/Stream evidence, not guessed here.
 
 ## Residency / memory policy
 
-The project has real conversations measured at several MB and more than 2,000 mapping nodes, so unlimited retention of every opened conversation is not acceptable.
+The repository has real multi-megabyte, 2,000+ node conversations, so unlimited permanent residency is not acceptable.
 
-Use a bounded resident working set.
+Use a bounded LRU-style working set after real-device measurement.
 
 Rules:
 
-- the foreground conversation is resident;
-- any conversation with an active owned response/stream is protected from ordinary eviction;
-- recently used loaded conversations remain resident so normal A/B/C switching is instant;
-- non-streaming least-recently-used conversation models are the first eviction candidates when the bound is exceeded or memory pressure requires release;
-- UIKit cells/view controllers are never the retained cache;
-- raw HTTP payloads should not be retained after parsing unless later evidence proves they are required;
-- presentation/render caches should be releasable independently from the minimum authoritative model where practical.
+- foreground entry protected;
+- active detail/recovery entry protected from ordinary capacity eviction;
+- future active response/stream entry protected;
+- recently used loaded entries remain resident for fast A/B/C switching;
+- inactive loaded entries are LRU eviction candidates;
+- terminal failed entries are lightweight and may be retained without holding large message payloads if implementation makes that natural;
+- memory warning trims eligible entries through the repository owner;
+- no persistent chat-body disk cache is introduced by this Work.
 
-Do **not** freeze an arbitrary permanent cache count during planning. Choose the first concrete bound from real-device measurements on the target iPhone/iOS 17.0 baseline, then document it as evidence.
+Do not freeze a permanent capacity number before real-device measurement. The first concrete capacity becomes evidence only after the exact Candidate is tested with multiple real development conversations.
 
-A useful validation target is repeated switching among several development conversations, including at least one large conversation, without repeat detail requests after their first successful load.
-
-## Memory warning / process lifecycle
-
-A system memory warning may evict non-active, non-streaming resident conversation models. That is different from ordinary navigation and is acceptable when logged/observable.
-
-If iOS terminates the whole process, in-memory residency is naturally lost. This plan does not introduce persistent on-disk chat-body caching merely to survive process death; such persistence would require its own privacy/storage requirement and evidence.
+Useful privacy-safe capacity diagnostics include resident count, eligible/protected counts, total visible-message count and approximate text/count metrics; never log bodies/raw IDs.
 
 ## Diagnostics
 
-Add privacy-safe events sufficient to prove behavior without logging raw conversation IDs or bodies, for example:
+Add enough evidence to distinguish navigation, cache, operation and account-scope behavior:
 
-- resident cache hit/miss;
-- load started/completed for hashed conversation identity;
-- in-flight equivalent load reused/coalesced;
-- obsolete async result discarded + reason (`operation_superseded` / `account_changed` / identity mismatch);
-- valid hidden-conversation load stored rather than discarded;
-- selection switched A/B;
-- resident entry evicted + reason (`capacity` / `memory_warning`);
-- active response protected from eviction;
+- selection changed once + old/new conversation hashes;
+- resident hit/miss/state;
+- detail operation started/coalesced/superseded/cancelled/completed;
+- account-scope bind/change/purge using safe hashed/non-secret identity metadata;
+- hidden-conversation result stored;
+- obsolete completion rejected + reason;
+- resident eviction + reason (`capacity` / `memory_warning`);
+- protected operation prevented from eviction;
 - return-to-resident first-visible timing;
-- hidden response status transition.
+- resident/protected counts for real-device capacity tests.
 
-Reuse the accepted short irreversible conversation hash/list-position diagnostics convention.
+Do not log raw conversation/account IDs, titles, bodies, payloads, Cookie/Authorization values or tokens.
 
-## Acceptance criteria
+## Acceptance criteria for this Work
 
-At minimum real-device acceptance should prove:
+Before calling multi-conversation residency Stable, real-device evidence should prove at minimum:
 
-1. Load A, load B, return A: A renders without a new detail request.
-2. A detail request finishing while B is selected is retained for A, not discarded merely due to selection change.
-3. A/B/C switching never shows another conversation's messages, title, round count, draft or scroll state.
-4. Manual sync/reload affects only the target conversation.
-5. A late older load/reload/sync completion cannot overwrite a newer authoritative A state.
-6. Account/logout change prevents old-account resident data/late callbacks from appearing in the new context.
-7. The resident model retains the minimum current-node/message identity required by the later accepted send protocol without retaining the raw payload.
-8. Once send/stream exists, A can continue an owned response while B is foreground; switching does not cancel A.
-9. Returning to a hidden actively-updating A shows its latest local stream state.
-10. An actively streaming conversation is not removed by normal LRU eviction.
-11. Memory-pressure eviction is bounded, observable and affects only eligible inactive/non-streaming entries.
-12. Large-conversation residency is measured on real device before declaring the cache policy Stable.
-13. If A/B concurrent streaming is supported by the current service, each response updates only its owning conversation and Stop targets only the selected response.
+1. A loaded -> B loaded -> A: A renders without a new Detail request.
+2. A is still loading -> select B -> A completes hidden: A result is retained; B UI is untouched.
+3. A still loading -> B -> return A before completion: no duplicate A Detail request; A reaches one terminal result.
+4. Rapid A/B/C switching never displays another conversation's title/messages/error/recovery feedback.
+5. Explicit Reload/Sync A cancels/replaces only A's older same-target detail operation; B's request/state is untouched.
+6. An obsolete A completion cannot overwrite newer A state.
+7. A terminal failed load remains failed when navigating away/back; returning does not silently retry.
+8. Verified account/workspace change purges old list/resident/session/operations and rejects late old-scope callbacks.
+9. Concurrent first loads share one account/transient-session acquisition rather than creating duplicate account probes/sessions.
+10. The resident model retains current-node/branch-tip identity without retaining raw mapping payloads.
+11. Memory warning/capacity eviction affects only eligible inactive entries and is observable.
+12. Several real development conversations, including at least one large one, can be switched repeatedly without unbounded memory growth or repeat requests for still-resident entries.
+13. Rapid different-conversation in-flight loads record whether service-side rate pressure exists; no speculative retry is used.
+14. Current b15 manual Sync/Reload behavior remains functionally intact for the selected target.
 
-## Testing guidance
+Future Send/Stream acceptance separately proves A streaming while B is visible and actual simultaneous A/B response support.
 
-There is no XCTest target today. When implementing this Work, strongly prefer extracting deterministic state logic so a minimal test target can cover high-risk non-network behavior if adding the target is compatible with the task's conflict/build plan.
+## Deterministic testing guidance
 
-High-value pure tests include:
+There is no XCTest target yet. If adding a minimal test target can remain isolated and does not delay the first Candidate materially, highest-value pure tests are:
 
-- resident lookup/hit/miss;
-- LRU eligibility/protected active response;
-- operation-generation stale-result rejection;
-- account-scope purge;
-- current-branch/node normalization;
-- round-count derivation later.
+- selection changes only through the explicit selection path;
+- resident hit/miss/failed/evicted state decisions;
+- same-A load coalescing;
+- Reload A cancels A only, not B;
+- per-conversation stale-generation rejection;
+- account-scope purge/late-old-scope rejection;
+- single-flight transient-session acquisition state machine;
+- LRU eligibility/protected in-flight entries.
 
-Real-device evidence remains required for actual networking, UI switching, memory behavior and future stream concurrency.
+Real-device tests remain mandatory for real networking, HTTP429 behavior, UI switching, memory pressure and performance.
 
 ## Non-goals / prohibited shortcuts
 
-- Do not instantiate a separate authoritative `ConversationRepository` per screen/conversation.
-- Do not keep one full UIKit hierarchy alive for every opened conversation to simulate caching.
-- Do not use the current navigation controller stack as conversation-state authority.
-- Do not cancel network/stream work merely on `viewDidDisappear` or selection change.
-- Do not reload every time a conversation becomes visible.
-- Do not retain an unlimited number of large conversations.
-- Do not let old async completions regress a newer authoritative state.
-- Do not carry resident conversation state across explicit account/logout changes.
-- Do not add persistent chat-body disk caching unless a later explicit requirement establishes its privacy/storage contract.
+- No separate authoritative repository per screen/conversation.
+- No retained UIKit hierarchy per conversation as the cache.
+- No navigation stack as conversation-state authority.
+- No load/sync/reload method that changes foreground selection merely because it targets an ID.
+- No cancellation merely because a conversation becomes hidden.
+- No reload on every navigation.
+- No unlimited resident detail retention.
+- No persistent chat-body/draft cache without a separate privacy/storage requirement.
+- No speculative retry, timer, watchdog, fallback, global rate limiter or compatibility shim.
+- No copied persistent auth secrets or second account owner.
+- No raw mapping retention merely to anticipate future Send/Edit/Regenerate.
+- No claim that concurrent A/B server operations are safe/unsafe until the exact Candidate produces runtime evidence.

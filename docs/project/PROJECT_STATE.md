@@ -6,7 +6,7 @@ _Last updated: 2026-08-26._
 
 The first product foundation is merged into `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`. The accepted Stable foundation runtime candidate is `DEV-app-foundation-0.1.0-b1`, built from product/workflow source `89b29434e4d81486d395b8ddb093a031f6f919a7` and real-device tested through TrollStore on iPhone / iOS 17.0.
 
-Authentication work remains on `dev/auth-bootstrap-20260826` / draft PR #6, but its current acceptance gate is now met by `DEV-auth-bootstrap-0.1.0-b6`. Embedded Google login, persistent WebKit authentication, direct native `/api/auth/session`, bearer-authenticated accounts-check, and ordered account-context parsing have all reached real-device success on iPhone / iOS 17.0. The task is ready for integration/merge; private conversation protocol work remains a separate future task.
+Authentication bootstrap is now merged into `main` by PR #6 at merge commit `78f42a06e6254088e3b495cb4529e549a1d4717f`. Its accepted runtime candidate is `DEV-auth-bootstrap-0.1.0-b6`. Embedded Google login, persistent WebKit authentication, direct native `/api/auth/session`, bearer-authenticated accounts-check, ordered account-context parsing, and the diagnostics-clear control have all reached accepted real-device evidence on iPhone / iOS 17.0. Private conversation protocol work remains separate and unverified.
 
 The product goal remains an **iOS native ChatGPT client** distributed as a TrollStore IPA. Intended user OS does not exceed iOS 17.0; lower compatibility remains preferred where practical.
 
@@ -42,6 +42,7 @@ The product goal remains an **iOS native ChatGPT client** distributed as a Troll
 - User explicitly pressed `重新开始`. Second attempt: 49 total / 30 matched cookies; `/api/auth/session` HTTP 200; accounts-check HTTP 200; parser observed `accountCount=2`, `accountOrderingCount=1`, selected a `plus` / `personal` account, set `session.accountState=verified`, and ended `accountContextProbe` with `status=ok` in 1289.71 ms.
 - User screenshot title reads `登录会话 · 账户上下文通过`.
 - Therefore current account/workspace context is **Runtime/manual/real-device tested and accepted** for the b6 path on iPhone / iOS 17.0. The initial 403 remains route/timing evidence; the successful second attempt was user-triggered, not an automatic retry.
+- PR #6 merged the accepted auth implementation into `main` at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
 
 ## Diagnostics state
 
@@ -60,8 +61,8 @@ Diagnostics/logging remains a Stable foundation capability: structured OSLog eve
 ## Durable development plan
 
 1. `DEV-app-foundation` — Completed / merged / Stable.
-2. `DEV-auth-bootstrap` — Acceptance achieved on b6; pending PR #6 integration/merge.
-3. `DEV-protocol-read` — may begin only as a separate task after auth integration; establish current conversation-list/detail protocol evidence before production models depend on it.
+2. `DEV-auth-bootstrap` — Completed / merged / Stable for the accepted iPhone / iOS 17.0 auth/account-context scope.
+3. `DEV-protocol-read` — next core task; establish current conversation-list/detail protocol evidence before production models depend on it.
 4. `DEV-native-read-path`.
 5. `DEV-send-stream`.
 6. `DEV-long-conversation`.

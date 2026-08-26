@@ -32,7 +32,7 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 
 ### Status
 
-**Acceptance achieved on `DEV-auth-bootstrap-0.1.0-b6`; pending PR #6 integration/merge.** Embedded Google login, persistent WebKit auth, current direct native session/accounts transport, ordered account-context parsing, privacy-safe diagnostics, and the requested clear-log control are implemented. The accepted account-context path is real-device tested on iPhone / iOS 17.0.
+**Completed / merged / Stable for the accepted scope.** PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`. Embedded Google login, persistent WebKit auth, current direct native session/accounts transport, ordered account-context parsing, privacy-safe diagnostics, and the requested clear-log control are implemented. The accepted account-context path is real-device tested on iPhone / iOS 17.0.
 
 ### Accepted evidence
 
@@ -57,15 +57,11 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 - Auth secrets excluded from logs/export — **implemented**.
 - Explicit local diagnostics clear — **implemented; fresh b6 export is consistent with use**.
 
-### Phase 2 integration step
-
-Before opening the next core feature task, re-check `main`, PR #6 head, branch conflicts and final CI relevance. Merge only with explicit user approval. Do not implement conversation protocol inside this auth checkpoint.
-
 ## Phase 3 — `DEV-protocol-read`
 
-### Entry gate
+### Status
 
-**Authentication/account-context prerequisite is now satisfied by b6 runtime evidence.** Phase 3 may begin as a separate Work ID after auth changes are integrated.
+**Ready to start as the next isolated development task.** The authentication/account-context prerequisite is satisfied and merged. Conversation-list/detail protocol is still Unknown / Unverified and must be established from current evidence rather than historical assumptions.
 
 ### Goal / evidence targets
 
@@ -73,7 +69,16 @@ Establish current conversation-list request/pagination/metadata, conversation-de
 
 ### Acceptance gate
 
-A minimal authenticated diagnostic harness loads conversation list and one detail on-device with safe request/response/timing evidence.
+A minimal authenticated diagnostic harness loads conversation list and one detail on-device with safe request/response/timing evidence. No production conversation models or rendering assumptions should become authoritative before this evidence exists.
+
+### Initial implementation order
+
+1. Create isolated `DEV-protocol-read` checkpoint/branch/PR identity from the merged auth baseline.
+2. Inspect the merged auth/account-context owners and current diagnostics boundary; reuse those owners rather than introducing a second credential authority.
+3. Establish current evidence for conversation-list path/method/query/pagination and required account/session headers from current sources and then real-device diagnostics.
+4. Add the smallest diagnostic harness needed to request the list and record only safe structural metadata: status, timing, item counts, pagination fields and hashed identifiers where needed.
+5. After one real conversation ID is obtained from the list, establish the detail request and safe structural evidence for mapping/current-node/message/branch relationships without logging message bodies.
+6. Stop on exact failures. Do not add speculative retries, fallback endpoints, User-Agent spoofing, Cloudflare bypass or historical compatibility shims.
 
 ## Phase 4 — `DEV-native-read-path`
 
@@ -113,4 +118,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Finalize/integrate PR #6 with explicit user approval. After merge, start a new isolated `DEV-protocol-read` task and establish current conversation-list/detail request evidence from the accepted b6 auth/account context. Do not guess private protocol shapes from historical material.
+Create and activate isolated `DEV-protocol-read` from the merged auth baseline, establish current conversation-list/detail protocol evidence, and build only the minimal safe diagnostic harness required for real-device validation.

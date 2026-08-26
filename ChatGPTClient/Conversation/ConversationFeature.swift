@@ -66,6 +66,11 @@ private struct ConversationResidentKey: Hashable {
     let conversationID: String
 }
 
+private enum ConversationResidentState {
+    case loaded(ConversationDetail)
+    case failed(Error)
+}
+
 private struct ConversationTransportContext {
     let session: AuthTransientSession
     let scope: ConversationAccountScope
@@ -73,6 +78,7 @@ private struct ConversationTransportContext {
 
 private struct ConversationDetailOperation {
     let generation: Int
+    let preserveLoadedResidentOnFailure: Bool
     var task: URLSessionDataTask?
     var completions: [(Result<ConversationDetail, Error>) -> Void]
 }
@@ -94,7 +100,7 @@ final class ConversationRepository {
     private var transientSessionScope: ConversationAccountScope?
     private var transientSessionProbeCompletions: [(Result<ConversationTransportContext, Error>) -> Void]?
     private var activeAccountScope: ConversationAccountScope?
-    private var residentConversations: [ConversationResidentKey: ConversationDetail] = [:]
+    private var residentStates: [ConversationResidentKey: ConversationResidentState] = [:]
     private var detailOperationGenerations: [ConversationResidentKey: Int] = [:]
     private var detailOperations: [ConversationResidentKey: ConversationDetailOperation] = [:]
     private var accountContextObserver: NSObjectProtocol?
@@ -105,8 +111,9 @@ final class ConversationRepository {
     var onAccountScopeReset: (() -> Void)?
 
     var selectedConversation: ConversationDetail? {
-        guard let id = selectedConversationID, let key = residentKey(for: id) else { return nil }
-        return residentConversations[key]
+        guard let id = selectedConversationID, let key = residentKey(for: id), let state = residentStates[key] else { return nil }
+        if case .loaded(let detail) = state { return detail }
+        return nil
     }
 
     init() {
@@ -123,14 +130,14 @@ final class ConversationRepository {
 
     func selectConversation(id: String) {
         selectedConversationID = id
-        guard let key = residentKey(for: id) else { return }
-        if residentConversations[key] != nil {
-            var fields = diagnosticsFields(for: id)
-            fields["residentCount"] = String(residentConversations.count)
-            diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
-        } else {
+        guard let key = residentKey(for: id), let state = residentStates[key] else {
             diagnostics.info(category: "conversation", name: "resident.miss", fields: diagnosticsFields(for: id))
+            return
         }
+        var fields = diagnosticsFields(for: id)
+        fields["residentCount"] = String(residentStates.count)
+        fields["state"] = Self.residentStateName(state)
+        diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
     }
 
     func diagnosticsFields(for id: String) -> [String: String] {
@@ -171,7 +178,7 @@ final class ConversationRepository {
         fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
         fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
         let span = diagnostics.startSpan(category: "conversation", name: "latestSync", fields: fields)
-        loadConversation(id: id, replacingCurrentRequest: true) { [weak self] result in
+        loadConversation(id: id, replacingCurrentRequest: true, preserveLoadedResidentOnFailure: true) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let detail):
@@ -180,7 +187,7 @@ final class ConversationRepository {
                 span.end(status: "ok", fields: fields)
                 completion(.success(detail))
             case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": previous == nil ? "empty" : "preserved"])
+                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": previous == nil ? "failed" : "preserved"])
                 completion(.failure(error))
             }
         }
@@ -194,9 +201,9 @@ final class ConversationRepository {
         let previous = selectedConversation
         var fields = diagnosticsFields(for: id)
         fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
-        fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
+        fields["localStateBefore"] = previous == nil ? "empty_or_failed" : "loaded"
         let span = diagnostics.startSpan(category: "conversation", name: "conversationReload", fields: fields)
-        removeResidentConversation(id: id)
+        removeResidentState(id: id)
         diagnostics.info(category: "conversation", name: "conversationReload.stateCleared", traceID: span.traceID, fields: diagnosticsFields(for: id))
         loadConversation(id: id, replacingCurrentRequest: true) { [weak self] result in
             guard let self else { return }
@@ -207,30 +214,19 @@ final class ConversationRepository {
                 span.end(status: "ok", fields: fields)
                 completion(.success(detail))
             case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": "empty"])
+                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": "failed"])
                 completion(.failure(error))
             }
         }
     }
 
-    func loadConversation(id: String, replacingCurrentRequest: Bool = false, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+    func loadConversation(id: String, replacingCurrentRequest: Bool = false, preserveLoadedResidentOnFailure: Bool = false, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         if !replacingCurrentRequest, let key = residentKey(for: id) {
-            if let detail = residentConversations[key] {
-                var fields = diagnosticsFields(for: id)
-                fields["residentCount"] = String(residentConversations.count)
-                diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
-                finishOnMain(.success(detail), completion: completion)
+            if let state = residentStates[key] {
+                finishResidentHit(id: id, state: state, completion: completion)
                 return
             }
-            if var operation = detailOperations[key] {
-                operation.completions.append(completion)
-                detailOperations[key] = operation
-                var fields = diagnosticsFields(for: id)
-                fields["operationGeneration"] = String(operation.generation)
-                fields["completionCount"] = String(operation.completions.count)
-                diagnostics.info(category: "conversation", name: "detail.coalesced", fields: fields)
-                return
-            }
+            if appendCompletionIfOperationExists(key: key, id: id, completion: completion) { return }
         }
 
         withTransientSession { [weak self] result in
@@ -239,12 +235,14 @@ final class ConversationRepository {
             case .failure(let error):
                 self.finishOnMain(.failure(error), completion: completion)
             case .success(let context):
-                DispatchQueue.main.async { self.beginDetailOperation(id: id, context: context, replacingCurrentRequest: replacingCurrentRequest, completion: completion) }
+                DispatchQueue.main.async {
+                    self.beginDetailOperation(id: id, context: context, replacingCurrentRequest: replacingCurrentRequest, preserveLoadedResidentOnFailure: preserveLoadedResidentOnFailure, completion: completion)
+                }
             }
         }
     }
 
-    private func beginDetailOperation(id: String, context: ConversationTransportContext, replacingCurrentRequest: Bool, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+    private func beginDetailOperation(id: String, context: ConversationTransportContext, replacingCurrentRequest: Bool, preserveLoadedResidentOnFailure: Bool, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         adoptAccountScope(context.scope)
         guard activeAccountScope == context.scope else {
             completion(.failure(ConversationRepositoryError.accountContextChanged))
@@ -252,32 +250,43 @@ final class ConversationRepository {
         }
         let key = ConversationResidentKey(scope: context.scope, conversationID: id)
         if !replacingCurrentRequest {
-            if let detail = residentConversations[key] {
-                var fields = diagnosticsFields(for: id)
-                fields["residentCount"] = String(residentConversations.count)
-                diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
-                completion(.success(detail))
+            if let state = residentStates[key] {
+                finishResidentHit(id: id, state: state, completion: completion)
                 return
             }
-            if var operation = detailOperations[key] {
-                operation.completions.append(completion)
-                detailOperations[key] = operation
-                var fields = diagnosticsFields(for: id)
-                fields["operationGeneration"] = String(operation.generation)
-                fields["completionCount"] = String(operation.completions.count)
-                diagnostics.info(category: "conversation", name: "detail.coalesced", fields: fields)
-                return
-            }
+            if appendCompletionIfOperationExists(key: key, id: id, completion: completion) { return }
         }
 
         let operationGeneration = (detailOperationGenerations[key] ?? 0) + 1
         detailOperationGenerations[key] = operationGeneration
         if replacingCurrentRequest { cancelDetailOperation(key: key, replacementOperationGeneration: operationGeneration) }
-        detailOperations[key] = ConversationDetailOperation(generation: operationGeneration, task: nil, completions: [completion])
+        detailOperations[key] = ConversationDetailOperation(generation: operationGeneration, preserveLoadedResidentOnFailure: preserveLoadedResidentOnFailure, task: nil, completions: [completion])
         var fields = diagnosticsFields(for: id)
         fields["operationGeneration"] = String(operationGeneration)
         let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: fields)
         requestConversationDetail(key: key, operationGeneration: operationGeneration, using: context, span: span)
+    }
+
+    private func finishResidentHit(id: String, state: ConversationResidentState, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        var fields = diagnosticsFields(for: id)
+        fields["residentCount"] = String(residentStates.count)
+        fields["state"] = Self.residentStateName(state)
+        diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
+        switch state {
+        case .loaded(let detail): finishOnMain(.success(detail), completion: completion)
+        case .failed(let error): finishOnMain(.failure(error), completion: completion)
+        }
+    }
+
+    private func appendCompletionIfOperationExists(key: ConversationResidentKey, id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) -> Bool {
+        guard var operation = detailOperations[key] else { return false }
+        operation.completions.append(completion)
+        detailOperations[key] = operation
+        var fields = diagnosticsFields(for: id)
+        fields["operationGeneration"] = String(operation.generation)
+        fields["completionCount"] = String(operation.completions.count)
+        diagnostics.info(category: "conversation", name: "detail.coalesced", fields: fields)
+        return true
     }
 
     private func withTransientSession(completion: @escaping (Result<ConversationTransportContext, Error>) -> Void) {
@@ -483,14 +492,24 @@ final class ConversationRepository {
                 return
             }
             self.detailOperations.removeValue(forKey: key)
-            if case .success(let detail) = result {
-                self.residentConversations[key] = detail
+            switch result {
+            case .success(let detail):
+                self.residentStates[key] = .loaded(detail)
                 var fields = self.diagnosticsFields(for: key.conversationID)
-                fields["residentCount"] = String(self.residentConversations.count)
+                fields["residentCount"] = String(self.residentStates.count)
                 fields["residentApproximateTextBytes"] = String(Self.approximateTextBytes(detail))
-                fields["residentTotalApproximateTextBytes"] = String(self.residentConversations.values.reduce(0) { $0 + Self.approximateTextBytes($1) })
+                fields["residentTotalApproximateTextBytes"] = String(self.residentStates.values.reduce(0) { $0 + Self.approximateTextBytes($1) })
                 fields["visibility"] = self.selectedConversationID == key.conversationID ? "foreground" : "hidden"
+                fields["state"] = "loaded"
                 self.diagnostics.info(category: "conversation", name: "resident.stored", fields: fields)
+            case .failure(let error):
+                let hasLoadedResident: Bool
+                if let existingState = self.residentStates[key], case .loaded = existingState { hasLoadedResident = true } else { hasLoadedResident = false }
+                if !operation.preserveLoadedResidentOnFailure || !hasLoadedResident { self.residentStates[key] = .failed(error) }
+                var fields = self.diagnosticsFields(for: key.conversationID)
+                fields["residentCount"] = String(self.residentStates.count)
+                fields["state"] = operation.preserveLoadedResidentOnFailure && hasLoadedResident ? "loaded_preserved" : "failed"
+                self.diagnostics.info(category: "conversation", name: "resident.terminal", fields: fields)
             }
             for completion in operation.completions { completion(result) }
         }
@@ -526,12 +545,12 @@ final class ConversationRepository {
     }
 
     private func resetAccountScope(to newScope: ConversationAccountScope?) {
-        let removedResidentCount = residentConversations.count
+        let removedResidentCount = residentStates.count
         let cancelledOperationCount = detailOperations.count
         for operation in detailOperations.values { operation.task?.cancel() }
         detailOperations.removeAll()
         detailOperationGenerations.removeAll()
-        residentConversations.removeAll()
+        residentStates.removeAll()
         conversations = []
         selectedConversationID = nil
         transientSession?.invalidateAndCancel()
@@ -544,10 +563,10 @@ final class ConversationRepository {
 
     private func handleMemoryWarning() {
         let selectedKey = selectedConversationID.flatMap { residentKey(for: $0) }
-        let evictedKeys = residentConversations.keys.filter { $0 != selectedKey }
+        let evictedKeys = residentStates.keys.filter { $0 != selectedKey }
         guard !evictedKeys.isEmpty else { return }
-        for key in evictedKeys { residentConversations.removeValue(forKey: key) }
-        diagnostics.warning(category: "conversation", name: "resident.evicted", fields: ["reason": "memory_warning", "evictedCount": String(evictedKeys.count), "residentCount": String(residentConversations.count)])
+        for key in evictedKeys { residentStates.removeValue(forKey: key) }
+        diagnostics.warning(category: "conversation", name: "resident.evicted", fields: ["reason": "memory_warning", "evictedCount": String(evictedKeys.count), "residentCount": String(residentStates.count)])
     }
 
     private func residentKey(for id: String) -> ConversationResidentKey? {
@@ -555,9 +574,9 @@ final class ConversationRepository {
         return ConversationResidentKey(scope: activeAccountScope, conversationID: id)
     }
 
-    private func removeResidentConversation(id: String) {
+    private func removeResidentState(id: String) {
         guard let key = residentKey(for: id) else { return }
-        residentConversations.removeValue(forKey: key)
+        residentStates.removeValue(forKey: key)
     }
 
     private func recoveryDiffFields(previous: ConversationDetail?, current: ConversationDetail) -> [String: String] {
@@ -593,8 +612,18 @@ final class ConversationRepository {
         "sha256:" + SHA256.hash(data: Data(value.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
     }
 
-    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int {
-        detail.messages.reduce(0) { $0 + $1.text.utf8.count }
+    private static func residentStateName(_ state: ConversationResidentState) -> String {
+        switch state {
+        case .loaded: return "loaded"
+        case .failed: return "failed"
+        }
+    }
+
+    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int { detail.messages.reduce(0) { $0 + $1.text.utf8.count } }
+
+    private static func approximateTextBytes(_ state: ConversationResidentState) -> Int {
+        if case .loaded(let detail) = state { return approximateTextBytes(detail) }
+        return 0
     }
 
     private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> [ConversationMessage] {
@@ -645,9 +674,7 @@ final class ConversationSidebarViewController: UITableViewController {
     }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -676,10 +703,9 @@ final class ConversationSidebarViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let item = repository.conversations[indexPath.row]
-        repository.selectConversation(id: item.id)
-        tableView.reloadData()
         diagnostics.info(category: "navigation", name: "conversation.selected", fields: repository.diagnosticsFields(for: item.id))
         onSelectConversation?(item.id)
+        tableView.reloadData()
     }
 
     func resetForAccountScopeChange() {
@@ -705,8 +731,7 @@ final class ConversationSidebarViewController: UITableViewController {
             self.refreshControl?.endRefreshing()
             self.navigationItem.rightBarButtonItem?.isEnabled = true
             switch result {
-            case .success:
-                self.tableView.reloadData()
+            case .success: self.tableView.reloadData()
             case .failure(let error):
                 guard !Self.isAccountContextChanged(error) else { return }
                 self.showError(error)
@@ -775,6 +800,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var messages: [ConversationMessage] = []
     private var loadingConversationID: String?
     private var recoveryActionInProgress = false
+    private var recoveryPresentationGeneration = 0
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -855,10 +881,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func showConversation(id: String) {
+        guard repository.selectedConversationID == id else { return }
         guard loadingConversationID != id || repository.selectedConversation?.id != id else { return }
+        recoveryPresentationGeneration += 1
         hideSyncToast()
         recoveryActionInProgress = false
-        repository.selectConversation(id: id)
         if let detail = repository.selectedConversation {
             loadingConversationID = nil
             activityIndicator.stopAnimating()
@@ -890,6 +917,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func resetForAccountScopeChange() {
+        recoveryPresentationGeneration += 1
         hideSyncToast()
         recoveryActionInProgress = false
         loadingConversationID = nil
@@ -925,15 +953,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let previousMessages = messages
         let hadLoadedDetail = repository.selectedConversation?.id == id
         recoveryActionInProgress = true
+        recoveryPresentationGeneration += 1
+        let presentationGeneration = recoveryPresentationGeneration
         diagnostics.info(category: "navigation", name: "conversation.latestSync.requested", fields: repository.diagnosticsFields(for: id))
         updateConversationMenu()
         showSyncToast("正在同步最新消息…")
         repository.syncLatestMessages { [weak self] result in
-            guard let self else { return }
-            guard self.repository.selectedConversationID == id else {
-                self.hideSyncToast()
-                return
-            }
+            guard let self, self.repository.selectedConversationID == id, self.recoveryPresentationGeneration == presentationGeneration else { return }
             self.recoveryActionInProgress = false
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
@@ -985,6 +1011,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID, !recoveryActionInProgress else { return }
         recoveryActionInProgress = true
+        recoveryPresentationGeneration += 1
+        let presentationGeneration = recoveryPresentationGeneration
         hideSyncToast()
         diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
         loadingConversationID = id
@@ -996,7 +1024,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         activityIndicator.startAnimating()
         updateConversationMenu()
         repository.reloadSelectedConversation { [weak self] result in
-            guard let self, self.repository.selectedConversationID == id else { return }
+            guard let self, self.repository.selectedConversationID == id, self.recoveryPresentationGeneration == presentationGeneration else { return }
             self.recoveryActionInProgress = false
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()

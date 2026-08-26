@@ -28,11 +28,11 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Application entry point**: `ChatGPTClient/AppDelegate.swift`.
 - **Application shell**: `RootViewController.swift`, `SettingsViewController.swift`.
 - **Build/runtime metadata owner**: `ChatGPTClient/Support/AppBuildInfo.swift` plus Xcode build settings/Info.plist expansion.
-- **Diagnostics owner**: `ChatGPTClient/Diagnostics/Diagnostics.swift` (`DiagnosticsLogger`, bounded store, sanitizer, exporter, and user-triggered clear operation). Clearing uses the existing store and removes its current + rotated local files only.
+- **Diagnostics owner**: `ChatGPTClient/Diagnostics/Diagnostics.swift` (`DiagnosticsLogger`, bounded store, sanitizer, exporter, user-triggered clear operation). Clearing uses the existing store and removes its current + rotated local files only.
 - **Embedded login UI/navigation owner**: `ChatGPTClient/Authentication/AuthWebViewController.swift`.
 - **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore`, accepted from real-device evidence.
-- **Safe auth evidence/account-context owner**: `ChatGPTClient/Authentication/AuthSessionStore.swift`; copied WebKit auth context is transient only. Native `/auth/login` remains historical route-specific evidence and is not a current account-context gate.
-- **Account/workspace context owner**: b6 Candidate in-memory context in `AuthSessionStore`; b5 proved the session/accounts HTTP transport on-device, while b6 ordered-account parsing remains runtime pending.
+- **Safe auth evidence/account-context owner**: `ChatGPTClient/Authentication/AuthSessionStore.swift`; copied WebKit auth context and `/api/auth/session` bearer are transient only. Native `/auth/login` remains historical route-specific evidence and is not a current account-context gate.
+- **Account/workspace context owner**: accepted b6 in-memory context in `AuthSessionStore`. Current parser uses `account_ordering` + keyed `accounts` + nested `account.account_id` and is real-device verified for the tested account.
 - **Test roots**: None yet.
 
 ## Build and validation
@@ -40,9 +40,9 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Primary packaging command**: `bash scripts/build_ipa.sh` on macOS with Xcode.
 - **Underlying build**: `xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Release -sdk iphoneos ... build` with signing disabled for TrollStore candidate packaging.
 - **Lint/static checks**: No separate lint tool configured.
-- **CI workflow**: `.github/workflows/ios-foundation.yml` on GitHub-hosted `macos-15`; current b6 push run used Xcode 16.4 / iPhoneOS 18.5 SDK and compiled for `arm64-apple-ios14.0`.
+- **CI workflow**: `.github/workflows/ios-foundation.yml` on GitHub-hosted `macos-15`; accepted b6 push run used Xcode 16.4 / iPhoneOS 18.5 SDK and compiled for `arm64-apple-ios14.0`.
 - **Artifact/package output**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` plus `.sha256`.
-- **Current validation level**: foundation and embedded login/persistence are runtime accepted on iPhone / iOS 17.0. b5 real-device evidence reached `/api/auth/session` HTTP 200 and accounts-check HTTP 200 on its second direct probe but failed the superseded account parser. b6 parser + diagnostics-clear implementation is Code written + CI passed + Artifact produced, runtime pending. Conversation/private protocol remains Unknown / Unverified.
+- **Current validation level**: foundation, embedded login/persistence, direct session/accounts transport and ordered account-context parsing are runtime accepted on iPhone / iOS 17.0 through b6. Conversation/private protocol remains Unknown / Unverified.
 
 ## Versioning and candidate identity
 
@@ -51,8 +51,8 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Merged main foundation version/build**: `0.1.0 (1)` / `DEV-app-foundation-0.1.0-b1`.
 - **Accepted web-login/persistence runtime evidence**: b2.
 - **Historical native `/auth/login` success/failure evidence**: b3/b4.
-- **Direct native session/accounts transport runtime evidence**: b5.
-- **Current active account-context test candidate**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`.
+- **Direct native session/accounts transport evidence**: b5/b6.
+- **Accepted auth/account-context runtime candidate**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`, pending PR #6 integration.
 - **Parallel test-candidate scheme**: `DEV-<work-slug>-<marketing-version>-b<build>`; identities must remain unique across Active tasks.
 - **Artifact naming rule**: `ChatGPTClient-<marketing-version>-b<build>-<work-slug>.ipa`.
 - **Current bundle identifier**: `com.whitesharkssw.chatgptclient`; accepted but not Frozen as a permanent signing/product contract.
@@ -68,13 +68,13 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 
 ## Current source/candidate baselines
 
-- Foundation merged to `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`; current `main` branch remains at `836651a41e36feafcc2386939d70d673be6e3725` after foundation documentation.
+- Foundation merged to `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`; last guard showed `main` at `836651a41e36feafcc2386939d70d673be6e3725`.
 - Auth work is on `dev/auth-bootstrap-20260826` / draft PR #6.
 - b2 source `809fa03e673afded87cb47fb755c998ab1b58e12` established Google login + WebKit persistence.
-- b3 source `0fcf040012c0698d0e3ce1628fec9865237eba3b` established one successful native `/auth/login` result; b4 source `33ea1b96f755bdf21fdd7691a9f1084a6d624908` later showed Cloudflare HTTP 403 on that native route while WebKit remained authenticated.
-- b5 source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f`, artifact ID `9593649485`: second device probe returned session HTTP 200 and accounts-check HTTP 200, then b5 parser `missing_default_account`.
-- b6 exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; authoritative push run `32934821144`; artifact ID `9594474567`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; artifact ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`.
-- Downloaded b6 artifact was locally extracted and its embedded version/build/candidate/source/deployment identity and IPA SHA-256 were rechecked successfully.
+- b3 source `0fcf040012c0698d0e3ce1628fec9865237eba3b` established one successful native `/auth/login` result; b4 source `33ea1b96f755bdf21fdd7691a9f1084a6d624908` later showed native Cloudflare HTTP 403 while WebKit remained authenticated.
+- b5 source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` established a successful direct session/accounts HTTP 200 path and exposed the old parser.
+- b6 exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; run `32934821144`; artifact ID `9594474567`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; artifact ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`.
+- b6 runtime export matches build 6/source `19c0cd22923d`, iPhone / iOS 17.0. First account probe returned session HTTP 403; after explicit user `重新开始`, second probe returned session HTTP 200, accounts-check HTTP 200, ordered account context verified (`plus`, `personal`) and `status=ok`.
 
 ## Historical reference material
 
@@ -84,9 +84,8 @@ The previous-project history pack is experience/reference only. It is not the cu
 
 - Runtime success on iOS 17.0 does not prove runtime compatibility on all systems down to the compiled iOS 14.0 minimum.
 - Native `/auth/login` results are route/time-specific and not a durable prerequisite contract.
-- b5 second probe proves the session/accounts HTTP path under that tested condition, not the corrected b6 parser.
-- b6 CI/artifact success does not prove account-context parsing or diagnostics-clear runtime behavior; exact device evidence is required.
-- A direct `/api/auth/session` request returned 403 in b5's first post-challenge probe; no speculative retry is currently part of the architecture.
+- Direct `/api/auth/session` can return HTTP 403 under observed challenge conditions; current code intentionally has no speculative automatic retry. b6 accepted success came from a later user-triggered verification attempt.
+- b6 auth/account success does not prove any conversation-list/detail/streaming protocol behavior.
 - Current private conversation protocol must be established from current evidence before implementation.
 
 ## Auto-refresh rule

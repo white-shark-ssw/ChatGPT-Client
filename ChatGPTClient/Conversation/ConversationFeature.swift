@@ -1,3 +1,4 @@
+import CryptoKit
 import UIKit
 import WebKit
 
@@ -75,6 +76,12 @@ final class ConversationRepository {
         if selectedConversation?.id != id { selectedConversation = nil }
     }
 
+    func diagnosticsFields(for id: String) -> [String: String] {
+        var fields = ["conversationHash": Self.shortHash(id)]
+        if let index = conversations.firstIndex(where: { $0.id == id }) { fields["listPosition"] = String(index + 1) }
+        return fields
+    }
+
     func loadConversations(completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         let span = diagnostics.startSpan(category: "conversation", name: "listLoad")
         withTransientSession { [weak self] result in
@@ -99,7 +106,7 @@ final class ConversationRepository {
 
     func loadConversation(id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         selectedConversationID = id
-        let span = diagnostics.startSpan(category: "conversation", name: "detailLoad")
+        let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: diagnosticsFields(for: id))
         withTransientSession { [weak self] result in
             guard let self else { return }
             switch result {
@@ -176,13 +183,16 @@ final class ConversationRepository {
 
     private func requestConversationDetail(id: String, using session: AuthTransientSession, span: DiagnosticsSpan, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         let detailURL = URL(string: "https://chatgpt.com/backend-api/conversation")!.appendingPathComponent(id)
-        diagnostics.info(category: "conversation", name: "detail.request", traceID: span.traceID, fields: ["method": "GET", "route": "conversation_detail"])
+        var requestFields = diagnosticsFields(for: id)
+        requestFields["method"] = "GET"
+        requestFields["route"] = "conversation_detail"
+        diagnostics.info(category: "conversation", name: "detail.request", traceID: span.traceID, fields: requestFields)
         var request = URLRequest(url: detailURL)
         request.httpMethod = "GET"
         session.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             if let error {
-                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error)
+                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: self.diagnosticsFields(for: id))
                 span.end(status: "failed", fields: ["stage": "network"])
                 self.finishOnMain(.failure(error), completion: completion)
                 return
@@ -211,12 +221,18 @@ final class ConversationRepository {
             let messages = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
             let title = Self.normalizedTitle(payload["title"] as? String)
             let detail = ConversationDetail(id: id, title: title, messages: messages)
-            let fields = ["httpStatus": String(response.statusCode), "byteCount": String(data.count), "mappingCount": String(mapping.count), "visibleMessageCount": String(messages.count)]
+            var fields = self.diagnosticsFields(for: id)
+            fields["httpStatus"] = String(response.statusCode)
+            fields["byteCount"] = String(data.count)
+            fields["mappingCount"] = String(mapping.count)
+            fields["visibleMessageCount"] = String(messages.count)
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
             DispatchQueue.main.async {
                 guard self.selectedConversationID == id else {
-                    self.diagnostics.info(category: "conversation", name: "detail.discarded", fields: ["reason": "selection_changed"])
+                    var fields = self.diagnosticsFields(for: id)
+                    fields["reason"] = "selection_changed"
+                    self.diagnostics.info(category: "conversation", name: "detail.discarded", fields: fields)
                     return
                 }
                 self.selectedConversation = detail
@@ -237,6 +253,10 @@ final class ConversationRepository {
     private static func normalizedTitle(_ title: String?) -> String {
         let trimmed = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return trimmed.isEmpty ? "未命名会话" : trimmed
+    }
+
+    private static func shortHash(_ value: String) -> String {
+        "sha256:" + SHA256.hash(data: Data(value.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
     }
 
     private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> [ConversationMessage] {
@@ -322,7 +342,7 @@ final class ConversationSidebarViewController: UITableViewController {
         let item = repository.conversations[indexPath.row]
         repository.selectConversation(id: item.id)
         tableView.reloadData()
-        diagnostics.info(category: "navigation", name: "conversation.selected")
+        diagnostics.info(category: "navigation", name: "conversation.selected", fields: repository.diagnosticsFields(for: item.id))
         onSelectConversation?(item.id)
     }
 
@@ -394,9 +414,11 @@ final class ConversationSidebarViewController: UITableViewController {
 
 final class ConversationDetailViewController: UIViewController, UITableViewDataSource {
     private let repository: ConversationRepository
+    private let diagnostics = DiagnosticsLogger.shared
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let stateLabel = UILabel()
+    private let retryButton = UIButton(type: .system)
     private var messages: [ConversationMessage] = []
     private var loadingConversationID: String?
 
@@ -432,6 +454,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         stateLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stateLabel)
 
+        retryButton.setTitle("重新加载", for: .normal)
+        retryButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        retryButton.addTarget(self, action: #selector(reloadCurrentConversation), for: .touchUpInside)
+        retryButton.isHidden = true
+        retryButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(retryButton)
+
         activityIndicator.hidesWhenStopped = true
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(activityIndicator)
@@ -445,6 +474,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             stateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             stateLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
             stateLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24),
+            retryButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            retryButton.topAnchor.constraint(equalTo: stateLabel.bottomAnchor, constant: 14),
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -36)
         ])
@@ -458,6 +489,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         tableView.reloadData()
         stateLabel.text = "正在读取会话…"
         stateLabel.isHidden = false
+        retryButton.isHidden = true
         activityIndicator.startAnimating()
         repository.loadConversation(id: id) { [weak self] result in
             guard let self, self.repository.selectedConversationID == id else { return }
@@ -469,12 +501,20 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
                 self.messages = detail.messages
                 self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
                 self.stateLabel.isHidden = !detail.messages.isEmpty
+                self.retryButton.isHidden = true
                 self.tableView.reloadData()
             case .failure(let error):
                 self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
                 self.stateLabel.isHidden = false
+                self.retryButton.isHidden = false
             }
         }
+    }
+
+    @objc private func reloadCurrentConversation() {
+        guard let id = repository.selectedConversationID else { return }
+        diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
+        showConversation(id: id)
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

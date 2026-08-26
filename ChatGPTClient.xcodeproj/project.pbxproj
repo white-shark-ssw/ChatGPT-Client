@@ -16,6 +16,7 @@
 		A00000000000000000000007 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000009 /* Assets.xcassets */; };
 		A00000000000000000000008 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000010 /* AuthSessionStore.swift */; };
 		A00000000000000000000009 /* ProtocolReadProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* ProtocolReadProbe.swift */; };
+		A00000000000000000000010 /* ConversationFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000012 /* ConversationFeature.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		B00000000000000000000009 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B00000000000000000000010 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
 		B00000000000000000000011 /* ProtocolReadProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolReadProbe.swift; sourceTree = "<group>"; };
+		B00000000000000000000012 /* ConversationFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationFeature.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 				B00000000000000000000003 /* SettingsViewController.swift */,
 				C00000000000000000000006 /* Authentication */,
 				C00000000000000000000007 /* Protocol */,
+				C00000000000000000000008 /* Conversation */,
 				C00000000000000000000003 /* Support */,
 				C00000000000000000000004 /* Diagnostics */,
 				B00000000000000000000009 /* Assets.xcassets */,
@@ -106,6 +109,14 @@
 				B00000000000000000000011 /* ProtocolReadProbe.swift */,
 			);
 			path = Protocol;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000008 /* Conversation */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000012 /* ConversationFeature.swift */,
+			);
+			path = Conversation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -185,6 +196,7 @@
 				A00000000000000000000006 /* AuthWebViewController.swift in Sources */,
 				A00000000000000000000008 /* AuthSessionStore.swift in Sources */,
 				A00000000000000000000009 /* ProtocolReadProbe.swift in Sources */,
+				A00000000000000000000010 /* ConversationFeature.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

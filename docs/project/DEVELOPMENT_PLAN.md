@@ -4,9 +4,9 @@ _Last updated: 2026-08-26._
 
 ## Purpose
 
-This is the durable implementation sequence for the new iOS-native ChatGPT client. Status must be backed by current source/CI/artifact/runtime evidence.
+This is the durable implementation sequence for the iOS-native ChatGPT client. Status must be backed by current source/CI/artifact/runtime evidence.
 
-Current constraints: native iOS client; TrollStore IPA distribution; intended user OS ceiling iOS 17.0; lowest practical deployment target; historical WebView material reference-only; current ChatGPT private/internal behavior must be revalidated.
+Current constraints: native iOS client; TrollStore IPA; intended OS ceiling iOS 17.0; lowest practical deployment target; historical WebView material reference-only; current private/internal behavior must be revalidated.
 
 ## Development principles
 
@@ -20,60 +20,49 @@ Current constraints: native iOS client; TrollStore IPA distribution; intended us
 
 ## Phase 1 — `DEV-app-foundation`
 
-### Status
-
-**Accepted / Stable foundation.** `DEV-app-foundation-0.1.0-b1` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0. Foundation is Stable, not Frozen.
-
-### Established scope
-
-Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell/settings, build/runtime identity, bounded local diagnostics/redacted export, reproducible unsigned IPA packaging and GitHub Actions build/artifact path.
+**Completed / merged / Stable.** `DEV-app-foundation-0.1.0-b1` reached Code + CI + Artifact + real-device testing on iPhone / iOS 17.0.
 
 ## Phase 2 — `DEV-auth-bootstrap`
 
-### Status
+**Completed / merged / Stable for accepted scope.** `DEV-auth-bootstrap-0.1.0-b6` established embedded Google login, persistent default `WKWebsiteDataStore` auth, transient native session/accounts transport, ordered plus/personal account context and privacy-safe diagnostics on iPhone / iOS 17.0.
 
-**Completed / merged / Stable for the accepted scope.** PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`. Embedded Google login, persistent WebKit auth, direct native session/accounts transport, ordered account-context parsing, privacy-safe diagnostics, and the clear-log control are accepted on iPhone / iOS 17.0 through b6.
-
-### Durable authentication boundary
-
-- Default persistent `WKWebsiteDataStore` is the sole persistent auth-secret authority.
-- `AuthSessionStore` is the accepted in-memory account-context owner.
-- Copied WebKit cookies and `/api/auth/session` bearer are transient only.
-- Challenge sensitivity is observed; no speculative automatic retry, fallback, UA spoof or Cloudflare bypass is part of the accepted architecture.
-- Authentication/account success does not prove conversation protocol behavior.
+Durable boundary: WebKit remains the sole persistent auth-secret authority; copied cookies/bearer are transient; challenge sensitivity remains observed; no speculative automatic retry/fallback/UA spoof/Cloudflare bypass.
 
 ## Phase 3 — `DEV-protocol-read`
 
 ### Status
 
-**Active — b7 ready for real-device protocol validation.** `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`, has reached **Code written + CI passed + Artifact produced**. Authoritative push run `32938912018` produced artifact ID `9595827498`; IPA `ChatGPTClient-0.1.0-b7-dev-protocol-read.ipa`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`. Runtime conversation-list/detail evidence is still pending.
+**Runtime acceptance passed on b7; PR #7 integration completing.** Candidate `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`, reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** on iPhone / iOS 17.0.
 
-### Current diagnostic scope
+### Accepted current evidence
 
-- Reuse accepted WebKit/AuthSessionStore owners; do not introduce another persistent credential authority.
-- After account verification, create a short-lived ephemeral authorized transport with the transient bearer hidden inside the transport owner.
-- Perform one conversation-list GET with the current evidence-backed first-page query, select one returned conversation ID only in memory, then perform one conversation-detail GET.
-- Record only safe status/timing/byte/item/pagination/tree/role/content-type structural evidence. Do not log full titles, message bodies/parts, payload dumps, raw conversation/message IDs or auth secrets.
-- Do not introduce production conversation models/repository/rendering in this phase.
-
-### CI history
-
-- b7 run `32938007843`: compile-only failure because Swift could not type-check one large closure in reasonable time.
-- b7 run `32938132841`: compile-only failure on one large detail diagnostics dictionary literal.
-- Product source `44a137...` split only those expressions for compiler tractability, preserving protocol behavior.
-- Push run `32938912018`: Xcode 16.4 Release build succeeded for `arm64-apple-ios14.0`; IPA and artifact hashes were independently rechecked after download.
+- First account attempt reproduced `/api/auth/session` HTTP 403; user explicitly pressed `重新开始`; second attempt returned session/accounts HTTP 200 and verified plus/personal account context. No automatic retry occurred.
+- Personal-account conversation list request `GET /backend-api/conversations?offset=0&limit=28&order=updated` succeeded with transient bearer + copied ephemeral WebKit cookies only; no `chatgpt-account-id` or browser-only headers were required in this tested run.
+- List response: HTTP 200, 23,697 bytes, 28 items, total 29, limit 28, offset 0.
+- First detail response: HTTP 200, 13,152,411 bytes, mappingCount 2068, messageNodeCount 2067, one root/null-message node, three branching nodes, max children 2, six content types; current node present+mapped and returned conversation identity matched.
+- Role counts user 22 + assistant 1235 + tool 810 + system 0 + other 0 equal all 2067 message nodes.
+- End-to-end list/detail probe finished `status=ok` in 13,573.66 ms; current diagnostics do not separate transport vs parse/inspection time.
+- Screenshot title `会话列表 · 会话详情通过` matches the exported result.
 
 ### Phase 3 acceptance gate
 
-A minimal authenticated diagnostic harness must load the current conversation list and one conversation detail on-device, with exported safe evidence sufficient to confirm or reject the tested path/shape. CI and artifact production alone do not satisfy this gate.
-
-### Next exact runtime action
-
-Install b7, clear accumulated diagnostics through Settings, run `开始会话列表与详情验证`, and export diagnostics immediately after the result. If the account/session gate is challenge-sensitive, preserve the exact failure and use only an explicit user-triggered restart; do not add automatic retries. If list/detail fails, keep the exact stage/status and change only what current runtime evidence justifies.
+**Passed for the exact tested Plus/personal read scope.** This does not prove send/streaming/attachments, non-personal workspaces, iPad or lower-iOS runtime.
 
 ## Phase 4 — `DEV-native-read-path`
 
-**Blocked on Phase 3 runtime acceptance.** After protocol-read evidence is accepted, build native conversation list/navigation, authoritative selected-conversation identity, conversation repository/store, message-tree active-branch resolver and virtualized native message rendering. Acceptance requires repeated real-conversation switching and long-conversation reads without identity mixing.
+### Status
+
+**Next core task after PR #7 integration.**
+
+### Required first design inputs from b7
+
+- Establish explicit production owners for conversation repository, list pagination, selected-conversation identity, detail/message-tree state and active branch resolution. The diagnostic `ProtocolReadProbe` must not become the production repository.
+- Reuse accepted auth/account transport ownership; do not create a second persistent credential authority.
+- Implement list/navigation/read models from the now-evidenced list/detail structure, while treating unsupported fields/semantics as Unknown until required.
+- The first tested detail was **13.15 MB with 2068 mapping nodes / 2067 message nodes**. Native storage, parsing and rendering must therefore be designed for real large-conversation input rather than a tiny sample.
+- Do not infer that the measured 13.57 s is rendering or parsing time; add phase-specific timing only where needed to locate actual bottlenecks.
+- Preserve conversation identity under repeated rapid switching. Acceptance requires repeated real-conversation switching and long-conversation reads without identity mixing.
+- Use bounded/virtualized native rendering rather than assuming all message views can remain materialized.
 
 ## Phase 5 — `DEV-send-stream`
 
@@ -81,7 +70,7 @@ Implement text send/new conversation only after read-path ownership is stable, t
 
 ## Phase 6 — `DEV-long-conversation`
 
-Measure and stabilize bounded visible views, model/render separation, incremental stream updates, memory growth, input latency, scrolling, first-visible timing and background/foreground behavior on real device.
+Measure and stabilize bounded visible views, model/render separation, incremental updates, memory growth, input latency, scrolling, first-visible timing and background/foreground behavior on real device.
 
 ## Phase 7 — `DEV-attachments`
 
@@ -97,11 +86,7 @@ Projects, web search, image generation, Voice, Memory, Deep Research, GPTs and o
 
 # Diagnostics / logging contract
 
-Every important async path should show what started, which owner handled it, what safe request/stream/upload it mapped to, timing, terminal result and safe error/status metadata.
-
-Never log passwords, OAuth codes, access/refresh/session tokens, Cookie values/full Cookie headers, Authorization values, full chat bodies or attachment contents. Prefer counts, sizes, statuses, timings and redacted/hashed identifiers.
-
-Use the accepted bounded local diagnostics store/export/clear authority; do not create a competing store without a concrete need.
+Every important async path should show what started, which owner handled it, safe request/stream/upload mapping, timing, terminal result and safe error/status metadata. Never log passwords, OAuth codes, tokens, Cookie/Authorization values, full chat bodies or attachment contents.
 
 # Parallel-development guidance
 
@@ -109,4 +94,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Obtain real-device b7 conversation-list/detail evidence. Do not start `DEV-native-read-path` or modify protocol headers/endpoints without the b7 runtime result.
+Complete PR #7 integration and then create isolated `DEV-native-read-path` from the merged b7 baseline. Its first work must establish production conversation state ownership and the minimal native list/detail read path using the accepted protocol evidence, with explicit handling for the evidenced large detail payload.

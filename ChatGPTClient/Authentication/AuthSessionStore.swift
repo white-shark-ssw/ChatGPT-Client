@@ -43,10 +43,13 @@ final class AuthTransientSession {
         self.accessToken = accessToken
     }
 
-    func dataTask(with request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
+    @discardableResult
+    func dataTask(with request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
         var authorizedRequest = request
         authorizedRequest.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        session.dataTask(with: authorizedRequest, completionHandler: completion).resume()
+        let task = session.dataTask(with: authorizedRequest, completionHandler: completion)
+        task.resume()
+        return task
     }
 
     func finishTasksAndInvalidate() {

@@ -44,7 +44,7 @@ Completed / merged / Stable for tested b9 scope. `ConversationRepository` owns p
 
 ### Current status
 
-**Active. b14 compact startup/navigation is real-device accepted; one selected-detail replacement lifecycle defect remains inside the same Work.**
+**Active b15 test candidate. b14 compact startup/navigation is real-device accepted; b15 implements the remaining selected-detail replacement lifecycle correction and awaits Runtime validation.**
 
 Runtime progression:
 
@@ -52,7 +52,8 @@ Runtime progression:
 - b11: request paths worked, but navigation-bar prompt feedback was invisible and rejected.
 - b12: centered sync feedback + public WebKit warm-up accepted; initial list still waited for lazy compact sidebar reveal.
 - b13: immediate list initiation and stale-operation rejection accepted; compact startup/navigation failed; manual replacement requests overlapped an older selected-detail request and returned HTTP429.
-- b14: `DEV-conversation-recovery-0.1.0-b14`, run `33000566633`, artifact `9618410313`, IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`. User reported the stated b14 device gate had no issues. Cold start now reaches the conversation-list root, duplicate sidebar icons are gone, and native compact list/detail navigation is accepted on iPhone/iOS17.
+- b14: `DEV-conversation-recovery-0.1.0-b14`, run `33000566633`, artifact `9618410313`, IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`. Exact b14 is real-device accepted: cold start reaches the conversation-list root, duplicate sidebar icons are gone, and native compact list/detail navigation works on iPhone/iOS17.
+- b15: `DEV-conversation-recovery-0.1.0-b15`, `0.1.0 (15)`, product/config head `159e8ea4f7baf6cd890d1f9bbebeac41feefbf52`, run `33004536664` success, artifact `9619988065`, IPA SHA `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`. Code + static/source review + CI + Artifact complete; Runtime pending.
 
 ### Manual recovery contract
 
@@ -60,29 +61,35 @@ Runtime progression:
 - Success reconciles server-backed detail; failure preserves previously loaded detail when applicable.
 - `重载当前会话` clears authoritative selected detail first, then performs one fresh server detail request.
 - During an ordinary initial detail load, overflow sync/reload remains available for explicit recovery.
-- Current generation guard rejects older selected-detail completions as `operation_superseded` once a newer operation owns the selected detail.
+- Operation generation rejects older selected-detail completions once a newer operation owns the selected detail.
 - Duplicate manual recovery taps are disabled only while the manual action itself is active.
 - No automatic retry/watchdog/fallback/resend chain.
 
-### Remaining selected-detail replacement correction
+### b15 selected-detail replacement lifecycle
 
-b13 supplied direct runtime evidence that freshness rejection alone is insufficient for the request lifecycle:
+b13 supplied direct runtime evidence that freshness rejection alone was insufficient for the request lifecycle: an ordinary detail request stayed in flight while manual replacement requests started, and those replacements returned HTTP429 even though the later old result was safely discarded.
 
-- ordinary detail generation 1 remained in flight;
-- manual reload generations 2/3 were started concurrently and each returned HTTP429;
-- generation 1 later succeeded but was correctly discarded as stale.
+b15 makes the minimum owner-level correction:
 
-The minimum correction remains **inside `DEV-conversation-recovery`**, not a new Work ID. It uses the same `ConversationRepository` owner, same source area and same PR dependency, and it directly closes the recovery-during-load defect exposed by this Work.
+1. `AuthTransientSession.dataTask(with:completion:)` returns the same already-created/resumed `URLSessionDataTask`; Authorization, cookies, endpoints and ephemeral transport semantics do not change.
+2. `ConversationRepository` tracks the current selected-detail task plus the generation that owns it.
+3. Ordinary detail loading behavior remains unchanged by default.
+4. Explicit manual sync/reload increments the replacement generation first, cancels the older tracked selected-detail task, then starts one replacement detail request.
+5. Intentional `NSURLErrorCancelled` is recorded as cancellation and is not surfaced to the obsolete UI operation.
+6. Existing generation rejection remains as a second freshness safeguard for any late callback.
+7. No retry, delay, timer, watchdog, fallback endpoint/header set, resend/regenerate or second state authority is added.
 
-Required direction:
+### b15 acceptance gate
 
-1. Track the current selected-detail network task at `ConversationRepository` request-lifecycle level.
-2. When explicit manual sync/reload replaces an in-flight selected-detail request, cancel/replace the older task before issuing the new request.
-3. Retain operation-generation stale-result rejection for callbacks that can still arrive after cancellation.
-4. Do not add automatic retry, timer, watchdog, fallback endpoint/header sets, resend/regenerate or a second state owner.
-5. Use a fresh unique candidate/build after a new conflict/build-index check; b14 cannot be reused.
+Exact b15 on iPhone/iOS17 must prove:
 
-Recovery remains unmerged until this correction is implemented and real-device accepted.
+- enter a conversation and, while ordinary `正在读取会话…` is still active, invoke exactly one manual sync or reload;
+- diagnostics show `detail.cancel.requested` for the old generation and `detail.cancelled` for that obsolete task, followed by one replacement `detail.request`;
+- the client does not intentionally leave the old and replacement selected-detail requests active concurrently;
+- the replacement completes normally without reproducing the b13 overlap-driven HTTP429 in the tested case;
+- centered sync feedback/full reload and the accepted b14 cold-start/list/detail navigation remain intact.
+
+Only exact b15 real-device acceptance can close recovery. CI/Artifact alone are not Runtime proof.
 
 ### Accepted cold-start/navigation state
 
@@ -125,4 +132,4 @@ Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Re
 
 ## Current next action
 
-Continue **the same `DEV-conversation-recovery` Work** when requested. First rerun main/PR/Active-task/build-index conflict checks, then allocate a fresh candidate and implement the minimum selected-detail cancel/replace lifecycle. After real-device acceptance, perform final merge-time checks, merge PR #10, complete recovery, then start `DEV-multi-conversation-state`.
+Real-device test exact `DEV-conversation-recovery-0.1.0-b15` against the selected-detail cancellation/replacement gate. If accepted, record Runtime evidence, perform final main/PR/conflict checks, merge PR #10, complete recovery, then start `DEV-multi-conversation-state`.

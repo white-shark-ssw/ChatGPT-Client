@@ -23,29 +23,29 @@ Every new testable Active task/candidate must allocate a unique candidate/build 
 | `DEV-native-read-path-0.1.0-b9` | `DEV-native-read-path` | `0.1.0 (9)` | PR #9 merged | `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7` | Code + CI + Artifact + real-device | Run `32978476582`; artifact `9610449216`; IPA SHA `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e` | Shell/list/two details/current visible branch accepted | Stable / merged production read baseline |
 | `DEV-conversation-recovery-0.1.0-b10` | `DEV-conversation-recovery` | `0.1.0 (10)` | `dev/conversation-recovery-20260826` / PR #10 | `89129913cb29a35db9dec7a6d5670d1b3b76bc23` | Code + CI + Artifact + real-device | Run `32982836557`; artifact `9612167843`; IPA SHA `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e` | Sync/full reload core accepted | Accepted core recovery runtime |
 | `DEV-conversation-recovery-0.1.0-b11` | `DEV-conversation-recovery` | `0.1.0 (11)` | same / PR #10 | head `c3490eb67f8d8218281b30560a5c20b3d846c931`; tested merge `7fe8ca7693e9e8daa5fa80c9b8c600215e443cf3`; tree `80cd8e60977bbcc8dc2dc83881a58afb29a51bde` | Code + CI + Artifact + real-device | Run `32988700796`; artifact `9613806931`; IPA SHA `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33` | Request paths worked; nav-bar feedback not visible | Presentation rejected / superseded |
-| `DEV-conversation-recovery-0.1.0-b12` | `DEV-conversation-recovery` | `0.1.0 (12)` | same / PR #10 | head `fd9fb3ac7a09eafa8dfd33918d114c7d3fee474f`; tested merge `4a7380b913ff5bd847c676fceab31adafdeecb3f`; tree `81c801284b1e83f68043c30b9c75f47e76640128` | **Code + CI + Artifact + real-device** | Run `32993589071`; artifact `9615588166`; IPA SHA `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab` | Centered sync toast accepted. Cold-start warm-up 0/0 -> 41/22 cookies in 194.97ms and later account/list succeeded without Login; first list still waited for lazy sidebar reveal. | **Partial runtime acceptance / superseded by b13** |
-| `DEV-conversation-recovery-0.1.0-b13` | `DEV-conversation-recovery` | `0.1.0 (13)` | same / PR #10 open | tested product/config head `fcc74ac4015449dba6c77f3136eede82cec3ec54`; tested merge `57187c0d0fd3116f964248a87f1a766268637788`; exact tree `2068ab4dc8f4bd9f94f1cb89e21b8dab29436ebf` | **Code written + static/source review + CI passed + Artifact produced** | **Run `32997544435`; artifact `9617184873`; IPA `ChatGPTClient-0.1.0-b13-dev-conversation-recovery.ipa`; IPA SHA `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`; ZIP `sha256:7d7d1faa4e69f8892df2d2c2b944f7ada36cb252c50dd0ddd238ecc05c7baf27`** | Runtime pending: immediate initial list start/sidebar action + recovery actions during ordinary detail load + stale-operation guard. | **Active test candidate / Runtime pending** |
+| `DEV-conversation-recovery-0.1.0-b12` | `DEV-conversation-recovery` | `0.1.0 (12)` | same / PR #10 | head `fd9fb3ac7a09eafa8dfd33918d114c7d3fee474f`; tested merge `4a7380b913ff5bd847c676fceab31adafdeecb3f`; tree `81c801284b1e83f68043c30b9c75f47e76640128` | Code + CI + Artifact + real-device | Run `32993589071`; artifact `9615588166`; IPA SHA `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab` | Centered sync toast accepted; warm-up 0/0 -> 41/22 and later account/list succeeded without Login; initial list still waited for lazy sidebar reveal | Partial runtime acceptance / superseded |
+| `DEV-conversation-recovery-0.1.0-b13` | `DEV-conversation-recovery` | `0.1.0 (13)` | same / PR #10 open | head `fcc74ac4015449dba6c77f3136eede82cec3ec54`; tested merge `57187c0d0fd3116f964248a87f1a766268637788`; tree `2068ab4dc8f4bd9f94f1cb89e21b8dab29436ebf` | **Code + CI + Artifact + real-device** | Run `32997544435`; artifact `9617184873`; IPA SHA `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`; ZIP `sha256:7d7d1faa4e69f8892df2d2c2b944f7ada36cb252c50dd0ddd238ecc05c7baf27` | Immediate list start worked; compact startup stayed on `新对话`, duplicate sidebar icons/reveal failures; manual replacement overlap produced HTTP429 while stale generation was correctly discarded | **Partial/failing Runtime / superseded by b14 for shell** |
+| `DEV-conversation-recovery-0.1.0-b14` | `DEV-conversation-recovery` | `0.1.0 (14)` | same / PR #10 open | head `82d96bf085dbee3877bcb16e27bbf69f4dc0990f`; tested merge `5b2f60dc8b30ae15d56cbe2d49bbe6b61aff0ad6`; exact tree `4d0ddb24ba6e261cdb7a4057ce47e73f199ad481` | **Code written + static/source review + CI passed + Artifact produced** | **Run `33000566633`; artifact `9618410313`; IPA `ChatGPTClient-0.1.0-b14-dev-conversation-recovery.ipa`; IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`; ZIP `sha256:d8c489159d0c68f315d5c9f9c7920cf6349ab76214c740e07cc30d99fbbbeccf`** | Runtime pending: compact cold start should land on primary conversation list, no duplicate custom sidebar icon, native list/detail navigation only | **Active test candidate / Runtime pending** |
 
 ## Current recovery evidence
 
-- b12 proves on the tested iPhone/iOS17 cold start that public `WKWebsiteDataStore.default()` warm-up can hydrate persisted auth: 0/0 -> 41/22 cookies, then the unchanged normal single account probe and list succeeded without visible Login.
-- b12 centered sync feedback is real-device accepted, including unchanged and changed result paths.
-- b12 exposed a separate shell/list sequencing defect: list loading lived in lazy compact-iPhone sidebar `viewDidLoad`.
-- b13 forces sidebar view/list initialization immediately after warm-up and supplies an explicit sidebar action.
-- b13 keeps sync/reload available during ordinary detail loading and adds a selected-detail operation generation so an older request cannot overwrite newer explicit recovery.
-- Current commits after tested b13 product/config head `fcc74ac...` change only `docs/project/**`; current product/config tree remains exactly the CI-tested tree.
+- b12 proves one tested public default-WebKit-data-store warm-up can hydrate persisted auth without visible Login; centered sync feedback is accepted.
+- b13 proves initial list loading now begins immediately after warm-up. In its tested launch, account context took `17089.96 ms`, full list load `22005.52 ms`, HTTP200 28/29. The near-minute user wait was therefore dominated by compact shell/navigation inability to reach the already-loading/already-loaded list, not by list initiation.
+- b13 also proves selected-detail generation rejection works: an older successful detail was discarded as `operation_superseded`. However manual reload/sync replacement requests overlapped the older detail request and returned HTTP429; that network-overlap defect remains unresolved in b14.
+- b14 moves accepted warm-up before installing the product root, constructs the split columns synchronously, chooses primary/list as the initial compact top column when no conversation is selected, and removes the custom b13 sidebar button.
+- b14 does **not** change authentication/protocol/recovery request semantics or fix the b13 HTTP429 overlap.
 
 ## Foundation / toolchain facts
 
 - Current CI pipeline targets `arm64-apple-ios14.0`; runtime evidence currently covers iPhone/iOS17 unless stated otherwise.
 - Default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority; native copies remain transient.
-- No automatic retry/watchdog/timer/resend/regenerate/fallback endpoint was introduced by b13.
+- No automatic retry/watchdog/timer/resend/regenerate/fallback endpoint was introduced by b14.
 
-## b13 package inspection
+## b14 package inspection
 
-- PR product/config head `fcc74ac4015449dba6c77f3136eede82cec3ec54` and synthetic merge `57187c0d0fd3116f964248a87f1a766268637788` share tree `2068ab4dc8f4bd9f94f1cb89e21b8dab29436ebf`.
-- Sidecar and independently calculated IPA SHA both equal `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`.
-- Embedded: version `0.1.0`, build `13`, candidate b13, source `57187c0d0fd3`, iOS min14.0, device families `[1,2]`, Mach-O arm64.
+- Product/config head `82d96bf085dbee3877bcb16e27bbf69f4dc0990f` and synthetic merge `5b2f60dc8b30ae15d56cbe2d49bbe6b61aff0ad6` share exact tree `4d0ddb24ba6e261cdb7a4057ce47e73f199ad481`.
+- Sidecar and independently calculated IPA SHA both equal `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`.
+- Embedded: version `0.1.0`, build `14`, candidate b14, source `5b2f60dc8b30`, minimum iOS14.0, device families `[1,2]`, Mach-O arm64.
 
 ## Uniqueness / evidence labels
 

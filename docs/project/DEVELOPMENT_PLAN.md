@@ -32,7 +32,7 @@ Durable boundary: WebKit remains the sole persistent auth-secret authority; copi
 
 ### Status
 
-**Runtime acceptance passed on b7; PR #7 integration completing.** Candidate `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`, reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** on iPhone / iOS 17.0.
+**Completed / merged / Stable for the tested read scope.** `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`, reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** on iPhone / iOS 17.0. PR #7 merged at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
 
 ### Accepted current evidence
 
@@ -52,13 +52,13 @@ Durable boundary: WebKit remains the sole persistent auth-secret authority; copi
 
 ### Status
 
-**Next core task after PR #7 integration.**
+**Next core task.**
 
 ### Required first design inputs from b7
 
 - Establish explicit production owners for conversation repository, list pagination, selected-conversation identity, detail/message-tree state and active branch resolution. The diagnostic `ProtocolReadProbe` must not become the production repository.
 - Reuse accepted auth/account transport ownership; do not create a second persistent credential authority.
-- Implement list/navigation/read models from the now-evidenced list/detail structure, while treating unsupported fields/semantics as Unknown until required.
+- Implement list/navigation/read models from the evidenced list/detail structure while leaving unsupported fields/semantics Unknown until required.
 - The first tested detail was **13.15 MB with 2068 mapping nodes / 2067 message nodes**. Native storage, parsing and rendering must therefore be designed for real large-conversation input rather than a tiny sample.
 - Do not infer that the measured 13.57 s is rendering or parsing time; add phase-specific timing only where needed to locate actual bottlenecks.
 - Preserve conversation identity under repeated rapid switching. Acceptance requires repeated real-conversation switching and long-conversation reads without identity mixing.
@@ -94,4 +94,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Complete PR #7 integration and then create isolated `DEV-native-read-path` from the merged b7 baseline. Its first work must establish production conversation state ownership and the minimal native list/detail read path using the accepted protocol evidence, with explicit handling for the evidenced large detail payload.
+Create isolated `DEV-native-read-path` from the merged b7 baseline. Its first work must establish production conversation state ownership and the minimal native list/detail read path using the accepted protocol evidence, with explicit handling for the evidenced large detail payload.

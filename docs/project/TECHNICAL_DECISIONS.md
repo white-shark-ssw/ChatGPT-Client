@@ -63,6 +63,7 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Recovery-during-load**: actions remain available during ordinary selected-detail loading because a stuck load is itself a valid explicit recovery case.
 - **Freshness**: a newer manual recovery supersedes the older selected-detail operation; operation generation rejects obsolete completions.
 - **Request lifecycle update from b13 runtime**: freshness rejection alone is not enough. If the older selected-detail network request is still active, the authoritative repository must cancel/replace that older task before starting the explicit manual replacement request. b13 proved the old state result was safely discarded but concurrently launched replacement requests returned HTTP429.
+- **b15 implementation evidence**: `ConversationRepository` now tracks the current selected-detail `URLSessionDataTask`; explicit manual sync/reload takes ownership of a new generation, cancels the old tracked task and then starts one replacement request. `AuthTransientSession` only exposes the same already-created/resumed task handle; auth/header/cookie/endpoint semantics are unchanged. CI/Artifact passed; Runtime acceptance is still pending.
 - **Boundary**: task cancellation is request-lifecycle ownership inside the existing repository; it is not automatic retry and not a second state authority.
 
 ### TD-014 — Reasoning UI includes expandable user-visible detail and two-pulse transition haptic

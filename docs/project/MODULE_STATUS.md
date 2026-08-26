@@ -3,14 +3,16 @@
 | Module | Status | Owner / baseline | Notes |
 |---|---|---|---|
 | Repository AI governance | Active | `AGENTS.md` + `docs/project/` | Governance bootstrap remains authoritative. |
-| Native application shell | Stable | `AppDelegate.swift`, `RootViewController.swift`, `SettingsViewController.swift`; `DEV-app-foundation-0.1.0-b1` | Swift/UIKit baseline real-device tested on iPhone / iOS 17.0. Settings includes the diagnostics-clear control. Not Frozen. |
-| Build/runtime metadata | Stable | `AppBuildInfo.swift`, Xcode target settings, `Info.plist` | Exact candidate/source/deployment/runtime identity is embedded in test candidates. Accepted auth candidate is b6/build 6. Not Frozen. |
-| Diagnostics / logging | Stable | `ChatGPTClient/Diagnostics/Diagnostics.swift`; foundation + b6 extension | Structured OSLog + bounded rolling JSONL + trace/span + secret filtering + redacted export + explicit clearing of current/rotated files through the same owner. Clearing does not affect WebKit/auth state. Supplied b6 export contains only the fresh test cycle, consistent with the requested clean-log workflow. Not Frozen. |
-| IPA build / CI packaging | Stable | `scripts/build_ipa.sh`, `.github/workflows/ios-foundation.yml` | b6 push run `32934821144` passed; artifact ID `9594474567`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`. Embedded candidate/source/build were locally rechecked. Not Frozen. |
-| Embedded web login | Stable | `AuthWebViewController.swift`; b2 + later device evidence | Continue with Google and persistence are accepted. WebKit can pass the observed Cloudflare challenge and still reach authenticated ChatGPT. Default persistent `WKWebsiteDataStore` remains the persistent auth-secret authority. Not Frozen. |
-| Authentication evidence / native `/auth/login` bridge | Stable | `AuthSessionStore.swift`; b3/b4 evidence | Native `/auth/login` is route-specific evidence only: b3 once succeeded, b4 later returned Cloudflare 403 while WebKit remained authenticated. It is not an account-context gate or session authority. Not Frozen. |
-| Account / workspace context | **Stable** | `AuthSessionStore.swift`; `DEV-auth-bootstrap-0.1.0-b6` | b6 real-device second attempt returned `/api/auth/session` HTTP 200 and accounts-check HTTP 200, parsed ordered account context from `account_ordering` + keyed `accounts` + `account.account_id`, observed accountCount=2/orderCount=1, selected plus/personal context, set `session.accountState=verified`, and ended `status=ok`. First attempt returned session HTTP 403; successful second attempt was user-triggered via `重新开始`, not automatic retry. Stable for this exact iPhone / iOS 17.0 scope; not Frozen. |
-| ChatGPT protocol / conversation / streaming / attachments | Unknown / Unverified | Future development tasks | Authentication/account-context gate is now satisfied, but current conversation-list/detail/streaming protocol is not implemented or evidenced yet. |
+| Native application shell | Stable | `AppDelegate.swift`, `RootViewController.swift`, `SettingsViewController.swift`; foundation + b7 diagnostic entry | Swift/UIKit shell real-device tested on iPhone / iOS 17.0. Not Frozen. |
+| Build/runtime metadata | Stable | `AppBuildInfo.swift`, Xcode settings, `Info.plist` | Exact candidate/source/deployment/runtime identity is embedded. Current accepted protocol candidate is b7/build 7. Not Frozen. |
+| Diagnostics / logging | Stable | `Diagnostics.swift` | Structured OSLog + bounded JSONL + redacted export + clear control. b7 reused this authority and exported privacy-safe protocol evidence. Not Frozen. |
+| IPA build / CI packaging | Stable | `scripts/build_ipa.sh`, `.github/workflows/ios-foundation.yml` | b7 exact-source push run `32938912018` passed; artifact ID `9595827498`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`. Not Frozen. |
+| Embedded web login | Stable | `AuthWebViewController.swift`; b2+ | Continue with Google and persistent default `WKWebsiteDataStore` authentication accepted. Not Frozen. |
+| Authentication/account context | Stable | `AuthSessionStore.swift`; b6 + b7 regression evidence | Ordered plus/personal account context accepted. b7 again observed first-attempt session 403 then explicit user restart -> session/accounts HTTP 200. No automatic retry. Not Frozen. |
+| Protocol-read diagnostic transport | **Stable for accepted diagnostic scope** | `AuthTransientSession` + `ProtocolReadProbe.swift`; `DEV-protocol-read-0.1.0-b7` | **Code + CI + Artifact + real-device tested.** Personal-account list HTTP 200 and first detail HTTP 200 using transient bearer + copied ephemeral cookies, with no account header required in the tested run. Diagnostic-only; not a production repository. Not Frozen. |
+| Conversation-list/detail protocol evidence | **Stable for tested scope** | `DEV-protocol-read-0.1.0-b7` | List: 28/29 items, HTTP 200. Detail: 13,152,411 bytes, mapping 2068 / messages 2067, current node mapped and identity matched. iPhone / iOS 17.0, plus/personal only. Not Frozen. |
+| Native conversation read path | Unknown / Unverified | Future `DEV-native-read-path` | Next core task. Must establish production repository/selected-conversation/message-tree ownership and handle the evidenced large detail payload without identity mixing or naive unbounded rendering. |
+| Streaming / send / attachments | Unknown / Unverified | Future development tasks | Not proven by b7 read evidence. |
 
 ## Allowed statuses
 
@@ -18,18 +20,15 @@ Use concise statuses such as Active, Candidate, Stable, Frozen, Experimental, De
 
 ## Frozen rule
 
-Before changing a Frozen or Stable core module for an unrelated task, verify that the current task truly requires it and record the concrete reason/evidence. Stable does not mean Frozen.
+Before changing a Frozen or Stable core module for an unrelated task, verify the task truly requires it and record the evidence. Stable does not mean Frozen.
 
 ## Current acceptance boundary
 
 - `DEV-app-foundation-0.1.0-b1`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**; foundation Stable, not Frozen.
-- `DEV-auth-bootstrap-0.1.0-b2`: same evidence level for embedded Google login and WebKit session persistence on iPhone / iOS 17.0.
-- `DEV-auth-bootstrap-0.1.0-b3`: same evidence level for transient native `/auth/login` success under its tested conditions; later b4 evidence limits that conclusion.
-- `DEV-auth-bootstrap-0.1.0-b4`: same evidence level with authenticated WebKit but native `/auth/login` HTTP 403; account probe never ran.
-- `DEV-auth-bootstrap-0.1.0-b5`: same evidence level; a successful second direct probe established session HTTP 200 + accounts-check HTTP 200, then exposed the obsolete parser.
-- `DEV-auth-bootstrap-0.1.0-b6`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**. Ordered account parsing passed on the user device and account/workspace context is accepted/Stable for the current path.
+- `DEV-auth-bootstrap-0.1.0-b6`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**; auth/account context Stable for the tested iPhone / iOS 17.0 scope.
+- `DEV-protocol-read-0.1.0-b7`: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**; current Plus/personal conversation-list + one-detail read protocol accepted on iPhone / iOS 17.0. Diagnostic owner remains separate from future production conversation state.
 
-Runtime compatibility below iOS 17.0 and on iPad remains unverified.
+Runtime compatibility below iOS 17.0, iPad, non-personal workspace behavior, send/streaming and attachments remain unverified.
 
 ## Auto-refresh rule
 

@@ -15,6 +15,7 @@
 		A00000000000000000000006 /* AuthWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000008 /* AuthWebViewController.swift */; };
 		A00000000000000000000007 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000009 /* Assets.xcassets */; };
 		A00000000000000000000008 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000010 /* AuthSessionStore.swift */; };
+		A00000000000000000000009 /* ProtocolReadProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* ProtocolReadProbe.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		B00000000000000000000008 /* AuthWebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWebViewController.swift; sourceTree = "<group>"; };
 		B00000000000000000000009 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B00000000000000000000010 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
+		B00000000000000000000011 /* ProtocolReadProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolReadProbe.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +58,7 @@
 				B00000000000000000000002 /* RootViewController.swift */,
 				B00000000000000000000003 /* SettingsViewController.swift */,
 				C00000000000000000000006 /* Authentication */,
+				C00000000000000000000007 /* Protocol */,
 				C00000000000000000000003 /* Support */,
 				C00000000000000000000004 /* Diagnostics */,
 				B00000000000000000000009 /* Assets.xcassets */,
@@ -95,6 +98,14 @@
 				B00000000000000000000010 /* AuthSessionStore.swift */,
 			);
 			path = Authentication;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000007 /* Protocol */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000011 /* ProtocolReadProbe.swift */,
+			);
+			path = Protocol;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -173,6 +184,7 @@
 				A00000000000000000000005 /* Diagnostics.swift in Sources */,
 				A00000000000000000000006 /* AuthWebViewController.swift in Sources */,
 				A00000000000000000000008 /* AuthSessionStore.swift in Sources */,
+				A00000000000000000000009 /* ProtocolReadProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,8 +232,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
-				DIAGNOSTICS_CANDIDATE = "DEV-auth-bootstrap-0.1.0-b6";
+				CURRENT_PROJECT_VERSION = 7;
+				DIAGNOSTICS_CANDIDATE = "DEV-protocol-read-0.1.0-b7";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -245,8 +257,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
-				DIAGNOSTICS_CANDIDATE = "DEV-auth-bootstrap-0.1.0-b6";
+				CURRENT_PROJECT_VERSION = 7;
+				DIAGNOSTICS_CANDIDATE = "DEV-protocol-read-0.1.0-b7";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (

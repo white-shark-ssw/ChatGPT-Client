@@ -4,9 +4,9 @@ _Last updated: 2026-08-26._
 
 ## Purpose
 
-This is the durable implementation sequence for the new iOS-native ChatGPT client. Status must be backed by current source/CI/artifact/runtime evidence.
+This is the durable implementation sequence for the iOS-native ChatGPT client. Status must be backed by current source/CI/artifact/runtime evidence.
 
-Current constraints: native iOS client; TrollStore IPA distribution; intended user OS ceiling iOS 17.0; lowest practical deployment target; historical WebView material reference-only; current ChatGPT private/internal behavior must be revalidated.
+Current constraints: native iOS client; TrollStore IPA; intended OS ceiling iOS 17.0; lowest practical deployment target; historical WebView material reference-only; current private/internal behavior must be revalidated.
 
 ## Development principles
 
@@ -20,77 +20,57 @@ Current constraints: native iOS client; TrollStore IPA distribution; intended us
 
 ## Phase 1 — `DEV-app-foundation`
 
-### Status
-
-**Accepted / Stable foundation.** `DEV-app-foundation-0.1.0-b1` reached Code written + CI passed + Artifact produced + Runtime/manual/real-device tested on iPhone / iOS 17.0. Foundation is Stable, not Frozen.
-
-### Established scope
-
-Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell/settings, build/runtime identity, bounded local diagnostics/redacted export, reproducible unsigned IPA packaging and GitHub Actions build/artifact path.
+**Completed / merged / Stable.** `DEV-app-foundation-0.1.0-b1` reached Code + CI + Artifact + real-device testing on iPhone / iOS 17.0.
 
 ## Phase 2 — `DEV-auth-bootstrap`
 
-### Status
+**Completed / merged / Stable for accepted scope.** `DEV-auth-bootstrap-0.1.0-b6` established embedded Google login, persistent default `WKWebsiteDataStore` auth, transient native session/accounts transport, ordered plus/personal account context and privacy-safe diagnostics on iPhone / iOS 17.0.
 
-**Completed / merged / Stable for the accepted scope.** PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`. Embedded Google login, persistent WebKit auth, current direct native session/accounts transport, ordered account-context parsing, privacy-safe diagnostics, and the requested clear-log control are implemented. The accepted account-context path is real-device tested on iPhone / iOS 17.0.
-
-### Accepted evidence
-
-- b2 completed Continue with Google in embedded `WKWebView` and established persistent WebKit authentication across force-close/relaunch.
-- Default persistent `WKWebsiteDataStore` remains the sole persistent auth-secret authority.
-- b3/b4 established that native browser-oriented `/auth/login` is route-specific evidence only and is not a durable account gate.
-- b5 established direct native `/api/auth/session` HTTP 200 + bearer-authenticated accounts-check HTTP 200 under a successful device run, then exposed the obsolete `accounts.default.account.id` parser.
-- b6 exact identity: `DEV-auth-bootstrap-0.1.0-b6`, version `0.1.0 (6)`, source `19c0cd22923d8c6f4c96e676258b31814d02a942`, run `32934821144`, artifact ID `9594474567`, IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`.
-- b6 first direct attempt returned `/api/auth/session` HTTP 403 after authenticated WebKit re-entry. The user explicitly pressed `重新开始`; the second attempt returned `/api/auth/session` HTTP 200 and accounts-check HTTP 200, observed `accountCount=2`, `accountOrderingCount=1`, selected `plus` / `personal`, set `session.accountState=verified`, and ended `accountContextProbe status=ok` in 1289.71 ms.
-- User screenshot title reads `登录会话 · 账户上下文通过`.
-- This success is not an automatic retry behavior; current code still intentionally has no speculative retry loop.
-- Settings provides `清理诊断日志` through the existing diagnostics store; it clears current/rotated local logs without clearing WebKit/auth state. The supplied b6 export contains only the fresh test cycle, consistent with the clean-log workflow.
-
-### Phase 2 acceptance gate
-
-- Actual Google login on real device — **passed**.
-- WebKit session persistence/re-entry — **passed**.
-- Persistent authentication-secret owner — **default `WKWebsiteDataStore`, accepted**.
-- Native `/auth/login` — **route-specific evidence only, not a gate**.
-- Direct native `/api/auth/session` + accounts-check transport — **passed under accepted b6 success condition**.
-- Current account/workspace parser/owner — **passed b6 on-device; accepted/Stable for current scope**.
-- Auth secrets excluded from logs/export — **implemented**.
-- Explicit local diagnostics clear — **implemented; fresh b6 export is consistent with use**.
+Durable boundary: WebKit remains the sole persistent auth-secret authority; copied cookies/bearer are transient; challenge sensitivity remains observed; no speculative automatic retry/fallback/UA spoof/Cloudflare bypass.
 
 ## Phase 3 — `DEV-protocol-read`
 
 ### Status
 
-**Ready to start as the next isolated development task.** The authentication/account-context prerequisite is satisfied and merged. Conversation-list/detail protocol is still Unknown / Unverified and must be established from current evidence rather than historical assumptions.
+**Runtime acceptance passed on b7; PR #7 integration completing.** Candidate `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`, reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** on iPhone / iOS 17.0.
 
-### Goal / evidence targets
+### Accepted current evidence
 
-Establish current conversation-list request/pagination/metadata, conversation-detail shape, node/message/branch semantics, status/error behavior and required safe request context before production models depend on them.
+- First account attempt reproduced `/api/auth/session` HTTP 403; user explicitly pressed `重新开始`; second attempt returned session/accounts HTTP 200 and verified plus/personal account context. No automatic retry occurred.
+- Personal-account conversation list request `GET /backend-api/conversations?offset=0&limit=28&order=updated` succeeded with transient bearer + copied ephemeral WebKit cookies only; no `chatgpt-account-id` or browser-only headers were required in this tested run.
+- List response: HTTP 200, 23,697 bytes, 28 items, total 29, limit 28, offset 0.
+- First detail response: HTTP 200, 13,152,411 bytes, mappingCount 2068, messageNodeCount 2067, one root/null-message node, three branching nodes, max children 2, six content types; current node present+mapped and returned conversation identity matched.
+- Role counts user 22 + assistant 1235 + tool 810 + system 0 + other 0 equal all 2067 message nodes.
+- End-to-end list/detail probe finished `status=ok` in 13,573.66 ms; current diagnostics do not separate transport vs parse/inspection time.
+- Screenshot title `会话列表 · 会话详情通过` matches the exported result.
 
-### Acceptance gate
+### Phase 3 acceptance gate
 
-A minimal authenticated diagnostic harness loads conversation list and one detail on-device with safe request/response/timing evidence. No production conversation models or rendering assumptions should become authoritative before this evidence exists.
-
-### Initial implementation order
-
-1. Create isolated `DEV-protocol-read` checkpoint/branch/PR identity from the merged auth baseline.
-2. Inspect the merged auth/account-context owners and current diagnostics boundary; reuse those owners rather than introducing a second credential authority.
-3. Establish current evidence for conversation-list path/method/query/pagination and required account/session headers from current sources and then real-device diagnostics.
-4. Add the smallest diagnostic harness needed to request the list and record only safe structural metadata: status, timing, item counts, pagination fields and hashed identifiers where needed.
-5. After one real conversation ID is obtained from the list, establish the detail request and safe structural evidence for mapping/current-node/message/branch relationships without logging message bodies.
-6. Stop on exact failures. Do not add speculative retries, fallback endpoints, User-Agent spoofing, Cloudflare bypass or historical compatibility shims.
+**Passed for the exact tested Plus/personal read scope.** This does not prove send/streaming/attachments, non-personal workspaces, iPad or lower-iOS runtime.
 
 ## Phase 4 — `DEV-native-read-path`
 
-Build native conversation list/navigation, authoritative selected-conversation identity, conversation repository/store, message-tree active-branch resolver and virtualized native message rendering. Acceptance requires repeated real-conversation switching and long-conversation reads without identity mixing.
+### Status
+
+**Next core task after PR #7 integration.**
+
+### Required first design inputs from b7
+
+- Establish explicit production owners for conversation repository, list pagination, selected-conversation identity, detail/message-tree state and active branch resolution. The diagnostic `ProtocolReadProbe` must not become the production repository.
+- Reuse accepted auth/account transport ownership; do not create a second persistent credential authority.
+- Implement list/navigation/read models from the now-evidenced list/detail structure, while treating unsupported fields/semantics as Unknown until required.
+- The first tested detail was **13.15 MB with 2068 mapping nodes / 2067 message nodes**. Native storage, parsing and rendering must therefore be designed for real large-conversation input rather than a tiny sample.
+- Do not infer that the measured 13.57 s is rendering or parsing time; add phase-specific timing only where needed to locate actual bottlenecks.
+- Preserve conversation identity under repeated rapid switching. Acceptance requires repeated real-conversation switching and long-conversation reads without identity mixing.
+- Use bounded/virtualized native rendering rather than assuming all message views can remain materialized.
 
 ## Phase 5 — `DEV-send-stream`
 
-Implement text send/new conversation as current protocol permits, composer/user-message state, streaming lifecycle/incremental assistant updates and evidence-backed cancel/failure behavior. Streams must remain owned by the correct conversation under rapid switching.
+Implement text send/new conversation only after read-path ownership is stable, then establish streaming lifecycle/incremental assistant updates and evidence-backed cancel/failure behavior. Streams must remain owned by the correct conversation under rapid switching.
 
 ## Phase 6 — `DEV-long-conversation`
 
-Measure and stabilize bounded visible views, model/render separation, incremental stream updates, memory growth, input latency, scrolling, first-visible timing and background/foreground behavior on real device.
+Measure and stabilize bounded visible views, model/render separation, incremental updates, memory growth, input latency, scrolling, first-visible timing and background/foreground behavior on real device.
 
 ## Phase 7 — `DEV-attachments`
 
@@ -106,11 +86,7 @@ Projects, web search, image generation, Voice, Memory, Deep Research, GPTs and o
 
 # Diagnostics / logging contract
 
-Every important async path should show what started, which owner handled it, what safe request/stream/upload it mapped to, timing, terminal result and safe error/status metadata.
-
-Never log passwords, OAuth codes, access/refresh/session tokens, Cookie values/full Cookie headers, Authorization values, full chat bodies or attachment contents. Prefer counts, sizes, statuses, timings and redacted/hashed identifiers.
-
-Use the accepted bounded local diagnostics store/export/clear authority; do not create a competing store without a concrete need.
+Every important async path should show what started, which owner handled it, safe request/stream/upload mapping, timing, terminal result and safe error/status metadata. Never log passwords, OAuth codes, tokens, Cookie/Authorization values, full chat bodies or attachment contents.
 
 # Parallel-development guidance
 
@@ -118,4 +94,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Create and activate isolated `DEV-protocol-read` from the merged auth baseline, establish current conversation-list/detail protocol evidence, and build only the minimal safe diagnostic harness required for real-device validation.
+Complete PR #7 integration and then create isolated `DEV-native-read-path` from the merged b7 baseline. Its first work must establish production conversation state ownership and the minimal native list/detail read path using the accepted protocol evidence, with explicit handling for the evidenced large detail payload.

@@ -4,92 +4,85 @@
 
 **Initialized — 2026-08-25; product baseline refreshed 2026-08-26**
 
-Bootstrap inspection completed against real repository state. Unsupported compatibility/protocol details remain `Unknown / Unverified`.
+Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
 ## Identity
 
 - **Project name**: ChatGPT-Client
 - **Repository**: `white-shark-ssw/ChatGPT-Client`
-- **Project purpose**: Develop an iOS native ChatGPT client.
-- **Product type**: Native iOS third-party ChatGPT client application.
-- **Primary users/runtime**: iOS users. Intended user-device environment does not exceed iOS 17.0; lower compatibility is preferred where practical.
+- **Project purpose**: Develop an iOS native third-party ChatGPT client.
+- **Primary users/runtime**: iOS; intended user-device environment does not exceed iOS 17.0; lower compatibility preferred where practical.
 
 ## Technology stack
 
-- **Primary language(s)**: Swift 5.
-- **Primary UI framework**: UIKit.
+- **Primary language**: Swift 5.
+- **UI framework**: UIKit.
 - **System frameworks**: UIKit, Foundation, WebKit, OSLog, CryptoKit.
-- **Package/dependency manager(s)**: None; current product has no third-party dependencies.
-- **Important manifests/configs**: `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Info.plist`, shared Xcode scheme, `.github/workflows/ios-foundation.yml`.
+- **Third-party dependencies**: None.
+- **Important config**: `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Info.plist`, shared Xcode scheme, `.github/workflows/ios-foundation.yml`.
 
 ## Repository structure and state owners
 
 - **Main source root**: `ChatGPTClient/`.
-- **Application entry point**: `ChatGPTClient/AppDelegate.swift`.
+- **Application entry**: `AppDelegate.swift`.
 - **Application shell**: `RootViewController.swift`, `SettingsViewController.swift`.
-- **Build/runtime metadata owner**: `ChatGPTClient/Support/AppBuildInfo.swift` plus Xcode build settings/Info.plist expansion.
-- **Diagnostics owner**: `ChatGPTClient/Diagnostics/Diagnostics.swift` (`DiagnosticsLogger`, bounded store, sanitizer, exporter, user-triggered clear operation). Clearing uses the existing store and removes its current + rotated local files only.
-- **Embedded login UI/navigation owner**: `ChatGPTClient/Authentication/AuthWebViewController.swift`.
-- **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore`, accepted from real-device evidence.
-- **Safe auth evidence/account-context owner**: `ChatGPTClient/Authentication/AuthSessionStore.swift`; copied WebKit auth context and `/api/auth/session` bearer are transient only. Native `/auth/login` remains historical route-specific evidence and is not a current account-context gate.
-- **Account/workspace context owner**: accepted b6 in-memory context in `AuthSessionStore`. Current parser uses `account_ordering` + keyed `accounts` + nested `account.account_id` and is real-device verified for the tested account.
-- **Conversation/private protocol owner**: Not established yet; `DEV-protocol-read` must establish current request/response evidence before production state ownership is introduced.
+- **Build/runtime metadata owner**: `Support/AppBuildInfo.swift` + Xcode/Info.plist settings.
+- **Diagnostics owner**: `Diagnostics/Diagnostics.swift`.
+- **Embedded login owner**: `Authentication/AuthWebViewController.swift`.
+- **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore`.
+- **Auth/account-context owner**: `Authentication/AuthSessionStore.swift`; copied cookies and `/api/auth/session` bearer are transient only.
+- **Protocol-read diagnostic owner**: `Protocol/ProtocolReadProbe.swift`; accepted for diagnostic list/detail evidence only and persists no production conversation state.
+- **Production conversation owner**: Not established yet. `DEV-native-read-path` must establish repository, selected-conversation identity and message-tree ownership.
 - **Test roots**: None yet.
 
 ## Build and validation
 
-- **Primary packaging command**: `bash scripts/build_ipa.sh` on macOS with Xcode.
-- **Underlying build**: `xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Release -sdk iphoneos ... build` with signing disabled for TrollStore candidate packaging.
-- **Lint/static checks**: No separate lint tool configured.
-- **CI workflow**: `.github/workflows/ios-foundation.yml` on GitHub-hosted `macos-15`; accepted b6 push run used Xcode 16.4 / iPhoneOS 18.5 SDK and compiled for `arm64-apple-ios14.0`.
-- **Artifact/package output**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` plus `.sha256`.
-- **Current validation level**: foundation, embedded login/persistence, direct session/accounts transport and ordered account-context parsing are runtime accepted on iPhone / iOS 17.0 through b6. Conversation/private protocol remains Unknown / Unverified.
+- **Packaging**: `bash scripts/build_ipa.sh`.
+- **Underlying build**: Release `xcodebuild` for iphoneos with signing disabled for TrollStore candidate packaging.
+- **CI**: GitHub Actions on `macos-15`; accepted b7 run used Xcode 16.4 / iPhoneOS 18.5 and compiled `arm64-apple-ios14.0`.
+- **Artifact output**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` + SHA-256 sidecar.
+- **Current validation level**: Foundation, Google/WebKit auth, account context, and current personal-account conversation list + one-detail read path are all **Code + CI + Artifact + real-device tested** on iPhone / iOS 17.0 through b7. Native production conversation UI/state, send/streaming and attachments remain Unverified.
 
 ## Versioning and candidate identity
 
-- **Version source**: `MARKETING_VERSION` in `ChatGPTClient.xcodeproj/project.pbxproj`.
-- **Build number source**: `CURRENT_PROJECT_VERSION` in the same Xcode target settings.
-- **Merged foundation version/build**: `0.1.0 (1)` / `DEV-app-foundation-0.1.0-b1`.
-- **Accepted web-login/persistence runtime evidence**: b2.
-- **Historical native `/auth/login` success/failure evidence**: b3/b4.
-- **Direct native session/accounts transport evidence**: b5/b6.
-- **Merged auth/account-context runtime baseline**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
-- **Next test-candidate identity**: Not allocated. `DEV-protocol-read` must inspect `BUILD_TEST_INDEX.md` and all Active checkpoints immediately before producing its first artifact.
-- **Parallel test-candidate scheme**: `DEV-<work-slug>-<marketing-version>-b<build>`; identities must remain unique across Active tasks.
-- **Artifact naming rule**: `ChatGPTClient-<marketing-version>-b<build>-<work-slug>.ipa`.
-- **Current bundle identifier**: `com.whitesharkssw.chatgptclient`; accepted but not Frozen as a permanent signing/product contract.
+- **Version source**: `MARKETING_VERSION` in Xcode project settings.
+- **Build source**: `CURRENT_PROJECT_VERSION`.
+- **Accepted foundation**: `0.1.0 (1)` / `DEV-app-foundation-0.1.0-b1`.
+- **Accepted auth/account baseline**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`; source `19c0cd22923d8c6f4c96e676258b31814d02a942`.
+- **Accepted protocol-read baseline**: `0.1.0 (7)` / `DEV-protocol-read-0.1.0-b7`; exact product/workflow source `44a137b973e29e2a313e9114fdacb7727dccefb9`; run `32938912018`; artifact ID `9595827498`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`. PR #7 integration is completing.
+- **Next candidate**: Not allocated. Future `DEV-native-read-path` must re-check all Active checkpoints and `BUILD_TEST_INDEX.md` immediately before its first artifact.
+- **Candidate scheme**: `DEV-<work-slug>-<marketing-version>-b<build>`.
+- **Bundle ID**: `com.whitesharkssw.chatgptclient`; accepted, not Frozen.
 
 ## Runtime / deployment
 
 - **Platform**: Native iOS application.
-- **Current minimum deployment target**: iOS 14.0, verified in Xcode build settings and generated IPA metadata.
-- **Compatibility ceiling**: intended user environment does not exceed iOS 17.0.
-- **Deployment / installation**: IPA through TrollStore.
-- **Device family build setting**: iPhone + iPad (`UIDeviceFamily` 1,2). Real-device validation currently covers iPhone only; iPad and iOS versions below 17.0 remain unverified.
-- **Architecture verified in artifact**: arm64 Mach-O.
+- **Deployment target**: iOS 14.0 build target.
+- **Intended environment ceiling**: iOS 17.0.
+- **Distribution**: TrollStore IPA.
+- **Device families**: iPhone + iPad build setting; real-device evidence currently covers iPhone only.
+- **Artifact architecture**: arm64.
 
 ## Current source/candidate baselines
 
-- Foundation merged to `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`.
-- Auth bootstrap merged to `main` by PR #6 at merge commit `78f42a06e6254088e3b495cb4529e549a1d4717f`.
-- b2 source `809fa03e673afded87cb47fb755c998ab1b58e12` established Google login + WebKit persistence.
-- b3 source `0fcf040012c0698d0e3ce1628fec9865237eba3b` established one successful native `/auth/login` result; b4 source `33ea1b96f755bdf21fdd7691a9f1084a6d624908` later showed native Cloudflare HTTP 403 while WebKit remained authenticated.
-- b5 source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` established a successful direct session/accounts HTTP 200 path and exposed the old parser.
-- b6 exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; run `32934821144`; artifact ID `9594474567`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; artifact ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`.
-- b6 runtime export matches build 6/source `19c0cd22923d`, iPhone / iOS 17.0. First account probe returned session HTTP 403; after explicit user `重新开始`, second probe returned session HTTP 200, accounts-check HTTP 200, ordered account context verified (`plus`, `personal`) and `status=ok`.
+- Foundation PR #5 merged at `9e7a06801715b0002d3e9a720d57041e830b776e`.
+- Auth PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
+- b6 source `19c0cd22923d8c6f4c96e676258b31814d02a942` accepted plus/personal account context.
+- b7 source `44a137b973e29e2a313e9114fdacb7727dccefb9` accepted the current personal-account list + first-detail read path on iPhone / iOS 17.0. Runtime export metadata matched source `44a137b973e2` exactly.
+- b7 list HTTP 200: 28 items / total 29. First detail HTTP 200: 13,152,411 bytes, mapping 2068 / messages 2067, current node mapped, identity matched; end-to-end probe `status=ok` in 13,573.66 ms.
+- b7 again observed first-attempt session 403 followed by success only after explicit user `重新开始`; no automatic retry exists.
 
 ## Historical reference material
 
-The previous-project history pack is experience/reference only. It is not the current source baseline and does not make historical endpoint names, request shapes, workarounds, diagnoses or framework choices current facts. See `docs/project/HISTORICAL_REFERENCE.md`.
+Previous-project material is experience/reference only and does not make historical endpoint names, request shapes or workarounds current facts.
 
 ## Evidence notes
 
-- Runtime success on iOS 17.0 does not prove runtime compatibility on all systems down to the compiled iOS 14.0 minimum.
-- Native `/auth/login` results are route/time-specific and not a durable prerequisite contract.
-- Direct `/api/auth/session` can return HTTP 403 under observed challenge conditions; current code intentionally has no speculative automatic retry. b6 accepted success came from a later user-triggered verification attempt.
-- b6 auth/account success does not prove any conversation-list/detail/streaming protocol behavior.
-- Current private conversation protocol must be established from current evidence before implementation.
+- iOS 17.0 runtime success does not prove iOS 14–16 or iPad runtime compatibility.
+- Accepted b7 read evidence is scoped to the tested Plus/personal account and the list + one-detail path. It does not prove send/streaming/attachments or non-personal workspace behavior.
+- The 13.57 s b7 probe duration is end-to-end and does not by itself identify network, parsing or rendering bottlenecks.
+- The observed 13.15 MB / 2068-node detail is a real design input for `DEV-native-read-path`.
 
 ## Auto-refresh rule
 
-Update this file proactively when project purpose, language/framework, build/test commands, version scheme, deployment/runtime, repository structure, major state ownership or accepted baseline changes.
+Update this file proactively when project purpose, stack, build/test commands, version scheme, deployment/runtime, repository structure, major state ownership or accepted baseline changes.

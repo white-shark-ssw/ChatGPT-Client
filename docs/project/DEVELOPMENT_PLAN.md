@@ -19,13 +19,13 @@ The product should become useful on the user's real device in small accepted inc
 
 ### Usability milestones
 
-**V0.1 read-use milestone**: official-style native shell + conversation list + conversation detail/message rendering + manual sync/reload. This is useful before send/stream exists and should be issued for real-device use as soon as accepted.
+**V0.1 read-use milestone**: official-style native shell + conversation list + conversation detail/message rendering + manual sync/reload.
 
-**V0.2 chat-use milestone**: V0.1 + text send/new conversation + streaming + stop + user-visible reasoning state/detail + reasoning-to-final haptics + manual recovery integration. This is the first daily-chat candidate and is the highest scheduling priority after V0.1.
+**V0.2 chat-use milestone**: V0.1 + text send/new conversation + streaming + stop + user-visible reasoning state/detail + reasoning-to-final haptics + manual recovery integration.
 
-**V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments, search/rename/archive/delete, edit/regenerate/branch behavior, settings/diagnostics refinement and other daily-use edges as their dependencies become stable.
+**V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments, search/rename/archive/delete, edit/regenerate/branch behavior, settings/diagnostics refinement and other daily-use edges.
 
-These are product milestones, not promises that every item is already implemented or protocol-verified.
+Small low-risk UX enhancements may be inserted between core phases when their dependencies are already merged and they do not create state-owner or branch conflicts.
 
 ## Development principles
 
@@ -45,15 +45,13 @@ These are product milestones, not promises that every item is already implemente
 
 ## Phase 2 — `DEV-auth-bootstrap`
 
-**Completed / merged / Stable for accepted scope.** `DEV-auth-bootstrap-0.1.0-b6` established embedded Google login, persistent default `WKWebsiteDataStore` auth, transient native session/accounts transport, ordered plus/personal account context and privacy-safe diagnostics on iPhone / iOS 17.0.
+**Completed / merged / Stable for accepted scope.** `DEV-auth-bootstrap-0.1.0-b6` established embedded Google login, persistent default `WKWebsiteDataStore` auth architecture, transient native session/accounts transport, ordered Plus/personal account context and privacy-safe diagnostics on iPhone / iOS 17.0.
 
-Durable boundary: WebKit remains the sole persistent auth-secret authority; copied cookies/bearer are transient; challenge sensitivity remains observed; no speculative automatic retry/fallback/UA spoof/Cloudflare bypass.
+Install/update persistence of usable WebKit auth remains separately Unverified from later b9 evidence; do not add speculative recovery.
 
 ## Phase 3 — `DEV-protocol-read`
 
-**Completed / merged / Stable for the tested read scope.** `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, exact product source `44a137b973e29e2a313e9114fdacb7727dccefb9`, reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** on iPhone / iOS 17.0. PR #7 merged at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
-
-Accepted scope includes current Plus/personal conversation list + one-detail read. First tested detail was 13,152,411 bytes with mappingCount 2068 / messageNodeCount 2067 and mapped `current_node`. Send/streaming/attachments and non-personal workspace behavior remain Unverified.
+**Completed / merged / Stable for the tested read scope.** `DEV-protocol-read-0.1.0-b7` established the accepted Plus/personal diagnostic conversation list + one-detail read path on iPhone / iOS 17.0.
 
 ## Phase 4 — `DEV-native-read-path`
 
@@ -61,23 +59,18 @@ Accepted scope includes current Plus/personal conversation list + one-detail rea
 
 **官方 App UI 主框架与原生会话读取**
 
-### Priority
+### Status
 
-**Next core task / V0.1 foundation.** Do not insert a separate visual-design implementation phase before it. The durable UI interaction baseline is `docs/project/UI_INTERACTION_BASELINE.md` and should be consumed directly by this task.
+**Completed / merged / Stable for tested b9 scope.** `DEV-native-read-path-0.1.0-b9`, source `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7`, reached Code + CI + Artifact + real-device acceptance and PR #9 merged at `467ea885d120fa59809c95c914b1ac670d76ee05`.
 
-### Scope
+Accepted production ownership:
 
-- Establish explicit production owners for conversation repository, list pagination, selected-conversation identity, detail/message-tree state and active-branch resolution. `ProtocolReadProbe` must remain diagnostic-only.
-- Build the minimal official-style native shell needed for actual read use: sidebar/conversation navigation, chat top bar, message area, loading/empty/error states and menu extension points.
-- Implement current conversation list/detail models from b7 evidence while leaving unsupported semantics Unknown until required.
-- Render current active branch with bounded/virtualized native views; do not materialize all views for the evidenced 13.15 MB / 2068-node conversation.
-- Support user/assistant visible Markdown text and the minimum evidence-backed content types needed by tested conversations. Unsupported node types must fail visibly/diagnosably rather than silently becoming authoritative assumptions.
-- Preserve exact selected-conversation identity during rapid A/B switching.
-- Add phase timings only where they locate actual transport/parse/model/render bottlenecks; do not infer the b7 13.57 s end-to-end probe bottleneck.
+- `ConversationRepository` owns production conversation summaries, selected identity, loaded detail and current visible branch.
+- `ConversationSidebarViewController` owns list presentation.
+- `ConversationDetailViewController` owns current detail/message presentation.
+- `ProtocolReadProbe` remains diagnostic-only.
 
-### First usable candidate gate — V0.1 read
-
-As soon as the native list/detail path is coherent and real-device testable, produce a unique candidate rather than waiting for send/stream or later daily-use features.
+Real-device b9 acceptance included two distinct selected conversations, including 7.50 MB / 2023 mapping nodes / 843 visible messages. Long-conversation performance decomposition remains later work.
 
 ## Phase 5 — `DEV-conversation-recovery`
 
@@ -85,35 +78,93 @@ As soon as the native list/detail path is coherent and real-device testable, pro
 
 **会话同步与重载**
 
-### Goal
+### Priority
 
-Provide explicit manual recovery for two observed real-world failure classes without creating automatic retry loops.
+**Next serialized core task.**
 
 ### `同步最新消息`
 
-Use the current conversation identity to fetch current server conversation detail and reconcile the authoritative local conversation state so that server-completed content can replace stale local thinking/streaming state.
+Use the current authoritative conversation identity to fetch current server detail and reconcile through `ConversationRepository` so server-completed content can replace stale local thinking/streaming state.
 
-Intended case: server reasoning/answer has already completed (including cases where a completion notification has arrived) while the client still shows thinking or an incomplete stream.
-
-It must not resend the user's prompt, regenerate an answer, create a new conversation or automatically loop retries.
+It must not resend the user's prompt, regenerate, create a new conversation or automatically loop retries.
 
 ### `重载当前会话`
 
-Manually request the current conversation again and rebuild that conversation's local authoritative state when initial/current loading timed out, failed, remained blank/spinning or became unusable.
+Manually request the current conversation again and rebuild that conversation through the authoritative owner when loading timed out, failed, remained blank/spinning or became unusable.
 
 - Preserve unsent composer draft when practical.
 - Do not resend messages.
-- Present a direct `重新加载` action in the conversation load-error state, with a manual menu entry also available for a visibly stale/broken loaded conversation.
+- Terminal load error provides direct `重新加载`; loaded-but-stale/broken state may expose `重载当前会话` in the overflow menu.
 
 ### Diagnostics
 
-Record safe start/end/status/timing/count/diff/state-transition evidence sufficient to distinguish server-stale vs local-merge vs UI-render failures. Do not log message bodies or auth secrets.
+Record safe start/end/status/timing/count/diff/state-transition evidence sufficient to distinguish server-state, local merge/store and UI-render failures. Do not log message bodies or auth secrets.
 
-### V0.1 acceptance
+## Phase 6 — `DEV-conversation-round-count`
 
-V0.1 should include these recovery controls if the native read owner is stable enough to implement them without a second state authority. If the read task needs to ship a first candidate before this Work completes, issue the earlier read candidate and follow immediately with the recovery candidate rather than blocking all real-device use.
+### User-facing name
 
-## Phase 6 — `DEV-send-stream`
+**会话轮数显示**
+
+### Goal
+
+Add a small optional conversation-round indicator to the existing title subtitle without changing the official-style layout or introducing a second conversation state authority.
+
+### UI
+
+The title's second line remains the conversation type and becomes a compact centered metadata row:
+
+- `聊天 · 23轮`
+- `工作 · 23轮`
+
+The round count appears to the **right of the existing type label**. When the setting is disabled, the subtitle remains only `聊天` or `工作`.
+
+Do not show a misleading `0轮` while detail has not loaded. Until the authoritative detail/branch is available, show only the type label; add the count when it is known.
+
+### Round-count semantics
+
+`轮数` is derived from the **current active branch**, not raw conversation `mapping` size.
+
+- Each user message on the current active branch counts as one round.
+- Assistant, tool, system, reasoning/status and other non-user nodes do not add rounds.
+- Regenerating an assistant answer does not increase the round count by itself.
+- Editing/switching branches recalculates from the newly active branch, so branch alternatives are not summed together.
+- Once send/stream exists, a newly submitted user message counts when it becomes part of the authoritative local active branch; completion of the assistant stream is not required to invent a second counter.
+
+This definition keeps the number useful as “how many user turns this active conversation path has had” and remains compatible with future Edit/Regenerate/branch navigation.
+
+### State ownership / implementation constraint
+
+- Derive the value from `ConversationRepository`'s current active visible branch / production conversation view state.
+- Do **not** maintain a separately mutable persistent round counter.
+- No new network request is required.
+- When sync/reload/branch selection changes authoritative detail, the displayed count follows the same updated branch automatically.
+
+The exact Swift property/type name is not frozen by planning; implementation must inspect current b9 source and use the existing model/state structure.
+
+### Setting
+
+Add an app setting:
+
+**显示会话轮数**
+
+- Default: **On**.
+- Persist using the app's existing settings-preference mechanism after verifying its current owner.
+- Turning it off hides only the `· N轮` portion; it does not affect type display or conversation data.
+
+### Acceptance
+
+- Two conversations with different known active-branch user-turn counts display different correct counts.
+- Rapid A/B switching never leaves the previous conversation's count behind.
+- Toggle Off/On updates presentation and persists across relaunch.
+- Reloading an already loaded conversation does not duplicate/increment the count.
+- Count remains derived from authoritative branch state and requires no extra server call.
+
+### Scheduling
+
+This is a small Work whose dependencies are already satisfied by merged b9. Keep it **serial with `DEV-conversation-recovery`** because both can touch `ConversationRepository` / conversation-detail UI. Planned order: recovery first, then round-count, then send/stream. If future conflict scanning proves the files/owners have diverged enough for safe parallel work, the normal parallel-development rules still apply.
+
+## Phase 7 — `DEV-send-stream`
 
 ### User-facing name
 
@@ -121,7 +172,7 @@ V0.1 should include these recovery controls if the native read owner is stable e
 
 ### Goal
 
-Reach the first daily-chat candidate as quickly as possible after the read/recovery ownership is stable.
+Reach the first daily-chat candidate as quickly as possible after read/recovery ownership is stable.
 
 ### Scope
 
@@ -139,7 +190,7 @@ Reach the first daily-chat candidate as quickly as possible after the read/recov
 
 Once read + send + stream + stop + basic reasoning presentation + manual recovery work on-device, issue a daily-use candidate immediately. Do not wait for attachments, Projects, search, Voice or the complete advanced roadmap.
 
-## Phase 7 — `DEV-markdown-export`
+## Phase 8 — `DEV-markdown-export`
 
 ### User-facing name
 
@@ -150,25 +201,21 @@ This is a product enhancement, not an official-App feature. The `导出 Markdown
 - Export from the authoritative conversation model, never from currently mounted UI cells.
 - First version exports the current active/user-visible branch to `.md` with useful Markdown structure, code blocks and supported visible attachment references.
 - Do not export hidden/internal reasoning/tool nodes that are not user-visible.
-- Place the action naturally in the existing official-style conversation menu rather than inventing a separate navigation system.
+- Place the action naturally in the existing official-style conversation menu.
 
-This feature may run as a parallel edge after the production conversation model is stable if conflict scanning shows it does not overlap an Active core owner.
-
-## Phase 8 — `DEV-long-conversation`
+## Phase 9 — `DEV-long-conversation`
 
 **超长会话性能优化**
 
-Measure and stabilize bounded visible views, model/render separation, incremental updates, memory growth, input latency, scrolling, first-visible timing, parse/model/render timing and background/foreground behavior on real device. The accepted 13.15 MB / 2068-node conversation is a required real design/test input.
+Measure and stabilize bounded visible views, model/render separation, incremental updates, memory growth, input latency, scrolling, first-visible timing, parse/model/render timing and background/foreground behavior on real device. b9's 7.50 MB / 2023-node / 20.74 s production detail is a current real design input.
 
-Do not delay the first usable candidates for every possible performance refinement; fix blockers and severe real-device regressions first, then optimize from measurement.
-
-## Phase 9 — `DEV-attachments`
+## Phase 10 — `DEV-attachments`
 
 **附件上传与文件处理**
 
 Add native photo/file/video attachment flows after text-chat ownership is stable. Upload state remains separate from send state; large video paths must avoid unnecessary full-memory loading. Current upload protocol must be evidenced before production assumptions.
 
-## Phase 10 — Daily-use conversation features
+## Phase 11 — Daily-use conversation features
 
 Split into separate Work IDs when dependencies are stable:
 
@@ -179,7 +226,7 @@ Split into separate Work IDs when dependencies are stable:
 - 设置与诊断界面完善
 - other small daily-use capabilities supported by current evidence
 
-## Phase 11 — Advanced capabilities
+## Phase 12 — Advanced capabilities
 
 Later roadmap candidates, each requiring current protocol/UI evidence before implementation:
 
@@ -192,13 +239,11 @@ Later roadmap candidates, each requiring current protocol/UI evidence before imp
 - GPTs
 - other current ChatGPT-specific capabilities
 
-These must not block V0.1/V0.2 daily use.
+These must not block early daily use.
 
 # Official-App interaction baseline
 
 See `docs/project/UI_INTERACTION_BASELINE.md`.
-
-Core rule: where the official ChatGPT iOS interaction is acceptable, reproduce the interaction pattern rather than inventing a new product language. Our additions must fit into that interaction system. Explicit improvements currently include manual latest-message sync, manual current-conversation reload, Markdown export and diagnostics/support surfaces.
 
 # Diagnostics / logging contract
 
@@ -206,10 +251,8 @@ Every important async path should show what started, which owner handled it, saf
 
 # Parallel-development guidance
 
-The dependency chain through production read ownership and send/stream remains strongly serialized. After the production conversation model/store contract is merged and stable, low-overlap edges such as Markdown export or settings/diagnostics refinement may run in parallel only after normal checkpoint/file/state-owner conflict scanning.
-
-Do not parallelize two tasks that both own the same conversation store, stream lifecycle, shared UI controller/core, build candidate or unmerged dependency.
+Core state-owner work remains serialized. Small edge tasks may parallelize only after branch/checkpoint/file/state-owner conflict scanning proves that they do not share a core owner or unmerged dependency.
 
 # Next implementation action
 
-Create isolated `DEV-native-read-path` from the current merged main baseline. Consume `UI_INTERACTION_BASELINE.md` directly, establish production conversation state ownership and build the smallest official-style native list/detail experience that can produce the first real-device V0.1 read candidate.
+Create isolated `DEV-conversation-recovery` from the current merged b9 baseline. After recovery is merged, `DEV-conversation-round-count` is the next planned small UI/data-derived enhancement before `DEV-send-stream`.

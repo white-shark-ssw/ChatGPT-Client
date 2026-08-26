@@ -10,6 +10,7 @@ This is the repository's AI work entry point.
 4. If `PROJECT_PROFILE.md` says `Initialization: Pending`, perform repository bootstrap according to `AGENTS.md` before substantive development.
 5. For Rules work, use `CURRENT_WORK_RULES.md`.
 6. For Development/Feature work, use `CURRENT_WORK_DEV.md` and exactly one selected checkpoint under `current/dev/`.
+7. Before multi-conversation, production send/stream, background-completion or TrollStore true-background work, also read `CLIENT_ARCHITECTURE_GAP_REVIEW.md` plus the relevant `MULTI_CONVERSATION_STATE_PLAN.md` / `BACKGROUND_EXECUTION_PLAN.md`. These documents contain pre-send concurrency, async-freshness, account-scope and background active-response-set invariants that are not safe to rediscover ad hoc.
 
 Do not ask the user to upload project documents that already exist in this repository.
 

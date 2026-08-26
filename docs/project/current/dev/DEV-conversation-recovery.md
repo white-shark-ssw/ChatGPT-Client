@@ -2,64 +2,86 @@
 
 ## Status
 
-**Active — b11 real-device feedback check pending**
+**Active — b12 implementation pending**
 
 - **Work ID**: `DEV-conversation-recovery`
-- **Routing aliases / keywords**: `会话同步与重载 / 同步最新消息 / 重载当前会话 / conversation recovery`
-- **Task**: Implement explicit manual `同步最新消息` and complete `重载当前会话` through the authoritative production conversation owner, including the runtime-discovered sync-result feedback gap.
-- **Accepted baseline**: `DEV-native-read-path-0.1.0-b9` remains the merged Stable production native-read baseline until recovery is finalized and merged.
-- **Working branch / PR**: `dev/conversation-recovery-20260826`; PR #10 open/unmerged; base `main@a43762d255e699a753011103b7e1a6bb5416cb30`; latest branch compare before this docs-only update was `behind_by=0`.
+- **Routing aliases / keywords**: `会话同步与重载 / 同步最新消息 / 重载当前会话 / 冷启动登录恢复 / conversation recovery`
+- **Task**: Finish explicit manual conversation recovery UX and the now-owned cold-start background login-state recovery through the accepted WebKit/auth owner.
+- **Accepted baseline**: `DEV-native-read-path-0.1.0-b9` remains the merged Stable production native-read baseline until this Work is finalized and merged.
+- **Working branch / PR**: `dev/conversation-recovery-20260826`; PR #10 open/unmerged.
+- **Latest base sync**: main advanced to `3a138ab6378fb72b9b36dedd3df55dc29e2ba814` with four planning/governance commits only. They add/adjust `BACKGROUND_EXECUTION_PLAN.md`, `CLIENT_ARCHITECTURE_GAP_REVIEW.md`, `MULTI_CONVERSATION_STATE_PLAN.md`, `START_HERE.md`, `PROJECT_SPECIFIC_RULES.md`, and `TECHNICAL_DECISIONS.md`; no product/build source changed. Branch synchronized these updates through merge commit `465de1b20d52044f20b045ccb4b7c41f5639eea7`; compare after merge is `behind_by=0`.
+- **Latest ownership correction**: main now explicitly says cold-start login-state recovery belongs to this active `DEV-conversation-recovery` Work. Do **not** create a separate `DEV-auth-resume` task. The older checkpoint/PR wording proposing a separate auth task is superseded.
 
-## b10 accepted core runtime
+## Accepted b10 core recovery runtime
 
 - Candidate `DEV-conversation-recovery-0.1.0-b10` / `0.1.0 (10)` / product source `89129913cb29a35db9dec7a6d5670d1b3b76bc23`.
 - CI run `32982836557` passed; artifact `9612167843`; IPA SHA-256 `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e`.
-- User tested exact b10 on iPhone / iOS 17.0 and reported no functional problems. Full reload visibly cleared the current content, showed reload state, then rebuilt the same conversation.
-- Diagnostics confirm two loaded-state latest-syncs and two full reloads ended `status=ok`; both tested syncs had zero visible diff, which exposed only the missing completion-feedback UX. No resend/duplicate observed.
+- Exact b10 on iPhone / iOS 17.0 accepted loaded-state latest-sync and full reload core behavior. Full reload visibly cleared/rebuilt the same conversation; diagnostics confirmed two syncs and two reloads `status=ok`; no resend/duplicate observed.
 
-## b11 implementation
+## b11 evidence and runtime rejection reason
 
-- Candidate: **`DEV-conversation-recovery-0.1.0-b11` / `0.1.0 (11)` / `ChatGPTClient-0.1.0-b11-dev-conversation-recovery.ipa`**.
-- Feedback product change is limited to `ConversationFeature.swift`, 21 additions / 0 deletions from the pre-b11 checkpoint.
-- Manual latest sync now shows `正在同步最新消息…`, then `已是最新` when visible messages are unchanged or `已同步最新消息` when changed. Result prompt auto-clears after 1.5 s and is presentation-only.
-- `ConversationRepository`, endpoints, headers, auth, recovery request semantics and authoritative state ownership are unchanged.
+- Candidate `DEV-conversation-recovery-0.1.0-b11` / `0.1.0 (11)` / final run `32988700796` success / artifact `9613806931` / IPA SHA-256 `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`.
+- Exact device export identity: Release, iPhone/iOS 17.0, candidate b11, source `7fe8ca7693e9`.
+- User reports **no visible sync prompt**. The b11 navigation-bar `navigationItem.prompt` presentation therefore fails the required UX even though sync itself works.
+- Device diagnostics confirm four latest-sync executions on one loaded conversation all completed `status=ok` with 275 visible messages and zero added/removed/changed messages. Durations: 2896.33 ms, 2991.85 ms, 3923.34 ms, 3327.18 ms. One full reload in the same export also completed `status=ok` in 2856.27 ms.
+- Conclusion: b11 is valid Code+CI+Artifact and runtime evidence for the request path, but **not accepted for final sync-feedback UX**. Do not merge/mark Stable from b11.
 
-## b11 CI / artifact evidence
+## Cold-start evidence now owned by this Work
 
-- Initial run `32987959118` is **not accepted b11 artifact evidence** even though it compiled successfully: it checked out intermediate commit `512a2c5280f0109cdd52fdf73fed5f8300ed6c23` before final build-number/workflow metadata. Its artifact was named `ChatGPTClient-DEV-conversation-recovery-0.1.0-b10`, embedded `CFBundleVersion=10` with candidate `DEV-conversation-recovery-0.1.0-b11`, and therefore had inconsistent identity. Do not distribute or reuse it.
-- Final PR run **`32988700796`** completed **success** against current PR head `c3490eb67f8d8218281b30560a5c20b3d846c931` using GitHub synthetic merge commit `7fe8ca7693e9e8daa5fa80c9b8c600215e443cf3`.
-- Synthetic merge commit tree SHA and branch-head tree SHA are identical: **`80cd8e60977bbcc8dc2dc83881a58afb29a51bde`**. Therefore the final CI tested the same source/config tree as the branch head.
-- Artifact ID **`9613806931`**, artifact name `ChatGPTClient-DEV-conversation-recovery-0.1.0-b11`, ZIP digest `sha256:70bb214d01bcf7f2a57df25f10c2280f5dce5482d06b545a168b4963f3b2ee2f`.
-- Downloaded IPA: `ChatGPTClient-0.1.0-b11-dev-conversation-recovery.ipa`; sidecar and independently calculated SHA-256 both equal **`6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`**.
-- Embedded identity independently inspected: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=11`, `DiagnosticsCandidate=DEV-conversation-recovery-0.1.0-b11`, `DiagnosticsSourceCommit=7fe8ca7693e9`, minimum OS `14.0`, device families `[1,2]`; executable is Mach-O arm64.
+- User confirms b11 cold launch still requires tapping `登录 / 账户验证`; b11 intentionally did not change auth.
+- Prior accepted diagnostics established the cold-start class: default `WKHTTPCookieStore` can initially report 0/0 and `/api/auth/session` can return unusable session fields until real WebKit activity hydrates the default store.
+- New b11 export begins when the user opens login. After visible WebKit navigation, cookie counts are already 47/28 then 49/30. Three immediate account probes fail at session transport with `NSURLErrorDomain -1005`; a later list-triggered normal account probe succeeds with 48/29 cookies, `/api/auth/session` HTTP 200, Plus/personal account context, then list HTTP 200 28/29.
+- Do not convert the `-1005` observations into an automatic retry loop. The next experiment is specifically **default WebKit data-store background warm-up followed by one normal account probe**.
 
-## Separate auth-resume evidence / direction
+## b12 candidate allocation
 
-- Cold app launch repeatedly reports default WebKit cookie store `itemCount=0/matchedItemCount=0`; `/api/auth/session` returns HTTP 200 but lacks required session fields. After a real visible `WKWebView` navigation, the same default store hydrates to dozens of cookies and account verification succeeds.
-- User wants normal cold-start verification fully background/invisible.
-- After recovery completes, create a separate auth-resume Work. First experiment must test public `WKWebsiteDataStore.default()` background warm-up/data-record + cookie-store initialization, then perform one normal account probe. No hidden/shadow `WKWebView`, no persisted copied Cookie/token/session secrets, no retry/watchdog loop. Visible official verification is fallback only if background warm-up is proven insufficient.
+- Conflict/identity preflight: PR #10 is the only open PR; main `current/dev/` has no competing Active checkpoint; this branch has only this Active checkpoint; branch/commit search found no existing `b12` reservation.
+- Reserve **`DEV-conversation-recovery-0.1.0-b12` / `0.1.0 (12)` / `ChatGPTClient-0.1.0-b12-dev-conversation-recovery.ipa`**. Do not reuse b11 for changed product code.
+
+## b12 minimum implementation contract
+
+### Sync feedback
+
+- Replace navigation-bar prompt feedback with an unmistakable **screen-centered native toast** in the conversation detail view.
+- On tap, show `正在同步最新消息…` centered and keep it visible while the one sync request is active.
+- On success, replace it with `已是最新` when visible content is unchanged or `已同步最新消息` when changed.
+- Success result remains centered for **2.0 seconds**, then disappears. The 2-second timer is presentation-only and does not drive network/recovery correctness.
+- On failure, remove the progress toast and preserve the existing explicit failure alert.
+
+### Cold-start background login-state recovery
+
+- Keep default `WKWebsiteDataStore` as the **sole persistent auth-secret authority**.
+- Add a bounded public-API warm-up owned by `AuthSessionStore`: initialize `WKWebsiteDataStore.default()`, fetch website-data records, then read its `httpCookieStore`; record safe record/cookie counts and duration only.
+- `ConversationRepository` uses that warm-up **once before its normal account-context probe whenever it has no transient session**. No second probe, no retry loop, no hidden/shadow `WKWebView`, no copied-token/cookie persistence, no new auth store.
+- If the warm-up + single normal probe still fails, preserve the existing explicit error state with `登录 / 账户验证` as the foreground fallback; do not silently navigate a web view.
+- This b12 is an experiment until exact real-device cold-start evidence proves whether public data-store warm-up hydrates the usable WebKit state.
+
+## State owner / invariants
+
+- `ConversationRepository` remains the sole production conversation read/recovery owner.
+- `AuthSessionStore` remains the accepted account-context/native-auth bridge; default `WKWebsiteDataStore` remains the only persistent auth-secret authority.
+- No resend/regenerate, automatic retry/watchdog, fallback endpoint/header set, hidden WebView, or second persistent state store.
 
 ## Validation state
 
-- b10 recovery core: **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested**.
-- b11 feedback: **Code written + static/source diff reviewed + CI passed + Artifact produced**.
-- b11 Runtime/manual/real-device tested: **pending**.
-- Stable / merged: **no** until b11 sync-feedback is confirmed on device and final merge-time checks pass.
+- b10 core recovery: **Code + CI + Artifact + Runtime/manual/real-device tested**.
+- b11 feedback/request path: **Code + static review + CI + Artifact + Runtime tested, but feedback presentation rejected**.
+- b12: **candidate reserved; code/CI/artifact/runtime pending**.
+- Stable / merged: **no**.
 
 ## Next exact action
 
-Install exact b11 IPA and test one loaded conversation:
-1. Tap `同步最新消息` and confirm `正在同步最新消息…` is visible while the request is active.
-2. When there is no server-visible change, confirm it becomes `已是最新` and clears automatically.
-3. If a changed conversation is available naturally, confirm success feedback becomes `已同步最新消息`; do not manufacture/re-send a prompt only for this test.
-4. Confirm existing `重载当前会话` behavior remains normal.
-
-If accepted: record runtime evidence, run final base/PR/conflict check, merge PR #10, archive/complete this checkpoint, then start the separate auth-resume Work before or according to the latest serialized roadmap/conflict scan.
+1. Implement only the centered 2-second sync toast and background default-data-store warm-up + single existing account probe.
+2. Bump build/candidate/workflow/artifact identity to b12.
+3. Review exact diff; run CI and inspect exact IPA identity.
+4. Real-device test a true cold launch **without tapping login first** and one manual latest-sync.
+5. If background warm-up does not recover auth, export diagnostics before changing strategy; do not add retries by guess.
 
 ## Rejected / do-not-repeat
 
+- No separate `DEV-auth-resume` Work; latest main planning explicitly folded cold-start auth into this Work.
 - No hidden/shadow WebView.
 - No persisted copied auth secrets.
 - No automatic retry/watchdog/resend/regenerate/fallback chain.
-- Do not treat intermediate run `32987959118` as valid final b11 artifact evidence.
-- Do not make the sync-feedback timer part of network/recovery correctness.
+- Do not use navigation-bar `navigationItem.prompt` again for required sync feedback.
+- Do not treat `NSURLErrorDomain -1005` as proof that retrying is the correct recovery mechanism.

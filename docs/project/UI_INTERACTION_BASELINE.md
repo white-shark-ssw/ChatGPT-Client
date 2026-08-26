@@ -49,6 +49,32 @@ The minimal chat screen uses:
 
 Do not crowd the top bar with dedicated recovery/export buttons. Put normal manual actions in the conversation overflow menu and expose contextual recovery directly in error/stale states where useful.
 
+## Conversation header metadata
+
+The conversation title remains the primary top-bar text. The existing second-line conversation type (`聊天` or `工作`) is the metadata row.
+
+The project adds an optional **conversation round count** to the right of that type label:
+
+- `聊天 · 23轮`
+- `工作 · 23轮`
+
+Interaction/visual rules:
+
+- Keep the subtitle/metadata row compact and centered under the title; do not add a separate badge or another top-bar button.
+- Use the existing secondary/subdued text treatment so the round count does not compete with the title.
+- When the user disables `显示会话轮数`, show only the existing type label.
+- Before authoritative conversation detail/active-branch state is available, show only the type rather than a misleading temporary `0轮`.
+- When switching conversations, syncing, reloading or changing the active branch, the displayed count follows the authoritative conversation state and must never retain the previous conversation's value.
+
+Round-count semantics are **current active-branch user turns**:
+
+- each user message on the current active branch = one round;
+- assistant/tool/system/reasoning/status nodes do not add rounds;
+- assistant Regenerate does not add a round by itself;
+- edit/branch changes recalculate from the newly active branch rather than summing alternate branches.
+
+The count is derived presentation data, not a separately mutable conversation authority.
+
 ## Sidebar / conversation navigation
 
 Use the official-style drawer/sidebar model rather than a custom tab-heavy navigation system.
@@ -212,6 +238,7 @@ UI must remain a consumer of authoritative state.
 
 - Conversation title/text is not conversation identity.
 - Selected conversation has one production owner.
+- Conversation round count is derived from the authoritative current active branch, not a separately mutable counter.
 - Stream/reasoning state belongs to the owning conversation/response lifecycle.
 - Haptics are emitted from state transition events, not arbitrary redraws.
 - Sync/reload operate through the production conversation owner; they must not establish second stores/identities.
@@ -226,7 +253,7 @@ For UI behavior, distinguish:
 - artifact availability;
 - real-device interaction result.
 
-The official-style reasoning transition, shimmer/detail interaction, double haptic, sidebar feel, composer behavior and recovery flows require real-device/manual acceptance before being described as matched/stable.
+The official-style reasoning transition, shimmer/detail interaction, double haptic, sidebar feel, composer behavior and recovery flows require real-device/manual acceptance before being described as matched/stable. Conversation round-count acceptance likewise requires real-device checks across distinct conversations, rapid switching and setting persistence.
 
 ## Maintenance rule
 

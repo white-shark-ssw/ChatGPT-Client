@@ -3,6 +3,7 @@ import UIKit
 final class SettingsViewController: UIViewController {
     private let diagnostics = DiagnosticsLogger.shared
     private let exportButton = UIButton(type: .system)
+    private let clearButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -36,7 +37,10 @@ final class SettingsViewController: UIViewController {
         exportButton.setTitle("导出诊断 JSON", for: .normal)
         exportButton.addTarget(self, action: #selector(exportDiagnostics), for: .touchUpInside)
 
-        let stack = UIStackView(arrangedSubviews: [metadataTitle, metadataLabel, diagnosticsTitle, diagnosticsDetail, sampleButton, exportButton])
+        clearButton.setTitle("清理诊断日志", for: .normal)
+        clearButton.addTarget(self, action: #selector(clearDiagnostics), for: .touchUpInside)
+
+        let stack = UIStackView(arrangedSubviews: [metadataTitle, metadataLabel, diagnosticsTitle, diagnosticsDetail, sampleButton, exportButton, clearButton])
         stack.axis = .vertical
         stack.spacing = 16
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -72,6 +76,15 @@ final class SettingsViewController: UIViewController {
             case .failure(let error):
                 self.showAlert(title: "导出失败", message: error.localizedDescription)
             }
+        }
+    }
+
+    @objc private func clearDiagnostics() {
+        do {
+            try diagnostics.clearStoredLogs()
+            showAlert(title: "已清理", message: "本地诊断日志已清空，之后产生的新日志会重新累计。")
+        } catch {
+            showAlert(title: "清理失败", message: error.localizedDescription)
         }
     }
 

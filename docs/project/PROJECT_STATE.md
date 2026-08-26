@@ -8,7 +8,7 @@ _Last updated: 2026-08-26._
 
 `DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, remains the merged accepted diagnostic conversation-read protocol evidence baseline for the tested Plus/personal list + one-detail path.
 
-`DEV-native-read-path-0.1.0-b9`, version `0.1.0 (9)`, is now the **runtime-accepted production native-read candidate**. Exact product/config source `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7`; run `32978476582`; artifact ID `9610449216`; IPA SHA-256 `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e`; PR #9. It has reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** for the native shell, production list, two distinct selected conversation details, current-branch extraction and visible user/assistant message rendering on iPhone / iOS 17.0. PR #9 is still pending final merge at this document revision, so Stable/merged status is not yet claimed.
+`DEV-native-read-path-0.1.0-b9`, version `0.1.0 (9)`, is the **merged Stable production native-read baseline for the tested scope**. Exact product/config source `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7`; run `32978476582`; artifact ID `9610449216`; IPA SHA-256 `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e`; PR #9 merged at `467ea885d120fa59809c95c914b1ac670d76ee05`. It reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** for native shell, production list, two distinct selected conversation details, current-branch extraction and visible user/assistant message rendering on iPhone / iOS 17.0. Stable here is scoped acceptance, not Frozen.
 
 `DEV-native-read-path-0.1.0-b8` remains historical partial/failing evidence: shell/list worked after explicit login, but one detail request returned HTTP 500 after 30,935.12 ms before parse/render. b9's two successful distinct detail reads show that b8 failure is not evidence of a systematic current native-read implementation failure.
 
@@ -80,8 +80,8 @@ Diagnostics/logging remains a Stable foundation capability with bounded persiste
 1. `DEV-app-foundation` — Completed / merged / Stable.
 2. `DEV-auth-bootstrap` — Completed / merged / Stable.
 3. `DEV-protocol-read` — Completed / merged / Stable for tested personal-account diagnostic read scope.
-4. `DEV-native-read-path` — **Runtime accepted b9; final PR #9 merge/closeout pending**.
-5. `DEV-conversation-recovery` — broader manual latest-message sync + loaded/current-conversation reload; next serialized core task after native-read merge.
+4. `DEV-native-read-path` — **Completed / merged / Stable for tested b9 native-read scope**.
+5. `DEV-conversation-recovery` — broader manual latest-message sync + loaded/current-conversation reload; next serialized core task.
 6. `DEV-send-stream` — text send/new conversation + streaming + stop + user-visible reasoning UI/detail + reasoning-to-final double haptic + recovery integration.
 7. `DEV-markdown-export` — authoritative current-branch Markdown export.
 8. `DEV-long-conversation` — measurement-driven long-conversation performance stabilization; b9 7.50 MB / 2023-node / 20.74 s detail is current production evidence.

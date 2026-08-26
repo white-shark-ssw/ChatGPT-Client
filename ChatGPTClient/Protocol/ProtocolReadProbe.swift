@@ -103,26 +103,25 @@ final class ProtocolReadProbe {
         let summary = summarize(mapping: mapping)
         let currentNode = payload["current_node"] as? String
         let returnedConversationID = payload["conversation_id"] as? String
-        var fields = [
-            "httpStatus": String(response.statusCode),
-            "byteCount": String(data.count),
-            "mappingCount": String(mapping.count),
-            "messageNodeCount": String(summary.messageNodeCount),
-            "nullMessageNodeCount": String(summary.nullMessageNodeCount),
-            "rootNodeCount": String(summary.rootNodeCount),
-            "branchingNodeCount": String(summary.branchingNodeCount),
-            "maxChildrenCount": String(summary.maxChildrenCount),
-            "userRoleCount": String(summary.userRoleCount),
-            "assistantRoleCount": String(summary.assistantRoleCount),
-            "systemRoleCount": String(summary.systemRoleCount),
-            "toolRoleCount": String(summary.toolRoleCount),
-            "otherRoleCount": String(summary.otherRoleCount),
-            "contentTypeCount": String(summary.contentTypeCount),
-            "currentNodePresent": String(currentNode?.isEmpty == false),
-            "currentNodeMapped": String(currentNode.map { mapping[$0] != nil } ?? false),
-            "conversationIdentityPresent": String(returnedConversationID?.isEmpty == false),
-            "conversationIdentityMatches": String(returnedConversationID == conversationID)
-        ]
+        var fields: [String: String] = [:]
+        fields["httpStatus"] = String(response.statusCode)
+        fields["byteCount"] = String(data.count)
+        fields["mappingCount"] = String(mapping.count)
+        fields["messageNodeCount"] = String(summary.messageNodeCount)
+        fields["nullMessageNodeCount"] = String(summary.nullMessageNodeCount)
+        fields["rootNodeCount"] = String(summary.rootNodeCount)
+        fields["branchingNodeCount"] = String(summary.branchingNodeCount)
+        fields["maxChildrenCount"] = String(summary.maxChildrenCount)
+        fields["userRoleCount"] = String(summary.userRoleCount)
+        fields["assistantRoleCount"] = String(summary.assistantRoleCount)
+        fields["systemRoleCount"] = String(summary.systemRoleCount)
+        fields["toolRoleCount"] = String(summary.toolRoleCount)
+        fields["otherRoleCount"] = String(summary.otherRoleCount)
+        fields["contentTypeCount"] = String(summary.contentTypeCount)
+        fields["currentNodePresent"] = String(currentNode?.isEmpty == false)
+        fields["currentNodeMapped"] = String(currentNode.map { mapping[$0] != nil } ?? false)
+        fields["conversationIdentityPresent"] = String(returnedConversationID?.isEmpty == false)
+        fields["conversationIdentityMatches"] = String(returnedConversationID == conversationID)
         for (key, value) in listFields { fields["list_\(key)"] = value }
         diagnostics.info(category: "protocol", name: "conversationDetail.response", traceID: span.traceID, fields: fields)
         finish(.verified, session: session, span: span, fields: ["stage": "detail", "listItemCount": listFields["itemCount"] ?? "unknown", "mappingCount": String(mapping.count), "messageNodeCount": String(summary.messageNodeCount)], completion: completion)

@@ -70,6 +70,10 @@ Diff from pre-b15 branch head `dbac22552b5c8f58fb4e51e4b6dead2c429a0005` before 
 - `ConversationFeature.swift`: +38 / -5, selected-detail task lifecycle + intentional-cancel diagnostics + manual replacement flag.
 - No auth parser/endpoint/header, conversation endpoint/parser or UI presentation changes.
 
+## Durable docs synchronized for b15
+
+`BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `TECHNICAL_DECISIONS.md` and `PROJECT_SPECIFIC_RULES.md` now record the b15 identity/ownership/evidence boundary. These updates are docs-only and do not alter the CI-tested product/config tree.
+
 ## State owner / invariants
 
 - `ConversationRepository` remains sole production conversation read/recovery owner.

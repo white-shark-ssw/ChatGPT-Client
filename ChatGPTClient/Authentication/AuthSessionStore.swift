@@ -162,8 +162,23 @@ final class AuthSessionStore {
                         self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": status], completion: completion)
                         return
                     }
-                    guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let accounts = payload["accounts"] as? [String: Any], let defaultEntry = accounts["default"] as? [String: Any], let account = defaultEntry["account"] as? [String: Any], let accountID = account["id"] as? String, !accountID.isEmpty else {
-                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": String(response.statusCode), "reason": "missing_default_account"], completion: completion)
+                    guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let accounts = payload["accounts"] as? [String: Any], let accountOrdering = payload["account_ordering"] as? [String], !accountOrdering.isEmpty else {
+                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": String(response.statusCode), "reason": "missing_account_ordering"], completion: completion)
+                        return
+                    }
+
+                    var selectedAccount: [String: Any]?
+                    var selectedAccountID: String?
+                    for key in accountOrdering {
+                        guard let entry = accounts[key] as? [String: Any] else { continue }
+                        if let canAccess = entry["can_access_with_session"] as? Bool, !canAccess { continue }
+                        guard let account = entry["account"] as? [String: Any], let accountID = account["account_id"] as? String, !accountID.isEmpty else { continue }
+                        selectedAccount = account
+                        selectedAccountID = accountID
+                        break
+                    }
+                    guard let account = selectedAccount, let accountID = selectedAccountID else {
+                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": String(response.statusCode), "reason": "missing_usable_ordered_account", "accountCount": String(accounts.count), "accountOrderingCount": String(accountOrdering.count)], completion: completion)
                         return
                     }
 
@@ -171,7 +186,7 @@ final class AuthSessionStore {
                     self.lock.lock()
                     self.accountContext = context
                     self.lock.unlock()
-                    var fields = ["httpStatus": String(response.statusCode), "userID": userID, "accountID": accountID]
+                    var fields = ["httpStatus": String(response.statusCode), "userID": userID, "accountID": accountID, "accountCount": String(accounts.count), "accountOrderingCount": String(accountOrdering.count)]
                     if let planType = context.planType { fields["planType"] = planType }
                     if let structure = context.structure { fields["structure"] = structure }
                     self.diagnostics.info(category: "auth", name: "accountContextProbe.accounts", traceID: span.traceID, fields: fields)

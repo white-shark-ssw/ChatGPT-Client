@@ -1,9 +1,9 @@
-name: iOS Protocol Read
+name: iOS Native Read Path
 
 on:
   push:
     branches:
-      - dev/protocol-read-20260826
+      - dev/native-read-path-20260826
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
@@ -43,7 +43,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-protocol-read-0.1.0-b7
+          name: ChatGPTClient-DEV-native-read-path-0.1.0-b8
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

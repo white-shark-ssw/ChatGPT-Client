@@ -8,7 +8,6 @@ final class AuthWebViewController: UIViewController {
     private let sessionStore = AuthSessionStore.shared
     private let webView: WKWebView
     private var bootstrapSpan: DiagnosticsSpan?
-    private var nativeProbeStarted = false
     private var accountProbeStarted = false
 
     init() {
@@ -46,7 +45,6 @@ final class AuthWebViewController: UIViewController {
     }
 
     private func startLogin() {
-        nativeProbeStarted = false
         accountProbeStarted = false
         title = "登录验证"
         bootstrapSpan?.end(status: "restarted")
@@ -60,33 +58,10 @@ final class AuthWebViewController: UIViewController {
         startLogin()
     }
 
-    private func startNativeProbeIfNeeded() {
-        guard !nativeProbeStarted else { return }
-        nativeProbeStarted = true
-        title = "网页登录成功 · 原生验证中"
-        diagnostics.info(category: "auth", name: "nativeSessionProbe.requested")
-        sessionStore.probeNativeSession(using: webView.configuration.websiteDataStore.httpCookieStore) { [weak self] state in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                switch state {
-                case .verified:
-                    self.title = "网页登录成功 · 原生会话通过"
-                    self.startAccountProbeIfNeeded()
-                case .notAuthenticated:
-                    self.title = "网页登录成功 · 原生会话未通过"
-                case .failed:
-                    self.title = "网页登录成功 · 原生验证失败"
-                case .unknown, .probing:
-                    break
-                }
-            }
-        }
-    }
-
     private func startAccountProbeIfNeeded() {
         guard !accountProbeStarted else { return }
         accountProbeStarted = true
-        title = "原生会话通过 · 账户验证中"
+        title = "网页登录成功 · 账户验证中"
         diagnostics.info(category: "auth", name: "accountContextProbe.requested")
         sessionStore.probeAccountContext(using: webView.configuration.websiteDataStore.httpCookieStore) { [weak self] state in
             DispatchQueue.main.async {
@@ -95,9 +70,9 @@ final class AuthWebViewController: UIViewController {
                 case .verified:
                     self.title = "登录会话 · 账户上下文通过"
                 case .notAvailable:
-                    self.title = "原生会话通过 · 账户上下文未通过"
+                    self.title = "网页登录成功 · 账户上下文未通过"
                 case .failed:
-                    self.title = "原生会话通过 · 账户验证失败"
+                    self.title = "网页登录成功 · 账户验证失败"
                 case .unknown, .probing:
                     break
                 }
@@ -157,7 +132,7 @@ extension AuthWebViewController: WKNavigationDelegate {
             bootstrapSpan.end(fields: Self.safeLocationFields(webView.url))
             self.bootstrapSpan = nil
         }
-        if webState == .authenticated { startNativeProbeIfNeeded() }
+        if webState == .authenticated { startAccountProbeIfNeeded() }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

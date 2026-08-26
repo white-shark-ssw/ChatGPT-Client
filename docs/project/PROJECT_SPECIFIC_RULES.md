@@ -11,7 +11,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Product delivery priority: **reach a genuinely usable TrollStore client as early as possible, then iterate in real-device candidates instead of waiting for the whole roadmap to finish**.
 - Accepted foundation baseline: `DEV-app-foundation-0.1.0-b1`.
 - Accepted auth/account baseline: `DEV-auth-bootstrap-0.1.0-b6`, merged through PR #6.
-- Accepted current conversation-read baseline: `DEV-protocol-read-0.1.0-b7` for the tested Plus/personal list + one-detail path on iPhone / iOS 17.0, merged through PR #7 at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
+- Accepted diagnostic conversation-read baseline: `DEV-protocol-read-0.1.0-b7` for the tested Plus/personal list + one-detail path on iPhone / iOS 17.0, merged through PR #7 at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
+- Accepted production native-read baseline: `DEV-native-read-path-0.1.0-b9` for the tested Plus/personal native shell/list/two-detail/current-visible-branch scope on iPhone / iOS 17.0, merged through PR #9 at `467ea885d120fa59809c95c914b1ac670d76ee05`. Stable for tested scope, not Frozen.
 
 ## UI / interaction contract
 
@@ -76,13 +77,16 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Do not implement private/internal Web API behavior from historical names, shapes or memory alone.
 - Establish current evidence for path/method/auth/account context/headers/body/response/stream/state/failure behavior as applicable before making a protocol capability authoritative.
 - Current real-device evidence outranks history and CI-only evidence.
-- **Accepted b7 personal-account read path**: transient native transport with copied ephemeral WebKit cookies + transient bearer; `GET /backend-api/conversations?offset=0&limit=28&order=updated`; then `GET /backend-api/conversation/{conversation_id}` for a returned ID.
+- **Accepted b7 personal-account diagnostic read path**: transient native transport with copied ephemeral WebKit cookies + transient bearer; `GET /backend-api/conversations?offset=0&limit=28&order=updated`; then `GET /backend-api/conversation/{conversation_id}` for a returned ID.
 - In the accepted b7 Plus/personal run, no `chatgpt-account-id` or extra browser-only header set was required. This is a tested-scope fact, not a universal rule for other workspace structures.
 - Accepted b7 list result: HTTP 200, 28 items / total 29, response limit 28, offset 0.
 - Accepted b7 first-detail result: HTTP 200, 13,152,411 bytes, mapping 2068 / message nodes 2067; current node present+mapped; returned conversation identity present+matching. Role counts summed exactly to all message nodes.
-- b7 read success does **not** establish send/streaming/attachments, non-personal workspace behavior, iPad or lower-iOS runtime.
-- `ProtocolReadProbe` remains diagnostic-only. Production repository/selected-conversation/message-tree identity must have explicit owners in `DEV-native-read-path`.
-- Protocol diagnostics must not log/export full titles, message bodies/parts, payload dumps, raw conversation/message IDs or auth secrets. Prefer structural counts/status/pagination/timing and hashed IDs when needed.
+- **Accepted b9 production native-read path**: `ConversationRepository` is the production owner for summaries, selected identity, loaded detail and current visible branch. It reuses the same transient auth owner/path and list/detail routes rather than `ProtocolReadProbe` state.
+- Accepted b9 runtime result on iPhone/iOS 17.0 after explicit login verification: production list HTTP 200, 28/29. Two distinct selected conversations both completed detail/current-branch/render: position 1 = 1,529,866 bytes / mapping 337 / visible messages 154 / 5,668.41 ms; position 13 = 7,503,328 bytes / mapping 2023 / visible messages 843 / 20,742.89 ms. The user confirmed both were fully readable.
+- b9's privacy-safe `conversationHash` + 1-based `listPosition` is an accepted correlation mechanism for production conversation diagnostics. Never log raw conversation IDs, full titles, message bodies/parts or payload dumps.
+- b7/b9 read success does **not** establish send/streaming/attachments, non-personal workspace behavior, iPad or lower-iOS runtime.
+- Terminal detail `重新加载` exists in b9 but was not exercised because both b9 details succeeded; its failure-path runtime behavior remains Unverified and must not be described as real-device proven.
+- `ProtocolReadProbe` remains diagnostic-only. Do not turn it into the production repository by convenience.
 
 ## Authentication contract
 
@@ -94,7 +98,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Native `/auth/login` is not an account-context prerequisite.
 - Account sequencing: authenticated WebKit -> ephemeral current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
 - Preserve challenge sensitivity: b5, b6 and b7 each showed a direct `/api/auth/session` HTTP 403 in at least one attempt followed by a later user-triggered successful verification. Current code intentionally has no speculative automatic retry.
-- b7 specifically: first account attempt used 46 total / 27 matched cookies and session HTTP 403; after explicit user `重新开始`, second attempt used 49 / 30 cookies, session/accounts HTTP 200, plus/personal verified.
+- b9 additionally showed a fresh app launch with 0 total / 0 matched WebKit cookies and missing required session fields; after explicit login verification, 48/29 then 49/30 total/matched cookies and Plus/personal account context succeeded. Therefore install/update authentication persistence remains Unknown / Unverified; do not silently add recovery until its state owner/failure mode is proven.
 - Accepted account parser uses non-empty `account_ordering`, keyed `accounts`, first ordered accessible entry, and nested `account.account_id`.
 - If future session/account requests fail, record exact stage/status/reason first. Do not immediately add retries, UA spoofing, Cloudflare bypass, alternate endpoints, browser-script token extraction or speculative parser fallbacks.
 - Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie values, full Cookie/Authorization headers or equivalent secrets.
@@ -106,6 +110,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Repeated testing uses the existing **clear local diagnostics** control; clearing must not affect WebKit/authentication state.
 - Prefer method/path category, HTTP status, elapsed time, byte/item counts, pagination, MIME/type and terminal reason over payload contents.
 - Safe cookie diagnostics may record total/matched counts only, not Cookie names/values.
+- Production conversation diagnostics may use the accepted short irreversible `conversationHash` plus 1-based `listPosition`; raw conversation IDs remain prohibited.
 - Do not create competing diagnostics persistence/export/clear authority without concrete evidence.
 
 ## Compatibility / deployment constraints
@@ -120,18 +125,20 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Historical WebView chat code is not the native product baseline.
 - WebView use remains limited to the evidence-backed authentication/bootstrap role; native chat remains the product direction.
 - UI text/titles are consumers, not identity authorities.
+- `ConversationRepository` is the accepted production conversation read owner for the b9 tested scope; `ProtocolReadProbe` stays diagnostic-only.
 - CI/artifact success is not runtime proof.
 - Auth route results remain tied to their tested route/time conditions.
 - b7 first account HTTP 403 must not erase the accepted explicit-restart success; b7 success must not erase challenge sensitivity.
-- b7 list/detail success must not be generalized to send/streaming/attachments or non-personal workspaces.
-- The observed 13.57 s protocol-probe total is end-to-end only. Do not label network, parsing or rendering as the bottleneck without phase-specific timing evidence.
-- The observed 13.15 MB / 2068-node detail is a current real-world input. `DEV-native-read-path` must not assume tiny conversations or naive all-view materialization.
+- b9 two-detail success means the earlier b8 one-off HTTP 500 is not proof of a systematic current native-read implementation failure; its exact cause remains unproven.
+- b7/b9 list/detail success must not be generalized to send/streaming/attachments or non-personal workspaces.
+- The observed 13.57 s b7 diagnostic total and 20.74 s b9 7.50 MB production detail are end-to-end only. Do not label network, parsing or rendering as the bottleneck without phase-specific timing evidence.
+- The observed 13.15 MB / 2068-node b7 detail and 7.50 MB / 2023-node b9 production detail are real-world inputs. Do not assume tiny conversations or naive all-view materialization.
 - Manual sync/reload must operate through the production conversation state owner rather than creating competing stores or identities.
 - Response transition haptics must be tied to lifecycle state transitions rather than rendering callbacks.
 
 ## Frozen business or architecture rules
 
-None recorded yet. Foundation, auth/account context, diagnostics and tested protocol-read diagnostic scope are Stable for their accepted scope, not Frozen. Production native conversation state and send/streaming remain Unverified.
+None recorded yet. Foundation, auth/account context, diagnostics, tested protocol-read diagnostic scope, and b9 production native-read scope are Stable for their accepted scope, not Frozen. Send/streaming remain Unverified.
 
 ## Code style / naming constraints
 

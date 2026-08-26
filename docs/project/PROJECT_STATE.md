@@ -6,9 +6,9 @@ _Last updated: 2026-08-26._
 
 `DEV-app-foundation-0.1.0-b1` remains the merged Stable foundation baseline. `DEV-auth-bootstrap-0.1.0-b6` remains the merged Stable authentication/account-context baseline for the tested iPhone / iOS 17.0 environment.
 
-`DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, has now reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** for the current Plus/personal conversation-list + one-detail read path on iPhone / iOS 17.0. Exact product/workflow source is `44a137b973e29e2a313e9114fdacb7727dccefb9`; authoritative push run `32938912018`; artifact ID `9595827498`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`.
+`DEV-protocol-read-0.1.0-b7`, version `0.1.0 (7)`, is now the merged accepted conversation-read evidence baseline. It reached **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** for the current Plus/personal conversation-list + one-detail read path on iPhone / iOS 17.0. Exact product/workflow source is `44a137b973e29e2a313e9114fdacb7727dccefb9`; authoritative push run `32938912018`; artifact ID `9595827498`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`. PR #7 merged at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
 
-PR #7 is completing integration of this accepted protocol-read baseline. Production native conversation ownership is still intentionally deferred to `DEV-native-read-path`.
+Production native conversation ownership is intentionally deferred to the next core task, `DEV-native-read-path`.
 
 ## Authentication evidence
 
@@ -46,8 +46,8 @@ Diagnostics/logging remains a Stable foundation capability with bounded persiste
 
 1. `DEV-app-foundation` — Completed / merged / Stable.
 2. `DEV-auth-bootstrap` — Completed / merged / Stable.
-3. `DEV-protocol-read` — Runtime gate passed on b7; integration completion in PR #7.
-4. `DEV-native-read-path` — next core task after PR #7 integration.
+3. `DEV-protocol-read` — Completed / merged / Stable for the tested personal-account read scope.
+4. `DEV-native-read-path` — next core task.
 5. `DEV-send-stream`.
 6. `DEV-long-conversation`.
 7. `DEV-attachments`.

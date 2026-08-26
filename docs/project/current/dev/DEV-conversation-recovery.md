@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — b15 selected-detail cancellation/replacement candidate**
+**Active — b15 Artifact ready; selected-detail cancellation/replacement Runtime pending**
 
 - **Work ID**: `DEV-conversation-recovery`
 - **Routing aliases / keywords**: `会话同步与重载 / 同步最新消息 / 重载当前会话 / 冷启动登录恢复 / conversation recovery`
@@ -10,7 +10,7 @@
 - **Accepted baseline**: `DEV-native-read-path-0.1.0-b9` remains the merged Stable production native-read baseline until this Work is finalized and merged.
 - **Working branch / PR**: `dev/conversation-recovery-20260826`; PR #10 open/unmerged.
 - **Current base**: main `3a138ab6378fb72b9b36dedd3df55dc29e2ba814`; latest pre-b15 compare `behind_by=0`.
-- **Active conflict scan**: only this development checkpoint exists on the working branch; no competing Active Work/candidate owner found. Existing development branches contain only earlier completed/merged work.
+- **Active conflict scan**: only this development checkpoint exists on the working branch; no competing Active Work/candidate owner found when b15 was allocated.
 
 ## Accepted runtime history
 
@@ -24,18 +24,23 @@
 
 - Product/config head `82d96bf085dbee3877bcb16e27bbf69f4dc0990f`; tested merge `5b2f60dc8b30ae15d56cbe2d49bbe6b61aff0ad6`; exact tree `4d0ddb24ba6e261cdb7a4057ce47e73f199ad481`.
 - CI `33000566633`; artifact `9618410313`.
-- IPA `ChatGPTClient-0.1.0-b14-dev-conversation-recovery.ipa`.
-- IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`.
+- IPA `ChatGPTClient-0.1.0-b14-dev-conversation-recovery.ipa`; IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`.
 
-## b15 identity
+## b15 identity / CI / Artifact
 
 Fresh candidate allocated after checking `BUILD_TEST_INDEX.md`, the only Active checkpoint, real Xcode build source, PR #10 and current branch/base state:
 
 - **Candidate**: `DEV-conversation-recovery-0.1.0-b15`
 - **Version / Build**: `0.1.0 (15)`
-- **Expected IPA**: `ChatGPTClient-0.1.0-b15-dev-conversation-recovery.ipa`
-- **Current product/config head after implementation + identity files**: `159e8ea4f7baf6cd890d1f9bbebeac41feefbf52`
-- **CI / Artifact / Runtime**: pending at this checkpoint update.
+- **Product/config head**: `159e8ea4f7baf6cd890d1f9bbebeac41feefbf52`
+- **CI run**: `33004536664` — success; build, inspect and upload all passed.
+- **CI synthetic merge**: `fb0c6d75362e111758b62a98f89696b7f1cb6c92`.
+- **Exact product/config tree**: `7a988bcad27d023eac77683985c5d7d92b22c176` for both branch head and tested synthetic merge.
+- **Artifact**: `9619988065`, `ChatGPTClient-DEV-conversation-recovery-0.1.0-b15`.
+- **Artifact ZIP digest**: `sha256:cf4e8bce5a80bdd86bd9b8457b86c7a41de65d762c6ee158422760538faa50a7`.
+- **IPA**: `ChatGPTClient-0.1.0-b15-dev-conversation-recovery.ipa`.
+- **IPA SHA-256**: `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`; generated sidecar matches independent SHA.
+- **Embedded identity**: version `0.1.0`, build `15`, candidate b15, source `fb0c6d75362e`, minimum iOS14.0, device families `[1,2]`, Mach-O arm64.
 
 ## b15 evidence-backed implementation
 
@@ -54,7 +59,7 @@ The remaining b13 HTTP429 overlap is the only target. No new Work ID was created
 - `同步最新消息` and `重载当前会话` call the same detail path with explicit replacement ownership.
 - A new manual recovery increments/owns the new generation first, then cancels the older tracked selected-detail task before starting its replacement request.
 - Intentional `NSURLErrorCancelled` is logged as `detail.cancelled` / span status `cancelled`, not as a network failure and not surfaced to the obsolete UI completion.
-- Existing `operationGeneration` guard remains in place so any late non-cancelled callback from an obsolete operation is still rejected.
+- Existing `operationGeneration` guard remains so any late non-cancelled callback from an obsolete operation is still rejected.
 - No retry, timer, watchdog, delayed retry, fallback endpoint/header set, resend/regenerate, hidden WebView or second persistent state store was added.
 
 ## Static/source review
@@ -75,12 +80,10 @@ Diff from pre-b15 branch head `dbac22552b5c8f58fb4e51e4b6dead2c429a0005` before 
 ## Validation state
 
 - b14: **Code + static/source review + CI + Artifact + Runtime/manual accepted for compact startup/navigation**.
-- b15: **Code written + static/source review; CI pending; Artifact pending; Runtime pending**.
+- b15: **Code written + static/source review + CI passed + Artifact produced; Runtime/manual pending**.
 - Entire Work: **not Stable / not merged** until b15 real-device acceptance.
 
 ## b15 real-device gate
-
-After exact b15 Artifact exists:
 
 1. Enter a conversation and, while ordinary `正在读取会话…` is still active, trigger exactly one manual `重载当前会话` or `同步最新消息`.
 2. Diagnostics should show `detail.cancel.requested` for the old generation, then `detail.cancelled` for that old task, followed by one replacement `detail.request` for the new generation.
@@ -90,11 +93,7 @@ After exact b15 Artifact exists:
 
 ## Next exact action
 
-1. Accept only CI associated with final b15 product/config head or an exact-tree-equivalent PR synthetic merge.
-2. Inspect/download Artifact and verify embedded version/build/candidate/source + SHA.
-3. Deliver exact b15 IPA for the real-device gate above.
-4. If accepted, record Runtime evidence, perform final main/PR/conflict scan, merge PR #10, update durable docs and complete this Work.
-5. Only then start `DEV-multi-conversation-state`.
+Install exact b15 on target iPhone/iOS17 and run the gate above. If accepted: record Runtime evidence, perform final main/PR/conflict scan, merge PR #10, update durable docs and complete this Work. Only then start `DEV-multi-conversation-state`.
 
 ## Rejected / do-not-repeat
 
@@ -103,4 +102,4 @@ After exact b15 Artifact exists:
 - No hidden/shadow WebView or copied persistent auth secrets.
 - No automatic retry/watchdog/timer/resend/regenerate/fallback chain.
 - Do not remove the generation guard merely because task cancellation now exists.
-- Do not claim cancellation solves the HTTP429 runtime defect until exact b15 device evidence confirms it.
+- Do not call the HTTP429 overlap solved until exact b15 device evidence confirms it.

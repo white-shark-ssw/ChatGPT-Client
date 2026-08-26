@@ -32,50 +32,57 @@ Swift 5 + UIKit, iOS 14.0 target, no third-party dependencies, application shell
 
 ### Status
 
-**Active. Embedded login/persistence is accepted. b4 real-device evidence isolated native browser-route `/auth/login` as an unreliable Cloudflare-gated prerequisite. b5 now directly tests the actual account/session path and is awaiting real-device validation.**
+**Active. Embedded login/persistence is accepted. b5 real-device evidence now proves the direct native session/accounts HTTP path can reach HTTP 200 on the intended device. The remaining observed b5 failure was the superseded account parser. b6 is the current ordered-account parser candidate and also adds the requested diagnostics-clear control; runtime validation is pending.**
 
-### Accepted b2 evidence
+### Accepted web-login evidence
 
-- `DEV-auth-bootstrap-0.1.0-b2`, product source `809fa03e673afded87cb47fb755c998ab1b58e12`.
-- Run `32886019320` passed; artifact ID `9577612707`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465`.
-- User completed Continue with Google in embedded `WKWebView` on iPhone / iOS 17.0.
-- Force-close/relaunch retained authenticated state. Default persistent `WKWebsiteDataStore` is the persistent auth-secret authority for the tested environment.
+- b2 completed Continue with Google in embedded `WKWebView` and established persistent WebKit authentication across force-close/relaunch.
+- Default persistent `WKWebsiteDataStore` remains the persistent auth-secret authority.
 
-### b3 / b4 route evidence
+### Native route evidence
 
-- b3 (`0fcf040012c0698d0e3ce1628fec9865237eba3b`) showed a transient cookie-copy ephemeral `URLSession` could resolve browser-oriented `/auth/login` to authenticated `chatgpt.com` HTTP 200 under its tested conditions.
-- b4 exact runtime candidate `DEV-auth-bootstrap-0.1.0-b4`, source `33ea1b96f755bdf21fdd7691a9f1084a6d624908`, artifact ID `9579720453`, was real-device tested on iPhone / iOS 17.0.
-- b4 WebKit `/auth/login` initially returned HTTP 403, completed a Cloudflare challenge, then reached non-`/auth` `chatgpt.com` HTTP 200 and `session.webState=authenticated`.
-- The separate native `/auth/login` request copied 46 total / 27 matching WebKit cookies but returned HTTP 403 and `session.nativeState=notAuthenticated`.
-- b4 account-context probe never started because controller sequencing required that native `/auth/login` gate first. Therefore b4 is not evidence that `/api/auth/session` or accounts-check failed.
+- b3 showed a transient native `/auth/login` request could reach authenticated ChatGPT HTTP 200 under one tested condition.
+- b4 later showed WebKit could pass Cloudflare and remain authenticated while separate native `/auth/login` returned HTTP 403.
+- Therefore native `/auth/login` remains route-specific evidence only and is not an account-context prerequisite.
 
-### Current b5 direct account-context candidate
+### b5 direct account/session evidence
 
-- `AuthWebViewController` now starts account-context verification directly after WebKit finishes at authenticated non-`/auth` `chatgpt.com`; native `/auth/login` is no longer a prerequisite.
-- `AuthSessionStore.probeAccountContext` uses the existing narrow evidence path: current WebKit ChatGPT/OpenAI cookies copied transiently to an ephemeral `URLSession` -> GET `/api/auth/session` -> transient bearer -> accounts-check -> required default account context only.
-- b5 adds only safe account-probe cookie counts (`itemCount`, `matchedItemCount`). Cookie values, bearer values, Authorization headers and response bodies remain excluded from diagnostics.
-- Valid candidate `DEV-auth-bootstrap-0.1.0-b5`, version `0.1.0 (5)`, exact product/workflow source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f`.
-- Push run `32932389742` passed Xcode 16.4 build/inspect/upload. Artifact ID `9593649485`; IPA `ChatGPTClient-0.1.0-b5-dev-auth-bootstrap.ipa`; IPA SHA-256 `d9a22635cc6ac05d2ba09a0a627eaa74d38d1a690b5e9affe2f318d2aa204f15`; ZIP digest `sha256:4ad6e95d4e30981aa63bb8bd401c0d4cd9acdddabbf83fab27b1f6fe54307066`.
-- Downloaded b5 artifact was locally checked for matching version/build/candidate/source and IPA checksum.
-- b5 is **Code written + CI passed + Artifact produced; Runtime/manual/real-device not yet tested**.
+- Candidate `DEV-auth-bootstrap-0.1.0-b5`, exact source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f`, artifact ID `9593649485`.
+- First direct probe after an observed Cloudflare challenge: `/api/auth/session` HTTP 403, `stage=session`.
+- Second direct probe: WebKit reached authenticated ChatGPT; `/api/auth/session` HTTP 200; required user id + transient access token parsed; bearer-authenticated accounts-check HTTP 200.
+- b5 then failed with `stage=accounts`, `reason=missing_default_account`. Current source inspection shows this was caused by requiring `payload.accounts.default.account.id`.
+- Thus b5 is **Code written + CI passed + Artifact produced + Runtime/manual/real-device tested** and establishes the native session/accounts transport under the successful second-run condition. It does not establish the corrected account parser.
+
+### Current b6 account-context candidate
+
+- `AuthSessionStore` now follows current response-shape evidence: require non-empty `account_ordering`, resolve each ordered key in the keyed `accounts` dictionary, skip entries explicitly marked `can_access_with_session=false`, and read nested `account.account_id` from the first usable entry. Optional `plan_type` / `structure` remain metadata only.
+- Shape failures log safe structural counts/reason only; response bodies and authentication secrets remain excluded.
+- Settings now includes `清理诊断日志`. The existing diagnostics owner clears its current JSONL and configured rotated archives without clearing WebKit login/auth state or introducing a competing store.
+- Valid candidate `DEV-auth-bootstrap-0.1.0-b6`, version `0.1.0 (6)`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`.
+- Push run `32934821144` passed Xcode 16.4 build/inspect/upload. Artifact ID `9594474567`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`.
+- Downloaded b6 artifact was locally checked for `0.1.0 (6)`, candidate b6, source `19c0cd22923d`, Release, minimum OS 14.0 and matching IPA checksum.
+- b6 is **Code written + CI passed + Artifact produced; Runtime/manual/real-device not yet tested**.
 
 ### Immediate verification order
 
-1. Install exact b5 artifact ID `9593649485` on the intended iPhone / iOS 17.0.
-2. Open the existing authentication verification page and let WebKit reach authenticated ChatGPT. b5 then directly runs account-context verification.
-3. Success title: `登录会话 · 账户上下文通过`.
-4. If the title is `网页登录成功 · 账户上下文未通过` or `网页登录成功 · 账户验证失败`, export the b5 diagnostic JSON without repeatedly restarting. Inspect the exact `accountContextProbe.end` stage/status: `stage=session` tests `/api/auth/session`; `stage=accounts` tests accounts-check.
-5. If account context passes, close Phase 2 and only then open `DEV-protocol-read`.
-6. If it fails, diagnose the exact current status/shape before considering any change. Do not add speculative retries, alternate endpoints, User-Agent spoofing, Cloudflare bypass or browser-script token extraction.
+1. Install exact b6 artifact ID `9594474567` on the intended iPhone / iOS 17.0.
+2. Optional but recommended for clean evidence: open Settings and press `清理诊断日志` once. This clears accumulated local b1-b5 diagnostics only; it does not log out WebKit.
+3. Open the authentication verification page once and let WebKit reach authenticated ChatGPT; b6 then directly runs account-context verification.
+4. Success title remains `登录会话 · 账户上下文通过`.
+5. On any other result, export one fresh b6 diagnostic JSON. Inspect the exact `accountContextProbe.end` stage/status/reason before changing code.
+6. Do not add speculative retries, alternate endpoints, User-Agent spoofing, Cloudflare bypass, browser-script token extraction or multi-shape parser fallback chains without new evidence.
+7. Only after b6 account context is accepted on-device should Phase 2 close and `DEV-protocol-read` begin.
 
 ### Phase 2 acceptance gate
 
 - Actual Google login on real device — **passed b2**.
-- WebKit session persistence/re-entry — **passed b2; b4 also confirms WebKit can recover through an observed Cloudflare challenge to authenticated ChatGPT**.
+- WebKit session persistence/re-entry — **passed**.
 - Persistent authentication-secret owner — **default `WKWebsiteDataStore`, accepted**.
-- Native `/auth/login` behavior — **route-specific evidence only; b3 succeeded, b4 returned Cloudflare 403; no longer a Phase 2 prerequisite**.
-- Account/workspace context owner/probe — **implemented b5; Code written + CI passed + Artifact produced; runtime pending**.
-- Auth secrets excluded from logs/export — **implemented; b5 continues the same diagnostics contract**.
+- Native `/auth/login` — **route-specific evidence only, not a gate**.
+- Direct native `/api/auth/session` + accounts-check transport — **passed under b5 second-run condition**.
+- Current account/workspace parsing/owner — **implemented b6; Code written + CI passed + Artifact produced; runtime pending**.
+- Auth secrets excluded from logs/export — **implemented**.
+- Explicit local diagnostics clear for repeated tests — **implemented b6; CI/artifact passed; runtime pending**.
 
 ## Phase 3 — `DEV-protocol-read`
 
@@ -121,7 +128,7 @@ Every important async path should show what started, which owner handled it, wha
 
 Never log passwords, OAuth codes, access/refresh/session tokens, Cookie values/full Cookie headers, Authorization values, full chat bodies or attachment contents. Prefer counts, sizes, statuses, timings and redacted/hashed identifiers.
 
-Use the accepted bounded local diagnostics store/export authority; do not create a competing store without a concrete need.
+Use the accepted bounded local diagnostics store/export/clear authority; do not create a competing store without a concrete need.
 
 # Parallel-development guidance
 
@@ -129,4 +136,4 @@ The core chain `foundation -> auth -> protocol read -> native read -> send/strea
 
 # Next implementation action
 
-Real-device test exact `DEV-auth-bootstrap-0.1.0-b5` artifact ID `9593649485`. Use the direct account-context result and exported diagnostics to either close Phase 2 or isolate the exact `/api/auth/session` / accounts-check failure. Do not open `DEV-protocol-read` yet.
+Real-device test exact `DEV-auth-bootstrap-0.1.0-b6` artifact ID `9594474567`. Clear accumulated diagnostics first if desired, then run auth verification once and export one fresh b6 diagnostic JSON only if the final title is not `登录会话 · 账户上下文通过`. Do not open `DEV-protocol-read` yet.

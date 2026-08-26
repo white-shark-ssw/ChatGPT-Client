@@ -8,8 +8,7 @@ This file contains rules specific to this repository/product. Populate/change th
 - The previous-project history pack is reference material only; it is not current source or current protocol documentation.
 - The durable ordered implementation roadmap lives in `docs/project/DEVELOPMENT_PLAN.md`.
 - `DEV-app-foundation-0.1.0-b1` is the accepted Stable foundation baseline.
-- `DEV-auth-bootstrap-0.1.0-b2` proves the tested embedded ChatGPT Continue with Google route and WebKit login persistence across force-close/relaunch on iPhone / iOS 17.0.
-- b3/b4 native `/auth/login` results are route-specific evidence only. b5 second direct probe proves `/api/auth/session` and bearer-authenticated accounts-check can both return HTTP 200 on the intended device; this does not yet prove the b6 parser.
+- `DEV-auth-bootstrap-0.1.0-b6` is the accepted current authentication/account-context runtime candidate for iPhone / iOS 17.0, pending PR #6 integration.
 
 ## Repository governance contract
 
@@ -22,7 +21,7 @@ This file contains rules specific to this repository/product. Populate/change th
 - Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old shapes or memory alone.
 - Before implementing a protocol capability, establish current evidence for URL/path, method, authentication/account context, headers, body, response/stream shape, IDs/state semantics and failure behavior as applicable.
 - Current evidence wins over historical notes.
-- `DEV-protocol-read` must not begin until the current account/workspace context actually required by the native request path is evidenced and assigned one explicit owner.
+- The auth/account-context entry gate for future `DEV-protocol-read` is satisfied by accepted b6 evidence, but conversation-list/detail/streaming protocol remains Unknown / Unverified until separately tested.
 - Native `/auth/login` success/failure is authentication-route evidence only; it is not proof of conversation-list/detail endpoints or their required context.
 
 ## Authentication contract
@@ -34,10 +33,11 @@ This file contains rules specific to this repository/product. Populate/change th
 - Do **not** create a second persistent Cookie/token/session authority.
 - `AuthSessionStore` may read current WebKit cookies and copy matching ChatGPT/OpenAI cookies transiently into an **ephemeral `URLSession`** for a specifically evidenced request. The copy must not be persisted.
 - Native `/auth/login` is **not** a current account-context prerequisite or authentication state authority.
-- Current account-context sequencing begins after WebKit reaches authenticated non-`/auth` ChatGPT: ephemeral current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
-- b5 real-device evidence must be preserved precisely: one direct session request returned HTTP 403 immediately after a Cloudflare challenge; a later direct run returned `/api/auth/session` HTTP 200 and accounts-check HTTP 200, then the old parser failed with `missing_default_account`. Do not rewrite this as a transport/authentication failure.
-- The old `accounts.default.account.id` parser is superseded by current evidence. The b6 candidate uses `account_ordering`, keyed `accounts`, the first ordered entry not explicitly inaccessible with session, and nested `account.account_id`. Treat this parser as Candidate until b6 runtime evidence passes.
-- If a direct session/account request or parser fails, record the exact stage/status/reason first. Do not immediately add retries, User-Agent spoofing, Cloudflare bypass logic, alternate endpoints, browser-script token extraction or speculative multi-shape parser fallbacks.
+- Current account-context sequencing begins after WebKit reaches authenticated ChatGPT: ephemeral current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
+- Preserve challenge sensitivity as an observed fact: b5 and b6 both had a direct `/api/auth/session` HTTP 403 in one attempt, followed by a later user-triggered verification attempt that returned HTTP 200. Current app code intentionally does not add a speculative automatic retry for this.
+- The accepted accounts-check parser uses non-empty `account_ordering`, keyed `accounts`, the first ordered entry not explicitly inaccessible with session, and nested `account.account_id`. Optional `plan_type` / `structure` are metadata only.
+- b6 real-device evidence: second user-triggered attempt returned `/api/auth/session` HTTP 200 + accounts-check HTTP 200, observed accountCount=2/orderCount=1, selected plus/personal account context, set `session.accountState=verified`, and ended `status=ok`. This is the accepted current account-context contract for the tested environment.
+- If a direct session/account request fails in later work, record the exact stage/status/reason first. Do not immediately add retries, User-Agent spoofing, Cloudflare bypass logic, alternate endpoints, browser-script token extraction or speculative multi-shape parser fallbacks.
 - Never log or export passwords, OAuth authorization codes, access/refresh/session tokens, Cookie values, full Cookie/Authorization headers or equivalent authentication secrets.
 
 ## Diagnostics / logging contract
@@ -48,7 +48,7 @@ This file contains rules specific to this repository/product. Populate/change th
 - User-triggered diagnostic export must remain redacted/privacy-safe.
 - Prefer method/path category, HTTP status, elapsed time, byte/item counts, MIME/type and terminal reason over payload contents.
 - Safe cookie diagnostics may record only total/matched counts, never Cookie names/values when names themselves could reveal security mechanisms unnecessarily.
-- Repeated device testing must provide an explicit **clear local diagnostics** control through the existing diagnostics authority. Clearing removes the store's current JSONL and configured rotated archives; it must not create another store or clear WebKit/authentication state.
+- Repeated device testing provides an explicit **clear local diagnostics** control through the existing diagnostics authority. Clearing removes the store's current JSONL and configured rotated archives; it must not create another store or clear WebKit/authentication state.
 - Do not create a competing diagnostics persistence/export/clear authority without evidence that the current owner is insufficient.
 
 ## Compatibility / deployment constraints
@@ -64,13 +64,14 @@ This file contains rules specific to this repository/product. Populate/change th
 - Current WebView use is limited to the evidence-backed login/bootstrap role; native chat architecture remains the product direction.
 - Future session/account/conversation/message-stream/upload identities must have explicit state owners; UI text/titles are consumers, not authorities.
 - CI/artifact success must never be described as runtime proof.
-- b3/b4/b5 route behavior must remain tied to their exact runtime candidates; do not generalize them into private conversation protocol behavior.
+- b3/b4/b5/b6 route behavior remains tied to exact runtime evidence; do not generalize auth results into private conversation protocol behavior.
 - b4 must not be labeled an account-context endpoint failure because its account probe never ran.
-- b5 second-run accounts HTTP 200 must not be labeled an auth failure; its observed terminal failure was the old response parser.
+- b5 second-run accounts HTTP 200 must not be labeled an auth failure; its terminal failure was the old response parser.
+- b6 first HTTP 403 must not erase the accepted second-attempt success, and b6 success must not erase the observed challenge sensitivity.
 
 ## Frozen business or architecture rules
 
-None recorded yet. Foundation modules, embedded web login/persistence and diagnostics are Stable for their accepted scope, not Frozen. Native `/auth/login` behavior is route-specific evidence. Account/workspace context remains Candidate / Unverified until b6 runtime acceptance.
+None recorded yet. Foundation modules, embedded web login/persistence, diagnostics, and current account-context ownership are Stable for their accepted scope, not Frozen. Conversation/private protocol remains Unverified.
 
 ## Code style / naming constraints
 
@@ -84,8 +85,8 @@ Follow existing repository style until explicit project-specific constraints are
 - Do not use UI text/title matching as a production identity authority.
 - Do not raise the iOS 14.0 minimum merely because CI uses a newer SDK.
 - Do not add silent auth/network/protocol recovery that hides original failure evidence.
-- Do not guess account/workspace or conversation endpoints from historical notes; establish current evidence first.
-- Do not treat native `/auth/login` as a mandatory gate for the actual account/session request.
+- Do not guess conversation endpoints from historical notes; establish current evidence first.
+- Do not treat native `/auth/login` as a mandatory gate for actual account/session requests.
 - Do not restore `accounts.default.account.id` as current authority without new current evidence.
 
 ## Historical reference

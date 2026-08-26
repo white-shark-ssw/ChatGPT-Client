@@ -12,57 +12,44 @@ This file is the durable index for testable identities and evidence.
 
 Every new testable Active task/candidate must allocate a unique candidate/build identity before artifact production. Do not reuse a build number, exact version/build tuple, candidate ID, artifact name or release tag across Active tasks.
 
-Runnable/distributable product artifacts are IPA files intended for TrollStore. Diagnostic exports must include exact candidate/version/build/source/runtime identity and must not expose passwords, OAuth codes, tokens, Cookie values, Authorization values, full chat content or attachment contents.
-
 ## Candidate table
 
 | Candidate | Work ID | Version / Build | Branch / PR | Product source | Validation | Artifact | Runtime result | Status |
 |---|---|---|---|---|---|---|---|---|
-| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 merged | `89b29434e4d81486d395b8ddb093a031f6f919a7` | Code + CI + Artifact + real-device | Artifact `9574034381`; IPA SHA `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | TrollStore install/launch, Settings/export/persistence accepted on iPhone/iOS17 | Stable / merged foundation |
-| `DEV-auth-bootstrap-0.1.0-b2` | `DEV-auth-bootstrap` | `0.1.0 (2)` | `dev/auth-bootstrap-20260826` / PR #6 merged | `809fa03e673afded87cb47fb755c998ab1b58e12` | Code + CI + Artifact + real-device | Run `32886019320`; artifact `9577612707`; IPA SHA `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465` | Embedded Google login and persisted WebKit auth observed | Historical accepted web-login evidence |
-| `DEV-auth-bootstrap-0.1.0-b3` | `DEV-auth-bootstrap` | `0.1.0 (3)` | same / PR #6 merged | `0fcf040012c0698d0e3ce1628fec9865237eba3b` | Code + CI + Artifact + real-device | Run `32889095904`; artifact `9578766019` | Native `/auth/login` reached authenticated HTTP 200 in tested conditions | Historical route evidence |
-| `DEV-auth-bootstrap-0.1.0-b4` | `DEV-auth-bootstrap` | `0.1.0 (4)` | same / PR #6 merged | `33ea1b96f755bdf21fdd7691a9f1084a6d624908` | Code + CI + Artifact + real-device | Run `32891798350`; artifact `9579720453` | WebKit authenticated while native `/auth/login` returned 403 | Historical failed diagnostic gate |
-| `DEV-auth-bootstrap-0.1.0-b5` | `DEV-auth-bootstrap` | `0.1.0 (5)` | same / PR #6 merged | `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` | Code + CI + Artifact + real-device | Run `32932389742`; artifact `9593649485` | Session/accounts transport worked; obsolete parser failed | Superseded by b6 |
-| `DEV-auth-bootstrap-0.1.0-b6` | `DEV-auth-bootstrap` | `0.1.0 (6)` | same / PR #6 merged | `19c0cd22923d8c6f4c96e676258b31814d02a942` | Code + CI + Artifact + real-device | Run `32934821144`; artifact `9594474567`; IPA SHA `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b` | Ordered Plus/personal account context verified | Stable / merged auth-account baseline |
-| `DEV-protocol-read-0.1.0-b7` | `DEV-protocol-read` | `0.1.0 (7)` | `dev/protocol-read-20260826` / PR #7 merged | `44a137b973e29e2a313e9114fdacb7727dccefb9` | Code + CI + Artifact + real-device | Run `32938912018`; artifact `9595827498`; IPA SHA `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae` | List 28/29; diagnostic detail 13,152,411 bytes / mapping 2068 / status ok | Stable / merged diagnostic read evidence |
-| `DEV-native-read-path-0.1.0-b8` | `DEV-native-read-path` | `0.1.0 (8)` | `dev/native-read-path-20260826` / PR #9 | `e312acc3dd17cdcdb01746bb76f70556510a0304` | Code + CI + Artifact + real-device partial/failing | Run `32976656499`; artifact `9609766005`; IPA SHA `50bfb7453443c41de8661c1ffc3e2a7076fd939fe62453aceacb599371862acd` | Shell/list worked; one detail HTTP 500; launch had 0/0 cookies | Historical failing predecessor |
-| `DEV-native-read-path-0.1.0-b9` | `DEV-native-read-path` | `0.1.0 (9)` | `dev/native-read-path-20260826` / PR #9 merged | `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7` | Code + CI + Artifact + real-device | Run `32978476582`; artifact `9610449216`; IPA SHA `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e`; ZIP `sha256:0851787dacd882e86f398adebd4680493b6693d08865521fb677d7d9ecf3892f` | Shell/list/two details/current visible branch accepted on iPhone/iOS17 | Stable / merged production native-read baseline |
-| `DEV-conversation-recovery-0.1.0-b10` | `DEV-conversation-recovery` | `0.1.0 (10)` | `dev/conversation-recovery-20260826` / PR #10 | `89129913cb29a35db9dec7a6d5670d1b3b76bc23` | Code + CI + Artifact + real-device | Run `32982836557`; artifact `9612167843`; IPA SHA `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e`; ZIP `sha256:5a4818f2ea10569092e4144630372d2fecc62a2fcc87d03010ad2116947d224c` | Sync/full reload core accepted; full reload visibly clear/rebuild; no resend/duplicate | Accepted core recovery runtime |
-| `DEV-conversation-recovery-0.1.0-b11` | `DEV-conversation-recovery` | `0.1.0 (11)` | same / PR #10 | PR head `c3490eb67f8d8218281b30560a5c20b3d846c931`; tested merge `7fe8ca7693e9e8daa5fa80c9b8c600215e443cf3`; tree `80cd8e60977bbcc8dc2dc83881a58afb29a51bde` | Code + static review + CI + Artifact + real-device | Run `32988700796`; artifact `9613806931`; IPA SHA `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`; ZIP `sha256:70bb214d01bcf7f2a57df25f10c2280f5dce5482d06b545a168b4963f3b2ee2f` | Four sync requests + one reload succeeded, but user saw no nav-bar sync prompt | Runtime presentation rejected / superseded by b12 |
-| `DEV-conversation-recovery-0.1.0-b12` | `DEV-conversation-recovery` | `0.1.0 (12)` | same / PR #10 open | PR head `fd9fb3ac7a09eafa8dfd33918d114c7d3fee474f`; tested merge `4a7380b913ff5bd847c676fceab31adafdeecb3f`; exact tree `81c801284b1e83f68043c30b9c75f47e76640128` | **Code written + static/source review + CI passed + Artifact produced** | **Run `32993589071`; artifact `9615588166`; IPA `ChatGPTClient-0.1.0-b12-dev-conversation-recovery.ipa`; IPA SHA `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab`; ZIP `sha256:867c256314f7581f5550717287a604f22c6f55ba60ce659638406e5d34082aac`** | Runtime pending: centered 2s sync toast + background default-WebKit-data-store warm-up before first account probe | **Active test candidate / Runtime pending** |
+| `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 merged | `89b29434e4d81486d395b8ddb093a031f6f919a7` | Code + CI + Artifact + real-device | Artifact `9574034381`; IPA SHA `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | Foundation accepted on iPhone/iOS17 | Stable / merged |
+| `DEV-auth-bootstrap-0.1.0-b6` | `DEV-auth-bootstrap` | `0.1.0 (6)` | PR #6 merged | `19c0cd22923d8c6f4c96e676258b31814d02a942` | Code + CI + Artifact + real-device | Run `32934821144`; artifact `9594474567`; IPA SHA `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b` | Ordered Plus/personal account context verified | Stable / merged auth baseline |
+| `DEV-protocol-read-0.1.0-b7` | `DEV-protocol-read` | `0.1.0 (7)` | PR #7 merged | `44a137b973e29e2a313e9114fdacb7727dccefb9` | Code + CI + Artifact + real-device | Run `32938912018`; artifact `9595827498`; IPA SHA `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae` | List 28/29; diagnostic detail accepted | Stable / merged diagnostic evidence |
+| `DEV-native-read-path-0.1.0-b8` | `DEV-native-read-path` | `0.1.0 (8)` | PR #9 | `e312acc3dd17cdcdb01746bb76f70556510a0304` | Code + CI + Artifact + real-device partial/failing | Run `32976656499`; artifact `9609766005`; IPA SHA `50bfb7453443c41de8661c1ffc3e2a7076fd939fe62453aceacb599371862acd` | One selected detail HTTP 500; launch 0/0 cookies | Historical failing predecessor |
+| `DEV-native-read-path-0.1.0-b9` | `DEV-native-read-path` | `0.1.0 (9)` | PR #9 merged | `d9c9b4da8bdecd2d6c097d4db2f3789300fc99c7` | Code + CI + Artifact + real-device | Run `32978476582`; artifact `9610449216`; IPA SHA `16168a9db6f03e4ab00ddae4149451563a31fe2862cfb7ab18320329d186b99e` | Shell/list/two details/current visible branch accepted | Stable / merged production read baseline |
+| `DEV-conversation-recovery-0.1.0-b10` | `DEV-conversation-recovery` | `0.1.0 (10)` | `dev/conversation-recovery-20260826` / PR #10 | `89129913cb29a35db9dec7a6d5670d1b3b76bc23` | Code + CI + Artifact + real-device | Run `32982836557`; artifact `9612167843`; IPA SHA `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e` | Sync/full reload core accepted; no resend/duplicate | Accepted core recovery runtime |
+| `DEV-conversation-recovery-0.1.0-b11` | `DEV-conversation-recovery` | `0.1.0 (11)` | same / PR #10 | head `c3490eb67f8d8218281b30560a5c20b3d846c931`; tested merge `7fe8ca7693e9e8daa5fa80c9b8c600215e443cf3`; tree `80cd8e60977bbcc8dc2dc83881a58afb29a51bde` | Code + CI + Artifact + real-device | Run `32988700796`; artifact `9613806931`; IPA SHA `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33` | Request paths worked; nav-bar feedback not visible | Runtime presentation rejected / superseded |
+| `DEV-conversation-recovery-0.1.0-b12` | `DEV-conversation-recovery` | `0.1.0 (12)` | same / PR #10 | head `fd9fb3ac7a09eafa8dfd33918d114c7d3fee474f`; tested merge `4a7380b913ff5bd847c676fceab31adafdeecb3f`; tree `81c801284b1e83f68043c30b9c75f47e76640128` | **Code + CI + Artifact + real-device** | Run `32993589071`; artifact `9615588166`; IPA SHA `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab` | Centered sync toast accepted. Cold-start warm-up 0/0 -> 41/22 cookies in 194.97 ms and later account/list succeeded without Login, but initial list did not start until sidebar was revealed because sidebar view loading was lazy. | **Partial runtime acceptance / superseded by b13** |
+| `DEV-conversation-recovery-0.1.0-b13` | `DEV-conversation-recovery` | `0.1.0 (13)` | same / PR #10 open | branch head `fcc74ac4015449dba6c77f3136eede82cec3ec54`; tested merge `57187c0d0fd3116f964248a87f1a766268637788`; exact tree `2068ab4dc8f4bd9f94f1cb89e21b8dab29436ebf` | **Code written + static/source review + CI passed + Artifact produced** | **Run `32997544435`; artifact `9617184873`; IPA `ChatGPTClient-0.1.0-b13-dev-conversation-recovery.ipa`; IPA SHA `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`; ZIP `sha256:7d7d1faa4e69f8892df2d2c2b944f7ada36cb252c50dd0ddd238ecc05c7baf27`** | Runtime pending: auto-start initial list after warm-up, immediately usable explicit sidebar button, recovery actions during ordinary detail load, stale-operation guard. | **Active test candidate / Runtime pending** |
+
+## Current recovery evidence
+
+- b12 proves on the tested iPhone/iOS17 cold start that public `WKWebsiteDataStore.default()` warm-up can hydrate the persisted auth state: 0/0 -> 41/22 cookie counts, then the normal single account probe and list request succeeded without visible Login.
+- b12 also proves the centered sync feedback and both unchanged/changed sync result paths on device.
+- b12 exposed a separate shell/list sequencing defect: `ConversationSidebarViewController.viewDidLoad` owned the initial `loadConversations()`, so compact-iPhone lazy primary-column loading delayed the first list request until the user could reveal the sidebar.
+- b13 forces the sidebar view/load path immediately after warm-up and uses an explicit left sidebar action. It also allows `同步最新消息` / `重载当前会话` during an ordinary detail load.
+- b13 adds one selected-detail operation generation in `ConversationRepository`; an older load completion is discarded as `operation_superseded` after a newer manual recovery starts. This is a freshness guard, not a second conversation-state authority and not automatic retry machinery.
 
 ## Foundation / toolchain facts
 
-- CI runner: GitHub-hosted `macos-15`; accepted builds used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
-- Compile target remains `arm64-apple-ios14.0`.
-- Runtime evidence currently covers iPhone/iOS 17.0 unless a candidate row states otherwise; lower iOS versions and iPad remain Unverified.
+- CI runner: GitHub-hosted `macos-15`; current builds use the existing Xcode/iPhoneOS pipeline and target `arm64-apple-ios14.0`.
+- Runtime evidence currently covers iPhone/iOS 17.0 unless a row states otherwise; lower iOS versions and iPad remain Unverified.
+- Default persistent `WKWebsiteDataStore` remains the sole persistent auth-secret authority; copied cookies/token remain transient only.
+- No automatic retry/watchdog/resend/regenerate/fallback endpoint was introduced by b13.
 
-## Authentication facts
+## b13 package inspection
 
-- b2 established embedded Google login and persistent default `WKWebsiteDataStore` architecture.
-- b6 established the accepted ordered account parser and Plus/personal account context.
-- Default `WKWebsiteDataStore` remains the sole persistent auth-secret authority; copied cookies/access token used by native transport remain transient only.
-- Current project planning assigns cold-start login-state recovery to active `DEV-conversation-recovery`; do not create a separate auth-resume Work.
-- b12 does not change `/api/auth/session`, accounts parsing, endpoints, headers or persistent secret ownership. It only warms the public default WebKit data store before the initial shell/list probe.
-
-## Native-read / recovery facts
-
-- b9 is the merged Stable native production read baseline for tested shell/list/two-detail/current-branch scope.
-- b10 proved repository-owned `同步最新消息` and clear-then-fetch `重载当前会话` on device; recovery diagnostics use safe counts/state transitions and omit raw IDs/message bodies.
-- b11 proved the sync request path continued to work but its `navigationItem.prompt` feedback was not visible to the user; this presentation is rejected.
-- b12 replaces that feedback with a centered toast: progress while request is active, then `已是最新` / `已同步最新消息` for 2 seconds.
-- b12 adds `AuthSessionStore.warmDefaultWebDataStore` and sequences `RootViewController` shell installation after warm-up. This is **not runtime proof** that cold-start auth is fixed.
-- If b12 cold-start still fails, export diagnostics before opening visible login; do not add retry loops without evidence.
-
-## b12 package inspection
-
-- Generated sidecar and independently calculated IPA SHA-256 both equal `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab`.
-- Embedded identity: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=12`, `DiagnosticsCandidate=DEV-conversation-recovery-0.1.0-b12`, `DiagnosticsSourceCommit=4a7380b913ff`, `MinimumOSVersion=14.0`, `UIDeviceFamily=[1,2]`.
-- Executable is Mach-O arm64.
+- GitHub PR head `fcc74ac4015449dba6c77f3136eede82cec3ec54` and synthetic merge `57187c0d0fd3116f964248a87f1a766268637788` share exact tree `2068ab4dc8f4bd9f94f1cb89e21b8dab29436ebf`.
+- Sidecar and independently calculated IPA SHA-256 both equal `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`.
+- Embedded identity: version `0.1.0`, build `13`, candidate `DEV-conversation-recovery-0.1.0-b13`, source `57187c0d0fd3`, minimum OS `14.0`, device families `[1,2]`, Mach-O arm64.
 
 ## Uniqueness rule
 
-Different Active tasks must not reuse the same exact candidate identity, build number, version/build tuple, release tag, artifact name, or candidate ID. Once allocated, treat a candidate identity as reserved until explicitly completed/released and documented.
+Different Active tasks must not reuse the same exact candidate identity, build number, version/build tuple, release tag, artifact name, or candidate ID.
 
 ## Evidence labels
 

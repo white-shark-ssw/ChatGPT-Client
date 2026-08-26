@@ -492,6 +492,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let stateLabel = UILabel()
     private let retryButton = UIButton(type: .system)
+    private let syncToastView = UIView()
+    private let syncToastLabel = UILabel()
+    private var syncToastHideWorkItem: DispatchWorkItem?
     private var messages: [ConversationMessage] = []
     private var loadingConversationID: String?
 
@@ -538,6 +541,18 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(activityIndicator)
 
+        syncToastView.backgroundColor = UIColor.black.withAlphaComponent(0.78)
+        syncToastView.layer.cornerRadius = 12
+        syncToastView.isHidden = true
+        syncToastView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(syncToastView)
+        syncToastLabel.font = .preferredFont(forTextStyle: .headline)
+        syncToastLabel.textColor = .white
+        syncToastLabel.textAlignment = .center
+        syncToastLabel.numberOfLines = 0
+        syncToastLabel.translatesAutoresizingMaskIntoConstraints = false
+        syncToastView.addSubview(syncToastLabel)
+
         NSLayoutConstraint.activate([
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -550,14 +565,22 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             retryButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             retryButton.topAnchor.constraint(equalTo: stateLabel.bottomAnchor, constant: 14),
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -36)
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -36),
+            syncToastView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            syncToastView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            syncToastView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 36),
+            syncToastView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -36),
+            syncToastLabel.leadingAnchor.constraint(equalTo: syncToastView.leadingAnchor, constant: 18),
+            syncToastLabel.trailingAnchor.constraint(equalTo: syncToastView.trailingAnchor, constant: -18),
+            syncToastLabel.topAnchor.constraint(equalTo: syncToastView.topAnchor, constant: 12),
+            syncToastLabel.bottomAnchor.constraint(equalTo: syncToastView.bottomAnchor, constant: -12)
         ])
         updateConversationMenu()
     }
 
     func showConversation(id: String) {
         guard loadingConversationID != id || repository.selectedConversation?.id != id else { return }
-        navigationItem.prompt = nil
+        hideSyncToast()
         repository.selectConversation(id: id)
         loadingConversationID = id
         messages = []
@@ -604,11 +627,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let previousMessages = messages
         diagnostics.info(category: "navigation", name: "conversation.latestSync.requested", fields: repository.diagnosticsFields(for: id))
         navigationItem.rightBarButtonItem?.isEnabled = false
-        navigationItem.prompt = "正在同步最新消息…"
+        showSyncToast("正在同步最新消息…")
         repository.syncLatestMessages { [weak self] result in
             guard let self else { return }
             guard self.repository.selectedConversationID == id else {
-                self.navigationItem.prompt = nil
+                self.hideSyncToast()
                 self.updateConversationMenu()
                 return
             }
@@ -621,9 +644,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
                 self.stateLabel.isHidden = !detail.messages.isEmpty
                 self.retryButton.isHidden = true
                 self.tableView.reloadData()
-                self.showSyncFeedback(changed ? "已同步最新消息" : "已是最新")
+                self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0)
             case .failure(let error):
-                self.navigationItem.prompt = nil
+                self.hideSyncToast()
                 let alert = UIAlertController(title: "同步失败", message: error.localizedDescription, preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "好", style: .default))
                 self.present(alert, animated: true)
@@ -637,17 +660,29 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.createTime != new.createTime }
     }
 
-    private func showSyncFeedback(_ text: String) {
-        navigationItem.prompt = text
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            guard self?.navigationItem.prompt == text else { return }
-            self?.navigationItem.prompt = nil
+    private func showSyncToast(_ text: String, autoHideAfter delay: TimeInterval? = nil) {
+        syncToastHideWorkItem?.cancel()
+        syncToastHideWorkItem = nil
+        syncToastLabel.text = text
+        syncToastView.isHidden = false
+        guard let delay else { return }
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.syncToastView.isHidden = true
+            self?.syncToastHideWorkItem = nil
         }
+        syncToastHideWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    private func hideSyncToast() {
+        syncToastHideWorkItem?.cancel()
+        syncToastHideWorkItem = nil
+        syncToastView.isHidden = true
     }
 
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
-        navigationItem.prompt = nil
+        hideSyncToast()
         diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
         loadingConversationID = id
         messages = []

@@ -92,7 +92,7 @@
 				B00000000000000000000007 /* ChatGPTClient.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		C00000000000000000000006 /* Authentication */ = {
 			isa = PBXGroup;
@@ -244,8 +244,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
-				DIAGNOSTICS_CANDIDATE = "DEV-conversation-recovery-0.1.0-b13";
+				CURRENT_PROJECT_VERSION = 14;
+				DIAGNOSTICS_CANDIDATE = "DEV-conversation-recovery-0.1.0-b14";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -269,8 +269,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
-				DIAGNOSTICS_CANDIDATE = "DEV-conversation-recovery-0.1.0-b13";
+				CURRENT_PROJECT_VERSION = 14;
+				DIAGNOSTICS_CANDIDATE = "DEV-conversation-recovery-0.1.0-b14";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -8,9 +8,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let launchSpan = diagnostics.startSpan(category: "app", name: "launch", fields: ["launchOptionsPresent": launchOptions == nil ? "false" : "true"])
-        let navigationController = UINavigationController(rootViewController: RootViewController())
         let window = UIWindow(frame: UIScreen.main.bounds)
-        window.rootViewController = navigationController
+        window.rootViewController = RootViewController()
         window.makeKeyAndVisible()
         self.window = window
         diagnostics.info(category: "app", name: "ready", fields: ["root": "RootViewController", "candidate": AppBuildInfo.current.candidate])

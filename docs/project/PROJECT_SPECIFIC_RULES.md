@@ -9,7 +9,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Accepted foundation baseline: `DEV-app-foundation-0.1.0-b1`.
 - Accepted auth/account baseline: `DEV-auth-bootstrap-0.1.0-b6`, merged through PR #6.
-- Accepted current conversation-read evidence: `DEV-protocol-read-0.1.0-b7` for the tested Plus/personal list + one-detail path on iPhone / iOS 17.0; PR #7 integration is completing.
+- Accepted current conversation-read baseline: `DEV-protocol-read-0.1.0-b7` for the tested Plus/personal list + one-detail path on iPhone / iOS 17.0, merged through PR #7 at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
 
 ## Repository governance contract
 
@@ -39,7 +39,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `AuthSessionStore` may copy matching WebKit cookies transiently into an **ephemeral `URLSession`** for evidence-backed requests; copied values must not be persisted.
 - Native `/auth/login` is not an account-context prerequisite.
 - Account sequencing: authenticated WebKit -> ephemeral current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
-- Preserve challenge sensitivity: b5, b6 and now b7 each showed a direct `/api/auth/session` HTTP 403 in at least one attempt followed by a later user-triggered successful verification. Current code intentionally has no speculative automatic retry.
+- Preserve challenge sensitivity: b5, b6 and b7 each showed a direct `/api/auth/session` HTTP 403 in at least one attempt followed by a later user-triggered successful verification. Current code intentionally has no speculative automatic retry.
 - b7 specifically: first account attempt used 46 total / 27 matched cookies and session HTTP 403; after explicit user `重新开始`, second attempt used 49 / 30 cookies, session/accounts HTTP 200, plus/personal verified.
 - Accepted account parser uses non-empty `account_ordering`, keyed `accounts`, first ordered accessible entry, and nested `account.account_id`.
 - If future session/account requests fail, record exact stage/status/reason first. Do not immediately add retries, UA spoofing, Cloudflare bypass, alternate endpoints, browser-script token extraction or speculative parser fallbacks.
@@ -99,4 +99,4 @@ See `docs/project/HISTORICAL_REFERENCE.md` for advisory previous-project lessons
 
 ## Rule maintenance
 
-Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses stay in the active task checkpoint.
+Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses stay in an active task checkpoint.

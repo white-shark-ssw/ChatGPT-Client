@@ -4,9 +4,9 @@ _Last updated: 2026-08-27._
 
 ## Purpose
 
-This is the durable implementation sequence for the iOS-native ChatGPT client. Current source, CI/artifact evidence, real-device evidence and the specialized plans under `docs/project/` take priority over stale historical phase wording.
+This is the durable implementation sequence for the iOS-native ChatGPT client. Current source, CI/artifact evidence, real-device evidence and specialized plans under `docs/project/` take priority over stale historical wording.
 
-Current constraints: native UIKit iOS client; TrollStore IPA; intended primary runtime iPhone/iOS 17.0; deployment target iOS 14.0; current ChatGPT private/internal behavior must be evidenced rather than guessed.
+Current constraints: native UIKit iOS client; TrollStore IPA; intended primary runtime iPhone/iOS17; deployment target iOS14; current ChatGPT private/internal behavior must be evidenced rather than guessed.
 
 ## Delivery principles
 
@@ -15,9 +15,9 @@ Current constraints: native UIKit iOS client; TrollStore IPA; intended primary r
 3. Authentication/session ownership before protocol assumptions.
 4. One authoritative owner per identity/state domain.
 5. Native model/state separate from mounted UI.
-6. Official ChatGPT iOS interaction is the default visual/interaction baseline unless an explicit requirement or runtime pain point justifies a deviation.
-7. Core owner work is serial; edge work may parallelize only after conflict scanning.
-8. Always distinguish Code written, static checks, CI, Artifact, Runtime and Stable/Frozen evidence.
+6. Official ChatGPT iOS interaction is the default visual/interaction baseline unless explicit requirements or runtime pain points justify deviation.
+7. Core owner work is serial; edge work parallelizes only after conflict scanning.
+8. Always distinguish Code, static checks, CI, Artifact, Runtime and Stable/Frozen evidence.
 9. Do not add speculative retry, fallback, watchdog, duplicate state or compatibility machinery.
 
 ## Usability milestones
@@ -34,7 +34,7 @@ Completed / merged / Stable. b1 reached Code + CI + Artifact + real-device accep
 
 ### Phase 2 — `DEV-auth-bootstrap`
 
-Completed / merged / Stable for tested scope. b6 established embedded visible login, default persistent `WKWebsiteDataStore` as the sole persistent auth-secret authority, transient native authorized transport and ordered Plus/personal account context.
+Completed / merged / Stable for tested scope. b6 established embedded visible login, default persistent `WKWebsiteDataStore` as sole persistent auth-secret authority, transient native authorized transport and ordered Plus/personal account context.
 
 ### Phase 3 — `DEV-protocol-read`
 
@@ -52,12 +52,13 @@ Completed / merged / Stable for tested b9 scope. `ConversationRepository` owns p
 
 ### Current status
 
-**Active b13 test candidate.**
+**Active b14 real-device candidate.**
 
-- b10: accepted core `同步最新消息` / clear-then-fetch `重载当前会话` runtime on iPhone/iOS17.
-- b11: request paths remained successful, but `navigationItem.prompt` feedback was not visible and is rejected.
-- b12: **Code + CI + Artifact + real-device partial acceptance**. Centered sync feedback is accepted. Public WebKit warm-up hydrated 0/0 -> 41/22 cookies and later normal account/list verification succeeded without Login, but the first list request was delayed until the primary/sidebar view was revealed because `ConversationSidebarViewController.viewDidLoad` was lazy on compact iPhone.
-- b13: **Code + static/source review + CI + Artifact**. Run `32997544435`; artifact `9617184873`; IPA SHA-256 `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`. Runtime pending.
+- b10: accepted core `同步最新消息` / clear-then-fetch `重载当前会话` runtime.
+- b11: request paths worked, but `navigationItem.prompt` feedback was invisible and rejected.
+- b12: centered sync feedback + public WebKit warm-up accepted; first list load remained gated by lazy compact sidebar reveal.
+- b13: real-device partial/failing. Initial list loading now starts immediately after warm-up and stale generation rejection works, but compact startup stayed on `新对话`, duplicate sidebar icons appeared, sidebar reveal was unreliable, and overlapping manual replacement detail requests produced HTTP429.
+- b14: **Code + static/source review + CI + Artifact**. Run `33000566633`; artifact `9618410313`; IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`. Runtime pending.
 
 ### Manual recovery contract
 
@@ -65,10 +66,20 @@ Completed / merged / Stable for tested b9 scope. `ConversationRepository` owns p
 - Success reconciles server-backed detail; failure preserves previously loaded detail when one exists.
 - `重载当前会话` clears authoritative selected detail first, then performs one fresh detail request and rebuilds from returned server state.
 - Terminal `重新加载` uses the full-reload path.
-- While an **ordinary initial detail load** is still active, the overflow menu keeps both `同步最新消息` and `重载当前会话` available so the user may explicitly recover from a stuck load.
-- A manual recovery request supersedes the older ordinary selected-detail operation. The repository rejects a later old completion as `operation_superseded` rather than letting it overwrite the newer result.
-- Duplicate manual recovery taps are disabled only while that manual action itself is active.
+- During an **ordinary initial detail load**, overflow `同步最新消息` and `重载当前会话` remain available so the user can explicitly recover from a stuck load.
+- Current generation guard rejects older selected-detail completions as `operation_superseded` once a newer operation owns the selected detail.
+- Duplicate manual recovery taps are disabled while the manual action itself is active.
 - No automatic retry/watchdog/fallback/resend chain.
+
+### Recovery overlap evidence still pending correction
+
+b13 showed a separate failure mode while exercising recovery during load:
+
+- ordinary detail generation 1 remained in flight and later succeeded;
+- manual reload generations 2 and 3 were started as additional requests and each received HTTP429 in about 1.1 s;
+- generation 1's later success was correctly discarded as stale.
+
+Therefore the freshness guard is valid, but the request lifecycle still needs a minimum correction so explicit replacement recovery does not intentionally leave the older selected-detail network task active. **b14 does not implement that correction.** Once b14 shell behavior is accepted, use a fresh candidate identity for any cancellation/replacement change after the normal conflict/build-number check.
 
 ### Sync feedback
 
@@ -80,44 +91,49 @@ Completed / merged / Stable for tested b9 scope. `ConversationRepository` owns p
 - Failure removes toast and uses explicit failure UI.
 - b12 real-device testing accepted this presentation.
 
-### Cold-start login/list sequencing
+### Cold-start auth/list evidence
 
-Cold-start login-state recovery belongs to the same `DEV-conversation-recovery` Work. Do not create a separate auth-resume task.
+Cold-start login-state recovery belongs to this same Work; do not create a separate auth-resume task.
 
-Accepted b12 evidence for the tested iPhone/iOS17 cold start:
+Accepted evidence:
 
-1. `AuthSessionStore` public `WKWebsiteDataStore.default()` warm-up restored persisted WebKit cookie visibility from `0/0` to `41/22` in `194.97 ms`.
-2. The later existing normal account probe succeeded without visible Login and list returned 28/29.
-3. Therefore the b12 observed long startup wait was not an auth failure; list loading was simply not started until the lazy sidebar view loaded.
+1. b12 public `WKWebsiteDataStore.default()` warm-up restored cookie visibility 0/0 -> 41/22 in `194.97 ms`; unchanged normal account/list verification later succeeded without visible Login.
+2. b13 repeated the warm-up successfully 0/0 -> 39/20 in `177.47 ms` and started `listLoad` immediately afterwards.
+3. b13's tested account probe took `17089.96 ms`, whole list load `22005.52 ms`, list HTTP200 28/29. This is an end-to-end latency signal; do not guess which subcomponent is the bottleneck.
+4. User's much longer wait to reach the list was a compact shell/navigation presentation defect, not delayed list initiation.
 
-b13 keeps the accepted warm-up and changes only the evidenced startup issue:
+### b14 compact startup/navigation correction
 
-1. `RootViewController` installs the shell after warm-up and immediately forces the sidebar view/load path so its existing first list request starts without waiting for user navigation.
-2. The detail screen uses an explicit native sidebar button owned by `RootViewController`; tapping it presents `.primary` directly.
-3. Default `WKWebsiteDataStore` remains the sole persistent auth-secret authority.
-4. No hidden/shadow WebView, copied persistent token/cookie store, retry loop, timer/watchdog or automatic visible Login navigation.
+b14 isolates that presentation defect:
 
-### b13 acceptance gate
+1. `AppDelegate` completes the accepted public WebKit warm-up before installing the product `RootViewController`.
+2. `RootViewController` constructs primary/sidebar and secondary/detail columns synchronously before first product presentation.
+3. With no selected conversation, the split delegate chooses `.primary` as the compact top column; current read-only startup should therefore land on the conversation list, even if rows are still loading.
+4. Remove the b13 custom `sidebar.left` button and custom `show(.primary)` action. Native UISplitViewController/navigation is the single compact navigation owner.
+5. Selecting a conversation still presents secondary; native Back/system split navigation should return to the list.
+6. Auth endpoints/parser/headers, list/detail routes, sync toast and generation guard are unchanged.
 
-Exact b13 must be tested on iPhone/iOS17 for:
+### b14 acceptance gate
 
-- force-quit -> cold launch without tapping Login; the initial list request starts automatically after warm-up, not after sidebar reveal;
-- the explicit top-left sidebar action is usable immediately while the list may still be loading;
-- open a conversation and, while `正在读取会话…` is still visible, verify `同步最新消息` and `重载当前会话` are enabled;
-- invoke one manual recovery before the ordinary load completes; the newer recovery result wins and any older completion cannot overwrite it;
-- centered sync feedback remains correct and full reload remains functional.
+Exact b14 on iPhone/iOS17 must prove:
 
-Only real-device acceptance can close recovery and allow PR #10 to merge.
+- force-quit -> launch: after the short warm-up, first product screen is the conversation list, not blank `新对话` detail;
+- no duplicate pair of top-left sidebar icons;
+- list loading starts automatically after warm-up, without requiring a sidebar tap;
+- select conversation -> detail -> native Back/system split navigation reliably returns to list;
+- centered sync feedback and ordinary full reload remain intact.
+
+Do not use b14 to claim the b13 selected-detail overlap/HTTP429 issue is solved.
 
 ## Phase 6 — `DEV-multi-conversation-state`
 
 ### Goal
 
-Establish stable multi-conversation session/runtime ownership before send/stream work. See `docs/project/MULTI_CONVERSATION_STATE_PLAN.md` for the authoritative detailed plan.
+Establish stable multi-conversation session/runtime ownership before send/stream work. See `docs/project/MULTI_CONVERSATION_STATE_PLAN.md`.
 
 ### Scheduling
 
-Starts **after recovery is merged/accepted**. This precedes round-count/preferences and send/stream because those features depend on clear multi-conversation identity/runtime ownership. The b13 single-selected detail-operation generation is deliberately minimal and will later be generalized into the account-scoped per-conversation freshness model planned here.
+Starts **after recovery is merged/accepted**. This precedes round-count/preferences and send/stream because those features depend on clear multi-conversation identity/runtime ownership. Current single-selected generation logic is deliberately minimal and will later be generalized into account-scoped per-conversation freshness.
 
 ## Phase 7 — `DEV-conversation-round-count`
 
@@ -126,9 +142,9 @@ Starts **after recovery is merged/accepted**. This precedes round-count/preferen
 **会话轮数显示 / preferences integration**
 
 - Display `聊天 · N轮` / `工作 · N轮` when enabled.
-- One user message on the current active branch equals one round; assistant/tool/system/reasoning nodes do not add rounds.
+- One user message on current active branch equals one round; assistant/tool/system/reasoning nodes do not add rounds.
 - Derive from authoritative active-branch state, never a second persistent mutable counter.
-- `显示会话轮数` defaults On and persists through the existing preference owner once current implementation verifies that owner.
+- `显示会话轮数` defaults On and persists through the existing preference owner once verified.
 - No extra network request.
 
 Scheduling: after `DEV-multi-conversation-state`, before send/stream, unless a later explicit conflict/dependency review changes the order.
@@ -141,26 +157,26 @@ Reach the first daily-chat candidate after read/recovery/multi-conversation owne
 
 Scope includes:
 
-- current evidence for text send/new-conversation protocol before production assumptions;
+- evidence current text send/new-conversation protocol before production assumptions;
 - composer send path, streaming lifecycle and stop/cancel behavior;
-- stream identity bound to the correct conversation/message under rapid switching;
-- user-visible reasoning status/detail only when the service explicitly provides user-visible material;
+- stream identity bound to correct conversation/message under rapid switching;
+- user-visible reasoning status/detail only when service explicitly supplies displayable material;
 - official-style reasoning-to-final haptic transition tuned on real device;
-- manual `同步最新消息` as recovery for stale/incomplete server state, never automatic prompt resend.
+- manual `同步最新消息` as recovery, never automatic prompt resend.
 
-See `CLIENT_ARCHITECTURE_GAP_REVIEW.md`, `MULTI_CONVERSATION_STATE_PLAN.md` and `UI_INTERACTION_BASELINE.md` for current constraints.
+See `CLIENT_ARCHITECTURE_GAP_REVIEW.md`, `MULTI_CONVERSATION_STATE_PLAN.md` and `UI_INTERACTION_BASELINE.md`.
 
 ## Phase 9 — `DEV-markdown-export`
 
-Product enhancement: export current authoritative user-visible branch to Markdown. Do not scrape mounted UI cells and do not expose hidden/internal reasoning/tool content.
+Export current authoritative user-visible branch to Markdown; do not scrape mounted cells or expose hidden/internal reasoning/tool content.
 
 ## Phase 10 — `DEV-long-conversation`
 
-Measure and improve parse/model/render timing, first-visible latency, bounded mounted views, memory growth, scrolling/input latency and lifecycle behavior. b9's accepted 7.50 MB / 2023-node / 20.74 s detail remains a real design input.
+Measure/improve parse/model/render timing, first-visible latency, mounted-view bounds, memory growth, scrolling/input latency and lifecycle behavior. Existing multi-megabyte / thousands-of-node details remain real design inputs.
 
 ## Phase 11 — `DEV-attachments`
 
-Add native photo/file/video attachment flows after text-chat ownership is stable. Evidence current upload protocol before production implementation; keep upload state separate from send state.
+Add native photo/file/video attachment flows after text-chat ownership is stable. Evidence current upload protocol before production implementation.
 
 ## Phase 12 — remaining daily-use features
 
@@ -172,4 +188,4 @@ Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Re
 
 ## Current next action
 
-Real-device test exact `DEV-conversation-recovery-0.1.0-b13`. If accepted, record Runtime evidence, perform final main/PR/conflict check, merge PR #10 and complete recovery. Then create `DEV-multi-conversation-state` as the next serialized core Work.
+Real-device test exact `DEV-conversation-recovery-0.1.0-b14` for compact startup/list-detail navigation. If accepted, record Runtime evidence, then allocate a fresh candidate for the minimum selected-detail replacement/cancellation correction unless the user explicitly scopes that b13 HTTP429 defect out. Recovery remains unmerged until its accepted scope is complete.

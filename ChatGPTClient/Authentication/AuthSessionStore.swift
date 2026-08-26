@@ -110,6 +110,7 @@ final class AuthSessionStore {
         cookieStore.getAllCookies { [weak self] cookies in
             guard let self else { return }
             let matchedCookies = cookies.filter(Self.isAuthCookieDomain)
+            self.diagnostics.info(category: "auth", name: "accountContextProbe.webData", traceID: span.traceID, fields: ["itemCount": String(cookies.count), "matchedItemCount": String(matchedCookies.count)])
             let configuration = URLSessionConfiguration.ephemeral
             configuration.httpShouldSetCookies = true
             guard let storage = configuration.httpCookieStorage else {

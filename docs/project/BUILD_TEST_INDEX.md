@@ -19,15 +19,15 @@ Runnable/distributable product artifacts are IPA files intended for TrollStore. 
 | Candidate | Work ID | Version / Build | Branch / PR | Product source | Validation | Artifact | Runtime result | Status |
 |---|---|---|---|---|---|---|---|---|
 | `DEV-app-foundation-0.1.0-b1` | `DEV-app-foundation` | `0.1.0 (1)` | `dev/app-foundation-20260826` / PR #5 merged | `89b29434e4d81486d395b8ddb093a031f6f919a7` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Artifact ID `9574034381`; IPA SHA-256 `dcdefac9e508c5fd55c3c418fc0ea497c736f54fadc3b5e946300c5c1c032760` | TrollStore install/launch, Settings/export/persistence accepted on iPhone / iOS 17.0 | Stable / accepted / merged foundation |
-| `DEV-auth-bootstrap-0.1.0-b2` | `DEV-auth-bootstrap` | `0.1.0 (2)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `809fa03e673afded87cb47fb755c998ab1b58e12` | Code written; CI passed; artifact produced; runtime/manual/real-device tested for embedded login + WebKit persistence | Run `32886019320`; artifact ID `9577612707`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465` | Continue with Google succeeded; force-close/relaunch retained authenticated WebKit state. | Superseded runtime evidence candidate; web login + persistence accepted |
-| `DEV-auth-bootstrap-0.1.0-b3` | `DEV-auth-bootstrap` | `0.1.0 (3)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `0fcf040012c0698d0e3ce1628fec9865237eba3b` | Code written; CI passed; artifact produced; runtime/manual/real-device tested for transient native session consumption | Run `32889095904`; artifact ID `9578766019`; IPA SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860` | Native `/auth/login` reached authenticated `chatgpt.com` HTTP 200 under its tested conditions. | Historical route-specific evidence; no longer a prerequisite gate |
-| `DEV-auth-bootstrap-0.1.0-b4` | `DEV-auth-bootstrap` | `0.1.0 (4)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `33ea1b96f755bdf21fdd7691a9f1084a6d624908` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32891798350`; artifact ID `9579720453`; IPA SHA-256 `f918b1f5762458e55e89a1f0d23e5c2bf46be11d7f4599c692627a07043dab03` | WebKit passed Cloudflare and reached authenticated ChatGPT, while separate native `/auth/login` returned HTTP 403; account probe never started. | Runtime-tested failed diagnostic gate, not account-context failure |
-| `DEV-auth-bootstrap-0.1.0-b5` | `DEV-auth-bootstrap` | `0.1.0 (5)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32932389742`; artifact ID `9593649485`; IPA `ChatGPTClient-0.1.0-b5-dev-auth-bootstrap.ipa`; IPA SHA-256 `d9a22635cc6ac05d2ba09a0a627eaa74d38d1a690b5e9affe2f318d2aa204f15`; ZIP digest `sha256:4ad6e95d4e30981aa63bb8bd401c0d4cd9acdddabbf83fab27b1f6fe54307066` | First direct `/api/auth/session` probe after Cloudflare challenge returned HTTP 403. A second run returned `/api/auth/session` HTTP 200 and accounts-check HTTP 200, then failed parser with `stage=accounts`, `reason=missing_default_account`. | Runtime-tested; native session/accounts transport evidenced, parser shape superseded |
-| `DEV-auth-bootstrap-0.1.0-b6` | `DEV-auth-bootstrap` | `0.1.0 (6)` | `dev/auth-bootstrap-20260826` / draft PR #6 | **`19c0cd22923d8c6f4c96e676258b31814d02a942`** | Code written; CI passed; artifact produced; runtime not yet tested | **Run `32934821144`; artifact ID `9594474567`; artifact `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b6`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`** | Pending real-device test of ordered account parsing; also adds user-triggered clearing of current + rotated local diagnostics through the existing diagnostics owner. | Active / valid test candidate / runtime pending |
+| `DEV-auth-bootstrap-0.1.0-b2` | `DEV-auth-bootstrap` | `0.1.0 (2)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `809fa03e673afded87cb47fb755c998ab1b58e12` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32886019320`; artifact ID `9577612707`; IPA SHA-256 `426c5f9b6b5e71a41c3ca571abdc73951835a55dc902691d75030a781ee61465` | Continue with Google succeeded; force-close/relaunch retained authenticated WebKit state. | Historical accepted web-login evidence |
+| `DEV-auth-bootstrap-0.1.0-b3` | `DEV-auth-bootstrap` | `0.1.0 (3)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `0fcf040012c0698d0e3ce1628fec9865237eba3b` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32889095904`; artifact ID `9578766019`; IPA SHA-256 `b377d3f085d1877c16baf79d3969af21d5345517261b6eda87a7637aef292860` | Native `/auth/login` reached authenticated ChatGPT HTTP 200 under its tested conditions. | Historical route-specific evidence |
+| `DEV-auth-bootstrap-0.1.0-b4` | `DEV-auth-bootstrap` | `0.1.0 (4)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `33ea1b96f755bdf21fdd7691a9f1084a6d624908` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32891798350`; artifact ID `9579720453`; IPA SHA-256 `f918b1f5762458e55e89a1f0d23e5c2bf46be11d7f4599c692627a07043dab03` | WebKit remained authenticated after Cloudflare while separate native `/auth/login` returned HTTP 403; account probe never started. | Failed diagnostic gate; not account-context failure |
+| `DEV-auth-bootstrap-0.1.0-b5` | `DEV-auth-bootstrap` | `0.1.0 (5)` | `dev/auth-bootstrap-20260826` / draft PR #6 | `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32932389742`; artifact ID `9593649485`; IPA SHA-256 `d9a22635cc6ac05d2ba09a0a627eaa74d38d1a690b5e9affe2f318d2aa204f15` | First direct session probe HTTP 403; later direct probe `/api/auth/session` HTTP 200 + accounts-check HTTP 200, then obsolete parser failed `missing_default_account`. | Transport evidence accepted; parser superseded |
+| `DEV-auth-bootstrap-0.1.0-b6` | `DEV-auth-bootstrap` | `0.1.0 (6)` | `dev/auth-bootstrap-20260826` / draft PR #6 | **`19c0cd22923d8c6f4c96e676258b31814d02a942`** | **Code written; CI passed; artifact produced; runtime/manual/real-device tested** | **Run `32934821144`; artifact ID `9594474567`; artifact `ChatGPTClient-DEV-auth-bootstrap-0.1.0-b6`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`** | Exact b6 export on iPhone / iOS 17.0: first attempt `/api/auth/session` HTTP 403; after user-triggered `重新开始`, second attempt `/api/auth/session` HTTP 200 + accounts-check HTTP 200; parser observed accountCount=2/orderCount=1, selected plus/personal account, `session.accountState=verified`, `accountContextProbe.end status=ok` in 1289.71 ms. Screenshot title `登录会话 · 账户上下文通过`. | **Accepted auth/account-context runtime candidate; ready for integration** |
 
 ## Foundation facts
 
-- CI runner: GitHub-hosted `macos-15`; current b6 run used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
+- CI runner: GitHub-hosted `macos-15`; b6 run used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
 - Compile target remains `arm64-apple-ios14.0`.
 - Foundation PR #5 merged at `9e7a06801715b0002d3e9a720d57041e830b776e`.
 - Foundation runtime validation covers one iPhone on iOS 17.0; lower iOS versions and iPad runtime remain unverified.
@@ -36,29 +36,24 @@ Runnable/distributable product artifacts are IPA files intended for TrollStore. 
 
 ### b2 — embedded login and persistence
 
-- Continue with Google succeeded in embedded `WKWebView` on iPhone / iOS 17.0.
-- Force-close/relaunch retained login. Default persistent `WKWebsiteDataStore` remains the evidenced persistent auth-secret authority.
+Continue with Google succeeded in embedded `WKWebView`; force-close/relaunch retained login. Default persistent `WKWebsiteDataStore` remains the evidenced persistent auth-secret authority.
 
 ### b3 / b4 — native `/auth/login` is route-specific
 
-- b3 proved transient cookie-copy native `/auth/login` HTTP 200 under one tested condition.
-- b4 later proved WebKit can be authenticated while native `/auth/login` independently returns Cloudflare HTTP 403. Therefore this browser-oriented route is not a durable account-context gate.
+b3 proved transient native `/auth/login` HTTP 200 once; b4 later proved WebKit can be authenticated while native `/auth/login` independently returns Cloudflare HTTP 403. This route is not a durable account-context gate.
 
-### b5 — direct account/session runtime evidence
+### b5 — direct account/session transport
 
-- Exact runtime export metadata: `DEV-auth-bootstrap-0.1.0-b5`, build `5`, source `c09f981171b0`, Release, iPhone / iOS 17.0.
-- First direct probe after a Cloudflare challenge: 46 total / 27 matched WebKit cookies; `/api/auth/session` HTTP 403; `stage=session`.
-- Second direct probe: 49 total / 30 matched cookies; `/api/auth/session` HTTP 200; required user id + transient bearer parsed; accounts-check HTTP 200; parser ended `stage=accounts`, `reason=missing_default_account`.
-- This second result is runtime evidence that the current native ephemeral transport can perform both network requests. The failure observed after HTTP 200 is the b5 parser assumption, not HTTP authentication/transport.
+A successful b5 direct run returned `/api/auth/session` HTTP 200 and bearer-authenticated accounts-check HTTP 200. The terminal failure was the obsolete `accounts.default.account.id` parser, not HTTP authentication/transport.
 
-### b6 — ordered account parser + diagnostics clear
+### b6 — accepted account context
 
-- b6 replaces `accounts.default.account.id` with the current evidenced ordered-account shape: require `account_ordering`, use the corresponding entry in keyed `accounts`, skip entries explicitly inaccessible with session, and read nested `account.account_id`.
-- On shape failure it records safe structural counts/reason only; no response bodies or authentication secrets are logged.
-- Settings now includes `清理诊断日志`; the existing diagnostics owner removes `events.jsonl` and configured rotated archives on its serial queue. It does not clear WebKit login/auth state.
-- Push run `32934821144` built exact source `19c0cd22923d8c6f4c96e676258b31814d02a942` and explicitly embedded `DIAGNOSTICS_CANDIDATE=DEV-auth-bootstrap-0.1.0-b6`, `SOURCE_COMMIT=19c0cd22923d`; build/inspect/upload succeeded.
-- Downloaded artifact was locally extracted. Embedded Info.plist confirms `0.1.0 (6)`, candidate b6, source `19c0cd22923d`, Release, minimum OS 14.0. Local IPA SHA-256 equals CI: `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`.
-- b6 remains **Code written + CI passed + Artifact produced; Runtime/manual/real-device not yet tested**.
+- Ordered parser uses `account_ordering`, keyed `accounts`, and nested `account.account_id`.
+- Runtime export matches b6/build 6/source `19c0cd22923d`, Release, iPhone / iOS 17.0.
+- First b6 request returned session HTTP 403 with 48 total / 29 matched cookies.
+- User explicitly restarted verification; second request used 49 total / 30 matched cookies, session HTTP 200, accounts-check HTTP 200, `accountCount=2`, `accountOrderingCount=1`, selected `plus` / `personal`, set account state verified and ended `status=ok`.
+- The app does not contain an automatic retry for this condition; preserve the first 403 as route/timing evidence.
+- Settings includes `清理诊断日志`, operating on the existing diagnostics store only. The supplied b6 export contains only the fresh 05:50 test cycle, consistent with clean-log operation.
 
 ## Uniqueness rule
 

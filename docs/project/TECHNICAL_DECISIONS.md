@@ -58,13 +58,13 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Decision**: Produce unique TrollStore candidates whenever a coherent milestone becomes testable; CI/artifact never substitutes for runtime proof.
 
 ### TD-013 — Manual sync/reload are explicit recovery actions, not automatic retry machinery
-- **Status**: Confirmed
+- **Status**: Confirmed / Runtime accepted for recorded recovery scope
 - **Decision**: `同步最新消息`, `重载当前会话` and terminal `重新加载` operate through authoritative `ConversationRepository` and never resend/regenerate or form retry/watchdog chains.
 - **Recovery-during-load**: actions remain available during ordinary selected-detail loading because a stuck load is itself a valid explicit recovery case.
 - **Freshness**: a newer manual recovery supersedes the older selected-detail operation; operation generation rejects obsolete completions.
-- **Request lifecycle update from b13 runtime**: freshness rejection alone is not enough. If the older selected-detail network request is still active, the authoritative repository must cancel/replace that older task before starting the explicit manual replacement request. b13 proved the old state result was safely discarded but concurrently launched replacement requests returned HTTP429.
-- **b15 implementation evidence**: `ConversationRepository` now tracks the current selected-detail `URLSessionDataTask`; explicit manual sync/reload takes ownership of a new generation, cancels the old tracked task and then starts one replacement request. `AuthTransientSession` only exposes the same already-created/resumed task handle; auth/header/cookie/endpoint semantics are unchanged. CI/Artifact passed; Runtime acceptance is still pending.
-- **Boundary**: task cancellation is request-lifecycle ownership inside the existing repository; it is not automatic retry and not a second state authority.
+- **Request lifecycle**: if the older selected-detail network request is still active, the authoritative repository cancels/replaces that older task after the new generation takes ownership and before issuing the replacement detail request.
+- **Implementation boundary**: `AuthTransientSession.dataTask` exposes only the same already-created/resumed transient `URLSessionDataTask`; auth/header/cookie/endpoint semantics are unchanged. Task cancellation remains request-lifecycle ownership inside the existing repository, not automatic retry and not a second state authority.
+- **Runtime evidence**: b13 proved freshness rejection alone prevented stale mutation but concurrent replacement requests could return HTTP429. Exact b15 then proved two replacement sequences: generations 1/3 were cancelled, generations 2/4 returned HTTP200 with 168/591 visible messages, and no HTTP429 appeared. User reported no issues. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
 
 ### TD-014 — Reasoning UI includes expandable user-visible detail and two-pulse transition haptic
 - **Status**: Confirmed
@@ -81,17 +81,17 @@ This file records durable, evidence-backed technical decisions and rejected rout
 ### TD-017 — Public default-WebKit data-store warm-up is accepted for the tested cold-start auth hydration step
 - **Status**: Confirmed for tested scope
 - **Date**: 2026-08-27
-- **Scope**: Cold-start authentication sequencing / `DEV-conversation-recovery`
+- **Scope**: Cold-start authentication sequencing / merged recovery baseline
 - **Decision**: Before first native conversation-list/account probe, initialize existing default persistent `WKWebsiteDataStore` with public APIs. Do not add hidden/shadow WebView or second persistent auth store merely to hydrate cookies.
 - **Evidence**: Exact b12 iPhone/iOS17 export began at 0/0 total/matched cookies; warm-up completed in 194.97 ms with 41/22 cookies and 7 data records. The later unchanged normal account probe succeeded and conversation list returned HTTP200 28/29 without opening visible Login. b13 repeated warm-up success and immediate list start.
 - **Boundary**: This proves hydration for tested persisted sessions only. It does not prove every install/update/session state and does not remove visible Login as explicit fallback after genuine failure evidence.
 - **Rejected / do-not-repeat**: no hidden WebView, persisted copied secrets, automatic retry/watchdog loop, speculative auth endpoint/header fallback.
 
 ### TD-018 — Compact read-mode startup uses native primary/list root and one navigation owner
-- **Status**: Confirmed for tested b14 iPhone/iOS17 scope
+- **Status**: Confirmed for tested b14+ iPhone/iOS17 scope
 - **Date**: 2026-08-27
 - **Decision**: With no selected conversation, compact startup uses `.primary` conversation list as the useful root. UISplitViewController/native navigation is the sole compact list/detail navigation owner; do not layer a duplicate custom sidebar button on top.
-- **Evidence**: b13 recording showed blank `新对话` startup, duplicate sidebar icons and unreliable custom reveal. Exact b14 removed the custom owner and user reported the stated compact startup/navigation gate had no issues.
+- **Evidence**: b13 recording showed blank `新对话` startup, duplicate sidebar icons and unreliable custom reveal. Exact b14 removed the custom owner and user reported the stated compact startup/navigation gate had no issues. b15 preserved this behavior.
 
 ## Rule
 

@@ -2,40 +2,65 @@
 
 ## Status
 
-**Active — source-level gap review complete; product implementation pending**
+**Active — b16 Candidate allocated; CI / Artifact / Runtime pending**
 
 - **Work ID**: `DEV-multi-conversation-state`
 - **Routing aliases / keywords**: `多会话 / 多会话驻留 / 多会话状态 / 快速切换 / multi-conversation`
-- **Task**: 将当前单 selected conversation detail/state owner 演进为 account-scoped 的 per-conversation resident state，为后续 send/stream 建立可靠的多会话状态、异步 freshness、请求生命周期和内存驻留基线。
-- **User intent / acceptance criteria**: 普通 A -> B -> A 导航不销毁 A 的权威本地会话状态、不因 selection change 丢弃 A 的有效返回、不仅为返回 A 而重复请求；不同会话状态严格隔离；手动 Sync/Reload 只影响目标会话；旧异步结果不能覆盖较新的目标会话状态；account/context 变化后旧 resident state/late callbacks 不得进入新上下文；在真实设备测量后确定有界 resident/LRU 策略。完整接受边界以 `MULTI_CONVERSATION_STATE_PLAN.md` 为准。
-- **Baseline**: `0.1.0 (15)` Stable recovery baseline; base branch `main`; base commit `f155ddb873540f7c80d6e66ebbfeb59ded26f011`; merged recovery PR #10 / runtime-accepted candidate `DEV-conversation-recovery-0.1.0-b15`.
-- **Working branch / PR / head commit**: `dev/multi-conversation-state-20260827`; PR `Not created`; branch was created from exact `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; pre-review head `c6c16d1b2c404e969d6798db8dc511a94dec496d` contained checkpoint only.
-- **Candidate identity**: `Not allocated` — must inspect real version/build source and `BUILD_TEST_INDEX.md` immediately before first testable artifact.
-- **Evidence**: Recovery merged Stable. Current b15 source still has one `selectedConversationID`, one `selectedConversation`, one global selected-detail generation/task slot, and cached transient session. Source review confirms three current selection mutations (`Sidebar.didSelect`, `Detail.showConversation`, `Repository.loadConversation`), single-slot request lifecycle, no repository memory-warning trim hook, and no public account-scope snapshot exposed to the repository. No product-code changes or runtime evidence yet in this Work.
-- **Files / modules in scope**: primary owner `ChatGPTClient/Conversation/ConversationFeature.swift`; minimal account-scope/session invalidation integration in `Authentication/AuthSessionStore.swift` only if required by the verified owner contract; `RootViewController`/detail/sidebar only for single selection-transition ownership, resident rendering and memory-warning plumbing; diagnostics; deterministic state-test support if justified; Xcode project only if a minimal test target is added; durable project docs after milestones.
-- **State owner / shared dependencies**: `ConversationRepository` remains sole production conversation-data authority; `AuthSessionStore` remains sole account-context/auth owner; UIKit selection/navigation is presentation state only; diagnostics use existing privacy-safe owner. Repository mutable resident/request/LRU/session bookkeeping must have one explicit execution domain rather than being mutated from arbitrary URLSession callbacks.
-- **Frozen / do-not-touch**: no business module is Frozen. Do not change accepted auth/protocol endpoint/header semantics, add second repository/state authority, retain UIKit hierarchy as cache, add persistent chat-body storage, retry/timer/watchdog/fallback machinery, or infer send/stream protocol behavior before evidence.
-- **Parallel conflicts checked against**: current `main` has no Active checkpoint and GitHub has no open PR. Development branch is exactly one checkpoint commit ahead of current `main`; no Candidate is allocated, so no candidate/branch conflict is present.
+- **Task**: 将单 selected conversation detail/request owner 演进为 account-scoped per-conversation resident state，并建立后续 send/stream 所需的多会话 freshness 与异步所有权基线。
+- **Acceptance boundary**: A -> B -> A 普通导航不能销毁 A、不能因为 selection change 丢弃 A 的有效返回、不能仅因返回 A 再次联网；不同会话状态隔离；同会话等价请求 coalesce；Sync/Reload 只替换目标会话；旧 generation / 旧 account callback 不得覆盖新状态；失败终态不得因普通导航隐式重试；保留已验证的 `current_node` 身份；最终 resident 容量必须由真实设备测量决定。完整边界以 `MULTI_CONVERSATION_STATE_PLAN.md` 为准。
+- **Baseline**: `0.1.0 (15)` Stable recovery; `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
+- **Working branch / PR**: `dev/multi-conversation-state-20260827`; PR `Not created`.
+- **Candidate identity**: **Reserved `DEV-multi-conversation-state-0.1.0-b16` / version `0.1.0 (16)`**. Product/config source for this exact Candidate is **`81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`**. Do not reuse b16 for later product-code changes after an Artifact is produced.
+- **Expected artifact identity**: `ChatGPTClient-0.1.0-b16-dev-multi-conversation-state.ipa` from `scripts/build_ipa.sh`; CI upload bundle `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b16`.
+- **Parallel/conflict check before b16 allocation**: `main` still `f155ddb...`; current dev directory contains only this Active Work + README; `BUILD_TEST_INDEX.md` ends at b15; GitHub has no open PR; therefore b16 was unique at allocation.
 
-## Source-level gaps that this Work must close
+## b16 product changes
 
-1. **Single selection mutation owner**: sidebar, detail and `loadConversation(id:)` currently all mutate selection. Keep exactly one explicit navigation/selection transition; loading/sync/reload by ID must never change foreground selection as a side effect.
-2. **Per-conversation operation registry**: replace the global selected-detail generation/task slot with same-conversation-scoped operation ownership. A Reload/Sync may cancel/replace A only; switching to B must not cancel A. Equivalent A loads must coalesce rather than duplicate.
-3. **Coalesced waiter/result semantics**: if A is already loading and the user returns to A, the UI must attach to/render that existing operation and receive its terminal state; request coalescing must not strand a spinner or silently drop the second caller.
-4. **Resident state includes terminal load state**: distinguish not-loaded/evicted, loading, loaded, failed and explicit reloading semantics. Returning to a previously failed A must show the retained failure and explicit Reload, not turn navigation into an implicit retry.
-5. **Account-scoped transient session and resident set**: the cached native transient session must be bound to the verified account/workspace scope. A verified scope change invalidates the old transient session, list/resident entries and operations; old callbacks are rejected. Do not create a second credential store.
-6. **Single-flight account/session acquisition**: if A/B start before `transientSession` exists, they must not independently launch duplicate account-context probes/transient-session creation. One in-flight acquisition supplies waiting conversation loads.
-7. **Single repository execution domain**: resident dictionaries, generations/tasks, LRU/access metadata, cached-session binding and state commits must be serialized (main-thread confinement or one dedicated owner queue). Heavy network/JSON parsing may stay off-main; mutable authority may not race across callback threads.
-8. **Per-conversation recovery presentation identity**: current detail UI has one `recoveryActionInProgress` and one toast work item. A hidden A completion must never hide/reset B's toast/menu/spinner. Presentation feedback must be tied to selected conversation + operation identity or derived from the target resident state.
-9. **In-flight operations are not ordinary LRU victims**: foreground, active response (future) and active detail/recovery operations are protected from ordinary capacity eviction. Memory-pressure cancellation/eviction, if needed, requires an explicit terminal/callback policy and diagnostics.
-10. **Memory-warning plumbing**: `AppDelegate` currently only logs memory warnings while the repository lives inside `RootViewController`. Route the system memory-pressure signal to the authoritative repository so eligible resident entries can be trimmed without a second cache owner.
-11. **Conversation-list freshness/account guard**: list responses also need account-context/freshness protection; an old-account list response may not repopulate the new account after a context change. First-page list refresh/reordering must not evict resident details merely because an ID is absent from the current 28-item page.
-12. **Minimal current-branch identity**: current parsing validates `current_node` and then discards it. Retain the directly evidenced current branch-tip identity in the resident detail; do not normalize/store the full raw mapping or speculative send graph until Send protocol evidence requires it.
-13. **Different-conversation concurrency must be measured**: b15 solved same-conversation replacement overlap. This Work intentionally allows A/B detail requests to coexist; rapid A -> B -> C real-device testing must record whether current service returns HTTP429 or other pressure signals. Do not preemptively add retries or an arbitrary global concurrency limit.
+- `ConversationRepository` remains the sole production conversation-data authority.
+- Selection is now mutated only by the Root navigation transition; sidebar and detail rendering no longer independently change selected ID.
+- Resident keys are verified account scope (`userID + accountID`) + conversation ID.
+- Parsed resident detail retains `currentNodeID` from the already-verified `current_node` field; raw mapping/body is not cached.
+- Detail operation generation/task ownership is per conversation instead of one global selected slot.
+- A valid detail response is committed to its target resident even when that conversation is hidden; selection controls presentation only.
+- Equivalent same-conversation loads attach additional completions to the existing operation instead of launching another request.
+- Initial account/transient-session acquisition is single-flight inside the repository, so rapid A/B opening before a cached native session exists does not start duplicate repository probes.
+- Resident terminal state records either loaded detail or failure. Returning to a failed conversation returns the retained failure and exposes explicit Reload instead of silently retrying network I/O.
+- Sync preserves an already-loaded target resident on failure; Reload explicitly clears and replaces only the target resident/request.
+- `AuthSessionStore` remains the sole auth/account owner; it now exposes a lock-protected verified context snapshot and a context-change notification. Repository scope changes invalidate the old transient session, resident/list state and per-conversation operations.
+- List success/failure delivery is scope-guarded so old-account callbacks cannot repopulate the new account UI.
+- Root clears sidebar/detail presentation on account-scope reset.
+- Detail recovery UI has a presentation generation guard so a hidden A Sync/Reload completion cannot hide/reset B's current toast/menu/spinner.
+- Memory warning evicts non-selected resident terminal states and logs the trim. No arbitrary normal-operation LRU bound has been added.
+- Diagnostics include resident hit/miss/state, same-conversation coalescing, hidden/foreground store, approximate resident text bytes, terminal state, memory-pressure eviction and account-scope reset. Existing protocol endpoint/header semantics were not changed.
 
-- **Completed**: governance startup; resume identity guard; current main/branch/PR/candidate state verified; required project/planning docs read; b15 repository/sidebar/detail/auth/root source reviewed; additional source-level gaps above recorded before product implementation.
-- **Validation state**: `Code written`: No. `Static/local checks`: No. `CI`: No. `Artifact`: No. `Runtime/manual/real-device`: No. `Stable/Frozen`: No. Gap review is source-backed planning evidence only.
-- **Pending**: implement the smallest ownership-preserving resident-state model; choose the single selection-transition owner; define account-scope snapshot/session binding at the existing auth owner; implement per-conversation operation/coalescing/terminal state; wire memory pressure; then decide whether a minimal XCTest target is justified before first Candidate.
-- **Next exact action**: implement the state-owner skeleton first without changing protocol semantics: selected ID as presentation-only; resident entries keyed by current verified account scope + conversation ID; one operation record per conversation; target-specific load/recovery that never changes selection; single-flight transient-session acquisition. Update this checkpoint immediately after the first product-code commit and before allocating a Candidate.
-- **Rejected / do-not-repeat**: separate repository per screen/conversation; retained VC/cell cache; load/sync/reload changing selection; cancellation merely on selection/view disappearance; reload-on-every-navigation; unlimited resident detail retention; persistent body/draft disk cache without requirement; speculative retry/timer/watchdog/fallback; global `isLoading/isStreaming` owner; treating UI title/text/list position as identity; guessing send/stream node requirements.
-- **Open questions / risks**: exact minimal public account-scope snapshot API at `AuthSessionStore`; exact resident entry/load-state Swift shape; coalesced waiter implementation compatible with current closure API; initial LRU capacity must come from real-device measurements; whether different-conversation concurrent detail loads trigger service-side rate pressure; whether adding a minimal XCTest target can remain isolated enough not to delay the first Candidate.
+## Files changed for b16
+
+- `ChatGPTClient/Authentication/AuthSessionStore.swift`
+- `ChatGPTClient/Conversation/ConversationFeature.swift`
+- `ChatGPTClient/RootViewController.swift`
+- `ChatGPTClient.xcodeproj/project.pbxproj`
+- `.github/workflows/ios-foundation.yml`
+- this checkpoint
+
+## Evidence / validation state
+
+- **Code written**: **Yes** — product/config source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`.
+- **Static/source review**: **Yes, source-level only** — diff confined to expected owner/auth/root/build/workflow scope; global selected-detail task/generation removed; speculative access-order/LRU bookkeeping removed before Candidate allocation; account/session acquisition duplicate discovered in review and replaced with single-flight waiter ownership.
+- **Compiler/local build**: **Not yet proven** in this environment; local container has no iOS SDK/repository network checkout path. GitHub CI is the authoritative compile/package gate.
+- **CI passed**: **Pending**.
+- **Artifact produced**: **Pending**.
+- **Runtime/manual/real-device**: **Not tested**.
+- **Stable/Frozen**: **No**.
+
+## Still pending after b16 build gate
+
+1. Confirm b16 compiles/packages; any product fix after a produced b16 Artifact must allocate b17 rather than reusing b16.
+2. Real-device A -> B -> A and A -> B -> C tests: verify first-open requests, hidden A store, resident return without request, state isolation, same-ID coalescing, target-only Sync/Reload and no unexpected HTTP429 under different-conversation overlap.
+3. Measure resident count / approximate text bytes / memory-warning behavior on the target iPhone/iOS17 setup. Only then choose a bounded LRU policy; do not guess a capacity from source alone.
+4. Add semantic per-conversation scroll restoration before Stable if runtime confirms the current reused detail table loses meaningful position. Keep this as presentation state, not repository data authority.
+5. Decide whether a minimal deterministic XCTest target remains conflict-light enough to justify in the next Candidate. No test target was added to b16 because the current Xcode project has only one explicit app target and adding a test target would be substantial project-file churn before the first compile/measurement gate.
+6. After verified milestones, update `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md` and `TECHNICAL_DECISIONS.md` with exact evidence labels.
+
+- **Next exact action**: inspect the GitHub Actions run triggered by `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`; if CI fails, classify the exact compiler/build error and allocate a new Candidate before product fixes if b16 Artifact already exists. If CI succeeds, record run/artifact/checksum identity and prepare the b16 real-device matrix without claiming runtime acceptance.
+- **Rejected / do-not-repeat**: separate repository per screen/conversation; retained VC/cell cache as data owner; load/sync/reload changing selection; cancellation on ordinary navigation; reload-on-every-navigation; unlimited retention as final architecture; speculative retry/timer/watchdog/fallback/global concurrency cap; persistent chat-body cache; future-only access-order bookkeeping before an actual LRU decision; treating title/text/list position as identity; guessing send/stream graph beyond `current_node` evidence.
+- **Open risks**: b16 has not compiled yet; different-conversation concurrent detail requests may expose service-side pressure only measurable on device; final LRU bound is intentionally Unknown until measurement; semantic scroll restoration is not yet implemented; no runtime evidence exists for account switching under the new resident owner.

@@ -30,6 +30,30 @@ struct AuthAccountContext {
     let structure: String?
 }
 
+final class AuthTransientSession {
+    private let session: URLSession
+    private let accessToken: String
+
+    fileprivate init?(cookies: [HTTPCookie], accessToken: String) {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpShouldSetCookies = true
+        guard let storage = configuration.httpCookieStorage else { return nil }
+        for cookie in cookies { storage.setCookie(cookie) }
+        session = URLSession(configuration: configuration)
+        self.accessToken = accessToken
+    }
+
+    func dataTask(with request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
+        var authorizedRequest = request
+        authorizedRequest.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        session.dataTask(with: authorizedRequest, completionHandler: completion).resume()
+    }
+
+    func finishTasksAndInvalidate() {
+        session.finishTasksAndInvalidate()
+    }
+}
+
 final class AuthSessionStore {
     static let shared = AuthSessionStore()
 
@@ -104,7 +128,7 @@ final class AuthSessionStore {
         }
     }
 
-    func probeAccountContext(using cookieStore: WKHTTPCookieStore, completion: @escaping (AuthAccountContextState) -> Void) {
+    func probeAccountContext(using cookieStore: WKHTTPCookieStore, createTransientSession: Bool = false, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
         setAccountState(.probing)
         let span = diagnostics.startSpan(category: "auth", name: "accountContextProbe")
         cookieStore.getAllCookies { [weak self] cookies in
@@ -190,16 +214,25 @@ final class AuthSessionStore {
                     if let planType = context.planType { fields["planType"] = planType }
                     if let structure = context.structure { fields["structure"] = structure }
                     self.diagnostics.info(category: "auth", name: "accountContextProbe.accounts", traceID: span.traceID, fields: fields)
-                    self.finishAccountProbe(.verified, span: span, fields: fields, completion: completion)
+
+                    var transientSession: AuthTransientSession?
+                    if createTransientSession {
+                        guard let createdSession = AuthTransientSession(cookies: matchedCookies, accessToken: accessToken) else {
+                            self.finishAccountProbe(.failed, span: span, fields: ["stage": "transient_session", "reason": "missing_http_cookie_storage"], completion: completion)
+                            return
+                        }
+                        transientSession = createdSession
+                    }
+                    self.finishAccountProbe(.verified, span: span, fields: fields, transientSession: transientSession, completion: completion)
                 }.resume()
             }.resume()
         }
     }
 
-    private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], completion: @escaping (AuthAccountContextState) -> Void) {
+    private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], transientSession: AuthTransientSession? = nil, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
         setAccountState(state)
         span.end(status: state == .verified ? "ok" : state == .notAvailable ? "not_available" : "failed", fields: fields)
-        completion(state)
+        completion(state, transientSession)
     }
 
     private func setNativeState(_ state: AuthNativeSessionState) {

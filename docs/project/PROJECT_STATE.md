@@ -49,6 +49,8 @@ b15 makes the minimum owner-level correction:
 - Existing operation-generation stale-result rejection remains for late callbacks.
 - No retry/timer/watchdog/fallback/resend/regenerate, hidden WebView or second conversation-state authority was added.
 
+The implementation is built and packaged, but **the b13 HTTP429 overlap defect is not yet Runtime-resolved** until exact b15 device evidence shows the cancellation/replacement sequence and successful replacement request.
+
 ## Current architecture
 
 - `AppDelegate`: lifecycle plus accepted b14 WebKit warm-up-before-root sequencing.

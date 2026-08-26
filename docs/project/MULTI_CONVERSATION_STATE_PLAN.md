@@ -12,7 +12,7 @@ The key invariant is:
 
 This plan is a prerequisite for robust multi-conversation send/stream behavior.
 
-See also `docs/project/CLIENT_ARCHITECTURE_GAP_REVIEW.md` for the broader pre-send/stream gap review.
+See also `docs/project/CLIENT_ARCHITECTURE_GAP_REVIEW.md` for the broader pre-send/stream gap review and current post-recovery sequencing.
 
 ## Current evidence / problem
 
@@ -42,12 +42,12 @@ Implement after the current manual recovery work is merged and before production
 
 The intended ordering is:
 
-1. `DEV-conversation-recovery`
-2. `DEV-multi-conversation-state`
-3. `DEV-conversation-round-count`
-4. `DEV-send-stream`
+1. `DEV-conversation-recovery` — including the user's cold-start background login-state verification requirement;
+2. `DEV-multi-conversation-state`;
+3. `DEV-conversation-round-count`;
+4. `DEV-send-stream`.
 
-A separate `DEV-auth-resume` cold-start-auth task may be parallelized with this Work only when a fresh conflict scan proves that branch/files/state owners are isolated.
+Do **not** create a separate `DEV-auth-resume` task. The user's latest requirement assigns that cold-start verification/recovery path to the active conversation-recovery work: background/invisible WebKit-store verification first, visible foreground verification only after background failure evidence.
 
 If the recovery branch later materially changes ownership/files, run the normal conflict scan before starting this Work.
 

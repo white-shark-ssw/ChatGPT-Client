@@ -20,6 +20,8 @@ Small real-device milestones remain the delivery model:
 - **V0.2 chat-use**: V0.1 + text send/new conversation + streaming + stop + user-visible reasoning interaction + reasoning-to-final double haptic + manual recovery integration.
 - **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and other daily-use features.
 
+Small low-risk UX enhancements may be inserted between core phases when their dependencies are already merged and conflict scanning is clean. The newly planned `DEV-conversation-round-count` is one such task and is scheduled after conversation recovery, before send/stream.
+
 Candidate identity/evidence separation remains mandatory.
 
 ## UI / interaction direction
@@ -30,6 +32,7 @@ Candidate identity/evidence separation remains mandatory.
 - b9 real-device testing accepted the first production split sidebar/detail read shell for the tested iPhone/iOS 17.0 scope.
 - Direct terminal `重新加载` is implemented as an explicit one-shot user action, but b9 did not exercise the failure path because both selected details succeeded; its runtime behavior remains separately Unverified.
 - `同步最新消息` and loaded-state `重载当前会话` remain broader `DEV-conversation-recovery` work; no automatic watchdog/retry/resend chain is accepted.
+- Planned conversation header enhancement: subtitle metadata displays `聊天 · N轮` or `工作 · N轮` when `显示会话轮数` is enabled. Count is derived from current active-branch user turns; no separate mutable counter or new request.
 - Markdown export remains a project enhancement, not official-App evidence.
 - Reasoning UI/haptic requirements remain future `DEV-send-stream` work.
 
@@ -59,6 +62,15 @@ Candidate identity/evidence separation remains mandatory.
 - These results prove the production repository/list/detail/current-visible-branch/render pipeline for the tested two Plus/personal conversations. They do not prove all content types, all conversations, non-personal workspaces, iPad, lower iOS, send/streaming or attachments.
 - The 20.74 s result is end-to-end `detailLoad`; current diagnostics do not decompose network transfer, JSON parsing/branch extraction and UI update time. Treat it as a long-conversation performance input rather than guessing the bottleneck.
 
+## Conversation round-count planned semantics
+
+- Work ID: `DEV-conversation-round-count` / **会话轮数显示**.
+- Dependency: merged b9 production conversation owner is sufficient; no new protocol evidence is required to count the already-built active branch.
+- Display: second-line type metadata becomes `聊天 · N轮` / `工作 · N轮`; setting `显示会话轮数` defaults On and hides only the count when Off.
+- Definition: one user message on the **current active branch** equals one round. Assistant/tool/system/reasoning nodes are excluded; Regenerate alone does not increment; branch switches recalculate from the selected branch.
+- Ownership: derived from `ConversationRepository`/current active branch; do not persist a competing mutable round counter.
+- Scheduling: after `DEV-conversation-recovery`, before `DEV-send-stream`, unless a future conflict scan proves a different ordering is safer.
+
 ## Diagnostics state
 
 Diagnostics/logging remains a Stable foundation capability with bounded persistence, redacted export and explicit clearing. b9's privacy-safe `conversationHash` + 1-based `listPosition` successfully correlated two distinct real-device selections without raw conversation IDs or message bodies.
@@ -81,11 +93,14 @@ Diagnostics/logging remains a Stable foundation capability with bounded persiste
 2. `DEV-auth-bootstrap` — Completed / merged / Stable.
 3. `DEV-protocol-read` — Completed / merged / Stable for tested personal-account diagnostic read scope.
 4. `DEV-native-read-path` — **Completed / merged / Stable for tested b9 native-read scope**.
-5. `DEV-conversation-recovery` — broader manual latest-message sync + loaded/current-conversation reload; next serialized core task.
-6. `DEV-send-stream` — text send/new conversation + streaming + stop + user-visible reasoning UI/detail + reasoning-to-final double haptic + recovery integration.
-7. `DEV-markdown-export` — authoritative current-branch Markdown export.
-8. `DEV-long-conversation` — measurement-driven long-conversation performance stabilization; b9 7.50 MB / 2023-node / 20.74 s detail is current production evidence.
-9. `DEV-attachments` — native attachment/upload flows after text-chat ownership stabilizes.
+5. `DEV-conversation-recovery` — manual latest-message sync + loaded/current-conversation reload; next serialized core task.
+6. `DEV-conversation-round-count` — optional active-branch user-turn count in conversation subtitle; small serial UI/data-derived task.
+7. `DEV-send-stream` — text send/new conversation + streaming + stop + user-visible reasoning UI/detail + reasoning-to-final double haptic + recovery integration.
+8. `DEV-markdown-export` — authoritative current-branch Markdown export.
+9. `DEV-long-conversation` — measurement-driven long-conversation performance stabilization.
+10. `DEV-attachments` — native attachment/upload flows after text-chat ownership stabilizes.
+11. Daily-use conversation features.
+12. Advanced capabilities.
 
 Core state-owner work remains serialized; parallel edges require normal conflict scanning.
 

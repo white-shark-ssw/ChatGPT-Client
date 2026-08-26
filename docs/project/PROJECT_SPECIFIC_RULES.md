@@ -50,6 +50,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Retain operation-generation/freshness rejection so a late callback from an obsolete task cannot mutate or surface stale state after the newer operation owns the selected detail.
 - This cancellation/task handle is request-lifecycle ownership inside the same authoritative repository; it must not become a second conversation-data authority.
 - b13 runtime is the evidence for this rule: the stale generation was correctly discarded, while concurrently started replacement requests returned HTTP429.
+- b15 implements this lifecycle at the authoritative owner and has Code + static/source review + CI + Artifact evidence; Runtime/manual acceptance is still required before calling the overlap defect solved.
 
 ### Recovery diagnostics / prohibited behavior
 
@@ -78,7 +79,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Use existing `DiagnosticsLogger`/store/export authority.
 - Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
 - Safe auth diagnostics may record cookie total/matched counts only.
-- Safe production conversation diagnostics may use short irreversible conversation hash + list position and operation-generation/discard reason.
+- Safe production conversation diagnostics may use short irreversible conversation hash + list position and operation-generation/discard/cancellation reason.
 
 ## Multi-conversation / state-owner direction
 

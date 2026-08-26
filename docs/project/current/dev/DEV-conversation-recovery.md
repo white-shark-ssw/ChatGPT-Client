@@ -20,12 +20,6 @@
 - **b13**: immediate list start and operation-generation stale rejection worked; compact startup/navigation failed; while ordinary detail generation 1 remained active, manual replacement generations 2/3 returned HTTP429.
 - **b14**: exact `DEV-conversation-recovery-0.1.0-b14` / `0.1.0 (14)` real-device accepted for compact startup/navigation. Cold start lands on conversation list, duplicate sidebar icons are gone, native compact list/detail navigation is usable. User explicitly reported b14 had no issues for the stated gate.
 
-## b14 accepted identity
-
-- Product/config head `82d96bf085dbee3877bcb16e27bbf69f4dc0990f`; tested merge `5b2f60dc8b30ae15d56cbe2d49bbe6b61aff0ad6`; exact tree `4d0ddb24ba6e261cdb7a4057ce47e73f199ad481`.
-- CI `33000566633`; artifact `9618410313`.
-- IPA `ChatGPTClient-0.1.0-b14-dev-conversation-recovery.ipa`; IPA SHA `b9100deb1d59b8ce22e15e72f766f0313be2903ec96ed2cda3d397986ba89182`.
-
 ## b15 identity / CI / Artifact
 
 Fresh candidate allocated after checking `BUILD_TEST_INDEX.md`, the only Active checkpoint, real Xcode build source, PR #10 and current branch/base state:
@@ -42,50 +36,22 @@ Fresh candidate allocated after checking `BUILD_TEST_INDEX.md`, the only Active 
 - **IPA SHA-256**: `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`; generated sidecar matches independent SHA.
 - **Embedded identity**: version `0.1.0`, build `15`, candidate b15, source `fb0c6d75362e`, minimum iOS14.0, device families `[1,2]`, Mach-O arm64.
 
-## b15 evidence-backed implementation
+## b15 implementation
 
-The remaining b13 HTTP429 overlap is the only target. No new Work ID was created because this is the same `ConversationRepository` manual-recovery owner and same PR dependency.
-
-### `AuthTransientSession`
-
-- Existing `dataTask(with:completion:)` now returns the same `URLSessionDataTask` it already creates and resumes.
-- `@discardableResult` preserves all existing callers.
-- Authorization header, ephemeral session, cookies, endpoint behavior and task-start behavior are unchanged.
-
-### `ConversationRepository`
-
-- Adds one selected-detail `URLSessionDataTask` handle plus its operation generation. This is request-lifecycle ownership only, not conversation state authority.
-- Ordinary `loadConversation` behavior is unchanged by default.
-- `同步最新消息` and `重载当前会话` call the same detail path with explicit replacement ownership.
-- A new manual recovery increments/owns the new generation first, then cancels the older tracked selected-detail task before starting its replacement request.
-- Intentional `NSURLErrorCancelled` is logged as `detail.cancelled` / span status `cancelled`, not as a network failure and not surfaced to the obsolete UI completion.
-- Existing `operationGeneration` guard remains so any late non-cancelled callback from an obsolete operation is still rejected.
+- `AuthTransientSession.dataTask(with:completion:)` now returns the same already-created/resumed `URLSessionDataTask`; auth/header/cookie/endpoint semantics are unchanged.
+- `ConversationRepository` tracks the current selected-detail task and owning generation.
+- Ordinary detail loading behavior is unchanged by default.
+- Explicit manual sync/reload takes ownership of a new generation, cancels the older tracked selected-detail task, then starts one replacement detail request.
+- Intentional `NSURLErrorCancelled` is logged as `detail.cancelled` rather than surfaced as a network error.
+- Existing operation-generation stale-result rejection remains for late callbacks.
 - No retry, timer, watchdog, delayed retry, fallback endpoint/header set, resend/regenerate, hidden WebView or second persistent state store was added.
 
-## Static/source review
-
-Diff from pre-b15 branch head `dbac22552b5c8f58fb4e51e4b6dead2c429a0005` before identity files:
-
-- `AuthSessionStore.swift`: +5 / -2, only return of existing task handle.
-- `ConversationFeature.swift`: +38 / -5, selected-detail task lifecycle + intentional-cancel diagnostics + manual replacement flag.
-- No auth parser/endpoint/header, conversation endpoint/parser or UI presentation changes.
-
-## Durable docs synchronized for b15
-
-`BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `TECHNICAL_DECISIONS.md` and `PROJECT_SPECIFIC_RULES.md` now record the b15 identity/ownership/evidence boundary. These updates are docs-only and do not alter the CI-tested product/config tree.
-
-## State owner / invariants
-
-- `ConversationRepository` remains sole production conversation read/recovery owner.
-- Default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- `AuthSessionStore` auth/account semantics remain Stable; b15 only exposes an already-created transient `URLSessionDataTask` handle needed by the production owner.
-- b14 native compact navigation contract is unchanged.
-
-## Validation state
+## Evidence boundary
 
 - b14: **Code + static/source review + CI + Artifact + Runtime/manual accepted for compact startup/navigation**.
 - b15: **Code written + static/source review + CI passed + Artifact produced; Runtime/manual pending**.
 - Entire Work: **not Stable / not merged** until b15 real-device acceptance.
+- Durable project docs are synchronized to this boundary; all post-`159e8ea...` work is documentation only unless a later source diff proves otherwise.
 
 ## b15 real-device gate
 

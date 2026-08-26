@@ -2,155 +2,135 @@
 
 ## Status
 
-**Active — b13 implementation after b12 runtime findings**
+**Active — b13 real-device gate**
 
 - **Work ID**: `DEV-conversation-recovery`
 - **Routing aliases / keywords**: `会话同步与重载 / 同步最新消息 / 重载当前会话 / 冷启动登录恢复 / conversation recovery`
 - **Task**: Finish explicit manual conversation recovery UX and cold-start usable native-list startup through the accepted WebKit/auth + production conversation owners.
 - **Accepted baseline**: `DEV-native-read-path-0.1.0-b9` remains the merged Stable production native-read baseline until this Work is finalized and merged.
 - **Working branch / PR**: `dev/conversation-recovery-20260826`; PR #10 open/unmerged.
-- **Current branch head before b13 product edits**: `187ef5dbf0dfa44a9bfa064afc5842d571a2a60e`.
-- **Current base**: main `3a138ab6378fb72b9b36dedd3df55dc29e2ba814`; compare is `behind_by=0`.
-- **Ownership correction**: current main explicitly assigns cold-start login-state recovery to this Work. Do **not** create a separate `DEV-auth-resume` task.
+- **Current base**: main `3a138ab6378fb72b9b36dedd3df55dc29e2ba814`; product/config pre-CI compare was `behind_by=0`.
+- **Ownership correction**: cold-start login-state recovery belongs to this Work. Do **not** create a separate `DEV-auth-resume` task.
 
-## Accepted b10 core recovery runtime
+## Accepted / rejected runtime history
 
-- Candidate `DEV-conversation-recovery-0.1.0-b10` / `0.1.0 (10)` / source `89129913cb29a35db9dec7a6d5670d1b3b76bc23`.
-- CI `32982836557` passed; artifact `9612167843`; IPA SHA-256 `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e`.
-- iPhone / iOS 17.0 accepted loaded-state latest-sync and full reload core behavior. Full reload visibly cleared/rebuilt; two syncs and two reloads ended `status=ok`; no resend/duplicate observed.
+### b10 core recovery accepted
 
-## b11 runtime result — request path works, feedback presentation rejected
+- `DEV-conversation-recovery-0.1.0-b10` / source `89129913cb29a35db9dec7a6d5670d1b3b76bc23`.
+- CI `32982836557`; artifact `9612167843`; IPA SHA `6e600f829fa24cdeb705e9ab104ebb780a8c70dd06871285d06fa30521aecb7e`.
+- iPhone/iOS17 accepted loaded-state latest-sync and full reload; no resend/duplicate.
 
-- Candidate `DEV-conversation-recovery-0.1.0-b11` / `0.1.0 (11)`; CI `32988700796` success; artifact `9613806931`; IPA SHA-256 `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`.
-- Four syncs all ended `status=ok`; one full reload also ended `status=ok`, but the user saw no `navigationItem.prompt` feedback.
-- `navigationItem.prompt` is rejected for required recovery feedback UX.
+### b11 presentation rejected
 
-## b12 identity / build evidence
+- CI `32988700796`; artifact `9613806931`; IPA SHA `6c99a2b34ac5312b82930d1eeaeefb2a373e351325c92b7df7ad37a068316b33`.
+- Request paths worked on device, but user saw no `navigationItem.prompt`; this feedback surface is rejected.
 
-- Candidate: `DEV-conversation-recovery-0.1.0-b12` / `0.1.0 (12)`.
-- Product/config branch head: `fd9fb3ac7a09eafa8dfd33918d114c7d3fee474f`.
-- CI run `32993589071` success; synthetic merge `4a7380b913ff5bd847c676fceab31adafdeecb3f`; exact tree `81c801284b1e83f68043c30b9c75f47e76640128`.
-- Artifact `9615588166`; IPA `ChatGPTClient-0.1.0-b12-dev-conversation-recovery.ipa`; IPA SHA-256 `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab`.
-- Embedded identity: `0.1.0 (12)`, candidate b12, source `4a7380b913ff`, iOS min 14.0, arm64.
+### b12 partial runtime acceptance
 
-## b12 real-device evidence — 2026-08-27
+Identity: `DEV-conversation-recovery-0.1.0-b12`, `0.1.0 (12)`, source `4a7380b913ff`, iPhone/iOS17.
 
-Exact user export matches b12 Release / iPhone / iOS 17.0 / source `4a7380b913ff`.
+The user-provided exact export shows:
 
-### Cold-start WebKit warm-up works for the tested auth state
+- true cold start `webDataWarmup.before = 0/0` cookies;
+- after public `WKWebsiteDataStore.default()` initialization: `41/22`, 7 website-data records;
+- warm-up `status=ok`, `194.97 ms`;
+- later normal account probe used the warmed state and succeeded without opening Login: session HTTP 200, Plus/personal verified in `4701.90 ms`;
+- list HTTP 200, 28/29, 23635 bytes; list load `9230.67 ms`.
 
-On the true cold launch at `17:43:20Z`:
+**Accepted conclusion**: for this tested cold start, the b12 public WebKit warm-up successfully hydrates usable persisted auth state. No hidden WebView or copied persistent secret store is needed for this run.
 
-- `webDataWarmup.before`: total/matched cookies `0/0`.
-- `webDataWarmup.after`: `41/22`, website-data records `7`.
-- warm-up completed `status=ok` in `194.97 ms`.
-- `nativeConversationShell.loaded` followed at `17:43:21Z`.
+**Remaining b12 startup defect**: `nativeConversationShell.loaded` occurred at `17:43:21Z`, but `listLoad.start` did not occur until `17:45:10Z`. Source ties first list load to `ConversationSidebarViewController.viewDidLoad`, and compact iPhone lazily loads the primary/sidebar controller. The user's recording matches this: initial `新对话` detail surface has unavailable/ineffective sidebar navigation; only later can the user enter the sidebar, after which list loading begins.
 
-When the first native conversation-list request finally started later, it used the warmed `41/22` WebKit cookie state. The normal single account probe succeeded without opening Login first:
+**Sync feedback accepted**: user confirms centered b12 toast is correct. Diagnostics exercised both unchanged (257 -> 257, zero diff) and changed (562 -> 563, +1 visible message) sync results.
 
-- `/api/auth/session` HTTP 200;
-- Plus/personal account context verified in `4701.90 ms`;
-- list HTTP 200, `28/29`, `23635` bytes;
-- list load completed `status=ok` in `9230.67 ms`.
+Therefore b12 is **Code + CI + Artifact + Runtime/manual tested, partial acceptance**: auth warm-up + centered sync feedback accepted; initial list/sidebar sequencing rejected.
 
-**Conclusion**: b12 proves the public default-WebKit-data-store warm-up can hydrate a usable auth state on this tested cold start. The remaining launch problem is not an auth failure in this export.
+## New explicit requirement from b12 test
 
-### Remaining startup bug: initial list load is lazy behind the hidden sidebar
-
-The same cold launch loaded the native shell at `17:43:21Z`, but **no `listLoad.start` occurred until `17:45:10Z`**, when the user was finally able to enter the sidebar. Source currently starts `loadConversations()` only from `ConversationSidebarViewController.viewDidLoad`; on compact iPhone the primary/sidebar controller is lazily loaded while the secondary empty `新对话` screen is foreground.
-
-The supplied recording matches this state: the app initially shows the empty detail surface, the top-left sidebar affordance is absent/non-responsive for an extended period, and only later does navigation become usable; after entering the sidebar the list then waits for its ~9 s network load.
-
-This is direct evidence to make initial list loading independent of the user opening the primary column.
-
-### b12 sync feedback accepted
-
-The user confirms the centered sync feedback is visible and correct.
-
-Diagnostics also prove both result classes:
-
-- position 1: sync `status=ok`, 257 -> 257 visible messages, zero diff, `2887.02 ms`;
-- position 3: sync `status=ok`, 562 -> 563 visible messages, `addedVisibleMessageCount=1`, `6705.75 ms`.
-
-The centered 2-second toast contract is therefore accepted for the tested b12 scope.
-
-## New explicit recovery requirement from b12 test
-
-While a conversation is in its ordinary initial detail-loading state, the overflow actions **must remain available**:
-
-- `同步最新消息`
-- `重载当前会话`
-
-Reason: the normal detail request itself can hang/fail; the user wants one explicit manual recovery attempt without waiting for a terminal error state.
+During an ordinary initial conversation detail load, overflow `同步最新消息` and `重载当前会话` must remain enabled. A stuck normal request is itself a recovery use case, so the user must be able to start one explicit manual recovery without waiting for terminal failure.
 
 This remains user-triggered recovery, not automatic retry machinery.
 
-## b13 candidate allocation
+## b13 identity / implementation
 
-Conflict/identity preflight:
+Candidate reserved and built:
 
-- PR #10 is the only open PR.
-- main `current/dev/` has no competing Active checkpoint.
-- branch is `behind_by=0` against current main.
-- repository search found no existing `DEV-conversation-recovery-0.1.0-b13` reservation.
-
-Reserve **`DEV-conversation-recovery-0.1.0-b13` / `0.1.0 (13)` / `ChatGPTClient-0.1.0-b13-dev-conversation-recovery.ipa`**. Do not reuse b12 after product changes.
-
-## b13 minimum implementation contract
+- **`DEV-conversation-recovery-0.1.0-b13`**
+- version/build **`0.1.0 (13)`**
+- IPA `ChatGPTClient-0.1.0-b13-dev-conversation-recovery.ipa`
+- product/config branch head **`fcc74ac4015449dba6c77f3136eede82cec3ec54`**
 
 ### Startup/list responsiveness
 
-1. After b12 WebKit warm-up completes, force the sidebar controller's initial view/load path to start immediately instead of waiting for the user to reveal the primary column.
-2. Keep the background warm-up as accepted from b12; do not add another auth probe/retry loop.
-3. Replace dependence on the delayed/system-managed `displayModeButtonItem` with an explicit native top-left sidebar button owned by `RootViewController`; tapping it calls the split controller's primary-column presentation directly.
-4. No timer/watchdog is added. The list request simply begins as soon as the warmed shell is configured.
+- Keep the b12 public WebKit warm-up unchanged.
+- After warm-up and shell installation, `RootViewController` calls `sidebarViewController.loadViewIfNeeded()` so the sidebar's existing `viewDidLoad -> loadConversations()` starts immediately; first list loading is no longer gated on user revealing the primary column.
+- Replace the delayed/system-managed detail `displayModeButtonItem` dependency with an explicit native top-left sidebar button. It logs `sidebar.open.requested` and calls `show(.primary)`.
+- No timer/watchdog/retry was introduced.
 
-### Manual recovery during an in-flight ordinary load
+### Manual recovery during an in-flight ordinary detail load
 
-1. The overflow menu stays enabled when a conversation identity exists even if the ordinary initial detail request is still in flight.
-2. A user-triggered sync or reload during that load starts one new explicit recovery request and supersedes the older ordinary detail operation.
-3. Add the minimum owner-level detail-operation generation/freshness guard in `ConversationRepository` so an older request completion cannot overwrite or surface an error over the newer manual recovery result.
-4. Once a manual recovery action itself is active, disable duplicate manual recovery taps until that action completes. This is presentation/action state only, not a second conversation-data authority.
-5. No automatic retry, timeout, watchdog, resend/regenerate, fallback endpoint/header set, or hidden WebView.
+- Overflow sync/reload availability now depends on selected conversation identity and whether a **manual** recovery action is already active, not on ordinary `loadingConversationID` or whether detail is already loaded.
+- One user-triggered sync/reload can therefore start while `正在读取会话…` is still shown.
+- Duplicate manual recovery taps are disabled until that manual action completes.
+- `ConversationRepository` owns `selectedDetailOperationGeneration`. Every selected detail operation gets one generation; when a newer manual recovery starts, any older ordinary detail completion is discarded with `reason=operation_superseded` and cannot overwrite/surface stale error over the newer result.
+- Selection change remains a separate discard reason.
+- This generation is a minimum current single-selected-conversation freshness guard, not a second conversation-state authority. Future `DEV-multi-conversation-state` may generalize it into account-scoped per-conversation freshness.
 
-The future `DEV-multi-conversation-state` Work may evolve this single-selected-conversation freshness guard into the planned per-conversation/account-scoped mechanism, but b13 implements only the minimum needed for the current explicit retry-during-load requirement.
+## b13 source/static review
+
+From the b13 runtime checkpoint `fa2b7ef0ed50d0e37574c56067d1280e7a6094e2` to product/config head `fcc74ac4015449dba6c77f3136eede82cec3ec54`, only five files changed:
+
+- `ConversationFeature.swift`: recovery-during-load + selected-detail generation guard.
+- `RootViewController.swift`: immediate sidebar view/list initialization + explicit sidebar action.
+- `project.pbxproj`: build 13 / candidate b13.
+- `scripts/build_ipa.sh`: b13 default candidate.
+- `.github/workflows/ios-foundation.yml`: b13 artifact identity.
+
+No auth endpoint/parser/header change and no unrelated product refactor.
+
+## b13 CI / Artifact evidence
+
+- CI run **`32997544435`** completed success; build, artifact inspection and upload all passed.
+- PR product/config head: `fcc74ac4015449dba6c77f3136eede82cec3ec54`.
+- GitHub synthetic merge: `57187c0d0fd3116f964248a87f1a766268637788`.
+- Branch head and tested merge share exact tree **`2068ab4dc8f4bd9f94f1cb89e21b8dab29436ebf`**.
+- Artifact **`9617184873`**, name `ChatGPTClient-DEV-conversation-recovery-0.1.0-b13`.
+- ZIP digest `sha256:7d7d1faa4e69f8892df2d2c2b944f7ada36cb252c50dd0ddd238ecc05c7baf27`.
+- IPA SHA-256 **`2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`**; sidecar matches independently calculated SHA.
+- Embedded identity verified: `0.1.0 (13)`, candidate b13, source `57187c0d0fd3`, minimum iOS 14.0, device families `[1,2]`, Mach-O arm64.
 
 ## State owner / invariants
 
 - `ConversationRepository` remains sole production conversation read/recovery owner.
 - `AuthSessionStore` remains the account/native-auth bridge; default `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- UI loading/recovery flags are presentation/action state only.
-- No resend/regenerate, automatic retry/watchdog, fallback endpoint/header set, hidden WebView, or second persistent state store.
+- UI recovery busy flag is presentation/action state only.
+- No resend/regenerate, automatic retry/watchdog/timer, fallback endpoint/header set, hidden WebView, or second persistent state store.
 
 ## Validation state
 
-- b10 core recovery: **Code + CI + Artifact + Runtime/manual/real-device tested**.
-- b11: **Code + CI + Artifact + Runtime; feedback presentation rejected**.
-- b12: **Code + CI + Artifact + Runtime/manual/real-device tested, partial acceptance**:
-  - centered sync toast accepted;
-  - background WebKit warm-up successfully hydrates usable auth in tested cold start;
-  - initial native list does not auto-start because sidebar view loading is lazy; startup/sidebar UX rejected.
-- b13: **candidate reserved; code/CI/artifact/runtime pending**.
+- b10: Code + CI + Artifact + Runtime accepted for core recovery.
+- b11: Code + CI + Artifact + Runtime; feedback presentation rejected.
+- b12: **Code + CI + Artifact + Runtime/manual tested, partial accepted** — warm-up and centered toast accepted, startup/list sequencing rejected.
+- b13: **Code written + static/source review + CI passed + Artifact produced; Runtime/manual pending**.
 - Stable / merged: **no**.
 
 ## Next exact action
 
-1. Implement only the b13 startup/list initiation, explicit sidebar button, recovery-during-load enablement, and minimum stale-detail-operation guard.
-2. Bump build/candidate/workflow/artifact identity to b13.
-3. Review exact diff; run CI; inspect exact IPA identity.
-4. Real-device test:
-   - force-quit -> launch -> do not tap Login; list request should start automatically and sidebar button should work immediately;
-   - while opening a conversation and it still shows `正在读取会话…`, open overflow and invoke one sync or reload; action must run rather than appear gray;
-   - verify older initial-load completion cannot overwrite the manual recovery result;
-   - verify centered sync toast remains correct.
-5. If accepted, update runtime evidence, run final conflict/PR check, merge #10 and complete this Work.
+Install exact b13 on iPhone/iOS17 and test:
+
+1. Force-quit -> launch; do **not** tap Login. The list request should start automatically after warm-up even if the sidebar has not been opened yet.
+2. The top-left sidebar action should be present/usable immediately; opening it may show a still-loading list, but opening it must not be what starts the request.
+3. Select a conversation and while `正在读取会话…` is still visible, open `...`; both `同步最新消息` and `重载当前会话` must be enabled.
+4. Invoke one manual recovery before the ordinary load returns. The manual result must win; if the older load later finishes, diagnostics should show `detail.discarded reason=operation_superseded` rather than UI overwrite.
+5. Confirm centered sync toast remains correct and full reload still clears/rebuilds.
+6. If accepted, record Runtime evidence, perform final main/PR/conflict check, merge PR #10 and complete this Work; then start `DEV-multi-conversation-state`.
 
 ## Rejected / do-not-repeat
 
 - No separate `DEV-auth-resume` Work.
 - No hidden/shadow WebView.
 - No persisted copied auth secrets.
-- No automatic retry/watchdog/resend/regenerate/fallback chain.
-- Do not use `navigationItem.prompt` again for required sync feedback.
-- Do not gate initial list loading on the primary/sidebar view becoming user-visible.
-- Do not allow an older ordinary detail request to overwrite a newer user-triggered recovery result.
+- No automatic retry/watchdog/timer/resend/regenerate/fallback chain.
+- Do not use `navigationItem.prompt` for required sync feedback.
+- Do not gate initial list loading on primary/sidebar view becoming visible.
+- Do not let an older ordinary detail operation overwrite a newer manual recovery result.

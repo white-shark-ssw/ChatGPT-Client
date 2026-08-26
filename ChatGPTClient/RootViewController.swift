@@ -31,8 +31,8 @@ final class RootViewController: UISplitViewController {
         let detailNavigationController = UINavigationController(rootViewController: detailViewController)
         setViewController(sidebarNavigationController, for: .primary)
         setViewController(detailNavigationController, for: .secondary)
-        detailViewController.navigationItem.leftItemsSupplementBackButton = true
-        detailViewController.navigationItem.leftBarButtonItem = displayModeButtonItem
+        sidebarViewController.loadViewIfNeeded()
+        detailViewController.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "sidebar.left"), style: .plain, target: self, action: #selector(openSidebar))
 
         sidebarViewController.onSelectConversation = { [weak self] id in
             guard let self else { return }
@@ -41,5 +41,10 @@ final class RootViewController: UISplitViewController {
         }
 
         diagnostics.info(category: "ui", name: "nativeConversationShell.loaded")
+    }
+
+    @objc private func openSidebar() {
+        diagnostics.info(category: "navigation", name: "sidebar.open.requested")
+        show(.primary)
     }
 }

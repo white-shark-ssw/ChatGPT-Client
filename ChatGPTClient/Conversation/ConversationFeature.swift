@@ -557,6 +557,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func showConversation(id: String) {
         guard loadingConversationID != id || repository.selectedConversation?.id != id else { return }
+        navigationItem.prompt = nil
         repository.selectConversation(id: id)
         loadingConversationID = id
         messages = []
@@ -600,23 +601,29 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     private func syncLatestMessages() {
         guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
+        let previousMessages = messages
         diagnostics.info(category: "navigation", name: "conversation.latestSync.requested", fields: repository.diagnosticsFields(for: id))
         navigationItem.rightBarButtonItem?.isEnabled = false
+        navigationItem.prompt = "正在同步最新消息…"
         repository.syncLatestMessages { [weak self] result in
             guard let self else { return }
             guard self.repository.selectedConversationID == id else {
+                self.navigationItem.prompt = nil
                 self.updateConversationMenu()
                 return
             }
             switch result {
             case .success(let detail):
+                let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
                 self.title = detail.title
                 self.messages = detail.messages
                 self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
                 self.stateLabel.isHidden = !detail.messages.isEmpty
                 self.retryButton.isHidden = true
                 self.tableView.reloadData()
+                self.showSyncFeedback(changed ? "已同步最新消息" : "已是最新")
             case .failure(let error):
+                self.navigationItem.prompt = nil
                 let alert = UIAlertController(title: "同步失败", message: error.localizedDescription, preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "好", style: .default))
                 self.present(alert, animated: true)
@@ -625,8 +632,22 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         }
     }
 
+    private func hasVisibleMessageChanges(from previous: [ConversationMessage], to current: [ConversationMessage]) -> Bool {
+        guard previous.count == current.count else { return true }
+        return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.createTime != new.createTime }
+    }
+
+    private func showSyncFeedback(_ text: String) {
+        navigationItem.prompt = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard self?.navigationItem.prompt == text else { return }
+            self?.navigationItem.prompt = nil
+        }
+    }
+
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID, loadingConversationID == nil else { return }
+        navigationItem.prompt = nil
         diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
         loadingConversationID = id
         messages = []

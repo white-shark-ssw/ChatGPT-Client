@@ -204,6 +204,20 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Validation level**: Code + CI + Artifact in b9; real-device discrimination pending.
 - **Supersedes**: b8 identity-less selected-detail diagnostics.
 
+### TD-016 — Background completion uses a public baseline first, then an isolated TrollStore true-background experiment
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Background execution / local notifications / TrollStore-specific process control
+- **Decision**: After the production send/stream lifecycle is established, implement background completion in two stages. First, `DEV-background-notify` uses the existing response lifecycle plus normal iOS background-task time and local completion notifications; if the task expires, it never resends and foreground recovery uses `同步最新消息`. Second, `DEV-trollstore-true-background` may test TrollStore-only long-running process techniques as an isolated experiment. Any elevated/background-preservation state is response-scoped and released on final/cancel/error; idle app behavior remains normal. If privilege is required, prefer a minimal helper that controls process lifetime without receiving ChatGPT cookies/tokens/message content; do not blanket-copy broad private entitlements into the main authenticated client.
+- **Evidence**: User explicitly chose local completion notifications and asked to evaluate the TrollStore utility `巨魔真后台`. Public distribution material identifies that utility/developer/support range but no public source was found. Open-source TrollSpeed at `a609be260c8261ead36509c3bc4ded8479da9c40` demonstrates TrollStore/root-persona spawning plus private memorystatus/jetsam/non-freezable process controls; this proves technical plausibility of long-running TrollStore processes, not compatibility with this client's stream. Apple public background APIs do not guarantee user-selected 30-minute/1-hour execution windows.
+- **Alternatives considered**: Public-only background task forever; fake 30m/1h selector; silent-audio/location background abuse; remote server holding ChatGPT credentials; immediately granting the main app platform/no-sandbox/jetsam entitlements; moving authenticated streaming into a privileged helper.
+- **Rejected / do-not-repeat**: Do not promise 30m/1h until the exact candidate survives real-device tests. Do not claim the exact `巨魔真后台` implementation without source. No automatic resend/regenerate. No remote credential upload. No broad privileged helper/main-app architecture before a dedicated experiment proves necessity.
+- **Affected modules**: Future send/stream lifecycle, app lifecycle, local notifications, diagnostics; possible isolated TrollStore helper/entitlements only in dedicated experiment.
+- **Validation level**: User-confirmed direction + public/source research; no product implementation, candidate or runtime proof yet.
+- **Supersedes**: Public-background-only planning assumption.
+- **Notes**: Durable implementation/validation details are in `docs/project/BACKGROUND_EXECUTION_PLAN.md`.
+
 ## Rule
 
 Do not write speculation here as fact. A historical plan or CI artifact is not runtime proof.

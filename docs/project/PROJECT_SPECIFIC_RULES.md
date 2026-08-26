@@ -66,6 +66,23 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Do not export hidden/internal reasoning/tool content that is not user-visible.
 - Place the action naturally in the official-style conversation menu and use normal iOS share/file presentation.
 
+## Background execution / completion-notification contract
+
+- Durable plan: `docs/project/BACKGROUND_EXECUTION_PLAN.md`.
+- Background continuation is **response-scoped**. Do not keep the app artificially alive when no response is actively reasoning/streaming.
+- After `DEV-send-stream` establishes the real response owner, first implement `DEV-background-notify`: continue the same response using normal iOS background-task time and issue a local `回答已完成` notification if final state arrives while backgrounded.
+- Public iOS APIs do not provide a reliable user-selectable `30分钟 / 1小时` execution guarantee. Do not expose such a setting as though the duration were controllable.
+- If normal background time expires before completion, do not resend, regenerate or create another stream. End the background assertion cleanly and use `同步最新消息` on foreground recovery.
+- `DEV-trollstore-true-background` is a separate TrollStore-only experiment after the normal background baseline. Do not let this experiment block the first daily-chat candidate.
+- Public distribution material for `巨魔真后台` identifies developer `bswbw` and TrollStore/iOS 14–17 support, but no public source was found in the 2026-08-26 investigation. Its internal mechanism therefore remains Unknown / Unverified.
+- Open-source TrollSpeed/UIDaemon-derived code is reference evidence that privileged TrollStore processes can use root persona, private memorystatus/jetsam controls and non-freezable process behavior. It does **not** prove that those techniques can be copied directly into this client or that an authenticated stream will survive unchanged.
+- Do not blanket-copy `platform-application`, `no-sandbox`, jetsam/memorystatus or other broad private entitlements into the main authenticated client. A dedicated real-device experiment must prove the smallest necessary mechanism first.
+- If privileged process control is required, prefer a minimal isolated helper. Keep ChatGPT cookies, bearer tokens, message bodies and actual authenticated stream content out of helper IPC whenever feasible; the normal production response/conversation owner remains authoritative.
+- Do not move the ChatGPT stream into a privileged helper merely for convenience.
+- Any accepted TrollStore true-background mode must release elevated/background-preservation state immediately on final answer, cancel/stop, terminal error or user disable. Explicit user force-quit should stop rather than silently respawn the client unless a later explicit requirement changes that rule.
+- Treat 5/15/30/60-minute runs as **real-device validation targets**, not promises. Do not claim 30- or 60-minute support until the exact candidate survives those tests with acceptable battery/thermal behavior.
+- Default local notification content should remain privacy-safe and concise; do not include full prompts/answers or secrets by default.
+
 ## Repository governance contract
 
 - Repository AI Governance Rules are dynamic authority.
@@ -135,6 +152,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - The observed 13.15 MB / 2068-node b7 detail and 7.50 MB / 2023-node b9 production detail are real-world inputs. Do not assume tiny conversations or naive all-view materialization.
 - Manual sync/reload must operate through the production conversation state owner rather than creating competing stores or identities.
 - Response transition haptics must be tied to lifecycle state transitions rather than rendering callbacks.
+- Background continuation must preserve the same authoritative response lifecycle; no second stream/request/store is allowed merely to keep work alive.
 
 ## Frozen business or architecture rules
 
@@ -157,6 +175,8 @@ Follow existing repository style until explicit project-specific constraints are
 - Do not turn the diagnostic `ProtocolReadProbe` into the production conversation repository by convenience.
 - Do not treat the injected Markdown menu shown in the reference recording as official-App behavior.
 - Do not block the first usable client on Projects, Voice, attachments, advanced search or broad future feature completeness.
+- Do not fake long-running background work through silent audio/location as the default route, and do not present public iOS background APIs as a guaranteed 30m/1h timer.
+- Do not grant broad TrollStore private entitlements to the main authenticated app or expose auth/chat content to a privileged helper without dedicated evidence and real-device validation.
 
 ## Historical reference
 

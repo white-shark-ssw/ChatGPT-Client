@@ -52,51 +52,62 @@ Completed / merged / Stable for tested b9 scope. `ConversationRepository` owns p
 
 ### Current status
 
-**Active b12 real-device candidate.**
+**Active b13 test candidate.**
 
 - b10: accepted core `同步最新消息` / clear-then-fetch `重载当前会话` runtime on iPhone/iOS17.
-- b11: request paths remained successful, but `navigationItem.prompt` feedback was not visible to the user and is rejected as final presentation.
-- b12: **Code + static/source review + CI + Artifact**. Run `32993589071`; artifact `9615588166`; IPA SHA-256 `2bd24e1dff89d2c04c82e838b44bf9e584d1587534ab6338b33b23bde0861aab`. Runtime pending.
+- b11: request paths remained successful, but `navigationItem.prompt` feedback was not visible and is rejected.
+- b12: **Code + CI + Artifact + real-device partial acceptance**. Centered sync feedback is accepted. Public WebKit warm-up hydrated 0/0 -> 41/22 cookies and later normal account/list verification succeeded without Login, but the first list request was delayed until the primary/sidebar view was revealed because `ConversationSidebarViewController.viewDidLoad` was lazy on compact iPhone.
+- b13: **Code + static/source review + CI + Artifact**. Run `32997544435`; artifact `9617184873`; IPA SHA-256 `2af6334278bcb88683cc123d47617e6956c0efb83aceb9b294961827f3e80040`. Runtime pending.
 
 ### Manual recovery contract
 
 - `同步最新消息` uses the authoritative selected conversation identity and existing detail path. It never resends/regenerates.
-- Success reconciles server-backed detail; failure preserves the previously loaded detail.
+- Success reconciles server-backed detail; failure preserves previously loaded detail when one exists.
 - `重载当前会话` clears authoritative selected detail first, then performs one fresh detail request and rebuilds from returned server state.
 - Terminal `重新加载` uses the full-reload path.
-- No automatic retry/watchdog/fallback chain.
+- While an **ordinary initial detail load** is still active, the overflow menu keeps both `同步最新消息` and `重载当前会话` available so the user may explicitly recover from a stuck load.
+- A manual recovery request supersedes the older ordinary selected-detail operation. The repository rejects a later old completion as `operation_superseded` rather than letting it overwrite the newer result.
+- Duplicate manual recovery taps are disabled only while that manual action itself is active.
+- No automatic retry/watchdog/fallback/resend chain.
 
-### b12 sync feedback
+### Sync feedback
 
 - Center-screen native toast, not navigation-bar prompt.
 - While syncing: `正在同步最新消息…`.
 - Success unchanged: `已是最新`.
 - Success changed: `已同步最新消息`.
 - Success result remains visible for 2 seconds; this timer is presentation-only.
-- Failure removes toast and uses the explicit failure alert.
+- Failure removes toast and uses explicit failure UI.
+- b12 real-device testing accepted this presentation.
 
-### Cold-start login-state recovery ownership
+### Cold-start login/list sequencing
 
-Latest project governance assigns this to **the same `DEV-conversation-recovery` Work**. Do not create a separate auth-resume task.
+Cold-start login-state recovery belongs to the same `DEV-conversation-recovery` Work. Do not create a separate auth-resume task.
 
-b12 tests the minimum evidence-backed hypothesis:
+Accepted b12 evidence for the tested iPhone/iOS17 cold start:
 
-1. `AuthSessionStore` initializes `WKWebsiteDataStore.default()` using public APIs, records safe cookie counts before/after and website-data record count.
-2. `RootViewController` waits for that warm-up to complete before installing sidebar/detail controllers.
-3. Sidebar's existing initial list load then performs the same **single** normal account-context probe.
-4. Default `WKWebsiteDataStore` remains the only persistent auth-secret authority.
-5. No hidden/shadow WebView, no copied persistent token/cookie store, no retry loop, no automatic visible login navigation.
-6. If the one background warm-up + normal probe fails, keep the existing explicit `登录 / 账户验证` UI as foreground fallback and preserve diagnostics before changing strategy.
+1. `AuthSessionStore` public `WKWebsiteDataStore.default()` warm-up restored persisted WebKit cookie visibility from `0/0` to `41/22` in `194.97 ms`.
+2. The later existing normal account probe succeeded without visible Login and list returned 28/29.
+3. Therefore the b12 observed long startup wait was not an auth failure; list loading was simply not started until the lazy sidebar view loaded.
 
-### Acceptance gate
+b13 keeps the accepted warm-up and changes only the evidenced startup issue:
 
-Exact b12 must be tested on iPhone/iOS17 for:
+1. `RootViewController` installs the shell after warm-up and immediately forces the sidebar view/load path so its existing first list request starts without waiting for user navigation.
+2. The detail screen uses an explicit native sidebar button owned by `RootViewController`; tapping it presents `.primary` directly.
+3. Default `WKWebsiteDataStore` remains the sole persistent auth-secret authority.
+4. No hidden/shadow WebView, copied persistent token/cookie store, retry loop, timer/watchdog or automatic visible Login navigation.
 
-- true cold launch after force-quit **without tapping Login first**;
-- centered sync progress/result toast and 2-second result visibility;
-- existing full reload behavior remains intact.
+### b13 acceptance gate
 
-If cold start fails, export diagnostics before visible login and treat b12 as partial/failing Runtime evidence rather than adding retries by guess.
+Exact b13 must be tested on iPhone/iOS17 for:
+
+- force-quit -> cold launch without tapping Login; the initial list request starts automatically after warm-up, not after sidebar reveal;
+- the explicit top-left sidebar action is usable immediately while the list may still be loading;
+- open a conversation and, while `正在读取会话…` is still visible, verify `同步最新消息` and `重载当前会话` are enabled;
+- invoke one manual recovery before the ordinary load completes; the newer recovery result wins and any older completion cannot overwrite it;
+- centered sync feedback remains correct and full reload remains functional.
+
+Only real-device acceptance can close recovery and allow PR #10 to merge.
 
 ## Phase 6 — `DEV-multi-conversation-state`
 
@@ -106,7 +117,7 @@ Establish stable multi-conversation session/runtime ownership before send/stream
 
 ### Scheduling
 
-Starts **after recovery is merged/accepted**. This precedes round-count/preferences and send/stream because those features depend on clear multi-conversation identity/runtime ownership.
+Starts **after recovery is merged/accepted**. This precedes round-count/preferences and send/stream because those features depend on clear multi-conversation identity/runtime ownership. The b13 single-selected detail-operation generation is deliberately minimal and will later be generalized into the account-scoped per-conversation freshness model planned here.
 
 ## Phase 7 — `DEV-conversation-round-count`
 
@@ -161,4 +172,4 @@ Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Re
 
 ## Current next action
 
-Real-device test exact `DEV-conversation-recovery-0.1.0-b12`. If accepted, record Runtime evidence, perform final main/PR/conflict check, merge PR #10 and complete/archive recovery. Then create `DEV-multi-conversation-state` as the next serialized core Work.
+Real-device test exact `DEV-conversation-recovery-0.1.0-b13`. If accepted, record Runtime evidence, perform final main/PR/conflict check, merge PR #10 and complete recovery. Then create `DEV-multi-conversation-state` as the next serialized core Work.

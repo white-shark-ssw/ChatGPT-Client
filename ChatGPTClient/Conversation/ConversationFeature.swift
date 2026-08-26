@@ -63,12 +63,15 @@ final class ConversationRepository {
     private let authSessionStore = AuthSessionStore.shared
     private var transientSession: AuthTransientSession?
     private var selectedDetailOperationGeneration = 0
+    private var selectedDetailTask: URLSessionDataTask?
+    private var selectedDetailTaskGeneration: Int?
 
     private(set) var conversations: [ConversationSummary] = []
     private(set) var selectedConversationID: String?
     private(set) var selectedConversation: ConversationDetail?
 
     deinit {
+        selectedDetailTask?.cancel()
         transientSession?.finishTasksAndInvalidate()
     }
 
@@ -115,7 +118,7 @@ final class ConversationRepository {
         fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
         fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
         let span = diagnostics.startSpan(category: "conversation", name: "latestSync", fields: fields)
-        loadConversation(id: id) { [weak self] result in
+        loadConversation(id: id, replacingCurrentRequest: true) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let detail):
@@ -142,7 +145,7 @@ final class ConversationRepository {
         let span = diagnostics.startSpan(category: "conversation", name: "conversationReload", fields: fields)
         selectedConversation = nil
         diagnostics.info(category: "conversation", name: "conversationReload.stateCleared", traceID: span.traceID, fields: diagnosticsFields(for: id))
-        loadConversation(id: id) { [weak self] result in
+        loadConversation(id: id, replacingCurrentRequest: true) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let detail):
@@ -157,10 +160,11 @@ final class ConversationRepository {
         }
     }
 
-    func loadConversation(id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+    func loadConversation(id: String, replacingCurrentRequest: Bool = false, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
         selectedConversationID = id
         selectedDetailOperationGeneration += 1
         let operationGeneration = selectedDetailOperationGeneration
+        if replacingCurrentRequest { cancelSelectedDetailRequest(id: id, replacementOperationGeneration: operationGeneration) }
         var fields = diagnosticsFields(for: id)
         fields["operationGeneration"] = String(operationGeneration)
         let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: fields)
@@ -247,9 +251,18 @@ final class ConversationRepository {
         diagnostics.info(category: "conversation", name: "detail.request", traceID: span.traceID, fields: requestFields)
         var request = URLRequest(url: detailURL)
         request.httpMethod = "GET"
-        session.dataTask(with: request) { [weak self] data, response, error in
+        let task = session.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
+            DispatchQueue.main.async { [weak self] in self?.clearSelectedDetailTask(operationGeneration: operationGeneration) }
             if let error {
+                let nsError = error as NSError
+                if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+                    var fields = self.diagnosticsFields(for: id)
+                    fields["operationGeneration"] = String(operationGeneration)
+                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: fields)
+                    span.end(status: "cancelled", fields: fields)
+                    return
+                }
                 self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: self.diagnosticsFields(for: id))
                 span.end(status: "failed", fields: ["stage": "network"])
                 self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(error), completion: completion)
@@ -289,6 +302,26 @@ final class ConversationRepository {
             span.end(status: "ok", fields: fields)
             self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .success(detail), completion: completion)
         }
+        selectedDetailTask = task
+        selectedDetailTaskGeneration = operationGeneration
+    }
+
+    private func cancelSelectedDetailRequest(id: String, replacementOperationGeneration: Int) {
+        guard let task = selectedDetailTask else { return }
+        let cancelledOperationGeneration = selectedDetailTaskGeneration
+        selectedDetailTask = nil
+        selectedDetailTaskGeneration = nil
+        var fields = diagnosticsFields(for: id)
+        if let cancelledOperationGeneration { fields["cancelledOperationGeneration"] = String(cancelledOperationGeneration) }
+        fields["replacementOperationGeneration"] = String(replacementOperationGeneration)
+        diagnostics.info(category: "conversation", name: "detail.cancel.requested", fields: fields)
+        task.cancel()
+    }
+
+    private func clearSelectedDetailTask(operationGeneration: Int) {
+        guard selectedDetailTaskGeneration == operationGeneration else { return }
+        selectedDetailTask = nil
+        selectedDetailTaskGeneration = nil
     }
 
     private func finishDetailOperation(id: String, operationGeneration: Int, result: Result<ConversationDetail, Error>, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {

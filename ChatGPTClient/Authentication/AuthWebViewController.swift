@@ -1,16 +1,24 @@
 import UIKit
 import WebKit
 
+enum AuthVerificationMode {
+    case authentication
+    case protocolRead
+}
+
 final class AuthWebViewController: UIViewController {
     private static let loginURL = URL(string: "https://chatgpt.com/auth/login")!
 
     private let diagnostics = DiagnosticsLogger.shared
     private let sessionStore = AuthSessionStore.shared
+    private let mode: AuthVerificationMode
     private let webView: WKWebView
     private var bootstrapSpan: DiagnosticsSpan?
     private var accountProbeStarted = false
+    private var protocolProbe: ProtocolReadProbe?
 
-    init() {
+    init(mode: AuthVerificationMode = .authentication) {
+        self.mode = mode
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
         webView = WKWebView(frame: .zero, configuration: configuration)
@@ -24,7 +32,7 @@ final class AuthWebViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "登录验证"
+        title = mode == .protocolRead ? "协议读取验证" : "登录验证"
         view.backgroundColor = .systemBackground
 
         webView.navigationDelegate = self
@@ -46,7 +54,8 @@ final class AuthWebViewController: UIViewController {
 
     private func startLogin() {
         accountProbeStarted = false
-        title = "登录验证"
+        protocolProbe = nil
+        title = mode == .protocolRead ? "协议读取验证" : "登录验证"
         bootstrapSpan?.end(status: "restarted")
         bootstrapSpan = diagnostics.startSpan(category: "auth", name: "webBootstrap", fields: ["entry": "chatgpt_login"])
         diagnostics.info(category: "auth", name: "webBootstrap.load", traceID: bootstrapSpan?.traceID, fields: Self.safeLocationFields(Self.loginURL))
@@ -63,18 +72,51 @@ final class AuthWebViewController: UIViewController {
         accountProbeStarted = true
         title = "网页登录成功 · 账户验证中"
         diagnostics.info(category: "auth", name: "accountContextProbe.requested")
-        sessionStore.probeAccountContext(using: webView.configuration.websiteDataStore.httpCookieStore) { [weak self] state in
+        sessionStore.probeAccountContext(using: webView.configuration.websiteDataStore.httpCookieStore, createTransientSession: mode == .protocolRead) { [weak self] state, transientSession in
             DispatchQueue.main.async {
-                guard let self else { return }
+                guard let self else {
+                    transientSession?.finishTasksAndInvalidate()
+                    return
+                }
                 switch state {
                 case .verified:
-                    self.title = "登录会话 · 账户上下文通过"
+                    if self.mode == .protocolRead, let transientSession {
+                        self.startProtocolProbe(using: transientSession)
+                    } else {
+                        transientSession?.finishTasksAndInvalidate()
+                        self.title = "登录会话 · 账户上下文通过"
+                    }
                 case .notAvailable:
+                    transientSession?.finishTasksAndInvalidate()
                     self.title = "网页登录成功 · 账户上下文未通过"
                 case .failed:
+                    transientSession?.finishTasksAndInvalidate()
                     self.title = "网页登录成功 · 账户验证失败"
                 case .unknown, .probing:
-                    break
+                    transientSession?.finishTasksAndInvalidate()
+                }
+            }
+        }
+    }
+
+    private func startProtocolProbe(using transientSession: AuthTransientSession) {
+        title = "登录会话 · 协议读取中"
+        diagnostics.info(category: "protocol", name: "conversationReadProbe.requested")
+        let probe = ProtocolReadProbe()
+        protocolProbe = probe
+        probe.run(using: transientSession) { [weak self, weak probe] state in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if self.protocolProbe === probe { self.protocolProbe = nil }
+                switch state {
+                case .verified:
+                    self.title = "会话列表 · 会话详情通过"
+                case .listNotAvailable:
+                    self.title = "账户通过 · 会话列表未通过"
+                case .detailNotAvailable:
+                    self.title = "会话列表通过 · 会话详情未通过"
+                case .failed:
+                    self.title = "账户通过 · 协议读取失败"
                 }
             }
         }

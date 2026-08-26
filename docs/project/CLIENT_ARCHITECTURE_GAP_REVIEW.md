@@ -4,416 +4,328 @@ _Last reviewed: 2026-08-27._
 
 ## Purpose
 
-This is a focused pre-send/stream architecture review for the native TrollStore ChatGPT client. It records missing invariants discovered after the native-read, manual-recovery, multi-conversation and background-execution planning work.
+This is the focused pre-send/stream architecture review for the native TrollStore ChatGPT client. It exists to prevent a small number of state/concurrency mistakes that would otherwise force expensive rework once multiple conversations, streaming, background execution and long conversations are active together.
 
-The goal is **not** to add every future feature before the client becomes usable. The goal is to prevent a small number of structural mistakes that would otherwise force expensive rework once multiple conversations, streaming, background execution and long conversations are active at the same time.
+The product rule remains: **reach a usable daily-chat candidate as early as possible; only P0 structural invariants may block the first production send/stream path.**
+
+## Latest ownership correction — cold-start authentication
+
+The user's latest explicit requirement supersedes the earlier plan that proposed a separate `DEV-auth-resume` Work.
+
+**Cold-start login-state recovery is part of the active `DEV-conversation-recovery` work. Do not create a second `DEV-auth-resume` task.**
+
+Required order inside that recovery work:
+
+1. verify/warm the default `WKWebsiteDataStore` in the background/invisibly first;
+2. perform the normal account/session verification through the accepted auth owner;
+3. if background verification cannot recover the usable WebKit state, preserve the exact failure evidence and only then move to the smallest visible foreground verification flow;
+4. keep default WebKit storage as the sole persistent auth-secret authority;
+5. no hidden/shadow login WebView, copied-token persistence, retry/watchdog loop or second auth store.
+
+The active recovery development session owns its own checkpoint/branch/PR and must update those records itself. Rules/planning sessions must not edit that development checkpoint.
 
 ## Current evidence baseline
 
-Verified current facts relevant to this review:
-
 - `DEV-native-read-path-0.1.0-b9` is the accepted production read baseline for the tested iPhone / iOS 17.0 scope.
 - `ConversationRepository` is the production conversation owner.
-- Current main source has one foreground `selectedConversationID` and one loaded `selectedConversation` slot.
-- Current detail parsing walks `mapping` from `current_node`, derives visible user/assistant messages, then stores only the simplified `ConversationDetail`/message projection. `current_node` and graph relationships are not retained in the resident result.
-- Current list request is `offset=0&limit=28&order=updated`; b7/b9 evidence already showed total count can exceed the returned 28.
-- b9 repeatedly started with 0 total / 0 matched WebKit cookies until an explicit real WKWebView login/account-verification flow hydrated the default WebKit store.
-- `SettingsViewController` currently has diagnostic/build controls but no accepted centralized preference/state owner for new feature toggles.
-- There is currently no unit/UI test target.
-- Active PR #10 owns manual recovery product changes and overlapping development/status/build documents; this review intentionally does not modify that work.
+- Current merged read source still uses one foreground `selectedConversationID` and one loaded `selectedConversation` slot.
+- Current detail parsing walks `mapping` from `current_node`, builds the visible branch, then keeps a simplified message projection; the authoritative current-node/graph identity required by future send/branch work is not yet retained as a resident model.
+- Current list transport uses `offset=0&limit=28&order=updated`; accepted runs already showed `total` can exceed the returned page.
+- `SettingsViewController` has build/diagnostic controls but no centralized preference owner for the planned feature toggles.
+- There is no XCTest/UI-test target yet.
+- Active PR #10 owns recovery product code and overlapping `DEVELOPMENT_PLAN.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `BUILD_TEST_INDEX.md`; this planning work deliberately does not modify those surfaces while PR #10 is active.
 
 ## Priority classification
 
-### P0 — must be structurally resolved before production send/stream becomes authoritative
+### P0 — required before production send/stream becomes authoritative
 
-These items are small enough to address now and expensive/dangerous to retrofit later.
+After the cold-start auth work is folded into recovery, the remaining P0 items are:
 
-1. **Per-conversation resident state instead of one loaded slot.**
+1. **Per-conversation resident state instead of one loaded-detail slot.**
 2. **Async operation freshness / stale-result protection.**
-3. **Retain authoritative conversation/node identity needed by later send/branch operations.**
-4. **Scope resident state to the verified account/workspace context and purge it on account/logout change.**
-5. **Define new-conversation identity handoff before first production send.**
-6. **Define per-conversation response ownership and multi-conversation concurrency before streaming.**
-7. **Define sync/reload behavior when the target conversation has an active response.**
-8. **Resolve cold-start authentication resume sufficiently for daily use without creating a second auth-secret owner.**
+3. **Retain the minimum authoritative conversation/node identity required by the current send protocol.**
+4. **Scope resident/draft/response state to verified account/workspace context and purge on logout/account change.**
+5. **Define the new-conversation identity handoff from local pending UI to authoritative server identity.**
+6. **Own responses per conversation/message identity instead of a global streaming flag.**
+7. **Define Sync/Reload ownership transitions when the target conversation has an active response.**
 
-### P1 — should be delivered around the first daily-chat candidates
+### P1 — around the first daily-chat candidates; do not block first send proof
 
-These materially improve daily use but should not block the first protocol/send proof.
+1. Basic Markdown/code-block rendering.
+2. Conversation-list pagination/load-more beyond the first 28 items.
+3. Per-conversation draft and scroll-anchor restoration while the process remains alive.
+4. Hidden-conversation generating/completed status in the sidebar after streaming exists.
+5. One centralized app-settings preference owner.
+6. Background continuation over an active response **set**, not a global Boolean.
+7. Large-conversation phase timing: network / parse-model / first-visible-render.
 
-1. **Basic Markdown/code-block message rendering path.**
-2. **Conversation-list pagination / load-more beyond the current 28-item page.**
-3. **Per-conversation draft and scroll-position restoration while the process remains alive.**
-4. **Hidden-conversation generation/completion status in the sidebar.**
-5. **One centralized app-settings preference owner for round-count/background/notification/experimental toggles.**
-6. **Background completion with multiple active responses handled as an active set, not a single global boolean.**
-7. **Phase timing for large conversation load: network / parse-model / first-visible-render.**
+### P2 — after the daily-chat loop is stable
 
-### P2 — useful after the daily-chat loop is stable
-
-1. Optional persisted state across process death beyond normal WebKit auth persistence.
-2. Persistent chat-body/disk caching, only if a later explicit privacy/storage requirement justifies it.
-3. Advanced branch/edit/regenerate cache optimization.
+1. Optional cross-process state restoration beyond normal WebKit auth persistence.
+2. Persistent chat-body/disk cache only after an explicit privacy/storage requirement.
+3. Advanced edit/regenerate/branch cache optimization.
 4. Advanced unread/history synchronization with other clients.
-5. Broad iPad/lower-iOS optimization after exact runtime testing.
+5. Broad lower-iOS/iPad optimization after exact runtime evidence.
 
-## P0 findings and required invariants
+## P0 invariants
 
-### 1. Per-conversation resident state
+### Per-conversation residency
 
-Already planned in `MULTI_CONVERSATION_STATE_PLAN.md`.
-
-Invariant:
-
-> Foreground selection is presentation state. It must not destroy another conversation's loaded model or owned response.
+Foreground selection is presentation state only.
 
 Conceptually:
 
-`account/workspace context + conversation ID -> resident conversation state`
+`verified account/workspace context + conversation ID -> resident conversation state`
 
-Do not implement one authoritative repository per screen. Keep one production conversation authority with per-conversation entries.
+Selecting B must not destroy A, cancel A's owned request/response, or force A to reload when returning to it.
 
-### 2. Async freshness / stale-result protection
+Use one production conversation authority with per-conversation entries. Do not create one authoritative repository per screen and do not keep full UIKit view hierarchies alive as the cache.
 
-The multi-conversation change removes the current `selection_changed` discard, but that alone is insufficient.
+### Async freshness / race protection
 
-Example race:
+Selection change alone must no longer discard a valid result, but an **obsolete** operation still must not overwrite a newer authoritative state.
 
-1. A is loaded and later starts streaming.
-2. User invokes `同步最新消息` for A.
-3. Stream advances locally.
-4. An older detail/sync response returns afterward.
-5. A blind replacement could regress A to an older server/local snapshot.
+Examples that require deterministic protection:
 
-Similar races exist between:
+- ordinary load A starts, then Reload A starts;
+- Sync A starts while A is progressing locally;
+- Stop/terminal state occurs, then a late stream callback arrives;
+- account context changes while an old request is in flight.
 
-- ordinary load vs explicit reload;
-- old reload vs newer reload;
-- list/detail request completion vs newer state;
-- sync vs current streaming update;
-- stop/cancel vs late stream callback;
-- account change vs old request completion.
+Every operation must be bound to its account/context + target conversation identity. A per-conversation generation/token or equivalent single-owner freshness guard may reject obsolete completions. This guard is not a second state authority and must not become a timer/retry system.
 
-Required direction:
+Equivalent missing-detail requests should be coalesced when the repository can do so cleanly.
 
-- each async operation is bound to its target account/context + conversation identity;
-- per-conversation load/reload generations or another single-owner freshness mechanism prevents an older operation from blindly overwriting a newer authoritative state;
-- selection change alone is not a discard reason;
-- request generation/versioning is not a second state authority; it is only an ownership/freshness guard around the authoritative resident entry;
-- duplicate requests for the same missing detail should be coalesced where the current owner can do so cleanly instead of issuing parallel equivalent loads.
+### Preserve authoritative node identity
 
-Do not add arbitrary timers or generic retry loops to solve this.
+The visible message array is a projection, not the complete authoritative conversation representation.
 
-### 3. Preserve node/current-branch identity
+Before production Send is implemented, the send-protocol evidence must establish the exact identities required, such as current-node/parent/message/request IDs. The resident model then keeps only that **minimum evidence-backed identity**.
 
-The current read model retains visible `message.id`, role, text and create time but does not retain the detail's authoritative `current_node` after parsing.
+Do not throw away an identity already present in Detail and re-fetch merely to recover it. Do not retain multi-megabyte raw HTTP JSON just for convenience.
 
-Before production send/stream, the resident conversation model must retain the **minimum current evidence-backed identity needed by the send protocol**, likely including current-node/parent/message identity once the send protocol probe proves the exact required fields.
+### Account/workspace isolation
 
-Rules:
+Resident conversations, drafts, local response owners and presentation status belong to a verified account/workspace scope.
 
-- do not re-fetch a conversation only because the model threw away an identity that the same accepted detail response already supplied;
-- do not retain the raw multi-megabyte JSON payload merely for convenience;
-- normalize only the node/branch metadata proven necessary;
-- keep the user-visible message list a derived projection, not the only authoritative conversation representation.
+Explicit logout/account switch must:
 
-This also avoids painting future Edit/Regenerate/branch work into a corner.
+- invalidate the old transient native session;
+- purge old-account resident/draft/response state;
+- reject late callbacks from the old context;
+- never display old-account content under the newly verified account.
 
-### 4. Account/workspace scoping and purge
+### New-conversation identity handoff
 
-Multi-conversation residency introduces an account-isolation requirement.
+The Send protocol probe must prove:
 
-Resident conversation state, drafts, response owners and any future local status must never survive an explicit account identity change as though the same account still owned them.
+- whether conversation identity is client-generated or returned/established by the service;
+- parent/current-node requirements;
+- message/request/response identity lifecycle;
+- when the new conversation is safe to insert into list/resident state.
 
-Required behavior:
+If a temporary local presentation identity is needed, it gets **one explicit handoff** to the authoritative conversation identity. Temporary and server identities must never remain independent state owners. Rapid double-send must not produce duplicate conversations/messages while handoff is unresolved.
 
-- bind the resident working set to the verified account/workspace context;
-- explicit logout/account switch invalidates the transient native session and clears resident conversation/message/draft/response state belonging to the old context;
-- late callbacks from the old context must be rejected even if a conversation ID string happens to match;
-- never show old-account resident content under a newly verified account.
+### Per-conversation response ownership
 
-This is an in-memory safety boundary. It does not require persistent credential storage.
-
-### 5. New-conversation identity handoff
-
-The existing architecture only loads server-created conversation IDs. Send/new-chat will introduce a period where the UI has a composing/pending chat before the authoritative server conversation identity is known.
-
-Before implementation, the send protocol probe must establish:
-
-- whether a client-generated conversation ID is sent or a server ID is returned later;
-- parent/current-node identity requirements;
-- request/message IDs and their lifecycle;
-- when the new conversation becomes safe to insert into the production list/resident map.
-
-Implementation rule:
-
-- a temporary local presentation identity, if required, must have one explicit handoff to the authoritative server conversation identity;
-- do not let both temporary and server IDs remain independent state owners;
-- rapid double-send must not accidentally create duplicate conversations/messages while the first identity handoff is unresolved.
-
-### 6. Per-conversation response ownership and concurrency
-
-The product requirement is stronger than fast navigation:
-
-- A may be reasoning/streaming;
-- user opens B;
-- A keeps running;
-- if current service/protocol evidence allows B to start its own response, A and B must have independent response owners.
-
-Required design:
+Required conceptual ownership:
 
 `conversation identity + response/message identity -> response lifecycle`
 
-Do not use a global `isStreaming` or whichever conversation is visible as the response owner.
+A may continue reasoning/streaming while B is visible. UI navigation never calls Stop merely because A becomes hidden.
 
-Initial concurrency policy:
+Initial product rule:
 
-- one active response per conversation is the safe product assumption unless current protocol/runtime evidence explicitly proves overlapping responses within the same conversation are valid;
-- multiple conversations should be architecturally independent, but the actual number of simultaneous server streams is **Unknown / Unverified** until tested;
-- do not hard-code an arbitrary global concurrency limit without evidence;
-- Stop targets the exact owning response/conversation, never all conversations.
+- at most one active response per conversation unless current protocol/runtime evidence proves same-conversation overlap;
+- different conversations are architecturally independent;
+- whether A and B can actually maintain simultaneous server streams remains **Unknown / Unverified** until real-device Send/Stream testing;
+- Stop targets one exact response/conversation, never a global `isStreaming` state.
 
-### 7. Sync/reload while a response is active
+### Sync/Reload while a response is active
 
-This needs explicit semantics because recovery is intended for stalled streams.
+`同步最新消息` targets one conversation, never resends, and reconciles server state without regressing newer local authoritative progress. If server evidence proves completion, the stale local response can become server-backed terminal and obsolete callbacks must lose mutation authority.
 
-#### Sync latest
+`重载当前会话` is stronger and user-explicit. It rebuilds one conversation only and must establish a clear owner transition so an old response callback cannot later resurrect/overwrite the reloaded state. Exact cancel/detach behavior follows current send/stream evidence; it is not guessed in advance.
 
-- targets one conversation;
-- does not resend;
-- may request server detail while a local response owner still exists;
-- reconciliation must not regress newer local state;
-- if server evidence proves the response is already complete, the local stale response lifecycle can transition to the server-backed terminal state and must ignore later obsolete callbacks;
-- if server still shows an in-progress state, keep the owned response unless current protocol evidence gives a terminal reason.
+## P1 implementation notes
 
-#### Full reload
+### `DEV-message-rendering` — Markdown 与代码块渲染
 
-Reload is deliberately stronger.
-
-- targets one conversation only;
-- user explicitly asks to rebuild that conversation from server state;
-- if an active local response exists, implementation must define one clear owner transition so the old stream cannot later resurrect/overwrite the reloaded state;
-- no prompt resend/regenerate is implied;
-- B/C resident conversations remain untouched.
-
-Exact stream-cancel/detach behavior must follow the actual send/stream protocol evidence rather than being guessed now.
-
-### 8. Cold-start auth resume
-
-Current b9 evidence shows a daily-use problem: a fresh launch may observe an empty default WebKit cookie store until a real WKWebView is opened/hydrated.
-
-Create a separate future Work:
-
-`DEV-auth-resume` — **冷启动登录态恢复**
-
-First experiment should follow the evidence already recorded by PR #10:
-
-- test background/default `WKWebsiteDataStore.default()` warm-up/website-data access first;
-- preserve WebKit as the sole persistent auth-secret authority;
-- no hidden/shadow login WebView as a speculative permanent workaround;
-- no copied-token persistence;
-- if background warm-up is insufficient, capture exact evidence before choosing the smallest visible verification flow.
-
-This Work is a good candidate to run in parallel with conversation-model work **only after a normal branch/file/state-owner conflict scan proves isolation**.
-
-## P1 findings
-
-### 9. Basic Markdown/code rendering is not a separate current roadmap Work
-
-The UI baseline expects native Markdown, headings/lists/links, code blocks and tables, while the current production read model primarily renders visible text.
-
-Do not block the first send protocol proof on a perfect renderer, but schedule a dedicated small Work around the first daily-chat candidate:
-
-`DEV-message-rendering` — **Markdown 与代码块渲染**
-
-First scope should prioritize development-chat usefulness:
+Prioritize development-chat usefulness:
 
 - paragraphs/headings/lists;
 - inline/fenced code;
-- code-copy action;
+- code-copy;
 - links;
-- table handling when current content requires it;
-- text selection/copy where UIKit implementation permits cleanly.
+- tables when current content requires them;
+- clean text selection/copy where UIKit permits.
 
-Streaming performance rule: do not broad-reload/reparse the whole long conversation for every token. Optimize only from measured behavior.
+Do not broad-reload/reparse the whole conversation on each streamed token.
 
-### 10. Conversation-list pagination
+### `DEV-conversation-pagination` — 会话列表加载更多
 
-Current accepted list transport returns at most 28 items and has already reported a larger `total`.
+Once repository ownership is stable:
 
-Create a small Work once recovery/multi-conversation repository ownership is stable:
-
-`DEV-conversation-pagination` — **会话列表加载更多**
-
-Rules:
-
-- preserve conversation identity while pages/reordering change;
+- use current protocol evidence for offset/cursor behavior;
 - deduplicate by authoritative conversation ID;
-- pagination/list refresh never clears resident detail merely because an item changes list position;
-- exact cursor/offset behavior must use current protocol evidence;
-- Search remains a separate later feature.
+- list refresh/reordering never clears resident detail merely because list position changes;
+- Search remains separate.
 
-This should not block the first send/stream candidate if the user's currently needed conversations are reachable, but it should not be forgotten because multi-session development will quickly exceed one page.
+### Per-conversation UI state
 
-### 11. Per-conversation draft and scroll state
+Within the live process preserve lightweight state such as semantic scroll anchor, unsent composer draft after the composer exists, and reasoning-detail expanded state where useful. Avoid raw pixel-only restoration for long conversations that grow.
 
-Within the live process, A/B switching should also preserve lightweight presentation state:
+Do not persist drafts/chat bodies to disk without a separate privacy/storage decision.
 
-- unsent composer draft;
-- scroll anchor / last visible message identity;
-- reasoning-detail expand/collapse state where useful.
+### Hidden-conversation response status
 
-Use a semantic message/anchor identity rather than only a raw pixel offset when long content can grow above/below it.
+After Send/Stream exists, the sidebar may derive:
 
-Do not persist chat drafts/bodies to disk merely because in-memory residency exists. Cross-process draft persistence requires its own explicit privacy/storage decision.
+- thinking/generating status for a hidden active response;
+- completed/unseen marker after a hidden response reaches final;
+- marker clear when viewed according to accepted UI behavior.
 
-### 12. Hidden-conversation generation/completion status
+This is presentation state derived from the response owner, not a second response authority and not a claim about an OpenAI unread API.
 
-Once multiple responses are possible, the sidebar should help the user understand what hidden conversations are doing.
+### Central settings owner
 
-Planned derived UI state, after send/stream exists:
-
-- generating/thinking indicator for a hidden conversation with an active response;
-- completed/unseen marker when a hidden response reaches final state;
-- marker clears when that conversation is viewed according to the accepted UI behavior.
-
-This is local presentation state, not a claim about an OpenAI server-side unread API.
-
-Do not let sidebar status become a second response authority.
-
-### 13. Central settings owner
-
-Confirmed/planned settings now include at least:
+The first real preference toggle should establish one small app preference owner around `UserDefaults`/system state. Planned consumers include:
 
 - `显示会话轮数`;
 - `后台等待回答完成`;
 - `回答完成时通知`;
-- future `TrollStore 真后台（实验）`;
-- later appearance/diagnostic refinements.
+- `TrollStore 真后台（实验）`;
+- later appearance/diagnostic options.
 
-Current `SettingsViewController` has no accepted preference-state owner.
+View controllers consume settings; they do not independently invent keys/defaults.
 
-When the first real toggle is implemented, establish one small app-settings owner around `UserDefaults`/system state instead of scattering independent keys and defaults through view controllers.
+### Multi-response background semantics
 
-Rules:
+Background protection is over an active protected-response set.
 
-- settings UI is a consumer;
-- notification authorization remains owned by iOS/`UNUserNotificationCenter`, while the app setting expresses user preference;
-- exact Swift type/key names are not frozen by this plan.
+If A and B are active when the App backgrounds, A finishing must not release protection while B remains active. Completion notification is deduplicated per response lifecycle. The final protected response leaving the set releases the public background assertion or accepted TrollStore preservation state.
 
-### 14. Multi-response background semantics
+### Long-conversation timing
 
-`BACKGROUND_EXECUTION_PLAN.md` originally describes a response-scoped path mostly in singular terms. With multi-conversation streaming, background protection must operate over an **active protected response set**.
+Before major performance rewrites, instrument safe phase timing for:
 
-Required semantics:
-
-- if A and B are both active when the app backgrounds, background/true-background preservation stays enabled while at least one protected response remains active;
-- A finishing must not release protection if B is still active;
-- completion notification is deduplicated per response lifecycle;
-- releasing the last protected response ends the background assertion/elevated preservation state;
-- no response is duplicated just to maintain the background set.
-
-### 15. Large-conversation phase timing
-
-b9 measured 20.74 s end-to-end for a 7.50 MB / 2023-node conversation, but current evidence does not separate transfer, JSON parsing/model construction and first visible render.
-
-Before major performance rewrites, add safe phase timing around:
-
-- response bytes received;
-- JSON parse / branch-model construction;
+- response bytes/network completion;
+- JSON parse + branch/model construction;
 - first visible message presentation;
-- later Markdown/layout time where relevant.
+- Markdown/layout when it becomes relevant.
 
-This is evidence collection, not a reason to prematurely add caching/retries/background parsing abstractions.
+The existing 20.74 s large-detail observation is end-to-end only and does not identify the bottleneck.
 
-## Additional correctness gaps to keep visible
+## Additional correctness constraints
 
-### Conversation freshness while resident
+### Resident freshness
 
-A resident conversation can become stale because another client/device changes it.
+A resident conversation can change on another client. A newer list `update_time` may later be used as a stale hint, but must not silently trigger a reload without a later accepted product rule. `同步最新消息` remains the explicit reconciliation action.
 
-The existing list already provides `update_time`.
+### `聊天` / `工作` derivation
 
-Potential future direction, only when implementation evidence supports it:
+The UI requirement is confirmed, but the current service field that authoritatively distinguishes these modes remains Unverified. Do not infer it from title/UI text. Capture the actual current service context before dynamic type display becomes authoritative.
 
-- if a refreshed list shows a newer server update time than the resident detail's known baseline, mark that entry as potentially stale;
-- do not silently reload it merely because the list changed;
-- `同步最新消息` remains the explicit reconciliation action unless a later product rule accepts automatic freshness behavior.
+### Process death
 
-### `聊天` / `工作` type derivation
+In-memory residency may disappear after iOS process termination/force quit. This is acceptable for the early client. Do not introduce persistent chat-body caching solely to hide relaunch cost.
 
-The user confirmed two visible official-App types/modes, but the current production read model does not yet have an accepted protocol contract for deriving a per-conversation `聊天` vs `工作` value.
+### Network/rate-limit failures
 
-Therefore:
-
-- do not fabricate the type from title/UI text;
-- if the current UI temporarily uses a known static type, record that implementation honestly;
-- before authoritative dynamic type display, capture the actual current service field/context that differentiates the two.
-
-### Process death / app relaunch
-
-In-memory resident conversation state naturally disappears if iOS terminates the process or the user force-quits.
-
-That is acceptable for the early client.
-
-Do not introduce a persistent chat-body cache simply to make relaunch instant. If later requested, define:
-
-- storage owner;
-- encryption/file-protection expectation;
-- eviction/size;
-- logout/account-switch purge;
-- schema/version migration;
-- privacy/export behavior.
-
-### Network transition / rate-limit behavior
-
-Keep explicit failures observable.
-
-- no speculative reachability-driven resend;
-- no automatic duplicate stream after Wi-Fi/cellular transition;
-- HTTP/auth/rate-limit errors should become clear terminal states according to actual protocol evidence;
-- manual sync/reload remains the accepted recovery mechanism unless new evidence justifies more.
+Keep explicit failures observable. No reachability-driven resend, duplicate stream after network transition, or speculative retry chain. Manual Sync/Reload remains the accepted recovery path unless new evidence justifies something else.
 
 ## Testing gap
 
-There is no test target today. Once the conversation state/stream parser becomes more complex, pure deterministic logic should stop depending only on real-device manual tests.
+There is no test target today. Add only the smallest deterministic test support when the state logic justifies it.
 
-Do not create a large testing framework project before it is useful. The first XCTest target should focus on logic that has real regression risk and no network dependency, such as:
+High-value pure tests include:
 
-- current-branch extraction / node identity normalization;
+- current-branch/node normalization;
+- resident lookup/LRU eligibility and protected-response eviction rules;
+- stale-operation generation rejection;
+- account-scope purge;
 - round-count derivation;
-- per-conversation resident lookup/eviction policy;
-- stale async-operation generation guard;
-- response lifecycle reducer/terminal transition once send/stream exists;
-- stream parser once the actual event format is captured;
+- response lifecycle terminal transitions;
+- actual stream parser once the event format is evidenced;
 - Markdown export transformation later.
 
-Real-device testing remains mandatory for WebKit auth, networking, haptics, background execution, TrollStore behavior and performance acceptance.
+Real-device evidence remains mandatory for WebKit auth, real networking, haptics, memory behavior, background execution and TrollStore-specific mechanisms.
 
-## Revised sequencing recommendation
+## Post-recovery development sequence
 
-The active recovery Work remains first and is not modified by this review.
+This is the current sequence after applying the user's latest ownership correction. It supersedes older planning text that listed a separate `DEV-auth-resume` task.
 
-After it merges, use this order unless a fresh conflict scan gives a better isolated parallel path:
+0. **`DEV-conversation-recovery` — 会话同步与重载 + 冷启动后台登录态验证**
+   - Current active task/PR #10.
+   - Finish Sync/Reload feedback and cold-start background WebKit verification; visible foreground verification only after background failure evidence.
+   - This task owns its own final candidate/runtime/merge records.
 
-1. `DEV-conversation-recovery` — finish current b11 validation/merge.
-2. `DEV-multi-conversation-state` — include resident entries, async freshness, account scoping and retention of minimum authoritative node identity.
-3. `DEV-auth-resume` — cold-start login-state recovery; may run in parallel with #2 only if branch/file/state-owner overlap is clean.
-4. `DEV-conversation-round-count` — small derived UI setting; establish the first centralized settings owner if one still does not exist.
-5. `DEV-send-stream` — establish actual send/new-conversation/response/stream protocol and per-conversation response lifecycle; test whether concurrent A/B streams are actually supported.
-6. Issue the earliest practical chat-use Candidate immediately when send/stream works; do not wait for every P1 item.
-7. `DEV-message-rendering` — basic Markdown/code usability.
-8. `DEV-conversation-pagination` — load more than one conversation page.
-9. `DEV-background-notify` — ordinary background continuation/local completion notification over the active response set.
-10. `DEV-trollstore-true-background` — isolated true-background experiment.
-11. `DEV-markdown-export`.
-12. `DEV-long-conversation`.
-13. `DEV-attachments` and later daily/advanced features.
+1. **`DEV-multi-conversation-state` — 多会话驻留与快速切换**
+   - Convert the repository from one loaded slot to account-scoped per-conversation resident entries.
+   - Add stale-operation/freshness guards and request coalescing where appropriate.
+   - Retain the minimum authoritative current-node/message identity needed for upcoming Send work without retaining raw payloads.
+   - Preserve semantic scroll state; prepare per-conversation draft/response linkage.
+   - Measure a bounded LRU working set on real device; active responses are protected from ordinary eviction.
+   - Add the first small deterministic XCTest coverage here if it can be isolated without delaying the candidate.
 
-The exact ordering of #7–#10 may be parallelized only after the send/stream owner is merged/stable and normal conflict scanning confirms they do not compete for the same core files/state owner.
+2. **`DEV-conversation-round-count` — 会话轮数显示 + 首个统一设置 owner**
+   - `聊天 · N轮` / `工作 · N轮`, derived from active-branch user turns.
+   - Default display On; setting persists.
+   - Establish the small centralized preference owner if one does not yet exist.
+   - No extra network request and no mutable round counter.
+
+3. **`DEV-send-stream` — 消息发送、流式回复与推理交互**
+   - First capture current Send/new-conversation/stream/stop protocol evidence.
+   - Define the pending-to-authoritative new-conversation identity handoff.
+   - Own each response by conversation/message identity; no global stream owner.
+   - Incrementally update only the affected assistant/reasoning presentation.
+   - Implement official-style gray shimmer reasoning, tap expand/collapse of explicit user-visible detail, completed `思考了 Xs` when evidenced, and the two-pulse reasoning-to-final haptic.
+   - Integrate Sync/Reload ownership transitions for stalled/abandoned streams.
+   - Test A generating -> view B -> return A, and test simultaneous A/B streams only if the current service permits them.
+   - **As soon as this loop works on device, issue the earliest practical daily-chat Candidate. Do not wait for P1 breadth.**
+
+4. **`DEV-message-rendering` — Markdown 与代码块渲染**
+   - Improve actual development-chat readability immediately after the first Send/Stream loop.
+
+5. **`DEV-conversation-pagination` — 会话列表加载更多**
+   - Remove the current first-page/28-item practical limitation without disturbing resident identity/state.
+
+6. **`DEV-background-notify` — 后台等待与完成通知**
+   - Continue the existing response owner using normal iOS background-task time.
+   - Support an active protected-response set.
+   - Local `回答已完成` notification once per completed response lifecycle.
+   - Expiration never resends; foreground uses Sync when reconciliation is required.
+
+7. **`DEV-trollstore-true-background` — TrollStore 真后台实验**
+   - Only after the normal background path is measurable.
+   - Response-scoped, minimal privilege, no auth/chat secrets in a privileged helper.
+   - 5/15/30/60-minute runs are validation targets, not promises.
+
+8. **`DEV-markdown-export` — Markdown 会话导出**
+   - Export the authoritative current user-visible branch, not mounted cells.
+
+9. **`DEV-long-conversation` — 超长会话性能优化**
+   - Use phase timing and real large conversations to optimize only proven bottlenecks.
+
+10. **`DEV-attachments` — 附件上传与文件处理**
+    - After text-chat ownership is stable; evidence current upload protocol first.
+
+11. **Daily-use conversation features**
+    - Search, rename/archive/delete, Edit/Regenerate/branch switching, model/temporary chat, settings/diagnostics refinement.
+
+12. **Advanced capabilities**
+    - Projects, Web Search, image/multimodal, Voice, Memory, Deep Research, GPTs and other current capabilities, each with current protocol/UI evidence.
+
+### Parallelization after Send/Stream
+
+The serialized core remains:
+
+`recovery -> multi-conversation state -> round-count/preferences -> send/stream`
+
+After the Send/Stream owner is merged/stable, `message-rendering`, `pagination`, and some settings/UI edges may run in parallel only after the normal branch/file/state-owner conflict scan. `background-notify` depends on the accepted response lifecycle and must not be implemented against an unmerged/unstable duplicate response owner.
 
 ## Acceptance mindset
 
-The project should continue producing small TrollStore candidates. A planning item only blocks the next candidate when it protects a core invariant that would otherwise make that candidate unsafe or cause immediate rework.
+Continue shipping small TrollStore candidates. A planning item blocks the next candidate only when it protects a core invariant that would otherwise make that candidate unsafe or cause immediate rework.
 
-Do not wait for this whole document to be implemented before using the app.
+Do not wait for this whole document to be implemented before using the App.

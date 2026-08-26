@@ -142,6 +142,59 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Supersedes**: Phase-3 Unknown/Unverified list/detail status for the exact tested scope.
 - **Notes**: The observed first detail is large (13.15 MB / 2068 mapping nodes), which is a concrete design input for native storage/parsing/rendering and long-conversation handling.
 
+### TD-011 — Official ChatGPT iOS interaction is the default UI baseline
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Product UI / interaction / user experience
+- **Decision**: Use the current official ChatGPT iOS interaction model as the default behavior baseline where the user considers it acceptable. Implement the baseline directly in feature work instead of inserting a separate visual-reinvention phase. Target native UIKit/system behavior rather than pixel-perfect copying. Explicit project enhancements should fit into the same interaction language.
+- **Evidence**: User-provided official-App interaction recordings and explicit statement that the official interaction is acceptable and does not need a separate invented design language.
+- **Alternatives considered**: Design a fully custom navigation/message/composer system before native read implementation.
+- **Rejected / do-not-repeat**: Do not block native read on a separate speculative UI redesign. Do not cite the recording's `导出 Markdown` entry as official; user confirmed it was injected by their dylib.
+- **Affected modules**: Native shell, sidebar/navigation, conversation UI, composer, messages, menus/sheets, later Projects/advanced surfaces.
+- **Validation level**: User-confirmed product requirement + visual recording reference; future implementation still requires real-device acceptance.
+- **Supersedes**: Earlier open-ended UI-planning assumption.
+- **Notes**: Durable details live in `docs/project/UI_INTERACTION_BASELINE.md`.
+
+### TD-012 — Ship small usable TrollStore candidates before roadmap completeness
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Delivery / roadmap / validation cadence
+- **Decision**: Prioritize the earliest coherent usable loop. Produce uniquely identified test candidates as soon as a meaningful milestone becomes real-device testable, rather than withholding usage until all daily-use/advanced features are complete. V0.1 targets native read + recovery; V0.2 targets the core daily text-chat loop; later work refines breadth/performance.
+- **Evidence**: User explicitly wants to start using the client as soon as possible; existing candidate/diagnostic infrastructure already supports repeated real-device validation.
+- **Alternatives considered**: Complete UI breadth, attachments, search, Projects and advanced features before issuing a daily-use candidate.
+- **Rejected / do-not-repeat**: Do not block first use on roadmap completeness. Speed does not permit candidate identity reuse or claiming CI/artifact success as runtime proof.
+- **Affected modules**: Roadmap, build/test cadence, all feature tasks.
+- **Validation level**: User-confirmed delivery requirement; existing candidate pipeline runtime-proven through b7.
+- **Supersedes**: More conservative interpretation that 'weeks to maturity' implies 'weeks before first use'.
+
+### TD-013 — Manual sync/reload are explicit recovery actions, not automatic retry machinery
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Conversation state / reliability / recovery UX
+- **Decision**: Add two explicit user-triggered recovery operations after production conversation ownership exists. `同步最新消息` reconciles the current conversation with server detail when local thinking/stream state may lag server completion. `重载当前会话` re-fetches/rebuilds the current conversation after load failure/timeout/blank/unusable state. Both operate through the authoritative conversation owner and never resend existing prompts/messages.
+- **Evidence**: User reports frequent real-world cases in the official App where server inference has completed/notification arrived while the App remains thinking/streaming, and separate cases where the current conversation times out or never loads.
+- **Alternatives considered**: Automatic stream timeout -> sync -> reload -> resend fallback chains.
+- **Rejected / do-not-repeat**: No automatic resend, infinite retry, watchdog chain or second conversation-state authority. Preserve exact failure evidence in diagnostics.
+- **Affected modules**: Future conversation repository/store, network read path, chat UI, stream integration, diagnostics.
+- **Validation level**: User-confirmed failure classes/requirement; implementation/runtime remains Unverified until its dedicated work.
+- **Supersedes**: None.
+
+### TD-014 — Reasoning UI includes expandable user-visible detail and a two-pulse transition haptic
+
+- **Status**: Confirmed
+- **Date**: 2026-08-26
+- **Scope**: Streaming / reasoning UX / haptics
+- **Decision**: When current protocol evidence provides user-visible reasoning status/detail, present an official-style subdued gray active reasoning label with shimmer/flowing-light treatment; allow tap expand/collapse of explicit user-visible detail; convert to a static completed summary such as `思考了 Xs` when supported; and emit two short haptic pulses on the real-time reasoning -> final-answer transition. Haptics are lifecycle events, not render callbacks.
+- **Evidence**: User-provided official-App recording shows the reasoning visual/detail interaction; user explicitly reports the two-pulse physical feedback on real device.
+- **Alternatives considered**: Plain non-interactive `正在思考`; per-token vibration; expose inferred/hidden reasoning.
+- **Rejected / do-not-repeat**: Do not vibrate per token or replay transition haptics when reloading completed content. Never expose hidden chain-of-thought; only render server content explicitly intended for user display.
+- **Affected modules**: Future send/stream response lifecycle, reasoning presentation, message rendering.
+- **Validation level**: Visual recording + user-confirmed haptic requirement; exact implementation/intensity/spacing remains real-device Unverified until `DEV-send-stream`.
+- **Supersedes**: None.
+
 ## Rule
 
 Do not write speculation here as fact. A historical plan or CI artifact is not runtime proof.

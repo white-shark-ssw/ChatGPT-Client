@@ -33,6 +33,7 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 - **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore`, accepted from real-device evidence.
 - **Safe auth evidence/account-context owner**: `ChatGPTClient/Authentication/AuthSessionStore.swift`; copied WebKit auth context and `/api/auth/session` bearer are transient only. Native `/auth/login` remains historical route-specific evidence and is not a current account-context gate.
 - **Account/workspace context owner**: accepted b6 in-memory context in `AuthSessionStore`. Current parser uses `account_ordering` + keyed `accounts` + nested `account.account_id` and is real-device verified for the tested account.
+- **Conversation/private protocol owner**: Not established yet; `DEV-protocol-read` must establish current request/response evidence before production state ownership is introduced.
 - **Test roots**: None yet.
 
 ## Build and validation
@@ -48,11 +49,12 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 
 - **Version source**: `MARKETING_VERSION` in `ChatGPTClient.xcodeproj/project.pbxproj`.
 - **Build number source**: `CURRENT_PROJECT_VERSION` in the same Xcode target settings.
-- **Merged main foundation version/build**: `0.1.0 (1)` / `DEV-app-foundation-0.1.0-b1`.
+- **Merged foundation version/build**: `0.1.0 (1)` / `DEV-app-foundation-0.1.0-b1`.
 - **Accepted web-login/persistence runtime evidence**: b2.
 - **Historical native `/auth/login` success/failure evidence**: b3/b4.
 - **Direct native session/accounts transport evidence**: b5/b6.
-- **Accepted auth/account-context runtime candidate**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`, pending PR #6 integration.
+- **Merged auth/account-context runtime baseline**: `0.1.0 (6)` / `DEV-auth-bootstrap-0.1.0-b6`, exact product/workflow source `19c0cd22923d8c6f4c96e676258b31814d02a942`; PR #6 merged at `78f42a06e6254088e3b495cb4529e549a1d4717f`.
+- **Next test-candidate identity**: Not allocated. `DEV-protocol-read` must inspect `BUILD_TEST_INDEX.md` and all Active checkpoints immediately before producing its first artifact.
 - **Parallel test-candidate scheme**: `DEV-<work-slug>-<marketing-version>-b<build>`; identities must remain unique across Active tasks.
 - **Artifact naming rule**: `ChatGPTClient-<marketing-version>-b<build>-<work-slug>.ipa`.
 - **Current bundle identifier**: `com.whitesharkssw.chatgptclient`; accepted but not Frozen as a permanent signing/product contract.
@@ -68,8 +70,8 @@ Bootstrap inspection completed against real repository state. Unsupported compat
 
 ## Current source/candidate baselines
 
-- Foundation merged to `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`; last guard showed `main` at `836651a41e36feafcc2386939d70d673be6e3725`.
-- Auth work is on `dev/auth-bootstrap-20260826` / draft PR #6.
+- Foundation merged to `main` by PR #5 at merge commit `9e7a06801715b0002d3e9a720d57041e830b776e`.
+- Auth bootstrap merged to `main` by PR #6 at merge commit `78f42a06e6254088e3b495cb4529e549a1d4717f`.
 - b2 source `809fa03e673afded87cb47fb755c998ab1b58e12` established Google login + WebKit persistence.
 - b3 source `0fcf040012c0698d0e3ce1628fec9865237eba3b` established one successful native `/auth/login` result; b4 source `33ea1b96f755bdf21fdd7691a9f1084a6d624908` later showed native Cloudflare HTTP 403 while WebKit remained authenticated.
 - b5 source `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` established a successful direct session/accounts HTTP 200 path and exposed the old parser.

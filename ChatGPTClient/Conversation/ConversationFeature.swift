@@ -493,8 +493,10 @@ final class ConversationMessageCell: UITableViewCell {
 
     private let bubbleView = UIView()
     private let messageLabel = UILabel()
-    private var leadingConstraint: NSLayoutConstraint!
-    private var trailingConstraint: NSLayoutConstraint!
+    private var userLeadingConstraint: NSLayoutConstraint!
+    private var userTrailingConstraint: NSLayoutConstraint!
+    private var assistantLeadingConstraint: NSLayoutConstraint!
+    private var assistantTrailingConstraint: NSLayoutConstraint!
     private var maxWidthConstraint: NSLayoutConstraint!
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -510,14 +512,15 @@ final class ConversationMessageCell: UITableViewCell {
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         bubbleView.addSubview(messageLabel)
 
-        leadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)
-        trailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
+        userLeadingConstraint = bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.layoutMarginsGuide.leadingAnchor, constant: 44)
+        userTrailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
+        assistantLeadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)
+        assistantTrailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
         maxWidthConstraint = bubbleView.widthAnchor.constraint(lessThanOrEqualTo: contentView.widthAnchor, multiplier: 0.82)
 
         NSLayoutConstraint.activate([
             bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 7),
             bubbleView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -7),
-            maxWidthConstraint,
             messageLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 12),
             messageLabel.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -12),
             messageLabel.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 9),
@@ -532,22 +535,16 @@ final class ConversationMessageCell: UITableViewCell {
 
     func configure(with message: ConversationMessage) {
         messageLabel.text = message.text
+        NSLayoutConstraint.deactivate([userLeadingConstraint, userTrailingConstraint, assistantLeadingConstraint, assistantTrailingConstraint, maxWidthConstraint])
         switch message.role {
         case .user:
             bubbleView.backgroundColor = .secondarySystemBackground
             bubbleView.layer.cornerRadius = 18
-            leadingConstraint.isActive = false
-            trailingConstraint.isActive = true
-            maxWidthConstraint.isActive = true
+            NSLayoutConstraint.activate([userLeadingConstraint, userTrailingConstraint, maxWidthConstraint])
         case .assistant:
             bubbleView.backgroundColor = .clear
             bubbleView.layer.cornerRadius = 0
-            trailingConstraint.isActive = false
-            leadingConstraint.isActive = true
-            maxWidthConstraint.isActive = false
-            if !bubbleView.trailingAnchor.constraintsAffectingLayout(for: .horizontal).contains(where: { $0.firstAnchor === bubbleView.trailingAnchor && $0.secondAnchor === contentView.layoutMarginsGuide.trailingAnchor }) {
-                bubbleView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor).isActive = true
-            }
+            NSLayoutConstraint.activate([assistantLeadingConstraint, assistantTrailingConstraint])
         }
     }
 }

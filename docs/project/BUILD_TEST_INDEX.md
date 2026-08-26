@@ -25,14 +25,14 @@ Runnable/distributable product artifacts are IPA files intended for TrollStore. 
 | `DEV-auth-bootstrap-0.1.0-b5` | `DEV-auth-bootstrap` | `0.1.0 (5)` | `dev/auth-bootstrap-20260826` / PR #6 merged | `c09f981171b02dc8a4f0d8ada4624bd779c68c2f` | Code written; CI passed; artifact produced; runtime/manual/real-device tested | Run `32932389742`; artifact ID `9593649485`; IPA SHA-256 `d9a22635cc6ac05d2ba09a0a627eaa74d38d1a690b5e9affe2f318d2aa204f15` | First direct session probe HTTP 403; later direct probe `/api/auth/session` HTTP 200 + accounts-check HTTP 200, then obsolete parser failed `missing_default_account`. | Transport evidence accepted; parser superseded |
 | `DEV-auth-bootstrap-0.1.0-b6` | `DEV-auth-bootstrap` | `0.1.0 (6)` | `dev/auth-bootstrap-20260826` / PR #6 merged | **`19c0cd22923d8c6f4c96e676258b31814d02a942`** | **Code written; CI passed; artifact produced; runtime/manual/real-device tested** | **Run `32934821144`; artifact ID `9594474567`; IPA `ChatGPTClient-0.1.0-b6-dev-auth-bootstrap.ipa`; IPA SHA-256 `c7109f691c1de675ef55da1a08695c10663b62030853453ee2fafd01fb070c8b`; ZIP digest `sha256:68c7cfc6667c362c79900be1cf46154a76aa3a363649b1995ff02a5d83b88d85`** | First attempt session HTTP 403; after user-triggered `重新开始`, second attempt session/accounts HTTP 200, ordered plus/personal account verified. | **Stable / accepted / merged auth-account baseline** |
 | `DEV-protocol-read-0.1.0-b7` | `DEV-protocol-read` | `0.1.0 (7)` | `dev/protocol-read-20260826` / PR #7 merged at `6208102eb3df79a1916b356cc95ff7916ff8f593` | **`44a137b973e29e2a313e9114fdacb7727dccefb9`** | **Code written; CI passed; artifact produced; runtime/manual/real-device tested** | **Push run `32938912018`; artifact ID `9595827498`; IPA `ChatGPTClient-0.1.0-b7-dev-protocol-read.ipa`; IPA SHA-256 `64b0cc055bc9da27bc887698ba18ae5cb2cc0fdb9f15a3a59eb09e55c5fcb4ae`; ZIP digest `sha256:c1d851dc949a43587f94fffd34b35c233ff5f35a2c8eef3399d2e722a9f7833f`** | Exact export on iPhone / iOS 17.0: first account/session attempt 403; after explicit `重新开始`, account context verified. List GET HTTP 200 with 28/29 items; first detail HTTP 200, 13,152,411 bytes, mapping 2068/message 2067, current node mapped and identity matched; probe `status=ok` in 13,573.66 ms. | **Stable / accepted / merged conversation-read evidence** |
-| `DEV-native-read-path-0.1.0-b8` | `DEV-native-read-path` | `0.1.0 (8)` | `dev/native-read-path-20260826` / PR not created | `5b4b35287d31b0cf94e74ae927b912255a87ae2c` initial CI source | Code written; CI in progress / not yet accepted | Reserved artifact `ChatGPTClient-0.1.0-b8-dev-native-read-path.ipa`; exact artifact ID/hash pending | Runtime/manual/real-device test pending | **Allocated / Active candidate** |
+| `DEV-native-read-path-0.1.0-b8` | `DEV-native-read-path` | `0.1.0 (8)` | `dev/native-read-path-20260826` / draft PR #9 | **`e312acc3dd17cdcdb01746bb76f70556510a0304`** | **Code written; CI passed; artifact produced** | **Run `32976656499`; artifact ID `9609766005`; IPA `ChatGPTClient-0.1.0-b8-dev-native-read-path.ipa`; IPA SHA-256 `50bfb7453443c41de8661c1ffc3e2a7076fd939fe62453aceacb599371862acd`; ZIP digest `sha256:a098465a336e99e9a3da281a22eb8864d58e52f4f0a5d62f8fa6ab05aed63817`** | Runtime/manual/real-device test pending | **Active Candidate; not Stable/Frozen** |
 
 ## Foundation facts
 
-- CI runner: GitHub-hosted `macos-15`; accepted b6 and b7 runs used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
+- CI runner: GitHub-hosted `macos-15`; accepted b6/b7 and b8 build used Xcode 16.4 (`16F6`) and iPhoneOS SDK 18.5.
 - Compile target remains `arm64-apple-ios14.0`.
 - Foundation PR #5 merged at `9e7a06801715b0002d3e9a720d57041e830b776e`.
-- Runtime validation currently covers iPhone / iOS 17.0; lower iOS versions and iPad remain unverified.
+- Runtime validation currently covers iPhone / iOS 17.0 for accepted b1/b6/b7 evidence; b8 runtime is still pending. Lower iOS versions and iPad remain unverified.
 
 ## Auth-bootstrap facts
 
@@ -53,6 +53,14 @@ Runnable/distributable product artifacts are IPA files intended for TrollStore. 
 - Screenshot title `会话列表 · 会话详情通过` agrees with the export.
 - PR #7 merged the accepted implementation and durable evidence into `main` at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
 - This accepts the exact personal-account list + one-detail read scope only. Send/streaming/attachments, non-personal workspaces, lower iOS and iPad remain unverified.
+
+## Native-read b8 facts
+
+- Candidate identity: `DEV-native-read-path-0.1.0-b8`, version/build `0.1.0 (8)`.
+- Initial source `5b4b35287d31b0cf94e74ae927b912255a87ae2c` run `32976295840` failed compile on a message-cell layout-constraint API misuse; it produced no artifact.
+- Minimal source correction `e312acc3dd17cdcdb01746bb76f70556510a0304` passed Release build, IPA inspection and upload in run `32976656499`.
+- Artifact ID `9609766005`; IPA SHA-256 `50bfb7453443c41de8661c1ffc3e2a7076fd939fe62453aceacb599371862acd`; artifact ZIP digest `sha256:a098465a336e99e9a3da281a22eb8864d58e52f4f0a5d62f8fa6ab05aed63817`.
+- This proves compile/package identity only. Native list/detail/message behavior, compact-width navigation, retained auth behavior and large-detail performance remain runtime/manual/real-device unverified.
 
 ## Uniqueness rule
 

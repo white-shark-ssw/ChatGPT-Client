@@ -8,7 +8,7 @@ This file contains rules specific to this repository/product. Populate/change th
 - The previous-project history pack is reference material only; it is not current source or current protocol documentation.
 - The durable ordered implementation roadmap lives in `docs/project/DEVELOPMENT_PLAN.md`.
 - `DEV-app-foundation-0.1.0-b1` is the accepted Stable foundation baseline.
-- `DEV-auth-bootstrap-0.1.0-b6` is the accepted current authentication/account-context runtime candidate for iPhone / iOS 17.0, pending PR #6 integration.
+- `DEV-auth-bootstrap-0.1.0-b6` is the accepted current authentication/account-context runtime baseline for iPhone / iOS 17.0 and is integrated into `main` through PR #6 / merge commit `78f42a06e6254088e3b495cb4529e549a1d4717f`.
 
 ## Repository governance contract
 
@@ -21,8 +21,9 @@ This file contains rules specific to this repository/product. Populate/change th
 - Do not implement ChatGPT private/internal Web API behavior from historical endpoint names, old shapes or memory alone.
 - Before implementing a protocol capability, establish current evidence for URL/path, method, authentication/account context, headers, body, response/stream shape, IDs/state semantics and failure behavior as applicable.
 - Current evidence wins over historical notes.
-- The auth/account-context entry gate for future `DEV-protocol-read` is satisfied by accepted b6 evidence, but conversation-list/detail/streaming protocol remains Unknown / Unverified until separately tested.
+- The auth/account-context entry gate for `DEV-protocol-read` is satisfied and integrated, but conversation-list/detail/streaming protocol remains Unknown / Unverified until separately tested.
 - Native `/auth/login` success/failure is authentication-route evidence only; it is not proof of conversation-list/detail endpoints or their required context.
+- Protocol diagnostics must not log or export full conversation/message bodies. Prefer item counts, structural key/count metadata, pagination/status fields, timings, MIME/type and hashed identifiers.
 
 ## Authentication contract
 

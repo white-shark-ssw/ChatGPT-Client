@@ -7,9 +7,63 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Product goal: **iOS native ChatGPT client**.
 - Previous-project history is reference-only, not current protocol authority.
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
+- Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
+- Product delivery priority: **reach a genuinely usable TrollStore client as early as possible, then iterate in real-device candidates instead of waiting for the whole roadmap to finish**.
 - Accepted foundation baseline: `DEV-app-foundation-0.1.0-b1`.
 - Accepted auth/account baseline: `DEV-auth-bootstrap-0.1.0-b6`, merged through PR #6.
 - Accepted current conversation-read baseline: `DEV-protocol-read-0.1.0-b7` for the tested Plus/personal list + one-detail path on iPhone / iOS 17.0, merged through PR #7 at `6208102eb3df79a1916b356cc95ff7916ff8f593`.
+
+## UI / interaction contract
+
+- The **official ChatGPT iOS interaction model is the default baseline** where the user considers it acceptable. Do not invent a separate UI language merely to be different.
+- This is an interaction/behavior baseline, not a pixel-perfect copying requirement. Prefer native UIKit/system behavior compatible with the current deployment target.
+- The user's recordings are visual reference for sidebar/navigation, conversation layout, composer, send/stop state, assistant message layout/actions, menus/sheets, project-style navigation patterns, and reasoning presentation.
+- `导出 Markdown` visible in the user's recording is **not an official-App feature**; it came from the user's injected dylib. Treat Markdown export as our enhancement, not official interaction evidence.
+- Preserve the official-style reasoning interaction when current protocol supplies user-visible reasoning status/detail: subdued gray active state with shimmer/flowing-light treatment; tappable expand/collapse detail; completed static summary such as `思考了 Xs` when duration is available; final answer below.
+- Only display reasoning summary/detail/tool-status explicitly returned for user display. Never manufacture, infer or expose hidden chain-of-thought.
+- The user explicitly requires the official-style **two short haptic pulses** at the real-time reasoning -> final-answer transition. Exact intensity/spacing must be real-device tuned; trigger from response lifecycle state, not cell redraw, and do not replay merely because completed content is reloaded.
+- Keep ordinary conversation actions inside official-style overflow/context menus rather than crowding the main navigation bar.
+- UI text/title remains a consumer, never an identity authority.
+
+## Fast usable candidate contract
+
+- Do not hold usable functionality until all roadmap phases are complete.
+- As soon as a coherent minimal user loop reaches its real artifact/test gate, produce a uniquely identified TrollStore candidate and let real-device evidence guide subsequent work.
+- First planned usability milestones are:
+  - **V0.1 read-use**: official-style native shell + conversation list/detail/message rendering + manual sync/reload.
+  - **V0.2 chat-use**: V0.1 + text send/new conversation + streaming + stop + user-visible reasoning interaction + reasoning-to-final haptics + manual recovery integration.
+  - **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and daily-use conversation features.
+- Candidate labels must still obey `BUILD_TEST_INDEX.md` uniqueness and evidence separation; speed does not justify mixing identities or calling CI/artifact success runtime proof.
+
+## Manual recovery contract
+
+### `同步最新消息`
+
+- This is an explicit user-triggered recovery tool for when server state may be ahead of local stream/thinking state, including the observed class where the server has completed and a completion notification may have arrived while the client still shows thinking/streaming.
+- Use the current authoritative conversation identity to fetch current server detail and reconcile through the production conversation owner.
+- It must not resend the user's prompt, regenerate, create a new conversation or enter an automatic retry loop.
+- If server detail shows completion, stale local thinking/streaming UI should be replaced by the current server-backed completed state.
+
+### `重载当前会话`
+
+- This is a user-triggered recovery tool for current-conversation load failure, timeout, blank/spinning state or otherwise unusable local conversation state.
+- Re-request current conversation detail and rebuild that conversation through the authoritative conversation owner.
+- Provide a direct `重新加载` action in terminal load-error UI; a manual conversation-menu entry may also exist for loaded-but-broken/stale state.
+- Preserve unsent composer draft when practical; never resend existing messages.
+- Do not turn reload into an automatic retry/watchdog chain.
+
+### Recovery diagnostics
+
+- Log safe start/end/status/timing/count/diff/state-transition evidence sufficient to distinguish server-state, local merge/store and UI-render failures.
+- Never log message bodies, raw payloads or auth secrets.
+
+## Markdown export contract
+
+- `导出 Markdown` is a project enhancement historically useful to the user through an injected dylib, not an official ChatGPT iOS feature.
+- Export from the authoritative conversation model/current user-visible branch, never from mounted UI cells.
+- Preserve useful Markdown structure/code blocks and supported visible attachment references.
+- Do not export hidden/internal reasoning/tool content that is not user-visible.
+- Place the action naturally in the official-style conversation menu and use normal iOS share/file presentation.
 
 ## Repository governance contract
 
@@ -72,6 +126,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - b7 list/detail success must not be generalized to send/streaming/attachments or non-personal workspaces.
 - The observed 13.57 s protocol-probe total is end-to-end only. Do not label network, parsing or rendering as the bottleneck without phase-specific timing evidence.
 - The observed 13.15 MB / 2068-node detail is a current real-world input. `DEV-native-read-path` must not assume tiny conversations or naive all-view materialization.
+- Manual sync/reload must operate through the production conversation state owner rather than creating competing stores or identities.
+- Response transition haptics must be tied to lifecycle state transitions rather than rendering callbacks.
 
 ## Frozen business or architecture rules
 
@@ -92,6 +148,8 @@ Follow existing repository style until explicit project-specific constraints are
 - Do not reintroduce `accounts.default.account.id` without new evidence.
 - Do not preemptively add `chatgpt-account-id`, duplicate browser headers, fallback conversation endpoints or compatibility shims to the accepted personal-account read path.
 - Do not turn the diagnostic `ProtocolReadProbe` into the production conversation repository by convenience.
+- Do not treat the injected Markdown menu shown in the reference recording as official-App behavior.
+- Do not block the first usable client on Projects, Voice, attachments, advanced search or broad future feature completeness.
 
 ## Historical reference
 

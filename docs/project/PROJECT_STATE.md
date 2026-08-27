@@ -10,71 +10,94 @@ _Last updated: 2026-08-27._
 - `DEV-native-read-path-0.1.0-b9`: merged Stable production native-read baseline for tested scope.
 - `DEV-conversation-recovery-0.1.0-b15`: **merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope**. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
 
-`DEV-multi-conversation-state` remains Active. b17 has accepted core real-device multi-conversation evidence but reproduced the P1 per-conversation scroll-anchor defect. b18 is now the exact identity-valid correction Candidate with Code + static/source review + CI + Artifact evidence; b18 Runtime/manual/real-device validation is pending. The merged Stable baseline remains b15 until this Work completes and merges.
+`DEV-multi-conversation-state` remains Active. b17 has accepted core multi-conversation Runtime evidence and reproduced the historical-scroll defect. Exact b18 now has Code + static/source + CI + identity-valid Artifact + **real-device historical-scroll Runtime acceptance for the tested iPhone/iOS17 matrix**. The Work is still not Stable/Frozen because failure/account-switch/normal-LRU and one isolated replacement gate remain open.
+
+Current `main` head is `2c33dacbefa613292eb89cbf606b0172a241e81e`. It advanced after b18 Artifact through docs-only message-timestamp planning (`DEVELOPMENT_PLAN.md`, `START_HERE.md`, `UI_INTERACTION_BASELINE.md` only); exact b18 product/runtime evidence remains tied to source `f30c13b4ac2c40dcda829585682825ca906dceae` and is not invalidated. Synchronize before final merge.
 
 ## Recovery completion
 
 Final candidate: `DEV-conversation-recovery-0.1.0-b15`, version `0.1.0 (15)`.
 
 - Product/config head `159e8ea4f7baf6cd890d1f9bbebeac41feefbf52`.
-- Tested synthetic merge `fb0c6d75362e111758b62a98f89696b7f1cb6c92`; tree `7a988bcad27d023eac77683985c5d7d92b22c176`.
 - CI Run `33004536664`; Artifact `9619988065`.
-- IPA `ChatGPTClient-0.1.0-b15-dev-conversation-recovery.ipa`; SHA `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`; ZIP `sha256:cf4e8bce5a80bdd86bd9b8457b86c7a41de65d762c6ee158422760538faa50a7`.
+- IPA SHA `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`.
 - Validation: **Code + static/source review + CI + Artifact + Runtime/manual/real-device accepted**.
 
 ## Active Work — DEV-multi-conversation-state
 
-- **Work / branch**: `DEV-multi-conversation-state` on `dev/multi-conversation-state-20260827`; PR not created.
-- **Baseline/conflict gate**: `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; no open PR; no second Active DEV checkpoint at b18 publication.
+- **Branch / PR**: `dev/multi-conversation-state-20260827`; PR not created.
 - **b16**: historical/rejected before runtime; never reuse.
-- **b17**: exact source `bc69d58b3245a1ab21b250e16612c11d39ddbf33`; tree `3451585f83c7bac69368709fe6273b90a0294d29`; Run `33045536770`; Artifact `9635486304`; core real-device resident/coalescing/hidden-Sync/rapid-overlap sequences accepted; P1 scroll defect reproduced.
-- **Current exact Candidate**: `DEV-multi-conversation-state-0.1.0-b18`, version `0.1.0 (18)`.
-- **Exact b18 product/config source**: `f30c13b4ac2c40dcda829585682825ca906dceae`; tree `c2797f05a8b8c43bdd1a5064177e3b7c49606614`.
-- **Atomic publication**: built off parent `49be4de3b2918ae72b22e3de7a386136d92c2523`; exact diff contains only workflow, Xcode project, `ConversationFeature.swift`, and `scripts/build_ipa.sh`; branch ref moved once.
-- **b18 implementation**: per-conversation lightweight historical-reading presentation anchor in `ConversationDetailViewController`, represented by message identity + relative visual offset. The actually displayed conversation is tracked separately from repository selection so outgoing A can be captured before rows become B. No global raw offset copying. Missing/new target starts at top. Account reset clears anchors. Sync/Reload preserve the anchor only when the same anchored message remains in the refreshed current branch.
-- **Ownership boundary**: `ConversationRepository`, auth owner, network/protocol paths and current-node data ownership are unchanged. No fake Send/Stream response owner, `isStreaming`, timer, retry, fallback, watchdog, or speculative follow-tail state was introduced.
-- **Diagnostics**: privacy-safe `scrollAnchor.saved`, `scrollAnchor.restored`, and `scrollAnchor.discarded`; no raw message IDs/bodies/titles/secrets.
-- **CI**: Run `33054012226`, Job `98456174184`, success; exact checkout `f30c13b4ac2c40dcda829585682825ca906dceae`; Xcode16.4; Release compile target `arm64-apple-ios14.0`; exact b18 candidate/source inputs; `BUILD SUCCEEDED`.
-- **Artifact**: `9638821912`, name `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b18`; ZIP digest `sha256:36b59b8c4d3bdcadedd463a3554528452ff46478651671b50f4bd9f7fa2b5d2c`.
-- **IPA**: `ChatGPTClient-0.1.0-b18-dev-multi-conversation-state.ipa`; SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`; independent hash matches sidecar.
-- **Embedded identity**: `0.1.0 (18)`, candidate b18, source `f30c13b4ac2c`, min iOS14.0, device families `[1,2]`, Mach-O arm64.
-- **Validation**: `Code written = Yes`; `Static/source = Passed`; `CI = Passed`; `Artifact = Produced and identity accepted`; `Runtime/manual/real-device = Pending`; `Stable/Frozen = No`.
+- **b17**: exact source `bc69d58b3245a1ab21b250e16612c11d39ddbf33`; Run `33045536770`; Artifact `9635486304`; core resident/coalescing/hidden-Sync/rapid-overlap Runtime accepted; P1 historical-scroll defect reproduced.
+- **Current exact Candidate**: `DEV-multi-conversation-state-0.1.0-b18`, `0.1.0 (18)`.
+- **Product/config source**: `f30c13b4ac2c40dcda829585682825ca906dceae`; tree `c2797f05a8b8c43bdd1a5064177e3b7c49606614`.
+- **Implementation**: lightweight per-conversation historical-reading anchor in `ConversationDetailViewController`, represented by message identity + relative visual offset. No global raw offset; no second conversation/response owner. Account reset clears anchors. Sync/Reload preserve only if the same anchor message remains.
+- **Ownership boundary**: `ConversationRepository`, `AuthSessionStore`, protocol/network routes and current-node authority are unchanged. No fake Send/Stream state, retry, timer, fallback, watchdog or global rate limiter.
+- **CI**: Run `33054012226`, Job `98456174184`, success; Xcode16.4; `arm64-apple-ios14.0`; exact b18 candidate/source.
+- **Artifact**: `9638821912`; ZIP `sha256:36b59b8c4d3bdcadedd463a3554528452ff46478651671b50f4bd9f7fa2b5d2c`.
+- **IPA**: `ChatGPTClient-0.1.0-b18-dev-multi-conversation-state.ipa`; SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`.
+- **Exact real-device identity**: iPhone / iOS17.0 / candidate b18 / build 18 / source `f30c13b4ac2c`.
+
+### b18 real-device result
+
+User executed the requested matrix and reported no issue. Diagnostic review records:
+
+- 195 events, all level `info`;
+- 21 `scrollAnchor.saved`, 19 `scrollAnchor.restored`;
+- 17 `resident.hit`, 17 `resident.firstVisible`;
+- all 17 recorded HTTP statuses are HTTP200;
+- no error, no HTTP429, no `scrollAnchor.discarded` in this run.
+
+Accepted for the observed/tested scope:
+
+- A -> B -> A restores A's historical semantic/visual anchor.
+- A and B preserve independent anchors over repeated switching.
+- first-time third conversation does not inherit prior A/B offset.
+- visible Sync preserves anchor when anchored message remains.
+- B Sync survives B -> A -> B and re-coalesces to the same active target operation before hidden HTTP200 completion.
+- Reload A preserves the same anchor after HTTP200 when anchored message remains.
+- resident return still avoids navigation-only Detail refetch.
+
+Runtime-unexercised conditional path: anchored message disappearance -> `scrollAnchor.discarded` -> top. No destructive branch mutation was manufactured solely to trigger it.
+
+### Validation labels
+
+- **Code written**: Yes.
+- **Static/source checks**: Passed.
+- **CI passed**: Yes.
+- **Artifact produced**: Yes, identity accepted.
+- **Runtime/manual/real-device**: **Passed for exact b18 historical-scroll/Sync/Reload-preservation/resident-regression matrix on iPhone/iOS17**.
+- **Stable/Frozen**: **No**.
 
 ## Current architecture
 
-### Accepted Stable baseline
-
 - `AppDelegate`: lifecycle plus accepted WebKit warm-up-before-root sequencing.
 - `RootViewController`: native compact list/detail navigation owner.
-- `ConversationRepository`: authoritative conversation data/read/recovery owner.
-- `ConversationSidebarViewController`: list presentation/initial list request.
-- `ConversationDetailViewController`: detail/messages, recovery presentation, and Active-branch lightweight scroll presentation metadata.
-- Default `WKWebsiteDataStore`: sole persistent auth-secret authority.
+- `ConversationRepository`: sole authoritative conversation data/read/recovery owner with account-scoped per-conversation residents/operations.
+- `ConversationDetailViewController`: detail/messages/recovery presentation plus lightweight per-conversation historical scroll presentation metadata.
+- Default persistent `WKWebsiteDataStore`: sole persistent auth-secret authority.
 - `AuthSessionStore`: sole account/auth context owner.
-
-### Active multi-conversation direction
-
-- One `ConversationRepository` owns account-scoped per-conversation resident and async-operation state; foreground selection is presentation only.
-- Current resident scope key is `userID + accountID + conversationID`; non-personal workspace identity remains Unknown / Unverified.
-- `current_node` is retained as minimum directly evidenced branch-tip metadata; raw mapping payload is discarded.
-- UIKit presentation metadata is not conversation-data authority.
-- b18 historical scroll state is per conversation and lightweight. Future active-response `follow-tail` eligibility must consume a real per-conversation Send/Stream response owner and is not implemented in b18.
+- Historical anchor and future active-response `follow-tail` are distinct. Follow-tail must consume the future authoritative per-conversation Send/Stream response owner; b18 does not implement fake response activity.
 
 ## Delivery / serialized direction
 
 1. `DEV-conversation-recovery` — Completed / merged / Stable b15.
-2. `DEV-multi-conversation-state` — Active; b18 exact runtime Candidate now ready for device validation of semantic scroll restoration.
-3. `DEV-conversation-round-count` / preferences integration.
-4. `DEV-send-stream`.
-5. Markdown export, long-conversation tuning, attachments and remaining daily-use work.
+2. `DEV-multi-conversation-state` — Active; b18 historical scroll Runtime accepted; remaining owner/memory acceptance below.
+3. Continue durable post-recovery roadmap from current `DEVELOPMENT_PLAN.md`; current `main` also contains message-timestamp/display-preference planning.
+4. `DEV-send-stream` remains the point where real response ownership/follow-tail can become runtime-testable.
 
 ## Known issues / open acceptance
 
-- b18 needs exact iPhone/iOS17 runtime proof for A≈10% -> B scroll -> A restoring the same semantic/visual point, independent A/B anchors, first-time target top behavior, and Sync/Reload anchor preservation when the anchored message remains.
-- Account-context purge/late-callback isolation still requires a real supported account-switch/logout route before Runtime acceptance.
-- Normal-operation resident/LRU bound remains Unknown until real process/system memory evidence; approximate visible-text bytes are not memory-capacity evidence.
-- Runtime below iOS17, iPad, non-personal workspace, send/streaming and attachments remain Unknown / Unverified as applicable.
+- Isolated same-target Reload replacement while an older Detail is actually in flight remains open as a multi-conversation regression spot-check; b15 remains accepted replacement-under-load baseline.
+- Terminal failed resident navigation with no implicit retry remains open until a natural terminal failure is available.
+- Supported account-context purge/late-callback isolation still requires a real supported account-switch/logout route.
+- Normal resident/LRU capacity remains Unknown until real **process/system memory** evidence; approximate visible-text bytes are not capacity evidence.
+- Missing-anchor-message discard is source/CI-defined but not runtime exercised in b18.
+- Runtime below iOS17, iPad, non-personal workspace, Send/Stream and attachments remain Unknown / Unverified as applicable.
 - No XCTest/UI-test target exists.
+
+## Next exact action
+
+Collect real iPhone process/system memory evidence while several small and large conversations remain resident and are repeatedly switched. Do not choose normal LRU capacity from approximate visible-text bytes. Do not change product code solely to guess a capacity before that evidence exists.
 
 ## Evidence rule
 

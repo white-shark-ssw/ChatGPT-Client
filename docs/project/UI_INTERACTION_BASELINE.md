@@ -128,6 +128,34 @@ When Markdown/code rendering exists:
 - code Copy copies the block's code content, not surrounding prose/cell decorations;
 - whole-message Copy remains available unless a later explicit interaction decision changes it.
 
+## Conversation entry / reading-position behavior
+
+The official-style default is **latest-message first**, while the multi-conversation presentation owner preserves an already-established reading position.
+
+### First entry with no local reading anchor
+
+- When a loaded conversation becomes visible and this process has no valid saved semantic reading anchor for that conversation, present the **latest message / bottom of the current visible branch** by default.
+- Do not present the first historical message merely because `UITableView` begins at offset zero.
+- The loading/empty placeholder position is not a reading position and must not be captured as an anchor.
+- For a long conversation, initial latest-message placement should appear at the final position without visibly animating through hundreds/thousands of historical rows.
+- This applies equally when Detail finished while the conversation was hidden and the conversation is later shown for the first time without an established reading anchor.
+
+### Return to an already-read conversation
+
+- Once a real semantic reading anchor has been captured for A, switching A -> B -> A restores A's anchor rather than forcing A to the bottom.
+- B maintains its own independent reading anchor; selecting/jumping/scrolling B never mutates A's saved position.
+- Sync/Reload/current-branch replacement should preserve an established anchor through the same presentation owner when it is still resolvable; they are not treated as fresh first-entry events.
+- If authoritative replacement makes an old anchor impossible to resolve, discard the obsolete anchor explicitly. Do not silently treat a raw top offset as a new authoritative reading position.
+
+### Future streamed content
+
+When Send/Stream exists, latest-message follow behavior extends these semantics:
+
+- if the user is already at/near the latest edge, new streamed content may keep following the active answer naturally;
+- if the user deliberately scrolls upward to inspect history, streaming must not continuously steal the viewport back to the bottom;
+- switching to another conversation never cancels the hidden conversation's response merely because its viewport is no longer visible;
+- exact near-bottom threshold/follow-tail state is owned by `DEV-send-stream` and requires real-device tuning.
+
 ## Quick previous / next answer navigation
 
 This is a user-required long-conversation enhancement and is optional through settings.
@@ -344,6 +372,7 @@ UI remains a consumer of authoritative state.
 - Round count is derived from authoritative active branch.
 - Message timestamp display is derived from the authoritative message timestamp where available; the display toggle is preference state, not message state.
 - Copy reads authoritative user-visible message/block content and never hidden reasoning/tool/system payloads.
+- First-entry latest-message placement and returned-conversation semantic restoration are two states of the same per-conversation presentation owner; raw loading/top offsets are not a second reading-position authority.
 - Answer-jump anchors are a lightweight derived presentation index over the authoritative visible active branch; they are rebuilt after authoritative message projection changes.
 - Per-conversation semantic scroll state remains owned by the existing conversation presentation owner; quick navigation cannot introduce a competing saved-offset store.
 - Stream/reasoning state belongs to owning conversation/response lifecycle.
@@ -356,6 +385,8 @@ UI remains a consumer of authoritative state.
 ## Validation expectations
 
 Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior, adaptive answer-jump behavior, Copy, attachment transfer and persistent list-cache/preview behavior require their own runtime acceptance as applicable.
+
+For conversation entry/scroll behavior, real-device validation should include: first entry into a long unloaded conversation lands at the latest message without visible top-to-bottom traversal; first display of a hidden-completed Detail with no saved anchor also lands at latest; A -> B -> A restores A's previously established semantic reading position; loading placeholders never overwrite that anchor behavior.
 
 For answer navigation, real-device validation should include a long conversation, repeated upward/downward direction changes, first/last-boundary behavior, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
 

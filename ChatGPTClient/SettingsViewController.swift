@@ -23,20 +23,20 @@ final class AppPreferences {
 
     var showsConversationRoundCount: Bool {
         get { defaults.bool(forKey: Key.showsConversationRoundCount.rawValue) }
-        set { set(newValue, for: .showsConversationRoundCount) }
+        set { setPreference(newValue, for: .showsConversationRoundCount) }
     }
 
     var showsMessageTimestamps: Bool {
         get { defaults.bool(forKey: Key.showsMessageTimestamps.rawValue) }
-        set { set(newValue, for: .showsMessageTimestamps) }
+        set { setPreference(newValue, for: .showsMessageTimestamps) }
     }
 
     var showsAnswerQuickNavigation: Bool {
         get { defaults.bool(forKey: Key.showsAnswerQuickNavigation.rawValue) }
-        set { set(newValue, for: .showsAnswerQuickNavigation) }
+        set { setPreference(newValue, for: .showsAnswerQuickNavigation) }
     }
 
-    private func set(_ value: Bool, for key: Key) {
+    private func setPreference(_ value: Bool, for key: Key) {
         guard defaults.bool(forKey: key.rawValue) != value else { return }
         defaults.set(value, forKey: key.rawValue)
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)

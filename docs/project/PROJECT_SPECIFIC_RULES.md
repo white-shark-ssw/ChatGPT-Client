@@ -12,6 +12,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
 - Accepted merged multi-conversation read-state baseline is `DEV-multi-conversation-state-0.1.0-b21` for the recorded Plus/personal iPhone/iOS17 scope; PR #23 merged. Stable, not Frozen.
 - Accepted merged conversation-list cache-core baseline is `DEV-conversation-list-cache-core-0.1.0-b23` for the recorded Plus/personal iPhone/iOS17 scope; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. Stable, not Frozen.
+- `DEV-conversation-round-count-0.1.0-b25` is the current identity-valid metadata Runtime Candidate, not yet a Stable baseline because real-device Runtime validation is pending.
 
 ## UI / interaction contract
 
@@ -24,12 +25,27 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `导出 Markdown` is our enhancement, not official-App evidence.
 - Preserve user-required reasoning interaction/haptics only when current protocol supplies explicit user-visible material; never expose hidden chain-of-thought.
 
+## Conversation metadata / Preferences contract
+
+- Round count and previous/next answer navigation consume one `ConversationRoundProjection` derived from the authoritative visible active branch. Do not maintain a second mutable round counter or semantic answer index.
+- Each visible authoritative user message starts one round. The first following visible assistant message before the next visible user message is that round's answer anchor. Missing answers do not get fabricated anchors; hidden tool/reasoning/system nodes do not create rounds.
+- Recompute the lightweight projection when authoritative visible messages change; scrolling consumes the derived answer rows and must not rescan all messages on every callback.
+- `AppPreferences` is the first centralized persisted settings owner. Current Work defaults are: `显示会话轮数` On, `显示消息时间` On, `显示回答快速跳转` On. View controllers/cells must not invent separate preference keys/owners.
+- Message timestamps use authoritative historical `createTime`; if absent, omit rather than fabricate a current timestamp. Formatting uses current locale/time zone.
+- Copy reads only authoritative user-visible message text and uses the system pasteboard without network requests or message-state mutation. Hidden reasoning/tool/system content is never copied merely because it exists in protocol data.
+- Quick answer navigation uses one adaptive floating control, native animated table/scroll movement and real user-drag direction. Programmatic scrolling is not user drag intent; no timer-stepped fake animation or auto-hide watchdog.
+- Current source has no evidenced authoritative Chat/Work conversation-type owner. Until such an owner is proven, metadata may show verified `N轮` only; do not infer `聊天`/`工作` from title or other presentation text.
+- b25 has Code/static/CI/Artifact evidence only. Do not promote its visual/interaction behavior to Runtime accepted or Stable until exact b25 real-device testing is recorded.
+
 ## Fast usable candidate contract
 
 - Do not hold usable functionality until all roadmap phases complete.
 - Every testable candidate has a unique build/candidate/artifact identity and keeps Code / CI / Artifact / Runtime / Stable evidence separate.
 - Once a Candidate/Artifact identity has actually been produced, do not rebuild corrected product code under that same build/candidate identity.
 - When CI runs on every product/config push, all files that define one Candidate's product source, version/build, workflow and packaging identity must be committed atomically enough that one intended Candidate maps to one intended source/config tree.
+- Workflow Artifact container naming is not package identity proof. Before a Candidate enters Runtime, verify the actual built app `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA agree with the intended Work identity.
+- `scripts/build_ipa.sh` must not carry a stale per-Work Candidate default that can override Xcode project identity. The current packaging contract reads version/build/Candidate from the built app, rejects Candidate/version/build mismatch, derives the IPA work slug from the built Candidate and emits the identity-matched filename.
+- A package-identity failure permanently rejects/reserves that build even if Swift/Xcode compilation and Artifact upload succeeded. b24 is the current concrete example and must never be reused.
 
 ## Manual recovery contract
 

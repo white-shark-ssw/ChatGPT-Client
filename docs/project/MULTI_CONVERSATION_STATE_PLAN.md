@@ -1,6 +1,6 @@
 # Multi-Conversation State / Residency Plan
 
-_Last updated: 2026-08-27; refreshed through b20 title Runtime evidence and exact b21 Artifact._
+_Last updated: 2026-08-27; refreshed through exact b21 title Runtime acceptance._
 
 ## Purpose
 
@@ -75,7 +75,7 @@ Source proves the summary lookup itself was valid. The first loading path caused
 - Artifact: `9645439329`; ZIP `sha256:b3e2da46ce9ac99fc7028b7f5186476b3264c4a8c0323a426ee275b62c0d7d14`.
 - IPA: `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
 - Independent package identity: `0.1.0 (21)`, b21, source `6b50ead167bf`, minimum iOS14.0, `[1,2]`, arm64.
-- **Runtime/manual/real-device: Pending. Stable/Frozen: No.**
+- **Runtime/manual/real-device: Accepted for the requested first-unloaded-entry / re-entry / rapid A -> B -> C title matrix on tested iPhone/iOS17; user reported no issue. No new diagnostics export accompanied this acceptance. Stable/Frozen: No.**
 
 ## State ownership model
 
@@ -113,7 +113,7 @@ Current source uses `userID + accountID` for personal-account residency. Support
 - Every waiter terminates on success, failure, supersede or account invalidation.
 - No arbitrary global concurrency limit, retry, timer, watchdog or fallback without evidence.
 
-b17/b18 Runtime confirm independent overlap and same-target coalescing. b20 title failure did not invalidate these operation owners.
+b17/b18 Runtime confirm independent overlap and same-target coalescing. b20 title failure and b21 title correction do not change these operation owners.
 
 ## Resident navigation semantics
 
@@ -167,7 +167,7 @@ b20 proved that this must respect UIViewController first-load ordering. Current 
 
 `selectConversation(id:) -> loadViewIfNeeded() -> assign selected summary title -> showConversation(id:)`.
 
-This ensures neutral initialization happens before the selected title handoff. It does not create a second title owner/cache and does not change request or resident ownership.
+This ensures neutral initialization happens before the selected title handoff. Direct real-device testing now accepts the requested first-entry/re-entry/rapid A→B→C title matrix. It does not create a second title owner/cache and does not change request or resident ownership.
 
 ## Future follow-tail contract
 
@@ -202,20 +202,13 @@ Accepted:
 - b17 resident return / hidden completion / same-target coalescing / rapid switching / Sync return / rapid overlap for tested scope.
 - b18 historical A/B anchor restoration, independent anchors, first-time target isolation, visible Sync/Reload anchor preservation when same message remains, resident return and active Sync re-coalescing for tested scope.
 - b19 observed real process-footprint 0→8 resident matrix; no evidence for urgent normal LRU at 8 residents.
+- b21 first-unloaded-entry/re-entry/rapid A -> B -> C title lifecycle matrix; user reported no issue on the tested iPhone/iOS17 environment.
 
 Superseded/failing:
 
 - b20 first-unloaded-entry title presentation failed due first-view lifecycle overwrite.
 
-Pending on b21:
-
-1. first entry into an unloaded conversation shows its list-summary title immediately while `正在读取会话…` is visible;
-2. re-entering resident target remains correct;
-3. rapid unloaded A -> B -> C shows each selected title immediately;
-4. late A/B completion cannot overwrite current C title/content;
-5. resident return/historical scroll remain intact.
-
-Still open afterward:
+Still open:
 
 1. isolated same-target Reload replacement while older same-target Detail is actually in flight;
 2. terminal failed A remains failed across navigation with no implicit retry when a natural failure is available;
@@ -227,7 +220,7 @@ Conditional anchored-message disappearance remains source/CI-defined but Runtime
 
 ## Next exact action
 
-Install exact b21 on iPhone/iOS17 and test first unloaded entry plus rapid unloaded A -> B -> C title transitions. Do not mark Runtime accepted from CI/Artifact. If b21 passes, continue only remaining evidence-backed gates; do not invent LRU capacity or auth retry behavior.
+Use exact b21 on iPhone/iOS17 for the isolated same-target Reload replacement-under-load Runtime spot-check: start an unloaded/slow Detail and trigger `重载当前会话` before the older ordinary Detail finishes. Expected: the older same-target request is cancelled/superseded, the Reload becomes authoritative without stale overwrite or HTTP429 regression, and unrelated conversations remain independent. This tests existing code; do not allocate b22 unless a real defect appears.
 
 Before final PR/merge, synchronize with `main@3cbb5c9acce26c0004e1d78c9607f2361d83fe05` and preserve its planning docs. Re-run only validation materially affected by synchronized product source.
 

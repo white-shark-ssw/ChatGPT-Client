@@ -2,6 +2,28 @@
 
 This file is the repository-wide standing instruction for AI coding agents.
 
+## ChatGPT Completion Notification
+
+本项目启用项目级完成通知。
+
+每次新会话开始时，除项目原有启动资料外，还必须读取：
+
+`docs/automation/CHATGPT_NOTIFY_RULES.md`
+
+**每一个面向用户的最终回答都必须触发一次完成通知。** 不得按任务重要性、耗时、是否修改代码、回答长度或问答类型过滤。普通寒暄、简单事实问答和短澄清只要是最终回答也通知；中间进度/工具过程不单独通知；每个用户轮次最多一次。若用户在当前轮明确要求本轮不要通知，则遵从该当前指令。
+
+固定通知配置：
+
+- Hub repository: `white-shark-ssw/ChatGPT-Notify`
+- Channel PR: `#1`
+- Project name: `ChatGPT-Client`
+- Protocol: `BARK_NOTIFY_V1`
+- Bark group: `ChatGPT-Notify`（由通知中心强制设置）
+
+最终回答的执行顺序必须是：完成本轮工作与验证 → 准备最终回答 → 按 `docs/automation/CHATGPT_NOTIFY_RULES.md` 创建通知中心 PR #1 的顶层通知评论并立即擦除公开正文 → 再输出最终回答。
+
+Bark Key 只属于通知中心，不得在本业务仓库中索取、读取、记录、提交或持久化。通知失败不得伪造成成功，也不得降低本项目原有开发、验证、文档、安全或证据分级要求。
+
 ## 1. Start from repository truth
 
 Before changing code:
@@ -177,7 +199,7 @@ When a development task completes:
 3. remove only that task's current checkpoint;
 4. leave all other Active task checkpoints untouched.
 
-When a rules task completes, move durable rules to permanent rule files and reset only `CURRENT_WORK_RULES.md` to Idle.
+When a rules task completes, move durable rules to permanent files and reset only `CURRENT_WORK_RULES.md` to Idle.
 
 ## 15. Conflict priority
 

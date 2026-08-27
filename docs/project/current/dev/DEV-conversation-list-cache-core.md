@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — b23 real-device cache-core Runtime accepted for tested Plus/personal iPhone/iOS17 scope; ready for PR/merge preparation**
+**Active — b23 real-device cache-core Runtime accepted for tested Plus/personal iPhone/iOS17 scope; durable evidence synced; ready for PR/merge preparation**
 
 - **Work ID**: `DEV-conversation-list-cache-core`
 - **Routing aliases / keywords**: `持久化会话列表缓存核心 / 会话列表缓存核心 / 列表缓存 / conversation list cache core`
 - **Task**: Add the first account-scoped persistent conversation-list snapshot and rapid-relaunch automatic-refresh suppression behind the existing authoritative `ConversationRepository`.
-- **Baseline / synchronization**: branch was created from `main@76d88794e9bc0dff9860ace3ad496e319355ee08` and synchronized with current `main@846dad81e382e6b7a862f082ef5bc5d4ce617493` via two-parent merge `27a107b9f993302743e6cfb45800ed12c9499643`. Main was rechecked before b23 allocation and remains `846dad81e382e6b7a862f082ef5bc5d4ce617493` at this Runtime checkpoint.
-- **Working branch / PR**: `dev/conversation-list-cache-core-20260828`; PR not created. Branch head immediately before this Runtime-doc update: `6bf0156fa87ded90014195e1e20c69da5982cc95`.
+- **Baseline / synchronization**: branch was created from `main@76d88794e9bc0dff9860ace3ad496e319355ee08` and synchronized with `main@846dad81e382e6b7a862f082ef5bc5d4ce617493` via two-parent merge `27a107b9f993302743e6cfb45800ed12c9499643`. Main was rechecked before b23 allocation and remained unchanged at the b23 Runtime checkpoint.
+- **Working branch / PR / current head before this checkpoint update**: `dev/conversation-list-cache-core-20260828`; PR not created; durable-doc head `e83a26b956e4a91d003d710bf11be17f53cb2684`.
 - **Exact accepted Runtime Candidate**: `DEV-conversation-list-cache-core-0.1.0-b23` / `0.1.0 (23)`; exact product/config source `d2af0fc157f6e2d037636c55f963c18071a332d5`; corrected product source `7bb6d116d785614dccf0e2a2b412d2823ad583e1`.
 - **Exact b23 CI / Artifact**: Run `33101116431`, Job `98618762016`, success; Artifact `9658508764`; outer ZIP `sha256:fa57e557a484f98b06753ce3f09fe4cdd89d390ea00a8778e052a518a560776b`; IPA `ChatGPTClient-0.1.0-b23-dev-conversation-list-cache-core.ipa`; IPA SHA `8f6911616fff1e93885191fcaec0f31a1e3c9488b7f4522fdbdb7dc5518be516`. Package inspection: `0.1.0 (23)`, arm64, minimum iOS14.0, device families `[1,2]`, Candidate/source metadata match `d2af0fc157f6`.
 - **Historical b22**: `DEV-conversation-list-cache-core-0.1.0-b22` remains permanently reserved and Runtime-partial/failing. It proved disk snapshot write/read, 60-second `recent_skip`, stale one-refresh and manual-bypass mechanics, but visible cache publication happened only after ~4.4–5.0s account verification, offline auth failure bypassed cache, and manual refresh lacked explicit terminal UI feedback. Corrected code must never reuse b22.
@@ -55,6 +55,19 @@ Still **Unknown / Unverified** unless naturally exercised later:
 
 These conditional boundaries do not contradict the accepted tested b23 scope and do not justify manufacturing fake account transitions or corrupting user data solely to fill a matrix cell.
 
+## Durable documentation synchronized in this Runtime cycle
+
+Updated on this task branch from exact b23 evidence:
+- `docs/project/BUILD_TEST_INDEX.md`
+- `docs/project/CONVERSATION_LIST_CACHE_PLAN.md`
+- `docs/project/MODULE_STATUS.md`
+- `docs/project/PROJECT_SPECIFIC_RULES.md`
+- `docs/project/PROJECT_STATE.md`
+- `docs/project/TECHNICAL_DECISIONS.md`
+- this task checkpoint.
+
+Compare from exact Candidate source `d2af0fc...` to durable-doc head `e83a26b...` shows only `docs/project/**` changes; no tested product/config blob changed after b23 Runtime Candidate creation.
+
 ## Validation state
 
 - **Code written**: Yes.
@@ -67,4 +80,4 @@ These conditional boundaries do not contradict the accepted tested b23 scope and
 
 ## Next exact action
 
-Update durable cache/project/build evidence to b23 Runtime truth, then prepare PR/merge from `dev/conversation-list-cache-core-20260828` against current `main`, re-check target advancement and run PR merge-view CI as required. Do not change product code without new defect evidence.
+Before PR/merge, re-fetch current `main` and branch head, confirm no target advancement/product-owner conflict, create the task PR if the user proceeds with closure, run/inspect PR merge-view CI, and only after merge evidence promote b23 to merged Stable and remove this checkpoint. Do not change product code without new defect evidence.

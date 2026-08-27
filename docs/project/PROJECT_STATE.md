@@ -10,7 +10,7 @@ _Last updated: 2026-08-27._
 - `DEV-native-read-path-0.1.0-b9`: merged Stable production native-read baseline for tested scope.
 - `DEV-conversation-recovery-0.1.0-b15`: **merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope**. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
 
-No multi-conversation Candidate is Runtime-accepted or Stable yet. The accepted runtime baseline remains b15 until exact later evidence changes it.
+`DEV-multi-conversation-state-0.1.0-b17` now has accepted real-device evidence for its tested core switching/coalescing/hidden-completion/Sync/rapid-overlap sequences, but the Work is still Active and not Stable/Frozen. The merged Stable baseline remains b15 until this Work completes and merges.
 
 ## Recovery completion
 
@@ -61,7 +61,11 @@ The b13 overlapping-request HTTP429 defect is therefore resolved for the tested 
 - **IPA**: `ChatGPTClient-0.1.0-b17-dev-multi-conversation-state.ipa`; SHA `ed551deac0335e47da56da36ec2a8a20550613ac072ac1ddf0b84790278318dc`; generated sidecar matches independent hash.
 - **Embedded identity**: `0.1.0 (17)`, candidate b17, source `bc69d58b3245`, min iOS14.0, device families `[1,2]`, Mach-O arm64.
 - **Implementation scope compiled in b17**: account-scoped per-conversation residents/operations, stale Auth-scope rejection, probe commit revalidation, deterministic waiter termination, same-target cancel-before-replace with synchronous task ownership, operation-first coalescing, target-specific Sync/Reload, selected-operation-derived recovery presentation, ordinary/list presentation freshness, main-thread repository owner, active-resident memory-warning protection, `current_node` retention and privacy-safe residency/selection diagnostics.
-- **Validation**: `Code written = Yes`; `Static/local = Passed`; `CI = Passed`; `Artifact = Produced and identity accepted`; `Runtime/manual/real-device = No yet`; `Stable/Frozen = No`.
+- **Real-device core evidence**: exact b17 on iPhone/iOS17 showed resident return without navigation-only refetch, hidden completion retained as resident, same-target in-flight return coalescing, Sync A->B->A rejoining the same active Sync, and rapid different-conversation overlap with up to three active operations; no HTTP429 appears in the supplied export.
+- **Return timing**: repeated resident returns logged `resident.firstVisible` around `0.23–0.78 ms` in the supplied run.
+- **Observed residency scale**: resident count reached 6; `residentTotalApproximateTextBytes` reached `6724764`, which remains correlation only and is not process-memory/LRU-capacity evidence.
+- **Runtime defect found**: per-conversation semantic scroll-anchor restoration is missing in b17. User left A around ~10%, switched to B and scrolled B, then returned A and observed A's position shift. This was already a planned P1 item and is now a reproduced P1 runtime defect.
+- **Validation**: `Code written = Yes`; `Static/local = Passed`; `CI = Passed`; `Artifact = Produced and identity accepted`; `Runtime/manual/real-device = Core tested sequences accepted with P1 scroll defect`; `Stable/Frozen = No`.
 
 ## Current architecture
 
@@ -75,28 +79,30 @@ The b13 overlapping-request HTTP429 defect is therefore resolved for the tested 
 - Default `WKWebsiteDataStore`: sole persistent auth-secret authority.
 - `AuthSessionStore`: account context, public warm-up and transient authorized transport.
 
-### Active branch direction, not yet Runtime-accepted
+### Active branch direction, core Runtime-tested but not Stable
 
 - One `ConversationRepository` is the account-scoped conversation authority with per-conversation resident and async-operation state; foreground selection is presentation state only.
 - `AuthSessionStore` remains the sole account/auth owner. Request transport contexts may validate against its current verified scope but cannot re-adopt an older scope.
 - Current resident scope key is `userID + accountID + conversationID`; non-personal workspace identity remains Unknown / Unverified.
 - `current_node` is retained as minimal directly evidenced branch-tip metadata; raw mapping payload is still discarded.
 - UIKit controllers consume resident/operation state; they are not authoritative conversation stores.
+- Scroll position is presentation state and is not yet preserved per conversation; the required future correction is a semantic/per-conversation scroll anchor, not a second data repository or shared raw offset.
 
 ## Delivery / serialized direction
 
 1. `DEV-conversation-recovery` — **Completed / merged / Stable for recorded scope**.
-2. `DEV-multi-conversation-state` — **Active**; b17 is the first valid runtime Candidate. Next gate is real-device concurrency/residency/recovery validation, then bounded resident/LRU policy from device evidence before Stable.
+2. `DEV-multi-conversation-state` — **Active**; b17 now has core real-device evidence for the tested switching/coalescing/hidden-Sync/rapid-overlap paths. The next smallest user-visible correction is the reproduced P1 semantic scroll-anchor gap under a new candidate; remaining account-switch/failure/LRU acceptance stays separate before Stable.
 3. `DEV-conversation-round-count` / preferences integration.
 4. `DEV-send-stream`.
 5. Markdown export, long-conversation tuning, attachments and remaining daily-use work.
 
-Semantic per-conversation scroll-anchor restoration remains P1 and does not block core multi-conversation runtime acceptance unless a later explicit requirement changes priority.
+Semantic per-conversation scroll-anchor restoration remains P1 in architecture priority, but it is no longer hypothetical: exact b17 real-device use reproduced it.
 
 ## Known issues / constraints
 
 - No unit/UI test target; current automated validation is static Swift parse, Release Xcode CI, IPA packaging/inspection and artifact upload.
-- b17 has **no real-device evidence yet**. Do not describe its owner/race behavior as runtime solved from CI/Artifact alone.
+- b17 core multi-conversation runtime behavior is accepted only for the exact tested sequences recorded above; do not generalize that to untested account-switch/failure/LRU cases.
+- **Known P1 UI defect**: A's per-conversation scroll position/semantic anchor is not restored after switching to B and scrolling B before returning to A.
 - Account-context purge/late-callback isolation requires a real supported account-switch/logout runtime route before that criterion can be accepted.
 - Current account-scope implementation is personal-account evidence only; non-personal workspace identity remains Unknown / Unverified.
 - Normal-operation resident/LRU bound remains Unknown until real-device/system memory measurement; approximate visible-text bytes are not actual process-memory evidence.

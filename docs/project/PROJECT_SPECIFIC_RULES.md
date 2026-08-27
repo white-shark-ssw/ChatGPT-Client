@@ -20,6 +20,18 @@ This file contains repository/product rules backed by explicit requirements, cur
 - UISplitViewController/native navigation is the sole compact list/detail navigation owner for the accepted b14 shell; do not add a duplicate custom sidebar button.
 - `导出 Markdown` is our enhancement, not official-App evidence.
 - Preserve user-required reasoning interaction/haptics only when current protocol supplies explicit user-visible material; never expose hidden chain-of-thought.
+- User-visible conversation metadata enhancements include optional round count in the title metadata row and optional timestamps on each visible user/assistant message; these are presentation features and do not create second conversation/message state owners.
+
+## Message timestamp contract
+
+- Every visible user message and every visible assistant reply supports a timestamp display controlled by one app preference `显示消息时间`.
+- Historical/server-backed timestamps come from the authoritative message `createTime` / current service `create_time` already parsed into the message model; do not issue an extra conversation request solely to obtain time.
+- User-message timestamp is subdued metadata below the user bubble on the user side; assistant timestamp is subdued metadata below the assistant response on the assistant/document side.
+- Use device locale/time zone. Same-day messages may use time-only; older messages include enough date context to disambiguate. Exact formatting remains an implementation/UI validation choice rather than protocol state.
+- If an authoritative timestamp is absent, omit the timestamp rather than fabricate one for historical/server-backed content.
+- The toggle is owned by the centralized preference owner established with the conversation-metadata Work; cells/view controllers must not create independent `UserDefaults` keys/defaults.
+- The user's current requirement does not freeze the toggle's initial default; record the selected default when the implementation Work starts.
+- Future optimistic Send presentation must not become a second durable timestamp authority. A provisional local timestamp, if needed before service confirmation, belongs only to pending presentation/response state and must hand off to the authoritative server-backed message time when available.
 
 ## Fast usable candidate contract
 
@@ -117,6 +129,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `ConversationRepository` is production conversation read/recovery owner; UI titles/text are never identity.
 - CI/artifact success is not runtime proof.
 - Manual sync/reload never create competing state stores or automatic retry machinery.
+- Message timestamps and round counts are derived/presentation state; do not maintain mutable duplicate counters/timestamps or issue hidden refreshes merely for their display.
 - No speculative timers, watchdogs, shadow WebViews, retry loops, auth fallback chains, persisted copied auth secrets, UA spoofing, Cloudflare bypass, fallback conversation endpoints or speculative parser/header compatibility.
 - Do not raise iOS14 minimum without concrete need.
 - Stable does not mean Frozen; no Frozen business/architecture rules are currently recorded.

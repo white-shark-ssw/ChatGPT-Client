@@ -75,6 +75,19 @@ This Work is serialized before conversation metadata/preferences and production 
 
 The Work generalizes the prior single-selected freshness/request-lifecycle model into account-scoped resident per-conversation state. Do not reuse the recovery checkpoint/branch/candidate identity.
 
+### Conversation-entry scroll semantics
+
+The multi-conversation presentation owner must distinguish **first entry with no saved reading position** from **returning to an already-read conversation**:
+
+- first visible presentation of a loaded conversation with no valid local semantic scroll anchor defaults to the latest message / bottom of the current visible branch, matching the official-App interaction expectation;
+- this initial placement is presentation setup, not a long animated traversal from the first message through the conversation;
+- a loading/empty placeholder's temporary top offset must never become a saved reading anchor;
+- after the user has actually viewed/scrolled a conversation and a semantic anchor exists, A -> B -> A restores A's saved reading position instead of forcing bottom;
+- Sync/Reload/current-branch replacement preserve an established reading anchor according to the existing presentation owner; they do not reinterpret every refresh as a fresh first entry;
+- if an old saved anchor is no longer resolvable after authoritative message replacement, discard that obsolete anchor explicitly and choose the current product fallback deliberately rather than silently treating raw top as authority.
+
+This behavior belongs to the current multi-conversation scroll/presentation owner and should be closed before that Work is declared Stable when practical; rules/planning sessions do not edit the active development checkpoint or Candidate.
+
 ## Phase 7 — `DEV-conversation-round-count`
 
 ### User-facing scope
@@ -151,6 +164,8 @@ Quick answer navigation is initially defined against server-backed/current visib
 ## Phase 8 — `DEV-send-stream`
 
 After read/recovery/multi-conversation ownership and the metadata/navigation/preferences bundle are stable: evidence current text-send/new-conversation/stream/stop protocol, implement composer/stream/stop, bind response identity correctly under switching, integrate manual recovery without automatic resend, and connect answer-navigation/follow-tail behavior to the real per-conversation response owner.
+
+Follow-tail must extend the same scroll semantics rather than replace them: when the user is already at/near the latest-message edge, new streamed content may keep the view following the newest response; once the user deliberately scrolls upward to read history, streaming must not continuously steal the viewport back to the bottom. Exact threshold/state transitions require real-device tuning under the authoritative response owner.
 
 **As soon as this phase reaches accepted real-device text chat/stream behavior, issue the earliest practical daily-chat Candidate. Do not wait for attachment/cache/persistence breadth.**
 

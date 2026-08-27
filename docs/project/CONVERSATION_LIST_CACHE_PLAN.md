@@ -4,246 +4,260 @@ _Last planned: 2026-08-27._
 
 ## Purpose
 
-This document defines the durable plan for a fast cold-start conversation list, clipped message previews, persistent list metadata and network-efficient incremental reconciliation.
+This document defines the durable plan for persistent conversation-list startup, network-efficient reconciliation and later clipped message previews.
 
-The primary product requirement is: **show useful cached conversation rows quickly after the current account scope is verified, then reconcile with one normal list refresh without issuing one Conversation Detail request per row.**
+The user has raised persistence priority because the current client has no conversation-list data after process death until the network list request finishes, and frequent development/test relaunches can repeatedly hit the list route.
 
-Planned Work ID: `DEV-conversation-list-cache-preview`.
+The work is now intentionally split:
+
+- **`DEV-conversation-list-cache-core`** — early persistent list snapshot + rapid-relaunch request suppression; runs immediately after multi-conversation state becomes Stable/merged.
+- **`DEV-conversation-list-preview`** — later preview-row enhancement built on the same accepted cache store; no second cache/list owner.
 
 ## Current evidence baseline
 
-Current multi-conversation branch source establishes:
+Current multi-conversation source establishes:
 
-- `ConversationSummary` currently stores only `id`, `title`, `updateTime`.
+- `ConversationSummary` currently stores `id`, `title`, `updateTime`.
 - `ConversationRepository.conversations` is in-memory only.
-- `ConversationSidebarViewController.viewDidLoad()` immediately calls `loadConversations()`; a cold process has no disk-backed list to render while the request is pending.
-- Current list request is one `GET /backend-api/conversations?offset=0&limit=28&order=updated`.
-- Current parser consumes only list-item `id`, `title`, and `update_time`.
-- Current repository has real account-scoped state work in progress; the persistent cache must build on the accepted account-scope owner after `DEV-multi-conversation-state` is merged/stable.
+- cold process startup has no disk-backed list rows to render.
+- current list request is `GET /backend-api/conversations?offset=0&limit=28&order=updated`.
+- current parser consumes list-item `id`, `title`, `update_time`.
+- accepted evidence has shown `total` can exceed the returned first page.
+- account-scoped repository state is being established by `DEV-multi-conversation-state`; persistent cache work must build on that accepted owner rather than create a second account/list authority.
 
-**Unknown / Unverified:** whether the current list payload already carries a safe user-visible snippet/preview field. Do not assume one exists and do not infer it from historical/private API memory.
+**Unknown / Unverified:** whether the current list payload itself contains a safe user-visible preview/snippet field.
 
-## Goals
-
-1. After current account verification succeeds, render the last known list snapshot without waiting for the list network request to finish.
-2. Immediately perform the normal current list refresh and merge changed rows into the cached presentation.
-3. Add one clipped message-preview line below the conversation title when preview data is locally available or is proven to arrive in the same list response.
-4. Never fan out `N` Conversation Detail requests merely to populate `N` preview rows.
-5. Persist only the minimum metadata needed for this experience; do not turn this feature into full chat-body/offline caching.
-6. Keep all cache data strictly scoped to the verified account/workspace context and never flash another account's cached list before scope verification.
-7. Integrate later with pagination, Send/Stream, rename/archive/delete and account switching without creating a second conversation authority.
-
-## Non-goals
-
-- No full `ConversationDetail` / raw mapping JSON persistence in this Work.
-- No automatic background polling, timer refresh or watchdog.
-- No server-request retry chain.
-- No speculative alternate list/preview endpoint.
-- No loading every conversation once at startup to manufacture previews.
-- No claim that cached preview text is server-current when another client may have changed the conversation since the preview was captured.
-
-## Ownership model
+## Shared ownership model
 
 `ConversationRepository` remains the authoritative in-memory product owner.
 
-Add one small durable snapshot component conceptually similar to `ConversationListCacheStore`. It is storage, not a second repository. UI never reads the cache file directly; the repository loads/reconciles the snapshot and publishes one list state.
+Add one small durable storage component conceptually similar to `ConversationListCacheStore`. It is storage only; the sidebar never reads/writes a cache file directly.
 
 Conceptual ownership:
 
-`verified account/workspace scope -> ConversationRepository -> persistent list snapshot`
+`verified account/workspace scope -> ConversationRepository -> persistent list snapshot store`
 
-The persistent snapshot may contain:
+The snapshot may contain:
 
 - schema version;
-- authoritative conversation ID required for later selection;
+- authoritative conversation ID;
 - title;
-- last known server `update_time`;
-- last known list ordering metadata needed for stable presentation;
-- optional bounded preview text;
-- optional preview role/source metadata;
-- optional preview source message/create time and/or source list update time for freshness reasoning;
-- last successful list reconciliation timestamp.
+- last known server `update_time` and ordering metadata;
+- last successful authoritative list reconciliation time;
+- later optional bounded preview text/source metadata;
+- any small cache bookkeeping needed for schema/freshness.
 
-Do not persist access tokens, cookies, bearer values, raw Detail payloads, hidden reasoning/tool content or full message bodies for this feature.
+Do **not** persist access tokens, cookies, bearer values, raw Detail mappings, hidden reasoning/tool content or full message bodies in this cache.
 
 ## Storage direction
 
-Use app-private Application Support / normal sandbox storage with iOS Data Protection and atomic writes. Prefer a simple versioned Codable/JSON or property-list snapshot before introducing a database dependency; list metadata + clipped previews are small enough that a database is not currently evidenced as necessary.
+Use app-private normal sandbox/Application Support storage with iOS Data Protection and atomic writes. A small versioned Codable JSON/property-list snapshot is preferred before adding a database dependency.
 
-Use a stable account-scope-derived cache namespace. Do not expose raw account identifiers in diagnostics or cache filenames when a stable hash can provide the namespace.
+Use a stable account-scope-derived namespace; do not expose raw account identifiers in cache filenames or diagnostics when a stable hash suffices.
 
-Schema versioning is required so incompatible future fields can be discarded/migrated deliberately rather than decoded as ambiguous state.
+Schema versioning is required. Corrupt/incompatible snapshots may be discarded deliberately without crashing or starting retry loops.
 
-## Cold-start sequence
+# Part A — `DEV-conversation-list-cache-core`
 
-The cold-start sequence remains auth-safe:
+## Goal
 
-1. Existing WebKit warm-up/account verification runs through the accepted auth owner.
-2. Before a verified account/workspace scope exists, do **not** present a previous account's conversation cache.
-3. Once the current scope is verified, load that scope's persistent list snapshot and publish it immediately if valid.
-4. The sidebar renders cached title/preview rows without waiting for the network list response.
-5. Start exactly one normal current list request through `ConversationRepository`.
-6. Reconcile the returned page into the cached list.
+Make cold-start list presentation immediate after verified account scope and reduce needless repeated automatic list requests during rapid process relaunches.
+
+This Work is intentionally **before** metadata/settings and Send/Stream so the many later development/test cycles benefit from it.
+
+## Core cold-start sequence
+
+1. Existing WebKit warm-up/account verification establishes the current verified scope.
+2. Before a verified scope exists, never show a previous account's cached titles.
+3. Once verified, load that scope's persistent snapshot and publish valid rows immediately.
+4. Decide whether an automatic network list refresh is needed using the persisted last-successful-reconciliation time.
+5. If refresh is needed, start one normal list request through `ConversationRepository`.
+6. Incrementally reconcile returned summaries into the same repository/list state.
 7. Persist the reconciled snapshot atomically.
-8. If the list refresh fails, keep the valid cached rows visible and surface refresh failure non-destructively; do not blank the list and do not enter automatic retry.
+8. If refresh fails, keep valid cached rows visible and surface the failure non-destructively; no retry loop.
 
-Disk load may be performed off-main when useful, but cache application to repository/UI state remains deterministic and account-scoped.
+Disk I/O may run off-main when appropriate, but account-scope validation and published repository/UI mutation remain deterministic.
 
-## Incremental reconciliation semantics
+## Rapid-relaunch freshness suppression
 
-"Incremental" initially means **client-side merge/diff of one normal list response**, not an assumed undocumented delta endpoint.
+A cache that always triggers a list request on every launch solves blank UI but does **not** solve request pressure. Therefore cache core adds one persisted freshness decision.
+
+Required semantics:
+
+- no valid cache -> perform the normal automatic list refresh;
+- cache exists but is older than the accepted freshness interval -> render cache immediately, then perform one automatic list refresh;
+- cache was successfully reconciled very recently -> render cache and **skip that launch's automatic list refresh**;
+- explicit pull-to-refresh / refresh-button action always bypasses the freshness suppression and performs one user-requested list refresh;
+- after an explicit successful refresh, persist the new reconciliation timestamp;
+- this is a single launch-time timestamp comparison, not a scheduled timer, polling loop, retry or watchdog.
+
+### Freshness interval
+
+Planning intentionally does not freeze an arbitrary long value. The implementation Work must choose/document a **small conservative rapid-relaunch window** and validate it on real device against two goals:
+
+1. repeated build/install/relaunch cycles do not each generate an unnecessary list request;
+2. ordinary users do not remain unexpectedly stale for a long interval, and manual refresh always remains available.
+
+If later evidence proves current list responses support useful validators such as ETag/Last-Modified, conditional refresh may be evaluated. Do not assume those semantics now.
+
+## Incremental reconciliation
+
+"Incremental" means client-side diff/merge of the normal list response unless a current service delta API is explicitly evidenced.
 
 For each returned authoritative summary:
 
-- insert an unknown conversation ID;
-- update title/update time for an existing ID when changed;
-- preserve the existing preview when the list response does not supply a newer preview;
-- reorder according to current authoritative ordering/update time;
-- update only changed presentation rows where practical instead of clearing/replacing the whole visible list.
+- insert unknown IDs;
+- update title/update time for known IDs when changed;
+- reorder using current authoritative list ordering/update time;
+- preserve later preview metadata if this response does not supply newer preview content;
+- update changed UI rows rather than blanking the entire list where practical.
 
-### Important first-page rule
+### First-page safety rule
 
-The current list route returns only the first 28 items while accepted evidence already shows `total` can exceed 28.
+The current request is limited to 28 rows while accepted evidence shows the server total may be larger.
 
-Therefore **absence from the refreshed first page does not prove deletion/archive**. Do not delete a cached older conversation solely because it is missing from page 1; it may simply have fallen below the first-page boundary.
+Therefore **absence from refreshed page 1 is not deletion/archive evidence**. Do not remove an older cached conversation merely because it is not among the newest 28.
 
-Later `DEV-conversation-pagination` can extend this same store. Only when the client has authoritative evidence for the complete current server set, or an explicit rename/archive/delete action succeeds, may it safely prune a specific cached entry for those reasons.
+Only complete pagination or an explicit authoritative rename/archive/delete result may later justify pruning specific entries.
 
-If a future current response proves stable ETag/validator or delta semantics, that may be evaluated then; it is not assumed in this plan.
+## Core non-goals
 
-## Message preview source priority
+- No `ConversationDetail` or full message-body disk cache.
+- No attempt to make all conversations available offline.
+- No per-row Detail request fan-out.
+- No preview scraping requirement for the first cache-core Candidate.
+- No timer/polling refresh.
+- No automatic retry chain.
+- No alternate speculative list endpoint.
 
-### Priority 1 — same list response, only if currently proven
+## Core diagnostics
 
-At implementation start, inspect **key names/type presence only** for the current list item schema in a privacy-safe diagnostic/development probe. Never log the preview value or full item payload.
+Privacy-safe events may include:
 
-If the current list response contains a user-visible preview/snippet field and real-device evidence confirms its semantics, use it. This is ideal because all visible rows receive preview data from the same one list request.
+- `listCache.load.started/completed` — hit/miss, entry count, schema, age;
+- `listCache.autoRefreshDecision` — `missing` / `stale` / `recent_skip` / `manual_bypass`;
+- `listCache.scopeRejected` — safe hashed scope/reason;
+- `listCache.reconcile` — inserted/updated/moved/unchanged counts;
+- `listCache.write` — entry count, bytes, duration.
 
-If no usable field is proven, do not add another network route and do not fan out Detail requests.
+Never log raw conversation IDs, titles, cached text, auth secrets or raw payloads.
 
-### Priority 2 — locally known authoritative visible messages
+## Core runtime acceptance
 
-Whenever the client already obtains a Conversation Detail through normal user activity (open, Sync, Reload), derive a preview from that conversation's current visible branch and update the persistent list snapshot.
+Exact iPhone/iOS17 candidate should cover:
 
-Initial text-only rule:
+1. Warm-cache cold start shows cached rows immediately after account verification and before a slow network refresh would finish.
+2. Multiple rapid process relaunches inside the accepted freshness window do **not** each produce an automatic list request.
+3. Manual refresh during that same window still produces exactly one requested list refresh.
+4. Relaunch after the freshness window shows cache immediately and performs one normal refresh.
+5. Refresh merge does not blank/flicker the list.
+6. Network failure keeps valid cache visible and does not automatically retry.
+7. Account A cache never appears under verified account B.
+8. First-page-28 reconciliation does not delete older cached rows just because they fall below page 1.
+9. Corrupt/schema-incompatible cache is rejected safely and normal network loading still works.
+10. Cache read/write remains small enough not to materially block main-thread startup interaction.
 
-- use the latest visible user/assistant message in the current branch;
-- never use system/tool/hidden reasoning content;
-- collapse whitespace/newlines for list presentation;
-- persist only a bounded clipped prefix (for example implementation-level ~120–160 user-visible characters, tuned without storing the full body);
-- if no visible text exists, omit preview rather than manufacture content.
+# Part B — `DEV-conversation-list-preview`
 
-### Priority 3 — future local Send/Stream events
+## Goal
 
-After production Send/Stream exists, locally created/received authoritative messages should update the same preview entry without waiting for a full list refresh.
+Add the one-line clipped preview under each conversation title **after cache core already exists**, reusing the exact same snapshot/store and repository list owner.
 
-Do not persist every streamed token. Update the preview presentation in memory as appropriate, but durable writes should occur at meaningful message/response state changes (for example an authoritative user message insertion or terminal assistant result), not token-by-token.
+## Preview source priority
+
+### Priority 1 — same list response, only if proven
+
+At implementation start inspect list item **key/type presence only**. Never log preview values or full list objects.
+
+If the current list response contains a confirmed user-visible preview/snippet field, use it from that same list request.
+
+### Priority 2 — already-loaded Detail
+
+If the list route has no usable preview field, whenever the client already receives a Conversation Detail through normal user activity (open, Sync, Reload), derive a bounded preview from the latest visible user/assistant message in the current branch.
+
+Rules:
+
+- exclude system/tool/hidden reasoning content;
+- collapse whitespace/newlines;
+- persist only a bounded clipped prefix, not the full body;
+- omit preview if no user-visible text exists;
+- never trigger a Detail solely to fill a preview.
+
+### Priority 3 — future Send/Stream
+
+After production Send/Stream exists, authoritative locally-created user messages and terminal assistant results update the same preview entry.
+
+Do not persist every streamed token. Durable writes occur only on meaningful state transitions.
 
 ## Preview freshness
 
-When a list refresh reports a newer `update_time` than the source associated with a locally cached preview and the list response itself does not provide preview content, that preview is only the **last locally known preview**.
+If a list refresh reports a newer server `update_time` but the response has no current preview content, a locally cached subtitle is only the **last locally known preview**.
 
-Do not issue an automatic Detail request merely to refresh it.
+Do not hide this uncertainty behind automatic Detail prefetching.
 
-The preview becomes fresh again when:
+It becomes current again when the conversation is normally opened/synced/reloaded, local Send/Stream updates it, or a proven list preview field supplies new content.
 
-- the user opens the conversation and normal Detail loads;
-- the user explicitly Syncs/Reloads it;
-- future local Send/Stream updates the conversation;
-- or a future proven list preview field supplies current content.
+## Preview UI
 
-Whether a potentially stale preview remains visible or is visually suppressed is an implementation/UI tuning choice, but the product must never claim stale cached text is guaranteed server-current.
+Compact iPhone row direction:
 
-## Sidebar UI design
+- title: primary one-line/tail-truncated label;
+- preview: subdued one-line `.secondaryLabel` with tail truncation;
+- Dynamic Type may increase row height;
+- row identity/tap behavior remains authoritative conversation ID.
 
-Recommended compact iPhone row:
+`显示会话消息预览` uses the centralized Preferences owner created in metadata/settings work. Toggle changes presentation only; it does not delete cache data or trigger network requests.
 
-- title: primary label, normally one concise line with tail truncation for dense scanning;
-- preview: one secondary line below, `.secondaryLabel` style, tail truncation;
-- selected state continues to use the existing list/navigation owner;
-- Dynamic Type may expand row height when needed; do not hard-code a tiny fixed row that clips accessibility text.
+## Preview acceptance
 
-The preview is presentation metadata only; tapping the row still selects by authoritative conversation ID.
+- Opening A once creates/updates A preview, and a later relaunch can show it without reopening A.
+- Many list rows cause no automatic Detail fan-out.
+- Potentially stale preview never causes a hidden Detail request.
+- Preview survives normal cache-core reconciliation when the list response has no newer preview field.
+- Preview Off hides the subtitle without deleting snapshot state or changing request behavior.
 
-A future setting `显示会话消息预览` should use the centralized preference owner created by `DEV-conversation-round-count`. Toggling it changes only row presentation and does not delete cached data or trigger network requests. Recommended initial product direction is On, but the implementation Work records the final default if the user gives a newer preference.
+## Relationship to resident multi-conversation state
 
-## Relationship to existing multi-conversation state
+Persistent list cache and resident Conversation Detail solve different problems:
 
-This persistent list cache is different from resident Conversation Detail state:
+- resident state: fast A/B/A switching while the process lives;
+- persistent list snapshot: fast process cold-start list availability;
+- preview: bounded derived list metadata.
 
-- resident Detail state optimizes A/B/A in-process switching;
-- persistent list snapshot optimizes process cold-start/sidebar availability;
-- preview cache stores only bounded list metadata, not the full resident Detail model.
-
-Do not make the disk snapshot a competing current Conversation Detail authority.
-
-A/B resident state may populate/update previews, but memory warning eviction of a resident Detail does not require deleting the small persistent title/preview snapshot.
+Memory-warning eviction of a resident Detail does not delete the small persistent list snapshot.
 
 ## Account / privacy boundaries
 
-- Never present a cached list before current account/workspace scope verification.
-- Cache namespaces are per verified scope.
-- Account change invalidates the currently published scope's list presentation before another scope is applied.
-- Late network/cache callbacks from an old scope must be rejected by the same account-scope freshness principle used elsewhere.
-- Explicit logout cache-deletion semantics should follow the real logout owner when that feature exists; until then, an old scope cache may remain on disk but must be unreachable from another verified scope.
-- Diagnostics may record cache hit/miss/count/age/schema/version and hashed scope identity, never title, preview text or raw conversation ID.
-
-## Diagnostics
-
-Safe events may include:
-
-- `listCache.load.started/completed` — hit/miss, entry count, cache age, schema;
-- `listCache.scopeRejected` — hashed scope/reason only;
-- `listCache.reconcile` — inserted/updated/moved/unchanged counts;
-- `listCache.write` — entry count, bytes, duration;
-- `listPreview.source` — `list_field` / `detail` / `send_stream`, count only;
-- `listPreview.staleKnown` — count only;
-- network list request/response continues using the existing diagnostics owner.
-
-Never log cached preview/title contents.
-
-## Runtime acceptance matrix
-
-At minimum test exact candidate on iPhone/iOS17:
-
-1. **Warm-cache cold start**: after account verification, cached list appears before network list completion.
-2. **Cold-start refresh**: one normal list request reconciles without clearing/flickering the cached list.
-3. **Offline/network failure**: cached list remains usable for navigation attempts; refresh failure is visible but non-destructive; no retry loop.
-4. **No preview fan-out**: a screen with many rows produces no automatic Detail requests solely for preview population.
-5. **Preview from opened Detail**: opening A once creates/updates A's clipped preview; relaunch shows it from cache without reopening A.
-6. **Potentially stale remote change**: newer list update time does not trigger hidden Detail fetch.
-7. **A/B account isolation**: no cached title/preview from A is shown under verified B.
-8. **First-page merge**: cached older rows are not incorrectly deleted merely because refreshed page 1 contains only 28 recent rows.
-9. **Large list cache**: disk read/write and UI reconciliation remain fast and do not materially block main-thread interaction.
-10. **Schema corruption/version mismatch**: reject/discard only the unusable cache snapshot and continue normal network list flow; no crash/retry loop.
-
-Later pagination/Send tests extend this matrix rather than creating another cache owner.
+- Never show cached list/preview before verified account/workspace scope.
+- Separate cache namespace per verified scope.
+- Account change removes the old scope from current presentation before another scope is applied.
+- Late cache/network callbacks from an obsolete scope are rejected.
+- Explicit logout deletion behavior follows the future real logout owner; until then old-scope cache may remain on disk but must be inaccessible to a different verified scope.
+- No title/preview/body/auth-secret logging.
 
 ## Development sequencing
 
-Default serialized route:
+Current serialized route is:
 
-`DEV-multi-conversation-state -> DEV-conversation-round-count -> DEV-send-stream -> DEV-conversation-list-cache-preview`
+`DEV-multi-conversation-state -> DEV-conversation-list-cache-core -> DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
 
-Reason: the project priority remains the earliest daily-chat Send/Stream candidate. Persistent list caching is high-value daily-use performance work but must not delay the first proven chat loop. It also touches `ConversationRepository` / sidebar list ownership, so it should not run as an unsafe parallel task against an active unmerged Send/Stream owner.
-
-After `DEV-send-stream` is Stable/merged, perform a normal file/state-owner conflict scan and start `DEV-conversation-list-cache-preview` before broader daily-use refinements such as Markdown export/long-conversation tuning.
-
-If future source modularization proves the list-cache owner no longer overlaps an active task, parallelization may be reconsidered through the normal governance preflight; do not assume it now.
+The cache core is moved early because it protects the repeated development/test lifecycle itself. Preview remains later because it depends naturally on the centralized preference owner and benefits from Send/Stream data, while it is not required to solve blank cold starts or rapid-relaunch request pressure.
 
 ## Rejected routes
 
-- Fetch Detail for every visible list row at cold start.
+- Delay all persistence until the end of the roadmap.
+- Treat cache-first UI as sufficient while still automatically requesting the list on every rapid relaunch.
+- Fetch Detail for every visible list row.
 - Prefetch all conversations in the background merely to fill previews.
-- Timer/polling-based list refresh.
-- Persist full conversation JSON or full message bodies for a one-line preview requirement.
-- Present last-account cache before current account verification.
-- Delete cached rows merely because they are absent from the first 28-item page.
-- Let cells read/write cache files directly.
+- Persist full conversation JSON/full message bodies for list-cache needs.
+- Present last-account cache before current scope verification.
+- Delete cached rows merely because they are absent from the newest 28.
+- Let cells directly read/write cache files.
+- Timer/polling/retry-based refresh machinery.
 
 ## Unknown / Unverified
 
-- Exact current server list-item preview/snippet field availability.
-- Exact preview default setting until implementation/user confirmation.
-- Exact cache file size/entry count in large accounts; measure before adding arbitrary disk caps.
-- Full deletion/archive reconciliation until those product actions and/or complete pagination are implemented.
+- Exact list-item preview/snippet field availability.
+- Exact initial rapid-relaunch freshness interval until the cache-core Work starts and documents it.
+- Exact large-account snapshot size/entry count; measure before inventing arbitrary disk caps.
+- Full deletion/archive reconciliation until pagination/actions provide authoritative evidence.

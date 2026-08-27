@@ -25,7 +25,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 - **Main source root**: `ChatGPTClient/`.
 - **Application entry**: `AppDelegate.swift`; accepted recovery baseline sequences public WebKit warm-up before installing the product root.
-- **Application shell**: `RootViewController.swift`, `SettingsViewController.swift`; compact iPhone startup uses native list/detail navigation with the conversation list as useful initial root. Active b21 Root also ensures first Detail view initialization occurs before assigning the selected list-summary title.
+- **Application shell**: `RootViewController.swift`, `SettingsViewController.swift`; compact iPhone startup uses native list/detail navigation with the conversation list as useful initial root. Active b21 Root ensures first Detail view initialization occurs before assigning the selected list-summary title; this title lifecycle ordering is real-device accepted for the requested b21 matrix.
 - **Build/runtime metadata owner**: `Support/AppBuildInfo.swift` + Xcode/Info.plist settings.
 - **Diagnostics owner**: `Diagnostics/Diagnostics.swift`; b19 added real task-VM process-memory enrichment to resident diagnostics.
 - **Embedded login owner**: `Authentication/AuthWebViewController.swift`.
@@ -44,7 +44,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Intended artifact scheme**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` + SHA-256 sidecar.
 - **Packaging status**: b16 historically exposed recovery hard-codes and is rejected. b17 corrected multi-conversation identity. Exact b21 independently verifies filename/version/build/candidate/source/SHA/arm64/iOS14 identity.
 - **Current accepted validation level**: Foundation, embedded Google/WebKit auth architecture, Plus/personal account context, diagnostic list/detail, production native read, manual sync/full reload, public WebKit cold-start warm-up, centered sync feedback, compact startup/native list-detail navigation, stale-generation rejection and selected-detail cancellation/replacement have real-device evidence on iPhone/iOS17 for recorded scopes.
-- **Current Active Work validation**: b17 core multi-conversation switching/coalescing/hidden completion Runtime accepted; b18 historical scroll Runtime accepted; b19 real process-footprint 0→8 resident matrix accepted. b20 real-device Runtime exposed a first Detail-view-load title lifecycle overwrite. b21 has Code + Static + CI + identity-valid Artifact and awaits exact title Runtime. Work remains Active and not Stable/Frozen.
+- **Current Active Work validation**: b17 core multi-conversation switching/coalescing/hidden completion Runtime accepted; b18 historical scroll Runtime accepted; b19 real process-footprint 0→8 resident matrix accepted. b20 real-device Runtime exposed a first Detail-view-load title lifecycle overwrite. Exact b21 has Code + Static + CI + identity-valid Artifact + direct real-device acceptance for the requested first-entry/re-entry/rapid A→B→C title matrix. Work remains Active and not Stable/Frozen because independent failure/account/LRU/replacement gates remain.
 
 ## Versioning and candidate identity
 
@@ -62,7 +62,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Historical-scroll Runtime Candidate**: `0.1.0 (18)` / b18; exact historical-scroll matrix accepted.
 - **Process-memory Runtime Candidate**: `0.1.0 (19)` / b19; observed 0→8 resident footprint matrix accepted, process-limit headroom Unverified.
 - **Title lifecycle failing predecessor**: `0.1.0 (20)` / b20; Code/CI/Artifact valid but first unloaded Detail entry Runtime showed neutral-title overwrite.
-- **Current exact multi-conversation Candidate**: `0.1.0 (21)` / `DEV-multi-conversation-state-0.1.0-b21`; product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417`; Job `98510113281`; Artifact `9645439329`; IPA `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`; **Runtime pending; Work not Stable**.
+- **Current exact multi-conversation Candidate**: `0.1.0 (21)` / `DEV-multi-conversation-state-0.1.0-b21`; product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417`; Job `98510113281`; Artifact `9645439329`; IPA `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`; **requested title Runtime accepted on tested iPhone/iOS17; Work not Stable**.
 
 ## Runtime / deployment
 
@@ -84,7 +84,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b18 accepted independent historical anchors, first-time target isolation, Sync/Reload anchor preservation, resident/coalescing regression matrix on iPhone/iOS17.
 - b19 reached 8 residents with 53 valid process-memory samples; physical footprint remained about 16.3–78.1 MiB and generally 55–65 MiB during repeated 8-resident switching. No urgent normal-LRU pressure is evidenced; exact process-limit headroom was unavailable.
 - b20 exact real-device export identifies `0.1.0 (20)`, source `754580fad96e`. User reproduced first-entry `新对话`; source proves first Detail `viewDidLoad()` overwrote the summary title. Second resident-backed entry was correct. The export's earlier auth HTTP403 is not causal because later verification/list HTTP200 succeeded before the reproduction.
-- b21 fixes only lifecycle ordering in Root via `loadViewIfNeeded()` before assigning the selected summary title. CI and Artifact identity pass; real-device first-entry/rapid-switch title behavior remains pending.
+- b21 fixes only lifecycle ordering in Root via `loadViewIfNeeded()` before assigning the selected summary title. CI and Artifact identity pass; after the requested exact b21 title checks, the user reported `没问题了`, accepting the first-entry/re-entry/rapid-switch title behavior on the tested iPhone/iOS17 environment. No new diagnostics export accompanied this acceptance.
 - Current `main` is `3cbb5c9acce26c0004e1d78c9607f2361d83fe05`; its planning-only changes must be synchronized before final merge.
 
 ## Evidence notes

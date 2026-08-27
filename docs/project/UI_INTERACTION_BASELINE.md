@@ -56,6 +56,38 @@ Round count is derived presentation data from authoritative active-branch user m
 
 Use the official-style drawer/sidebar/list model rather than a custom tab-heavy system. Prioritize recent conversations, selected state, loading/pagination, settings/account entry and native compact navigation ownership.
 
+### Persistent cold-start list and message preview
+
+The planned `DEV-conversation-list-cache-preview` enhancement adds a dense one-line preview under the conversation title and a persistent account-scoped list snapshot.
+
+Recommended row treatment on compact iPhone:
+
+- title remains the primary line, normally one line with tail truncation for dense scanning;
+- preview is one subdued `.secondaryLabel` line below the title with tail truncation;
+- Dynamic Type may increase row height; do not force a fixed height that clips accessibility text;
+- preview is derived display metadata only and never changes conversation identity or tap behavior.
+
+Cold-start presentation follows cache-first / stale-while-refresh semantics **after current account/workspace verification**:
+
+1. show the matching account-scoped cached list immediately when available;
+2. start one normal list refresh;
+3. merge changed/new rows without blanking the already-visible cache;
+4. if refresh fails, keep the cache visible and present failure non-destructively.
+
+Never flash another account's cached titles/previews before the current account scope is verified.
+
+Message preview sourcing must not create a request storm:
+
+- if current runtime evidence proves the existing list response itself includes a usable user-visible preview field, use it from that same list request;
+- otherwise use only locally known current visible user/assistant messages obtained through normal Detail/Sync/Reload and later Send/Stream activity;
+- do **not** automatically issue one Conversation Detail request per list row merely to populate previews;
+- hidden/system/tool/reasoning content is never a preview source;
+- persist only a bounded clipped preview, not the full message body/raw Detail payload.
+
+If another client updates a conversation and the current list response provides only a newer `update_time` without preview content, the cached subtitle may represent the **last locally known preview** until that conversation is normally opened/synced/reloaded. Do not silently solve this with hidden Detail prefetching.
+
+A future `显示会话消息预览` preference uses the centralized settings owner. Toggling it only changes list presentation; it does not trigger network requests or erase the cached snapshot.
+
 ## Conversation messages
 
 ### User messages
@@ -208,6 +240,8 @@ Use compact native official-style states.
 - Empty/new-chat state remains simple.
 - Preserve original error evidence instead of hiding repeated failures behind silent retries.
 
+For the conversation list specifically, a valid matching persistent cache is useful content rather than an error placeholder. A failed refresh may keep those cached rows visible while the refresh failure is surfaced separately; this is not an automatic network fallback/retry loop.
+
 ## Menus and sheets
 
 Prefer native UIKit/system menus/sheets/context menus compatible with deployment target. Conversation overflow reserves natural positions for recovery and future actions; destructive actions use standard destructive presentation.
@@ -226,6 +260,8 @@ UI remains a consumer of authoritative state.
 
 - Conversation title/text is not identity.
 - Selected conversation has one production owner.
+- Persistent list cache is a scope-bound durable snapshot consumed through `ConversationRepository`, not a second list/conversation authority.
+- Cached preview is bounded derived presentation metadata and may be last-locally-known when server preview content is unavailable; it never triggers automatic Detail fan-out.
 - Round count is derived from authoritative active branch.
 - Message timestamp display is derived from the authoritative message timestamp where available; the display toggle is preference state, not message state.
 - Answer-jump anchors are a lightweight derived presentation index over the authoritative visible active branch; they are not message/conversation identity and are rebuilt after authoritative message projection changes.
@@ -237,9 +273,11 @@ UI remains a consumer of authoritative state.
 
 ## Validation expectations
 
-Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior and adaptive answer-jump behavior require their own runtime acceptance as applicable.
+Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior, adaptive answer-jump behavior and persistent list-cache/preview behavior require their own runtime acceptance as applicable.
 
 For answer navigation, real-device validation should include a long conversation, repeated upward/downward direction changes, first/last-boundary behavior, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
+
+For list cache/preview, real-device validation should include warm-cache cold start, one-request refresh/reconciliation, network-failure cache retention, no automatic Detail fan-out, account-scope isolation, first-page-28 merge behavior, and relaunch persistence of a preview derived from an already-opened conversation.
 
 ## Maintenance rule
 

@@ -25,6 +25,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 - Do not hold usable functionality until all roadmap phases complete.
 - Every testable candidate has a unique build/candidate/artifact identity and keeps Code / CI / Artifact / Runtime / Stable evidence separate.
+- Once a Candidate/Artifact identity has actually been produced, do not rebuild corrected product code under that same build/candidate identity.
+- When CI runs on every product/config push, all files that define one Candidate's product source, version/build, workflow and packaging identity must be committed atomically enough that one intended Candidate maps to one intended source/config tree. Do not knowingly create multiple different product commits that all publish the same candidate/build identity.
 
 ## Manual recovery contract
 
@@ -46,15 +48,16 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ### Replacement request lifecycle
 
-- If a newer explicit manual sync/reload replaces an older selected-detail request that is still in flight, `ConversationRepository` must **cancel/replace the older selected-detail network task before starting the replacement request**.
-- Retain operation-generation/freshness rejection so a late callback from an obsolete task cannot mutate or surface stale state after the newer operation owns the selected detail.
+- If a newer explicit manual sync/reload replaces an older same-target detail request that is still in flight, `ConversationRepository` must **cancel/replace the older target network task before starting the replacement request**.
+- Retain operation-generation/freshness rejection so a late callback from an obsolete task cannot mutate or surface stale state after the newer operation owns that target.
 - This cancellation/task handle is request-lifecycle ownership inside the same authoritative repository; it must not become a second conversation-data authority.
-- b13 runtime is the evidence for this rule: the stale generation was correctly discarded, while concurrently started replacement requests returned HTTP429.
-- b15 implements this lifecycle at the authoritative owner and has Code + static/source review + CI + Artifact evidence; Runtime/manual acceptance is still required before calling the overlap defect solved.
+- b13 runtime is the evidence for this rule: stale-generation rejection worked, while concurrently started replacement requests returned HTTP429.
+- Exact b15 then Runtime-accepted the cancellation-before-replacement fix for the recorded selected-conversation scope: two obsolete generations were cancelled, both replacements returned HTTP200, no HTTP429 appeared, and the user reported no issue. PR #10 is merged.
+- Multi-conversation generalization must preserve this same-target ordering per conversation. An implementation detail that leaves the old task handle temporarily unavailable after the old request is already resumed is not sufficient evidence of deterministic cancel-before-replace ownership.
 
 ### Recovery diagnostics / prohibited behavior
 
-- Log safe timing/count/diff/state/freshness evidence only; no raw IDs, message bodies, payloads or auth secrets.
+- Log safe timing/count/diff/state/freshness evidence only; no raw conversation IDs, message bodies, payloads or auth secrets.
 - No automatic retry/watchdog/timer/resend/regenerate/fallback chain.
 - A request-generation/freshness guard and request-task cancellation are allowed at the authoritative owner; neither initiates automatic retries or creates a second store.
 
@@ -78,14 +81,25 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 - Use existing `DiagnosticsLogger`/store/export authority.
 - Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
-- Safe auth diagnostics may record cookie total/matched counts only.
-- Safe production conversation diagnostics may use short irreversible conversation hash + list position and operation-generation/discard/cancellation reason.
+- New multi-conversation correlation should use privacy-safe irreversible conversation markers and non-secret counts/generations; old/new selection traces must not expose raw IDs.
+- Approximate visible-text byte counts may be used as correlation data but are not a substitute for actual memory-footprint/runtime evidence when choosing resident capacity.
 
-## Multi-conversation / state-owner direction
+## Multi-conversation / state-owner contract
 
-- Current freshness generation and replacement task lifecycle are intentionally scoped to the current single-selected conversation model.
-- `DEV-multi-conversation-state` starts only after recovery acceptance/merge and will establish account-scoped per-conversation resident state/freshness before production send/stream.
-- Do not create a separate repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
+- `DEV-multi-conversation-state` is now Active after merged recovery. Current b16 source has Code + CI evidence only; its Artifact identity is rejected and multi-conversation runtime behavior is not accepted yet.
+- One `ConversationRepository` remains production conversation authority. Evolve it to account-scoped per-conversation resident/operation entries; do not create one repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
+- Foreground selection is presentation state only. Loading, Sync, Reload and future response work target an authoritative conversation identity without changing selection as a side effect.
+- Selection change alone does not cancel another conversation's valid request/work and is not a reason to discard a valid hidden-conversation result.
+- Same-conversation obsolete operations are rejected by target-specific freshness/generation ownership. Equivalent same-target missing-detail loads may coalesce, but every collected waiter must have a deterministic terminal contract; do not silently abandon waiters on supersede/account reset as the final design.
+- Account scope comes only from the accepted auth owner. A delayed conversation/list/detail operation context may never re-establish an older account scope after a newer verified context exists. Old-scope callbacks are rejected; they are not account authority.
+- Current active source uses `userID + accountID` for personal-account scope. Do not claim this proves non-personal workspace isolation until current service evidence establishes whether another workspace identity is required.
+- Retain minimum evidence-backed authoritative branch identity such as current `current_node`; do not retain raw multi-megabyte mapping payloads or invent future send graph requirements.
+- Resident terminal failures may remain in memory so ordinary navigation does not become implicit network retry. Explicit Reload remains the user-owned retry/rebuild action.
+- A loaded conversation may remain visible while explicit Sync is in flight, but navigating away/back must not lose the active target's terminal update. Recovery presentation may be lightweight/per-conversation, but must not become a second conversation-data authority.
+- List/account presentation also needs freshness protection: late old-scope/superseded list completion must not clear/overwrite a newer list operation's UI state.
+- Mutable resident/session/list/operation authority must use one explicit execution domain. Network transfer and JSON parsing may be off-main; mutable repository state and list-position/state reads may not race across URLSession and UI callbacks.
+- Memory warning may trim eligible inactive resident terminal states through the repository owner. A normal-operation bounded LRU policy is not frozen until real-device measurement; approximate text bytes alone do not justify a capacity number.
+- Semantic scroll-anchor restoration is P1 in the architecture gap review. It is useful within this Work but does not block the first valid core multi-conversation runtime Candidate unless a later explicit user requirement changes priority.
 
 ## Markdown export contract
 

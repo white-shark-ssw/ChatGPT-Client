@@ -9,8 +9,8 @@
 - **Task**: 将单 selected conversation detail/request owner 演进为 account-scoped per-conversation resident state，并建立后续 send/stream 所需的多会话 freshness 与异步所有权基线。
 - **Acceptance boundary**: A -> B -> A 普通导航不能销毁 A、不能因为 selection change 丢弃 A 的有效返回、不能仅因返回 A 再次联网；不同会话状态隔离；同会话等价请求 coalesce；Sync/Reload 只替换目标会话；旧 generation / 旧 account callback 不得覆盖新状态；失败终态不得因普通导航隐式重试；保留已验证的 `current_node` 身份；最终 resident 容量必须由真实设备测量决定。完整边界以 `MULTI_CONVERSATION_STATE_PLAN.md` 为准。
 - **Baseline**: `0.1.0 (15)` Stable recovery; `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
-- **Working branch / PR / source identity**: `dev/multi-conversation-state-20260827`; PR `Not created`; exact active product/config source under review remains `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`. Later commits through the second-review documentation cycle are docs-only and do not change that product source.
-- **Parallel/conflict guard refreshed**: this is the only Active checkpoint under `docs/project/current/dev/`; GitHub has no open PR; `main` is still `f155ddb873540f7c80d6e66ebbfeb59ded26f011`. No branch/base conflict currently blocks this Work.
+- **Working branch / PR / head commit**: `dev/multi-conversation-state-20260827`; PR `Not created`; current branch head `4c34b3e01221babe04e2710db059ed2fe558af94` is documentation-only after the second review; exact b16 product/config source remains `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`.
+- **Parallel/conflict guard refreshed**: current branch is the only Active checkpoint under `docs/project/current/dev/`; GitHub has no open PR; `main` is still `f155ddb873540f7c80d6e66ebbfeb59ded26f011`. No branch/base conflict currently blocks this Work.
 
 ## Candidate history
 
@@ -44,7 +44,7 @@
 
 ## Second source-review findings — must not be lost
 
-These findings are source-backed against product source `81e6774ae1f5...`; they downgrade the current implementation from “candidate-ready” even though b16 compiled.
+These findings are source-backed against branch source `81e6774ae1f5...`; they downgrade the current implementation from “candidate-ready” even though b16 compiled.
 
 1. **Critical stale account-scope re-adoption path**: `beginDetailOperation` calls `adoptAccountScope(context.scope)`. If a delayed old `ConversationTransportContext` executes after the repository has already reset to a newly verified scope, that operation can reset the repository back to the old scope instead of being rejected. A stale operation context is not account authority. Required fix: operation/list/detail contexts may only compare against the current authoritative verified scope; only a currently verified `AuthSessionStore` snapshot may establish/change repository scope.
 2. **Probe-result freshness is not rechecked at commit**: after account probe success, the queued main-thread commit should verify that `AuthSessionStore.verifiedAccountContext()` still matches the returned scope before installing the transient session/scope. Otherwise an older probe result can be accepted after a newer context transition. Do not invent a second account owner; verify against the existing owner.
@@ -69,17 +69,6 @@ These findings are source-backed against product source `81e6774ae1f5...`; they 
 - **Runtime/manual/real-device**: **No** for this Work.
 - **Stable/Frozen**: **No**.
 
-## Documentation maintenance completed in this review cycle
-
-- `PROJECT_STATE.md`: now distinguishes Stable b15 from Active multi-conversation source/CI evidence and records unresolved P0 findings.
-- `MODULE_STATUS.md`: multi-conversation state is now Active implementation / CI-evidenced / Runtime Unverified instead of future Planned.
-- `TECHNICAL_DECISIONS.md`: adds the durable one-account-scoped-repository ownership direction without promoting b16 implementation to runtime proof.
-- `PROJECT_SPECIFIC_RULES.md`: refreshes b15 replacement runtime status, multi-conversation account/freshness/waiter/owner-domain contracts and atomic Candidate identity rule.
-- `PROJECT_PROFILE.md`: distinguishes accepted b15 owner from Active branch direction and records b16 packaging identity failure.
-- `CLIENT_ARCHITECTURE_GAP_REVIEW.md`: removes stale “Recovery PR #10 Active” premise, marks this Work Active and keeps semantic scroll restoration at P1.
-- `MULTI_CONVERSATION_STATE_PLAN.md`: adds current b16 evidence, second-review P0 findings and first-valid-Candidate boundary.
-- `BUILD_TEST_INDEX.md`: already records b16 as Artifact-identity rejected; no new candidate/runtime evidence was created in this review, so no additional index row is warranted.
-
 ## Pending / ordering after review
 
 1. Keep b16 permanently historical/rejected; do not touch its identity again.
@@ -92,7 +81,8 @@ These findings are source-backed against product source `81e6774ae1f5...`; they 
 8. Use real-device residency behavior plus actual device/system memory observation where available, memory-warning behavior, resident/protected counts and timing evidence to choose a bounded normal-operation LRU policy. Approximate text bytes alone are not a memory-capacity measurement.
 9. **Semantic per-conversation scroll-anchor restoration is P1 in `CLIENT_ARCHITECTURE_GAP_REVIEW.md`; it is not a blocker for the first valid b17 core runtime Candidate.** Implement it after the core owner/runtime evidence unless a new explicit requirement raises its priority. Do not delay the first valid Candidate solely for scroll restoration.
 10. Decide whether a minimal XCTest target is justified after the first valid runtime Candidate; current one-target Xcode project means adding tests is nontrivial project-file churn.
+11. Keep durable project docs synchronized with the active implementation/evidence state; do not leave multi-conversation marked merely “future / Planned” after source+CI implementation exists.
 
-- **Next exact action**: when product work resumes, re-run the b17 uniqueness/conflict gate, then prepare one atomic b17 product/config commit containing the required owner fixes + packaging identity correction + Xcode/workflow bump. Do not include semantic scroll restoration as a b17 blocker and do not publish intermediate b17 product commits.
+- **Next exact action**: product work resumed 2026-08-27. Re-run the b17 uniqueness/conflict gate, then prepare one atomic b17 commit containing the required P0 owner fixes + package identity correction + Xcode/workflow bump. Do not include semantic scroll restoration as a b17 blocker.
 - **Rejected / do-not-repeat**: reuse b16; let an incoming stale operation context reset repository account scope; silently abandon coalesced waiters as the long-term contract; separate repository per screen/conversation; retained VC/cell cache as data owner; load/sync/reload changing selection; cancellation on ordinary navigation; reload-on-every-navigation; unlimited retention as final architecture; speculative retry/timer/watchdog/fallback/global concurrency cap; persistent chat-body cache; future-only access-order bookkeeping before actual LRU decision; treating title/text/list position as identity; choosing LRU capacity from approximate text bytes alone; guessing send/stream graph beyond `current_node` evidence.
-- **Open risks**: no multi-conversation real-device evidence yet; different-conversation concurrent requests may expose service-side pressure only on device; LRU bound remains Unknown by rule; non-personal workspace scope remains Unknown; user-facing account-switch test route is not established; b16 packaging identity is rejected; current product source still has the P0 defects enumerated above.
+- **Open risks**: no multi-conversation real-device evidence yet; different-conversation concurrent requests may expose service-side pressure only on device; LRU bound remains Unknown by rule; non-personal workspace scope remains Unknown; user-facing account-switch test route is not established; b16 packaging identity is rejected; current source has the P0 defects enumerated above.

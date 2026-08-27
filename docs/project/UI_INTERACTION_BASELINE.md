@@ -108,6 +108,26 @@ When `显示消息时间` is enabled, show subdued timestamp metadata below each
 - If a historical message has no authoritative timestamp, omit the metadata rather than fabricate a current time.
 - Future optimistic Send presentation may temporarily show a provisional local timestamp only if the authoritative response/message owner needs it; once server-backed time exists, the display must hand off to that authoritative value rather than keep a second durable timestamp authority.
 
+## Message actions / Copy
+
+Copy is a required daily-use interaction and must remain easy in the native client.
+
+### Basic message Copy
+
+- Visible assistant textual replies expose a compact official-style Copy action in the response action area.
+- Visible user messages expose Copy through the native message/context action surface without requiring manual text selection.
+- Copy reads the authoritative **user-visible** message text; hidden reasoning/tool/system content is never included merely because it exists in the protocol graph.
+- Copy uses the system pasteboard, does not mutate message state and does not trigger any network request.
+- Provide compact immediate feedback such as `已复制`; exact presentation is implementation-level.
+
+### Scoped Copy
+
+When Markdown/code rendering exists:
+
+- each fenced code block gets a dedicated one-tap Copy control;
+- code Copy copies the block's code content, not surrounding prose/cell decorations;
+- whole-message Copy remains available unless a later explicit interaction decision changes it.
+
 ## Quick previous / next answer navigation
 
 This is a user-required long-conversation enhancement and is optional through settings.
@@ -187,9 +207,68 @@ Once an authoritative response lifecycle exists:
 
 Exact active-response “jump to newest” behavior should be validated with the real Send/Stream owner rather than guessed in the read-only phase.
 
+## Assistant files — download and share
+
+The high-priority attachment interaction is specified in `ATTACHMENT_TRANSFER_PLAN.md` and follows accepted text Send/Stream ownership.
+
+### File card
+
+When current protocol proves a user-visible downloadable assistant file, render a native compact file card inside the owning assistant response rather than flattening it into ordinary text.
+
+Display only currently evidenced metadata such as:
+
+- safe filename;
+- type/icon;
+- size when supplied/trustworthy;
+- download/progress/error state.
+
+The attachment identity belongs to the authoritative message/attachment model, not to a URL stored only in the cell.
+
+### Tap -> download -> system share
+
+Required first-version interaction:
+
+`tap file card -> explicit download -> app-private local temporary/cache file -> immediately present UIActivityViewController`
+
+This intentionally exposes native system actions such as Save to Files, AirDrop and compatible third-party share/open targets.
+
+- Do not substitute an expiring/authenticated remote URL for a completed reliable local download.
+- A visible failure remains on the owning file card and a later user action may retry; no automatic retry loop.
+- If a valid local downloaded copy already exists for the same attachment identity, a later tap may reuse it and open the share sheet without needless redownload.
+- A full download-management screen is not required for this interaction.
+
 ## Composer
 
 Follow the official model: rounded composer, multiline growth, leading attachment/tool entry when supported, send affordance when valid, and stop control while an evidenced response is active. Do not preload unsupported future tools.
+
+### High-frequency image/file send
+
+After text Send/Stream is accepted, native attachment sending becomes the next high-priority capability:
+
+- leading `+` opens official-style attachment choices;
+- **照片/图片** uses the iOS14-compatible native Photos/PHPicker path;
+- **文件** uses `UIDocumentPickerViewController` / accepted system document picker path;
+- selected attachments display compact thumbnails/file cards in the owning composer before Send;
+- user can explicitly remove an attachment before Send;
+- pending attachment state belongs to the owning conversation draft so A's selected file never appears in B;
+- upload progress/failure is shown only to the fidelity actually supported by the evidenced transfer;
+- upload endpoint/headers/asset identity/type/size limits must be captured from current protocol before production implementation.
+
+Do not silently upload/retry/resend merely because picker selection or transfer failed. Do not recompress/transcode images unless current service requirements justify it.
+
+## Download manager — later
+
+Basic assistant-file tap-download-share must ship before a custom download manager.
+
+A later optional `DEV-download-manager` may add:
+
+- active/recent download list;
+- retained local-file history;
+- re-open/re-share/delete;
+- storage usage/cleanup controls;
+- pause/resume/background behavior only if current iOS/service evidence supports it.
+
+The manager must not block core attachment usability.
 
 ## Reasoning / thinking interaction
 
@@ -264,20 +343,29 @@ UI remains a consumer of authoritative state.
 - Cached preview is bounded derived presentation metadata and may be last-locally-known when server preview content is unavailable; it never triggers automatic Detail fan-out.
 - Round count is derived from authoritative active branch.
 - Message timestamp display is derived from the authoritative message timestamp where available; the display toggle is preference state, not message state.
-- Answer-jump anchors are a lightweight derived presentation index over the authoritative visible active branch; they are not message/conversation identity and are rebuilt after authoritative message projection changes.
+- Copy reads authoritative user-visible message/block content and never hidden reasoning/tool/system payloads.
+- Answer-jump anchors are a lightweight derived presentation index over the authoritative visible active branch; they are rebuilt after authoritative message projection changes.
 - Per-conversation semantic scroll state remains owned by the existing conversation presentation owner; quick navigation cannot introduce a competing saved-offset store.
 - Stream/reasoning state belongs to owning conversation/response lifecycle.
+- Pending outgoing attachments belong to the owning conversation composer/draft state.
+- Incoming download state belongs to the owning attachment identity and must not migrate across conversations/accounts.
 - Sync/reload operate through production conversation owner and do not create second stores/identities.
 - A freshness/operation-generation guard may reject obsolete selected-detail results; request-task cancellation/replacement remains lifecycle ownership at the same authoritative repository.
 - Export reads authoritative model rather than rendered UI.
 
 ## Validation expectations
 
-Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior, adaptive answer-jump behavior and persistent list-cache/preview behavior require their own runtime acceptance as applicable.
+Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior, adaptive answer-jump behavior, Copy, attachment transfer and persistent list-cache/preview behavior require their own runtime acceptance as applicable.
 
 For answer navigation, real-device validation should include a long conversation, repeated upward/downward direction changes, first/last-boundary behavior, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
 
 For list cache/preview, real-device validation should include warm-cache cold start, one-request refresh/reconciliation, network-failure cache retention, no automatic Detail fan-out, account-scope isolation, first-page-28 merge behavior, and relaunch persistence of a preview derived from an already-opened conversation.
+
+For Copy, validate user + assistant whole-message actions and later code-block Copy; clipboard output must match user-visible content and exclude hidden material/UI decorations.
+
+For attachment receive/download/share, validate a real assistant file card, one user-triggered download, valid local file, immediate system share sheet, explicit failure/no auto retry, conversation/account isolation and safe local-file reuse.
+
+For attachment send, validate real image + document selection/upload/send, pending removal, A/B draft isolation and no duplicate send on failure.
 
 ## Maintenance rule
 

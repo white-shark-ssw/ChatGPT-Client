@@ -9,7 +9,7 @@ STAGING_DIR="$BUILD_DIR/ipa-staging"
 PROJECT="$ROOT_DIR/ChatGPTClient.xcodeproj"
 SCHEME="ChatGPTClient"
 SOURCE_COMMIT="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
-CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-multi-conversation-state-0.1.0-b20}"
+CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-multi-conversation-state-0.1.0-b21}"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$ARTIFACT_DIR" "$STAGING_DIR/Payload"

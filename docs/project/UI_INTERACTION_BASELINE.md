@@ -76,6 +76,85 @@ When `显示消息时间` is enabled, show subdued timestamp metadata below each
 - If a historical message has no authoritative timestamp, omit the metadata rather than fabricate a current time.
 - Future optimistic Send presentation may temporarily show a provisional local timestamp only if the authoritative response/message owner needs it; once server-backed time exists, the display must hand off to that authoritative value rather than keep a second durable timestamp authority.
 
+## Quick previous / next answer navigation
+
+This is a user-required long-conversation enhancement and is optional through settings.
+
+### Semantic target
+
+- `上一轮回答` / `下一轮回答` navigate by derived **round answer anchors**, not raw pixel percentages.
+- A round begins at an authoritative visible user message. Its historical answer anchor is the first visible assistant reply after that user message and before the next visible user message.
+- Multiple tool/reasoning/system nodes do not independently become “rounds”. A missing historical assistant reply does not get a fabricated anchor.
+- The same derived round projection should support header round count and answer navigation, avoiding parallel mutable indexes.
+
+### Button design and placement
+
+Use **one adaptive floating button**, not two large always-visible controls.
+
+Recommended compact-iPhone placement:
+
+- trailing edge of the conversation viewport;
+- approximately 12–16 pt inside the trailing safe area;
+- approximately 12–16 pt above the composer when a composer is present;
+- before Send/Composer exists, use the bottom safe-area region as the lower anchor;
+- when the keyboard/composer moves, the button moves with that layout so it never sits underneath the composer.
+
+Visual direction:
+
+- compact circular/material-like control, roughly 36–40 pt visible size with at least a 44 pt effective tap target;
+- SF Symbol chevron/arrow compatible with the iOS14 deployment target;
+- subtle system/material background, light shadow/border only as needed for readability over message content;
+- no large text pill permanently covering the document area;
+- VoiceOver/accessibility label is the full action (`上一轮回答` or `下一轮回答`) even if the visible control is icon-only.
+
+### Direction behavior
+
+The control follows the user's latest **real drag direction**:
+
+- user browses toward older content -> upward state / `上一轮回答`;
+- user browses toward newer content -> downward state / `下一轮回答`.
+
+Important boundaries:
+
+- Programmatic animated scrolling caused by the button is not a user drag and must not immediately reverse the control's semantic direction.
+- If only one adjacent answer target is valid at the current boundary, show that valid direction even if the previous user-drag direction pointed the other way.
+- If no useful adjacent answer exists (for example too few answer anchors), hide the control.
+- Do not require an auto-hide timer; visibility/direction should be deterministic from preference, current conversation/anchor availability and user drag intent.
+
+A short native cross-fade/symbol transition when the direction changes is acceptable, but direction must be event-driven rather than timer/watchdog-driven.
+
+### Tap / scrolling behavior
+
+Tapping must produce visible spatial continuity:
+
+- resolve the adjacent answer anchor in the chosen direction from the current visible round context;
+- scroll the existing `UITableView`/`UIScrollView` to that assistant-answer start with native animation;
+- position the answer start with a modest readable top inset below the navigation area;
+- do **not** instantly teleport to a final raw offset;
+- do **not** fake a long jump with timer-stepped offsets;
+- a user touch/drag may naturally interrupt the animation and takes priority.
+
+For long conversations, derive/store the lightweight answer-row/index projection when message data changes. Do not scan all messages during every `scrollViewDidScroll` callback.
+
+### Multi-conversation and refresh interaction
+
+- Quick navigation consumes the current conversation's existing presentation/scroll owner; it does not create a second saved-scroll authority.
+- Using the control in B must never mutate A's semantic scroll anchor.
+- After Sync/Reload/current-branch replacement, answer anchors are re-derived from authoritative visible messages; stale row indexes are not retained as identity.
+- The setting toggle hides/shows only the navigation presentation; it does not change message data or resident conversation state.
+
+### Future active-response interaction
+
+The first implementation may navigate server-backed/current visible branch answers before Send/Stream exists.
+
+Once an authoritative response lifecycle exists:
+
+- switching/jumping to an older round must never Stop or cancel a still-generating response merely because it is no longer visible;
+- active-response/follow-tail behavior is owned by the per-conversation Send/Stream lifecycle, not by this floating button;
+- programmatic jump animation must not masquerade as a user's manual follow-tail/exit-follow-tail gesture.
+
+Exact active-response “jump to newest” behavior should be validated with the real Send/Stream owner rather than guessed in the read-only phase.
+
 ## Composer
 
 Follow the official model: rounded composer, multiline growth, leading attachment/tool entry when supported, send affordance when valid, and stop control while an evidenced response is active. Do not preload unsupported future tools.
@@ -149,6 +228,8 @@ UI remains a consumer of authoritative state.
 - Selected conversation has one production owner.
 - Round count is derived from authoritative active branch.
 - Message timestamp display is derived from the authoritative message timestamp where available; the display toggle is preference state, not message state.
+- Answer-jump anchors are a lightweight derived presentation index over the authoritative visible active branch; they are not message/conversation identity and are rebuilt after authoritative message projection changes.
+- Per-conversation semantic scroll state remains owned by the existing conversation presentation owner; quick navigation cannot introduce a competing saved-offset store.
 - Stream/reasoning state belongs to owning conversation/response lifecycle.
 - Sync/reload operate through production conversation owner and do not create second stores/identities.
 - A freshness/operation-generation guard may reject obsolete selected-detail results; request-task cancellation/replacement remains lifecycle ownership at the same authoritative repository.
@@ -156,7 +237,9 @@ UI remains a consumer of authoritative state.
 
 ## Validation expectations
 
-Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior and message-timestamp behavior still require their own runtime acceptance.
+Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior and adaptive answer-jump behavior require their own runtime acceptance as applicable.
+
+For answer navigation, real-device validation should include a long conversation, repeated upward/downward direction changes, first/last-boundary behavior, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
 
 ## Maintenance rule
 

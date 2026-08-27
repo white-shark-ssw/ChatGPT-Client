@@ -23,7 +23,7 @@ Current constraints: native UIKit iOS client; TrollStore IPA; intended primary r
 ## Usability milestones
 
 - **V0.1 read-use**: native shell + conversation list/detail/message rendering + manual sync/full reload + usable cold-start login-state recovery.
-- **V0.2 chat-use**: V0.1 + stable multi-conversation state ownership + conversation metadata/preferences + text send/new conversation + streaming + stop + user-visible reasoning interaction/haptics + recovery integration.
+- **V0.2 chat-use**: V0.1 + stable multi-conversation state ownership + conversation metadata/preferences + long-conversation answer navigation + text send/new conversation + streaming + stop + user-visible reasoning interaction/haptics + recovery integration.
 - **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and remaining daily-use conversation features.
 
 ## Completed foundations
@@ -77,11 +77,22 @@ The Work generalizes the prior single-selected freshness/request-lifecycle model
 
 ### User-facing scope
 
-Implement the small conversation metadata/preferences bundle immediately after multi-conversation state and before Send/Stream:
+Implement the small conversation metadata/navigation/preferences bundle immediately after multi-conversation state and before Send/Stream:
 
 - conversation header round count: `聊天 · N轮` / `工作 · N轮`;
 - per-message timestamp display for every visible user message and visible assistant reply;
-- the first centralized app preference owner shared by both toggles and future settings.
+- adaptive quick navigation for `上一轮回答` / `下一轮回答`;
+- the first centralized app preference owner shared by these toggles and future settings.
+
+### Shared round derivation
+
+Round count and answer-jump navigation must share one derived active-branch round projection instead of maintaining parallel mutable counters/indexes.
+
+- Each authoritative visible user message starts one round.
+- For navigation, the historical answer anchor for that round is the first visible assistant reply following that user message before the next user message.
+- Tool/reasoning/system nodes do not independently create rounds merely because they exist in the protocol graph or UI.
+- If a historical round has no visible assistant answer, it has no fabricated answer anchor.
+- Recompute the lightweight derived round/answer-anchor list when the authoritative visible message projection changes (initial load, Sync, Reload, later branch change). Do not rescan the entire conversation on every scroll callback.
 
 ### Round count
 
@@ -99,13 +110,37 @@ Implement the small conversation metadata/preferences bundle immediately after m
 - If a historical message has no authoritative `createTime`, omit its timestamp rather than fabricate one.
 - The default value for `显示消息时间` is **not yet frozen by an explicit user requirement**; choose/document it when this Work starts rather than silently assuming.
 
+### Quick previous/next answer navigation
+
+- Setting: one centralized persisted toggle such as `显示回答快速跳转`; exact final label/default may be tuned when the Work starts, but view controllers/cells must not invent independent preference keys.
+- Presentation: use one small adaptive floating control rather than two permanently visible large controls.
+- Placement on compact iPhone: trailing safe-area side, approximately 12–16 pt from the right edge; bottom approximately 12–16 pt above the current composer when a composer exists, otherwise above the bottom safe area. It must move with the composer/keyboard layout rather than overlap it.
+- Keep the visible control compact (roughly 36–40 pt) while preserving at least a 44 pt hit target; prefer native material/system background and SF Symbols compatible with the deployment target.
+- Direction is driven by the user's most recent **actual drag direction**: browsing toward older content presents the upward/`上一轮回答` state; browsing toward newer content presents the downward/`下一轮回答` state. Programmatic animated scrolling must not feed back and flip the button direction as though it were a user drag.
+- Boundary availability overrides the last direction: if only one valid adjacent answer exists, present that valid direction; if the conversation does not have a useful adjacent answer target, hide the control.
+- The target is the adjacent derived answer anchor in the chosen direction, not a raw percentage/row guess and not another network load.
+- Tap behavior must visibly animate the existing conversation scroll container to the target answer start using native `UIScrollView`/`UITableView` animation semantics. Do not instant-teleport by assigning a final raw offset without animation, and do not implement staged timer-driven fake scrolling.
+- Land the target answer start with a modest readable top inset below the navigation area rather than burying the first line directly under the bar.
+- User touch/drag remains authoritative and may interrupt a programmatic animation naturally.
+- Conversation switch, Sync and Reload must use the same per-conversation presentation owner established by multi-conversation work; quick navigation must not create a second scroll-position authority or mutate another conversation's saved anchor.
+
 ### Future Send/Stream handoff
 
 Production Send must not create a second durable timestamp authority. If optimistic local presentation needs an immediate provisional time before the service supplies authoritative message time, that provisional value belongs to the pending response/message presentation and must hand off to the authoritative server-backed message timestamp once available.
 
+Quick answer navigation is initially defined against server-backed/current visible branch answers. When real Send/Stream exists, `DEV-send-stream` must integrate active-response/follow-tail behavior through the authoritative per-conversation response owner: navigating away from a generating answer must never Stop/cancel it merely because the user chose another historical round, and synthetic scrolling must not masquerade as user follow-tail intent.
+
+### Acceptance focus
+
+- Long conversations with many rounds: repeated up/down answer navigation lands on the intended adjacent answer with visible smooth movement and no extra Detail request.
+- A/B multi-conversation switching: each conversation preserves its own semantic scroll anchor; using the jump control in B never changes A.
+- Sync/Reload: answer anchors are re-derived from the refreshed visible branch; stale row indexes are not retained as authority.
+- Toggle Off removes the control without changing round count/message data or scroll state.
+- Scrolling performance remains bounded; no O(n) full-message scan on every `scrollViewDidScroll` event.
+
 ## Phase 8 — `DEV-send-stream`
 
-After read/recovery/multi-conversation ownership and the small metadata/preferences bundle are stable: evidence current text-send/new-conversation protocol, implement composer/stream/stop, bind response identity correctly under switching, and integrate manual recovery without automatic resend.
+After read/recovery/multi-conversation ownership and the small metadata/navigation/preferences bundle are stable: evidence current text-send/new-conversation protocol, implement composer/stream/stop, bind response identity correctly under switching, integrate manual recovery without automatic resend, and connect the answer-navigation/follow-tail behavior to the real per-conversation response owner.
 
 ## Phase 9 — `DEV-markdown-export`
 
@@ -129,4 +164,4 @@ Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Re
 
 ## Current next action
 
-No development Work is automatically activated by this plan. Finish the currently active multi-conversation Work through its own checkpoint/runtime gate. After it is Stable/merged, the next serialized Work is `DEV-conversation-round-count` with the expanded scope above: round count + message timestamps + first centralized preference owner; then proceed directly to `DEV-send-stream`.
+No development Work is automatically activated by this plan. Finish the currently active multi-conversation Work through its own checkpoint/runtime gate. After it is Stable/merged, the next serialized Work is `DEV-conversation-round-count` with the expanded scope above: round count + message timestamps + adaptive previous/next answer navigation + first centralized preference owner; then proceed directly to `DEV-send-stream`.

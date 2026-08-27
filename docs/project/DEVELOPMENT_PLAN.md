@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-27._
+_Last updated: 2026-08-28._
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Current constraints: native UIKit iOS client; TrollStore IPA; primary tested run
 4. Do not add speculative retry/fallback/watchdog/duplicate-state machinery.
 5. Distinguish Code / Static / CI / Artifact / Runtime / Stable evidence.
 6. High-frequency operations such as Copy and image/file transfer outrank lower-frequency polish once their dependencies exist.
-7. Persistent list caching is now an early infrastructure/performance task because repeated cold starts otherwise begin with no list data and may cause unnecessary repeated list requests during development/testing.
+7. Persistent list caching is early infrastructure/performance because repeated cold starts otherwise begin with no list data and may cause unnecessary repeated list requests during development/testing.
 
 ## Usability milestones
 
@@ -60,52 +60,27 @@ Evidence boundaries retained after closure: natural failed-resident navigation, 
 - Sync/Reload preserve an established reading anchor through the existing presentation owner.
 - Future Send/Stream follow-tail applies only while the user remains at/near the latest edge; deliberate history browsing must not be pulled back to bottom.
 
-## Phase 7 — `DEV-conversation-list-cache-core`
+### Phase 7 — `DEV-conversation-list-cache-core`
 
-### Why this is moved earlier
+**Completed / merged / Stable for the recorded Plus/personal iPhone/iOS17 cache-core scope.** PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`; final Runtime Candidate is `DEV-conversation-list-cache-core-0.1.0-b23`.
 
-This is the **first task after the now-Stable/merged multi-conversation baseline**, before metadata/settings and before Send/Stream.
+Accepted scope includes:
 
-The previous plan delayed list persistence until after the first chat loop. That leaves every development/test cold start with no local list data and still causes an automatic list request per relaunch. The user explicitly wants this risk reduced earlier.
+- one account-scoped persistent conversation-list snapshot behind `ConversationRepository`;
+- fast provisional cached-title presentation on cold start while preserving verified auth/account authority boundaries;
+- accepted 60-second rapid-relaunch `recent_skip` behavior for the recorded use case;
+- offline retained-cache presentation after temporary auth transport failure;
+- manual refresh bypass with explicit success/failure presentation;
+- first-page reconciliation that preserves known off-page rows when the server returns 28 of total 29;
+- app-private versioned storage without Detail/message-body persistence, copied auth secrets, per-row Detail prefetch, retry/timer/watchdog/polling, or a second list authority.
 
-Durable design: `docs/project/CONVERSATION_LIST_CACHE_PLAN.md`.
-
-### Core scope
-
-- Add one account/workspace-scoped persistent list snapshot behind `ConversationRepository`.
-- Persist bounded list metadata only: schema version, conversation ID, title, update time/order metadata, last successful reconciliation time, and fields required for future bounded preview integration.
-- After the current account scope is verified, load the matching snapshot and publish cached rows before waiting for network.
-- Never display another account's cache before scope verification.
-- No full `ConversationDetail`, raw mapping JSON or full message-body disk cache in this Work.
-- No per-row Detail prefetch and no automatic polling/retry loop.
-- Current first-page `limit=28` absence never proves deletion; preserve older cached rows unless later complete pagination or an explicit authoritative action proves removal.
-
-### Rapid-relaunch request suppression
-
-Cache-first rendering alone is insufficient to reduce frequent restart traffic, so the core Work must persist the time of the last successful authoritative list reconciliation and apply a **short freshness window** on launch:
-
-- valid cache missing/invalid -> perform the normal list request;
-- valid cache older than the accepted freshness window -> show cache immediately, then perform one normal list request;
-- valid cache that was successfully synchronized very recently -> show it and **skip that launch's automatic list request**;
-- explicit pull-to-refresh / refresh-button action always bypasses this suppression and performs one user-requested list refresh;
-- this is a one-time timestamp comparison, not a timer, polling loop, retry or watchdog.
-
-The exact initial freshness interval is intentionally not frozen by planning. The implementation Work must choose/document a small conservative value and validate it on device; do not silently invent a long stale interval. If current response evidence later proves usable ETag/validator semantics, conditional refresh may be evaluated but is not assumed.
-
-### Acceptance focus
-
-- Warm-cache cold start shows known rows immediately after verified scope.
-- Several rapid process relaunches inside the accepted freshness window do not each emit an automatic list request.
-- Manual refresh still performs a request immediately.
-- Once cache ages beyond the window, one normal refresh occurs and reconciles without blanking/flicker.
-- Network failure leaves valid cached rows visible; no automatic retry.
-- Account A cache never appears under verified account B.
+Conditional supported account-switch mismatch, corrupt/schema rejection, provisional-row Detail-block tap, iPad, runtime below iOS17 and non-personal workspace identity remain Unknown / Unverified where applicable. They do not block the next serialized Work.
 
 ## Phase 8 — `DEV-conversation-round-count`
 
 ### User-facing bundle
 
-Implement after cache core and before Send/Stream:
+This is the **current next development priority**:
 
 - `聊天 · N轮` / `工作 · N轮` derived from authoritative visible user turns;
 - per-user/per-assistant message timestamps from authoritative `createTime` when available;
@@ -130,6 +105,7 @@ Evidence the current text Send/new-conversation/stream/stop protocol, then imple
 - A hidden conversation may continue responding while another is visible.
 - Sync/Reload never resend messages.
 - If user is at/near latest, stream may follow tail; once user intentionally browses history, stream must not steal the viewport.
+- Once new-chat creation is genuinely usable, transition the compact startup/navigation UX from the current read-stage conversation-list-first shell toward the official-style new-chat main surface with the sidebar as navigation/history entry; Projects remain a later evidenced capability and do not block that shell transition.
 
 **As soon as exact real-device text chat/stream works, issue the earliest practical daily-chat Candidate.**
 
@@ -160,7 +136,7 @@ Improve development-chat readability:
 
 ## Phase 12 — `DEV-conversation-list-preview`
 
-This is now the **preview/UI enhancement built on the already-accepted cache core**, rather than the first introduction of persistence.
+This is the **preview/UI enhancement built on the accepted cache core** rather than a second persistence implementation.
 
 - Reuse the same persistent list snapshot/store and repository owner from `DEV-conversation-list-cache-core`.
 - First verify whether the current list response itself exposes a safe user-visible preview/snippet field.
@@ -198,8 +174,8 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-The multi-conversation phase is complete. The serialized near-term route is:
+`DEV-conversation-list-cache-core` is complete. There is currently no Active development checkpoint. The next serialized development Work is:
 
-`DEV-conversation-list-cache-core -> DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
+`DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
 
-This document records priority only. It does not activate `DEV-conversation-list-cache-core`; that Work must establish its own checkpoint/branch/candidate identity in the development session that owns it.
+The next development session should create/select `DEV-conversation-round-count` with its own branch/checkpoint and fresh candidate identity after the normal conflict/identity gate. This document records priority only and does not activate the Work by itself.

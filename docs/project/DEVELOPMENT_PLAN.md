@@ -43,11 +43,13 @@ Completed / merged / Stable for tested b9 scope. `ConversationRepository` is the
 ### Phase 5 — `DEV-conversation-recovery`
 Completed / merged / Stable for recorded Plus/personal iPhone/iOS17 scope. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`; exact evidence remains in `BUILD_TEST_INDEX.md`.
 
-## Phase 6 — `DEV-multi-conversation-state`
+### Phase 6 — `DEV-multi-conversation-state`
 
-### Goal
+**Completed / merged / Stable for the recorded Plus/personal iPhone/iOS17 read-state scope.** PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`; final Runtime Candidate is `DEV-multi-conversation-state-0.1.0-b21` with exact product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`. Frozen remains No.
 
-Finish account-scoped per-conversation resident state, stale-operation protection, request coalescing, minimum current-node identity and per-conversation presentation state before production Send/Stream.
+Accepted scope includes account-scoped per-conversation resident state, stale-operation protection, same-target coalescing/replacement ownership, minimum current-node identity, independent historical scroll presentation, measured 0→8 resident process footprint, selected-title lifecycle ordering, and same-target Reload replacement-under-load/hidden-rejoin behavior.
+
+Evidence boundaries retained after closure: natural failed-resident navigation, supported account-switch purge, non-personal workspace identity and missing-anchor-message discard remain Unknown / Unverified where applicable; normal LRU capacity remains unfrozen because current real-device evidence does not justify one. Future active-response follow-tail belongs to Send/Stream.
 
 ### Conversation-entry scroll semantics
 
@@ -58,13 +60,11 @@ Finish account-scoped per-conversation resident state, stale-operation protectio
 - Sync/Reload preserve an established reading anchor through the existing presentation owner.
 - Future Send/Stream follow-tail applies only while the user remains at/near the latest edge; deliberate history browsing must not be pulled back to bottom.
 
-The owning development session maintains its own exact Candidate/runtime gate. Do not expand or overwrite that Active checkpoint from unrelated work.
-
 ## Phase 7 — `DEV-conversation-list-cache-core`
 
 ### Why this is moved earlier
 
-This is now the **first task after multi-conversation becomes Stable/merged**, before metadata/settings and before Send/Stream.
+This is the **first task after the now-Stable/merged multi-conversation baseline**, before metadata/settings and before Send/Stream.
 
 The previous plan delayed list persistence until after the first chat loop. That leaves every development/test cold start with no local list data and still causes an automatic list request per relaunch. The user explicitly wants this risk reduced earlier.
 
@@ -198,8 +198,8 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-No new development Work is activated by this planning change. Finish `DEV-multi-conversation-state` through its own runtime/merge gate. After it is Stable/merged, the serialized near-term route is now:
+The multi-conversation phase is complete. The serialized near-term route is:
 
 `DEV-conversation-list-cache-core -> DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
 
-This ordering deliberately pays the small persistence cost early so the many subsequent development/test relaunches are faster and do not needlessly hammer the list route, while still keeping full chat-body persistence and complex offline storage out of the early scope.
+This document records priority only. It does not activate `DEV-conversation-list-cache-core`; that Work must establish its own checkpoint/branch/candidate identity in the development session that owns it.

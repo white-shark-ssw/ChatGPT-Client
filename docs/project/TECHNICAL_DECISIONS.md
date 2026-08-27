@@ -93,6 +93,16 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Decision**: With no selected conversation, compact startup uses `.primary` conversation list as the useful root. UISplitViewController/native navigation is the sole compact list/detail navigation owner; do not layer a duplicate custom sidebar button on top.
 - **Evidence**: b13 recording showed blank `新对话` startup, duplicate sidebar icons and unreliable custom reveal. Exact b14 removed the custom owner and user reported the stated compact startup/navigation gate had no issues. b15 preserved this behavior.
 
+### TD-019 — Multi-conversation data remains one account-scoped repository authority
+- **Status**: Confirmed architectural direction; implementation Active / Runtime Unverified
+- **Date**: 2026-08-27
+- **Decision**: Production conversation state is owned by one `ConversationRepository` scoped by the currently verified account context and keyed per authoritative conversation identity. Foreground selection is presentation state only. Selecting B must not delete A, cancel A merely because A became hidden, or make navigation itself a reload trigger. Same-target async freshness/cancellation remains per-conversation ownership inside this repository.
+- **Account boundary**: `AuthSessionStore` remains the sole auth/account-context owner. Repository operation contexts may be checked against the current verified account scope but must never become authority that can restore an older scope after a newer account transition. Persistent auth secrets remain solely in default WebKit storage.
+- **Resident model boundary**: retain only current evidence-backed conversation data/metadata, including current branch-tip identity when available. Do not retain raw multi-megabyte payloads, use UIKit hierarchy as cache, or create one repository per screen/conversation.
+- **Memory boundary**: normal resident capacity must become bounded from real-device evidence; no arbitrary capacity is frozen from source/CI or approximate text-byte metrics alone. Memory-warning trimming is distinct from ordinary LRU capacity.
+- **Validation boundary**: b16 source at `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08` compiled in Run `33009246356`, but its Artifact identity is rejected and a second source review found unresolved stale-scope/waiter/presentation/list-freshness/execution-domain defects. This decision therefore records ownership direction, **not** a claim that current multi-conversation runtime behavior is solved.
+- **Rejected**: stale operation context re-adopting account scope; selection-driven cancellation; separate screen repositories; retained VC/cell cache; navigation-triggered reload; speculative retry/timer/watchdog/global rate limiter; persistent chat-body cache without a separate contract.
+
 ## Rule
 
 Do not write speculation here as fact. Historical plans, CI and Artifacts are not runtime proof.

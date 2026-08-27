@@ -10,6 +10,8 @@ _Last updated: 2026-08-27._
 - `DEV-native-read-path-0.1.0-b9`: merged Stable production native-read baseline for tested scope.
 - `DEV-conversation-recovery-0.1.0-b15`: **merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope**. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
 
+No multi-conversation Candidate is Runtime-accepted or Stable yet. The accepted runtime baseline remains b15 until exact later evidence changes it.
+
 ## Recovery completion
 
 Final candidate: `DEV-conversation-recovery-0.1.0-b15`, version `0.1.0 (15)`.
@@ -46,28 +48,54 @@ Two independent real-device replacement cases were accepted:
 
 The b13 overlapping-request HTTP429 defect is therefore resolved for the tested b15 scope.
 
+## Active Work — DEV-multi-conversation-state
+
+- **Work**: `DEV-multi-conversation-state` on `dev/multi-conversation-state-20260827`.
+- **Baseline**: current `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; no open PR; no second Active DEV checkpoint.
+- **b16 source/config**: `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`.
+- **b16 CI**: Run `33009246356` succeeded, proving exact b16 source compiles/packages on the current macOS15/Xcode16.4 CI path.
+- **b16 Artifact**: `9621830284` exists but is **identity-rejected** before runtime because `scripts/build_ipa.sh` still embedded recovery-b15 candidate default and recovery IPA slug. b16 is historical and must not be reused.
+- **Current branch head after evidence/doc updates**: `ea6c7e41f22f8bdc42fde56cca3b596e086a4c10`.
+- **Implementation evidence**: account-scoped/per-conversation resident source, per-conversation detail generations/tasks, coalesced ordinary loads, failed terminal residency, single-flight repository auth acquisition, current-node retention, account reset/list guards and memory-warning resident trimming are written and compiled.
+- **Second source review**: unresolved P0 owner defects remain before the first valid runtime Candidate. In particular: delayed old transport context can currently re-adopt stale account scope; superseded/account-reset waiters can be silently abandoned; hidden Sync A -> B -> A can leave visible A stale after Sync terminal; list request/presentation freshness is incomplete; task-handle attachment has an avoidable cancellation window; mutable repository reads are not fully confined to one execution domain.
+- **Validation**: `Code written = Yes`; `Static/source review = performed with unresolved findings`; `CI = Yes for b16`; `Artifact = produced but identity rejected`; `Runtime/manual/real-device = No`; `Stable/Frozen = No`.
+
 ## Current architecture
+
+### Accepted Stable baseline
 
 - `AppDelegate`: lifecycle plus accepted WebKit warm-up-before-root sequencing.
 - `RootViewController`: synchronously built split shell; native compact list/detail navigation owner.
-- `ConversationRepository`: authoritative conversation summaries, selected identity/detail/current visible branch, manual recovery, operation-generation freshness and selected-detail request lifecycle.
+- `ConversationRepository` in b15: authoritative conversation summaries, selected identity/detail/current visible branch, manual recovery, selected-detail generation freshness and selected-detail request lifecycle.
 - `ConversationSidebarViewController`: list presentation/initial list request.
 - `ConversationDetailViewController`: detail/messages, recovery menu and centered sync feedback.
 - Default `WKWebsiteDataStore`: sole persistent auth-secret authority.
 - `AuthSessionStore`: account context, public warm-up and transient authorized transport; task-handle exposure does not change auth semantics.
 
+### Active branch direction, not yet Runtime-accepted
+
+- `ConversationRepository` is being generalized to one account-scoped authority with per-conversation resident/operation entries; foreground selection is presentation state only.
+- `AuthSessionStore` remains account/auth authority and now exposes only the minimum verified-context snapshot/change signal needed by the repository branch.
+- Current resident scope key is `userID + accountID + conversationID`; non-personal workspace identity remains Unknown / Unverified.
+- `current_node` is retained as minimal directly evidenced branch-tip metadata; raw mapping payload is still discarded.
+
 ## Delivery / serialized direction
 
 1. `DEV-conversation-recovery` — **Completed / merged / Stable for recorded scope**.
-2. `DEV-multi-conversation-state` — next serialized development Work when the user asks to continue.
+2. `DEV-multi-conversation-state` — **Active**; must close current P0 source findings, produce a valid uniquely identified runtime Candidate, gather real-device concurrency/residency evidence, then choose bounded resident/LRU behavior from device evidence before Stable.
 3. `DEV-conversation-round-count` / preferences integration.
 4. `DEV-send-stream`.
 5. Markdown export, long-conversation tuning, attachments and remaining daily-use work.
 
+Semantic per-conversation scroll-anchor restoration remains P1 in the architecture gap review and does not block the first valid core multi-conversation runtime Candidate unless a later explicit requirement changes priority.
+
 ## Known issues / constraints
 
 - No unit/UI test target; automated validation remains Release compile, IPA packaging/inspection and artifact upload.
-- Current freshness/task lifecycle is intentionally single-selected; future multi-conversation Work will generalize account-scoped per-conversation state.
+- Multi-conversation active source is **not** yet runtime accepted; do not describe its owner/race behavior as solved from b16 CI.
+- A valid next Candidate must not reuse b16 and should be created atomically so one candidate/build identity maps to one intended source/config tree and Artifact.
+- Current account-scope implementation is personal-account evidence only; non-personal workspace identity remains Unknown / Unverified.
+- Normal-operation resident/LRU bound remains Unknown until real-device measurement; approximate visible-text byte metrics are not actual process-memory evidence.
 - Runtime below iOS17, iPad, non-personal workspace, send/streaming and attachments remain Unknown / Unverified as applicable.
 - Long account/list/detail durations are end-to-end signals, not proof of one bottleneck.
 

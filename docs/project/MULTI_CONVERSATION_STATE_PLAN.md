@@ -1,6 +1,6 @@
 # Multi-Conversation State / Residency Plan
 
-_Last updated: 2026-08-27; refreshed after b17 static/CI/Artifact validation._
+_Last updated: 2026-08-27; refreshed after b17 real-device core validation._
 
 ## Purpose
 
@@ -18,7 +18,7 @@ See `CLIENT_ARCHITECTURE_GAP_REVIEW.md` for the broader pre-send architecture an
 
 ### Accepted Stable baseline
 
-`DEV-conversation-recovery-0.1.0-b15` is merged Stable for the recorded Plus/personal iPhone/iOS17 recovery scope. Current accepted runtime baseline remains `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`.
+`DEV-conversation-recovery-0.1.0-b15` is merged Stable for the recorded Plus/personal iPhone/iOS17 recovery scope. Current merged Stable baseline remains `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011` until this Work completes/merges.
 
 b15 proved the same-conversation explicit replacement rule: a newer manual recovery owns a new generation, cancels the older selected-detail task before replacement, and stale callbacks cannot mutate current state.
 
@@ -36,26 +36,57 @@ b16 source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08` compiled in Run `330092463
 - CI: Run `33045536770`, job `98428537619`, success on Xcode16.4; Release target `arm64-apple-ios14.0`.
 - Artifact: `9635486304`; IPA `ChatGPTClient-0.1.0-b17-dev-multi-conversation-state.ipa`; IPA SHA `ed551deac0335e47da56da36ec2a8a20550613ac072ac1ddf0b84790278318dc`; ZIP digest `sha256:bf6aed8cebcb08153fbe8fac6868ce60c0ef4bd7876340246912ba8edbed1c33`.
 - Independent package inspection confirms embedded `0.1.0 (17)`, candidate b17, source `bc69d58b3245`, minimum iOS14.0, device families `[1,2]`, arm64.
-- **No b17 runtime/manual/real-device evidence exists yet.** Code/static/CI/Artifact success must not be described as runtime correctness.
+- **Real-device**: exact b17 on iPhone/iOS17 now has accepted evidence for resident return, hidden completion, same-target in-flight coalescing, Sync A->B->A rejoin and rapid multi-conversation overlap. No HTTP429 appears in the supplied diagnostic export.
+- **Not Stable**: Reload-target isolation, failure residency, supported account-switch purge and measured normal LRU capacity remain separate acceptance work.
 
-## b16 P0 findings and b17 static closure
+## b17 real-device core evidence
 
-The b16 second review identified the following P0 source defects. b17 now contains source-level fixes and has compiled/package evidence for each affected source path; real-device behavior remains to be proven.
+The 2026-08-27 exact b17 export and user observation support these current conclusions:
 
-1. **Stale scope re-adoption** -> b17 operation/transport context only validates against the current `AuthSessionStore` verified scope; stale transport cannot establish repository scope.
-2. **Probe commit freshness** -> b17 rechecks current `verifiedAccountContext()` before installing completed probe session/scope.
-3. **Abandoned waiters** -> b17 superseded operations resolve old waiters with `operationSuperseded`; account reset resolves invalidated waiters with `accountContextChanged`.
-4. **Ordinary presentation freshness** -> b17 detail presentation uses selected identity + presentation generation.
-5. **Sync A -> B -> A stale-visible bug** -> b17 checks/joins an active per-conversation operation before returning a loaded resident, so returning A can observe A's existing Sync/Reload terminal result.
-6. **Global recovery presentation** -> b17 derives recovery presentation from the selected conversation's active operation rather than a global recovery-in-progress authority.
-7. **List freshness** -> b17 adds repository list generation plus sidebar presentation generation.
-8. **Task-handle window** -> b17 installs the replacement owner, cancels old task, starts/attaches the replacement task synchronously on the owner domain, then resolves old waiters.
-9. **Repository execution domain** -> b17 main-thread-confines mutable repository state and avoids background reads of mutable list state.
-10. **Missing runtime diagnostics** -> b17 includes explicit old->new hashed selection transition, resident/active/protected counts and resident first-visible timing.
-11. **Memory-warning active resident protection** -> b17 protects selected and active-operation residents; only eligible inactive terminal entries are trimmed.
-12. **Package identity** -> b17 removes the b16 recovery candidate/slug hard-codes and independently verifies the correct package identity.
+1. Loaded resident return logs `resident.hit` and `resident.firstVisible` without a navigation-only refetch; observed first-visible timings are approximately `0.23–0.78 ms`.
+2. Returning to an in-flight same target logs `detail.coalesced completionCount=2`, so the original operation remains owner instead of starting a duplicate target Detail request.
+3. Hidden valid completion logs `resident.stored visibility=hidden`; later return resolves through resident hit.
+4. Sync A -> B -> A: returning A while its Sync is still active logs `resident.hit activeOperationKind=sync` and coalesces onto the same Sync; that operation later finishes HTTP200 / `latestSync.end status=ok`.
+5. Rapid different-conversation overlap reached `activeOperationCount=3`; hidden/foreground completions stayed target-specific; no HTTP429 appears in the supplied export.
+6. Resident count reached 6 and `residentTotalApproximateTextBytes=6724764`; this remains an approximate text correlation metric, not process-memory evidence or an LRU-capacity decision.
 
-These are source/CI/Artifact closure statements only. They become accepted behavior only after exact b17 real-device evidence.
+### Reproduced P1 — semantic per-conversation scroll anchor
+
+The previously planned P1 gap is now reproduced on exact b17:
+
+- leave conversation A around ~10% scroll position;
+- switch to conversation B;
+- scroll B;
+- return to A;
+- A's prior position has shifted instead of restoring the same semantic/visual location.
+
+This does **not** invalidate the accepted resident-data result: A is still returned from its resident state without a Detail refetch. The defect belongs to presentation residency: the single visible detail presentation does not yet retain/restore a per-conversation semantic scroll anchor.
+
+Implementation rule for the correction:
+
+- scroll state remains presentation metadata, not a second conversation-data authority;
+- prefer a semantic anchor tied to visible message identity plus relative offset where possible, rather than copying one global raw `contentOffset` between conversations;
+- restoration must tolerate layout/height changes and large conversations;
+- do not retain one full UIKit hierarchy per conversation merely to preserve scroll position.
+
+Because b17 already exists, any product-code correction must use a new unique Candidate/build (next expected b18 after conflict/uniqueness gate). Never rebuild/reuse b17.
+
+## b16 P0 findings and b17 closure
+
+The b16 second review identified the following P0 defects. b17 contains source fixes, compiled/package evidence, and the user/device run now supplies direct evidence for the core navigation/coalescing/hidden-Sync portions noted below.
+
+1. **Stale scope re-adoption** -> operation/transport context only validates against the current `AuthSessionStore` verified scope; stale transport cannot establish repository scope. Runtime account-switch purge remains untested because no supported switch route was exercised.
+2. **Probe commit freshness** -> current `verifiedAccountContext()` is rechecked before installing completed probe session/scope.
+3. **Abandoned waiters** -> superseded operations resolve old waiters with `operationSuperseded`; account reset resolves invalidated waiters with `accountContextChanged`.
+4. **Ordinary presentation freshness** -> detail presentation uses selected identity + presentation generation.
+5. **Sync A -> B -> A stale-visible bug** -> operation-first return/coalescing is now directly observed in exact b17 runtime.
+6. **Global recovery presentation** -> recovery presentation derives from the selected conversation's active operation; exact b17 Sync-return behavior is accepted for the tested sequence.
+7. **List freshness** -> repository list generation plus sidebar presentation generation; destructive stale-list overlap was not separately manufactured in the supplied runtime run.
+8. **Task-handle window** -> replacement owner/cancel/start+attach/waiter ordering is compiled; b15 remains the accepted isolated replacement-under-load runtime baseline until b17-specific replacement is separately exercised.
+9. **Repository execution domain** -> mutable repository state is main-thread-confined.
+10. **Runtime diagnostics** -> exact b17 runtime demonstrates old->new selection hashes, resident/active/protected counts, coalescing and first-visible timing.
+11. **Memory-warning active resident protection** -> source/CI covered; no system memory-warning acceptance event was captured in the supplied runtime run.
+12. **Package identity** -> independently accepted for exact b17.
 
 ## Work identity / ordering
 
@@ -123,6 +154,8 @@ Required semantics:
 - every waiter terminates on success, failure, supersede or account invalidation;
 - do not impose an arbitrary global concurrency limit before device evidence.
 
+Exact b17 runtime now confirms independent overlap and same-target coalescing for the supplied sequences.
+
 ## Resident terminal state / navigation
 
 Resident logic distinguishes:
@@ -141,7 +174,7 @@ On navigation to B:
 4. Failed B remains failed; ordinary navigation does not implicitly retry.
 5. Only missing/evicted B starts one ordinary load.
 
-Returning B -> A follows the same rules.
+Returning B -> A follows the same rules. Exact b17 runtime accepts loaded return and in-flight coalescing. Failure residency remains unproven because no natural terminal failure was exercised.
 
 ## Recovery semantics
 
@@ -153,7 +186,7 @@ Returning B -> A follows the same rules.
 - preserves loaded A on failure when applicable;
 - B/C remain untouched.
 
-If user switches A -> B -> A before Sync terminal, returning A must remain attached to A's already-active Sync and advance to its terminal result without another network request.
+Exact b17 runtime now accepts A -> B -> A before Sync terminal: returning A rejoined the same active Sync and applied its successful terminal result without a duplicate Sync caused by return.
 
 ### Reload A
 
@@ -164,9 +197,13 @@ If user switches A -> B -> A before Sync terminal, returning A must remain attac
 - never resend/regenerate;
 - B/C remain resident and independent.
 
+Reload target isolation was not separately isolated in the supplied b17 run.
+
 ### Recovery presentation
 
 The visible detail controller owns lightweight presentation only. It derives active Sync/Reload state from the selected conversation's repository operation identity and uses presentation freshness so hidden/obsolete completions cannot mutate another visible conversation.
+
+Scroll anchor is also presentation state, but unlike recovery status it still needs per-conversation preservation/restoration as described in the reproduced P1 section.
 
 Future Sync/Reload behavior while a Send/Stream response is active must follow actual Send/Stream protocol evidence; do not guess it here.
 
@@ -202,11 +239,11 @@ Current rules:
 - approximate visible-text bytes are correlation only and cannot justify/freeze capacity;
 - do not add future-only access-order bookkeeping before a measured normal LRU policy is implemented.
 
-Use device/system memory observation where available, resident/protected counts, first-visible timing, memory warnings and repeated switching across small/large conversations.
+The supplied b17 run exercised multiple large conversations and reached 6 residents, which is useful runtime behavior evidence but still insufficient to freeze a normal capacity without process/system memory evidence.
 
 ## Diagnostics
 
-Privacy-safe runtime evidence should include:
+Privacy-safe runtime evidence includes/should include:
 
 - explicit old/new irreversible selection hashes;
 - resident hit/miss/state;
@@ -220,53 +257,53 @@ Privacy-safe runtime evidence should include:
 - memory-warning eviction reason;
 - return-to-resident first-visible timing.
 
+The current schema does **not** log semantic scroll anchors; the b17 scroll-position defect is user-observed runtime evidence, not inferred from logs. Do not add raw message bodies/titles merely for anchor diagnostics.
+
 Never log raw conversation/account IDs, titles, bodies, payloads, Cookie/Authorization values or tokens.
 
 ## Acceptance criteria
 
 Before calling this Work Stable, exact real-device evidence should prove at minimum:
 
-1. A loaded -> B loaded -> A renders A without a new Detail request.
-2. A loading -> B -> A completes hidden: A is retained and B is untouched.
-3. A loading -> B -> A before completion coalesces onto one A operation.
-4. Rapid A/B/C switching never shows another conversation's title/messages/error/recovery feedback.
-5. Sync A -> B -> A before terminal restores/observes the same active Sync and applies terminal state without a duplicate request.
-6. Reload/Sync A cancels/replaces only A's older target operation; B remains independent.
-7. Superseded/obsolete A cannot overwrite newer A; old waiters terminate without stale UI mutation.
-8. A terminal failed load stays failed across navigation and does not silently retry.
-9. Verified account change purges old state and rejects late old-scope callbacks; stale transport cannot re-adopt old scope.
-10. Concurrent first loads share one transient-session acquisition.
-11. Stale list callbacks cannot overwrite/reset a newer list request or sidebar state.
-12. `current_node` remains available without raw mapping retention.
-13. Memory warning trims only eligible inactive residents.
-14. Several real conversations including at least one large conversation switch repeatedly without unbounded growth or repeat requests for still-resident entries.
-15. Rapid different-conversation in-flight loads record HTTP429/service pressure without automatic retry/global rate limiting.
-16. Accepted b15 manual Sync/Reload behavior remains intact for the target conversation.
+1. A loaded -> B loaded -> A renders A without a new Detail request. **Accepted in b17 supplied run.**
+2. A loading -> B -> A completes hidden: A is retained and B is untouched. **Accepted in b17 supplied run.**
+3. A loading -> B -> A before completion coalesces onto one A operation. **Accepted in b17 supplied run.**
+4. Rapid A/B/C switching never shows another conversation's title/messages/error/recovery feedback. **Accepted for the observed b17 run.**
+5. Sync A -> B -> A before terminal restores/observes the same active Sync and applies terminal state without a duplicate request. **Accepted in b17 supplied run.**
+6. Reload/Sync A cancels/replaces only A's older target operation; B remains independent. **Sync target behavior observed; isolated Reload replacement remains open.**
+7. Superseded/obsolete A cannot overwrite newer A; old waiters terminate without stale UI mutation. **Source/CI plus observed coalescing; isolated supersede terminal test remains open.**
+8. A terminal failed load stays failed across navigation and does not silently retry. **Open — no natural failure exercised.**
+9. Verified account change purges old state and rejects late old-scope callbacks; stale transport cannot re-adopt old scope. **Open runtime — no supported account switch exercised.**
+10. Concurrent first loads share one transient-session acquisition. **No duplicate auth-probe issue observed in supplied overlap, but keep exact runtime criterion open unless explicitly isolated.**
+11. Stale list callbacks cannot overwrite/reset a newer list request or sidebar state. **Open as destructive overlap criterion.**
+12. `current_node` remains available without raw mapping retention. **Source/CI-backed; no contrary runtime result.**
+13. Memory warning trims only eligible inactive residents. **Open — no memory-warning event captured.**
+14. Several real conversations including at least one large conversation switch repeatedly without unbounded growth or repeat requests for still-resident entries. **Partially accepted: large conversations and 6 residents exercised; bounded-policy conclusion remains open.**
+15. Rapid different-conversation in-flight loads record HTTP429/service pressure without automatic retry/global rate limiting. **Accepted for supplied run: up to 3 active operations; no HTTP429 observed.**
+16. Accepted b15 manual Sync/Reload behavior remains intact for the target conversation. **Sync accepted in supplied b17 run; b15 remains accepted Reload/replacement baseline.**
 
 Account/workspace runtime evidence beyond the current personal account remains separately Unknown until a real supported route exists and is tested.
 
-## First valid Candidate boundary
+## Candidate boundary / next correction
 
-b17 is now the first identity-valid core runtime Candidate. Its P0 source boundary is:
+b17 is the first identity-valid Candidate and now carries accepted core real-device evidence for the tested switching/coalescing/hidden-Sync/rapid-overlap paths.
 
-- stale-scope rejection/current-auth-owner verification;
-- deterministic waiter lifecycle and matching UI freshness;
-- hidden Sync return correctness;
-- list freshness/presentation correctness;
-- deterministic same-target cancellation/task ownership;
-- one repository execution domain;
-- privacy-safe runtime diagnostics;
-- correct unique Candidate/IPA identity.
+**Semantic scroll-anchor restoration remains P1 in architecture priority, but is now a reproduced b17 runtime defect rather than a hypothetical item.** It does not retroactively invalidate b17 core residency evidence.
 
-**Semantic scroll-anchor restoration is P1 and does not block b17 runtime proof.**
+If this P1 correction is implemented next, run the normal candidate/branch/conflict uniqueness gate and allocate b18 before touching product Candidate identity. Do not rebuild/reuse b17.
 
 ## Deterministic testing guidance
 
-There is still no XCTest target. Adding one is separate project-file work and must not be used as a substitute for b17 real-device validation.
+There is still no XCTest target. Adding one is separate project-file work and must not substitute for real-device validation.
 
 Highest-value future pure tests include resident decisions, coalescing/waiter termination, target-isolated replacement, stale-generation rejection, stale-account rejection, account purge, single-flight auth acquisition, list freshness, LRU eligibility and current-branch normalization.
 
-Real-device tests remain mandatory for networking, HTTP429 behavior, UI switching, account/WebKit behavior, memory pressure and performance.
+For scroll-anchor restoration, highest-value runtime checks are:
+
+- A at top/middle/deep position -> B scroll -> A returns to the same semantic message/relative offset;
+- repeat with a long A where cells have very different heights;
+- Sync A while hidden/visible must not restore an obsolete anchor over a user scroll performed after return;
+- resident eviction/reload should define whether the anchor remains valid or is discarded rather than guessing.
 
 ## Non-goals / prohibited shortcuts
 
@@ -283,4 +320,5 @@ Real-device tests remain mandatory for networking, HTTP429 behavior, UI switchin
 - No copied persistent auth secrets or second account owner.
 - No raw mapping retention to anticipate future Send/Edit/Regenerate.
 - No capacity chosen from approximate text bytes alone.
-- No claim that concurrent A/B server operations are safe/unsafe until exact runtime evidence exists.
+- No full retained view hierarchy per conversation merely to preserve scroll position.
+- No claim that concurrent A/B server operations are safe/unsafe beyond exact runtime evidence.

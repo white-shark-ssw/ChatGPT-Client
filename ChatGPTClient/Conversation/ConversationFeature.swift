@@ -771,13 +771,14 @@ final class ConversationRepository {
                 return
             }
             let items = rawItems.compactMap(Self.parseConversationSummary)
+            let totalCount = (payload["total"] as? NSNumber)?.intValue
             var fields = ["httpStatus": String(response.statusCode), "byteCount": String(data.count), "itemCount": String(items.count), "operationGeneration": String(operationGeneration)]
-            if let total = payload["total"] as? NSNumber { fields["totalCount"] = total.stringValue }
-            self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: fields, result: .success(items), completion: completion)
+            if let totalCount { fields["totalCount"] = String(totalCount) }
+            self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: fields, result: .success(items), totalCount: totalCount, completion: completion)
         }
     }
 
-    private func finishListOperation(context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, statusFields: [String: String], result: Result<[ConversationSummary], Error>, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+    private func finishListOperation(context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, statusFields: [String: String], result: Result<[ConversationSummary], Error>, totalCount: Int? = nil, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         DispatchQueue.main.async {
             self.requireMainThread()
             guard self.activeAccountScope == context.scope else {
@@ -796,7 +797,7 @@ final class ConversationRepository {
             }
             switch result {
             case .success(let items):
-                let reconciliation = self.reconcileConversationPage(items)
+                let reconciliation = self.reconcileConversationPage(items, totalCount: totalCount)
                 self.conversations = reconciliation.items
                 self.onConversationListChanged?()
                 var reconcileFields = reconciliation.fields
@@ -849,7 +850,7 @@ final class ConversationRepository {
         }
     }
 
-    private func reconcileConversationPage(_ page: [ConversationSummary]) -> (items: [ConversationSummary], fields: [String: String]) {
+    private func reconcileConversationPage(_ page: [ConversationSummary], totalCount: Int?) -> (items: [ConversationSummary], fields: [String: String]) {
         requireMainThread()
         let previous = conversations
         var previousByID: [String: ConversationSummary] = [:]
@@ -873,14 +874,22 @@ final class ConversationRepository {
             }
         }
 
-        var reconciled = authoritativePage
-        for item in previous where !seen.contains(item.id) { reconciled.append(item) }
+        let offPageCandidates = previous.filter { !seen.contains($0.id) }
+        let preservedOffPage: [ConversationSummary]
+        if let totalCount {
+            preservedOffPage = Array(offPageCandidates.prefix(max(0, totalCount - authoritativePage.count)))
+        } else {
+            preservedOffPage = offPageCandidates
+        }
+        let reconciled = authoritativePage + preservedOffPage
         let movedCount = reconciled.enumerated().reduce(0) { count, pair in
             let (index, item) = pair
             guard let previousIndex = previousIndexByID[item.id] else { return count }
             return count + (previousIndex == index ? 0 : 1)
         }
-        return (reconciled, ["insertedCount": String(insertedCount), "updatedCount": String(updatedCount), "movedCount": String(movedCount), "unchangedCount": String(unchangedCount), "preservedOffPageCount": String(max(0, reconciled.count - authoritativePage.count))])
+        var fields = ["insertedCount": String(insertedCount), "updatedCount": String(updatedCount), "movedCount": String(movedCount), "unchangedCount": String(unchangedCount), "preservedOffPageCount": String(preservedOffPage.count), "discardedExcessOffPageCount": String(max(0, offPageCandidates.count - preservedOffPage.count))]
+        if let totalCount { fields["authoritativeTotalCount"] = String(totalCount) }
+        return (reconciled, fields)
     }
 
     private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan) {
@@ -1256,7 +1265,10 @@ final class ConversationSidebarViewController: UITableViewController {
     @objc private func reloadConversations() { loadConversations(forceRefresh: true) }
 
     private func loadConversations(forceRefresh: Bool) {
-        guard !loading else { return }
+        guard !loading else {
+            if forceRefresh { refreshControl?.endRefreshing() }
+            return
+        }
         loading = true
         loadPresentationGeneration += 1
         let presentationGeneration = loadPresentationGeneration
@@ -1353,11 +1365,15 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private let syncToastView = UIView()
     private let syncToastLabel = UILabel()
     private let answerJumpButton = UIButton(type: .system)
+    private let headerTitleLabel = UILabel()
+    private let headerMetadataLabel = UILabel()
+    private let headerStack = UIStackView()
     private var syncToastHideWorkItem: DispatchWorkItem?
     private var preferenceObserver: NSObjectProtocol?
     private var messages: [ConversationMessage] = []
     private var roundProjection = ConversationRoundProjection(rounds: [])
     private var answerRows: [Int] = []
+    private var programmaticAnswerTargetRow: Int?
     private var currentAnswerJumpDirection: AnswerJumpDirection?
     private var lastUserDragDirection: AnswerJumpDirection = .previous
     private var previousContentOffsetY: CGFloat = 0
@@ -1382,6 +1398,23 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "新对话"
+
+        headerTitleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        headerTitleLabel.textColor = .label
+        headerTitleLabel.textAlignment = .center
+        headerTitleLabel.lineBreakMode = .byTruncatingTail
+        headerTitleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        headerMetadataLabel.font = .systemFont(ofSize: 12, weight: .regular)
+        headerMetadataLabel.textColor = .secondaryLabel
+        headerMetadataLabel.textAlignment = .center
+        headerMetadataLabel.lineBreakMode = .byTruncatingTail
+        headerMetadataLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        headerStack.axis = .vertical
+        headerStack.alignment = .center
+        headerStack.spacing = 0
+        headerStack.addArrangedSubview(headerTitleLabel)
+        headerStack.addArrangedSubview(headerMetadataLabel)
+        navigationItem.titleView = headerStack
 
         tableView.dataSource = self
         tableView.delegate = self
@@ -1464,6 +1497,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         ])
 
         preferenceObserver = NotificationCenter.default.addObserver(forName: AppPreferences.didChangeNotification, object: preferences, queue: .main) { [weak self] _ in self?.preferencesDidChange() }
+        updateHeaderMetadata()
         updateConversationMenu()
     }
 
@@ -1476,6 +1510,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         guard repository.selectedConversationID == id else { return }
         captureScrollAnchorForDisplayedConversation()
         displayedConversationID = id
+        programmaticAnswerTargetRow = nil
         lastUserDragDirection = .previous
         previousContentOffsetY = tableView.contentOffset.y
         presentationGeneration += 1
@@ -1501,6 +1536,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             activityIndicator.startAnimating()
         }
 
+        updateHeaderMetadata()
         if operationSnapshot?.kind == .sync { showSyncToast("正在同步最新消息…") }
         updateConversationMenu()
         if operationSnapshot == nil, existingDetail != nil { return }
@@ -1517,6 +1553,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         hideSyncToast()
         loadingConversationID = nil
         displayedConversationID = nil
+        programmaticAnswerTargetRow = nil
         scrollAnchorsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
@@ -1525,6 +1562,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         stateLabel.text = "从侧边栏选择一个会话"
         stateLabel.isHidden = false
         retryButton.isHidden = true
+        updateHeaderMetadata()
         updateConversationMenu()
     }
 
@@ -1547,10 +1585,12 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         messages = []
         roundProjection = ConversationRoundProjection(rounds: [])
         answerRows = []
+        programmaticAnswerTargetRow = nil
         currentAnswerJumpDirection = nil
         navigationItem.prompt = nil
         answerJumpButton.isHidden = true
         tableView.reloadData()
+        updateHeaderMetadata()
     }
 
     private func rebuildRoundProjection() {
@@ -1558,14 +1598,20 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         var rowsByMessageID: [String: Int] = [:]
         for (row, message) in messages.enumerated() where rowsByMessageID[message.id] == nil { rowsByMessageID[message.id] = row }
         answerRows = roundProjection.answerMessageIDs.compactMap { rowsByMessageID[$0] }
+        programmaticAnswerTargetRow = nil
     }
 
     private func updateHeaderMetadata() {
-        guard preferences.showsConversationRoundCount, let id = displayedConversationID, repository.selectedConversation?.id == id else {
-            navigationItem.prompt = nil
+        navigationItem.prompt = nil
+        headerTitleLabel.text = title ?? "新对话"
+        guard let id = displayedConversationID else {
+            headerMetadataLabel.text = nil
+            headerMetadataLabel.isHidden = true
             return
         }
-        navigationItem.prompt = "\(roundProjection.rounds.count)轮"
+        let hasAuthoritativeDetail = repository.selectedConversation?.id == id
+        headerMetadataLabel.text = preferences.showsConversationRoundCount && hasAuthoritativeDetail ? "聊天 · \(roundProjection.rounds.count)轮" : "聊天"
+        headerMetadataLabel.isHidden = false
     }
 
     private func preferencesDidChange() {
@@ -1776,13 +1822,24 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         return (previous, next)
     }
 
+    private func adjacentAnswerRows(relativeToAnswerRow row: Int) -> (previous: Int?, next: Int?) {
+        let index = lowerBoundAnswerIndex(for: row)
+        guard index < answerRows.count, answerRows[index] == row else { return adjacentAnswerRows() }
+        return (index > 0 ? answerRows[index - 1] : nil, index + 1 < answerRows.count ? answerRows[index + 1] : nil)
+    }
+
+    private func effectiveAdjacentAnswerRows() -> (previous: Int?, next: Int?) {
+        guard let targetRow = programmaticAnswerTargetRow else { return adjacentAnswerRows() }
+        return adjacentAnswerRows(relativeToAnswerRow: targetRow)
+    }
+
     private func updateAnswerJumpButton() {
         guard preferences.showsAnswerQuickNavigation else {
             currentAnswerJumpDirection = nil
             answerJumpButton.isHidden = true
             return
         }
-        let targets = adjacentAnswerRows()
+        let targets = effectiveAdjacentAnswerRows()
         let direction: AnswerJumpDirection?
         if targets.previous == nil { direction = targets.next == nil ? nil : .next }
         else if targets.next == nil { direction = .previous }
@@ -1799,20 +1856,17 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     @objc private func jumpToAdjacentAnswer() {
-        let targets = adjacentAnswerRows()
+        let targets = effectiveAdjacentAnswerRows()
         guard let direction = currentAnswerJumpDirection else { return }
         let targetRow = direction == .previous ? targets.previous : targets.next
         guard let targetRow, messages.indices.contains(targetRow) else {
             updateAnswerJumpButton()
             return
         }
-        tableView.layoutIfNeeded()
-        let targetRect = tableView.rectForRow(at: IndexPath(row: targetRow, section: 0))
-        let minimumY = -tableView.adjustedContentInset.top
-        let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
-        let targetY = min(max(targetRect.minY - tableView.adjustedContentInset.top - 12, minimumY), maximumY)
+        programmaticAnswerTargetRow = targetRow
         diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow)])
-        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: targetY), animated: true)
+        tableView.scrollToRow(at: IndexPath(row: targetRow, section: 0), at: .top, animated: true)
+        updateAnswerJumpButton()
     }
 
     @objc private func reloadCurrentConversation() {
@@ -1848,6 +1902,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        programmaticAnswerTargetRow = nil
         previousContentOffsetY = scrollView.contentOffset.y
     }
 

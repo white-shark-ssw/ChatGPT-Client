@@ -9,8 +9,8 @@
 - **Task**: 将单 selected conversation detail/request owner 演进为 account-scoped per-conversation resident state，并建立后续 send/stream 所需的多会话 freshness 与异步所有权基线。
 - **Acceptance boundary**: A -> B -> A 普通导航不能销毁 A、不能因为 selection change 丢弃 A 的有效返回、不能仅因返回 A 再次联网；不同会话状态隔离；同会话等价请求 coalesce；Sync/Reload 只替换目标会话；旧 generation / 旧 account callback 不得覆盖新状态；失败终态不得因普通导航隐式重试；保留已验证的 `current_node` 身份；最终 resident 容量必须由真实设备测量决定。完整边界以 `MULTI_CONVERSATION_STATE_PLAN.md` 为准。
 - **Baseline**: `0.1.0 (15)` Stable recovery; `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
-- **Working branch / PR / head commit**: `dev/multi-conversation-state-20260827`; PR `Not created`; current branch head `4c34b3e01221babe04e2710db059ed2fe558af94` is documentation-only after the second review; exact b16 product/config source remains `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`.
-- **Parallel/conflict guard refreshed**: current branch is the only Active checkpoint under `docs/project/current/dev/`; GitHub has no open PR; `main` is still `f155ddb873540f7c80d6e66ebbfeb59ded26f011`. No branch/base conflict currently blocks this Work.
+- **Working branch / PR / head commit**: `dev/multi-conversation-state-20260827`; PR `Not created`; current branch head `e80955e4fcde1839893f66cb6a31144e15ca42a6` is documentation-only after resuming b17 work; exact b16 product/config source remains `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`.
+- **Parallel/conflict guard**: pending immediate b17 recheck against current main / active checkpoints / PRs / Build Index before Candidate allocation.
 
 ## Candidate history
 

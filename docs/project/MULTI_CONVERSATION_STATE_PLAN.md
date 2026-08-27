@@ -1,6 +1,6 @@
 # Multi-Conversation State / Residency Plan
 
-_Last updated: 2026-08-27; refreshed after exact b18 historical-scroll real-device acceptance._
+_Last updated: 2026-08-27; refreshed through b20 title Runtime evidence and exact b21 Artifact._
 
 ## Purpose
 
@@ -18,11 +18,11 @@ This Work is the structural prerequisite for production Send/Stream ownership. E
 
 `DEV-conversation-recovery-0.1.0-b15` is merged Stable for recorded Plus/personal iPhone/iOS17 recovery scope.
 
-Current `main` head is `2c33dacbefa613292eb89cbf606b0172a241e81e`; it advanced after b18 Artifact through docs-only message-timestamp/display-preference planning. Exact b18 product/runtime evidence remains tied to source `f30c13b4ac2c40dcda829585682825ca906dceae`. Final merge must synchronize these docs-only main changes without overwriting them.
+Current `main` is `3cbb5c9acce26c0004e1d78c9607f2361d83fe05`; its merged planning PR #18 must be preserved during final synchronization.
 
 ### Historical b16
 
-b16 source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08` compiled, but Artifact `9621830284` embedded the wrong recovery candidate/slug and was rejected before runtime. Source review also found owner/race gaps. Never reuse b16.
+b16 source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08` compiled, but Artifact `9621830284` embedded the wrong recovery candidate/slug and was rejected before Runtime. Source review also found owner/race gaps. Never reuse b16.
 
 ### b17 core Runtime evidence
 
@@ -36,18 +36,46 @@ Exact iPhone/iOS17 Runtime accepted:
 4. Sync A -> B -> A rejoins same active Sync;
 5. rapid different-conversation overlap reached three active operations without HTTP429 in supplied export.
 
-The same run reproduced the historical-scroll defect: A around ~10% -> B scroll -> return A shifted.
+The same run reproduced the historical-scroll defect.
 
-### Current b18 Candidate
+### b18 historical-scroll Runtime evidence
 
-- Candidate: `DEV-multi-conversation-state-0.1.0-b18`, version `0.1.0 (18)`.
-- Exact product/config source: `f30c13b4ac2c40dcda829585682825ca906dceae`.
-- Tree: `c2797f05a8b8c43bdd1a5064177e3b7c49606614`.
-- CI: Run `33054012226`, Job `98456174184`, success; `arm64-apple-ios14.0`; exact candidate/source inputs.
-- Artifact: `9638821912`; ZIP `sha256:36b59b8c4d3bdcadedd463a3554528452ff46478651671b50f4bd9f7fa2b5d2c`.
-- IPA: `ChatGPTClient-0.1.0-b18-dev-multi-conversation-state.ipa`; SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`.
-- Independent package identity: `0.1.0 (18)`, b18, source `f30c13b4ac2c`, minimum iOS14.0, `[1,2]`, arm64.
-- **Runtime/manual/real-device: Accepted for the tested historical-scroll / Sync / Reload-preservation / resident-regression matrix on exact iPhone/iOS17 b18. Stable/Frozen: No.**
+Exact b18 source `f30c13b4ac2c40dcda829585682825ca906dceae`, Run `33054012226`, Artifact `9638821912`.
+
+Exact iPhone/iOS17 Runtime accepted historical A/B anchor restoration, independent anchors, first-time target isolation, visible Sync/Reload anchor preservation when anchored message remains, resident return and active Sync re-coalescing. Missing-anchor-message discard remained Runtime-unexercised.
+
+### b19 process-memory Runtime evidence
+
+Exact b19 source `c6accf16c8cf80c719f1e569e356b2bbe664e91e`, Run `33063446367`, Artifact `9642715296`.
+
+Exact iPhone/iOS17 run reached 8 residents and captured 53 valid task-VM samples. Physical footprint was approximately 16.3–78.1 MiB and generally 55–65 MiB during repeated switching at 8 residents. Observed HTTP statuses were all 200 with no error/HTTP429. `processMemoryLimitRemainingBytes` was absent, so exact process-limit headroom remains Unverified.
+
+Decision: this run provides no evidence for urgent normal-LRU eviction at 8 residents. Do not choose a normal capacity from physical RAM or approximate text bytes. Existing memory-warning trimming remains the evidence-backed eviction behavior; normal LRU stays unfrozen.
+
+### b20 title Runtime defect
+
+Exact b20 source `754580fad96efa69f8a0ce7ea2bf542cacaf156e`, Run `33067148782`, Artifact `9644208203`.
+
+b20 added immediate navigation title handoff from the selected `ConversationSummary.title`. Real-device export `0.1.0 (20)` / source `754580fad96e` reproduced a first-entry defect:
+
+- first unloaded target selected at `11:48:37Z`, `resident.miss`;
+- Detail returned HTTP200 after about 9565.84 ms;
+- same target reselected at `11:48:48Z` as `resident.hit` and became first-visible in about 28.70 ms;
+- user observed `新对话` only on the first loading entry; second resident-backed entry was correct.
+
+Source proves the summary lookup itself was valid. The first loading path caused `ConversationDetailViewController.viewDidLoad()` to run after Root had installed the summary title; its neutral `title = "新对话"` initialization overwrote the real title. The export's earlier cold-start auth HTTP403 is not causal because a later account/list generation succeeded before reproduction. No retry/fallback is justified.
+
+### Current b21 Candidate
+
+- Candidate: `DEV-multi-conversation-state-0.1.0-b21`, version `0.1.0 (21)`.
+- Exact product/config source: `6b50ead167bfde305d2ad58dd16fee6edaabf597`.
+- Tree: `01168ce7be8d9cf4888ad1d0718238826730c30d`.
+- Product delta from b20: exactly one Root behavior line, `detailViewController.loadViewIfNeeded()`, after selection and before assigning target summary title.
+- CI: Run `33070183417`, Job `98510113281`, success.
+- Artifact: `9645439329`; ZIP `sha256:b3e2da46ce9ac99fc7028b7f5186476b3264c4a8c0323a426ee275b62c0d7d14`.
+- IPA: `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
+- Independent package identity: `0.1.0 (21)`, b21, source `6b50ead167bf`, minimum iOS14.0, `[1,2]`, arm64.
+- **Runtime/manual/real-device: Pending. Stable/Frozen: No.**
 
 ## State ownership model
 
@@ -66,7 +94,7 @@ Foreground `selectedConversationID` is presentation state only. Loading, Sync, R
 `AuthSessionStore` remains sole account/auth-context owner. Default persistent WebKit storage remains sole persistent auth-secret authority.
 
 - cached transient session stays bound to verified scope;
-- delayed transport/operation context cannot re-adopt an old scope;
+- delayed transport/operation context cannot re-adopt old scope;
 - queued probe success is rechecked against current verified scope before commit;
 - verified different scope purges old list/residents/operations/session/selection and rejects late old-scope results;
 - invalidated consumers terminate deterministically.
@@ -85,11 +113,9 @@ Current source uses `userID + accountID` for personal-account residency. Support
 - Every waiter terminates on success, failure, supersede or account invalidation.
 - No arbitrary global concurrency limit, retry, timer, watchdog or fallback without evidence.
 
-b17 Runtime confirms independent overlap and same-target coalescing. b18 re-confirms same-target coalescing when returning to B while B Sync is active.
+b17/b18 Runtime confirm independent overlap and same-target coalescing. b20 title failure did not invalidate these operation owners.
 
 ## Resident navigation semantics
-
-Resident logic distinguishes missing/evicted, active operation, loaded, terminal failure and explicit Sync/Reload.
 
 On navigation to B:
 
@@ -111,19 +137,17 @@ Sync captures its target, does not change selection, may replace only same-targe
 
 Reload captures its target, rebuilds that target from one fresh server Detail, never resends/regenerates and leaves other conversations independent. Exact b18 ordinary Reload completed HTTP200 and restored the same historical anchor when the anchored message remained.
 
-An isolated older-in-flight Detail -> newer same-target Reload replacement sequence was not exercised in b18; b15 remains accepted replacement-under-load baseline and the multi-conversation regression spot-check stays open.
+An isolated older-in-flight Detail -> newer same-target Reload replacement sequence remains unexercised in multi-conversation Runtime; b15 remains accepted replacement-under-load baseline.
 
-## b18 per-conversation historical scroll presentation
+## Per-conversation historical scroll presentation
 
-The b17 defect belongs to presentation residency, not conversation-data ownership. b18 changes only the existing detail presentation owner.
-
-### Representation
+Representation:
 
 `conversation ID -> { visible message ID, relative vertical offset }`
 
 The message ID is in-memory only and is never logged. There is no global raw `contentOffset` copied between conversations and no retained view hierarchy per conversation.
 
-### Capture / restore
+Rules:
 
 - `displayedConversationID` tracks actually displayed conversation separately from repository selection.
 - Before outgoing A rows become B, capture A top-visible message identity + relative offset.
@@ -133,29 +157,17 @@ The message ID is in-memory only and is never logged. There is no global raw `co
 - Visible Sync/Reload captures before refresh and restores only when the same anchored message remains.
 - If anchored message disappears, discard anchor and return top; do not guess another message.
 
-### Exact b18 Runtime evidence
+Exact b18 Runtime accepts the tested matrix. Anchored-message disappearance remains Runtime-unproven.
 
-User installed exact b18 on iPhone/iOS17, executed requested matrix and reported no issue. Export metadata identifies b18/build18/source `f30c13b4ac2c`.
+## Selected-title presentation lifecycle
 
-Observed diagnostics:
+The visible conversation list already holds server-backed `ConversationSummary.title`. Selection may use this summary immediately while Detail is still missing; loaded Detail later confirms via `detail.title`.
 
-- 195 events, all `info`;
-- 21 `scrollAnchor.saved`, 19 `scrollAnchor.restored`;
-- 17 `resident.hit`, 17 `resident.firstVisible`;
-- all 17 recorded HTTP statuses are 200;
-- no error, HTTP429 or `scrollAnchor.discarded`.
+b20 proved that this must respect UIViewController first-load ordering. Current b21 ordering is:
 
-Accepted:
+`selectConversation(id:) -> loadViewIfNeeded() -> assign selected summary title -> showConversation(id:)`.
 
-1. A -> B -> A historical position restoration.
-2. Independent A/B anchors across repeated switching.
-3. First-time third target starts without inheriting prior offset.
-4. Visible Sync preserves anchor when the anchored message remains.
-5. Reload preserves anchor when the anchored message remains.
-6. B Sync survives B -> A -> B, restores B anchor and `detail.coalesced completionCount=2` re-attaches to the same Sync before hidden HTTP200 completion.
-7. Already-resident returns remain resident hits with no navigation-only Detail refetch.
-
-Not Runtime-proven: anchored-message disappearance -> `scrollAnchor.discarded` -> top, because the condition did not occur naturally. Do not manufacture destructive branch mutation solely to prove it.
+This ensures neutral initialization happens before the selected title handoff. It does not create a second title owner/cache and does not change request or resident ownership.
 
 ## Future follow-tail contract
 
@@ -166,14 +178,16 @@ Historical anchor and future active-response follow-tail are different semantics
 - If user intentionally scrolls upward while A generates, that exits follow-tail and establishes historical-reading intent.
 - B scrolling never mutates A state; hidden A growth never mutates B state.
 
-Whether a response is active/terminal must come from future authoritative per-conversation Send/Stream response owner. b18 intentionally adds no `isStreaming`, response flag, timer, fake follow-tail state or future response authority.
+Whether a response is active/terminal must come from future authoritative per-conversation Send/Stream response owner. Current work adds no `isStreaming`, response flag, timer, fake follow-tail state or future response authority.
 
 ## Residency / memory policy
 
-Unlimited permanent residency is not acceptable. A bounded normal LRU-style working set will be selected **after real-device process/system memory evidence**.
+Unlimited permanent residency is not a final principle, but a bounded normal LRU capacity is selected only from real evidence.
 
 Current rules:
 
+- b19 shows no immediate footprint pressure through 8 residents on tested device;
+- exact process-limit headroom remains Unverified;
 - selected resident protected;
 - active detail/recovery resident protected;
 - future active response protected;
@@ -181,30 +195,41 @@ Current rules:
 - no persistent chat-body disk cache;
 - approximate visible-text bytes are correlation only and cannot justify capacity.
 
-b17 reached six residents and `residentTotalApproximateTextBytes=6724764`; b18 reached three residents in the scroll run. Neither number alone is process-memory evidence.
-
 ## Acceptance before Stable
 
 Accepted:
 
 - b17 resident return / hidden completion / same-target coalescing / rapid switching / Sync return / rapid overlap for tested scope.
 - b18 historical A/B anchor restoration, independent anchors, first-time target isolation, visible Sync/Reload anchor preservation when same message remains, resident return and active Sync re-coalescing for tested scope.
+- b19 observed real process-footprint 0→8 resident matrix; no evidence for urgent normal LRU at 8 residents.
 
-Still open:
+Superseded/failing:
+
+- b20 first-unloaded-entry title presentation failed due first-view lifecycle overwrite.
+
+Pending on b21:
+
+1. first entry into an unloaded conversation shows its list-summary title immediately while `正在读取会话…` is visible;
+2. re-entering resident target remains correct;
+3. rapid unloaded A -> B -> C shows each selected title immediately;
+4. late A/B completion cannot overwrite current C title/content;
+5. resident return/historical scroll remain intact.
+
+Still open afterward:
 
 1. isolated same-target Reload replacement while older same-target Detail is actually in flight;
 2. terminal failed A remains failed across navigation with no implicit retry when a natural failure is available;
 3. supported account switch purges old scope and rejects late callbacks when a real supported route exists;
-4. normal resident capacity is chosen from real process/system memory evidence, not approximate text bytes;
+4. stronger process-limit/headroom or pressure evidence if normal LRU capacity becomes necessary;
 5. non-personal workspace isolation remains Unknown / Unverified.
 
-Conditional anchored-message disappearance path remains source/CI-defined but Runtime-unexercised.
+Conditional anchored-message disappearance remains source/CI-defined but Runtime-unexercised.
 
 ## Next exact action
 
-**Do not change product code yet. Collect real iPhone process/system memory evidence while several small and large conversations remain resident and are switched repeatedly. Use that evidence to decide whether a bounded normal LRU policy is needed now and what capacity is defensible.**
+Install exact b21 on iPhone/iOS17 and test first unloaded entry plus rapid unloaded A -> B -> C title transitions. Do not mark Runtime accepted from CI/Artifact. If b21 passes, continue only remaining evidence-backed gates; do not invent LRU capacity or auth retry behavior.
 
-Before final PR/merge, synchronize with current `main@2c33dacbefa613292eb89cbf606b0172a241e81e` and preserve its docs-only message-timestamp/display-preference planning. Re-run only validation materially affected by synchronized product source.
+Before final PR/merge, synchronize with `main@3cbb5c9acce26c0004e1d78c9607f2361d83fe05` and preserve its planning docs. Re-run only validation materially affected by synchronized product source.
 
 ## Non-goals / prohibited shortcuts
 
@@ -213,11 +238,11 @@ Before final PR/merge, synchronize with current `main@2c33dacbefa613292eb89cbf60
 - No selection-driven cancellation or reload-on-every-navigation.
 - No stale operation context restoring old account scope.
 - No silently abandoned waiters.
-- No unlimited final resident retention.
+- No unlimited final resident retention principle.
 - No persistent chat-body/draft cache without separate privacy/storage requirement.
 - No speculative retry, timer, watchdog, fallback, global rate limiter or compatibility shim.
 - No copied persistent auth secrets or second account owner.
 - No raw mapping retention to anticipate future Send/Edit/Regenerate.
-- No capacity chosen from approximate text bytes alone.
+- No capacity chosen from approximate text bytes or device physical RAM alone.
 - No full retained view hierarchy per conversation merely to preserve scroll position.
 - No claim about concurrent A/B server safety beyond exact Runtime evidence.

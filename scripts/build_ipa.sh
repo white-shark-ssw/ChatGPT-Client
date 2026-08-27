@@ -9,7 +9,7 @@ STAGING_DIR="$BUILD_DIR/ipa-staging"
 PROJECT="$ROOT_DIR/ChatGPTClient.xcodeproj"
 SCHEME="ChatGPTClient"
 SOURCE_COMMIT="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
-CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-conversation-recovery-0.1.0-b15}"
+CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-multi-conversation-state-0.1.0-b17}"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$ARTIFACT_DIR" "$STAGING_DIR/Payload"
@@ -38,7 +38,7 @@ cp -R "$APP_PATH" "$STAGING_DIR/Payload/"
 PLIST="$APP_PATH/Info.plist"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
 BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PLIST")"
-IPA_NAME="ChatGPTClient-${VERSION}-b${BUILD_NUMBER}-dev-conversation-recovery.ipa"
+IPA_NAME="ChatGPTClient-${VERSION}-b${BUILD_NUMBER}-dev-multi-conversation-state.ipa"
 IPA_PATH="$ARTIFACT_DIR/$IPA_NAME"
 
 (

@@ -30,6 +30,7 @@ struct ConversationDetail {
 
 enum ConversationRepositoryError: LocalizedError {
     case authenticationNotAvailable
+    case authenticationTemporarilyUnavailable
     case missingTransientSession
     case invalidResponse
     case httpStatus(Int)
@@ -42,6 +43,7 @@ enum ConversationRepositoryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .authenticationNotAvailable: return "当前登录会话不可用，请先完成登录或账户验证。"
+        case .authenticationTemporarilyUnavailable: return "暂时无法验证账户，请检查网络连接。"
         case .missingTransientSession: return "未建立可用的原生读取会话。"
         case .invalidResponse: return "服务器返回了无法识别的响应。"
         case .httpStatus(let status): return "服务器请求失败（HTTP \(status)）。"
@@ -133,29 +135,33 @@ private final class ConversationListCacheStore {
     func load(namespace: String, completion: @escaping (LoadResult) -> Void) {
         queue.async {
             let startedAt = ProcessInfo.processInfo.systemUptime
+            completion(self.loadSnapshot(namespace: namespace, startedAt: startedAt))
+        }
+    }
+
+    func loadLastVerified(completion: @escaping (String?, LoadResult) -> Void) {
+        queue.async {
+            let startedAt = ProcessInfo.processInfo.systemUptime
             do {
-                let url = try self.cacheURL(namespace: namespace)
-                guard self.fileManager.fileExists(atPath: url.path) else {
-                    completion(.missing(durationMs: Self.elapsedMs(since: startedAt)))
+                let hintURL = try self.lastVerifiedNamespaceURL()
+                guard self.fileManager.fileExists(atPath: hintURL.path) else {
+                    completion(nil, .missing(durationMs: Self.elapsedMs(since: startedAt)))
                     return
                 }
-                let data = try Data(contentsOf: url)
-                let snapshot: ConversationListCacheSnapshot
-                do {
-                    snapshot = try JSONDecoder().decode(ConversationListCacheSnapshot.self, from: data)
-                } catch {
-                    try? self.fileManager.removeItem(at: url)
-                    completion(.rejected(reason: "decode_failed", durationMs: Self.elapsedMs(since: startedAt)))
+                let namespace = try String(contentsOf: hintURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard Self.isValidNamespace(namespace) else {
+                    try? self.fileManager.removeItem(at: hintURL)
+                    completion(nil, .rejected(reason: "scope_hint_invalid", durationMs: Self.elapsedMs(since: startedAt)))
                     return
                 }
-                guard snapshot.schemaVersion == Self.schemaVersion else {
-                    try? self.fileManager.removeItem(at: url)
-                    completion(.rejected(reason: "schema_mismatch", durationMs: Self.elapsedMs(since: startedAt)))
-                    return
+                let result = self.loadSnapshot(namespace: namespace, startedAt: startedAt)
+                switch result {
+                case .loaded: break
+                case .missing, .rejected: try? self.fileManager.removeItem(at: hintURL)
                 }
-                completion(.loaded(snapshot: snapshot, byteCount: data.count, durationMs: Self.elapsedMs(since: startedAt)))
+                completion(namespace, result)
             } catch {
-                completion(.rejected(reason: "read_failed", durationMs: Self.elapsedMs(since: startedAt)))
+                completion(nil, .rejected(reason: "scope_hint_read_failed", durationMs: Self.elapsedMs(since: startedAt)))
             }
         }
     }
@@ -171,6 +177,9 @@ private final class ConversationListCacheStore {
                 let url = try self.cacheURL(namespace: namespace)
                 try data.write(to: url, options: .atomic)
                 try self.fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
+                let hintURL = try self.lastVerifiedNamespaceURL()
+                try Data(namespace.utf8).write(to: hintURL, options: .atomic)
+                try self.fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: hintURL.path)
                 completion(.success((byteCount: data.count, durationMs: Self.elapsedMs(since: startedAt))))
             } catch {
                 completion(.failure(error))
@@ -178,7 +187,36 @@ private final class ConversationListCacheStore {
         }
     }
 
-    private func cacheURL(namespace: String) throws -> URL {
+    func clearLastVerifiedNamespace() {
+        queue.async {
+            guard let url = try? self.lastVerifiedNamespaceURL(), self.fileManager.fileExists(atPath: url.path) else { return }
+            try? self.fileManager.removeItem(at: url)
+        }
+    }
+
+    private func loadSnapshot(namespace: String, startedAt: TimeInterval) -> LoadResult {
+        do {
+            let url = try cacheURL(namespace: namespace)
+            guard fileManager.fileExists(atPath: url.path) else { return .missing(durationMs: Self.elapsedMs(since: startedAt)) }
+            let data = try Data(contentsOf: url)
+            let snapshot: ConversationListCacheSnapshot
+            do {
+                snapshot = try JSONDecoder().decode(ConversationListCacheSnapshot.self, from: data)
+            } catch {
+                try? fileManager.removeItem(at: url)
+                return .rejected(reason: "decode_failed", durationMs: Self.elapsedMs(since: startedAt))
+            }
+            guard snapshot.schemaVersion == Self.schemaVersion else {
+                try? fileManager.removeItem(at: url)
+                return .rejected(reason: "schema_mismatch", durationMs: Self.elapsedMs(since: startedAt))
+            }
+            return .loaded(snapshot: snapshot, byteCount: data.count, durationMs: Self.elapsedMs(since: startedAt))
+        } catch {
+            return .rejected(reason: "read_failed", durationMs: Self.elapsedMs(since: startedAt))
+        }
+    }
+
+    private func cacheDirectoryURL() throws -> URL {
         let applicationSupport = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let directory = applicationSupport.appendingPathComponent("ConversationListCache", isDirectory: true)
         if !fileManager.fileExists(atPath: directory.path) {
@@ -186,7 +224,16 @@ private final class ConversationListCacheStore {
         } else {
             try fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: directory.path)
         }
-        return directory.appendingPathComponent("snapshot-\(namespace).json", isDirectory: false)
+        return directory
+    }
+
+    private func cacheURL(namespace: String) throws -> URL { try cacheDirectoryURL().appendingPathComponent("snapshot-\(namespace).json", isDirectory: false) }
+
+    private func lastVerifiedNamespaceURL() throws -> URL { try cacheDirectoryURL().appendingPathComponent("last-verified-scope.txt", isDirectory: false) }
+
+    private static func isValidNamespace(_ namespace: String) -> Bool {
+        guard namespace.count == 64 else { return false }
+        return namespace.unicodeScalars.allSatisfy { CharacterSet(charactersIn: "0123456789abcdef").contains($0) }
     }
 
     private static func elapsedMs(since startedAt: TimeInterval) -> Double { (ProcessInfo.processInfo.systemUptime - startedAt) * 1000 }
@@ -211,6 +258,7 @@ final class ConversationRepository {
     private var transientSessionScope: ConversationAccountScope?
     private var transientSessionProbeCompletions: [(Result<ConversationTransportContext, Error>) -> Void]?
     private var activeAccountScope: ConversationAccountScope?
+    private var provisionalCacheNamespace: String?
     private var residentStates: [ConversationResidentKey: ConversationResidentState] = [:]
     private var detailOperationGenerations: [ConversationResidentKey: Int] = [:]
     private var detailOperations: [ConversationResidentKey: ConversationDetailOperation] = [:]
@@ -287,20 +335,19 @@ final class ConversationRepository {
         listOperationGeneration += 1
         let generation = listOperationGeneration
         let span = diagnostics.startSpan(category: "conversation", name: "listLoad", fields: ["operationGeneration": String(generation), "refreshMode": forceRefresh ? "manual" : "automatic"])
-        withTransientSession { [weak self] result in
+        if forceRefresh {
+            beginAuthenticatedConversationListLoad(forceRefresh: true, operationGeneration: generation, span: span, completion: completion)
+            return
+        }
+        prepareProvisionalConversationListCache(operationGeneration: generation, span: span) { [weak self] result in
             guard let self else { return }
             self.requireMainThread()
-            guard generation == self.listOperationGeneration else {
-                span.end(status: "discarded", fields: ["reason": "operation_superseded", "operationGeneration": String(generation)])
-                completion(.failure(ConversationRepositoryError.operationSuperseded))
-                return
-            }
             switch result {
             case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "auth", "operationGeneration": String(generation)])
+                span.end(status: "discarded", fields: ["reason": "operation_superseded", "operationGeneration": String(generation)])
                 completion(.failure(error))
-            case .success(let context):
-                self.loadConversationListCache(using: context, operationGeneration: generation, forceRefresh: forceRefresh, span: span, completion: completion)
+            case .success:
+                self.beginAuthenticatedConversationListLoad(forceRefresh: false, operationGeneration: generation, span: span, completion: completion)
             }
         }
     }
@@ -468,7 +515,8 @@ final class ConversationRepository {
             }
             guard state == .verified, let session, let returnedContext = self.authSessionStore.verifiedAccountContext() else {
                 session?.finishTasksAndInvalidate()
-                DispatchQueue.main.async { self.finishTransientSessionProbe(.failure(ConversationRepositoryError.authenticationNotAvailable)) }
+                let error: ConversationRepositoryError = state == .failed ? .authenticationTemporarilyUnavailable : .authenticationNotAvailable
+                DispatchQueue.main.async { self.finishTransientSessionProbe(.failure(error)) }
                 return
             }
             let returnedScope = ConversationAccountScope(returnedContext)
@@ -497,6 +545,93 @@ final class ConversationRepository {
         let completions = transientSessionProbeCompletions ?? []
         transientSessionProbeCompletions = nil
         for completion in completions { completion(result) }
+    }
+
+    private func prepareProvisionalConversationListCache(operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<Void, Error>) -> Void) {
+        requireMainThread()
+        guard activeAccountScope == nil, conversations.isEmpty else {
+            completion(.success(()))
+            return
+        }
+        diagnostics.info(category: "conversation", name: "listCache.provisional.started", traceID: span.traceID, fields: ["operationGeneration": String(operationGeneration)])
+        listCacheStore.loadLastVerified { [weak self] namespace, loadResult in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                self.requireMainThread()
+                guard self.listOperationGeneration == operationGeneration else {
+                    completion(.failure(ConversationRepositoryError.operationSuperseded))
+                    return
+                }
+                switch loadResult {
+                case .missing(let durationMs):
+                    self.diagnostics.info(category: "conversation", name: "listCache.provisional.completed", traceID: span.traceID, fields: ["hit": "false", "durationMs": String(format: "%.2f", durationMs)])
+                case .rejected(let reason, let durationMs):
+                    self.diagnostics.warning(category: "conversation", name: "listCache.provisional.completed", fields: ["hit": "false", "durationMs": String(format: "%.2f", durationMs), "reason": reason])
+                case .loaded(let snapshot, let byteCount, let durationMs):
+                    guard let namespace else {
+                        self.diagnostics.warning(category: "conversation", name: "listCache.provisional.completed", fields: ["hit": "false", "reason": "missing_namespace"])
+                        completion(.success(()))
+                        return
+                    }
+                    self.conversations = snapshot.items.map(\.summary)
+                    self.provisionalCacheNamespace = namespace
+                    self.onConversationListChanged?()
+                    let age = Self.cacheAge(reconciliationTime: snapshot.lastSuccessfulReconciliationTime)
+                    self.diagnostics.info(category: "conversation", name: "listCache.provisional.completed", traceID: span.traceID, fields: ["hit": "true", "entryCount": String(self.conversations.count), "byteCount": String(byteCount), "ageSeconds": age.isFinite ? String(format: "%.2f", age) : "invalid", "durationMs": String(format: "%.2f", durationMs), "scopeHash": "sha256:\(namespace.prefix(12))"])
+                }
+                completion(.success(()))
+            }
+        }
+    }
+
+    private func beginAuthenticatedConversationListLoad(forceRefresh: Bool, operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+        requireMainThread()
+        withTransientSession { [weak self] result in
+            guard let self else { return }
+            self.requireMainThread()
+            guard operationGeneration == self.listOperationGeneration else {
+                span.end(status: "discarded", fields: ["reason": "operation_superseded", "operationGeneration": String(operationGeneration)])
+                completion(.failure(ConversationRepositoryError.operationSuperseded))
+                return
+            }
+            switch result {
+            case .failure(let error):
+                if !forceRefresh, let provisionalNamespace = self.provisionalCacheNamespace, !self.conversations.isEmpty, let repositoryError = error as? ConversationRepositoryError, repositoryError == .authenticationTemporarilyUnavailable {
+                    self.diagnostics.info(category: "conversation", name: "listCache.autoRefreshDecision", traceID: span.traceID, fields: ["decision": "offline_cache", "scopeHash": "sha256:\(provisionalNamespace.prefix(12))", "operationGeneration": String(operationGeneration)])
+                    span.end(status: "ok", fields: ["source": "cache", "auth": "temporarily_unavailable", "itemCount": String(self.conversations.count), "operationGeneration": String(operationGeneration)])
+                    completion(.success(self.conversations))
+                    return
+                }
+                if let repositoryError = error as? ConversationRepositoryError, repositoryError == .authenticationNotAvailable { self.rejectProvisionalConversationListCache(reason: "auth_not_available") }
+                span.end(status: "failed", fields: ["stage": "auth", "operationGeneration": String(operationGeneration)])
+                completion(.failure(error))
+            case .success(let context):
+                let verifiedNamespace = Self.cacheNamespace(for: context.scope)
+                if let provisionalNamespace = self.provisionalCacheNamespace {
+                    if provisionalNamespace != verifiedNamespace {
+                        self.diagnostics.info(category: "conversation", name: "listCache.scopeRejected", traceID: span.traceID, fields: ["scopeHash": "sha256:\(provisionalNamespace.prefix(12))", "reason": "verified_scope_mismatch"])
+                        self.conversations = []
+                        self.selectedConversationID = nil
+                        self.onConversationListChanged?()
+                        self.listCacheStore.clearLastVerifiedNamespace()
+                    }
+                    self.provisionalCacheNamespace = nil
+                }
+                self.loadConversationListCache(using: context, operationGeneration: operationGeneration, forceRefresh: forceRefresh, span: span, completion: completion)
+            }
+        }
+    }
+
+    private func rejectProvisionalConversationListCache(reason: String) {
+        requireMainThread()
+        if let namespace = provisionalCacheNamespace {
+            diagnostics.info(category: "conversation", name: "listCache.scopeRejected", fields: ["scopeHash": "sha256:\(namespace.prefix(12))", "reason": reason])
+            provisionalCacheNamespace = nil
+            conversations = []
+            selectedConversationID = nil
+            onConversationListChanged?()
+        }
+        listCacheStore.clearLastVerifiedNamespace()
     }
 
     private func loadConversationListCache(using context: ConversationTransportContext, operationGeneration: Int, forceRefresh: Bool, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
@@ -858,6 +993,7 @@ final class ConversationRepository {
         detailOperationGenerations.removeAll()
         residentStates.removeAll()
         conversations = []
+        provisionalCacheNamespace = nil
         selectedConversationID = nil
         transientSession?.invalidateAndCancel()
         transientSession = nil
@@ -1056,6 +1192,7 @@ final class ConversationSidebarViewController: UITableViewController {
         loadPresentationGeneration += 1
         loading = false
         refreshControl?.endRefreshing()
+        navigationItem.prompt = nil
         navigationItem.rightBarButtonItem?.isEnabled = true
         errorView?.removeFromSuperview()
         errorView = nil
@@ -1071,6 +1208,7 @@ final class ConversationSidebarViewController: UITableViewController {
         let presentationGeneration = loadPresentationGeneration
         errorView?.removeFromSuperview()
         errorView = nil
+        if forceRefresh { navigationItem.prompt = "正在刷新会话列表…" }
         navigationItem.rightBarButtonItem?.isEnabled = false
         repository.loadConversations(forceRefresh: forceRefresh) { [weak self] result in
             guard let self, self.loadPresentationGeneration == presentationGeneration else { return }
@@ -1078,9 +1216,17 @@ final class ConversationSidebarViewController: UITableViewController {
             self.refreshControl?.endRefreshing()
             self.navigationItem.rightBarButtonItem?.isEnabled = true
             switch result {
-            case .success: self.tableView.reloadData()
+            case .success:
+                self.tableView.reloadData()
+                if forceRefresh { self.navigationItem.prompt = "已刷新 · \(self.repository.conversations.count) 条" }
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
+                if !self.repository.conversations.isEmpty {
+                    self.navigationItem.prompt = forceRefresh ? "刷新失败 · 当前显示缓存" : "网络不可用 · 当前显示缓存"
+                    self.tableView.reloadData()
+                    return
+                }
+                self.navigationItem.prompt = nil
                 self.showError(error)
             }
         }
@@ -1099,11 +1245,15 @@ final class ConversationSidebarViewController: UITableViewController {
         retryButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
         retryButton.addTarget(self, action: #selector(reloadConversations), for: .touchUpInside)
 
-        let loginButton = UIButton(type: .system)
-        loginButton.setTitle("登录 / 账户验证", for: .normal)
-        loginButton.addTarget(self, action: #selector(openLogin), for: .touchUpInside)
+        var arrangedSubviews: [UIView] = [label, retryButton]
+        if let repositoryError = error as? ConversationRepositoryError, repositoryError == .authenticationNotAvailable {
+            let loginButton = UIButton(type: .system)
+            loginButton.setTitle("登录 / 账户验证", for: .normal)
+            loginButton.addTarget(self, action: #selector(openLogin), for: .touchUpInside)
+            arrangedSubviews.append(loginButton)
+        }
 
-        let stack = UIStackView(arrangedSubviews: [label, retryButton, loginButton])
+        let stack = UIStackView(arrangedSubviews: arrangedSubviews)
         stack.axis = .vertical
         stack.alignment = .center
         stack.spacing = 12

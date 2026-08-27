@@ -1,10 +1,10 @@
-# Candidate: DEV-conversation-list-cache-core-0.1.0-b23
-name: iOS Conversation List Cache Core
+# Candidate: DEV-conversation-round-count-0.1.0-b24
+name: iOS Conversation Metadata
 
 on:
   push:
     branches:
-      - dev/conversation-list-cache-core-20260828
+      - dev/conversation-round-count-20260828
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-conversation-list-cache-core-0.1.0-b23
+          name: ChatGPTClient-DEV-conversation-round-count-0.1.0-b24
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

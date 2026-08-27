@@ -6,7 +6,7 @@ _Last updated: 2026-08-28._
 
 This document defines the durable conversation-list persistence baseline and the later preview-row enhancement. The work remains intentionally split:
 
-- **`DEV-conversation-list-cache-core`** — persistent summary snapshot + rapid-relaunch suppression. Exact b23 is Runtime accepted for the recorded Plus/personal iPhone/iOS17 matrix; PR/merge is still pending.
+- **`DEV-conversation-list-cache-core`** — persistent summary snapshot + rapid-relaunch suppression. Exact b23 is merged Stable for the recorded Plus/personal iPhone/iOS17 matrix via PR #24.
 - **`DEV-conversation-list-preview`** — later clipped message-preview enhancement built on the same accepted store and repository owner.
 
 ## Ownership model
@@ -85,7 +85,7 @@ For each returned authoritative summary:
 
 Current list request remains `GET /backend-api/conversations?offset=0&limit=28&order=updated`. Absence from page 1 is **not** deletion/archive evidence.
 
-Exact b23 real-device diagnostics finally exercise this path with a genuine off-page cached row: server returns `pageCount=28`, `totalCount=29`; reconciliation records `preservedOffPageCount=1` and `resultCount=29`, then writes the 29-entry cache. Two later manual refreshes repeat the same preservation. This rule is now Runtime accepted for the recorded tested scope.
+Exact b23 real-device diagnostics exercise this path with a genuine off-page cached row: server returns `pageCount=28`, `totalCount=29`; reconciliation records `preservedOffPageCount=1` and `resultCount=29`, then writes the 29-entry cache. Two later manual refreshes repeat the same preservation. This rule is Runtime accepted for the recorded tested scope.
 
 Only complete pagination or explicit authoritative rename/archive/delete evidence may later justify pruning specific entries.
 
@@ -120,9 +120,9 @@ Never log raw conversation IDs, titles, cached text, auth secrets or raw payload
 
 b22 proved disk snapshot write/read, 60-second recent suppression, stale one-refresh and manual bypass. It failed the visible product acceptance because cache reading occurred only after slow account verification, offline auth transport failure prevented cache use, and manual refresh had no explicit terminal feedback.
 
-### b23 — accepted tested scope
+### b23 — accepted merged baseline
 
-Exact Candidate `DEV-conversation-list-cache-core-0.1.0-b23`, source `d2af0fc157f6e2d037636c55f963c18071a332d5`, Run `33101116431`, Artifact `9658508764`.
+Exact Candidate `DEV-conversation-list-cache-core-0.1.0-b23`, source `d2af0fc157f6e2d037636c55f963c18071a332d5`, Runtime Run `33101116431`, Artifact `9658508764`.
 
 User-supplied iPhone/iOS17 diagnostics show:
 
@@ -132,6 +132,8 @@ User-supplied iPhone/iOS17 diagnostics show:
 - online manual refresh uses `manual_bypass`, performs exactly one list request and writes reconciled cache;
 - first-page safety preserves one true off-page item (`28 + 1 -> 29`);
 - user reports the tested b23 behavior appears problem-free.
+
+PR #24 merge-view Run `33103769517` / Job `98628067286` checked out merge view `26297ff0683966c2c82fd7a8a95f53f1ad51d3d6`, compiled/package-tested successfully and produced Artifact `9659600955`. PR #24 then merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. The merge-view Artifact is CI evidence only and does not replace the exact real-device Runtime Artifact.
 
 ## Core accepted / conditional matrix
 
@@ -172,7 +174,7 @@ Do not manufacture fake account transitions, destructive user-data corruption or
 
 ## Goal
 
-Add a one-line clipped preview under each conversation title **after cache core is merged**, reusing the exact same snapshot/store and repository list owner.
+Add a one-line clipped preview under each conversation title, reusing the merged cache-core snapshot/store and repository list owner.
 
 ## Preview source priority
 
@@ -222,11 +224,9 @@ Memory-warning eviction of resident Detail does not delete the small persistent 
 
 ## Development sequencing
 
-Current serialized route remains:
+`DEV-conversation-list-cache-core` is complete and merged. The next serialized route is:
 
-`DEV-conversation-list-cache-core -> DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
-
-Cache core must merge/close before the serialized next Work is treated as its successor baseline.
+`DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
 
 ## Remaining Unknown / Unverified for preview
 

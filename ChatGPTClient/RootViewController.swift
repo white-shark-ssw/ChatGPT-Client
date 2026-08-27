@@ -26,6 +26,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         sidebarViewController.onSelectConversation = { [weak self] id in
             guard let self else { return }
             self.repository.selectConversation(id: id)
+            self.detailViewController.title = self.repository.conversations.first(where: { $0.id == id })?.title ?? "新对话"
             self.detailViewController.showConversation(id: id)
             self.show(.secondary)
         }

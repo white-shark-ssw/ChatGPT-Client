@@ -9,7 +9,6 @@ STAGING_DIR="$BUILD_DIR/ipa-staging"
 PROJECT="$ROOT_DIR/ChatGPTClient.xcodeproj"
 SCHEME="ChatGPTClient"
 SOURCE_COMMIT="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
-CANDIDATE="${DIAGNOSTICS_CANDIDATE:-DEV-conversation-list-cache-core-0.1.0-b23}"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$ARTIFACT_DIR" "$STAGING_DIR/Payload"
@@ -25,7 +24,6 @@ xcodebuild \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   SOURCE_COMMIT="$SOURCE_COMMIT" \
-  DIAGNOSTICS_CANDIDATE="$CANDIDATE" \
   build
 
 APP_PATH="$DERIVED_DATA/Build/Products/Release-iphoneos/ChatGPTClient.app"
@@ -38,7 +36,19 @@ cp -R "$APP_PATH" "$STAGING_DIR/Payload/"
 PLIST="$APP_PATH/Info.plist"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
 BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PLIST")"
-IPA_NAME="ChatGPTClient-${VERSION}-b${BUILD_NUMBER}-dev-conversation-list-cache-core.ipa"
+CANDIDATE="$(/usr/libexec/PlistBuddy -c 'Print :DiagnosticsCandidate' "$PLIST")"
+EXPECTED_SUFFIX="-${VERSION}-b${BUILD_NUMBER}"
+if [[ "$CANDIDATE" != DEV-*"$EXPECTED_SUFFIX" ]]; then
+  echo "Candidate identity mismatch: candidate=$CANDIDATE version=$VERSION build=$BUILD_NUMBER" >&2
+  exit 1
+fi
+WORK_SLUG="${CANDIDATE#DEV-}"
+WORK_SLUG="${WORK_SLUG%"$EXPECTED_SUFFIX"}"
+if [[ -z "$WORK_SLUG" || "$WORK_SLUG" == "$CANDIDATE" ]]; then
+  echo "Unable to derive work slug from candidate: $CANDIDATE" >&2
+  exit 1
+fi
+IPA_NAME="ChatGPTClient-${VERSION}-b${BUILD_NUMBER}-dev-${WORK_SLUG}.ipa"
 IPA_PATH="$ARTIFACT_DIR/$IPA_NAME"
 
 (

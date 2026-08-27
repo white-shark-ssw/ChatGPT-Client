@@ -12,6 +12,7 @@ This is the repository's AI work entry point.
 6. For Development/Feature work, use `CURRENT_WORK_DEV.md` and exactly one selected checkpoint under `current/dev/`.
 7. Before multi-conversation, production send/stream, background-completion or TrollStore true-background work, also read `CLIENT_ARCHITECTURE_GAP_REVIEW.md` plus the relevant `MULTI_CONVERSATION_STATE_PLAN.md` / `BACKGROUND_EXECUTION_PLAN.md`. These documents contain pre-send concurrency, async-freshness, account-scope and background active-response-set invariants that are not safe to rediscover ad hoc.
 8. For any new post-recovery development task, read both the **Post-recovery development sequence** in `CLIENT_ARCHITECTURE_GAP_REVIEW.md` and the current phase ordering/scope in `DEVELOPMENT_PLAN.md` before choosing/creating the Work. Current branch/checkpoint evidence and the user's latest explicit requirement outrank either document if one is temporarily behind an Active parallel task. Cold-start login-state recovery belongs to `DEV-conversation-recovery`; do not create a separate `DEV-auth-resume` task.
+9. Before `DEV-conversation-list-cache-preview` or later conversation-list persistence/preview work, also read `CONVERSATION_LIST_CACHE_PLAN.md`. The list cache is an account-scoped durable snapshot behind `ConversationRepository`; do not replace it with per-row Detail prefetching or a second list authority.
 
 Do not ask the user to upload project documents that already exist in this repository.
 

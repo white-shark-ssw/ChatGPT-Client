@@ -2,28 +2,69 @@
 
 ## Status
 
-**Active — b22 Runtime partial/failing; b23 Code + source review + CI + identity-valid Artifact; Runtime pending**
+**Active — b23 real-device cache-core Runtime accepted for tested Plus/personal iPhone/iOS17 scope; ready for PR/merge preparation**
 
 - **Work ID**: `DEV-conversation-list-cache-core`
 - **Routing aliases / keywords**: `持久化会话列表缓存核心 / 会话列表缓存核心 / 列表缓存 / conversation list cache core`
 - **Task**: Add the first account-scoped persistent conversation-list snapshot and rapid-relaunch automatic-refresh suppression behind the existing authoritative `ConversationRepository`.
-- **User intent / acceptance criteria**: warm relaunch should visibly restore cached rows quickly; rapid relaunch should suppress redundant automatic list requests; manual refresh must bypass suppression and visibly report completion/failure; stale cache refreshes once; offline transport failure keeps a valid last-verified-scope list snapshot visible without retry; provisional/offline rows must not issue Detail requests until current account scope is verified; confirmed unauthenticated/account mismatch must reject old provisional rows; first-page `limit=28` absence never deletes older cached rows; no Detail/full-body cache/second list authority.
-- **Baseline / synchronization**: task branch created from `main@76d88794e9bc0dff9860ace3ad496e319355ee08`; synchronized with current `main@846dad81e382e6b7a862f082ef5bc5d4ce617493` via two-parent merge `27a107b9f993302743e6cfb45800ed12c9499643`. Current main was rechecked before b23 allocation and remains `846dad81e382e6b7a862f082ef5bc5d4ce617493`.
-- **Working branch / PR / current Candidate source**: `dev/conversation-list-cache-core-20260828`; PR not created; corrected product head `7bb6d116d785614dccf0e2a2b412d2823ad583e1`; exact b23 product/config source `d2af0fc157f6e2d037636c55f963c18071a332d5`; tree `7a04f3f4650443213035faede9045a8073fbcfb4`.
-- **Candidate identities**: b22 is permanently reserved and Runtime-partial/failing. b23 is permanently allocated as `DEV-conversation-list-cache-core-0.1.0-b23` / `0.1.0 (23)` after repository/search/current-main conflict checks found no prior b23 record.
-- **Exact b22 Runtime Candidate**: source `6eefc0f4d1734feeef17cabdaa4942d0ade14ba0`; Run `33097152104`; Job `98604939953`; Artifact `9656872520`; ZIP `sha256:4a3f238b9efd38ce505ba2fd3b8b7dd885c46e7568d342758d26f14a77e3eb41`; IPA `ChatGPTClient-0.1.0-b22-dev-conversation-list-cache-core.ipa`; IPA SHA `f91818079ed1310cef4e7f1d66ceea131a96b450f012d979a9a36d1ca14e2886`.
-- **b22 Runtime evidence — accepted mechanics**: supplied iPhone/iOS17 diagnostics show authoritative success followed by `listCache.write` with 28 entries; subsequent cold launches show cache hits with `published=true`, `recent_skip` and `networkRequest=skipped`; a `106.30s` stale launch publishes cache then issues exactly one normal list request; repeated manual refreshes show `manual_bypass`, exactly one `list.request`, HTTP200 and `cacheWrite=ok`.
-- **b22 Runtime defects**: (1) warm relaunch cache read starts only after ~4.4–5.0s account verification, leaving the visible list blank first; (2) offline cold launch auth probing fails with `NSURLErrorDomain -1005/-1004` before any cache read, producing reload/login account controls instead of cache; (3) manual refresh has no explicit visible terminal feedback despite succeeding internally. First-page off-page preservation remains Runtime-unverified because observed cache contained only the returned 28 rows while server total was 29.
-- **Corrected product implementation**: `ConversationFeature.swift` only. `ConversationListCacheStore` retains schema 1 snapshots and adds a protected/atomic `last-verified-scope.txt` containing only the existing 64-hex SHA-256 cache namespace; no raw account ID/user ID, cookie, token, bearer or Detail content is persisted. Automatic cold start can load that last-verified snapshot before online account verification and publish titles immediately. Existing b22 snapshots migrate after the first successful b23 scope verification via `rememberVerifiedNamespace`, even when the verified list snapshot is recent and the network list request is skipped.
-- **Auth / isolation correction**: `AuthSessionStore` is unchanged and remains sole auth/account authority. Repository distinguishes auth probe transport `.failed` from confirmed non-verified `.notAvailable`: automatic cold start may retain provisional cached titles only for temporary transport failure; confirmed auth unavailability clears provisional rows and the scope hint. A newly verified different scope clears provisional rows before loading the verified scope. Provisional/offline rows are list-only and cannot open Detail until `activeAccountScope` is actually verified; tapping them shows `当前仅显示缓存，联网验证账户后可打开会话` and sends no Detail request.
-- **Refresh feedback correction**: manual list refresh now shows `正在刷新会话列表…`, terminal success `已刷新 · N 条`, and on failure with existing rows `刷新失败 · 当前显示缓存`; transient/network failure without rows no longer offers a misleading login button, while confirmed `authenticationNotAvailable` still offers login/account verification.
-- **Source/static review**: correction diff from synchronized baseline changes only `ConversationFeature.swift` plus this task checkpoint; no AuthSessionStore, Root, Detail protocol, endpoint/header or scroll implementation changes. Foundation `CocoaError.fileWriteInvalidFileName` exists in the platform API. No retry/timer/watchdog/polling/fallback chain or second list owner was added.
-- **Rejected duplicate b22 identity**: corrected product head `7bb6d116d785614dccf0e2a2b412d2823ad583e1` automatically triggered Run `33100589549`, which succeeded and proves that exact corrected product source compiles/packages. Config still said b22, producing Artifact `9658308131` named `ChatGPTClient-DEV-conversation-list-cache-core-0.1.0-b22` / ZIP `sha256:838890c7b180f5d12e5935b788897df5f4eeeb0d6fbd7f8174a3b6da46d845d9`. Because b22 was already a tested Candidate, this later artifact is explicitly **identity-rejected / never for Runtime / never a replacement b22**.
-- **b23 identity allocation**: atomic tree commit `d2af0fc157f6e2d037636c55f963c18071a332d5` changes only `.github/workflows/ios-foundation.yml`, `ChatGPTClient.xcodeproj/project.pbxproj`, and `scripts/build_ipa.sh`: build 22→23 and Candidate b22→b23; work slug remains `dev-conversation-list-cache-core`. No product source changed in the allocation commit.
-- **Exact b23 CI**: Run `33101116431`, Job `98618762016`, head `d2af0fc157f6e2d037636c55f963c18071a332d5`, **success**.
-- **Exact b23 Artifact**: Artifact `9658508764`; outer ZIP `sha256:fa57e557a484f98b06753ce3f09fe4cdd89d390ea00a8778e052a518a560776b`; actual IPA `ChatGPTClient-0.1.0-b23-dev-conversation-list-cache-core.ipa`; IPA SHA `8f6911616fff1e93885191fcaec0f31a1e3c9488b7f4522fdbdb7dc5518be516`. Independent package inspection: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=23`, `MinimumOSVersion=14.0`, `UIDeviceFamily=[1,2]`, Mach-O arm64, `DiagnosticsCandidate=DEV-conversation-list-cache-core-0.1.0-b23`, `DiagnosticsSourceCommit=d2af0fc157f6`. Identity accepted for Runtime testing.
-- **State owners / safety**: `ConversationRepository` remains sole list/conversation owner on main thread; `AuthSessionStore` remains sole verified account/auth owner; default persistent WebKit storage remains sole persistent auth-secret owner; the namespace hint is cache bookkeeping only and cannot establish a transport/account context.
-- **Files/modules in scope**: product correction remains only `ChatGPTClient/Conversation/ConversationFeature.swift`; Candidate identity files are Xcode project/workflow/build script. Durable docs/checkpoint update as evidence changes. No business module is Frozen.
-- **Rejected / do-not-repeat**: no token/cookie persistence; no raw account/user ID cache filenames or hint; no Detail/full-body disk cache; no network retry/timer/watchdog/polling; no alternate endpoint; no second repository; no treating transport failure as confirmed logout; no allowing provisional rows to issue Detail; no reuse of b22 or b23 exact candidate identity.
-- **Validation state**: Code written: **Yes**. Static/source: **Passed**. Exact b23 CI: **Passed**. b23 Artifact: **Produced and identity-valid**. Runtime/manual/real-device: **b22 Partial/failing; b23 not tested**. Stable/Frozen: **No**.
-- **Next exact action**: install exact b23 Artifact on the existing b22 test device, complete one successful online b23 launch so the privacy-safe last-verified namespace hint is established, then kill/relaunch and exercise the Runtime matrix: immediate cached rows before auth completes; verified recent-skip/no list request; offline cache with no login overlay; offline cached-row Detail blocked until verification; online manual `正在刷新…` → exactly one request → `已刷新 · N 条`; offline manual `刷新失败 · 当前显示缓存`; >60s stale cache immediate display plus one refresh; confirmed auth/scope mismatch rejection if naturally available. First-page off-page preservation remains pending until a cached item genuinely exists outside returned page 1.
+- **Baseline / synchronization**: branch was created from `main@76d88794e9bc0dff9860ace3ad496e319355ee08` and synchronized with current `main@846dad81e382e6b7a862f082ef5bc5d4ce617493` via two-parent merge `27a107b9f993302743e6cfb45800ed12c9499643`. Main was rechecked before b23 allocation and remains `846dad81e382e6b7a862f082ef5bc5d4ce617493` at this Runtime checkpoint.
+- **Working branch / PR**: `dev/conversation-list-cache-core-20260828`; PR not created. Branch head immediately before this Runtime-doc update: `6bf0156fa87ded90014195e1e20c69da5982cc95`.
+- **Exact accepted Runtime Candidate**: `DEV-conversation-list-cache-core-0.1.0-b23` / `0.1.0 (23)`; exact product/config source `d2af0fc157f6e2d037636c55f963c18071a332d5`; corrected product source `7bb6d116d785614dccf0e2a2b412d2823ad583e1`.
+- **Exact b23 CI / Artifact**: Run `33101116431`, Job `98618762016`, success; Artifact `9658508764`; outer ZIP `sha256:fa57e557a484f98b06753ce3f09fe4cdd89d390ea00a8778e052a518a560776b`; IPA `ChatGPTClient-0.1.0-b23-dev-conversation-list-cache-core.ipa`; IPA SHA `8f6911616fff1e93885191fcaec0f31a1e3c9488b7f4522fdbdb7dc5518be516`. Package inspection: `0.1.0 (23)`, arm64, minimum iOS14.0, device families `[1,2]`, Candidate/source metadata match `d2af0fc157f6`.
+- **Historical b22**: `DEV-conversation-list-cache-core-0.1.0-b22` remains permanently reserved and Runtime-partial/failing. It proved disk snapshot write/read, 60-second `recent_skip`, stale one-refresh and manual-bypass mechanics, but visible cache publication happened only after ~4.4–5.0s account verification, offline auth failure bypassed cache, and manual refresh lacked explicit terminal UI feedback. Corrected code must never reuse b22.
+
+## b23 implementation / ownership
+
+- Product correction is confined to `ChatGPTClient/Conversation/ConversationFeature.swift`; candidate identity also changes Xcode build settings, workflow and `scripts/build_ipa.sh`.
+- `ConversationRepository` remains sole authoritative in-memory list/conversation owner and main-thread mutation domain.
+- `AuthSessionStore` is unchanged and remains sole verified auth/account authority; default persistent WebKit storage remains sole persistent auth-secret authority.
+- `ConversationListCacheStore` persists schema-1 list snapshots plus `last-verified-scope.txt` containing only the existing 64-hex SHA-256 cache namespace. No raw user/account IDs, cookies, tokens, bearer values, Detail mappings or message bodies are persisted.
+- Automatic cold start may provisionally publish the last successfully verified scope's cached **list titles** before current network account verification completes. This provisional cache is not account/transport authority.
+- A different subsequently verified scope rejects/clears the provisional presentation; confirmed auth unavailability rejects it; temporary transport failure may retain it without retry.
+- Provisional/offline rows are list-only and cannot start Detail until current scope is actually verified. Tapping them reports `当前仅显示缓存，联网验证账户后可打开会话`.
+- Manual refresh bypasses freshness suppression and provides visible navigation prompt feedback: `正在刷新会话列表…`, success `已刷新 · N 条`, failure with retained rows `刷新失败 · 当前显示缓存`.
+- No retry/timer/watchdog/polling, alternate endpoint, second repository/list owner or auth-secret persistence was added.
+
+## b23 Runtime evidence — user supplied exact iPhone/iOS17 diagnostics + screenshot
+
+- Export metadata identifies build `23`, Candidate `DEV-conversation-list-cache-core-0.1.0-b23`, source `d2af0fc157f6`, iPhone, iOS17.0, Plus/personal scope.
+- First successful b23 online launch establishes/migrates cache bookkeeping. The stale 28-entry snapshot (`ageSeconds=2463.43`) is loaded, one normal list request returns 28 with server `totalCount=29`, reconciliation records `insertedCount=1`, `preservedOffPageCount=1`, `resultCount=29`, and the 29-entry snapshot is written successfully.
+- Rapid relaunch at `18:15:26Z`: `listCache.provisional.completed` hits 29 entries in `4.09 ms` at age `18.32s` **before** account verification finishes (~4521 ms). After matching verification, the already-published cache remains (`published=false` on the second scoped load), decision is `recent_skip`, and `networkRequest=skipped`.
+- Another rapid relaunch at `18:15:37Z` with network unavailable: provisional 29-entry cache loads in `4.30 ms`; auth fails naturally with `NSURLErrorDomain -1005`; repository chooses `offline_cache`; `listLoad` completes `status=ok`, source `cache`, 29 items in `31.58 ms`. No login/account-verification overlay replaces the list.
+- Offline manual refresh at `18:15:41Z` fails naturally at auth with `-1005`; the screenshot confirms the list remains visible and the centered navigation prompt above the `ChatGPT` title shows `刷新失败 · 当前显示缓存`.
+- Online manual refresh at `18:16:08Z` uses `manual_bypass`, emits exactly one `list.request`, receives HTTP200, preserves the off-page item (`pageCount=28`, `preservedOffPageCount=1`, `resultCount=29`) and writes cache successfully. A second manual refresh at `18:16:21Z` again emits exactly one request and preserves the same 29-row result.
+- Direct user result: `好像没问题了`; no new functional defect reported in this b23 matrix.
+
+## Acceptance / evidence boundaries
+
+Accepted on exact b23 for tested Plus/personal iPhone/iOS17 scope:
+- immediate provisional cached list before slow account verification;
+- recent rapid-relaunch automatic list-request suppression;
+- stale cache one-refresh path;
+- offline cold-start cache preservation without login overlay or automatic retry;
+- manual refresh bypass request mechanics;
+- visible offline refresh-failure feedback with retained rows;
+- first-page-28 safety preserving one genuinely off-page cached item;
+- small snapshot I/O (observed ~1–20 ms scoped reads/writes; provisional reads ~4 ms).
+
+Still **Unknown / Unverified** unless naturally exercised later:
+- supported real account-switch / verified-scope-mismatch Runtime transition;
+- provisional cached-row tap/Detail-block guard Runtime (source/CI-defined, no supplied tap sequence);
+- corrupt/schema-incompatible snapshot Runtime rejection;
+- iPad, iOS below 17, non-personal workspace identity.
+
+These conditional boundaries do not contradict the accepted tested b23 scope and do not justify manufacturing fake account transitions or corrupting user data solely to fill a matrix cell.
+
+## Validation state
+
+- **Code written**: Yes.
+- **Static/source review**: Passed.
+- **CI passed**: Yes — exact b23 Run `33101116431` / Job `98618762016`.
+- **Artifact produced**: Yes — exact identity-valid b23 Artifact `9658508764`.
+- **Runtime/manual/real-device**: **Accepted for the recorded b23 cache-core matrix on Plus/personal iPhone/iOS17**.
+- **Stable**: **Not yet merged; do not mark merged Stable before PR/merge evidence**.
+- **Frozen**: No.
+
+## Next exact action
+
+Update durable cache/project/build evidence to b23 Runtime truth, then prepare PR/merge from `dev/conversation-list-cache-core-20260828` against current `main`, re-check target advancement and run PR merge-view CI as required. Do not change product code without new defect evidence.

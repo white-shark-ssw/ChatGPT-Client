@@ -1,4 +1,5 @@
 import CryptoKit
+import Darwin
 import Foundation
 import OSLog
 
@@ -71,6 +72,29 @@ private enum DiagnosticsSanitizer {
 
     private static func shortHash(_ value: String) -> String {
         SHA256.hash(data: Data(value.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+private enum DiagnosticsProcessMemory {
+    private static let taskVMInfoCount = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+
+    static func fields() -> [String: String] {
+        var info = task_vm_info_data_t()
+        var count = taskVMInfoCount
+        let result = withUnsafeMutablePointer(to: &info) { infoPointer in
+            infoPointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { integerPointer in
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), integerPointer, &count)
+            }
+        }
+        guard result == KERN_SUCCESS else { return ["processMemorySampleStatus": "failed", "processMemorySampleKernReturn": String(result)] }
+        var fields = [
+            "processMemorySampleStatus": "ok",
+            "processPhysFootprintBytes": String(info.phys_footprint),
+            "processResidentSizeBytes": String(info.resident_size),
+            "devicePhysicalMemoryBytes": String(ProcessInfo.processInfo.physicalMemory)
+        ]
+        if count >= taskVMInfoCount { fields["processMemoryLimitRemainingBytes"] = String(info.limit_bytes_remaining) }
+        return fields
     }
 }
 
@@ -202,7 +226,9 @@ final class DiagnosticsLogger {
     }
 
     fileprivate func log(level: DiagnosticsLevel, category: String, name: String, traceID: String?, fields: [String: String]) {
-        let sanitized = DiagnosticsSanitizer.sanitizeLocalFields(fields)
+        var enrichedFields = fields
+        if category == "conversation", name.hasPrefix("resident.") { DiagnosticsProcessMemory.fields().forEach { enrichedFields[$0.key] = $0.value } }
+        let sanitized = DiagnosticsSanitizer.sanitizeLocalFields(enrichedFields)
         var consoleFields = sanitized
         if let traceID { consoleFields["trace_id"] = traceID }
         let summary = consoleFields.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: " ")

@@ -4,27 +4,27 @@ _Last updated: 2026-08-27._
 
 ## Purpose
 
-This is the durable implementation sequence for the iOS-native ChatGPT client. Current source, CI/artifact evidence, real-device evidence and specialized plans under `docs/project/` take priority over stale historical wording.
+This is the durable implementation sequence for the iOS-native ChatGPT client. Current source, CI/artifact evidence, real-device evidence, explicit user requirements and specialized plans under `docs/project/` take priority over stale historical wording.
 
-Current constraints: native UIKit iOS client; TrollStore IPA; intended primary runtime iPhone/iOS17; deployment target iOS14; current ChatGPT private/internal behavior must be evidenced rather than guessed.
+Current constraints: native UIKit iOS client; TrollStore IPA; primary tested runtime iPhone/iOS17; deployment target iOS14; current ChatGPT private/internal behavior must be evidenced rather than guessed.
 
 ## Delivery principles
 
-1. Fast usable loop before breadth.
-2. Diagnosability before complexity.
-3. Authentication/session ownership before protocol assumptions.
-4. One authoritative owner per identity/state domain.
-5. Native model/state separate from mounted UI.
-6. Official ChatGPT iOS interaction is the default visual/interaction baseline unless explicit requirements or runtime pain points justify deviation.
-7. Core owner work is serial; edge work parallelizes only after conflict scanning.
-8. Always distinguish Code, static checks, CI, Artifact, Runtime and Stable/Frozen evidence.
-9. Do not add speculative retry, fallback, watchdog, duplicate state or compatibility machinery.
+1. Reach a genuinely usable client early; do not wait for roadmap breadth.
+2. Keep one authoritative owner per identity/state domain.
+3. Prefer official ChatGPT iOS interaction patterns unless an explicit requirement says otherwise.
+4. Do not add speculative retry/fallback/watchdog/duplicate-state machinery.
+5. Distinguish Code / Static / CI / Artifact / Runtime / Stable evidence.
+6. High-frequency operations such as Copy and image/file transfer outrank lower-frequency polish once their dependencies exist.
+7. Persistent list caching is now an early infrastructure/performance task because repeated cold starts otherwise begin with no list data and may cause unnecessary repeated list requests during development/testing.
 
 ## Usability milestones
 
-- **V0.1 read-use**: native shell + conversation list/detail/message rendering + manual sync/full reload + usable cold-start login-state recovery.
-- **V0.2 chat-use**: V0.1 + stable multi-conversation state ownership + text send/new conversation + streaming + stop + user-visible reasoning interaction/haptics + recovery integration.
-- **V0.3 daily-use refinement**: preferences/metadata, Markdown export, long-conversation tuning, attachments and remaining daily-use conversation features.
+- **V0.1 read-use**: native shell + list/detail + manual recovery + accepted cold-start auth warm-up.
+- **V0.1 cache-use increment**: V0.1 + account-scoped persistent conversation-list snapshot so cold start can show known rows immediately and rapid relaunches can avoid needless automatic list refreshes when the cache was just synchronized.
+- **V0.2 chat-use**: stable multi-conversation ownership + metadata/preferences + message Copy + answer navigation + text send/new conversation + stream/stop/reasoning/haptics.
+- **V0.2 attachment-use increment**: image/file sending + assistant-file tap-download-share.
+- **V0.3 refinement**: Markdown/code rendering, conversation-list previews, Markdown export, long-conversation tuning, pagination/search/download manager and remaining daily-use features.
 
 ## Completed foundations
 
@@ -32,75 +32,174 @@ Current constraints: native UIKit iOS client; TrollStore IPA; intended primary r
 Completed / merged / Stable.
 
 ### Phase 2 — `DEV-auth-bootstrap`
-Completed / merged / Stable for tested scope. Default persistent `WKWebsiteDataStore` is the sole persistent auth-secret authority; native auth consumption remains transient.
+Completed / merged / Stable for tested scope. Default persistent `WKWebsiteDataStore` remains the sole persistent auth-secret authority.
 
 ### Phase 3 — `DEV-protocol-read`
 Completed / merged / Stable for accepted diagnostic read scope.
 
 ### Phase 4 — `DEV-native-read-path`
-Completed / merged / Stable for tested b9 scope. `ConversationRepository` owns production conversation summaries/selected detail/current visible branch.
+Completed / merged / Stable for tested b9 scope. `ConversationRepository` is the production conversation owner.
 
-## Phase 5 — `DEV-conversation-recovery`
-
-**Completed / merged / Stable for recorded Plus/personal iPhone/iOS17 scope.** PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
-
-Final candidate: `DEV-conversation-recovery-0.1.0-b15`, `0.1.0 (15)`; run `33004536664`; artifact `9619988065`; IPA SHA `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`.
-
-Accepted recovery progression:
-
-- b10: core `同步最新消息` and full `重载当前会话`.
-- b12: centered sync feedback + public default-WebKit cold-start warm-up.
-- b14: compact startup/list-detail navigation; initial useful root is conversation list; duplicate sidebar control removed.
-- b15: selected-detail replacement lifecycle; manual recovery cancels the obsolete in-flight detail task after the new generation takes ownership, then starts one replacement request; stale-generation rejection remains.
-
-Final b15 runtime proved two independent replacement sequences:
-
-- generation 1 -> 2 reload: old task cancelled; replacement HTTP200 / 168 visible messages / reload success;
-- generation 3 -> 4 latest-sync: old task cancelled; replacement HTTP200 / 591 visible messages / sync success;
-- no HTTP429 reproduced in either accepted case.
-
-No retry/timer/watchdog/fallback/resend/regenerate/hidden-WebView/second-state-owner machinery was added. Auth/header/cookie/endpoint semantics remain unchanged by the task-handle exposure used for cancellation.
+### Phase 5 — `DEV-conversation-recovery`
+Completed / merged / Stable for recorded Plus/personal iPhone/iOS17 scope. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`; exact evidence remains in `BUILD_TEST_INDEX.md`.
 
 ## Phase 6 — `DEV-multi-conversation-state`
 
 ### Goal
 
-Establish stable multi-conversation session/runtime ownership before send/stream work. See `docs/project/MULTI_CONVERSATION_STATE_PLAN.md` and the post-recovery sequencing in `CLIENT_ARCHITECTURE_GAP_REVIEW.md`.
+Finish account-scoped per-conversation resident state, stale-operation protection, request coalescing, minimum current-node identity and per-conversation presentation state before production Send/Stream.
 
-### Scheduling
+### Conversation-entry scroll semantics
 
-This is the **next serialized development Work when the user asks to continue**. Before creating/activating it, rerun normal governance preflight, conflict scan, branch/PR/candidate allocation and read the required multi-conversation architecture documents.
+- First visible presentation with **no valid saved reading anchor** defaults to the latest message / bottom of the current branch.
+- This first placement does not visibly animate from the top through a long conversation.
+- Loading-placeholder offsets are not reading anchors.
+- Once A has a real semantic reading anchor, A -> B -> A restores A rather than forcing bottom.
+- Sync/Reload preserve an established reading anchor through the existing presentation owner.
+- Future Send/Stream follow-tail applies only while the user remains at/near the latest edge; deliberate history browsing must not be pulled back to bottom.
 
-The Work will generalize the current single-selected freshness/request-lifecycle model into account-scoped resident per-conversation state. Do not reuse the recovery checkpoint/branch/candidate identity.
+The owning development session maintains its own exact Candidate/runtime gate. Do not expand or overwrite that Active checkpoint from unrelated work.
 
-## Phase 7 — `DEV-conversation-round-count`
+## Phase 7 — `DEV-conversation-list-cache-core`
 
-After multi-conversation state. Display `聊天 · N轮` / `工作 · N轮`; derive count from authoritative active-branch user messages; no second mutable counter or extra network request.
+### Why this is moved earlier
 
-## Phase 8 — `DEV-send-stream`
+This is now the **first task after multi-conversation becomes Stable/merged**, before metadata/settings and before Send/Stream.
 
-After read/recovery/multi-conversation ownership is stable: evidence current text-send/new-conversation protocol, implement composer/stream/stop, bind response identity correctly under switching, and integrate manual recovery without automatic resend.
+The previous plan delayed list persistence until after the first chat loop. That leaves every development/test cold start with no local list data and still causes an automatic list request per relaunch. The user explicitly wants this risk reduced earlier.
 
-## Phase 9 — `DEV-markdown-export`
+Durable design: `docs/project/CONVERSATION_LIST_CACHE_PLAN.md`.
 
-Export authoritative current user-visible branch to Markdown; never scrape mounted cells or expose hidden/internal reasoning/tool content.
+### Core scope
 
-## Phase 10 — `DEV-long-conversation`
+- Add one account/workspace-scoped persistent list snapshot behind `ConversationRepository`.
+- Persist bounded list metadata only: schema version, conversation ID, title, update time/order metadata, last successful reconciliation time, and fields required for future bounded preview integration.
+- After the current account scope is verified, load the matching snapshot and publish cached rows before waiting for network.
+- Never display another account's cache before scope verification.
+- No full `ConversationDetail`, raw mapping JSON or full message-body disk cache in this Work.
+- No per-row Detail prefetch and no automatic polling/retry loop.
+- Current first-page `limit=28` absence never proves deletion; preserve older cached rows unless later complete pagination or an explicit authoritative action proves removal.
 
-Measure/improve parse/model/render timing, first-visible latency, mounted-view bounds, memory growth, scrolling/input latency and lifecycle behavior.
+### Rapid-relaunch request suppression
 
-## Phase 11 — `DEV-attachments`
+Cache-first rendering alone is insufficient to reduce frequent restart traffic, so the core Work must persist the time of the last successful authoritative list reconciliation and apply a **short freshness window** on launch:
 
-Add native photo/file/video attachment flows after text-chat ownership is stable; evidence current upload protocol before production implementation.
+- valid cache missing/invalid -> perform the normal list request;
+- valid cache older than the accepted freshness window -> show cache immediately, then perform one normal list request;
+- valid cache that was successfully synchronized very recently -> show it and **skip that launch's automatic list request**;
+- explicit pull-to-refresh / refresh-button action always bypasses this suppression and performs one user-requested list refresh;
+- this is a one-time timestamp comparison, not a timer, polling loop, retry or watchdog.
 
-## Phase 12 — remaining daily-use features
+The exact initial freshness interval is intentionally not frozen by planning. The implementation Work must choose/document a small conservative value and validate it on device; do not silently invent a long stale interval. If current response evidence later proves usable ETag/validator semantics, conditional refresh may be evaluated but is not assumed.
 
-Split into isolated Work IDs as dependencies stabilize: search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat, settings/diagnostics refinement and other evidenced daily-use capabilities.
+### Acceptance focus
 
-## Phase 13 — advanced capabilities
+- Warm-cache cold start shows known rows immediately after verified scope.
+- Several rapid process relaunches inside the accepted freshness window do not each emit an automatic list request.
+- Manual refresh still performs a request immediately.
+- Once cache ages beyond the window, one normal refresh occurs and reconciles without blanking/flicker.
+- Network failure leaves valid cached rows visible; no automatic retry.
+- Account A cache never appears under verified account B.
 
-Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Research, GPTs and other current ChatGPT-specific capabilities.
+## Phase 8 — `DEV-conversation-round-count`
+
+### User-facing bundle
+
+Implement after cache core and before Send/Stream:
+
+- `聊天 · N轮` / `工作 · N轮` derived from authoritative visible user turns;
+- per-user/per-assistant message timestamps from authoritative `createTime` when available;
+- adaptive `上一轮回答` / `下一轮回答` floating navigation with native animated scrolling;
+- basic one-tap Copy for visible user and assistant message text;
+- first centralized Preferences owner for these toggles and later settings.
+
+### Shared derivation / behavior
+
+- Round count and answer navigation share one derived active-branch round projection, not parallel mutable counters.
+- A visible user message starts a round; the first visible assistant reply before the next user message is that round's answer anchor.
+- Tool/reasoning/system nodes do not create rounds.
+- Recompute answer anchors only when authoritative visible messages change, not on every scroll callback.
+- Quick-jump animation is native scroll-container animation, not timer-stepped fake scrolling.
+- Copy never includes hidden reasoning/tool/system material and never triggers network requests.
+
+## Phase 9 — `DEV-send-stream`
+
+Evidence the current text Send/new-conversation/stream/stop protocol, then implement composer, pending-to-authoritative identity handoff, per-conversation response lifecycle, incremental stream presentation, Stop, user-visible reasoning interaction and required reasoning-to-final haptic behavior.
+
+- No global response owner.
+- A hidden conversation may continue responding while another is visible.
+- Sync/Reload never resend messages.
+- If user is at/near latest, stream may follow tail; once user intentionally browses history, stream must not steal the viewport.
+
+**As soon as exact real-device text chat/stream works, issue the earliest practical daily-chat Candidate.**
+
+## Phase 10 — `DEV-attachments`
+
+High-priority immediately after accepted text Send/Stream. Durable design: `ATTACHMENT_TRANSFER_PLAN.md`.
+
+Core first Candidate:
+
+- native photo/image picker;
+- native document/file picker;
+- per-conversation pending attachment cards/thumbnails and removal before Send;
+- evidence current upload/asset/message attachment protocol before implementation;
+- assistant user-visible file cards;
+- tap file -> explicit file-backed download -> app-private local file -> immediate `UIActivityViewController` share sheet;
+- visible transfer failure, explicit user retry only; no automatic retry loop;
+- full custom download manager does not block this phase.
+
+## Phase 11 — `DEV-message-rendering`
+
+Improve development-chat readability:
+
+- Markdown paragraphs/headings/lists/links;
+- inline/fenced code;
+- code-block one-tap Copy while retaining whole-message Copy;
+- tables when needed;
+- no full-conversation reparse/reload on every streamed token.
+
+## Phase 12 — `DEV-conversation-list-preview`
+
+This is now the **preview/UI enhancement built on the already-accepted cache core**, rather than the first introduction of persistence.
+
+- Reuse the same persistent list snapshot/store and repository owner from `DEV-conversation-list-cache-core`.
+- First verify whether the current list response itself exposes a safe user-visible preview/snippet field.
+- If not, populate bounded previews only from Detail/Sync/Reload already obtained through normal user activity and from later authoritative Send/Stream events.
+- Never issue one Detail request per row solely to manufacture previews.
+- Show one clipped secondary preview line and use the centralized `显示会话消息预览` preference.
+- Streaming must not write preview data to disk token-by-token.
+
+Do not create a second list/cache store for this phase.
+
+## Phase 13 — `DEV-markdown-export`
+
+Export the authoritative current user-visible branch to Markdown; never scrape mounted cells or expose hidden/internal reasoning/tool content.
+
+## Phase 14 — `DEV-long-conversation`
+
+Measure network / parse-model / first-visible-render / Markdown-layout timing and optimize only evidenced bottlenecks.
+
+## Phase 15 — remaining daily-use features
+
+Split into isolated Work IDs as dependencies stabilize:
+
+- `DEV-download-manager` — persistent download history/progress/re-share/storage controls;
+- conversation pagination/load-more using the same list-cache/reconciliation owner;
+- background wait/completion notification and later TrollStore true-background experiment;
+- search;
+- rename/archive/delete;
+- edit/regenerate/branch switching;
+- model selection/temporary chat;
+- settings/diagnostics refinement.
+
+## Phase 16 — advanced capabilities
+
+Projects, web search, image/multimodal generation, Voice, Memory, Deep Research, GPTs and other current capabilities, each only with current protocol/UI evidence.
 
 ## Current next action
 
-No development Work is automatically activated by this plan. When the user asks to continue development, start governance preflight for the next serialized Work: `DEV-multi-conversation-state`.
+No new development Work is activated by this planning change. Finish `DEV-multi-conversation-state` through its own runtime/merge gate. After it is Stable/merged, the serialized near-term route is now:
+
+`DEV-conversation-list-cache-core -> DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
+
+This ordering deliberately pays the small persistence cost early so the many subsequent development/test relaunches are faster and do not needlessly hammer the list route, while still keeping full chat-body persistence and complex offline storage out of the early scope.

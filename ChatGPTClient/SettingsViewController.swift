@@ -1,7 +1,54 @@
 import UIKit
 
+final class AppPreferences {
+    static let shared = AppPreferences()
+    static let didChangeNotification = Notification.Name("AppPreferences.didChange")
+
+    private enum Key: String {
+        case showsConversationRoundCount = "preferences.conversation.showsRoundCount"
+        case showsMessageTimestamps = "preferences.conversation.showsMessageTimestamps"
+        case showsAnswerQuickNavigation = "preferences.conversation.showsAnswerQuickNavigation"
+    }
+
+    private let defaults: UserDefaults
+
+    private init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        defaults.register(defaults: [
+            Key.showsConversationRoundCount.rawValue: true,
+            Key.showsMessageTimestamps.rawValue: true,
+            Key.showsAnswerQuickNavigation.rawValue: true
+        ])
+    }
+
+    var showsConversationRoundCount: Bool {
+        get { defaults.bool(forKey: Key.showsConversationRoundCount.rawValue) }
+        set { set(newValue, for: .showsConversationRoundCount) }
+    }
+
+    var showsMessageTimestamps: Bool {
+        get { defaults.bool(forKey: Key.showsMessageTimestamps.rawValue) }
+        set { set(newValue, for: .showsMessageTimestamps) }
+    }
+
+    var showsAnswerQuickNavigation: Bool {
+        get { defaults.bool(forKey: Key.showsAnswerQuickNavigation.rawValue) }
+        set { set(newValue, for: .showsAnswerQuickNavigation) }
+    }
+
+    private func set(_ value: Bool, for key: Key) {
+        guard defaults.bool(forKey: key.rawValue) != value else { return }
+        defaults.set(value, forKey: key.rawValue)
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+    }
+}
+
 final class SettingsViewController: UIViewController {
     private let diagnostics = DiagnosticsLogger.shared
+    private let preferences = AppPreferences.shared
+    private let roundCountSwitch = UISwitch()
+    private let messageTimeSwitch = UISwitch()
+    private let answerJumpSwitch = UISwitch()
     private let exportButton = UIButton(type: .system)
     private let clearButton = UIButton(type: .system)
 
@@ -9,6 +56,26 @@ final class SettingsViewController: UIViewController {
         super.viewDidLoad()
         title = "设置"
         view.backgroundColor = .systemBackground
+
+        let scrollView = UIScrollView()
+        scrollView.alwaysBounceVertical = true
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+
+        let contentView = UIView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(contentView)
+
+        let preferencesTitle = UILabel()
+        preferencesTitle.font = .preferredFont(forTextStyle: .headline)
+        preferencesTitle.text = "会话显示"
+
+        roundCountSwitch.isOn = preferences.showsConversationRoundCount
+        roundCountSwitch.addTarget(self, action: #selector(roundCountPreferenceChanged), for: .valueChanged)
+        messageTimeSwitch.isOn = preferences.showsMessageTimestamps
+        messageTimeSwitch.addTarget(self, action: #selector(messageTimePreferenceChanged), for: .valueChanged)
+        answerJumpSwitch.isOn = preferences.showsAnswerQuickNavigation
+        answerJumpSwitch.addTarget(self, action: #selector(answerJumpPreferenceChanged), for: .valueChanged)
 
         let metadataTitle = UILabel()
         metadataTitle.font = .preferredFont(forTextStyle: .headline)
@@ -40,20 +107,60 @@ final class SettingsViewController: UIViewController {
         clearButton.setTitle("清理诊断日志", for: .normal)
         clearButton.addTarget(self, action: #selector(clearDiagnostics), for: .touchUpInside)
 
-        let stack = UIStackView(arrangedSubviews: [metadataTitle, metadataLabel, diagnosticsTitle, diagnosticsDetail, sampleButton, exportButton, clearButton])
+        let stack = UIStackView(arrangedSubviews: [
+            preferencesTitle,
+            makePreferenceRow(title: "显示会话轮数", control: roundCountSwitch),
+            makePreferenceRow(title: "显示消息时间", control: messageTimeSwitch),
+            makePreferenceRow(title: "显示回答快速跳转", control: answerJumpSwitch),
+            metadataTitle,
+            metadataLabel,
+            diagnosticsTitle,
+            diagnosticsDetail,
+            sampleButton,
+            exportButton,
+            clearButton
+        ])
         stack.axis = .vertical
         stack.spacing = 16
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
+        contentView.addSubview(stack)
 
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24)
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+            stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24)
         ])
 
         diagnostics.info(category: "ui", name: "settings.loaded")
     }
+
+    private func makePreferenceRow(title: String, control: UISwitch) -> UIView {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .body)
+        label.text = title
+        label.numberOfLines = 0
+        let row = UIStackView(arrangedSubviews: [label, control])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+        return row
+    }
+
+    @objc private func roundCountPreferenceChanged() { preferences.showsConversationRoundCount = roundCountSwitch.isOn }
+
+    @objc private func messageTimePreferenceChanged() { preferences.showsMessageTimestamps = messageTimeSwitch.isOn }
+
+    @objc private func answerJumpPreferenceChanged() { preferences.showsAnswerQuickNavigation = answerJumpSwitch.isOn }
 
     @objc private func writeSampleEvent() {
         let span = diagnostics.startSpan(category: "diagnostics", name: "sample", fields: ["origin": "settings"])

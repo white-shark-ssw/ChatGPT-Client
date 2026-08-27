@@ -61,8 +61,20 @@ Use the official-style drawer/sidebar/list model rather than a custom tab-heavy 
 ### User messages
 Use a compact rounded bubble/background treatment similar to the official App.
 
+When `显示消息时间` is enabled, show subdued timestamp metadata below each visible user bubble, aligned to the user-message side. The timestamp is not part of the message body and must not change message identity or copying/export semantics.
+
 ### Assistant messages
 Use wide readable document-style content without a large enclosing bubble. Later support Markdown/headings/lists/links/code/tables/visible attachments as evidence and roadmap require.
+
+When `显示消息时间` is enabled, show subdued timestamp metadata below each visible assistant response, aligned to the assistant/document side. Reasoning/status rows are not independent assistant messages merely because they are visible UI; timestamp ownership follows the actual visible assistant message model supplied by the service/response owner.
+
+### Message timestamp source and formatting
+
+- Historical/server-backed messages use the authoritative message `createTime` / service `create_time` already present in the conversation model; do not refetch Detail solely for timestamps.
+- Use the device's current locale and time zone.
+- Same-day messages may use time-only; older messages include enough date context to avoid ambiguity. Exact localized formatting/spacing is implementation-level and should be tuned on real device without raising the deployment target.
+- If a historical message has no authoritative timestamp, omit the metadata rather than fabricate a current time.
+- Future optimistic Send presentation may temporarily show a provisional local timestamp only if the authoritative response/message owner needs it; once server-backed time exists, the display must hand off to that authoritative value rather than keep a second durable timestamp authority.
 
 ## Composer
 
@@ -136,6 +148,7 @@ UI remains a consumer of authoritative state.
 - Conversation title/text is not identity.
 - Selected conversation has one production owner.
 - Round count is derived from authoritative active branch.
+- Message timestamp display is derived from the authoritative message timestamp where available; the display toggle is preference state, not message state.
 - Stream/reasoning state belongs to owning conversation/response lifecycle.
 - Sync/reload operate through production conversation owner and do not create second stores/identities.
 - A freshness/operation-generation guard may reject obsolete selected-detail results; request-task cancellation/replacement remains lifecycle ownership at the same authoritative repository.
@@ -143,7 +156,7 @@ UI remains a consumer of authoritative state.
 
 ## Validation expectations
 
-Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior and round-count behavior still require their own runtime acceptance.
+Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior and message-timestamp behavior still require their own runtime acceptance.
 
 ## Maintenance rule
 

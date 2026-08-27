@@ -53,7 +53,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Cancellation/task handle is request-lifecycle ownership inside the same repository, not a second conversation authority.
 - b13 runtime proved freshness rejection alone while overlapping replacement requests could HTTP429.
 - b15 Runtime accepted deterministic cancellation-before-replacement for recorded selected-conversation scope: obsolete requests cancelled, replacements HTTP200, no HTTP429.
-- Multi-conversation generalization preserves this same-target rule per conversation.
+- Multi-conversation generalization preserves this same-target rule per conversation. Exact b18 did not naturally isolate an older in-flight Detail -> newer Reload replacement sequence, so that specific regression gate remains open rather than inferred from ordinary Reload success.
 
 ### Recovery diagnostics / prohibited behavior
 
@@ -87,7 +87,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Multi-conversation / state-owner contract
 
-- `DEV-multi-conversation-state` is Active after merged recovery. b16 is historical/rejected before runtime; b17 has accepted core real-device evidence with reproduced P1 scroll defect; current exact b18 source `f30c13b4ac2c40dcda829585682825ca906dceae` has Code + source/static review + CI + identity-valid Artifact and Runtime pending.
+- `DEV-multi-conversation-state` is Active after merged recovery. b16 is historical/rejected before runtime; b17 has accepted core real-device evidence with reproduced historical-scroll defect; exact b18 source `f30c13b4ac2c40dcda829585682825ca906dceae` now has Code + source/static + CI + identity-valid Artifact + **real-device historical-scroll Runtime acceptance for the tested iPhone/iOS17 matrix**. Work remains not Stable/Frozen.
 - One `ConversationRepository` remains production conversation authority. Do not create one repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
 - Foreground selection is presentation state only. Loading, Sync, Reload and future response work target authoritative conversation identity without changing selection as side effect.
 - Selection change alone does not cancel another conversation's valid request/work and is not a reason to discard a valid hidden result.
@@ -99,7 +99,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - A loaded conversation may remain visible while explicit Sync is in flight; navigating away/back must not lose target terminal update.
 - List/account presentation needs freshness protection so late old-scope/superseded completion cannot clear/overwrite newer presentation.
 - Mutable resident/session/list/operation authority uses one explicit execution domain. Network transfer/pure parsing may be off-owner.
-- Memory warning may trim eligible inactive terminal residents. Normal bounded LRU policy remains unfrozen until real-device process/system memory measurement; approximate text bytes alone are insufficient.
+- Memory warning may trim eligible inactive terminal residents. Normal bounded LRU policy remains unfrozen until real **process/system memory** measurement; approximate text bytes alone are insufficient.
+- Exact b18 Runtime evidence may close only the tested paths: independent historical anchors, first-time target isolation, Sync/Reload anchor preservation when the anchored message remains, resident return and active Sync coalescing. It does not automatically close natural failure residency, supported account-switch isolation, normal LRU policy or unexercised replacement paths.
 
 ## Per-conversation scroll presentation contract
 
@@ -109,7 +110,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - A target with no saved anchor starts from its normal top instead of inheriting another conversation's offset.
 - Account-scope reset clears presentation anchors.
 - Visible Sync/Reload may preserve the historical anchor only if the same anchored message remains in the refreshed current branch. If it disappears, do not invent a cross-message fallback.
-- b18 implements only this historical-anchor behavior and is Runtime pending.
+- Exact b18 iPhone/iOS17 Runtime **accepts** the tested historical-anchor behavior: user reported no issue; diagnostics show repeated A/B saved/restored pairs, first-time third-conversation isolation, Sync/Reload preservation, resident hits and same-target Sync coalescing, with all recorded HTTP statuses 200 and no error/HTTP429.
+- Anchored-message disappearance did not occur naturally in b18, so `scrollAnchor.discarded -> top` remains source/CI-defined and Runtime-unverified; do not manufacture destructive branch mutation solely to trigger it.
 - Future active-response `follow-tail` behavior must consume the authoritative per-conversation Send/Stream response lifecycle. Do not invent UI `isStreaming`, timer, response flag or unused future state to fake follow-tail before Send/Stream exists.
 - User-confirmed future rule: if A is at/near bottom with an active authoritative response and grows/completes while hidden, returning A shows A's current latest bottom; intentional upward scrolling exits follow-tail and establishes historical-reading intent.
 
@@ -136,6 +138,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Repository AI Governance Rules are dynamic authority.
 - Every work session reads root `AGENTS.md`, then `docs/project/START_HERE.md`.
 - Material source/CI/artifact/runtime/architecture/status changes update current checkpoint and durable docs in the same work cycle.
+- Current `main` may advance through parallel docs/planning work; exact Candidate evidence remains tied to its tested product source, and final merge must synchronize target-branch docs without overwriting parallel planning.
 
 ## Critical invariants / prohibited routes
 

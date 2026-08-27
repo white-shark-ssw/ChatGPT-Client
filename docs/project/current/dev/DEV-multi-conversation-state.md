@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — b17 exact source passed static/local parse + CI + independent Artifact identity inspection; ready for real-device multi-conversation validation; Runtime/Stable still pending**
+**Active — b17 exact source passed static/local + CI + Artifact; core real-device multi-conversation sequences accepted for tested iPhone/iOS17 scope; semantic scroll-anchor restoration is a reproduced P1 defect; full Work Stable acceptance still pending**
 
 - **Work ID**: `DEV-multi-conversation-state`
 - **Routing aliases / keywords**: `多会话 / 多会话驻留 / 多会话状态 / 快速切换 / multi-conversation`
@@ -23,7 +23,7 @@
 - Second source review also found stale-scope, waiter, hidden-Sync, list-freshness, task-handle and owner-domain gaps.
 - No real-device run. b16 must never be reused.
 
-### b17 — valid runtime Candidate
+### b17 — identity-valid runtime Candidate
 
 - **Static/local**: final `ConversationFeature.swift` blob `1034cff72dea36d6d7e835bdf52dcfe2cdc8e38d`; local Git-blob hash matched; `swiftc -frontend -parse` passed.
 - **CI**: Run `33045536770`, job `98428537619`, success. Exact checkout `bc69d58b3245a1ab21b250e16612c11d39ddbf33`; Xcode 16.4 / build 16F6; Release target `arm64-apple-ios14.0`; log ends `BUILD SUCCEEDED`.
@@ -31,7 +31,28 @@
 - **Artifact**: `9635486304`, name `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b17`, uploaded ZIP digest `sha256:bf6aed8cebcb08153fbe8fac6868ce60c0ef4bd7876340246912ba8edbed1c33`.
 - **IPA**: `ChatGPTClient-0.1.0-b17-dev-multi-conversation-state.ipa`; SHA-256 `ed551deac0335e47da56da36ec2a8a20550613ac072ac1ddf0b84790278318dc`; independent SHA equals generated sidecar.
 - **Independent package inspection**: `CFBundleShortVersionString=0.1.0`; `CFBundleVersion=17`; `DiagnosticsCandidate=DEV-multi-conversation-state-0.1.0-b17`; `DiagnosticsSourceCommit=bc69d58b3245`; `MinimumOSVersion=14.0`; `UIDeviceFamily=[1,2]`; Mach-O 64-bit arm64.
-- **Disposition**: **valid exact runtime Candidate**. This is Artifact identity acceptance only, not runtime acceptance.
+- **Disposition**: valid exact runtime Candidate. Artifact identity acceptance is distinct from runtime acceptance.
+
+## b17 real-device evidence — 2026-08-27
+
+Exact exported diagnostics identify `0.1.0 (17)`, candidate `DEV-multi-conversation-state-0.1.0-b17`, source `bc69d58b3245`, iPhone / iOS17.0. User followed the requested core switching/coalescing/hidden-completion/Sync/rapid-switch sequences and reported no major functional issue except scroll-position restoration.
+
+Accepted evidence for the tested sequences:
+
+1. **Resident return**: repeated returns to already-loaded conversations logged `resident.hit` and `resident.firstVisible` without a new same-target Detail request solely because of navigation. Observed `resident.firstVisible.elapsedMs` values in the export are approximately `0.23–0.78 ms`.
+2. **Same-target coalescing while loading**: returning to an in-flight conversation logged `detail.coalesced` with `completionCount=2`; the original Detail operation remained the owner rather than starting a duplicate target request.
+3. **Hidden completion**: a Detail operation completed while another conversation was foreground and logged `resident.stored visibility=hidden`; later navigation returned through `resident.hit`.
+4. **Sync A -> B -> A**: conversation `sha256:8922c7c08d04` started Sync generation 2; after switching away and returning before terminal, the return logged `resident.hit activeOperationKind=sync` and `detail.coalesced completionCount=2`; the same Sync later returned HTTP200 and `latestSync.end status=ok` with 832 visible messages and no duplicate Sync caused by the return.
+5. **Rapid multi-conversation overlap**: diagnostics reached `activeOperationCount=3`; different conversations completed independently, including hidden resident stores. No HTTP429 event appears in the supplied b17 diagnostic export.
+6. **Residency scale observed, not capacity evidence**: resident count reached 6 and `residentTotalApproximateTextBytes` reached `6724764` in the export. This is only the existing approximate text correlation metric and is not process-memory evidence or a basis for freezing LRU capacity.
+
+### Reproduced P1 defect — per-conversation scroll anchor
+
+User reproduced the previously planned P1 gap: leave conversation A around ~10% scroll position, switch to B and scroll B, then return to A; A no longer stays at the same semantic/visual position. This is **not a resident-data ownership failure**: b17 still returns A from resident state, but the single visible detail presentation does not yet preserve a per-conversation semantic scroll anchor.
+
+This issue was already explicitly scoped in project docs as **P1 semantic per-conversation scroll-anchor restoration** and did not block the first core b17 runtime proof. It is now upgraded from planned P1 work to **runtime-reproduced P1 defect**.
+
+The current diagnostic schema does not record table/collection scroll anchor identity/offset, so the scroll-position defect is grounded by the user's direct runtime observation rather than inferred from diagnostics.
 
 ## b17 owner fixes written and compiled
 
@@ -55,29 +76,27 @@
 - **Static/local checks**: **Passed — Swift parse + exact blob identity**.
 - **CI passed**: **Yes — Run `33045536770`**.
 - **Artifact produced**: **Yes — Artifact `9635486304`, identity independently accepted**.
-- **Runtime/manual/real-device**: **No yet for b17**.
-- **Stable/Frozen**: **No**. b15 remains the accepted Stable/runtime baseline.
+- **Runtime/manual/real-device**: **Yes, partial/core accepted for the tested iPhone/iOS17 sequences above; P1 scroll-anchor defect reproduced**.
+- **Stable/Frozen**: **No**. b15 remains the merged Stable baseline until this Work completes/merges.
 
-## Real-device core matrix for b17
+## Real-device core matrix status for b17
 
-Use the exact b17 IPA and capture diagnostics after each sequence when practical. Do not infer success only from UI appearance.
-
-1. **Resident return**: load A fully -> load B fully -> return A. Expected: A renders from resident state; no new A detail request solely because of navigation; `resident.firstVisible`/resident counts are available.
-2. **Hidden completion**: start A detail -> switch B before A completes -> let A finish hidden -> return A. Expected: valid hidden A result is stored; B is never overwritten; return A does not refetch.
-3. **Same-target coalescing**: start A -> B -> return A before original A finishes. Expected: return joins A's active operation; no duplicate A detail request.
-4. **Sync A -> B -> A**: with A loaded, start `同步最新消息`, switch B, then return A before Sync terminal. Expected: A shows/restores active Sync presentation, joins the same operation, and applies terminal result when it completes; no duplicate Sync/detail request caused by return.
-5. **Reload target isolation**: start Reload A, switch B. Expected: A replacement owns only A; B remains independent; obsolete A waiter/callback cannot mutate B.
-6. **Failure residency**: make/observe a genuine A detail terminal failure if naturally encountered -> B -> A. Expected: ordinary return to A does not issue an implicit retry; explicit Reload remains available. Do not manufacture unsafe network conditions solely for this case.
-7. **Rapid A/B/C overlap**: open three different conversations while prior detail loads are still active. Expected: different conversations do not cancel each other; watch for HTTP429/service pressure without adding automatic retry/global concurrency cap.
-8. **Manual replacement regression**: while A ordinary load is active, trigger Sync/Reload A. Expected: same-target old task is cancelled before replacement; no stale mutation; compare against b15 accepted behavior and observe HTTP429.
-9. **Memory behavior**: exercise multiple small and large residents, capture resident/active/protected counts and device/system memory observations where available. Do not choose LRU capacity from approximate text bytes alone.
+1. **Resident return**: **Accepted in supplied run** — resident hits/first-visible observed; no navigation-only refetch observed.
+2. **Hidden completion**: **Accepted in supplied run** — valid hidden result stored and later hit.
+3. **Same-target coalescing**: **Accepted in supplied run** — `detail.coalesced completionCount=2` observed.
+4. **Sync A -> B -> A**: **Accepted in supplied run** — return rejoined active Sync and same operation completed HTTP200/ok.
+5. **Reload target isolation**: not separately proven by the supplied run.
+6. **Failure residency**: not naturally encountered/proven in the supplied run.
+7. **Rapid A/B/C overlap / rate pressure**: **Accepted for observed run** — up to 3 active operations, independent completions, no HTTP429 in export.
+8. **Manual replacement regression**: b15 remains the accepted replacement baseline; b17-specific replacement-under-load was not separately isolated in this supplied run.
+9. **Memory behavior**: multiple large residents were exercised and counts captured, but no process-memory/LRU capacity acceptance yet.
 
 ## Remaining acceptance / risks
 
+- **P1 scroll anchor**: runtime reproduced as described above. Fix should preserve a semantic/per-conversation anchor rather than copy B's raw scroll offset into A; implementation must remain presentation state and must not create a second conversation-data authority.
 - Account-context purge/late-callback isolation still needs a real supported runtime account-switch/logout route before claiming that criterion Runtime-tested.
 - Normal-operation resident/LRU capacity remains Unknown until device/system memory evidence; approximate text bytes are insufficient.
 - Current `userID + accountID` scope remains personal-account evidence only; non-personal workspace isolation is Unknown/Unverified.
-- Semantic scroll-anchor restoration remains P1 and does not block core multi-conversation acceptance.
 - No XCTest/UI-test target exists; this Candidate's automated evidence is syntax/static + real Xcode Release CI + package inspection.
 
-- **Next exact action**: install and test exact `DEV-multi-conversation-state-0.1.0-b17` on the target iPhone/iOS17 scope using the core matrix above. Record exact user/runtime results and diagnostics against b17. If a product defect is found, mark b17 runtime result accordingly and allocate b18 before any product-code correction; never rebuild/reuse b17.
+- **Next exact action**: treat b17 as the accepted core runtime evidence for the tested switching/coalescing/hidden-Sync/rapid-overlap sequences, while keeping the Work Active. Before any product-code correction, run candidate/branch conflict uniqueness again and allocate **b18**; the next smallest user-visible correction is the now-reproduced P1 per-conversation semantic scroll-anchor restoration. Do not rebuild or reuse b17. Remaining account-switch/failure/LRU acceptance stays separate and must not be guessed from this run.

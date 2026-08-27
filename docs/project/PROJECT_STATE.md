@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-27._
+_Last updated: 2026-08-28._
 
 ## Current accepted baseline
 
@@ -9,67 +9,85 @@ _Last updated: 2026-08-27._
 - `DEV-protocol-read-0.1.0-b7`: merged accepted Plus/personal diagnostic list + detail protocol evidence baseline.
 - `DEV-native-read-path-0.1.0-b9`: merged Stable production native-read baseline for tested scope.
 - `DEV-conversation-recovery-0.1.0-b15`: merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope; PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
-- `DEV-multi-conversation-state-0.1.0-b21`: **merged Stable multi-conversation read-state baseline for tested Plus/personal iPhone/iOS17 scope**. PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
+- `DEV-multi-conversation-state-0.1.0-b21`: merged Stable multi-conversation read-state baseline for tested Plus/personal iPhone/iOS17 scope; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
+- `DEV-conversation-list-cache-core-0.1.0-b23`: **real-device Runtime accepted for the recorded cache-core matrix; PR/merge pending**.
 
-`DEV-multi-conversation-state` is complete for its recorded tested scope. Core residency/coalescing/hidden completion, historical scroll, observed 0→8 resident process-footprint behavior, title lifecycle, and same-target Reload replacement-under-load/hidden-rejoin behavior have accepted real-device evidence. Natural-failure/account-switch/non-personal/missing-anchor conditions remain explicit Unknown/Unverified boundaries; normal LRU is not implemented because current evidence does not justify one. Stable does not mean Frozen.
+Current `main` remains `846dad81e382e6b7a862f082ef5bc5d4ce617493` at the b23 Runtime checkpoint. The active cache branch is `dev/conversation-list-cache-core-20260828`.
 
-Current `main` includes PR #23 at `2057a6241839afabeaf9b81c9daea24d3a0978f6` before this closure-document update. PR #23 preserved the main planning priority for `DEV-conversation-list-cache-core`.
-
-## Stable multi-conversation baseline — DEV-multi-conversation-state
+## Stable merged multi-conversation baseline — DEV-multi-conversation-state
 
 - **Merged PR**: #23, merge commit `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
 - **Final Runtime Candidate**: `DEV-multi-conversation-state-0.1.0-b21`, `0.1.0 (21)`.
-- **Exact tested product/config source**: `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`.
+- **Exact tested product/config source**: `6b50ead167bfde305d2ad58dd16fee6edaabf597`.
 - **Exact Candidate CI**: Run `33070183417`, Job `98510113281`, success.
-- **Exact Runtime Artifact**: `9645439329`; ZIP `sha256:b3e2da46ce9ac99fc7028b7f5186476b3264c4a8c0323a426ee275b62c0d7d14`.
-- **Runtime IPA**: `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
-- **Package identity**: `0.1.0 (21)`, candidate b21, source `6b50ead167bf`, minimum iOS14.0, `[1,2]`, arm64.
-- **PR merge-view validation**: PR Run `33093117645`, Job `98590935774`, success; checkout/tested merge `0520f118d4ada5eacfbac4ff444d9572e322efe1`; source metadata `0520f118d4ad`; PR validation Artifact `9655230149`, IPA SHA `933bb559a9356348227d8603ce9bd24139b6234d055fd3ea03de38d8857809cc`. This is merge-view CI evidence, not a replacement Runtime Candidate.
+- **Exact Runtime Artifact**: `9645439329`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
+- **Accepted scope**: resident return, hidden completion, same-target coalescing/replacement, historical scroll, observed 0→8 resident process-footprint behavior and title lifecycle on tested Plus/personal iPhone/iOS17.
+- **Conditional boundaries**: natural failed-resident navigation, supported account-switch purge, non-personal workspace identity and missing-anchor-message discard remain Unknown / Unverified; no arbitrary normal LRU is frozen.
 
-### Runtime evidence
+## Active conversation-list cache baseline — DEV-conversation-list-cache-core
 
-- b17: resident return, hidden completion, same-target coalescing, Sync A→B→A rejoin and rapid independent overlap accepted; historical-scroll defect reproduced.
-- b18: independent semantic historical scroll anchors, first-time target isolation, Sync/Reload anchor preservation when anchored message remains, resident/coalescing regressions accepted.
-- b19: 8 residents, 53 valid task-VM samples, physical footprint ~16.3–78.1 MiB and generally 55–65 MiB during repeated switching at 8 residents; all observed HTTP statuses 200 and no error/HTTP429. Exact process-limit headroom unavailable.
-- b20: first unloaded Detail title lifecycle defect reproduced/source-confirmed; superseded.
-- b21 title: first unloaded entry, re-entry and rapid A→B→C accepted by direct user real-device result.
-- b21 Reload-under-load: two exact same-target replacement sequences accepted. Ordinary-load generation 1 is cancelled by Reload generation 2; replacement returns HTTP200. Strengthened case switches to an unrelated conversation while Reload is active, returns to target and logs `detail.coalesced completionCount=2`; no duplicate Reload/stale overwrite and unrelated conversation remains independent.
+### Historical b22
 
-### Evidence boundaries retained after merge
+`DEV-conversation-list-cache-core-0.1.0-b22` is permanently reserved and Runtime-partial/failing. Exact source `6eefc0f4d1734feeef17cabdaa4942d0ade14ba0`, Run `33097152104`, Job `98604939953`, Artifact `9656872520`, IPA SHA `f91818079ed1310cef4e7f1d66ceea131a96b450f012d979a9a36d1ca14e2886`.
 
-- Natural terminal failed-resident navigation remains Runtime-unverified until a natural failure exists; do not manufacture failure/retry logic merely to fill a matrix cell.
-- Supported account-context purge/late-callback Runtime proof remains deferred until a real supported switch/logout route exists; do not create fake account transition UI.
-- Normal bounded LRU remains unfrozen; b19 gives no evidence for urgent normal eviction at 8 residents. Existing memory-warning trimming remains the evidence-backed policy.
-- Non-personal workspace isolation remains Unknown / Unverified.
-- Missing-anchor-message discard remains Runtime-unexercised with source/CI-defined behavior and no current defect evidence.
-- Future Send/Stream follow-tail and attachments are separate Work and are not part of this Stable read-state claim.
+b22 proved snapshot persistence, 60-second `recent_skip`, stale one-refresh and manual-bypass mechanics, but cache publication occurred only after ~4.4–5.0 seconds of account verification, offline auth failure prevented cache presentation, and manual refresh lacked explicit terminal feedback. Corrected code does not reuse b22.
 
-### Validation labels
+### Accepted b23 Runtime Candidate
 
-- **Code written**: Yes.
-- **Static/source checks**: Passed.
-- **CI passed**: Yes — exact b21 plus PR merge-view validation.
-- **Artifact produced**: Yes — exact b21 identity accepted; PR merge-view Artifact recorded separately.
-- **Runtime/manual/real-device**: Accepted for recorded multi-conversation read-state matrix on tested Plus/personal iPhone/iOS17.
-- **Stable**: **Yes for the recorded tested scope after PR #23 merge**.
-- **Frozen**: **No**.
+- **Candidate**: `DEV-conversation-list-cache-core-0.1.0-b23`, `0.1.0 (23)`.
+- **Exact product/config source**: `d2af0fc157f6e2d037636c55f963c18071a332d5`; corrected product source `7bb6d116d785614dccf0e2a2b412d2823ad583e1`.
+- **Exact CI**: Run `33101116431`, Job `98618762016`, success.
+- **Artifact**: `9658508764`; ZIP `sha256:fa57e557a484f98b06753ce3f09fe4cdd89d390ea00a8778e052a518a560776b`.
+- **IPA**: `ChatGPTClient-0.1.0-b23-dev-conversation-list-cache-core.ipa`; SHA `8f6911616fff1e93885191fcaec0f31a1e3c9488b7f4522fdbdb7dc5518be516`.
+- **Package identity**: `0.1.0 (23)`, Candidate b23, source `d2af0fc157f6`, minimum iOS14.0, device family `[1,2]`, arm64.
+
+### b23 real-device evidence
+
+User-supplied iPhone/iOS17 diagnostics identify exact b23 and Plus/personal scope. Observed behavior:
+
+- after first successful b23 verification, stale cache reconciled a returned page of 28 against server total 29 and preserved one real off-page cached row, producing/writing 29 rows;
+- rapid relaunch loaded the 29-row provisional list in `4.09 ms` before account verification completed (~4521 ms), then matching verification selected `recent_skip` and issued no list request;
+- another process relaunch with network unavailable loaded 29 provisional rows in `4.30 ms`; natural `NSURLErrorDomain -1005` auth failure selected `offline_cache`, completed list load from cache in `31.58 ms`, and did not replace the list with Login/account-verification UI;
+- offline manual refresh failed non-destructively while the screenshot kept rows visible and showed the centered navigation prompt `刷新失败 · 当前显示缓存` above the `ChatGPT` title;
+- online manual refresh uses `manual_bypass`, emits exactly one list request, returns HTTP200, preserves the off-page item (`28 + 1 -> 29`) and persists the reconciled cache; a second manual refresh repeats the one-request behavior;
+- direct user result: `好像没问题了`, with no new functional defect reported in the tested b23 sequence.
+
+This is **Runtime acceptance for the recorded tested cache-core scope**, not proof of every conditional path.
+
+### Cache ownership / privacy boundary
+
+- `ConversationRepository` remains sole authoritative in-memory list/conversation owner.
+- `AuthSessionStore` remains sole verified auth/account owner and is unchanged.
+- Default persistent WebKit storage remains sole persistent auth-secret owner.
+- `ConversationListCacheStore` is storage-only and may persist schema-1 summaries plus a protected SHA-256 last-verified scope namespace hint. It persists no raw account/user IDs, cookies, tokens, bearer values, Detail mappings or message bodies.
+- Before current verification completes, the last successfully verified scope may provisionally provide **list titles only** for fast/offline presentation. It cannot establish transport/account authority; a different verified scope or confirmed unauthenticated result rejects the provisional presentation. Provisional/offline rows cannot start Detail until current scope is verified.
+- No retry/timer/watchdog/polling or alternate endpoint was introduced.
+
+### Remaining evidence boundaries
+
+Still Unknown / Unverified unless naturally exercised:
+
+- supported real account switch / verified-scope mismatch transition;
+- provisional cached-row tap/Detail-block Runtime path;
+- corrupt/schema-incompatible snapshot Runtime rejection;
+- iPad, iOS below 17 and non-personal workspace identity.
+
+These are conditional boundaries, not current known defects, and do not justify manufactured account transitions or destructive corruption tests.
 
 ## Current architecture
 
 - `AppDelegate`: lifecycle plus accepted WebKit warm-up-before-root sequencing.
-- `RootViewController`: native compact list/detail navigation owner; selected target summary title is handed to Detail after ensuring first Detail view initialization has completed.
-- `ConversationRepository`: sole authoritative conversation data/read/recovery owner with account-scoped per-conversation residents/operations.
-- `ConversationDetailViewController`: detail/messages/recovery presentation plus lightweight per-conversation historical scroll metadata; loaded Detail remains final title presentation via `detail.title`.
-- `DiagnosticsLogger`: accepted structured diagnostics owner with b19 task-VM process-memory enrichment.
+- `RootViewController`: native compact list/detail navigation owner.
+- `ConversationRepository`: sole authoritative conversation/list/read/recovery owner with account-scoped residents and persistent-list-cache integration.
+- `ConversationListCacheStore`: storage-only persistent summary snapshot + privacy-safe last-verified scope namespace hint.
+- `ConversationDetailViewController`: detail/messages/recovery presentation plus per-conversation historical scroll metadata.
+- `DiagnosticsLogger`: accepted structured diagnostics authority.
 - Default persistent `WKWebsiteDataStore`: sole persistent auth-secret authority.
-- `AuthSessionStore`: sole auth/account-context owner.
-- Historical anchor and future active-response `follow-tail` remain distinct; follow-tail must consume future authoritative per-conversation Send/Stream response ownership.
+- `AuthSessionStore`: sole verified auth/account-context owner.
 
 ## Roadmap handoff
 
-The next serialized development priority is `DEV-conversation-list-cache-core`. Its durable scope is `CONVERSATION_LIST_CACHE_PLAN.md`: one account-scoped persistent list snapshot behind `ConversationRepository`, cache-first presentation after verified scope, and conservative rapid-relaunch request suppression without per-row Detail prefetching or a second list authority.
-
-No new development checkpoint is activated merely by closing this Work; activate the next Work only when development begins.
+`DEV-conversation-list-cache-core` is Runtime accepted for its tested b23 scope but is **not yet merged Stable**. The immediate action is PR/merge preparation against current `main`, including target-advance check and merge-view CI. After successful merge/closure, the next serialized development priority remains `DEV-conversation-round-count`, followed by `DEV-send-stream` according to the current development plan.
 
 ## Evidence rule
 

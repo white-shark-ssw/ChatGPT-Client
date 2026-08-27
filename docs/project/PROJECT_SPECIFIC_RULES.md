@@ -11,6 +11,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device candidates.
 - Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
 - Accepted merged multi-conversation read-state baseline is `DEV-multi-conversation-state-0.1.0-b21` for the recorded Plus/personal iPhone/iOS17 scope; PR #23 merged. Stable, not Frozen.
+- Conversation-list cache-core exact b23 is Runtime accepted for its recorded Plus/personal iPhone/iOS17 matrix; merge is still pending and therefore it is not yet a merged Stable baseline.
 
 ## UI / interaction contract
 
@@ -19,6 +20,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Ordinary conversation actions live in official-style overflow/context menus.
 - On compact iPhone with no selected conversation, initial product surface is the conversation list; opening/revealing a sidebar must not start the initial list request.
 - UISplitViewController/native navigation is the sole compact list/detail navigation owner for accepted b14 shell; do not add a duplicate custom sidebar button.
+- Conversation-list manual refresh feedback uses the centered navigation prompt above the `ChatGPT` title. Accepted b23 states are `正在刷新会话列表…`, `已刷新 · N 条`, and retained-cache failure `刷新失败 · 当前显示缓存`.
 - `导出 Markdown` is our enhancement, not official-App evidence.
 - Preserve user-required reasoning interaction/haptics only when current protocol supplies explicit user-visible material; never expose hidden chain-of-thought.
 
@@ -70,6 +72,23 @@ This file contains repository/product rules backed by explicit requirements, cur
 - b12 real-device evidence proves one public `WKWebsiteDataStore.default()` warm-up can hydrate usable persisted auth for tested iPhone/iOS17 cold start.
 - This tested result does not justify retry loops or hidden/shadow WebViews and does not prove all install/update/session states.
 - After warm-up, initial conversation-list loading begins independently of manual sidebar reveal.
+- Cache-core does **not** change auth authority: a last-successfully-verified cache namespace hint may provisionally identify which cached list titles to present, but it can never establish verified account/transport state or authorize Detail.
+
+## Conversation-list persistent cache contract
+
+- `ConversationRepository` remains the single authoritative list/conversation owner; `ConversationListCacheStore` is storage only and the sidebar never becomes a second cache/list owner.
+- Persist only a small versioned account-scoped summary snapshot plus privacy-safe bookkeeping. Do not persist Detail/full-body data for this feature.
+- Cache namespace uses a SHA-256-derived scope value. b23 additionally persists only that 64-hex namespace in `last-verified-scope.txt`; never persist raw account/user IDs for routing.
+- On automatic cold start, a valid last-successfully-verified scope snapshot may provisionally publish **list titles only** before current network account verification completes. This is the accepted correction to b22's visible blank/offline failure behavior.
+- Provisional/offline cached rows must not start Detail until current account scope is actually verified. The list may explain `当前仅显示缓存，联网验证账户后可打开会话`.
+- Matching verified scope keeps the provisional rows and applies normal freshness logic. A different newly verified scope or confirmed unauthenticated/unavailable result rejects the old provisional presentation.
+- Temporary auth transport failure may retain valid provisional rows as offline list presentation. It must not be reinterpreted as confirmed logout and must not start an automatic retry chain.
+- Exact b23 accepts a 60-second rapid-relaunch freshness window for the recorded current use case: recent cache may skip that launch's automatic list request; stale cache performs one refresh; manual refresh always bypasses suppression.
+- Manual refresh emits one user-requested list request and provides visible terminal feedback. Failure with valid cached rows keeps rows visible.
+- Page-1 absence is never deletion evidence. Exact b23 Runtime proves a returned page of 28 with server total 29 preserves one real off-page cached row (`preservedOffPageCount=1`, result 29) across automatic and manual reconciliation.
+- Cache storage uses app-private Application Support, Data Protection and atomic writes; corrupt/schema-incompatible data may be discarded deliberately without retry loop.
+- Never add timer/polling/watchdog/retry, alternate list/auth endpoint, speculative ETag behavior, per-row Detail prefetch or another list/account authority solely for cache-core.
+- Runtime below iOS17, iPad, supported real account-switch mismatch, provisional-row Detail-block tap and corrupt/schema-rejection remain conditional Unknown / Unverified until evidenced.
 
 ## Protocol evidence contract
 
@@ -83,12 +102,13 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Use existing `DiagnosticsLogger`/store/export authority.
 - Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
 - Multi-conversation correlation uses privacy-safe irreversible conversation markers and non-secret counts/generations.
+- Cache diagnostics may record schema, hit/miss, age, entry counts, duration, privacy-safe scope hash and decisions such as `recent_skip`, `stale`, `manual_bypass`, `offline_cache`; never cached titles/text or raw scope identities.
 - Scroll-anchor diagnostics may record non-secret row indices/relative offset and save/restore/discard reason but never raw message identity/body.
 - Approximate visible-text byte counts may be correlation data but are not actual memory-footprint evidence for LRU capacity.
 
 ## Multi-conversation / state-owner contract
 
-- `DEV-multi-conversation-state-0.1.0-b21` is the **Stable merged multi-conversation read-state baseline** for the tested Plus/personal iPhone/iOS17 scope. Accepted evidence includes b17 core residency/coalescing/hidden completion, b18 historical scroll, b19 0→8 resident process-footprint behavior, b21 title lifecycle and b21 same-target Reload replacement-under-load/hidden-rejoin coalescing. PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`. Frozen remains No.
+- `DEV-multi-conversation-state-0.1.0-b21` is the **Stable merged multi-conversation read-state baseline** for the tested Plus/personal iPhone/iOS17 scope. PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`. Frozen remains No.
 - One `ConversationRepository` remains production conversation authority. Do not create one repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
 - Foreground selection is presentation state only. Loading, Sync, Reload and future response work target authoritative conversation identity without changing selection as side effect.
 - Selection change alone does not cancel another conversation's valid request/work and is not a reason to discard a valid hidden result.
@@ -96,14 +116,14 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Account scope comes only from accepted auth owner. Delayed operation/transport context may never re-establish an older scope after newer verified context exists.
 - Current source uses `userID + accountID` for personal-account scope. Do not claim non-personal workspace isolation until current service evidence establishes any additional identity.
 - Retain minimum evidence-backed authoritative branch identity such as `current_node`; do not retain raw multi-megabyte mapping payloads or invent future send graph requirements.
-- Resident terminal failures may remain in memory so navigation does not become implicit network retry. Explicit Reload remains user-owned retry/rebuild action. Natural failed-resident Runtime proof remains conditional until a real terminal failure occurs; do not manufacture failure/retry behavior solely for a matrix cell.
+- Resident terminal failures may remain in memory so navigation does not become implicit network retry. Explicit Reload remains user-owned retry/rebuild action.
 - A loaded conversation may remain visible while explicit Sync is in flight; navigating away/back must not lose target terminal update.
 - List/account presentation needs freshness protection so late old-scope/superseded completion cannot clear/overwrite newer presentation.
 - Mutable resident/session/list/operation authority uses one explicit execution domain. Network transfer/pure parsing may be off-owner.
-- b19 real task-VM evidence shows no immediate pressure through 8 residents; do not add or freeze an arbitrary normal LRU capacity. Memory warning may trim eligible inactive terminal residents. If stronger future process-limit/headroom/pressure evidence appears, revisit capacity in the owning future Work.
+- b19 real task-VM evidence shows no immediate pressure through 8 residents; do not add or freeze an arbitrary normal LRU capacity. Memory warning may trim eligible inactive terminal residents.
 - Supported account-switch purge remains Runtime-unverified until a real supported switch/logout route exists. Do not create fake account transition UI to prove it.
 - Missing-anchor-message discard remains source/CI-defined and Runtime-unexercised; no current defect evidence justifies destructive branch mutation solely to exercise it.
-- Stable is scoped to the recorded tested behavior only: runtime below iOS17, iPad, non-personal workspaces and the conditional paths above remain Unknown / Unverified where applicable.
+- Stable is scoped to recorded tested behavior only: runtime below iOS17, iPad, non-personal workspaces and conditional paths remain Unknown / Unverified where applicable.
 
 ## Per-conversation scroll presentation contract
 
@@ -113,8 +133,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - A target with no saved anchor starts from its normal top instead of inheriting another conversation's offset.
 - Account-scope reset clears presentation anchors.
 - Visible Sync/Reload may preserve the historical anchor only if the same anchored message remains in the refreshed current branch. If it disappears, do not invent a cross-message fallback.
-- Exact b18 iPhone/iOS17 Runtime **accepts** the tested historical-anchor behavior: user reported no issue; diagnostics show repeated A/B saved/restored pairs, first-time third-conversation isolation, Sync/Reload preservation, resident hits and same-target Sync coalescing, with all recorded HTTP statuses 200 and no error/HTTP429.
-- Anchored-message disappearance did not occur naturally in b18, so `scrollAnchor.discarded -> top` remains source/CI-defined and Runtime-unverified; do not manufacture destructive branch mutation solely to trigger it.
+- Exact b18 iPhone/iOS17 Runtime accepts the tested historical-anchor behavior. Anchored-message disappearance remains Runtime-unexercised.
 - Future active-response `follow-tail` behavior must consume the authoritative per-conversation Send/Stream response lifecycle. Do not invent UI `isStreaming`, timer, response flag or unused future state to fake follow-tail before Send/Stream exists.
 - User-confirmed future rule: if A is at/near bottom with an active authoritative response and grows/completes while hidden, returning A shows A's current latest bottom; intentional upward scrolling exits follow-tail and establishes historical-reading intent.
 
@@ -146,9 +165,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 ## Critical invariants / prohibited routes
 
 - Historical WebView chat code is not native product baseline; WebView remains authentication/bootstrap only.
-- `ConversationRepository` is production conversation read/recovery owner; UI titles/text are never identity.
+- `ConversationRepository` is production conversation read/recovery/list-cache owner; UI titles/text are never identity.
 - CI/artifact success is not runtime proof.
-- Manual sync/reload never create competing state stores or automatic retry machinery.
+- Manual sync/reload/list refresh never create competing state stores or automatic retry machinery.
 - No speculative timers, watchdogs, shadow WebViews, retry loops, auth fallback chains, persisted copied auth secrets, UA spoofing, Cloudflare bypass, fallback conversation endpoints or speculative parser/header compatibility.
 - Do not raise iOS14 minimum without concrete need.
 - Stable does not mean Frozen; no Frozen business/architecture rules are currently recorded.

@@ -11,7 +11,7 @@ This is the repository's AI work entry point.
 5. For Rules work, use `CURRENT_WORK_RULES.md`.
 6. For Development/Feature work, use `CURRENT_WORK_DEV.md` and exactly one selected checkpoint under `current/dev/`.
 7. Before multi-conversation, production send/stream, background-completion or TrollStore true-background work, also read `CLIENT_ARCHITECTURE_GAP_REVIEW.md` plus the relevant `MULTI_CONVERSATION_STATE_PLAN.md` / `BACKGROUND_EXECUTION_PLAN.md`. These documents contain pre-send concurrency, async-freshness, account-scope and background active-response-set invariants that are not safe to rediscover ad hoc.
-8. For any new post-recovery development task, read the **Post-recovery development sequence** in `CLIENT_ARCHITECTURE_GAP_REVIEW.md` before choosing/creating the Work. It records the user's latest sequencing correction: cold-start login-state recovery belongs to `DEV-conversation-recovery`; do not create a separate `DEV-auth-resume` task. When the active recovery PR later merges, its owning development session must synchronize overlapping `DEVELOPMENT_PLAN.md` / state docs with this latest requirement.
+8. For any new post-recovery development task, read both the **Post-recovery development sequence** in `CLIENT_ARCHITECTURE_GAP_REVIEW.md` and the current phase ordering/scope in `DEVELOPMENT_PLAN.md` before choosing/creating the Work. Current branch/checkpoint evidence and the user's latest explicit requirement outrank either document if one is temporarily behind an Active parallel task. Cold-start login-state recovery belongs to `DEV-conversation-recovery`; do not create a separate `DEV-auth-resume` task.
 
 Do not ask the user to upload project documents that already exist in this repository.
 

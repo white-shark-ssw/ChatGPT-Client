@@ -6,7 +6,7 @@
 
 - Work ID: `DEV-multi-conversation-state`
 - Branch: `dev/multi-conversation-state-20260827`
-- Target main: `0ea4d7296f574722ec665b40633ecba42fc680e8`
+- Target main: `3cbb5c9acce26c0004e1d78c9607f2361d83fe05`
 - Last Runtime Candidate: `DEV-multi-conversation-state-0.1.0-b18`
 - Reserved Candidate: `DEV-multi-conversation-state-0.1.0-b19` / `0.1.0 (19)` — measurement only
 
@@ -21,9 +21,9 @@ Enrich existing `conversation / resident.*` diagnostics with current-process tas
 - Workflow blob `da751e26c2cd0da15b15f3e7aac9730e3b7158fc`
 - Build script blob `5cac0fcb7a7a201afa57dfe2895eca84970ffad4`
 - Syntax-only parse passed for new task-VM sampling construct.
-- Exact latest prepared product commit `613aac2d897f79c5460dc28b5d77aa499da366fe`, tree `260a07725d243209fb6775dd5c7e439ae9ba7d9a`, parent `a0c0fce21b2339bf0e19c5140cebaa8021965955`.
 - Product diff remains exactly four files: Diagnostics.swift, Xcode project, workflow, build script. ConversationFeature/Repository unchanged.
 - Earlier sibling off-branch commits caused solely by docs checkpoint advancement were never published and are not Candidate sources.
+- `main` advanced from `0ea4d729...` to `3cbb5c9a...` through merged PR #18. Compare evidence shows only `CONVERSATION_LIST_CACHE_PLAN.md`, `DEVELOPMENT_PLAN.md`, `START_HERE.md`, and `UI_INTERACTION_BASELINE.md`; no b19 product/config/state-owner overlap. Open PR count is 0.
 
 ## Evidence
 

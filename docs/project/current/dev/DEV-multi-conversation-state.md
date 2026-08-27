@@ -20,77 +20,56 @@
 
 - Exact source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`; CI Run `33009246356` succeeded.
 - Artifact `9621830284` embedded wrong recovery candidate/slug and is permanently rejected/superseded before runtime.
-- Source review also found stale-scope, waiter, hidden-Sync, list-freshness, task-handle and owner-domain gaps.
 - Never reuse b16.
 
 ### b17 — identity-valid / core runtime accepted
 
 - Exact product/config source `bc69d58b3245a1ab21b250e16612c11d39ddbf33`; tree `3451585f83c7bac69368709fe6273b90a0294d29`.
 - CI Run `33045536770`, job `98428537619`, success; Artifact `9635486304` identity accepted.
-- iPhone/iOS17 runtime accepted resident return, hidden completion, same-target coalescing, Sync A->B->A rejoin and rapid different-conversation overlap up to three active operations with no HTTP429 in that export.
-- User reproduced historical-scroll defect: A near ~10% -> B scroll -> A returned shifted.
+- iPhone/iOS17 runtime accepted core resident/coalescing/hidden-Sync/overlap paths; user reproduced historical-scroll defect.
 
 ### b18 — historical semantic scroll correction / runtime accepted for tested matrix
 
 - Exact product/config source `f30c13b4ac2c40dcda829585682825ca906dceae`; tree `c2797f05a8b8c43bdd1a5064177e3b7c49606614`.
 - Run `33054012226`, Job `98456174184`: success; Artifact `9638821912`; IPA SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`.
-- Exact device export identifies iPhone/iOS17, b18/build18/source `f30c13b4ac2c`.
-- User executed the requested matrix and reported no issue.
-- Runtime accepted for tested scope: historical A->B->A anchor restoration, independent A/B anchors, first-time target isolation, visible Sync/Reload anchor preservation when message remains, resident return and active same-target Sync coalescing.
-- Missing-anchor-message discard did not occur naturally and remains Runtime-unverified.
+- Exact iPhone/iOS17 runtime accepted historical A/B anchor restoration, independent anchors, first-time target isolation, visible Sync/Reload preservation when anchor remains, resident return and active same-target Sync coalescing.
 
 ## b19 — real process-memory measurement Candidate
-
-### Why b19 exists
-
-The current repository only logs `residentApproximateTextBytes`. That is a text-size correlation metric and cannot establish actual process memory or a safe resident capacity. The Work explicitly prohibits choosing normal LRU capacity from that metric.
-
-b19 samples current-process task VM information only for diagnostics correlation so real resident-count transitions can be compared against actual process footprint and task memory headroom.
 
 ### Scope / ownership boundary
 
 - **Measurement only. No LRU eviction policy is implemented in b19.**
 - No resident capacity number is selected in source.
 - No automatic retry, timer, watchdog, fallback, memory-pressure polling loop or global concurrency limiter.
-- `ConversationRepository` data/operation ownership remains unchanged.
-- `AuthSessionStore`, protocol routes/headers and conversation parsing remain unchanged.
-- Do not persist memory samples outside the existing bounded diagnostics store/export.
-- No raw conversation/message identity or content is added to diagnostics.
+- `ConversationRepository`, `AuthSessionStore`, protocol routes/headers and parsing are unchanged.
+- Memory samples stay in the existing bounded diagnostics store/export.
+- No raw conversation/message identity or body is added to diagnostics.
 
-### Instrumentation design
+### Instrumentation
 
-The existing `DiagnosticsLogger` enriches only `conversation / resident.*` events. This naturally aligns memory samples with existing resident count / active operation / protected resident fields without adding a new timer or lifecycle owner.
+`DiagnosticsLogger` enriches only `conversation / resident.*` events with current-process task VM memory fields so they line up with existing resident/active/protected counts:
 
-Fields:
+- `processPhysFootprintBytes`;
+- `processResidentSizeBytes`;
+- `processMemoryLimitRemainingBytes` when returned by the kernel;
+- `devicePhysicalMemoryBytes`;
+- sampling status / kern return on failure.
 
-- `processPhysFootprintBytes` — current app `task_vm_info_data_t.phys_footprint`;
-- `processResidentSizeBytes` — current task `resident_size` correlation;
-- `processMemoryLimitRemainingBytes` — task VM `limit_bytes_remaining` when returned by the current kernel;
-- `devicePhysicalMemoryBytes` — `ProcessInfo.processInfo.physicalMemory`;
-- `processMemorySampleStatus` / `processMemorySampleKernReturn` make sampling failure observable without affecting product behavior.
+No new sampling timer exists. Existing `resident.miss`, `resident.stored`, `resident.hit`, `resident.firstVisible`, `resident.evicted`, and `resident.evictionSkipped` provide natural sample points.
 
-Useful existing sample points include `resident.miss`, `resident.stored`, `resident.hit`, `resident.firstVisible`, `resident.evicted`, and `resident.evictionSkipped`.
-
-### Candidate identity / publication gate
+### Candidate identity / publication record
 
 - Candidate: `DEV-multi-conversation-state-0.1.0-b19`.
 - Version/build: `0.1.0 (19)`.
-- b19 repository search before reservation: no existing identity.
-- Branch Actions before reservation: b16/b17/b18 only; no b19 run/artifact.
-- Docs reservation commits: checkpoint `1785bd43b2ae76f40121e0faa7fac009a1703681`; Build Index `593490ddeb82cd173ccde5cfe90d79002545f3d7`.
-- A publication-gate checkpoint update advanced the branch docs-only to `728220fa41f66cc7df3fd2e3ff13eadb52fd86f2`, so the first prepared off-branch sibling `54a5850b...` was not force-pushed and is not the Candidate source.
-- **Exact final off-branch product commit prepared from latest docs-only parent `728220fa41f66cc7df3fd2e3ff13eadb52fd86f2`: `ea5232548e61b3cf16a91065fad525425a07bb99`; tree `fbdb3b4b50efc7411bfabff5182e16745dadbddd`.**
-- Exact product diff is 4 files only: `ChatGPTClient/Diagnostics/Diagnostics.swift`, Xcode project, workflow, build script. `ConversationFeature.swift` / Repository are unchanged.
-- New Diagnostics blob `5e927b43792535586d8406e1ca5f46cf51c6f041`; Xcode blob `8530571220ba034d49d629031483cccaa6af61a1`; workflow blob `da751e26c2cd0da15b15f3e7aac9730e3b7158fc`; build-script blob `5cac0fcb7a7a201afa57dfe2895eca84970ffad4`.
-- Local syntax-only `swiftc -frontend -parse` passed for the exact new task-VM sampling construct. macOS/iPhoneOS SDK/type availability still requires exact CI compile proof.
-- Publication recheck: `main` is `0ea4d729...`, whose delta from prior `main` is only `DEVELOPMENT_PLAN.md` and `UI_INTERACTION_BASELINE.md`; open PR list is empty. No product/config overlap exists.
-
-## User-confirmed future Send/Stream scroll semantics
-
-- Per-conversation presentation distinguishes historical-reading anchor from future follow-tail intent.
-- If A is at/near bottom and has an authoritative active response, hidden growth/completion must make return-to-A land at A's current latest bottom.
-- Intentional upward scrolling while A generates exits follow-tail and later restores historical reading position.
-- b19 does not implement response lifecycle/follow-tail.
+- b19 repository search before reservation: no existing identity; branch Actions contained b16/b17/b18 only.
+- Docs reservation: `1785bd43b2ae76f40121e0faa7fac009a1703681` and `593490ddeb82cd173ccde5cfe90d79002545f3d7`.
+- Two intermediate off-branch commits (`54a5850b...`, `ea523254...`) became sibling commits after docs-only checkpoint advancement and were deliberately **not force-pushed**; they are not Candidate product sources.
+- **Exact final product commit prepared from latest docs-only parent `b6f16ec9e1467578d2d67100fbb3354b2660ef26`: `0afb9c1072de521784cd5b2ca97d239a41338991`; tree `393879742f55203730d86c84165ae4f94cbf1e06`.**
+- Exact final diff is 4 files only: `ChatGPTClient/Diagnostics/Diagnostics.swift`, `ChatGPTClient.xcodeproj/project.pbxproj`, `.github/workflows/ios-foundation.yml`, `scripts/build_ipa.sh`.
+- Product blobs: Diagnostics `5e927b43792535586d8406e1ca5f46cf51c6f041`; Xcode `8530571220ba034d49d629031483cccaa6af61a1`; workflow `da751e26c2cd0da15b15f3e7aac9730e3b7158fc`; build script `5cac0fcb7a7a201afa57dfe2895eca84970ffad4`.
+- `ConversationFeature.swift` / Repository remain unchanged from b18.
+- Local syntax-only `swiftc -frontend -parse` passed for the exact new task-VM sampling construct; exact macOS/iPhoneOS compile remains CI-pending.
+- `main@0ea4d729...` differs from prior target only in merged planning docs; open PR list is empty; no product/config overlap exists.
 
 ## Evidence labels
 
@@ -103,8 +82,8 @@ Useful existing sample points include `resident.miss`, `resident.stored`, `resid
 - **Stable/Frozen**: No.
 
 ### b19
-- **Code written**: Prepared off-branch; not yet published at this checkpoint revision.
-- **Static/source checks**: Syntax/source review passed; exact iPhoneOS compile pending.
+- **Code written**: Exact product commit prepared; publication/CI pending at this checkpoint revision.
+- **Static/source checks**: Source review + syntax parse passed; iPhoneOS compile pending.
 - **CI passed**: Pending.
 - **Artifact produced**: Pending.
 - **Runtime/manual/real-device memory evidence**: Pending.
@@ -113,15 +92,15 @@ Useful existing sample points include `resident.miss`, `resident.stored`, `resid
 ## Remaining Work before Stable
 
 - Collect exact b19 process-memory evidence while several small and large conversations become resident and are repeatedly switched.
-- Decide from measured footprint / remaining-limit trend whether a normal bounded LRU is required now. If evidence does not justify a source change, do not manufacture one.
-- If an LRU is justified, allocate a new unique Candidate after b19; never rebuild/reuse b19 for corrected behavior.
-- Isolated target-only Reload replacement while older same-target Detail is actually in flight remains open as a regression spot-check.
-- Terminal failed resident A -> B -> A with no implicit retry remains open until a natural terminal failure is available.
-- Supported account-switch/logout purge and late-callback rejection remain runtime-open until a real supported route exists.
+- Decide from measured footprint/headroom trend whether a normal bounded LRU is required now. If evidence does not justify code, do not manufacture it.
+- If LRU is justified, allocate a new unique Candidate after b19; never rebuild/reuse b19.
+- Isolated target-only Reload replacement while older same-target Detail is in flight remains open.
+- Natural failed-resident navigation remains open until a natural terminal failure occurs.
+- Supported account-switch/logout purge and late-callback rejection remain open until a real supported route exists.
 - Non-personal workspace isolation remains Unknown / Unverified.
 
 ## Next exact action
 
-Publish exact off-branch b19 commit `ea5232548e61b3cf16a91065fad525425a07bb99` with one branch ref move, then inspect the one intended b19 CI run and Artifact identity. After exact Artifact exists, install it on iPhone/iOS17 and exercise the resident-memory matrix before making any LRU decision.
+Publish exact final b19 product commit `0afb9c1072de521784cd5b2ca97d239a41338991` by fast-forward branch ref, inspect the one intended b19 CI run and Artifact identity, then install exact b19 on iPhone/iOS17 and run the resident-memory matrix before any LRU decision.
 
-Before final Work merge, synchronize with current `main@0ea4d7296f574722ec665b40633ecba42fc680e8` and preserve its merged message-timestamp / adaptive-answer-navigation planning.
+Before final Work merge, synchronize with `main@0ea4d7296f574722ec665b40633ecba42fc680e8` and preserve merged planning.

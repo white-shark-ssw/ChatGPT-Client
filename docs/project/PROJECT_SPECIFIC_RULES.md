@@ -11,7 +11,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device candidates.
 - Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
 - Accepted merged multi-conversation read-state baseline is `DEV-multi-conversation-state-0.1.0-b21` for the recorded Plus/personal iPhone/iOS17 scope; PR #23 merged. Stable, not Frozen.
-- Conversation-list cache-core exact b23 is Runtime accepted for its recorded Plus/personal iPhone/iOS17 matrix; merge is still pending and therefore it is not yet a merged Stable baseline.
+- Accepted merged conversation-list cache-core baseline is `DEV-conversation-list-cache-core-0.1.0-b23` for the recorded Plus/personal iPhone/iOS17 scope; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. Stable, not Frozen.
 
 ## UI / interaction contract
 
@@ -76,6 +76,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Conversation-list persistent cache contract
 
+- `DEV-conversation-list-cache-core-0.1.0-b23` is the **Stable merged cache-core baseline** for the recorded Plus/personal iPhone/iOS17 scope. Exact Runtime source `d2af0fc157f6e2d037636c55f963c18071a332d5`; PR #24 merge-view Run `33103769517` / Job `98628067286` passed on `26297ff0683966c2c82fd7a8a95f53f1ad51d3d6`; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. Frozen remains No.
 - `ConversationRepository` remains the single authoritative list/conversation owner; `ConversationListCacheStore` is storage only and the sidebar never becomes a second cache/list owner.
 - Persist only a small versioned account-scoped summary snapshot plus privacy-safe bookkeeping. Do not persist Detail/full-body data for this feature.
 - Cache namespace uses a SHA-256-derived scope value. b23 additionally persists only that 64-hex namespace in `last-verified-scope.txt`; never persist raw account/user IDs for routing.

@@ -78,15 +78,25 @@ Conditional supported account-switch mismatch, corrupt/schema rejection, provisi
 
 ## Phase 8 — `DEV-conversation-round-count`
 
+**Active.** Dedicated branch: `dev/conversation-round-count-20260828`. First Candidate identity is `DEV-conversation-round-count-0.1.0-b24`; CI/Artifact/Runtime evidence remains separate from code-written status.
+
 ### User-facing bundle
 
-This is the **current next development priority**:
-
-- `聊天 · N轮` / `工作 · N轮` derived from authoritative visible user turns;
+- round metadata derived from authoritative visible user turns;
 - per-user/per-assistant message timestamps from authoritative `createTime` when available;
 - adaptive `上一轮回答` / `下一轮回答` floating navigation with native animated scrolling;
 - basic one-tap Copy for visible user and assistant message text;
 - first centralized Preferences owner for these toggles and later settings.
+
+Historical interaction planning described `聊天 · N轮` / `工作 · N轮`. Current source/repository evidence does **not** establish an authoritative Chat/Work conversation-type owner, and architecture rules forbid guessing identity from UI text. Until such a source is evidenced, this Work presents only verified `N轮`; adding `聊天` / `工作` is deferred rather than fabricated.
+
+### Preferences frozen for this Work
+
+- `显示会话轮数`: On by default;
+- `显示消息时间`: On by default;
+- `显示回答快速跳转`: On by default.
+
+All three are persisted by the single centralized app Preferences owner. Toggling presentation settings must not mutate conversation/message authority or issue network requests.
 
 ### Shared derivation / behavior
 
@@ -95,7 +105,9 @@ This is the **current next development priority**:
 - Tool/reasoning/system nodes do not create rounds.
 - Recompute answer anchors only when authoritative visible messages change, not on every scroll callback.
 - Quick-jump animation is native scroll-container animation, not timer-stepped fake scrolling.
+- Quick-jump direction follows real user drag intent; programmatic jump animation must not masquerade as a new user drag, and valid boundary availability wins.
 - Copy never includes hidden reasoning/tool/system material and never triggers network requests.
+- Historical timestamps use existing authoritative service time; if it is absent, omit the timestamp rather than fabricate one.
 
 ## Phase 9 — `DEV-send-stream`
 
@@ -174,8 +186,8 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-`DEV-conversation-list-cache-core` is complete. There is currently no Active development checkpoint. The next serialized development Work is:
+`DEV-conversation-round-count` is the Active serialized development Work. Keep its dedicated checkpoint, branch, b24 candidate identity and evidence chain authoritative. Complete clean diff/static review, CI and Artifact verification, then perform explicit accepted-scope runtime/manual validation before any Stable claim.
 
-`DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
+After this Work is accepted, the serialized order remains:
 
-The next development session should create/select `DEV-conversation-round-count` with its own branch/checkpoint and fresh candidate identity after the normal conflict/identity gate. This document records priority only and does not activate the Work by itself.
+`DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`

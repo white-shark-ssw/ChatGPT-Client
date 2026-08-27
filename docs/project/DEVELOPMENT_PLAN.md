@@ -23,8 +23,8 @@ Current constraints: native UIKit iOS client; TrollStore IPA; intended primary r
 ## Usability milestones
 
 - **V0.1 read-use**: native shell + conversation list/detail/message rendering + manual sync/full reload + usable cold-start login-state recovery.
-- **V0.2 chat-use**: V0.1 + stable multi-conversation state ownership + text send/new conversation + streaming + stop + user-visible reasoning interaction/haptics + recovery integration.
-- **V0.3 daily-use refinement**: preferences/metadata, Markdown export, long-conversation tuning, attachments and remaining daily-use conversation features.
+- **V0.2 chat-use**: V0.1 + stable multi-conversation state ownership + conversation metadata/preferences + text send/new conversation + streaming + stop + user-visible reasoning interaction/haptics + recovery integration.
+- **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and remaining daily-use conversation features.
 
 ## Completed foundations
 
@@ -69,17 +69,43 @@ Establish stable multi-conversation session/runtime ownership before send/stream
 
 ### Scheduling
 
-This is the **next serialized development Work when the user asks to continue**. Before creating/activating it, rerun normal governance preflight, conflict scan, branch/PR/candidate allocation and read the required multi-conversation architecture documents.
+This Work is serialized before conversation metadata/preferences and production send/stream. Its owning development session maintains the exact active candidate/runtime status; planning documents do not overwrite that checkpoint.
 
-The Work will generalize the current single-selected freshness/request-lifecycle model into account-scoped resident per-conversation state. Do not reuse the recovery checkpoint/branch/candidate identity.
+The Work generalizes the prior single-selected freshness/request-lifecycle model into account-scoped resident per-conversation state. Do not reuse the recovery checkpoint/branch/candidate identity.
 
 ## Phase 7 — `DEV-conversation-round-count`
 
-After multi-conversation state. Display `聊天 · N轮` / `工作 · N轮`; derive count from authoritative active-branch user messages; no second mutable counter or extra network request.
+### User-facing scope
+
+Implement the small conversation metadata/preferences bundle immediately after multi-conversation state and before Send/Stream:
+
+- conversation header round count: `聊天 · N轮` / `工作 · N轮`;
+- per-message timestamp display for every visible user message and visible assistant reply;
+- the first centralized app preference owner shared by both toggles and future settings.
+
+### Round count
+
+- Derive from authoritative active-branch user messages.
+- No second mutable counter and no extra network request.
+- Existing planned `显示会话轮数` setting persists; round-count default remains On per prior confirmed planning.
+
+### Message timestamps
+
+- Historical/server-backed timestamp source is the message's existing authoritative `createTime` / current service `create_time`; do not issue another Detail request only to obtain time.
+- User-message timestamp is subdued metadata below the user bubble, aligned with the user-message side.
+- Assistant timestamp is subdued metadata below that assistant response, aligned with the assistant/document side.
+- `显示消息时间` is one centralized persisted preference consumed by message presentation; individual cells/view controllers must not invent their own keys/defaults.
+- Format using the device's current locale/time zone; same-day messages may use time-only while older messages include enough date context to disambiguate. Exact localized strings/spacing are implementation-level and must be validated visually on device.
+- If a historical message has no authoritative `createTime`, omit its timestamp rather than fabricate one.
+- The default value for `显示消息时间` is **not yet frozen by an explicit user requirement**; choose/document it when this Work starts rather than silently assuming.
+
+### Future Send/Stream handoff
+
+Production Send must not create a second durable timestamp authority. If optimistic local presentation needs an immediate provisional time before the service supplies authoritative message time, that provisional value belongs to the pending response/message presentation and must hand off to the authoritative server-backed message timestamp once available.
 
 ## Phase 8 — `DEV-send-stream`
 
-After read/recovery/multi-conversation ownership is stable: evidence current text-send/new-conversation protocol, implement composer/stream/stop, bind response identity correctly under switching, and integrate manual recovery without automatic resend.
+After read/recovery/multi-conversation ownership and the small metadata/preferences bundle are stable: evidence current text-send/new-conversation protocol, implement composer/stream/stop, bind response identity correctly under switching, and integrate manual recovery without automatic resend.
 
 ## Phase 9 — `DEV-markdown-export`
 
@@ -103,4 +129,4 @@ Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Re
 
 ## Current next action
 
-No development Work is automatically activated by this plan. When the user asks to continue development, start governance preflight for the next serialized Work: `DEV-multi-conversation-state`.
+No development Work is automatically activated by this plan. Finish the currently active multi-conversation Work through its own checkpoint/runtime gate. After it is Stable/merged, the next serialized Work is `DEV-conversation-round-count` with the expanded scope above: round count + message timestamps + first centralized preference owner; then proceed directly to `DEV-send-stream`.

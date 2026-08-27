@@ -28,7 +28,7 @@ struct ConversationDetail {
     let messages: [ConversationMessage]
 }
 
-enum ConversationRepositoryError: LocalizedError {
+enum ConversationRepositoryError: LocalizedError, Equatable {
     case authenticationNotAvailable
     case authenticationTemporarilyUnavailable
     case missingTransientSession
@@ -166,6 +166,17 @@ private final class ConversationListCacheStore {
         }
     }
 
+    func rememberVerifiedNamespace(_ namespace: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        queue.async {
+            do {
+                try self.writeLastVerifiedNamespace(namespace)
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
     func write(namespace: String, summaries: [ConversationSummary], reconciliationTime: TimeInterval, completion: @escaping (Result<(byteCount: Int, durationMs: Double), Error>) -> Void) {
         queue.async {
             let startedAt = ProcessInfo.processInfo.systemUptime
@@ -177,9 +188,7 @@ private final class ConversationListCacheStore {
                 let url = try self.cacheURL(namespace: namespace)
                 try data.write(to: url, options: .atomic)
                 try self.fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
-                let hintURL = try self.lastVerifiedNamespaceURL()
-                try Data(namespace.utf8).write(to: hintURL, options: .atomic)
-                try self.fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: hintURL.path)
+                try self.writeLastVerifiedNamespace(namespace)
                 completion(.success((byteCount: data.count, durationMs: Self.elapsedMs(since: startedAt))))
             } catch {
                 completion(.failure(error))
@@ -231,6 +240,13 @@ private final class ConversationListCacheStore {
 
     private func lastVerifiedNamespaceURL() throws -> URL { try cacheDirectoryURL().appendingPathComponent("last-verified-scope.txt", isDirectory: false) }
 
+    private func writeLastVerifiedNamespace(_ namespace: String) throws {
+        guard Self.isValidNamespace(namespace) else { throw CocoaError(.fileWriteInvalidFileName) }
+        let url = try lastVerifiedNamespaceURL()
+        try Data(namespace.utf8).write(to: url, options: .atomic)
+        try fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
+    }
+
     private static func isValidNamespace(_ namespace: String) -> Bool {
         guard namespace.count == 64 else { return false }
         return namespace.unicodeScalars.allSatisfy { CharacterSet(charactersIn: "0123456789abcdef").contains($0) }
@@ -275,6 +291,11 @@ final class ConversationRepository {
         requireMainThread()
         guard let id = selectedConversationID else { return nil }
         return residentDetail(id: id)
+    }
+
+    var canOpenConversationFromList: Bool {
+        requireMainThread()
+        return activeAccountScope != nil
     }
 
     init() {
@@ -637,6 +658,10 @@ final class ConversationRepository {
     private func loadConversationListCache(using context: ConversationTransportContext, operationGeneration: Int, forceRefresh: Bool, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         requireMainThread()
         let namespace = Self.cacheNamespace(for: context.scope)
+        listCacheStore.rememberVerifiedNamespace(namespace) { [weak self] result in
+            guard let self, case .failure(let error) = result else { return }
+            self.diagnostics.warning(category: "conversation", name: "listCache.scopeHint", fields: ["result": "failed", "errorType": String(describing: type(of: error))])
+        }
         diagnostics.info(category: "conversation", name: "listCache.load.started", traceID: span.traceID, fields: ["schema": String(ConversationListCacheStore.schemaVersion), "operationGeneration": String(operationGeneration)])
         listCacheStore.load(namespace: namespace) { [weak self] loadResult in
             guard let self else { return }
@@ -1184,6 +1209,10 @@ final class ConversationSidebarViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        guard repository.canOpenConversationFromList else {
+            navigationItem.prompt = "当前仅显示缓存，联网验证账户后可打开会话"
+            return
+        }
         onSelectConversation?(repository.conversations[indexPath.row].id)
         tableView.reloadData()
     }
@@ -1218,7 +1247,7 @@ final class ConversationSidebarViewController: UITableViewController {
             switch result {
             case .success:
                 self.tableView.reloadData()
-                if forceRefresh { self.navigationItem.prompt = "已刷新 · \(self.repository.conversations.count) 条" }
+                self.navigationItem.prompt = forceRefresh ? "已刷新 · \(self.repository.conversations.count) 条" : nil
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 if !self.repository.conversations.isEmpty {

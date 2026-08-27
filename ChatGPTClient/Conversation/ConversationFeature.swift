@@ -882,6 +882,11 @@ final class ConversationSidebarViewController: UITableViewController {
 }
 
 final class ConversationDetailViewController: UIViewController, UITableViewDataSource {
+    private struct ScrollAnchor {
+        let messageID: String
+        let relativeOffset: CGFloat
+    }
+
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
     private let tableView = UITableView(frame: .zero, style: .plain)
@@ -894,6 +899,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var messages: [ConversationMessage] = []
     private var loadingConversationID: String?
     private var presentationGeneration = 0
+    private var displayedConversationID: String?
+    private var scrollAnchorsByConversationID: [String: ScrollAnchor] = [:]
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -975,6 +982,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func showConversation(id: String) {
         guard repository.selectedConversationID == id else { return }
+        captureScrollAnchorForDisplayedConversation()
+        displayedConversationID = id
         presentationGeneration += 1
         let currentPresentationGeneration = presentationGeneration
         let presentationStart = ProcessInfo.processInfo.systemUptime
@@ -986,12 +995,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         if let detail = existingDetail {
             loadingConversationID = operationSnapshot == nil ? nil : id
             activityIndicator.stopAnimating()
-            apply(detail)
+            apply(detail, captureCurrentAnchor: false)
             logResidentFirstVisible(id: id, startedAt: presentationStart, operationKind: operationSnapshot?.kind)
         } else {
             loadingConversationID = id
             messages = []
             tableView.reloadData()
+            resetScrollPositionToTop()
             stateLabel.text = operationSnapshot?.kind == .reload ? "正在重新加载会话…" : "正在读取会话…"
             stateLabel.isHidden = false
             retryButton.isHidden = true
@@ -1013,23 +1023,86 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         presentationGeneration += 1
         hideSyncToast()
         loadingConversationID = nil
+        displayedConversationID = nil
+        scrollAnchorsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
         messages = []
         tableView.reloadData()
+        resetScrollPositionToTop()
         stateLabel.text = "从侧边栏选择一个会话"
         stateLabel.isHidden = false
         retryButton.isHidden = true
         updateConversationMenu()
     }
 
-    private func apply(_ detail: ConversationDetail) {
+    private func apply(_ detail: ConversationDetail, captureCurrentAnchor: Bool = true) {
+        if captureCurrentAnchor, displayedConversationID == detail.id, !messages.isEmpty { captureScrollAnchor(for: detail.id) }
+        displayedConversationID = detail.id
         title = detail.title
         messages = detail.messages
         stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
         stateLabel.isHidden = !detail.messages.isEmpty
         retryButton.isHidden = true
         tableView.reloadData()
+        restoreScrollAnchor(for: detail.id)
+    }
+
+    private func captureScrollAnchorForDisplayedConversation() {
+        guard let id = displayedConversationID else { return }
+        captureScrollAnchor(for: id)
+    }
+
+    private func captureScrollAnchor(for id: String) {
+        guard !messages.isEmpty, let indexPath = tableView.indexPathsForVisibleRows?.min(by: { $0.row < $1.row }), messages.indices.contains(indexPath.row) else { return }
+        let rowRect = tableView.rectForRow(at: indexPath)
+        let relativeOffset = tableView.contentOffset.y - rowRect.minY
+        scrollAnchorsByConversationID[id] = ScrollAnchor(messageID: messages[indexPath.row].id, relativeOffset: relativeOffset)
+        var fields = repository.diagnosticsFields(for: id)
+        fields["anchorRowIndex"] = String(indexPath.row)
+        fields["relativeOffsetPoints"] = String(format: "%.2f", relativeOffset)
+        diagnostics.info(category: "conversation", name: "scrollAnchor.saved", fields: fields)
+    }
+
+    private func restoreScrollAnchor(for id: String) {
+        guard !messages.isEmpty else {
+            resetScrollPositionToTop()
+            return
+        }
+        guard let anchor = scrollAnchorsByConversationID[id] else {
+            resetScrollPositionToTop()
+            return
+        }
+        guard let row = messages.firstIndex(where: { $0.id == anchor.messageID }) else {
+            scrollAnchorsByConversationID.removeValue(forKey: id)
+            resetScrollPositionToTop()
+            var fields = repository.diagnosticsFields(for: id)
+            fields["reason"] = "message_not_found"
+            diagnostics.info(category: "conversation", name: "scrollAnchor.discarded", fields: fields)
+            return
+        }
+        let indexPath = IndexPath(row: row, section: 0)
+        view.layoutIfNeeded()
+        tableView.layoutIfNeeded()
+        tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+        tableView.layoutIfNeeded()
+        setScrollOffsetY(tableView.rectForRow(at: indexPath).minY + anchor.relativeOffset)
+        var fields = repository.diagnosticsFields(for: id)
+        fields["anchorRowIndex"] = String(row)
+        fields["relativeOffsetPoints"] = String(format: "%.2f", anchor.relativeOffset)
+        diagnostics.info(category: "conversation", name: "scrollAnchor.restored", fields: fields)
+    }
+
+    private func resetScrollPositionToTop() {
+        view.layoutIfNeeded()
+        tableView.layoutIfNeeded()
+        setScrollOffsetY(-tableView.adjustedContentInset.top)
+    }
+
+    private func setScrollOffsetY(_ value: CGFloat) {
+        let minimumY = -tableView.adjustedContentInset.top
+        let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
+        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: min(max(value, minimumY), maximumY)), animated: false)
     }
 
     private func updateConversationMenu() {
@@ -1141,6 +1214,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID else { return }
         if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
+        captureScrollAnchor(for: id)
         presentationGeneration += 1
         let currentPresentationGeneration = presentationGeneration
         hideSyncToast()
@@ -1148,6 +1222,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         loadingConversationID = id
         messages = []
         tableView.reloadData()
+        resetScrollPositionToTop()
         stateLabel.text = "正在重新加载会话…"
         stateLabel.isHidden = false
         retryButton.isHidden = true
@@ -1157,7 +1232,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
             switch result {
-            case .success(let detail): self.apply(detail)
+            case .success(let detail): self.apply(detail, captureCurrentAnchor: false)
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.stateLabel.text = "读取失败\n\(error.localizedDescription)"

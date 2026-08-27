@@ -2,12 +2,12 @@
 
 ## Status
 
-**Active — b18 historical-scroll Runtime accepted; b19 process-footprint Runtime accepted for observed 0→8 resident matrix; b20 Runtime exposed a first-detail-view-load title lifecycle defect; exact b21 has Code + Static + CI + identity-valid Artifact and awaits real-device Runtime; normal LRU remains unfrozen; Stable/Frozen = No**
+**Active — b18 historical-scroll Runtime accepted; b19 process-footprint Runtime accepted for observed 0→8 resident matrix; b20 Runtime exposed a first-detail-view-load title lifecycle defect; exact b21 now has Code + Static + CI + identity-valid Artifact + accepted real-device title Runtime; normal LRU remains unfrozen; Stable/Frozen = No**
 
 - Work ID: `DEV-multi-conversation-state`
 - Branch: `dev/multi-conversation-state-20260827`
 - Target main: `3cbb5c9acce26c0004e1d78c9607f2361d83fe05`
-- Last Runtime Candidate: `DEV-multi-conversation-state-0.1.0-b20`
+- Last Runtime Candidate: `DEV-multi-conversation-state-0.1.0-b21`
 - Current exact Candidate: `DEV-multi-conversation-state-0.1.0-b21` / `0.1.0 (21)` — first Detail view-load title lifecycle correction
 - b21 exact product/config source: `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`
 - b21 CI: Run `33070183417`; Job `98510113281`; success
@@ -62,6 +62,16 @@ This makes the existing first `viewDidLoad()` initialization happen before the r
 - Artifact `9645439329` exact name is `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b21`.
 - Independent package inspection matches GitHub digest and sidecar: `0.1.0 (21)`, candidate b21, source `6b50ead167bf`, minimum iOS `14.0`, `UIDeviceFamily=[1,2]`, Mach-O arm64; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
 
+### b21 real-device acceptance
+
+After installing exact b21 and running the requested title checks, the user reported **“没问题了”**. Treat this as accepted direct real-device evidence for the requested b21 title matrix on the tested iPhone/iOS17 environment:
+
+- first entry into an unloaded conversation no longer presents the b20 `新对话` lifecycle overwrite while loading;
+- returning/re-entering remains correct;
+- requested rapid unloaded A -> B -> C selection/title check produced no reported issue, including no reported late A/B overwrite of the current target.
+
+No new diagnostics export accompanied this acceptance, so do not claim additional HTTP/timing evidence beyond the user's direct Runtime result.
+
 No Repository/list-detail protocol/account ownership/request cancellation/coalescing/scroll/Send-Stream/retry/timer/watchdog/fallback/LRU behavior was added or changed.
 
 ## Evidence labels
@@ -74,19 +84,19 @@ No Repository/list-detail protocol/account ownership/request cancellation/coales
 - b21 Static/source: **Passed**.
 - b21 CI: **Passed — Run `33070183417`, Job `98510113281`**.
 - b21 Artifact: **Produced / identity independently accepted — Artifact `9645439329`**.
-- b21 Runtime/manual/real-device: **Pending**.
+- b21 Runtime/manual/real-device: **Accepted for the requested first-unloaded-entry / re-entry / rapid A→B→C title matrix on tested iPhone/iOS17; no issue reported**.
 - Stable/Frozen: **No**.
 
 ## Remaining gates
 
-- b21 first entry into an unloaded conversation must show its list-summary title immediately while loading; returning/re-entering must remain correct.
-- b21 rapid A→B→C while all targets are initially unloaded must show each selected list-summary title immediately; late A/B completion must not overwrite current C title/content.
-- normal LRU remains unfrozen pending stronger headroom/pressure evidence.
-- isolated Reload replacement-under-load.
-- natural failed-resident navigation.
-- supported account-switch isolation when route exists.
-- non-personal workspace isolation Unknown/Unverified.
+- isolated same-target Reload replacement-under-load in the multi-conversation implementation;
+- natural failed-resident navigation with no implicit retry;
+- supported account-switch isolation when a real route exists;
+- normal LRU remains unfrozen pending stronger headroom/pressure evidence if a bounded capacity becomes necessary;
+- non-personal workspace isolation Unknown/Unverified;
+- missing-anchor-message discard remains Runtime-unexercised;
+- future Send/Stream follow-tail remains separate Work evidence.
 
 ## Next exact action
 
-Install exact b21 on iPhone/iOS17. First test a conversation whose Detail view/content has not yet loaded: while `正在读取会话…` is visible, the navigation title must already be that list item's title and must never flash/stick at `新对话`. Return to the list and re-enter to confirm the resident case remains correct. Then rapidly choose unloaded A -> B -> C before prior Details finish; titles must immediately follow A -> B -> C and late A/B completion must not overwrite C title/content. Spot-check resident return and historical scroll remain intact.
+Use exact b21 for the next evidence-only regression gate: start an unloaded/slow conversation Detail and, while that same target's ordinary Detail request is still in flight, explicitly choose `重载当前会话`. Expected: the newer Reload owns that target, the older same-target Detail is cancelled/superseded per the accepted repository contract, the replacement completes without stale overwrite, and unrelated conversations remain independent. This is a Runtime spot-check of existing code, not a reason to create b22 unless the test exposes a defect. Do not invent retry/fallback/LRU behavior.

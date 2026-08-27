@@ -1,6 +1,6 @@
 # Client Architecture Gap Review
 
-_Last reviewed: 2026-08-27; refreshed through b20 title Runtime evidence and exact b21 Artifact._
+_Last reviewed: 2026-08-27; refreshed through exact b21 title Runtime acceptance._
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Product rule: **reach a usable daily-chat candidate early; only P0 structural in
 - b18 exact source `f30c13b4ac2c...` has accepted iPhone/iOS17 Runtime for the tested historical-scroll / Sync / Reload-preservation / resident-regression matrix. Missing-anchor-message discard remains Runtime-unexercised.
 - b19 exact source `c6accf16c8cf...` has accepted real-device process-footprint evidence for an observed 0→8 resident matrix: 53 valid samples, physical footprint about 16.3–78.1 MiB and generally 55–65 MiB during repeated switching at 8 residents; all observed HTTP statuses 200 and no HTTP429/error. `processMemoryLimitRemainingBytes` was absent, so exact process-limit headroom remains Unverified. There is no evidence for urgent normal-LRU eviction at 8 residents and no normal capacity is frozen.
 - b20 exact source `754580fad96e...` is Code/Static/CI/Artifact valid but real-device Runtime exposed a presentation lifecycle defect: first entry into an unloaded conversation showed `新对话` while loading; re-entry after the Detail became resident was correct. Source proves Root assigned the list-summary title before first Detail view load, then `ConversationDetailViewController.viewDidLoad()` overwrote it with the neutral title.
-- Exact b21 product/config source is `6b50ead167bfde305d2ad58dd16fee6edaabf597`, tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417` / Job `98510113281` succeeded; Artifact `9645439329` is identity-valid; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`. b21 adds only `detailViewController.loadViewIfNeeded()` before assigning the selected list-summary title. Runtime proof is pending.
+- Exact b21 product/config source is `6b50ead167bfde305d2ad58dd16fee6edaabf597`, tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417` / Job `98510113281` succeeded; Artifact `9645439329` is identity-valid; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`. b21 adds only `detailViewController.loadViewIfNeeded()` before assigning the selected list-summary title. After the requested exact b21 first-entry/re-entry/rapid A→B→C title checks, the user reported `没问题了`; treat the title lifecycle correction as Runtime accepted for the tested iPhone/iOS17 matrix. No new diagnostics export accompanied this acceptance.
 - The b20 export also contained an earlier cold-start auth probe HTTP403, followed by successful account verification and conversation-list HTTP200 before the title reproduction. That event is not causal for the title defect and does not justify automatic retry/fallback.
 - Current `main@3cbb5c9acce26c0004e1d78c9607f2361d83fe05` contains merged planning PR #18. Its planning files must be preserved during final synchronization.
 - There is still no XCTest/UI-test target.
@@ -36,7 +36,7 @@ Cold-start login-state recovery belongs to completed recovery baseline. Do not c
 6. Own responses per conversation/message identity instead of a global streaming flag.
 7. Define Sync/Reload ownership transitions when target conversation has an active response.
 
-b17 addresses the evidenced pre-Send owner/race/account-scope portion of 1–4 and has direct Runtime evidence for tested navigation/coalescing/hidden-Sync paths. b18 adds Runtime-accepted historical presentation isolation. b19 measures memory without changing owners. b20/b21 are title-presentation lifecycle corrections only. Items 5–7 require current Send/Stream protocol evidence and must not be guessed.
+b17 addresses the evidenced pre-Send owner/race/account-scope portion of 1–4 and has direct Runtime evidence for tested navigation/coalescing/hidden-Sync paths. b18 adds Runtime-accepted historical presentation isolation. b19 measures memory without changing owners. b20/b21 are title-presentation lifecycle corrections only, and exact b21 is now Runtime accepted for that title gate. Items 5–7 require current Send/Stream protocol evidence and must not be guessed.
 
 ### P1 — around first daily-chat candidates
 
@@ -82,7 +82,7 @@ Every operation binds account/context + target conversation + generation/token.
 - Presentation has target/freshness identity so obsolete completion cannot mutate wrong conversation.
 - No timer/retry/watchdog/fallback machinery.
 
-b17 Runtime confirms same-target coalescing and A Sync rejoin. b18 re-confirms coalescing when returning to B while B Sync is active. b20 rapid switching also retained multiple independent operations; its defect was title initialization, not request ownership.
+b17 Runtime confirms same-target coalescing and A Sync rejoin. b18 re-confirms coalescing when returning to B while B Sync is active. b20 rapid switching retained multiple independent operations; its defect was title initialization, not request ownership. b21 title Runtime acceptance does not alter this owner model.
 
 ### Account/workspace isolation
 
@@ -131,7 +131,7 @@ Exact b18 implements and Runtime-validates historical-reading mode for the teste
 
 The conversation list already owns a server-backed `ConversationSummary.title` for each displayed list row. Selecting a target may use that summary immediately for navigation presentation while its Detail remains unloaded; loaded Detail later confirms with `detail.title`.
 
-b20 proved one lifecycle hazard: assigning the summary title before the Detail VC's first view load allowed `viewDidLoad()` neutral initialization to overwrite it. b21 resolves only the ordering by ensuring first view initialization happens before the summary title assignment. This is presentation metadata, not a second conversation/title authority, and does not alter Repository selection or request ownership.
+b20 proved one lifecycle hazard: assigning the summary title before the Detail VC's first view load allowed `viewDidLoad()` neutral initialization to overwrite it. b21 resolves only the ordering by ensuring first view initialization happens before the summary title assignment. Direct real-device testing now accepts the requested first-entry/re-entry/rapid A→B→C title matrix. This is presentation metadata, not a second conversation/title authority, and does not alter Repository selection or request ownership.
 
 ### Conversation pagination / Markdown / settings / background
 
@@ -172,13 +172,13 @@ Real-device evidence remains mandatory for WebKit auth, real networking, HTTP429
 ## Current serialized development state
 
 1. `DEV-conversation-recovery` — Completed / merged / Stable b15.
-2. `DEV-multi-conversation-state` — Active; b17 core Runtime, b18 historical-scroll Runtime and b19 observed memory Runtime accepted; b20 title lifecycle defect reproduced; b21 Code/Static/CI/Artifact accepted and Runtime pending.
+2. `DEV-multi-conversation-state` — Active; b17 core Runtime, b18 historical-scroll Runtime, b19 observed memory Runtime and b21 requested title Runtime accepted; b20 remains the superseded title-lifecycle failing predecessor.
 3. Current durable roadmap is `DEVELOPMENT_PLAN.md`; current `main` planning updates must be preserved during final synchronization.
 4. `DEV-send-stream` remains the stage where real response ownership/follow-tail can be implemented and tested.
 
 ## Current multi-conversation Runtime gate
 
-Accepted on b17/b18/b19:
+Accepted on b17/b18/b19/b21:
 
 - loaded A -> B -> A without navigation-only A Detail refetch;
 - hidden completion retained;
@@ -187,18 +187,12 @@ Accepted on b17/b18/b19:
 - rapid different-conversation overlap without HTTP429 in supplied export;
 - independent historical A/B anchors and first-time target isolation;
 - visible Sync/Reload anchor preservation when anchored message remains;
-- real process footprint observed through 8 residents without evidence for urgent normal LRU.
+- real process footprint observed through 8 residents without evidence for urgent normal LRU;
+- exact b21 first-unloaded-entry/re-entry/rapid A→B→C title lifecycle matrix produced no reported issue.
 
 Rejected/superseded on b20:
 
 - first unloaded Detail entry title presentation: Runtime showed `新对话` during loading due first-view lifecycle overwrite; second resident-backed entry was correct.
-
-Pending on exact b21:
-
-- first unloaded target immediately displays its list-summary title while loading and never gets overwritten by neutral `新对话`;
-- rapid unloaded A -> B -> C title follows current selection immediately;
-- late A/B completion cannot overwrite C title/content;
-- resident return/historical scroll remains intact.
 
 Still open before full Work Stable acceptance:
 
@@ -206,12 +200,13 @@ Still open before full Work Stable acceptance:
 - failed resident navigation with no implicit retry when a natural terminal failure is available;
 - supported account-scope Runtime isolation when a real switch/logout route exists;
 - stronger headroom/pressure evidence if a bounded normal LRU capacity is eventually needed;
-- non-personal workspace isolation remains Unknown / Unverified.
+- non-personal workspace isolation remains Unknown / Unverified;
+- missing-anchor-message discard remains conditional Runtime-unexercised evidence.
 
 Future Send/Stream adds separate scroll gate: A active at bottom -> B -> A grows/completes hidden -> return A at current latest bottom; A active -> user scrolls upward -> B -> return A at preserved historical anchor.
 
 ## Next exact action
 
-Install exact b21 and run the first-unloaded-entry plus rapid unloaded A->B->C title matrix. Do not infer Runtime success from CI or Artifact. After title Runtime is accepted, continue only the remaining evidence-backed gates; do not invent normal LRU capacity or auth retry behavior without new evidence.
+Use exact b21 for the isolated same-target Reload replacement-under-load Runtime spot-check. Start an unloaded/slow target Detail, then explicitly trigger `重载当前会话` while that same target's ordinary Detail request is still in flight. Expected: the older same-target request is cancelled/superseded, the Reload becomes authoritative without stale overwrite or HTTP429 regression, and unrelated conversations remain independent. Do not create b22 unless this existing-code Runtime spot-check exposes a defect.
 
 Before final PR/merge, synchronize with current `main@3cbb5c9acce26c0004e1d78c9607f2361d83fe05` without overwriting its planning documents, then rerun only validation materially affected by synchronized product source.

@@ -10,9 +10,9 @@ _Last updated: 2026-08-28._
 - `DEV-native-read-path-0.1.0-b9`: merged Stable production native-read baseline for tested scope.
 - `DEV-conversation-recovery-0.1.0-b15`: merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope; PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
 - `DEV-multi-conversation-state-0.1.0-b21`: merged Stable multi-conversation read-state baseline for tested Plus/personal iPhone/iOS17 scope; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
-- `DEV-conversation-list-cache-core-0.1.0-b23`: **real-device Runtime accepted for the recorded cache-core matrix; PR/merge pending**.
+- `DEV-conversation-list-cache-core-0.1.0-b23`: **merged Stable conversation-list cache-core baseline for the recorded Plus/personal iPhone/iOS17 scope**; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`.
 
-Current `main` remains `846dad81e382e6b7a862f082ef5bc5d4ce617493` at the b23 Runtime checkpoint. The active cache branch is `dev/conversation-list-cache-core-20260828`.
+Current `main` includes PR #24 at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. The cache-core Work is complete for its recorded tested scope; conditional boundaries below remain explicit Unknown / Unverified rather than blockers.
 
 ## Stable merged multi-conversation baseline — DEV-multi-conversation-state
 
@@ -24,7 +24,7 @@ Current `main` remains `846dad81e382e6b7a862f082ef5bc5d4ce617493` at the b23 Run
 - **Accepted scope**: resident return, hidden completion, same-target coalescing/replacement, historical scroll, observed 0→8 resident process-footprint behavior and title lifecycle on tested Plus/personal iPhone/iOS17.
 - **Conditional boundaries**: natural failed-resident navigation, supported account-switch purge, non-personal workspace identity and missing-anchor-message discard remain Unknown / Unverified; no arbitrary normal LRU is frozen.
 
-## Active conversation-list cache baseline — DEV-conversation-list-cache-core
+## Stable merged conversation-list cache baseline — DEV-conversation-list-cache-core
 
 ### Historical b22
 
@@ -53,6 +53,14 @@ User-supplied iPhone/iOS17 diagnostics identify exact b23 and Plus/personal scop
 - direct user result: `好像没问题了`, with no new functional defect reported in the tested b23 sequence.
 
 This is **Runtime acceptance for the recorded tested cache-core scope**, not proof of every conditional path.
+
+### PR / merge evidence
+
+- **PR**: #24, merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`.
+- **PR merge-view CI**: Run `33103769517`, Job `98628067286`, success.
+- **Tested merge view**: `26297ff0683966c2c82fd7a8a95f53f1ad51d3d6`, combining `main@846dad81e382e6b7a862f082ef5bc5d4ce617493` with PR head `6a762f6fc968d1829d548be116776279cc0b7052`.
+- **Merge-view Artifact**: `9659600955`; IPA `ChatGPTClient-0.1.0-b23-dev-conversation-list-cache-core.ipa`; IPA SHA `06f8ade97344c54b017cd31c82f87abc8bc33e4c2a4fb277e17f02d0f5b204af`; embedded source marker `26297ff06839`.
+- The merge-view Artifact is CI/merge evidence only and does not replace the exact real-device Runtime Artifact `9658508764`.
 
 ### Cache ownership / privacy boundary
 
@@ -87,7 +95,7 @@ These are conditional boundaries, not current known defects, and do not justify 
 
 ## Roadmap handoff
 
-`DEV-conversation-list-cache-core` is Runtime accepted for its tested b23 scope but is **not yet merged Stable**. The immediate action is PR/merge preparation against current `main`, including target-advance check and merge-view CI. After successful merge/closure, the next serialized development priority remains `DEV-conversation-round-count`, followed by `DEV-send-stream` according to the current development plan.
+`DEV-conversation-list-cache-core` is merged Stable for its recorded b23 tested scope. The next serialized development priority is `DEV-conversation-round-count`, followed by `DEV-send-stream` according to the current development plan. No new development checkpoint is activated merely by closing this Work.
 
 ## Evidence rule
 

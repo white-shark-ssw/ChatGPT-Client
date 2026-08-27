@@ -78,7 +78,12 @@ Conditional supported account-switch mismatch, corrupt/schema rejection, provisi
 
 ## Phase 8 — `DEV-conversation-round-count`
 
-**Active.** Dedicated branch: `dev/conversation-round-count-20260828`. First Candidate identity is `DEV-conversation-round-count-0.1.0-b24`; CI/Artifact/Runtime evidence remains separate from code-written status.
+**Active at Runtime gate.** Dedicated branch: `dev/conversation-round-count-20260828`.
+
+- Historical b24 compiled but its actual package identity was invalid: the stale build script overrode the intended Candidate with cache-core b23 and retained the cache-core IPA slug. b24 is permanently rejected/reserved and was never installed.
+- Current exact Runtime Candidate is `DEV-conversation-round-count-0.1.0-b25` / `0.1.0 (25)` with product/config source `5e6a61a45b5aae1d6d4ddb210a8685094a2e74a8`.
+- Exact b25 CI Run `33110228837` / Job `98650799276` succeeded; identity-valid Artifact `9662219000`; IPA `ChatGPTClient-0.1.0-b25-dev-conversation-round-count.ipa`; IPA SHA `91ea6b79b67ac06f45771606d425221e10d80e7992c524be697a73bf320c923b`; embedded Candidate `DEV-conversation-round-count-0.1.0-b25`; source marker `5e6a61a45b5a`.
+- Evidence level is currently Code + static/source/package review + exact CI + identity-valid Artifact. **Runtime/manual/real-device remains Not tested; Stable/Frozen No.**
 
 ### User-facing bundle
 
@@ -96,7 +101,7 @@ Historical interaction planning described `聊天 · N轮` / `工作 · N轮`. C
 - `显示消息时间`: On by default;
 - `显示回答快速跳转`: On by default.
 
-All three are persisted by the single centralized app Preferences owner. Toggling presentation settings must not mutate conversation/message authority or issue network requests.
+All three are persisted by the single centralized `AppPreferences` owner. Toggling presentation settings must not mutate conversation/message authority or issue network requests.
 
 ### Shared derivation / behavior
 
@@ -108,6 +113,17 @@ All three are persisted by the single centralized app Preferences owner. Togglin
 - Quick-jump direction follows real user drag intent; programmatic jump animation must not masquerade as a new user drag, and valid boundary availability wins.
 - Copy never includes hidden reasoning/tool/system material and never triggers network requests.
 - Historical timestamps use existing authoritative service time; if it is absent, omit the timestamp rather than fabricate one.
+
+### Runtime acceptance focus for b25
+
+- verify round count against a known long conversation and confirm the Off setting removes only presentation;
+- verify all three preferences persist after leaving Settings and after process relaunch;
+- verify user/assistant historical timestamps use plausible local formatting and messages with absent authoritative time do not get fabricated metadata;
+- verify assistant one-tap Copy and user context-menu Copy copy only visible text with `已复制` feedback;
+- repeatedly drag/jump older/newer through a long conversation, including first/last boundaries; jumps must visibly animate to the adjacent answer and never trigger extra Detail requests;
+- verify A/B conversation switching preserves independent semantic scroll anchors; jumping in B must not mutate A;
+- verify Sync/Reload re-derive answer anchors and preserve/discard the existing semantic scroll anchor according to the established presentation owner;
+- basic Dynamic Type/VoiceOver sanity for the new metadata/actions/control.
 
 ## Phase 9 — `DEV-send-stream`
 
@@ -186,8 +202,12 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-`DEV-conversation-round-count` is the Active serialized development Work. Keep its dedicated checkpoint, branch, b24 candidate identity and evidence chain authoritative. Complete clean diff/static review, CI and Artifact verification, then perform explicit accepted-scope runtime/manual validation before any Stable claim.
+`DEV-conversation-round-count` remains the Active serialized development Work. b25 is the exact identity-valid Runtime Candidate; do not change product/config code or candidate identity while merely performing governance/PR documentation work.
 
-After this Work is accepted, the serialized order remains:
+Next sequence:
 
-`DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
+1. synchronize remaining durable docs and open the Work PR after final base/conflict guard;
+2. treat PR merge-view CI/Artifact as merge evidence only, not Runtime evidence;
+3. install/test exact b25 on the accepted iPhone/iOS17 scope using the Runtime focus above;
+4. only after accepted Runtime update checkpoint/state/index, merge/close the Work as Stable for the tested scope;
+5. then proceed `DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`.

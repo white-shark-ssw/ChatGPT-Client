@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; product/runtime profile refreshed 2026-08-27**
+**Initialized — 2026-08-25; product/runtime profile refreshed 2026-08-28**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -27,12 +27,13 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Application entry**: `AppDelegate.swift`; accepted recovery baseline sequences public WebKit warm-up before installing the product root.
 - **Application shell**: `RootViewController.swift`, `SettingsViewController.swift`; compact iPhone startup uses native list/detail navigation with the conversation list as useful initial root. Exact b21 Root ensures first Detail view initialization occurs before assigning the selected list-summary title; this title lifecycle ordering is real-device accepted for the requested b21 matrix.
 - **Build/runtime metadata owner**: `Support/AppBuildInfo.swift` + Xcode/Info.plist settings.
-- **Diagnostics owner**: `Diagnostics/Diagnostics.swift`; b19 added real task-VM process-memory enrichment to resident diagnostics.
+- **Diagnostics owner**: `Diagnostics/Diagnostics.swift`; b19 added real task-VM process-memory enrichment to resident diagnostics and b23 adds privacy-safe list-cache diagnostics at conversation call sites.
 - **Embedded login owner**: `Authentication/AuthWebViewController.swift`.
 - **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore`.
 - **Auth/account-context owner**: `Authentication/AuthSessionStore.swift`; copied cookies and `/api/auth/session` bearer are transient only.
 - **Protocol-read diagnostic owner**: `Protocol/ProtocolReadProbe.swift`; diagnostic-only.
-- **Production conversation data owner**: `Conversation/ConversationFeature.swift` / the single `ConversationRepository`; b17 generalized it to account-scoped per-conversation resident/operation entries while foreground selection remains presentation-only.
+- **Production conversation data owner**: `Conversation/ConversationFeature.swift` / the single `ConversationRepository`; b17 generalized it to account-scoped per-conversation resident/operation entries while foreground selection remains presentation-only; merged b23 adds storage-only persistent list-cache integration without creating a second list authority.
+- **Conversation-list persistent storage**: private `ConversationListCacheStore` in `ConversationFeature.swift`; stores schema-versioned summary snapshots and a privacy-safe SHA-256 last-verified scope namespace hint only. It is not auth/account or conversation authority.
 - **Conversation presentation owner**: `ConversationDetailViewController`; b18 adds lightweight per-conversation historical scroll anchor metadata. Exact b18 iPhone/iOS17 Runtime accepts the tested historical anchor matrix. This metadata is not a second conversation-data or response authority.
 - **Test roots**: None yet.
 
@@ -40,11 +41,12 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 - **Packaging**: `bash scripts/build_ipa.sh`.
 - **Underlying build**: Release `xcodebuild` for iphoneos with signing disabled for TrollStore packaging.
-- **CI**: GitHub Actions on macOS15; current pipeline compiles `arm64-apple-ios14.0` and b18/b21 validation used Xcode 16.4 / iPhoneOS18.5.
+- **CI**: GitHub Actions on macOS15; current pipeline compiles `arm64-apple-ios14.0` and b21/b23 validation used Xcode 16.4 / iPhoneOS18.5.
 - **Intended artifact scheme**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` + SHA-256 sidecar.
-- **Packaging status**: b16 historically exposed recovery hard-codes and is rejected. b17 corrected multi-conversation identity. Exact b21 independently verifies filename/version/build/candidate/source/SHA/arm64/iOS14 identity.
-- **Current accepted validation level**: Foundation, embedded Google/WebKit auth architecture, Plus/personal account context, diagnostic list/detail, production native read, manual sync/full reload, public WebKit cold-start warm-up, centered sync feedback, compact startup/native list-detail navigation, stale-generation rejection, selected-detail cancellation/replacement and the recorded multi-conversation read-state matrix have real-device evidence on iPhone/iOS17 for their recorded scopes.
+- **Packaging status**: b16 historically exposed recovery hard-codes and is rejected. b17 corrected multi-conversation identity. Exact b21 and b23 independently verify filename/version/build/candidate/source/SHA/arm64/iOS14 identity. PR #24 merge-view CI also succeeded on the GitHub-generated merge commit.
+- **Current accepted validation level**: Foundation, embedded Google/WebKit auth architecture, Plus/personal account context, diagnostic list/detail, production native read, manual sync/full reload, public WebKit cold-start warm-up, centered sync feedback, compact startup/native list-detail navigation, stale-generation rejection, selected-detail cancellation/replacement, the recorded multi-conversation read-state matrix, and the recorded persistent conversation-list cache-core matrix have real-device evidence on iPhone/iOS17 for their stated scopes.
 - **Merged multi-conversation validation**: b17 core switching/coalescing/hidden completion accepted; b18 historical scroll accepted; b19 real process-footprint 0→8 resident matrix accepted; b20 first Detail-view-load title lifecycle defect reproduced and superseded; exact b21 title lifecycle plus same-target Reload replacement-under-load/hidden-rejoin coalescing are real-device accepted. PR #23 merged this Work at `2057a6241839afabeaf9b81c9daea24d3a0978f6`, making b21 the **Stable merged multi-conversation read-state baseline for the tested Plus/personal iPhone/iOS17 scope**. Remaining natural-failure/account-switch/non-personal/missing-anchor conditions remain explicit Unknown/Unverified boundaries; normal LRU is not implemented because b19 supplies no evidence that one is currently needed. Frozen remains No.
+- **Merged conversation-list cache validation**: historical b22 is Runtime-partial/failing. Exact b23 real-device evidence accepts immediate provisional cached rows before slow auth, `recent_skip`, stale one-refresh, offline `-1005 -> offline_cache`, retained-list refresh-failure feedback, manual one-request refresh, and real first-page `28 + preservedOffPageCount=1 -> 29` safety. PR #24 merge-view Run `33103769517` / Job `98628067286` succeeded and PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`, making b23 the **Stable merged conversation-list cache-core baseline for the recorded Plus/personal iPhone/iOS17 scope**. Conditional account-switch/provisional-row-tap/corrupt-schema/iPad/lower-iOS/non-personal boundaries remain Unknown / Unverified. Frozen remains No.
 
 ## Versioning and candidate identity
 
@@ -62,7 +64,9 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Historical-scroll Runtime Candidate**: `0.1.0 (18)` / b18; exact historical-scroll matrix accepted.
 - **Process-memory Runtime Candidate**: `0.1.0 (19)` / b19; observed 0→8 resident footprint matrix accepted, process-limit headroom Unverified.
 - **Title lifecycle failing predecessor**: `0.1.0 (20)` / b20; Code/CI/Artifact valid but first unloaded Detail entry Runtime showed neutral-title overwrite.
-- **Stable merged multi-conversation baseline**: `0.1.0 (21)` / `DEV-multi-conversation-state-0.1.0-b21`; product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417`; Job `98510113281`; Artifact `9645439329`; IPA `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`; title and Reload-under-load Runtime matrices accepted on tested iPhone/iOS17; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`. Stable for the recorded scope; Frozen No.
+- **Stable merged multi-conversation baseline**: `0.1.0 (21)` / `DEV-multi-conversation-state-0.1.0-b21`; product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`; Run `33070183417`; Artifact `9645439329`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`. Stable for the recorded scope; Frozen No.
+- **Historical cache-core failing predecessor**: `0.1.0 (22)` / `DEV-conversation-list-cache-core-0.1.0-b22`; exact identity remains permanently reserved and superseded after partial/failing Runtime.
+- **Stable merged conversation-list cache-core baseline**: `0.1.0 (23)` / `DEV-conversation-list-cache-core-0.1.0-b23`; product/config source `d2af0fc157f6e2d037636c55f963c18071a332d5`; Runtime Run `33101116431`; Job `98618762016`; Artifact `9658508764`; IPA SHA `8f6911616fff1e93885191fcaec0f31a1e3c9488b7f4522fdbdb7dc5518be516`; PR merge-view Run `33103769517`, Job `98628067286`, tested merge `26297ff0683966c2c82fd7a8a95f53f1ad51d3d6`; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. Stable for the recorded cache-core scope; Frozen No.
 
 ## Runtime / deployment
 
@@ -83,20 +87,23 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b17 accepted core multi-conversation resident return, hidden completion, same-target coalescing, Sync A->B->A rejoin and rapid overlap; historical-scroll defect reproduced.
 - b18 accepted independent historical anchors, first-time target isolation, Sync/Reload anchor preservation, resident/coalescing regression matrix on iPhone/iOS17.
 - b19 reached 8 residents with 53 valid process-memory samples; physical footprint remained about 16.3–78.1 MiB and generally 55–65 MiB during repeated 8-resident switching. No urgent normal-LRU pressure is evidenced; exact process-limit headroom was unavailable.
-- b20 exact real-device export identifies `0.1.0 (20)`, source `754580fad96e`. User reproduced first-entry `新对话`; source proves first Detail `viewDidLoad()` overwrote the summary title. Second resident-backed entry was correct. The export's earlier auth HTTP403 is not causal because later verification/list HTTP200 succeeded before the reproduction.
-- b21 fixes only lifecycle ordering in Root via `loadViewIfNeeded()` before assigning the selected summary title. Direct real-device testing accepts first-entry/re-entry/rapid-switch title behavior. A later exact b21 diagnostics export also accepts two same-target ordinary-load -> Reload replacement sequences: old generation cancelled, replacement HTTP200, unrelated hidden conversation independent, and return to the active Reload coalesced onto the same generation without duplicate request or stale overwrite.
-- PR #23 merge-view CI Run `33093117645`, Job `98590935774` succeeded on GitHub merge view `0520f118d4ada5eacfbac4ff444d9572e322efe1`; Artifact `9655230149` is merge-view CI evidence only and does not replace the exact b21 Runtime Artifact.
-- Current roadmap makes `DEV-conversation-list-cache-core` the next early infrastructure task after the now-Stable multi-conversation baseline.
+- b20 exact real-device export identifies `0.1.0 (20)`, source `754580fad96e`. User reproduced first-entry `新对话`; source proves first Detail `viewDidLoad()` overwrote the summary title. Second resident-backed entry was correct.
+- b21 fixes lifecycle ordering in Root via `loadViewIfNeeded()` before assigning the selected summary title. Direct real-device testing accepts first-entry/re-entry/rapid-switch title behavior. Exact diagnostics also accept same-target ordinary-load -> Reload replacement with old-task cancellation and hidden/rejoin coalescing. PR #23 merged.
+- b22 proved core snapshot/freshness mechanics but failed visible warm-cache ordering, offline fallback and refresh feedback; it is superseded and never reused.
+- b23 exact real-device export identifies `0.1.0 (23)`, source `d2af0fc157f6`. Provisional cache publication occurred in about 4 ms before ~4.5 s account verification; rapid relaunch skipped automatic list refresh; offline auth transport failure kept 29 cached rows; online manual refresh sent exactly one request; page-1 reconciliation preserved the real 29th cached row. User reported no new issue. PR #24 merged after merge-view CI success.
+- PR #24 merge-view CI Run `33103769517`, Job `98628067286` checked out merge view `26297ff0683966c2c82fd7a8a95f53f1ad51d3d6` and succeeded; merge-view Artifact `9659600955` is CI evidence only and does not replace the exact b23 Runtime Artifact.
+- Current roadmap next serialized development priority is `DEV-conversation-round-count`, followed by `DEV-send-stream`.
 
 ## Evidence notes
 
 - iOS17 Runtime success does not prove iOS14–16 or iPad Runtime compatibility.
-- Read/recovery/multi-conversation evidence is scoped to tested Plus/personal account; it does not prove Send/Stream/attachments or non-personal workspaces.
+- Read/recovery/multi-conversation/cache evidence is scoped to tested Plus/personal account; it does not prove Send/Stream/attachments or non-personal workspaces.
 - Current source keys account residency with `userID + accountID`; whether non-personal workspaces require additional identity remains Unknown / Unverified.
 - Approximate resident visible-text bytes are correlation metrics only; b19 real task-VM footprint is the process-memory evidence. Exact process-limit headroom is still Unverified, but current evidence does not justify an arbitrary normal LRU capacity.
-- Natural terminal failed-resident navigation and supported account-switch purge remain Runtime-unverified until those conditions/routes exist naturally; the completed Work did not manufacture them.
+- Natural terminal failed-resident navigation and supported account-switch purge remain Runtime-unverified until those conditions/routes exist naturally; completed Work did not manufacture them.
 - Historical scroll presentation is in-memory only; future active-response follow-tail eligibility remains unimplemented until the real Send/Stream response owner exists.
 - Missing-anchor-message discard was not naturally exercised in exact b18 Runtime; source/CI contract exists but no device proof is claimed.
+- Cache-core supported real verified-scope mismatch, provisional-row Detail-block tap, corrupt/schema rejection, iPad, iOS below 17 and non-personal workspace identity remain conditional Unknown / Unverified; they are not current known defects.
 
 ## Auto-refresh rule
 

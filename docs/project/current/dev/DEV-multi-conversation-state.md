@@ -54,6 +54,16 @@ This issue was already explicitly scoped in project docs as **P1 semantic per-co
 
 The current diagnostic schema does not record table/collection scroll anchor identity/offset, so the scroll-position defect is grounded by the user's direct runtime observation rather than inferred from diagnostics.
 
+### User-confirmed future Send/Stream scroll semantics — anchor vs follow-tail
+
+The user explicitly clarified the required behavior once production Send/Stream exists:
+
+- Per-conversation scroll presentation must distinguish **historical-reading anchor** from **follow-tail/bottom-following intent**; one raw `contentOffset` is not the product contract.
+- If conversation A is at/near the bottom when the user leaves it **and A has an active response**, A is in `follow-tail` semantics. If A continues reasoning/generating while hidden and appends new answer content, returning to A must show A's **current latest bottom**, not restore the older pre-answer pixel/message position.
+- If the user intentionally scrolls upward in A while A is generating, that action exits `follow-tail`; subsequent navigation should preserve/restore the user's semantic reading anchor instead of forcing the viewport back to the latest bottom.
+- B's scrolling must never mutate A's anchor/follow-tail presentation state, and A's hidden response growth must never change B's scroll state.
+- This is a **user-confirmed product requirement**, but automatic hidden-response advancement cannot be Runtime-tested until `DEV-send-stream` establishes the authoritative per-conversation response lifecycle. Do not invent stream protocol/state to fake this behavior in pre-send work.
+
 ## b17 owner fixes written and compiled
 
 1. **Stale account context cannot re-adopt scope**: request/transport context only validates against the current Auth owner; repository scope changes are driven by a currently verified `AuthSessionStore` snapshot/change signal.
@@ -93,10 +103,11 @@ The current diagnostic schema does not record table/collection scroll anchor ide
 
 ## Remaining acceptance / risks
 
-- **P1 scroll anchor**: runtime reproduced as described above. Fix should preserve a semantic/per-conversation anchor rather than copy B's raw scroll offset into A; implementation must remain presentation state and must not create a second conversation-data authority.
+- **P1 scroll anchor**: runtime reproduced as described above. Fix should preserve a semantic/per-conversation presentation state. For ordinary historical reading, restore message identity + relative offset; for future active-response sessions, the user-confirmed contract additionally requires a per-conversation `follow-tail` semantic mode. Implementation must remain presentation state and must not create a second conversation-data authority.
+- **Future follow-tail runtime gate**: once Send/Stream exists, test A active response at bottom -> switch B/use B -> A completes hidden -> return A; expected A opens at its current latest bottom. Also test user scrolls A upward during generation -> switch B -> return A; expected A preserves the reading anchor rather than snapping to bottom.
 - Account-context purge/late-callback isolation still needs a real supported runtime account-switch/logout route before claiming that criterion Runtime-tested.
 - Normal-operation resident/LRU capacity remains Unknown until device/system memory evidence; approximate text bytes are insufficient.
 - Current `userID + accountID` scope remains personal-account evidence only; non-personal workspace isolation is Unknown/Unverified.
 - No XCTest/UI-test target exists; this Candidate's automated evidence is syntax/static + real Xcode Release CI + package inspection.
 
-- **Next exact action**: treat b17 as the accepted core runtime evidence for the tested switching/coalescing/hidden-Sync/rapid-overlap sequences, while keeping the Work Active. Before any product-code correction, run candidate/branch conflict uniqueness again and allocate **b18**; the next smallest user-visible correction is the now-reproduced P1 per-conversation semantic scroll-anchor restoration. Do not rebuild or reuse b17. Remaining account-switch/failure/LRU acceptance stays separate and must not be guessed from this run.
+- **Next exact action**: treat b17 as the accepted core runtime evidence for the tested switching/coalescing/hidden-Sync/rapid-overlap sequences, while keeping the Work Active. Before any product-code correction, run candidate/branch conflict uniqueness again and allocate **b18**; the next smallest user-visible correction is the now-reproduced P1 per-conversation semantic scroll restoration. Its presentation model must not preclude the user-confirmed future `follow-tail` mode, but b18 must not invent Send/Stream lifecycle ownership before that protocol Work exists. Do not rebuild or reuse b17. Remaining account-switch/failure/LRU acceptance stays separate and must not be guessed from this run.

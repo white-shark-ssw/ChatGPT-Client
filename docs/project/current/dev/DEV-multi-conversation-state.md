@@ -2,48 +2,67 @@
 
 ## Status
 
-**Active — b18 Runtime accepted for tested historical-scroll matrix; exact b19 measurement-only Candidate has Code + Static + CI + identity-valid Artifact; real-device process-memory Runtime evidence pending; no LRU behavior has been chosen or implemented; Stable/Frozen = No**
+**Active — b18 historical-scroll Runtime accepted; exact b19 measurement Runtime accepted for observed process-footprint matrix; user-reported rapid-switch title defect is source-confirmed and b20 is reserved for the minimal presentation fix; normal LRU remains unfrozen; Stable/Frozen = No**
 
 - Work ID: `DEV-multi-conversation-state`
 - Branch: `dev/multi-conversation-state-20260827`
 - Target main: `3cbb5c9acce26c0004e1d78c9607f2361d83fe05`
-- Last Runtime Candidate: `DEV-multi-conversation-state-0.1.0-b18`
-- Current exact Candidate: `DEV-multi-conversation-state-0.1.0-b19` / `0.1.0 (19)` — measurement only
-- Exact product/config source: `c6accf16c8cf80c719f1e569e356b2bbe664e91e`; tree `9142ebe7c4cd0860428d8fe35ee341507f61d051`.
-- CI: Run `33063446367`; Job `98487641474`; success.
-- Artifact: `9642715296`; `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b19`; upload ZIP `sha256:7f33f13818b1ef77c83c84b7371fea2b930d4786709b72c9442fe33765b3bafc`.
-- IPA: `ChatGPTClient-0.1.0-b19-dev-multi-conversation-state.ipa`; SHA `04861c63278d4a8fdf7c655f80b97f01cf8880d9f362d2f3edf1f55aec8ca8bc`.
+- Last Runtime Candidate: `DEV-multi-conversation-state-0.1.0-b19`
+- Reserved Candidate: `DEV-multi-conversation-state-0.1.0-b20` / `0.1.0 (20)` — rapid-switch title presentation correction
+- b19 exact product/config source: `c6accf16c8cf80c719f1e569e356b2bbe664e91e`; tree `9142ebe7c4cd0860428d8fe35ee341507f61d051`
+- b19 CI: Run `33063446367`; Job `98487641474`; success
+- b19 Artifact: `9642715296`; IPA SHA `04861c63278d4a8fdf7c655f80b97f01cf8880d9f362d2f3edf1f55aec8ca8bc`
 
-## b19 exact scope
+## b19 real-device memory evidence
 
-Enrich existing `conversation / resident.*` diagnostics with current-process task VM memory values: physical footprint, resident size, task memory-limit remaining when available, device physical memory, sample status/kernel error. No new timer/polling, no LRU/capacity, no retry/fallback/watchdog, no Repository/auth/protocol/parser/Send-Stream changes.
+Exact exported metadata: `0.1.0 (19)`, candidate b19, source `c6accf16c8cf`, iPhone / iOS17.0.
 
-## Exact source / package evidence
+Observed run:
 
-- Diagnostics blob `5e927b43792535586d8406e1ca5f46cf51c6f041`.
-- Xcode blob `8530571220ba034d49d629031483cccaa6af61a1`.
-- Workflow blob `da751e26c2cd0da15b15f3e7aac9730e3b7158fc`.
-- Build script blob `5cac0fcb7a7a201afa57dfe2895eca84970ffad4`.
-- Source review + syntax-only parse passed before publication.
-- Product diff is exactly four files: `Diagnostics.swift`, Xcode project, workflow, build script. `ConversationFeature.swift` / `ConversationRepository` unchanged.
-- Run `33063446367` checked out exact `c6accf16c8cf80c719f1e569e356b2bbe664e91e`; build/inspect/upload steps all succeeded.
-- Independent Artifact inspection matches sidecar and embedded package identity: `0.1.0 (19)`, candidate `DEV-multi-conversation-state-0.1.0-b19`, source `c6accf16c8cf`, minimum iOS `14.0`, `UIDeviceFamily=[1,2]`, Mach-O arm64.
-- Earlier sibling off-branch commits caused solely by docs checkpoint advancement were never published and are not Candidate sources.
-- `main` advanced from `0ea4d729...` to `3cbb5c9a...` through merged PR #18. Compare evidence shows only `CONVERSATION_LIST_CACHE_PLAN.md`, `DEVELOPMENT_PLAN.md`, `START_HERE.md`, and `UI_INTERACTION_BASELINE.md`; no b19 product/config/state-owner overlap. Open PR count was 0 at publication guard.
+- 165 events, all `info`; 21 recorded HTTP statuses, all HTTP200.
+- 53 process-memory samples, all `processMemorySampleStatus=ok`.
+- resident count progressed from 0 to 8, including several very large detail responses and repeated resident switching.
+- `processPhysFootprintBytes`: approximately 16.3 MiB minimum, 78.1 MiB observed maximum, 48.5 MiB median.
+- `processResidentSizeBytes`: approximately 129.8 MiB observed maximum.
+- at 8 residents, repeated-switch samples were approximately 55–65 MiB physical footprint; final large hidden resident storage was about 64.9 MiB footprint / 115.8 MiB resident size.
+- `residentTotalApproximateTextBytes` reached 8,974,051 bytes, but remains correlation-only and is not capacity evidence.
+- footprint did not increase monotonically with resident count and fell substantially after large request/parse completion, consistent with source ownership that does not retain raw mapping payloads in residents.
+- `processMemoryLimitRemainingBytes` was absent from all 53 Runtime samples. Current source only emits it when returned `TASK_VM_INFO` count includes `limit_bytes_remaining`; therefore exact iOS17 headroom remains Unverified.
+- No HTTP429/error/regression was observed; same-target load coalescing remained active during repeated rapid taps.
+
+### Memory decision
+
+The exact b19 run does **not** provide evidence for an urgent normal-LRU eviction at 8 residents: observed footprint stayed low and stabilized after large loads. Do not manufacture an LRU capacity from physical RAM or approximate text bytes. Because process-limit remaining/headroom was not returned on this iOS17 run, normal LRU capacity remains unfrozen and Work remains Active. Existing memory-warning trimming remains the only evidence-backed eviction behavior for now.
+
+## User-reported rapid-switch title defect
+
+Runtime report: select A; before A Detail loads select B; before B loads select C. Navigation title continues showing A until the currently selected Detail finishes, then changes to the correct title.
+
+Source confirmation:
+
+- `RootViewController` updates `selectedConversationID` before calling `ConversationDetailViewController.showConversation(id:)`.
+- `showConversation(id:)` changes loading rows/state but, when `existingDetail == nil`, does not change `title`.
+- `title = detail.title` currently occurs only in `apply(_:)`, after the target Detail is available.
+- existing selected-ID + `presentationGeneration` completion guards already reject stale hidden A/B presentation completion; network/Repository ownership is not the defect.
+
+### b20 minimal fix contract
+
+On target selection, update the detail navigation title immediately from the already-loaded `ConversationSummary.title` for that target (fallback to the existing neutral `新对话` title if a summary is unexpectedly absent). Loaded Detail may then synchronously/terminally confirm with `detail.title` through existing `apply(_:)`.
+
+Do not change Repository, request cancellation/coalescing, account ownership, scroll anchors, Send/Stream, retry/timer/fallback behavior, or memory residency policy for this title correction.
 
 ## Evidence labels
 
-- b18: Code + Static + CI + Artifact + tested Runtime accepted; Work not Stable.
-- b19 Code: **Yes — exact source published**.
-- b19 Static/source: **Passed**.
-- b19 CI: **Passed — Run `33063446367`, Job `98487641474`**.
-- b19 Artifact: **Produced / identity independently accepted — Artifact `9642715296`**.
-- b19 Runtime/manual/real-device: **Pending**.
+- b18: Code + Static + CI + Artifact + tested Runtime accepted.
+- b19 Code/Static/CI/Artifact: Passed.
+- b19 Runtime/manual/real-device: **Accepted for observed process-footprint / 0→8 resident / repeated-switch matrix; process-limit headroom Unverified**.
+- b20 Code/Static/CI/Artifact/Runtime: Pending.
 - Stable/Frozen: **No**.
 
 ## Remaining gates
 
-- b19 real iPhone footprint/headroom evidence and evidence-backed LRU decision.
+- b20 rapid A→B→C title correctness while A/B Detail requests remain in flight.
+- normal LRU remains unfrozen pending stronger headroom/pressure evidence; b19 shows no immediate footprint pressure at 8 residents on tested iPhone/iOS17.
 - isolated Reload replacement-under-load.
 - natural failed-resident navigation.
 - supported account-switch isolation when route exists.
@@ -51,4 +70,4 @@ Enrich existing `conversation / resident.*` diagnostics with current-process tas
 
 ## Next exact action
 
-Install exact b19 on iPhone/iOS17. Exercise several small and large conversations until multiple residents are retained, repeatedly switch among them, then export diagnostics. Evaluate `processPhysFootprintBytes` and `processMemoryLimitRemainingBytes` together with resident/active/protected counts. Do not choose or implement normal LRU capacity until that Runtime evidence is reviewed.
+Implement b20 as the minimal detail-presentation title correction only, update candidate/build/package identity atomically, run static/CI/Artifact validation, then real-device test rapid A→B→C before prior Details finish. Do not reuse b19.

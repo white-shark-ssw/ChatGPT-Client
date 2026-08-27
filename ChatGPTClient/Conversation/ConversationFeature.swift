@@ -1,4 +1,5 @@
 import CryptoKit
+import Foundation
 import UIKit
 import WebKit
 
@@ -97,6 +98,100 @@ private struct ConversationDetailOperation {
     var completions: [(Result<ConversationDetail, Error>) -> Void]
 }
 
+private struct ConversationListCacheEntry: Codable {
+    let id: String
+    let title: String
+    let updateTime: TimeInterval?
+
+    init(_ summary: ConversationSummary) {
+        id = summary.id
+        title = summary.title
+        updateTime = summary.updateTime
+    }
+
+    var summary: ConversationSummary { ConversationSummary(id: id, title: title, updateTime: updateTime) }
+}
+
+private struct ConversationListCacheSnapshot: Codable {
+    let schemaVersion: Int
+    let lastSuccessfulReconciliationTime: TimeInterval
+    let items: [ConversationListCacheEntry]
+}
+
+private final class ConversationListCacheStore {
+    static let schemaVersion = 1
+
+    enum LoadResult {
+        case missing(durationMs: Double)
+        case loaded(snapshot: ConversationListCacheSnapshot, byteCount: Int, durationMs: Double)
+        case rejected(reason: String, durationMs: Double)
+    }
+
+    private let queue = DispatchQueue(label: "com.whitesharkssw.chatgptclient.conversation-list-cache", qos: .utility)
+    private let fileManager = FileManager.default
+
+    func load(namespace: String, completion: @escaping (LoadResult) -> Void) {
+        queue.async {
+            let startedAt = ProcessInfo.processInfo.systemUptime
+            do {
+                let url = try self.cacheURL(namespace: namespace)
+                guard self.fileManager.fileExists(atPath: url.path) else {
+                    completion(.missing(durationMs: Self.elapsedMs(since: startedAt)))
+                    return
+                }
+                let data = try Data(contentsOf: url)
+                let snapshot: ConversationListCacheSnapshot
+                do {
+                    snapshot = try JSONDecoder().decode(ConversationListCacheSnapshot.self, from: data)
+                } catch {
+                    try? self.fileManager.removeItem(at: url)
+                    completion(.rejected(reason: "decode_failed", durationMs: Self.elapsedMs(since: startedAt)))
+                    return
+                }
+                guard snapshot.schemaVersion == Self.schemaVersion else {
+                    try? self.fileManager.removeItem(at: url)
+                    completion(.rejected(reason: "schema_mismatch", durationMs: Self.elapsedMs(since: startedAt)))
+                    return
+                }
+                completion(.loaded(snapshot: snapshot, byteCount: data.count, durationMs: Self.elapsedMs(since: startedAt)))
+            } catch {
+                completion(.rejected(reason: "read_failed", durationMs: Self.elapsedMs(since: startedAt)))
+            }
+        }
+    }
+
+    func write(namespace: String, summaries: [ConversationSummary], reconciliationTime: TimeInterval, completion: @escaping (Result<(byteCount: Int, durationMs: Double), Error>) -> Void) {
+        queue.async {
+            let startedAt = ProcessInfo.processInfo.systemUptime
+            do {
+                let snapshot = ConversationListCacheSnapshot(schemaVersion: Self.schemaVersion, lastSuccessfulReconciliationTime: reconciliationTime, items: summaries.map(ConversationListCacheEntry.init))
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.sortedKeys]
+                let data = try encoder.encode(snapshot)
+                let url = try self.cacheURL(namespace: namespace)
+                try data.write(to: url, options: .atomic)
+                try self.fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
+                completion(.success((byteCount: data.count, durationMs: Self.elapsedMs(since: startedAt))))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
+    private func cacheURL(namespace: String) throws -> URL {
+        let applicationSupport = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let directory = applicationSupport.appendingPathComponent("ConversationListCache", isDirectory: true)
+        if !fileManager.fileExists(atPath: directory.path) {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication])
+        } else {
+            try fileManager.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: directory.path)
+        }
+        return directory.appendingPathComponent("snapshot-\(namespace).json", isDirectory: false)
+    }
+
+    private static func elapsedMs(since startedAt: TimeInterval) -> Double { (ProcessInfo.processInfo.systemUptime - startedAt) * 1000 }
+}
+
 final class ConversationRepository {
     private static let listURL: URL = {
         var components = URLComponents(string: "https://chatgpt.com/backend-api/conversations")!
@@ -107,9 +202,11 @@ final class ConversationRepository {
         ]
         return components.url!
     }()
+    private static let listCacheFreshnessInterval: TimeInterval = 60
 
     private let diagnostics = DiagnosticsLogger.shared
     private let authSessionStore = AuthSessionStore.shared
+    private let listCacheStore = ConversationListCacheStore()
     private var transientSession: AuthTransientSession?
     private var transientSessionScope: ConversationAccountScope?
     private var transientSessionProbeCompletions: [(Result<ConversationTransportContext, Error>) -> Void]?
@@ -124,6 +221,7 @@ final class ConversationRepository {
     private(set) var conversations: [ConversationSummary] = []
     private(set) var selectedConversationID: String?
     var onAccountScopeReset: (() -> Void)?
+    var onConversationListChanged: (() -> Void)?
 
     var selectedConversation: ConversationDetail? {
         requireMainThread()
@@ -184,11 +282,11 @@ final class ConversationRepository {
         return ConversationDetailOperationSnapshot(generation: operation.generation, kind: operation.kind)
     }
 
-    func loadConversations(completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+    func loadConversations(forceRefresh: Bool = false, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         requireMainThread()
         listOperationGeneration += 1
         let generation = listOperationGeneration
-        let span = diagnostics.startSpan(category: "conversation", name: "listLoad", fields: ["operationGeneration": String(generation)])
+        let span = diagnostics.startSpan(category: "conversation", name: "listLoad", fields: ["operationGeneration": String(generation), "refreshMode": forceRefresh ? "manual" : "automatic"])
         withTransientSession { [weak self] result in
             guard let self else { return }
             self.requireMainThread()
@@ -202,7 +300,7 @@ final class ConversationRepository {
                 span.end(status: "failed", fields: ["stage": "auth", "operationGeneration": String(generation)])
                 completion(.failure(error))
             case .success(let context):
-                self.requestConversationList(using: context, operationGeneration: generation, span: span, completion: completion)
+                self.loadConversationListCache(using: context, operationGeneration: generation, forceRefresh: forceRefresh, span: span, completion: completion)
             }
         }
     }
@@ -401,6 +499,67 @@ final class ConversationRepository {
         for completion in completions { completion(result) }
     }
 
+    private func loadConversationListCache(using context: ConversationTransportContext, operationGeneration: Int, forceRefresh: Bool, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+        requireMainThread()
+        let namespace = Self.cacheNamespace(for: context.scope)
+        diagnostics.info(category: "conversation", name: "listCache.load.started", traceID: span.traceID, fields: ["schema": String(ConversationListCacheStore.schemaVersion), "operationGeneration": String(operationGeneration)])
+        listCacheStore.load(namespace: namespace) { [weak self] loadResult in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                self.requireMainThread()
+                guard self.activeAccountScope == context.scope else {
+                    self.diagnostics.info(category: "conversation", name: "listCache.scopeRejected", traceID: span.traceID, fields: ["scopeHash": "sha256:\(namespace.prefix(12))", "reason": "account_changed"])
+                    span.end(status: "discarded", fields: ["reason": "account_changed", "operationGeneration": String(operationGeneration)])
+                    completion(.failure(ConversationRepositoryError.accountContextChanged))
+                    return
+                }
+                guard self.listOperationGeneration == operationGeneration else {
+                    self.diagnostics.info(category: "conversation", name: "listCache.scopeRejected", traceID: span.traceID, fields: ["scopeHash": "sha256:\(namespace.prefix(12))", "reason": "operation_superseded"])
+                    span.end(status: "discarded", fields: ["reason": "operation_superseded", "operationGeneration": String(operationGeneration)])
+                    completion(.failure(ConversationRepositoryError.operationSuperseded))
+                    return
+                }
+
+                var snapshot: ConversationListCacheSnapshot?
+                switch loadResult {
+                case .missing(let durationMs):
+                    self.diagnostics.info(category: "conversation", name: "listCache.load.completed", traceID: span.traceID, fields: ["hit": "false", "schema": String(ConversationListCacheStore.schemaVersion), "entryCount": "0", "durationMs": String(format: "%.2f", durationMs)])
+                case .rejected(let reason, let durationMs):
+                    self.diagnostics.warning(category: "conversation", name: "listCache.load.completed", fields: ["hit": "false", "schema": String(ConversationListCacheStore.schemaVersion), "entryCount": "0", "durationMs": String(format: "%.2f", durationMs), "reason": reason])
+                case .loaded(let loadedSnapshot, let byteCount, let durationMs):
+                    snapshot = loadedSnapshot
+                    let cachedItems = loadedSnapshot.items.map(\.summary)
+                    let shouldPublish = self.conversations.isEmpty
+                    if shouldPublish {
+                        self.conversations = cachedItems
+                        self.onConversationListChanged?()
+                    }
+                    let age = Self.cacheAge(reconciliationTime: loadedSnapshot.lastSuccessfulReconciliationTime)
+                    self.diagnostics.info(category: "conversation", name: "listCache.load.completed", traceID: span.traceID, fields: ["hit": "true", "schema": String(loadedSnapshot.schemaVersion), "entryCount": String(cachedItems.count), "byteCount": String(byteCount), "ageSeconds": age.isFinite ? String(format: "%.2f", age) : "invalid", "published": shouldPublish ? "true" : "false", "durationMs": String(format: "%.2f", durationMs)])
+                }
+
+                if forceRefresh {
+                    self.diagnostics.info(category: "conversation", name: "listCache.autoRefreshDecision", traceID: span.traceID, fields: ["decision": "manual_bypass", "operationGeneration": String(operationGeneration)])
+                    self.requestConversationList(using: context, operationGeneration: operationGeneration, span: span, completion: completion)
+                    return
+                }
+                if let snapshot {
+                    let age = Self.cacheAge(reconciliationTime: snapshot.lastSuccessfulReconciliationTime)
+                    if age < Self.listCacheFreshnessInterval {
+                        self.diagnostics.info(category: "conversation", name: "listCache.autoRefreshDecision", traceID: span.traceID, fields: ["decision": "recent_skip", "freshnessSeconds": String(Int(Self.listCacheFreshnessInterval)), "ageSeconds": String(format: "%.2f", age), "operationGeneration": String(operationGeneration)])
+                        span.end(status: "ok", fields: ["source": "cache", "networkRequest": "skipped", "itemCount": String(self.conversations.count), "operationGeneration": String(operationGeneration)])
+                        completion(.success(self.conversations))
+                        return
+                    }
+                    self.diagnostics.info(category: "conversation", name: "listCache.autoRefreshDecision", traceID: span.traceID, fields: ["decision": "stale", "freshnessSeconds": String(Int(Self.listCacheFreshnessInterval)), "ageSeconds": age.isFinite ? String(format: "%.2f", age) : "invalid", "operationGeneration": String(operationGeneration)])
+                } else {
+                    self.diagnostics.info(category: "conversation", name: "listCache.autoRefreshDecision", traceID: span.traceID, fields: ["decision": "missing", "operationGeneration": String(operationGeneration)])
+                }
+                self.requestConversationList(using: context, operationGeneration: operationGeneration, span: span, completion: completion)
+            }
+        }
+    }
+
     private func requestConversationList(using context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         requireMainThread()
         let requestFields = ["method": "GET", "route": "conversation_list", "offset": "0", "limit": "28", "order": "updated", "operationGeneration": String(operationGeneration)]
@@ -452,15 +611,91 @@ final class ConversationRepository {
             }
             switch result {
             case .success(let items):
-                self.conversations = items
+                let reconciliation = self.reconcileConversationPage(items)
+                self.conversations = reconciliation.items
+                self.onConversationListChanged?()
+                var reconcileFields = reconciliation.fields
+                reconcileFields["pageCount"] = String(items.count)
+                reconcileFields["resultCount"] = String(reconciliation.items.count)
+                self.diagnostics.info(category: "conversation", name: "listCache.reconcile", traceID: span.traceID, fields: reconcileFields)
                 self.diagnostics.info(category: "conversation", name: "list.response", traceID: span.traceID, fields: statusFields)
-                span.end(status: "ok", fields: statusFields)
-                completion(.success(items))
+                self.persistConversationListCache(scope: context.scope, operationGeneration: operationGeneration, span: span, statusFields: statusFields, completion: completion)
             case .failure(let error):
                 span.end(status: "failed", fields: statusFields)
                 completion(.failure(error))
             }
         }
+    }
+
+    private func persistConversationListCache(scope: ConversationAccountScope, operationGeneration: Int, span: DiagnosticsSpan, statusFields: [String: String], completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+        requireMainThread()
+        let summaries = conversations
+        let reconciliationTime = Date().timeIntervalSince1970
+        let namespace = Self.cacheNamespace(for: scope)
+        listCacheStore.write(namespace: namespace, summaries: summaries, reconciliationTime: reconciliationTime) { [weak self] writeResult in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                self.requireMainThread()
+                guard self.activeAccountScope == scope else {
+                    self.diagnostics.info(category: "conversation", name: "listCache.scopeRejected", traceID: span.traceID, fields: ["scopeHash": "sha256:\(namespace.prefix(12))", "reason": "account_changed_after_write"])
+                    span.end(status: "discarded", fields: ["reason": "account_changed", "operationGeneration": String(operationGeneration)])
+                    completion(.failure(ConversationRepositoryError.accountContextChanged))
+                    return
+                }
+                guard self.listOperationGeneration == operationGeneration else {
+                    self.diagnostics.info(category: "conversation", name: "listCache.scopeRejected", traceID: span.traceID, fields: ["scopeHash": "sha256:\(namespace.prefix(12))", "reason": "operation_superseded_after_write"])
+                    span.end(status: "discarded", fields: ["reason": "operation_superseded", "operationGeneration": String(operationGeneration)])
+                    completion(.failure(ConversationRepositoryError.operationSuperseded))
+                    return
+                }
+                var finalFields = statusFields
+                finalFields["resultCount"] = String(self.conversations.count)
+                switch writeResult {
+                case .success(let result):
+                    self.diagnostics.info(category: "conversation", name: "listCache.write", traceID: span.traceID, fields: ["entryCount": String(summaries.count), "byteCount": String(result.byteCount), "durationMs": String(format: "%.2f", result.durationMs), "schema": String(ConversationListCacheStore.schemaVersion)])
+                    finalFields["cacheWrite"] = "ok"
+                case .failure(let error):
+                    self.diagnostics.warning(category: "conversation", name: "listCache.write", fields: ["entryCount": String(summaries.count), "schema": String(ConversationListCacheStore.schemaVersion), "result": "failed", "errorType": String(describing: type(of: error))])
+                    finalFields["cacheWrite"] = "failed"
+                }
+                span.end(status: "ok", fields: finalFields)
+                completion(.success(self.conversations))
+            }
+        }
+    }
+
+    private func reconcileConversationPage(_ page: [ConversationSummary]) -> (items: [ConversationSummary], fields: [String: String]) {
+        requireMainThread()
+        let previous = conversations
+        var previousByID: [String: ConversationSummary] = [:]
+        var previousIndexByID: [String: Int] = [:]
+        for (index, item) in previous.enumerated() {
+            previousByID[item.id] = item
+            previousIndexByID[item.id] = index
+        }
+
+        var seen = Set<String>()
+        var authoritativePage: [ConversationSummary] = []
+        var insertedCount = 0
+        var updatedCount = 0
+        var unchangedCount = 0
+        for item in page where seen.insert(item.id).inserted {
+            authoritativePage.append(item)
+            if let old = previousByID[item.id] {
+                if old.title != item.title || old.updateTime != item.updateTime { updatedCount += 1 } else { unchangedCount += 1 }
+            } else {
+                insertedCount += 1
+            }
+        }
+
+        var reconciled = authoritativePage
+        for item in previous where !seen.contains(item.id) { reconciled.append(item) }
+        let movedCount = reconciled.enumerated().reduce(0) { count, pair in
+            let (index, item) = pair
+            guard let previousIndex = previousIndexByID[item.id] else { return count }
+            return count + (previousIndex == index ? 0 : 1)
+        }
+        return (reconciled, ["insertedCount": String(insertedCount), "updatedCount": String(updatedCount), "movedCount": String(movedCount), "unchangedCount": String(unchangedCount), "preservedOffPageCount": String(max(0, reconciled.count - authoritativePage.count))])
     }
 
     private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan) {
@@ -700,6 +935,17 @@ final class ConversationRepository {
         return trimmed.isEmpty ? "未命名会话" : trimmed
     }
 
+    private static func cacheNamespace(for scope: ConversationAccountScope) -> String {
+        let value = scope.userID + "\u{0}" + scope.accountID
+        return SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func cacheAge(reconciliationTime: TimeInterval) -> TimeInterval {
+        let now = Date().timeIntervalSince1970
+        guard reconciliationTime > 0, reconciliationTime <= now else { return .infinity }
+        return now - reconciliationTime
+    }
+
     private static func shortHash(_ value: String) -> String { "sha256:" + SHA256.hash(data: Data(value.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined() }
 
     private static func residentStateName(_ state: ConversationResidentState) -> String {
@@ -770,6 +1016,7 @@ final class ConversationSidebarViewController: UITableViewController {
     init(repository: ConversationRepository) {
         self.repository = repository
         super.init(style: .plain)
+        repository.onConversationListChanged = { [weak self] in self?.tableView.reloadData() }
     }
 
     @available(*, unavailable)
@@ -784,7 +1031,7 @@ final class ConversationSidebarViewController: UITableViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversations))
         refreshControl = UIRefreshControl()
         refreshControl?.addTarget(self, action: #selector(reloadConversations), for: .valueChanged)
-        loadConversations()
+        loadConversations(forceRefresh: false)
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { repository.conversations.count }
@@ -815,9 +1062,9 @@ final class ConversationSidebarViewController: UITableViewController {
         tableView.reloadData()
     }
 
-    @objc private func reloadConversations() { loadConversations() }
+    @objc private func reloadConversations() { loadConversations(forceRefresh: true) }
 
-    private func loadConversations() {
+    private func loadConversations(forceRefresh: Bool) {
         guard !loading else { return }
         loading = true
         loadPresentationGeneration += 1
@@ -825,7 +1072,7 @@ final class ConversationSidebarViewController: UITableViewController {
         errorView?.removeFromSuperview()
         errorView = nil
         navigationItem.rightBarButtonItem?.isEnabled = false
-        repository.loadConversations { [weak self] result in
+        repository.loadConversations(forceRefresh: forceRefresh) { [weak self] result in
             guard let self, self.loadPresentationGeneration == presentationGeneration else { return }
             self.loading = false
             self.refreshControl?.endRefreshing()

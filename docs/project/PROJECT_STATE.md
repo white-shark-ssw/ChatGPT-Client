@@ -12,7 +12,31 @@ _Last updated: 2026-08-28._
 - `DEV-multi-conversation-state-0.1.0-b21`: merged Stable multi-conversation read-state baseline for tested Plus/personal iPhone/iOS17 scope; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
 - `DEV-conversation-list-cache-core-0.1.0-b23`: **merged Stable conversation-list cache-core baseline for the recorded Plus/personal iPhone/iOS17 scope**; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`.
 
-Current `main` includes PR #24 at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. The cache-core Work is complete for its recorded tested scope; conditional boundaries below remain explicit Unknown / Unverified rather than blockers.
+The merged accepted baseline remains b23 for conversation-list cache/read behavior. `DEV-conversation-round-count` is the current Active Work layered on that baseline and is not yet Stable.
+
+## Active development — DEV-conversation-round-count
+
+- **Branch**: `dev/conversation-round-count-20260828`.
+- **Activation baseline**: `main@e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`; resume checks through b25 production found no base advance or competing Active development checkpoint.
+- **Scope**: shared derived active-branch round count/answer anchors, authoritative historical message timestamps, visible-text Copy, one adaptive previous/next answer navigation control, and the first centralized persisted Preferences owner.
+- **Authority boundary**: `ConversationRepository` remains sole conversation/list authority. `AppPreferences` owns display/interaction booleans only. `ConversationRoundProjection` is derived from authoritative visible `ConversationDetail.messages`; no second mutable counter/index authority and no new network path.
+- **Type-prefix evidence boundary**: current source does not expose an evidenced authoritative Chat/Work conversation type. The implementation therefore shows only verified `N轮` and does not guess `聊天`/`工作` from presentation text.
+- **Preferences defaults for this Work**: round count On, message timestamps On, answer quick navigation On.
+
+### Rejected b24
+
+`DEV-conversation-round-count-0.1.0-b24` / `0.1.0 (24)` is permanently reserved and **Artifact identity rejected**. Exact product source `3eefc34d9fd279e2913509591446f8f2c4575f41`; Run `33109613596`; Job `98648639389`; uploaded container Artifact `9661977997`, ZIP `sha256:6f24e6bbfee8e7caf1412575df0fd15be0b5ddb57b98c5b54f29317a5dec73c7`. Build logs prove the old package script overrode the intended Candidate with stale `DEV-conversation-list-cache-core-0.1.0-b23` and emitted `ChatGPTClient-0.1.0-b24-dev-conversation-list-cache-core.ipa`, IPA SHA `d635499300b8ab56c23770294d987228ce1af15daf9a436ea867e29c07b665b1`. b24 was not installed/tested and must never be rebuilt or reused.
+
+### Current b25 Runtime Candidate
+
+- **Candidate**: `DEV-conversation-round-count-0.1.0-b25`, `0.1.0 (25)`.
+- **Exact product/config source**: `5e6a61a45b5aae1d6d4ddb210a8685094a2e74a8`.
+- **Exact CI**: Run `33110228837`, Job `98650799276`, success with Xcode 16.4; target `arm64-apple-ios14.0`.
+- **Artifact**: `9662219000`; ZIP `sha256:b6db29921f0b1f2f593611080ffcb8ce6542db820ee73fcf728a124ab25cee57`.
+- **IPA**: `ChatGPTClient-0.1.0-b25-dev-conversation-round-count.ipa`; SHA `91ea6b79b67ac06f45771606d425221e10d80e7992c524be697a73bf320c923b`.
+- **Embedded identity**: Candidate `DEV-conversation-round-count-0.1.0-b25`; source marker `5e6a61a45b5a`.
+- **Packaging correction**: no command-line Candidate override; post-build script reads built app version/build/Candidate, rejects mismatch, derives work slug from the built Candidate and names the IPA accordingly. Workflow Artifact label is not treated as identity authority.
+- **Evidence level**: Code written + static/source/package review + exact CI + identity-valid Artifact. **Runtime/manual/real-device: Not tested. Stable/Frozen: No.**
 
 ## Stable merged multi-conversation baseline — DEV-multi-conversation-state
 
@@ -88,14 +112,16 @@ These are conditional boundaries, not current known defects, and do not justify 
 - `RootViewController`: native compact list/detail navigation owner.
 - `ConversationRepository`: sole authoritative conversation/list/read/recovery owner with account-scoped residents and persistent-list-cache integration.
 - `ConversationListCacheStore`: storage-only persistent summary snapshot + privacy-safe last-verified scope namespace hint.
-- `ConversationDetailViewController`: detail/messages/recovery presentation plus per-conversation historical scroll metadata.
+- `ConversationDetailViewController`: detail/messages/recovery presentation plus per-conversation historical scroll metadata and current b25 metadata/Copy/answer-jump presentation.
+- `AppPreferences`: centralized persisted display/interaction preference owner; not conversation authority.
+- `ConversationRoundProjection`: derived active-branch round/answer projection; not mutable data authority.
 - `DiagnosticsLogger`: accepted structured diagnostics authority.
 - Default persistent `WKWebsiteDataStore`: sole persistent auth-secret authority.
 - `AuthSessionStore`: sole verified auth/account-context owner.
 
 ## Roadmap handoff
 
-`DEV-conversation-list-cache-core` is merged Stable for its recorded b23 tested scope. The next serialized development priority is `DEV-conversation-round-count`, followed by `DEV-send-stream` according to the current development plan. No new development checkpoint is activated merely by closing this Work.
+`DEV-conversation-round-count` is currently Active at identity-valid b25 CI/Artifact and awaits real-device Runtime acceptance. It must not be described as complete or Stable before that gate. After it is accepted/merged, the next serialized development priority is `DEV-send-stream` according to the current development plan.
 
 ## Evidence rule
 

@@ -9,8 +9,8 @@
 - **Task**: 将单 selected conversation detail/request owner 演进为 account-scoped per-conversation resident state，并建立后续 Send/Stream 所需的多会话 freshness、异步所有权与轻量 per-conversation presentation 基线。
 - **Stable product baseline**: `DEV-conversation-recovery-0.1.0-b15`, version `0.1.0 (15)`.
 - **Working branch / PR**: `dev/multi-conversation-state-20260827`; product PR `Not created`.
-- **Current target branch**: `main@2c33dacbefa613292eb89cbf606b0172a241e81e`.
-- **Parallel conflict note**: open PR #17 (`rules/turn-jump-plan-20260827`) is planning-only and targets `DEVELOPMENT_PLAN.md` / `UI_INTERACTION_BASELINE.md`; it does not overlap b19 runtime instrumentation files. Preserve it during final synchronization.
+- **Current target branch**: `main@0ea4d7296f574722ec665b40633ecba42fc680e8`.
+- **Parallel conflict note**: PR #17 has merged into `main`. The merge changed only `docs/project/DEVELOPMENT_PLAN.md` and `docs/project/UI_INTERACTION_BASELINE.md`; it does not overlap b19 runtime instrumentation files. Preserve these planning changes during final synchronization.
 - **Last runtime-tested Candidate**: `DEV-multi-conversation-state-0.1.0-b18`, version `0.1.0 (18)`.
 - **Reserved next Candidate**: `DEV-multi-conversation-state-0.1.0-b19`, version `0.1.0 (19)` — **memory measurement only**.
 
@@ -45,7 +45,7 @@
 
 The current repository only logs `residentApproximateTextBytes`. That is a text-size correlation metric and cannot establish actual process memory or a safe resident capacity. The Work explicitly prohibits choosing normal LRU capacity from that metric.
 
-Apple's documented memory model provides actual process footprint through `task_info` / `task_vm_info_data_t.phys_footprint`, and the same task VM information exposes current memory-limit remaining bytes. b19 will use those current-process values only for diagnostics correlation.
+b19 samples current-process task VM information only for diagnostics correlation so real resident-count transitions can be compared against actual process footprint and task memory headroom.
 
 ### Scope / ownership boundary
 
@@ -57,27 +57,31 @@ Apple's documented memory model provides actual process footprint through `task_
 - Do not persist memory samples outside the existing bounded diagnostics store/export.
 - No raw conversation/message identity or content is added to diagnostics.
 
-### Planned instrumentation
+### Instrumentation design
 
-Use the existing `DiagnosticsLogger` path and enrich only conversation `resident.*` events with current-process memory fields so samples naturally line up with resident-count transitions and visible resident returns:
+The existing `DiagnosticsLogger` enriches only `conversation / resident.*` events. This naturally aligns memory samples with existing resident count / active operation / protected resident fields without adding a new timer or lifecycle owner.
 
-- `processPhysFootprintBytes` — current app physical footprint from `task_vm_info_data_t.phys_footprint`;
-- `processResidentSizeBytes` — task resident size for correlation;
-- `processMemoryLimitRemainingBytes` — current task memory-limit remainder from task VM info;
-- `devicePhysicalMemoryBytes` — device physical-memory total from `ProcessInfo.processInfo.physicalMemory`.
+Fields:
 
-Expected useful sample points already present in product flow include `resident.miss`, `resident.stored`, `resident.hit`, `resident.firstVisible`, `resident.evicted`, and `resident.evictionSkipped`. No new timer/cadence is introduced.
+- `processPhysFootprintBytes` — current app `task_vm_info_data_t.phys_footprint`;
+- `processResidentSizeBytes` — current task `resident_size` correlation;
+- `processMemoryLimitRemainingBytes` — task VM `limit_bytes_remaining` when returned by the current kernel;
+- `devicePhysicalMemoryBytes` — `ProcessInfo.processInfo.physicalMemory`;
+- `processMemorySampleStatus` / `processMemorySampleKernReturn` make sampling failure observable without affecting product behavior.
 
-### Candidate identity / uniqueness gate
+Useful existing sample points include `resident.miss`, `resident.stored`, `resident.hit`, `resident.firstVisible`, `resident.evicted`, and `resident.evictionSkipped`.
+
+### Candidate identity / publication gate
 
 - Candidate: `DEV-multi-conversation-state-0.1.0-b19`.
 - Version/build: `0.1.0 (19)`.
-- Branch: `dev/multi-conversation-state-20260827`.
-- b19 search in repository: no existing identity found before reservation.
-- Branch Actions before reservation: exactly three historical product runs for b16/b17/b18; no b19 run/artifact exists.
-- Current branch at gate: `ca2a18224d4fa10d724380144a21532f3c574da6`.
-- Current main at gate: `2c33dacbefa613292eb89cbf606b0172a241e81e`.
-- Open PR #17 is planning-only and non-overlapping with b19 product instrumentation.
+- b19 repository search before reservation: no existing identity.
+- Branch Actions before reservation: b16/b17/b18 only; no b19 run/artifact.
+- Docs reservation commits: checkpoint `1785bd43b2ae76f40121e0faa7fac009a1703681`; Build Index `593490ddeb82cd173ccde5cfe90d79002545f3d7`.
+- Exact off-branch product commit prepared from parent `593490ddeb82cd173ccde5cfe90d79002545f3d7`: `54a5850b8fc22f18a044c7c80bbff8a5be2cc52e`; tree `fec22bb6eed3e2d64e82ced747116f6ad8bdeaa4`.
+- Exact product diff is 4 files only: `ChatGPTClient/Diagnostics/Diagnostics.swift`, Xcode project, workflow, build script. `ConversationFeature.swift` / Repository are unchanged.
+- Local syntax-only `swiftc -frontend -parse` passed for the exact new task-VM sampling construct. macOS/iPhoneOS SDK/type availability still requires exact CI compile proof.
+- Publication recheck: branch remained `593490d...`; `main` advanced to `0ea4d729...` only through merged PR #17 docs (`DEVELOPMENT_PLAN.md`, `UI_INTERACTION_BASELINE.md`); open PR list is now empty. No product/config overlap exists.
 
 ## User-confirmed future Send/Stream scroll semantics
 
@@ -97,8 +101,8 @@ Expected useful sample points already present in product flow include `resident.
 - **Stable/Frozen**: No.
 
 ### b19
-- **Code written**: Pending publication.
-- **Static/source checks**: Pending.
+- **Code written**: Prepared off-branch; not yet published at this checkpoint revision.
+- **Static/source checks**: Syntax/source review passed; exact iPhoneOS compile pending.
 - **CI passed**: Pending.
 - **Artifact produced**: Pending.
 - **Runtime/manual/real-device memory evidence**: Pending.
@@ -116,6 +120,6 @@ Expected useful sample points already present in product flow include `resident.
 
 ## Next exact action
 
-Implement the smallest b19 diagnostics-only process-memory snapshot in `Diagnostics.swift`, update exact b19 version/build/workflow/package identity atomically, run static/source checks, then publish one exact b19 product source and validate CI/Artifact identity. After Artifact exists, install exact b19 on the target iPhone/iOS17 and exercise a resident-memory matrix before making any LRU decision.
+Publish exact off-branch b19 commit `54a5850b8fc22f18a044c7c80bbff8a5be2cc52e` with one branch ref move, then inspect the one intended b19 CI run and Artifact identity. After exact Artifact exists, install it on iPhone/iOS17 and exercise the resident-memory matrix before making any LRU decision.
 
-Before final Work merge, synchronize with current `main@2c33dacbefa613292eb89cbf606b0172a241e81e` and preserve parallel planning changes including PR #17 if merged.
+Before final Work merge, synchronize with current `main@0ea4d7296f574722ec665b40633ecba42fc680e8` and preserve its merged message-timestamp / adaptive-answer-navigation planning.

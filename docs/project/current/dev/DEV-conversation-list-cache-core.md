@@ -1,0 +1,24 @@
+# DEV-conversation-list-cache-core
+
+## Status
+
+**Active — baseline/branch established; source inspection next**
+
+- **Work ID**: `DEV-conversation-list-cache-core`
+- **Routing aliases / keywords**: `持久化会话列表缓存核心 / 会话列表缓存核心 / 列表缓存 / conversation list cache core`
+- **Task**: Add the first account-scoped persistent conversation-list snapshot and rapid-relaunch automatic-refresh suppression behind the existing authoritative `ConversationRepository`.
+- **User intent / acceptance criteria**: After verified account scope, warm-cache cold start can publish known conversation rows immediately; rapid relaunches inside a small conservative freshness window do not each emit an automatic list request; manual refresh bypasses suppression; stale/missing cache performs one normal refresh; network failure keeps valid cache visible without retry; account scopes never leak; first-page `limit=28` absence never deletes older cached rows; corrupt/incompatible cache is rejected safely; no Detail prefetch/full-body cache/second list authority.
+- **Baseline**: `main@76d88794e9bc0dff9860ace3ad496e319355ee08`; merged Stable `DEV-multi-conversation-state-0.1.0-b21` baseline via PR #23 / merge `2057a6241839afabeaf9b81c9daea24d3a0978f6`; iPhone/iOS17 tested scope, iOS14 deployment minimum.
+- **Working branch / PR / head commit**: `dev/conversation-list-cache-core-20260828`; created from exact baseline `76d88794e9bc0dff9860ace3ad496e319355ee08`; PR not created; branch head initially equals baseline before this checkpoint commit.
+- **Candidate identity**: Not allocated. Current index/source show no `b22` record, but allocation is deferred until a runnable/testable Artifact stage.
+- **Evidence**: `CONVERSATION_LIST_CACHE_PLAN.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_STATE.md`, PR #23 and current `main` establish sequencing and Stable predecessor. Real source inspection is still required before code changes.
+- **Files / modules in scope**: `ConversationRepository` / conversation-list model and list publication path; one small app-private persistence component; exact source files to be confirmed from current branch before edits. Project docs/checkpoint updated when durable truth changes.
+- **State owner / shared dependencies**: `ConversationRepository` remains the sole authoritative list/conversation owner; `AuthSessionStore` remains the sole verified auth/account-context owner; persistent WebKit storage remains sole persistent auth-secret authority.
+- **Frozen / do-not-touch**: No business module is currently Frozen. Do not add persistent auth secrets, Detail/full-body cache, per-row Detail fetch, retry/timer/watchdog/polling, speculative endpoint/header compatibility, or a second list authority.
+- **Parallel conflicts checked against**: `docs/project/current/dev/DEV-multi-conversation-state.md` is a stale residue: real PR #23 is merged and current `PROJECT_STATE.md` marks that Work Stable. It is not treated as an Active dependency. No existing `dev/conversation-list-cache*` development branch found; only historical/planning `rules/conversation-list-cache-plan-20260827`. No `b22` repository record found.
+- **Completed**: Governance startup; required cache plan/roadmap read; predecessor merge/stability verified against real GitHub; unique Work ID selected; parallel branch/candidate naming preflight; dedicated branch created.
+- **Validation state**: Code written: No. Static/local: Not run. CI: Not run. Artifact: None. Runtime/manual/real-device: Not tested. Stable/Frozen: No.
+- **Pending**: Inspect exact current repository/list/auth call sites, list-refresh trigger/UI consumption, filesystem conventions, diagnostics APIs, build/version source and CI; choose the smallest storage/reconciliation design and conservative freshness interval from evidence; then implement and validate.
+- **Next exact action**: Read the exact `ConversationRepository`/list model/list-controller/auth-scope/diagnostics definitions and call sites on `dev/conversation-list-cache-core-20260828`, identify the single owner execution domain and current automatic/manual list-refresh paths, then record the evidence-backed minimal file set before product code changes.
+- **Rejected / do-not-repeat**: No full conversation-body disk cache; no per-row Detail fan-out; no deletion from page-1 absence; no raw account/conversation identifiers in filenames or diagnostics; no automatic retry chain; no timer/polling/watchdog; no speculative ETag/alternate API assumption; no second repository/cache authority.
+- **Open questions / risks**: Exact current owner execution domain and list refresh entry points; exact cache filename/location conventions; initial short freshness interval; whether current list response has validators is Unknown/Unverified and out of scope unless proven; non-personal workspace identity remains Unknown/Unverified.

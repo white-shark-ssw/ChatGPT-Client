@@ -17,8 +17,17 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         setViewController(sidebarNavigationController, for: .primary)
         setViewController(detailNavigationController, for: .secondary)
 
+        repository.onAccountScopeReset = { [weak self] in
+            guard let self else { return }
+            self.sidebarViewController.resetForAccountScopeChange()
+            self.detailViewController.resetForAccountScopeChange()
+            self.show(.primary)
+        }
         sidebarViewController.onSelectConversation = { [weak self] id in
             guard let self else { return }
+            self.repository.selectConversation(id: id)
+            self.detailViewController.loadViewIfNeeded()
+            self.detailViewController.title = self.repository.conversations.first(where: { $0.id == id })?.title ?? "新对话"
             self.detailViewController.showConversation(id: id)
             self.show(.secondary)
         }

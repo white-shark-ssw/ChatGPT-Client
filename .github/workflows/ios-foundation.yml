@@ -1,10 +1,10 @@
-# Candidate: DEV-conversation-recovery-0.1.0-b15
-name: iOS Conversation Recovery
+# Candidate: DEV-multi-conversation-state-0.1.0-b21
+name: iOS Multi-Conversation State
 
 on:
   push:
     branches:
-      - dev/conversation-recovery-20260826
+      - dev/multi-conversation-state-20260827
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-conversation-recovery-0.1.0-b15
+          name: ChatGPTClient-DEV-multi-conversation-state-0.1.0-b21
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

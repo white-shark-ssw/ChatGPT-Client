@@ -23,6 +23,7 @@ struct ConversationMessage {
 struct ConversationDetail {
     let id: String
     let title: String
+    let currentNodeID: String
     let messages: [ConversationMessage]
 }
 
@@ -34,6 +35,8 @@ enum ConversationRepositoryError: LocalizedError {
     case invalidPayload
     case missingCurrentNode
     case conversationIdentityMismatch
+    case accountContextChanged
+    case operationSuperseded
 
     var errorDescription: String? {
         switch self {
@@ -43,9 +46,55 @@ enum ConversationRepositoryError: LocalizedError {
         case .httpStatus(let status): return "服务器请求失败（HTTP \(status)）。"
         case .invalidPayload: return "会话数据格式不完整。"
         case .missingCurrentNode: return "会话缺少当前消息分支。"
-        case .conversationIdentityMismatch: return "返回的会话身份与当前选择不一致。"
+        case .conversationIdentityMismatch: return "返回的会话身份与请求目标不一致。"
+        case .accountContextChanged: return "账户上下文已变化，请重新选择会话。"
+        case .operationSuperseded: return "请求已由较新的操作替换。"
         }
     }
+}
+
+enum ConversationDetailOperationKind: String {
+    case load
+    case sync
+    case reload
+}
+
+struct ConversationDetailOperationSnapshot {
+    let generation: Int
+    let kind: ConversationDetailOperationKind
+}
+
+private struct ConversationAccountScope: Hashable {
+    let userID: String
+    let accountID: String
+
+    init(_ context: AuthAccountContext) {
+        userID = context.userID
+        accountID = context.accountID
+    }
+}
+
+private struct ConversationResidentKey: Hashable {
+    let scope: ConversationAccountScope
+    let conversationID: String
+}
+
+private enum ConversationResidentState {
+    case loaded(ConversationDetail)
+    case failed(Error)
+}
+
+private struct ConversationTransportContext {
+    let session: AuthTransientSession
+    let scope: ConversationAccountScope
+}
+
+private struct ConversationDetailOperation {
+    let generation: Int
+    let kind: ConversationDetailOperationKind
+    let preserveLoadedResidentOnFailure: Bool
+    var task: URLSessionDataTask?
+    var completions: [(Result<ConversationDetail, Error>) -> Void]
 }
 
 final class ConversationRepository {
@@ -62,63 +111,119 @@ final class ConversationRepository {
     private let diagnostics = DiagnosticsLogger.shared
     private let authSessionStore = AuthSessionStore.shared
     private var transientSession: AuthTransientSession?
-    private var selectedDetailOperationGeneration = 0
-    private var selectedDetailTask: URLSessionDataTask?
-    private var selectedDetailTaskGeneration: Int?
+    private var transientSessionScope: ConversationAccountScope?
+    private var transientSessionProbeCompletions: [(Result<ConversationTransportContext, Error>) -> Void]?
+    private var activeAccountScope: ConversationAccountScope?
+    private var residentStates: [ConversationResidentKey: ConversationResidentState] = [:]
+    private var detailOperationGenerations: [ConversationResidentKey: Int] = [:]
+    private var detailOperations: [ConversationResidentKey: ConversationDetailOperation] = [:]
+    private var listOperationGeneration = 0
+    private var accountContextObserver: NSObjectProtocol?
+    private var memoryWarningObserver: NSObjectProtocol?
 
     private(set) var conversations: [ConversationSummary] = []
     private(set) var selectedConversationID: String?
-    private(set) var selectedConversation: ConversationDetail?
+    var onAccountScopeReset: (() -> Void)?
+
+    var selectedConversation: ConversationDetail? {
+        requireMainThread()
+        guard let id = selectedConversationID else { return nil }
+        return residentDetail(id: id)
+    }
+
+    init() {
+        accountContextObserver = NotificationCenter.default.addObserver(forName: AuthSessionStore.accountContextDidChangeNotification, object: authSessionStore, queue: .main) { [weak self] _ in self?.handleAccountContextChange() }
+        memoryWarningObserver = NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in self?.handleMemoryWarning() }
+    }
 
     deinit {
-        selectedDetailTask?.cancel()
+        if let accountContextObserver { NotificationCenter.default.removeObserver(accountContextObserver) }
+        if let memoryWarningObserver { NotificationCenter.default.removeObserver(memoryWarningObserver) }
+        for operation in detailOperations.values { operation.task?.cancel() }
         transientSession?.finishTasksAndInvalidate()
     }
 
     func selectConversation(id: String) {
+        requireMainThread()
+        let previousID = selectedConversationID
         selectedConversationID = id
-        if selectedConversation?.id != id { selectedConversation = nil }
+        if previousID != id {
+            var fields = diagnosticsFields(for: id)
+            fields["previousConversationHash"] = previousID.map(Self.shortHash) ?? "none"
+            fields["activeOperationCount"] = String(detailOperations.count)
+            diagnostics.info(category: "navigation", name: "conversation.selectionChanged", fields: fields)
+        }
+        guard let key = residentKey(for: id), let state = residentStates[key] else {
+            diagnostics.info(category: "conversation", name: "resident.miss", fields: residentDiagnosticsFields(for: id))
+            return
+        }
+        var fields = residentDiagnosticsFields(for: id)
+        fields["state"] = Self.residentStateName(state)
+        diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
     }
 
     func diagnosticsFields(for id: String) -> [String: String] {
+        requireMainThread()
         var fields = ["conversationHash": Self.shortHash(id)]
         if let index = conversations.firstIndex(where: { $0.id == id }) { fields["listPosition"] = String(index + 1) }
         return fields
     }
 
+    func residentDiagnosticsFields(for id: String) -> [String: String] {
+        requireMainThread()
+        var fields = diagnosticsFields(for: id)
+        fields["residentCount"] = String(residentStates.count)
+        fields["activeOperationCount"] = String(detailOperations.count)
+        fields["protectedResidentCount"] = String(protectedResidentKeys().count)
+        return fields
+    }
+
+    func detailOperationSnapshot(for id: String) -> ConversationDetailOperationSnapshot? {
+        requireMainThread()
+        guard let key = residentKey(for: id), let operation = detailOperations[key] else { return nil }
+        return ConversationDetailOperationSnapshot(generation: operation.generation, kind: operation.kind)
+    }
+
     func loadConversations(completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
-        let span = diagnostics.startSpan(category: "conversation", name: "listLoad")
+        requireMainThread()
+        listOperationGeneration += 1
+        let generation = listOperationGeneration
+        let span = diagnostics.startSpan(category: "conversation", name: "listLoad", fields: ["operationGeneration": String(generation)])
         withTransientSession { [weak self] result in
             guard let self else { return }
+            self.requireMainThread()
+            guard generation == self.listOperationGeneration else {
+                span.end(status: "discarded", fields: ["reason": "operation_superseded", "operationGeneration": String(generation)])
+                completion(.failure(ConversationRepositoryError.operationSuperseded))
+                return
+            }
             switch result {
             case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "auth"])
-                self.finishOnMain(.failure(error), completion: completion)
-            case .success(let session):
-                self.requestConversationList(using: session, span: span, completion: completion)
+                span.end(status: "failed", fields: ["stage": "auth", "operationGeneration": String(generation)])
+                completion(.failure(error))
+            case .success(let context):
+                self.requestConversationList(using: context, operationGeneration: generation, span: span, completion: completion)
             }
         }
     }
 
     func loadSelectedConversation(completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        requireMainThread()
         guard let id = selectedConversationID else {
-            finishOnMain(.failure(ConversationRepositoryError.invalidPayload), completion: completion)
+            completion(.failure(ConversationRepositoryError.invalidPayload))
             return
         }
         loadConversation(id: id, completion: completion)
     }
 
-    func syncLatestMessages(completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
-        guard let id = selectedConversationID else {
-            finishOnMain(.failure(ConversationRepositoryError.invalidPayload), completion: completion)
-            return
-        }
-        let previous = selectedConversation
+    func syncLatestMessages(id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        requireMainThread()
+        let previous = residentDetail(id: id)
         var fields = diagnosticsFields(for: id)
         fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
         fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
         let span = diagnostics.startSpan(category: "conversation", name: "latestSync", fields: fields)
-        loadConversation(id: id, replacingCurrentRequest: true) { [weak self] result in
+        loadConversation(id: id, replacingCurrentRequest: true, operationKind: .sync, preserveLoadedResidentOnFailure: true) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let detail):
@@ -127,25 +232,23 @@ final class ConversationRepository {
                 span.end(status: "ok", fields: fields)
                 completion(.success(detail))
             case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": previous == nil ? "empty" : "preserved"])
+                let status = Self.isLifecycleTermination(error) ? "superseded" : "failed"
+                span.end(status: status, fields: ["stage": "detailLoad", "localStateAfter": previous == nil ? "failed" : "preserved"])
                 completion(.failure(error))
             }
         }
     }
 
-    func reloadSelectedConversation(completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
-        guard let id = selectedConversationID else {
-            finishOnMain(.failure(ConversationRepositoryError.invalidPayload), completion: completion)
-            return
-        }
-        let previous = selectedConversation
+    func reloadConversation(id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        requireMainThread()
+        let previous = residentDetail(id: id)
         var fields = diagnosticsFields(for: id)
         fields["previousVisibleMessageCount"] = String(previous?.messages.count ?? 0)
-        fields["localStateBefore"] = previous == nil ? "empty" : "loaded"
+        fields["localStateBefore"] = previous == nil ? "empty_or_failed" : "loaded"
         let span = diagnostics.startSpan(category: "conversation", name: "conversationReload", fields: fields)
-        selectedConversation = nil
+        removeResidentState(id: id)
         diagnostics.info(category: "conversation", name: "conversationReload.stateCleared", traceID: span.traceID, fields: diagnosticsFields(for: id))
-        loadConversation(id: id, replacingCurrentRequest: true) { [weak self] result in
+        loadConversation(id: id, replacingCurrentRequest: true, operationKind: .reload) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let detail):
@@ -154,37 +257,110 @@ final class ConversationRepository {
                 span.end(status: "ok", fields: fields)
                 completion(.success(detail))
             case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "detailLoad", "localStateAfter": "empty"])
+                let status = Self.isLifecycleTermination(error) ? "superseded" : "failed"
+                span.end(status: status, fields: ["stage": "detailLoad", "localStateAfter": "failed"])
                 completion(.failure(error))
             }
         }
     }
 
-    func loadConversation(id: String, replacingCurrentRequest: Bool = false, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
-        selectedConversationID = id
-        selectedDetailOperationGeneration += 1
-        let operationGeneration = selectedDetailOperationGeneration
-        if replacingCurrentRequest { cancelSelectedDetailRequest(id: id, replacementOperationGeneration: operationGeneration) }
-        var fields = diagnosticsFields(for: id)
-        fields["operationGeneration"] = String(operationGeneration)
-        let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: fields)
+    func loadConversation(id: String, replacingCurrentRequest: Bool = false, operationKind: ConversationDetailOperationKind = .load, preserveLoadedResidentOnFailure: Bool = false, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        requireMainThread()
+        if !replacingCurrentRequest, let key = residentKey(for: id) {
+            if appendCompletionIfOperationExists(key: key, id: id, completion: completion) { return }
+            if let state = residentStates[key] {
+                finishResidentHit(id: id, state: state, completion: completion)
+                return
+            }
+        }
+
         withTransientSession { [weak self] result in
             guard let self else { return }
+            self.requireMainThread()
             switch result {
-            case .failure(let error):
-                span.end(status: "failed", fields: ["stage": "auth"])
-                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(error), completion: completion)
-            case .success(let session):
-                self.requestConversationDetail(id: id, operationGeneration: operationGeneration, using: session, span: span, completion: completion)
+            case .failure(let error): completion(.failure(error))
+            case .success(let context):
+                self.beginDetailOperation(id: id, context: context, replacingCurrentRequest: replacingCurrentRequest, operationKind: operationKind, preserveLoadedResidentOnFailure: preserveLoadedResidentOnFailure, completion: completion)
             }
         }
     }
 
-    private func withTransientSession(completion: @escaping (Result<AuthTransientSession, Error>) -> Void) {
-        if let transientSession {
-            completion(.success(transientSession))
+    private func beginDetailOperation(id: String, context: ConversationTransportContext, replacingCurrentRequest: Bool, operationKind: ConversationDetailOperationKind, preserveLoadedResidentOnFailure: Bool, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        requireMainThread()
+        guard validateTransportContext(context) else {
+            completion(.failure(ConversationRepositoryError.accountContextChanged))
             return
         }
+        let key = ConversationResidentKey(scope: context.scope, conversationID: id)
+        if !replacingCurrentRequest {
+            if appendCompletionIfOperationExists(key: key, id: id, completion: completion) { return }
+            if let state = residentStates[key] {
+                finishResidentHit(id: id, state: state, completion: completion)
+                return
+            }
+        }
+
+        let operationGeneration = (detailOperationGenerations[key] ?? 0) + 1
+        detailOperationGenerations[key] = operationGeneration
+        let replacedOperation = replacingCurrentRequest ? detailOperations.removeValue(forKey: key) : nil
+        detailOperations[key] = ConversationDetailOperation(generation: operationGeneration, kind: operationKind, preserveLoadedResidentOnFailure: preserveLoadedResidentOnFailure, task: nil, completions: [completion])
+        let replacedCompletions = replacedOperation.map { cancelReplacedOperation($0, key: key, replacementOperationGeneration: operationGeneration) } ?? []
+
+        var fields = residentDiagnosticsFields(for: id)
+        fields["operationGeneration"] = String(operationGeneration)
+        fields["operationKind"] = operationKind.rawValue
+        let span = diagnostics.startSpan(category: "conversation", name: "detailLoad", fields: fields)
+        requestConversationDetail(key: key, operationGeneration: operationGeneration, using: context, span: span)
+        for replacedCompletion in replacedCompletions { replacedCompletion(.failure(ConversationRepositoryError.operationSuperseded)) }
+    }
+
+    private func finishResidentHit(id: String, state: ConversationResidentState, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+        var fields = residentDiagnosticsFields(for: id)
+        fields["state"] = Self.residentStateName(state)
+        diagnostics.info(category: "conversation", name: "resident.hit", fields: fields)
+        switch state {
+        case .loaded(let detail): completion(.success(detail))
+        case .failed(let error): completion(.failure(error))
+        }
+    }
+
+    private func appendCompletionIfOperationExists(key: ConversationResidentKey, id: String, completion: @escaping (Result<ConversationDetail, Error>) -> Void) -> Bool {
+        guard var operation = detailOperations[key] else { return false }
+        operation.completions.append(completion)
+        detailOperations[key] = operation
+        var fields = residentDiagnosticsFields(for: id)
+        fields["operationGeneration"] = String(operation.generation)
+        fields["operationKind"] = operation.kind.rawValue
+        fields["completionCount"] = String(operation.completions.count)
+        diagnostics.info(category: "conversation", name: "detail.coalesced", fields: fields)
+        return true
+    }
+
+    private func withTransientSession(completion: @escaping (Result<ConversationTransportContext, Error>) -> Void) {
+        requireMainThread()
+        if let transientSession, let transientSessionScope {
+            if let verifiedContext = authSessionStore.verifiedAccountContext() {
+                let verifiedScope = ConversationAccountScope(verifiedContext)
+                bindVerifiedAccountScope(verifiedScope)
+                if verifiedScope == transientSessionScope, activeAccountScope == verifiedScope {
+                    completion(.success(ConversationTransportContext(session: transientSession, scope: transientSessionScope)))
+                    return
+                }
+                transientSession.invalidateAndCancel()
+                self.transientSession = nil
+                self.transientSessionScope = nil
+            } else if activeAccountScope == transientSessionScope {
+                completion(.success(ConversationTransportContext(session: transientSession, scope: transientSessionScope)))
+                return
+            }
+        }
+        if transientSessionProbeCompletions != nil {
+            transientSessionProbeCompletions?.append(completion)
+            diagnostics.info(category: "conversation", name: "authContext.coalesced", fields: ["completionCount": String(transientSessionProbeCompletions?.count ?? 0)])
+            return
+        }
+
+        transientSessionProbeCompletions = [completion]
         diagnostics.info(category: "conversation", name: "authContext.requested")
         let cookieStore = WKWebsiteDataStore.default().httpCookieStore
         authSessionStore.probeAccountContext(using: cookieStore, createTransientSession: true) { [weak self] state, session in
@@ -192,162 +368,312 @@ final class ConversationRepository {
                 session?.finishTasksAndInvalidate()
                 return
             }
-            guard state == .verified, let session else {
+            guard state == .verified, let session, let returnedContext = self.authSessionStore.verifiedAccountContext() else {
                 session?.finishTasksAndInvalidate()
-                completion(.failure(ConversationRepositoryError.authenticationNotAvailable))
+                DispatchQueue.main.async { self.finishTransientSessionProbe(.failure(ConversationRepositoryError.authenticationNotAvailable)) }
                 return
             }
-            self.transientSession = session
-            completion(.success(session))
+            let returnedScope = ConversationAccountScope(returnedContext)
+            DispatchQueue.main.async {
+                self.requireMainThread()
+                guard let currentContext = self.authSessionStore.verifiedAccountContext(), ConversationAccountScope(currentContext) == returnedScope else {
+                    session.invalidateAndCancel()
+                    self.finishTransientSessionProbe(.failure(ConversationRepositoryError.accountContextChanged))
+                    return
+                }
+                self.bindVerifiedAccountScope(returnedScope)
+                guard self.activeAccountScope == returnedScope else {
+                    session.invalidateAndCancel()
+                    self.finishTransientSessionProbe(.failure(ConversationRepositoryError.accountContextChanged))
+                    return
+                }
+                self.transientSession = session
+                self.transientSessionScope = returnedScope
+                self.finishTransientSessionProbe(.success(ConversationTransportContext(session: session, scope: returnedScope)))
+            }
         }
     }
 
-    private func requestConversationList(using session: AuthTransientSession, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
-        diagnostics.info(category: "conversation", name: "list.request", traceID: span.traceID, fields: ["method": "GET", "route": "conversation_list", "offset": "0", "limit": "28", "order": "updated"])
+    private func finishTransientSessionProbe(_ result: Result<ConversationTransportContext, Error>) {
+        requireMainThread()
+        let completions = transientSessionProbeCompletions ?? []
+        transientSessionProbeCompletions = nil
+        for completion in completions { completion(result) }
+    }
+
+    private func requestConversationList(using context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+        requireMainThread()
+        let requestFields = ["method": "GET", "route": "conversation_list", "offset": "0", "limit": "28", "order": "updated", "operationGeneration": String(operationGeneration)]
+        diagnostics.info(category: "conversation", name: "list.request", traceID: span.traceID, fields: requestFields)
         var request = URLRequest(url: Self.listURL)
         request.httpMethod = "GET"
-        session.dataTask(with: request) { [weak self] data, response, error in
+        context.session.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             if let error {
                 self.diagnostics.error(category: "conversation", name: "list.failed", traceID: span.traceID, error: error)
-                span.end(status: "failed", fields: ["stage": "network"])
-                self.finishOnMain(.failure(error), completion: completion)
+                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "network"], result: .failure(error), completion: completion)
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
-                span.end(status: "failed", fields: ["stage": "response", "reason": "non_http_response"])
-                self.finishOnMain(.failure(ConversationRepositoryError.invalidResponse), completion: completion)
+                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "response", "reason": "non_http_response"], result: .failure(ConversationRepositoryError.invalidResponse), completion: completion)
                 return
             }
             guard (200..<300).contains(response.statusCode) else {
-                span.end(status: "failed", fields: ["stage": "response", "httpStatus": String(response.statusCode)])
-                self.finishOnMain(.failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
+                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "response", "httpStatus": String(response.statusCode)], result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
                 return
             }
             guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let rawItems = payload["items"] as? [[String: Any]] else {
-                span.end(status: "failed", fields: ["stage": "parse", "reason": "missing_items"])
-                self.finishOnMain(.failure(ConversationRepositoryError.invalidPayload), completion: completion)
+                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "parse", "reason": "missing_items"], result: .failure(ConversationRepositoryError.invalidPayload), completion: completion)
                 return
             }
-
             let items = rawItems.compactMap(Self.parseConversationSummary)
-            var fields = ["httpStatus": String(response.statusCode), "byteCount": String(data.count), "itemCount": String(items.count)]
+            var fields = ["httpStatus": String(response.statusCode), "byteCount": String(data.count), "itemCount": String(items.count), "operationGeneration": String(operationGeneration)]
             if let total = payload["total"] as? NSNumber { fields["totalCount"] = total.stringValue }
-            self.diagnostics.info(category: "conversation", name: "list.response", traceID: span.traceID, fields: fields)
-            span.end(status: "ok", fields: fields)
-            DispatchQueue.main.async {
+            self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: fields, result: .success(items), completion: completion)
+        }
+    }
+
+    private func finishListOperation(context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, statusFields: [String: String], result: Result<[ConversationSummary], Error>, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+        DispatchQueue.main.async {
+            self.requireMainThread()
+            guard self.activeAccountScope == context.scope else {
+                var fields = statusFields
+                fields["reason"] = "account_changed"
+                span.end(status: "discarded", fields: fields)
+                completion(.failure(ConversationRepositoryError.accountContextChanged))
+                return
+            }
+            guard self.listOperationGeneration == operationGeneration else {
+                var fields = statusFields
+                fields["reason"] = "operation_superseded"
+                span.end(status: "discarded", fields: fields)
+                completion(.failure(ConversationRepositoryError.operationSuperseded))
+                return
+            }
+            switch result {
+            case .success(let items):
                 self.conversations = items
-                self.finishOnMain(.success(items), completion: completion)
+                self.diagnostics.info(category: "conversation", name: "list.response", traceID: span.traceID, fields: statusFields)
+                span.end(status: "ok", fields: statusFields)
+                completion(.success(items))
+            case .failure(let error):
+                span.end(status: "failed", fields: statusFields)
+                completion(.failure(error))
             }
         }
     }
 
-    private func requestConversationDetail(id: String, operationGeneration: Int, using session: AuthTransientSession, span: DiagnosticsSpan, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+    private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan) {
+        requireMainThread()
+        let id = key.conversationID
         let detailURL = URL(string: "https://chatgpt.com/backend-api/conversation")!.appendingPathComponent(id)
         var requestFields = diagnosticsFields(for: id)
         requestFields["method"] = "GET"
         requestFields["route"] = "conversation_detail"
         requestFields["operationGeneration"] = String(operationGeneration)
+        if let operation = detailOperations[key] { requestFields["operationKind"] = operation.kind.rawValue }
         diagnostics.info(category: "conversation", name: "detail.request", traceID: span.traceID, fields: requestFields)
         var request = URLRequest(url: detailURL)
         request.httpMethod = "GET"
-        let task = session.dataTask(with: request) { [weak self] data, response, error in
+        let callbackFields = requestFields
+        let task = context.session.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
-            DispatchQueue.main.async { [weak self] in self?.clearSelectedDetailTask(operationGeneration: operationGeneration) }
             if let error {
                 let nsError = error as NSError
                 if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
-                    var fields = self.diagnosticsFields(for: id)
-                    fields["operationGeneration"] = String(operationGeneration)
-                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: fields)
-                    span.end(status: "cancelled", fields: fields)
+                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)
+                    span.end(status: "cancelled", fields: callbackFields)
                     return
                 }
-                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: self.diagnosticsFields(for: id))
+                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: callbackFields)
                 span.end(status: "failed", fields: ["stage": "network"])
-                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(error), completion: completion)
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
                 span.end(status: "failed", fields: ["stage": "response", "reason": "non_http_response"])
-                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.invalidResponse), completion: completion)
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.invalidResponse))
                 return
             }
             guard (200..<300).contains(response.statusCode) else {
                 span.end(status: "failed", fields: ["stage": "response", "httpStatus": String(response.statusCode)])
-                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)))
                 return
             }
             guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let mapping = payload["mapping"] as? [String: Any], let currentNode = payload["current_node"] as? String, !currentNode.isEmpty else {
                 span.end(status: "failed", fields: ["stage": "parse", "reason": "missing_mapping_or_current_node"])
-                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.missingCurrentNode), completion: completion)
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.missingCurrentNode))
                 return
             }
             if let returnedID = payload["conversation_id"] as? String, !returnedID.isEmpty, returnedID != id {
                 span.end(status: "failed", fields: ["stage": "identity", "reason": "conversation_identity_mismatch"])
-                self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.conversationIdentityMismatch), completion: completion)
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.conversationIdentityMismatch))
                 return
             }
 
             let messages = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
             let title = Self.normalizedTitle(payload["title"] as? String)
-            let detail = ConversationDetail(id: id, title: title, messages: messages)
-            var fields = self.diagnosticsFields(for: id)
+            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages)
+            var fields = callbackFields
             fields["httpStatus"] = String(response.statusCode)
             fields["byteCount"] = String(data.count)
             fields["mappingCount"] = String(mapping.count)
             fields["visibleMessageCount"] = String(messages.count)
-            fields["operationGeneration"] = String(operationGeneration)
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
-            self.finishDetailOperation(id: id, operationGeneration: operationGeneration, result: .success(detail), completion: completion)
+            self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .success(detail))
         }
-        selectedDetailTask = task
-        selectedDetailTaskGeneration = operationGeneration
+        guard var operation = detailOperations[key], operation.generation == operationGeneration else {
+            task.cancel()
+            return
+        }
+        operation.task = task
+        detailOperations[key] = operation
     }
 
-    private func cancelSelectedDetailRequest(id: String, replacementOperationGeneration: Int) {
-        guard let task = selectedDetailTask else { return }
-        let cancelledOperationGeneration = selectedDetailTaskGeneration
-        selectedDetailTask = nil
-        selectedDetailTaskGeneration = nil
-        var fields = diagnosticsFields(for: id)
-        if let cancelledOperationGeneration { fields["cancelledOperationGeneration"] = String(cancelledOperationGeneration) }
+    private func cancelReplacedOperation(_ operation: ConversationDetailOperation, key: ConversationResidentKey, replacementOperationGeneration: Int) -> [(Result<ConversationDetail, Error>) -> Void] {
+        var fields = diagnosticsFields(for: key.conversationID)
+        fields["cancelledOperationGeneration"] = String(operation.generation)
         fields["replacementOperationGeneration"] = String(replacementOperationGeneration)
+        fields["cancelledOperationKind"] = operation.kind.rawValue
+        fields["taskPresent"] = operation.task == nil ? "false" : "true"
         diagnostics.info(category: "conversation", name: "detail.cancel.requested", fields: fields)
-        task.cancel()
+        operation.task?.cancel()
+        return operation.completions
     }
 
-    private func clearSelectedDetailTask(operationGeneration: Int) {
-        guard selectedDetailTaskGeneration == operationGeneration else { return }
-        selectedDetailTask = nil
-        selectedDetailTaskGeneration = nil
-    }
-
-    private func finishDetailOperation(id: String, operationGeneration: Int, result: Result<ConversationDetail, Error>, completion: @escaping (Result<ConversationDetail, Error>) -> Void) {
+    private func finishDetailOperation(key: ConversationResidentKey, operationGeneration: Int, result: Result<ConversationDetail, Error>) {
         DispatchQueue.main.async {
-            guard self.selectedConversationID == id else {
-                self.logDiscardedDetail(id: id, operationGeneration: operationGeneration, reason: "selection_changed")
+            self.requireMainThread()
+            guard self.activeAccountScope == key.scope else {
+                self.logDiscardedDetail(key: key, operationGeneration: operationGeneration, reason: "account_changed")
                 return
             }
-            guard self.selectedDetailOperationGeneration == operationGeneration else {
-                self.logDiscardedDetail(id: id, operationGeneration: operationGeneration, reason: "operation_superseded")
+            guard let operation = self.detailOperations[key], operation.generation == operationGeneration else {
+                self.logDiscardedDetail(key: key, operationGeneration: operationGeneration, reason: "operation_superseded")
                 return
             }
-            if case .success(let detail) = result { self.selectedConversation = detail }
-            completion(result)
+            self.detailOperations.removeValue(forKey: key)
+            switch result {
+            case .success(let detail):
+                self.residentStates[key] = .loaded(detail)
+                var fields = self.residentDiagnosticsFields(for: key.conversationID)
+                fields["residentApproximateTextBytes"] = String(Self.approximateTextBytes(detail))
+                fields["residentTotalApproximateTextBytes"] = String(self.residentStates.values.reduce(0) { $0 + Self.approximateTextBytes($1) })
+                fields["visibility"] = self.selectedConversationID == key.conversationID ? "foreground" : "hidden"
+                fields["state"] = "loaded"
+                fields["operationKind"] = operation.kind.rawValue
+                self.diagnostics.info(category: "conversation", name: "resident.stored", fields: fields)
+            case .failure(let error):
+                let hasLoadedResident: Bool
+                if let existingState = self.residentStates[key], case .loaded = existingState { hasLoadedResident = true } else { hasLoadedResident = false }
+                if !operation.preserveLoadedResidentOnFailure || !hasLoadedResident { self.residentStates[key] = .failed(error) }
+                var fields = self.residentDiagnosticsFields(for: key.conversationID)
+                fields["state"] = operation.preserveLoadedResidentOnFailure && hasLoadedResident ? "loaded_preserved" : "failed"
+                fields["operationKind"] = operation.kind.rawValue
+                self.diagnostics.info(category: "conversation", name: "resident.terminal", fields: fields)
+            }
+            for completion in operation.completions { completion(result) }
         }
     }
 
-    private func logDiscardedDetail(id: String, operationGeneration: Int, reason: String) {
-        var fields = diagnosticsFields(for: id)
+    private func logDiscardedDetail(key: ConversationResidentKey, operationGeneration: Int, reason: String) {
+        var fields = diagnosticsFields(for: key.conversationID)
         fields["operationGeneration"] = String(operationGeneration)
-        fields["currentOperationGeneration"] = String(selectedDetailOperationGeneration)
+        fields["currentOperationGeneration"] = String(detailOperationGenerations[key] ?? 0)
         fields["reason"] = reason
         diagnostics.info(category: "conversation", name: "detail.discarded", fields: fields)
     }
 
+    private func validateTransportContext(_ context: ConversationTransportContext) -> Bool {
+        requireMainThread()
+        if let verifiedContext = authSessionStore.verifiedAccountContext() {
+            let verifiedScope = ConversationAccountScope(verifiedContext)
+            bindVerifiedAccountScope(verifiedScope)
+            return verifiedScope == context.scope && activeAccountScope == context.scope && transientSessionScope == context.scope
+        }
+        return activeAccountScope == context.scope && transientSessionScope == context.scope
+    }
+
+    private func handleAccountContextChange() {
+        requireMainThread()
+        guard let context = authSessionStore.verifiedAccountContext() else {
+            if activeAccountScope != nil { resetAccountScope(to: nil) }
+            return
+        }
+        bindVerifiedAccountScope(ConversationAccountScope(context))
+    }
+
+    private func bindVerifiedAccountScope(_ scope: ConversationAccountScope) {
+        requireMainThread()
+        if let activeAccountScope {
+            if activeAccountScope != scope { resetAccountScope(to: scope) }
+        } else {
+            activeAccountScope = scope
+        }
+    }
+
+    private func resetAccountScope(to newScope: ConversationAccountScope?) {
+        requireMainThread()
+        let removedResidentCount = residentStates.count
+        let cancelledOperations = Array(detailOperations.values)
+        listOperationGeneration += 1
+        for operation in cancelledOperations { operation.task?.cancel() }
+        detailOperations.removeAll()
+        detailOperationGenerations.removeAll()
+        residentStates.removeAll()
+        conversations = []
+        selectedConversationID = nil
+        transientSession?.invalidateAndCancel()
+        transientSession = nil
+        transientSessionScope = nil
+        activeAccountScope = newScope
+        diagnostics.info(category: "conversation", name: "accountScope.reset", fields: ["residentRemovedCount": String(removedResidentCount), "operationCancelledCount": String(cancelledOperations.count), "nextScopeVerified": newScope == nil ? "false" : "true"])
+        onAccountScopeReset?()
+        for operation in cancelledOperations {
+            for completion in operation.completions { completion(.failure(ConversationRepositoryError.accountContextChanged)) }
+        }
+    }
+
+    private func handleMemoryWarning() {
+        requireMainThread()
+        let protectedKeys = protectedResidentKeys()
+        let evictedKeys = residentStates.keys.filter { !protectedKeys.contains($0) }
+        guard !evictedKeys.isEmpty else {
+            diagnostics.warning(category: "conversation", name: "resident.evictionSkipped", fields: ["reason": "memory_warning", "residentCount": String(residentStates.count), "protectedResidentCount": String(protectedKeys.count), "activeOperationCount": String(detailOperations.count)])
+            return
+        }
+        for key in evictedKeys { residentStates.removeValue(forKey: key) }
+        diagnostics.warning(category: "conversation", name: "resident.evicted", fields: ["reason": "memory_warning", "evictedCount": String(evictedKeys.count), "residentCount": String(residentStates.count), "protectedResidentCount": String(protectedKeys.count), "activeOperationCount": String(detailOperations.count)])
+    }
+
+    private func protectedResidentKeys() -> Set<ConversationResidentKey> {
+        requireMainThread()
+        var keys = Set(detailOperations.keys)
+        if let selectedConversationID, let selectedKey = residentKey(for: selectedConversationID) { keys.insert(selectedKey) }
+        return keys.intersection(Set(residentStates.keys))
+    }
+
+    private func residentKey(for id: String) -> ConversationResidentKey? {
+        requireMainThread()
+        guard let activeAccountScope else { return nil }
+        return ConversationResidentKey(scope: activeAccountScope, conversationID: id)
+    }
+
+    private func residentDetail(id: String) -> ConversationDetail? {
+        requireMainThread()
+        guard let key = residentKey(for: id), let state = residentStates[key], case .loaded(let detail) = state else { return nil }
+        return detail
+    }
+
+    private func removeResidentState(id: String) {
+        requireMainThread()
+        guard let key = residentKey(for: id) else { return }
+        residentStates.removeValue(forKey: key)
+    }
+
     private func recoveryDiffFields(previous: ConversationDetail?, current: ConversationDetail) -> [String: String] {
+        requireMainThread()
         let previousMessages = previous?.messages ?? []
         var previousByID: [String: ConversationMessage] = [:]
         var currentByID: [String: ConversationMessage] = [:]
@@ -359,18 +685,10 @@ final class ConversationRepository {
             guard let old = previousByID[message.id] else { return count }
             return count + ((old.role != message.role || old.text != message.text || old.createTime != message.createTime) ? 1 : 0)
         }
-        return [
-            "previousVisibleMessageCount": String(previousMessages.count),
-            "currentVisibleMessageCount": String(current.messages.count),
-            "addedVisibleMessageCount": String(addedCount),
-            "removedVisibleMessageCount": String(removedCount),
-            "changedVisibleMessageCount": String(changedCount)
-        ]
+        return ["previousVisibleMessageCount": String(previousMessages.count), "currentVisibleMessageCount": String(current.messages.count), "addedVisibleMessageCount": String(addedCount), "removedVisibleMessageCount": String(removedCount), "changedVisibleMessageCount": String(changedCount)]
     }
 
-    private func finishOnMain<T>(_ result: Result<T, Error>, completion: @escaping (Result<T, Error>) -> Void) {
-        if Thread.isMainThread { completion(result) } else { DispatchQueue.main.async { completion(result) } }
-    }
+    private func requireMainThread() { precondition(Thread.isMainThread, "ConversationRepository mutable state must stay on main thread") }
 
     private static func parseConversationSummary(_ item: [String: Any]) -> ConversationSummary? {
         guard let id = item["id"] as? String, !id.isEmpty else { return nil }
@@ -382,8 +700,28 @@ final class ConversationRepository {
         return trimmed.isEmpty ? "未命名会话" : trimmed
     }
 
-    private static func shortHash(_ value: String) -> String {
-        "sha256:" + SHA256.hash(data: Data(value.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
+    private static func shortHash(_ value: String) -> String { "sha256:" + SHA256.hash(data: Data(value.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined() }
+
+    private static func residentStateName(_ state: ConversationResidentState) -> String {
+        switch state {
+        case .loaded: return "loaded"
+        case .failed: return "failed"
+        }
+    }
+
+    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int { detail.messages.reduce(0) { $0 + $1.text.utf8.count } }
+
+    private static func approximateTextBytes(_ state: ConversationResidentState) -> Int {
+        if case .loaded(let detail) = state { return approximateTextBytes(detail) }
+        return 0
+    }
+
+    static func isLifecycleTermination(_ error: Error) -> Bool {
+        guard let repositoryError = error as? ConversationRepositoryError else { return false }
+        switch repositoryError {
+        case .accountContextChanged, .operationSuperseded: return true
+        default: return false
+        }
     }
 
     private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> [ConversationMessage] {
@@ -426,6 +764,7 @@ final class ConversationSidebarViewController: UITableViewController {
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
     private var loading = false
+    private var loadPresentationGeneration = 0
     private var errorView: UIView?
 
     init(repository: ConversationRepository) {
@@ -434,9 +773,7 @@ final class ConversationSidebarViewController: UITableViewController {
     }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -450,9 +787,7 @@ final class ConversationSidebarViewController: UITableViewController {
         loadConversations()
     }
 
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        repository.conversations.count
-    }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { repository.conversations.count }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let item = repository.conversations[indexPath.row]
@@ -466,32 +801,39 @@ final class ConversationSidebarViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let item = repository.conversations[indexPath.row]
-        repository.selectConversation(id: item.id)
+        onSelectConversation?(repository.conversations[indexPath.row].id)
         tableView.reloadData()
-        diagnostics.info(category: "navigation", name: "conversation.selected", fields: repository.diagnosticsFields(for: item.id))
-        onSelectConversation?(item.id)
     }
 
-    @objc private func reloadConversations() {
-        loadConversations()
+    func resetForAccountScopeChange() {
+        loadPresentationGeneration += 1
+        loading = false
+        refreshControl?.endRefreshing()
+        navigationItem.rightBarButtonItem?.isEnabled = true
+        errorView?.removeFromSuperview()
+        errorView = nil
+        tableView.reloadData()
     }
+
+    @objc private func reloadConversations() { loadConversations() }
 
     private func loadConversations() {
         guard !loading else { return }
         loading = true
+        loadPresentationGeneration += 1
+        let presentationGeneration = loadPresentationGeneration
         errorView?.removeFromSuperview()
         errorView = nil
         navigationItem.rightBarButtonItem?.isEnabled = false
         repository.loadConversations { [weak self] result in
-            guard let self else { return }
+            guard let self, self.loadPresentationGeneration == presentationGeneration else { return }
             self.loading = false
             self.refreshControl?.endRefreshing()
             self.navigationItem.rightBarButtonItem?.isEnabled = true
             switch result {
-            case .success:
-                self.tableView.reloadData()
+            case .success: self.tableView.reloadData()
             case .failure(let error):
+                guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.showError(error)
             }
         }
@@ -540,6 +882,11 @@ final class ConversationSidebarViewController: UITableViewController {
 }
 
 final class ConversationDetailViewController: UIViewController, UITableViewDataSource {
+    private struct ScrollAnchor {
+        let messageID: String
+        let relativeOffset: CGFloat
+    }
+
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
     private let tableView = UITableView(frame: .zero, style: .plain)
@@ -551,7 +898,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var syncToastHideWorkItem: DispatchWorkItem?
     private var messages: [ConversationMessage] = []
     private var loadingConversationID: String?
-    private var recoveryActionInProgress = false
+    private var presentationGeneration = 0
+    private var displayedConversationID: String?
+    private var scrollAnchorsByConversationID: [String: ScrollAnchor] = [:]
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -559,9 +908,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -634,41 +981,135 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func showConversation(id: String) {
-        guard loadingConversationID != id || repository.selectedConversation?.id != id else { return }
+        guard repository.selectedConversationID == id else { return }
+        captureScrollAnchorForDisplayedConversation()
+        displayedConversationID = id
+        presentationGeneration += 1
+        let currentPresentationGeneration = presentationGeneration
+        let presentationStart = ProcessInfo.processInfo.systemUptime
+        let operationSnapshot = repository.detailOperationSnapshot(for: id)
+        let existingDetail = repository.selectedConversation
+        let previousMessages = existingDetail?.messages ?? []
         hideSyncToast()
-        recoveryActionInProgress = false
-        repository.selectConversation(id: id)
-        loadingConversationID = id
-        messages = []
-        tableView.reloadData()
-        stateLabel.text = "正在读取会话…"
-        stateLabel.isHidden = false
-        retryButton.isHidden = true
-        activityIndicator.startAnimating()
+
+        if let detail = existingDetail {
+            loadingConversationID = operationSnapshot == nil ? nil : id
+            activityIndicator.stopAnimating()
+            apply(detail, captureCurrentAnchor: false)
+            logResidentFirstVisible(id: id, startedAt: presentationStart, operationKind: operationSnapshot?.kind)
+        } else {
+            loadingConversationID = id
+            messages = []
+            tableView.reloadData()
+            resetScrollPositionToTop()
+            stateLabel.text = operationSnapshot?.kind == .reload ? "正在重新加载会话…" : "正在读取会话…"
+            stateLabel.isHidden = false
+            retryButton.isHidden = true
+            activityIndicator.startAnimating()
+        }
+
+        if operationSnapshot?.kind == .sync { showSyncToast("正在同步最新消息…") }
         updateConversationMenu()
+        if operationSnapshot == nil, existingDetail != nil { return }
+
+        let observedKind = operationSnapshot?.kind ?? .load
         repository.loadConversation(id: id) { [weak self] result in
-            guard let self, self.repository.selectedConversationID == id else { return }
-            self.loadingConversationID = nil
-            self.activityIndicator.stopAnimating()
-            switch result {
-            case .success(let detail):
-                self.title = detail.title
-                self.messages = detail.messages
-                self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
-                self.stateLabel.isHidden = !detail.messages.isEmpty
-                self.retryButton.isHidden = true
-                self.tableView.reloadData()
-            case .failure(let error):
-                self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
-                self.stateLabel.isHidden = false
-                self.retryButton.isHidden = false
-            }
-            self.updateConversationMenu()
+            guard let self, self.repository.selectedConversationID == id, self.presentationGeneration == currentPresentationGeneration else { return }
+            self.finishVisibleOperation(id: id, kind: observedKind, previousMessages: previousMessages, result: result)
         }
     }
 
+    func resetForAccountScopeChange() {
+        presentationGeneration += 1
+        hideSyncToast()
+        loadingConversationID = nil
+        displayedConversationID = nil
+        scrollAnchorsByConversationID.removeAll()
+        activityIndicator.stopAnimating()
+        title = "新对话"
+        messages = []
+        tableView.reloadData()
+        resetScrollPositionToTop()
+        stateLabel.text = "从侧边栏选择一个会话"
+        stateLabel.isHidden = false
+        retryButton.isHidden = true
+        updateConversationMenu()
+    }
+
+    private func apply(_ detail: ConversationDetail, captureCurrentAnchor: Bool = true) {
+        if captureCurrentAnchor, displayedConversationID == detail.id, !messages.isEmpty { captureScrollAnchor(for: detail.id) }
+        displayedConversationID = detail.id
+        title = detail.title
+        messages = detail.messages
+        stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
+        stateLabel.isHidden = !detail.messages.isEmpty
+        retryButton.isHidden = true
+        tableView.reloadData()
+        restoreScrollAnchor(for: detail.id)
+    }
+
+    private func captureScrollAnchorForDisplayedConversation() {
+        guard let id = displayedConversationID else { return }
+        captureScrollAnchor(for: id)
+    }
+
+    private func captureScrollAnchor(for id: String) {
+        guard !messages.isEmpty, let indexPath = tableView.indexPathsForVisibleRows?.min(by: { $0.row < $1.row }), messages.indices.contains(indexPath.row) else { return }
+        let rowRect = tableView.rectForRow(at: indexPath)
+        let relativeOffset = tableView.contentOffset.y - rowRect.minY
+        scrollAnchorsByConversationID[id] = ScrollAnchor(messageID: messages[indexPath.row].id, relativeOffset: relativeOffset)
+        var fields = repository.diagnosticsFields(for: id)
+        fields["anchorRowIndex"] = String(indexPath.row)
+        fields["relativeOffsetPoints"] = String(format: "%.2f", relativeOffset)
+        diagnostics.info(category: "conversation", name: "scrollAnchor.saved", fields: fields)
+    }
+
+    private func restoreScrollAnchor(for id: String) {
+        guard !messages.isEmpty else {
+            resetScrollPositionToTop()
+            return
+        }
+        guard let anchor = scrollAnchorsByConversationID[id] else {
+            resetScrollPositionToTop()
+            return
+        }
+        guard let row = messages.firstIndex(where: { $0.id == anchor.messageID }) else {
+            scrollAnchorsByConversationID.removeValue(forKey: id)
+            resetScrollPositionToTop()
+            var fields = repository.diagnosticsFields(for: id)
+            fields["reason"] = "message_not_found"
+            diagnostics.info(category: "conversation", name: "scrollAnchor.discarded", fields: fields)
+            return
+        }
+        let indexPath = IndexPath(row: row, section: 0)
+        view.layoutIfNeeded()
+        tableView.layoutIfNeeded()
+        tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+        tableView.layoutIfNeeded()
+        setScrollOffsetY(tableView.rectForRow(at: indexPath).minY + anchor.relativeOffset)
+        var fields = repository.diagnosticsFields(for: id)
+        fields["anchorRowIndex"] = String(row)
+        fields["relativeOffsetPoints"] = String(format: "%.2f", anchor.relativeOffset)
+        diagnostics.info(category: "conversation", name: "scrollAnchor.restored", fields: fields)
+    }
+
+    private func resetScrollPositionToTop() {
+        view.layoutIfNeeded()
+        tableView.layoutIfNeeded()
+        setScrollOffsetY(-tableView.adjustedContentInset.top)
+    }
+
+    private func setScrollOffsetY(_ value: CGFloat) {
+        let minimumY = -tableView.adjustedContentInset.top
+        let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
+        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: min(max(value, minimumY), maximumY)), animated: false)
+    }
+
     private func updateConversationMenu() {
-        let canRecover = repository.selectedConversationID != nil && !recoveryActionInProgress
+        let selectedID = repository.selectedConversationID
+        let operationKind = selectedID.flatMap { repository.detailOperationSnapshot(for: $0)?.kind }
+        let recoveryInProgress = operationKind == .sync || operationKind == .reload
+        let canRecover = selectedID != nil && !recoveryInProgress
         let recoveryAttributes: UIMenuElement.Attributes = canRecover ? [] : [.disabled]
         let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: recoveryAttributes) { [weak self] _ in self?.syncLatestMessages() }
         let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: recoveryAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
@@ -676,50 +1117,72 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func syncLatestMessages() {
-        guard let id = repository.selectedConversationID, !recoveryActionInProgress else { return }
+        guard let id = repository.selectedConversationID else { return }
+        if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         let previousMessages = messages
         let hadLoadedDetail = repository.selectedConversation?.id == id
-        recoveryActionInProgress = true
+        presentationGeneration += 1
+        let currentPresentationGeneration = presentationGeneration
         diagnostics.info(category: "navigation", name: "conversation.latestSync.requested", fields: repository.diagnosticsFields(for: id))
-        updateConversationMenu()
         showSyncToast("正在同步最新消息…")
-        repository.syncLatestMessages { [weak self] result in
-            guard let self else { return }
-            guard self.repository.selectedConversationID == id else {
-                self.hideSyncToast()
-                return
-            }
-            self.recoveryActionInProgress = false
+        repository.syncLatestMessages(id: id) { [weak self] result in
+            guard let self, self.repository.selectedConversationID == id, self.presentationGeneration == currentPresentationGeneration else { return }
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
             switch result {
             case .success(let detail):
                 let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
-                self.title = detail.title
-                self.messages = detail.messages
-                self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
-                self.stateLabel.isHidden = !detail.messages.isEmpty
-                self.retryButton.isHidden = true
-                self.tableView.reloadData()
+                self.apply(detail)
                 self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0)
             case .failure(let error):
+                guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.hideSyncToast()
                 if !hadLoadedDetail {
                     self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
                     self.stateLabel.isHidden = false
                     self.retryButton.isHidden = false
                 }
-                let alert = UIAlertController(title: "同步失败", message: error.localizedDescription, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "好", style: .default))
-                self.present(alert, animated: true)
+                self.showRecoveryError(title: "同步失败", error: error)
             }
             self.updateConversationMenu()
         }
+        updateConversationMenu()
+    }
+
+    private func finishVisibleOperation(id: String, kind: ConversationDetailOperationKind, previousMessages: [ConversationMessage], result: Result<ConversationDetail, Error>) {
+        loadingConversationID = nil
+        activityIndicator.stopAnimating()
+        switch result {
+        case .success(let detail):
+            let changed = hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
+            apply(detail)
+            if kind == .sync { showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0) }
+        case .failure(let error):
+            guard !ConversationRepository.isLifecycleTermination(error) else { return }
+            if kind == .sync, repository.selectedConversation != nil {
+                hideSyncToast()
+                showRecoveryError(title: "同步失败", error: error)
+            } else {
+                hideSyncToast()
+                stateLabel.text = "读取失败\n\(error.localizedDescription)"
+                stateLabel.isHidden = false
+                retryButton.isHidden = false
+                if kind == .sync { showRecoveryError(title: "同步失败", error: error) }
+            }
+        }
+        updateConversationMenu()
     }
 
     private func hasVisibleMessageChanges(from previous: [ConversationMessage], to current: [ConversationMessage]) -> Bool {
         guard previous.count == current.count else { return true }
         return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.createTime != new.createTime }
+    }
+
+    private func logResidentFirstVisible(id: String, startedAt: TimeInterval, operationKind: ConversationDetailOperationKind?) {
+        var fields = repository.residentDiagnosticsFields(for: id)
+        fields["elapsedMs"] = String(format: "%.2f", (ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
+        fields["activeOperationKind"] = operationKind?.rawValue ?? "none"
+        diagnostics.info(category: "conversation", name: "resident.firstVisible", fields: fields)
     }
 
     private func showSyncToast(_ text: String, autoHideAfter delay: TimeInterval? = nil) {
@@ -742,44 +1205,46 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         syncToastView.isHidden = true
     }
 
+    private func showRecoveryError(title: String, error: Error) {
+        let alert = UIAlertController(title: title, message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "好", style: .default))
+        present(alert, animated: true)
+    }
+
     @objc private func reloadCurrentConversation() {
-        guard let id = repository.selectedConversationID, !recoveryActionInProgress else { return }
-        recoveryActionInProgress = true
+        guard let id = repository.selectedConversationID else { return }
+        if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
+        captureScrollAnchor(for: id)
+        presentationGeneration += 1
+        let currentPresentationGeneration = presentationGeneration
         hideSyncToast()
         diagnostics.info(category: "navigation", name: "conversation.detailReload.requested", fields: repository.diagnosticsFields(for: id))
         loadingConversationID = id
         messages = []
         tableView.reloadData()
+        resetScrollPositionToTop()
         stateLabel.text = "正在重新加载会话…"
         stateLabel.isHidden = false
         retryButton.isHidden = true
         activityIndicator.startAnimating()
-        updateConversationMenu()
-        repository.reloadSelectedConversation { [weak self] result in
-            guard let self, self.repository.selectedConversationID == id else { return }
-            self.recoveryActionInProgress = false
+        repository.reloadConversation(id: id) { [weak self] result in
+            guard let self, self.repository.selectedConversationID == id, self.presentationGeneration == currentPresentationGeneration else { return }
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
             switch result {
-            case .success(let detail):
-                self.title = detail.title
-                self.messages = detail.messages
-                self.stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
-                self.stateLabel.isHidden = !detail.messages.isEmpty
-                self.retryButton.isHidden = true
-                self.tableView.reloadData()
+            case .success(let detail): self.apply(detail, captureCurrentAnchor: false)
             case .failure(let error):
+                guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
                 self.stateLabel.isHidden = false
                 self.retryButton.isHidden = false
             }
             self.updateConversationMenu()
         }
+        updateConversationMenu()
     }
 
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        messages.count
-    }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messages.count }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ConversationMessageCell.reuseIdentifier, for: indexPath) as! ConversationMessageCell
@@ -829,9 +1294,7 @@ final class ConversationMessageCell: UITableViewCell {
     }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(with message: ConversationMessage) {
         messageLabel.text = message.text

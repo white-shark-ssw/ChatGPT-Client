@@ -23,7 +23,7 @@ enum AuthAccountContextState: String {
     case failed
 }
 
-struct AuthAccountContext {
+struct AuthAccountContext: Equatable {
     let userID: String
     let accountID: String
     let planType: String?
@@ -55,10 +55,15 @@ final class AuthTransientSession {
     func finishTasksAndInvalidate() {
         session.finishTasksAndInvalidate()
     }
+
+    func invalidateAndCancel() {
+        session.invalidateAndCancel()
+    }
 }
 
 final class AuthSessionStore {
     static let shared = AuthSessionStore()
+    static let accountContextDidChangeNotification = Notification.Name("AuthSessionStore.accountContextDidChange")
 
     private static let loginURL = URL(string: "https://chatgpt.com/auth/login")!
     private static let sessionURL = URL(string: "https://chatgpt.com/api/auth/session")!
@@ -82,6 +87,13 @@ final class AuthSessionStore {
         lock.unlock()
         if changed { diagnostics.info(category: "auth", name: "session.webState", fields: ["state": state.rawValue]) }
         return state
+    }
+
+    func verifiedAccountContext() -> AuthAccountContext? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard accountState == .verified else { return nil }
+        return accountContext
     }
 
     func warmDefaultWebDataStore(completion: @escaping () -> Void) {
@@ -237,9 +249,7 @@ final class AuthSessionStore {
                     }
 
                     let context = AuthAccountContext(userID: userID, accountID: accountID, planType: account["plan_type"] as? String, structure: account["structure"] as? String)
-                    self.lock.lock()
-                    self.accountContext = context
-                    self.lock.unlock()
+                    self.setVerifiedAccountContext(context)
                     var fields = ["httpStatus": String(response.statusCode), "userID": userID, "accountID": accountID, "accountCount": String(accounts.count), "accountOrderingCount": String(accountOrdering.count)]
                     if let planType = context.planType { fields["planType"] = planType }
                     if let structure = context.structure { fields["structure"] = structure }
@@ -260,7 +270,7 @@ final class AuthSessionStore {
     }
 
     private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], transientSession: AuthTransientSession? = nil, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
-        setAccountState(state)
+        if state != .verified { setAccountState(state) }
         span.end(status: state == .verified ? "ok" : state == .notAvailable ? "not_available" : "failed", fields: fields)
         completion(state, transientSession)
     }
@@ -272,12 +282,27 @@ final class AuthSessionStore {
         diagnostics.info(category: "auth", name: "session.nativeState", fields: ["state": state.rawValue])
     }
 
+    private func setVerifiedAccountContext(_ context: AuthAccountContext) {
+        lock.lock()
+        let previousContext = accountContext
+        let stateChanged = accountState != .verified
+        accountContext = context
+        accountState = .verified
+        lock.unlock()
+        if stateChanged { diagnostics.info(category: "auth", name: "session.accountState", fields: ["state": AuthAccountContextState.verified.rawValue]) }
+        if previousContext != context { NotificationCenter.default.post(name: Self.accountContextDidChangeNotification, object: self) }
+    }
+
     private func setAccountState(_ state: AuthAccountContextState) {
         lock.lock()
+        let previousState = accountState
+        let hadContext = accountContext != nil
         accountState = state
-        if state != .verified { accountContext = nil }
+        if state == .notAvailable || state == .failed || state == .unknown { accountContext = nil }
+        let contextInvalidated = hadContext && accountContext == nil
         lock.unlock()
-        diagnostics.info(category: "auth", name: "session.accountState", fields: ["state": state.rawValue])
+        if previousState != state { diagnostics.info(category: "auth", name: "session.accountState", fields: ["state": state.rawValue]) }
+        if contextInvalidated { NotificationCenter.default.post(name: Self.accountContextDidChangeNotification, object: self) }
     }
 
     private static func webState(for url: URL?) -> AuthWebSessionState {

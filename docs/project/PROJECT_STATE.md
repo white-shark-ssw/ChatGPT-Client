@@ -8,69 +8,68 @@ _Last updated: 2026-08-27._
 - `DEV-auth-bootstrap-0.1.0-b6`: merged Stable authentication/account-context baseline for tested iPhone/iOS17 scope.
 - `DEV-protocol-read-0.1.0-b7`: merged accepted Plus/personal diagnostic list + detail protocol evidence baseline.
 - `DEV-native-read-path-0.1.0-b9`: merged Stable production native-read baseline for tested scope.
-- `DEV-conversation-recovery-0.1.0-b15`: **merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope**. PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
+- `DEV-conversation-recovery-0.1.0-b15`: merged Stable recovery baseline for tested Plus/personal iPhone/iOS17 scope; PR #10 merged at `a089fb0448f1c0282e634e5cccf3d0a47199d81f`.
 
-## Recovery completion
+`DEV-multi-conversation-state` is **Ready for PR / closure**, not yet merged Stable/Frozen. Exact b21 is the final Runtime Candidate for the tested Plus/personal iPhone/iOS17 read-state scope. Core residency/coalescing/hidden completion, historical scroll, 0→8 resident process-footprint behavior, title lifecycle, and same-target Reload replacement-under-load/hidden-rejoin behavior all have accepted real-device evidence. Remaining natural-failure/account-switch/non-personal/missing-anchor conditions are explicit Unknown/Unverified boundaries rather than current known defects; normal LRU is not implemented because b19 gives no evidence that one is presently required.
 
-Final candidate: `DEV-conversation-recovery-0.1.0-b15`, version `0.1.0 (15)`.
+Current `main` head is `4f38cdace0c94fed852534448f1362f1125270de`. Development merge commit `7f2a9776cc419f8e8b30aebbf731e82b3bc24a92` includes that exact main as second parent and preserves its six planning/rules files. GitHub reports `behind_by=0`. From exact b21 product source to synchronized head only docs changed, so synchronization did not materially change product/config behavior and does not justify b22 or repeated real-device testing.
 
-- Product/config head `159e8ea4f7baf6cd890d1f9bbebeac41feefbf52`.
-- Tested synthetic merge `fb0c6d75362e111758b62a98f89696b7f1cb6c92`.
-- Exact tested product/config tree `7a988bcad27d023eac77683985c5d7d92b22c176`.
-- CI run `33004536664`: success.
-- Artifact `9619988065`; IPA `ChatGPTClient-0.1.0-b15-dev-conversation-recovery.ipa`.
-- IPA SHA `b2b54905cff2b67604f95d44033efd6b4b98d319b311ac06204ddec359dd905e`; ZIP digest `sha256:cf4e8bce5a80bdd86bd9b8457b86c7a41de65d762c6ee158422760538faa50a7`.
-- Embedded identity: `0.1.0 (15)`, candidate b15, source `fb0c6d75362e`, min iOS14.0, arm64.
-- Validation: **Code + static/source review + CI + Artifact + Runtime/manual/real-device accepted**.
+## Active Work — DEV-multi-conversation-state
 
-## Accepted recovery behavior
+- **Branch / PR**: `dev/multi-conversation-state-20260827`; PR pending creation.
+- **Final Runtime Candidate**: `DEV-multi-conversation-state-0.1.0-b21`, `0.1.0 (21)`.
+- **Product/config source**: `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`.
+- **CI**: Run `33070183417`, Job `98510113281`, success.
+- **Artifact**: `9645439329`; ZIP `sha256:b3e2da46ce9ac99fc7028b7f5186476b3264c4a8c0323a426ee275b62c0d7d14`.
+- **IPA**: `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
+- **Package identity**: `0.1.0 (21)`, candidate b21, source `6b50ead167bf`, minimum iOS14.0, `[1,2]`, arm64.
 
-- `同步最新消息` and full `重载当前会话` operate through authoritative `ConversationRepository`; no resend/regenerate.
-- Centered sync feedback is accepted: syncing indicator plus final `已是最新` / `已同步最新消息` result.
-- Public `WKWebsiteDataStore.default()` warm-up is accepted for tested persisted cold-start login hydration; no hidden WebView or second persistent credential store.
-- Compact iPhone startup lands on the conversation list; duplicate sidebar controls are removed; native list/detail navigation is the single owner.
-- Manual recovery remains available during ordinary detail loading.
-- A newer manual recovery takes ownership of a new selected-detail generation, cancels the older tracked `URLSessionDataTask`, then starts one replacement request.
-- Existing operation-generation stale-result rejection remains for late callbacks.
-- Intentional cancellation is recorded as cancellation rather than surfaced as a network failure.
-- No automatic retry/timer/watchdog/fallback/resend/regenerate chain was added.
+### Runtime evidence
 
-## Final b15 runtime evidence
+- b17: resident return, hidden completion, same-target coalescing, Sync A→B→A rejoin and rapid independent overlap accepted; historical-scroll defect reproduced.
+- b18: independent semantic historical scroll anchors, first-time target isolation, Sync/Reload anchor preservation when anchored message remains, resident/coalescing regressions accepted.
+- b19: 8 residents, 53 valid task-VM samples, physical footprint ~16.3–78.1 MiB and generally 55–65 MiB during repeated switching at 8 residents; all observed HTTP statuses 200 and no error/HTTP429. Exact process-limit headroom unavailable.
+- b20: first unloaded Detail title lifecycle defect reproduced/source-confirmed; superseded.
+- b21 title: first unloaded entry, re-entry and rapid A→B→C accepted by direct user real-device result.
+- b21 Reload-under-load: two exact same-target replacement sequences accepted. Ordinary-load generation 1 is cancelled by Reload generation 2; replacement returns HTTP200. Strengthened case switches to an unrelated conversation while Reload is active, returns to target and logs `detail.coalesced completionCount=2`; no duplicate Reload/stale overwrite and unrelated conversation remains independent.
 
-Two independent real-device replacement cases were accepted:
+### Scope-out decisions
 
-1. Generation 1 -> 2 manual reload: generation 1 ended `cancelled` after 2451.99 ms; generation 2 returned HTTP200, 168 visible messages, and reload ended `ok` after 3862.17 ms.
-2. Generation 3 -> 4 manual latest-sync: generation 3 ended `cancelled` after 2352.66 ms; generation 4 returned HTTP200, 591 visible messages, and latest-sync ended `ok` after 5368.57 ms.
-3. No HTTP429 appeared in either accepted sequence.
-4. User explicitly reported exact b15 had no issues.
+- Natural terminal failed-resident navigation remains Runtime-unverified until a natural failure exists; do not manufacture failure/retry logic for closure.
+- Supported account-context purge/late-callback Runtime proof remains deferred until a real supported switch/logout route exists; do not create fake account transition UI.
+- Normal bounded LRU remains unfrozen; b19 gives no evidence for urgent normal eviction at 8 residents. Existing memory-warning trimming remains the evidence-backed policy.
+- Non-personal workspace isolation remains Unknown / Unverified.
+- Missing-anchor-message discard remains Runtime-unexercised with source/CI-defined behavior and no current defect evidence.
+- Future Send/Stream follow-tail and attachments are separate Work and are not closure gates for this read-state task.
 
-The b13 overlapping-request HTTP429 defect is therefore resolved for the tested b15 scope.
+### Validation labels
+
+- **Code written**: Yes.
+- **Static/source checks**: Passed.
+- **CI passed**: Yes — b21 Run `33070183417`, Job `98510113281`.
+- **Artifact produced**: Yes — b21 Artifact `9645439329`, identity independently accepted.
+- **Runtime/manual/real-device**: Accepted for recorded multi-conversation read-state matrix on tested Plus/personal iPhone/iOS17.
+- **Stable/Frozen**: Not yet. Promote to Stable for this recorded scope after PR merge; Frozen remains No.
 
 ## Current architecture
 
 - `AppDelegate`: lifecycle plus accepted WebKit warm-up-before-root sequencing.
-- `RootViewController`: synchronously built split shell; native compact list/detail navigation owner.
-- `ConversationRepository`: authoritative conversation summaries, selected identity/detail/current visible branch, manual recovery, operation-generation freshness and selected-detail request lifecycle.
-- `ConversationSidebarViewController`: list presentation/initial list request.
-- `ConversationDetailViewController`: detail/messages, recovery menu and centered sync feedback.
-- Default `WKWebsiteDataStore`: sole persistent auth-secret authority.
-- `AuthSessionStore`: account context, public warm-up and transient authorized transport; task-handle exposure does not change auth semantics.
+- `RootViewController`: native compact list/detail navigation owner; selected target summary title is handed to Detail after ensuring first Detail view initialization has completed.
+- `ConversationRepository`: sole authoritative conversation data/read/recovery owner with account-scoped per-conversation residents/operations.
+- `ConversationDetailViewController`: detail/messages/recovery presentation plus lightweight per-conversation historical scroll metadata; loaded Detail remains final title presentation via `detail.title`.
+- `DiagnosticsLogger`: accepted structured diagnostics owner with b19 task-VM process-memory enrichment.
+- Default persistent `WKWebsiteDataStore`: sole persistent auth-secret authority.
+- `AuthSessionStore`: sole account/auth context owner.
+- Historical anchor and future active-response `follow-tail` remain distinct; follow-tail must consume future authoritative per-conversation Send/Stream response ownership.
 
-## Delivery / serialized direction
+## Roadmap handoff
 
-1. `DEV-conversation-recovery` — **Completed / merged / Stable for recorded scope**.
-2. `DEV-multi-conversation-state` — next serialized development Work when the user asks to continue.
-3. `DEV-conversation-round-count` / preferences integration.
-4. `DEV-send-stream`.
-5. Markdown export, long-conversation tuning, attachments and remaining daily-use work.
+Current main planning makes `DEV-conversation-list-cache-core` the next early infrastructure task immediately after multi-conversation is Stable/merged. Its durable scope is `CONVERSATION_LIST_CACHE_PLAN.md`. Preserve that priority during this merge; do not let closure overwrite current roadmap planning.
 
-## Known issues / constraints
+## Next exact action
 
-- No unit/UI test target; automated validation remains Release compile, IPA packaging/inspection and artifact upload.
-- Current freshness/task lifecycle is intentionally single-selected; future multi-conversation Work will generalize account-scoped per-conversation state.
-- Runtime below iOS17, iPad, non-personal workspace, send/streaming and attachments remain Unknown / Unverified as applicable.
-- Long account/list/detail durations are end-to-end signals, not proof of one bottleneck.
+Create and review the task PR against current synchronized main. If PR validation exposes no product/config conflict, merge; then record final PR/merge evidence, promote multi-conversation to Stable for the recorded Plus/personal iPhone/iOS17 read-state scope, remove only its Active checkpoint, and leave conditional Unknown/Unverified boundaries documented.
 
 ## Evidence rule
 
-Always distinguish Code written, static/local checks, CI passed, Artifact produced, Runtime/manual/real-device tested, and Stable/Frozen acceptance. Current user/device evidence outranks older assumptions.
+Always distinguish Code written, static/local checks, CI passed, Artifact produced, Runtime/manual/real-device tested, and Stable/Frozen acceptance. CI/Artifact success is not Runtime proof.

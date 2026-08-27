@@ -9,7 +9,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device candidates.
-- Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for the tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
+- Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
 
 ## UI / interaction contract
 
@@ -17,7 +17,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - UI text/title is a consumer, never identity authority.
 - Ordinary conversation actions live in official-style overflow/context menus.
 - On compact iPhone with no selected conversation, initial product surface is the conversation list; opening/revealing a sidebar must not start the initial list request.
-- UISplitViewController/native navigation is the sole compact list/detail navigation owner for the accepted b14 shell; do not add a duplicate custom sidebar button.
+- UISplitViewController/native navigation is the sole compact list/detail navigation owner for accepted b14 shell; do not add a duplicate custom sidebar button.
 - `导出 Markdown` is our enhancement, not official-App evidence.
 - Preserve user-required reasoning interaction/haptics only when current protocol supplies explicit user-visible material; never expose hidden chain-of-thought.
 
@@ -25,6 +25,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 - Do not hold usable functionality until all roadmap phases complete.
 - Every testable candidate has a unique build/candidate/artifact identity and keeps Code / CI / Artifact / Runtime / Stable evidence separate.
+- Once a Candidate/Artifact identity has actually been produced, do not rebuild corrected product code under that same build/candidate identity.
+- When CI runs on every product/config push, all files that define one Candidate's product source, version/build, workflow and packaging identity must be committed atomically enough that one intended Candidate maps to one intended source/config tree.
 
 ## Manual recovery contract
 
@@ -33,39 +35,40 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Explicit user-triggered recovery through authoritative `ConversationRepository` for stale/incomplete local state.
 - Uses current authoritative conversation identity and current server detail; never resends/regenerates/creates another conversation.
 - Preserve an already loaded detail on sync failure when applicable.
-- Keep this action available while the ordinary initial detail request is still loading; a stuck ordinary load is itself a valid reason for one explicit manual recovery attempt.
+- Keep this action available while ordinary initial detail request is still loading.
 - b12 accepted feedback: centered `正在同步最新消息…`; then centered `已是最新` or `已同步最新消息` for about 2 seconds.
 
 ### `重载当前会话`
 
 - Explicit user-triggered recovery for failed, timed-out, blank/spinning, stale or otherwise unusable current conversation.
 - Terminal load-error UI provides direct `重新加载`.
-- Keep overflow `重载当前会话` available during ordinary initial detail loading, not only after successful load.
+- Keep overflow `重载当前会话` available during ordinary initial detail loading.
 - Reload clears/rebuilds selected authoritative detail from one fresh server request; never resends existing messages.
 - Duplicate manual recovery taps may be disabled while the manual action itself is active.
 
 ### Replacement request lifecycle
 
-- If a newer explicit manual sync/reload replaces an older selected-detail request that is still in flight, `ConversationRepository` must **cancel/replace the older selected-detail network task before starting the replacement request**.
-- Retain operation-generation/freshness rejection so a late callback from an obsolete task cannot mutate or surface stale state after the newer operation owns the selected detail.
-- This cancellation/task handle is request-lifecycle ownership inside the same authoritative repository; it must not become a second conversation-data authority.
-- b13 runtime is the evidence for this rule: the stale generation was correctly discarded, while concurrently started replacement requests returned HTTP429.
-- b15 implements this lifecycle at the authoritative owner and has Code + static/source review + CI + Artifact evidence; Runtime/manual acceptance is still required before calling the overlap defect solved.
+- If a newer explicit manual sync/reload replaces an older same-target detail request still in flight, `ConversationRepository` must cancel/replace the older target network task before starting the replacement request.
+- Retain operation-generation/freshness rejection so late obsolete callbacks cannot mutate newer authoritative state.
+- Cancellation/task handle is request-lifecycle ownership inside the same repository, not a second conversation authority.
+- b13 runtime proved freshness rejection alone while overlapping replacement requests could HTTP429.
+- b15 Runtime accepted deterministic cancellation-before-replacement for recorded selected-conversation scope: obsolete requests cancelled, replacements HTTP200, no HTTP429.
+- Multi-conversation generalization preserves this same-target rule per conversation. Exact b21 diagnostics now accept two same-target ordinary-load -> Reload replacement sequences in the multi-conversation implementation: older generation cancelled; replacement generation HTTP200; unrelated conversation remained independent; returning to the target while Reload was active coalesced onto the same replacement rather than starting a duplicate request.
 
 ### Recovery diagnostics / prohibited behavior
 
-- Log safe timing/count/diff/state/freshness evidence only; no raw IDs, message bodies, payloads or auth secrets.
+- Log safe timing/count/diff/state/freshness evidence only; no raw conversation IDs, message bodies, payloads or auth secrets.
 - No automatic retry/watchdog/timer/resend/regenerate/fallback chain.
-- A request-generation/freshness guard and request-task cancellation are allowed at the authoritative owner; neither initiates automatic retries or creates a second store.
+- Request-generation/freshness guards and target task cancellation are allowed at the authoritative owner; neither initiates automatic retries or creates a second store.
 
 ## Cold-start authentication contract
 
 - Tested login entry remains embedded `WKWebView`; default persistent `WKWebsiteDataStore` is sole persistent auth-secret authority.
 - Do not persist copied cookies/tokens/session values outside WebKit; transient native copies remain ephemeral.
-- Native `/auth/login` is not an account-context prerequisite. Sequencing remains current WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
-- b12 real-device evidence proves one public `WKWebsiteDataStore.default()` warm-up can hydrate usable persisted auth for the tested iPhone/iOS17 cold start.
-- This tested-scope result does not justify retry loops or hidden/shadow WebViews and does not prove all install/update/session states.
-- After warm-up, initial conversation-list loading must begin independently of any manual sidebar reveal.
+- Native `/auth/login` is not an account-context prerequisite. Sequencing remains WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
+- b12 real-device evidence proves one public `WKWebsiteDataStore.default()` warm-up can hydrate usable persisted auth for tested iPhone/iOS17 cold start.
+- This tested result does not justify retry loops or hidden/shadow WebViews and does not prove all install/update/session states.
+- After warm-up, initial conversation-list loading begins independently of manual sidebar reveal.
 
 ## Protocol evidence contract
 
@@ -78,14 +81,40 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 - Use existing `DiagnosticsLogger`/store/export authority.
 - Never log/export passwords, OAuth codes, access/refresh/session tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
-- Safe auth diagnostics may record cookie total/matched counts only.
-- Safe production conversation diagnostics may use short irreversible conversation hash + list position and operation-generation/discard/cancellation reason.
+- Multi-conversation correlation uses privacy-safe irreversible conversation markers and non-secret counts/generations.
+- Scroll-anchor diagnostics may record non-secret row indices/relative offset and save/restore/discard reason but never raw message identity/body.
+- Approximate visible-text byte counts may be correlation data but are not actual memory-footprint evidence for LRU capacity.
 
-## Multi-conversation / state-owner direction
+## Multi-conversation / state-owner contract
 
-- Current freshness generation and replacement task lifecycle are intentionally scoped to the current single-selected conversation model.
-- `DEV-multi-conversation-state` starts only after recovery acceptance/merge and will establish account-scoped per-conversation resident state/freshness before production send/stream.
-- Do not create a separate repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
+- Exact b21 is the final Runtime Candidate for `DEV-multi-conversation-state` before merge closure. For the tested Plus/personal iPhone/iOS17 read-state scope, accepted evidence includes b17 core residency/coalescing/hidden completion, b18 historical scroll, b19 0→8 resident process-footprint behavior, b21 title lifecycle and b21 same-target Reload replacement-under-load/hidden-rejoin coalescing. Promote the Work to Stable for this recorded scope only after merge; Frozen remains No.
+- One `ConversationRepository` remains production conversation authority. Do not create one repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
+- Foreground selection is presentation state only. Loading, Sync, Reload and future response work target authoritative conversation identity without changing selection as side effect.
+- Selection change alone does not cancel another conversation's valid request/work and is not a reason to discard a valid hidden result.
+- Same-conversation obsolete operations are rejected by target-specific freshness/generation ownership. Equivalent same-target missing-detail loads may coalesce, but every waiter has deterministic terminal contract.
+- Account scope comes only from accepted auth owner. Delayed operation/transport context may never re-establish an older scope after newer verified context exists.
+- Current source uses `userID + accountID` for personal-account scope. Do not claim non-personal workspace isolation until current service evidence establishes any additional identity.
+- Retain minimum evidence-backed authoritative branch identity such as `current_node`; do not retain raw multi-megabyte mapping payloads or invent future send graph requirements.
+- Resident terminal failures may remain in memory so navigation does not become implicit network retry. Explicit Reload remains user-owned retry/rebuild action. Natural failed-resident Runtime proof remains conditional until a real terminal failure occurs; do not manufacture failure/retry behavior solely for a matrix cell.
+- A loaded conversation may remain visible while explicit Sync is in flight; navigating away/back must not lose target terminal update.
+- List/account presentation needs freshness protection so late old-scope/superseded completion cannot clear/overwrite newer presentation.
+- Mutable resident/session/list/operation authority uses one explicit execution domain. Network transfer/pure parsing may be off-owner.
+- b19 real task-VM evidence shows no immediate pressure through 8 residents; do not add or freeze an arbitrary normal LRU capacity. Memory warning may trim eligible inactive terminal residents. If stronger future process-limit/headroom/pressure evidence appears, revisit capacity in the owning future Work.
+- Supported account-switch purge remains Runtime-unverified until a real supported switch/logout route exists. Do not create fake account transition UI to prove it.
+- Missing-anchor-message discard remains source/CI-defined and Runtime-unexercised; no current defect evidence justifies destructive branch mutation solely to exercise it.
+
+## Per-conversation scroll presentation contract
+
+- Scroll presentation metadata belongs to the existing detail presentation owner, not `ConversationRepository` and not a retained UIKit hierarchy per conversation.
+- Historical reading uses a semantic anchor tied to message identity plus relative visual offset where practical; one global raw `contentOffset` is prohibited.
+- A/B scroll presentation is independent. Switching/scrolling B must not mutate A's saved anchor.
+- A target with no saved anchor starts from its normal top instead of inheriting another conversation's offset.
+- Account-scope reset clears presentation anchors.
+- Visible Sync/Reload may preserve the historical anchor only if the same anchored message remains in the refreshed current branch. If it disappears, do not invent a cross-message fallback.
+- Exact b18 iPhone/iOS17 Runtime **accepts** the tested historical-anchor behavior: user reported no issue; diagnostics show repeated A/B saved/restored pairs, first-time third-conversation isolation, Sync/Reload preservation, resident hits and same-target Sync coalescing, with all recorded HTTP statuses 200 and no error/HTTP429.
+- Anchored-message disappearance did not occur naturally in b18, so `scrollAnchor.discarded -> top` remains source/CI-defined and Runtime-unverified; do not manufacture destructive branch mutation solely to trigger it.
+- Future active-response `follow-tail` behavior must consume the authoritative per-conversation Send/Stream response lifecycle. Do not invent UI `isStreaming`, timer, response flag or unused future state to fake follow-tail before Send/Stream exists.
+- User-confirmed future rule: if A is at/near bottom with an active authoritative response and grows/completes while hidden, returning A shows A's current latest bottom; intentional upward scrolling exits follow-tail and establishes historical-reading intent.
 
 ## Markdown export contract
 
@@ -110,6 +139,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Repository AI Governance Rules are dynamic authority.
 - Every work session reads root `AGENTS.md`, then `docs/project/START_HERE.md`.
 - Material source/CI/artifact/runtime/architecture/status changes update current checkpoint and durable docs in the same work cycle.
+- Current `main` may advance through parallel docs/planning work; exact Candidate evidence remains tied to its tested product source, and final merge must synchronize target-branch docs without overwriting parallel planning.
 
 ## Critical invariants / prohibited routes
 
@@ -131,4 +161,4 @@ See `docs/project/HISTORICAL_REFERENCE.md` for advisory previous-project lessons
 
 ## Rule maintenance
 
-Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses stay in the active checkpoint.
+Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses stay in active checkpoint.

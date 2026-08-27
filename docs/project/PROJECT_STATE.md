@@ -51,11 +51,10 @@ The b13 overlapping-request HTTP429 defect is therefore resolved for the tested 
 ## Active Work — DEV-multi-conversation-state
 
 - **Work**: `DEV-multi-conversation-state` on `dev/multi-conversation-state-20260827`.
-- **Baseline**: current `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; no open PR; no second Active DEV checkpoint.
-- **b16 source/config**: `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`.
+- **Baseline**: current `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; no open PR; no second Active DEV checkpoint at the latest conflict scan.
+- **Exact active product/config source under review**: `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`. Later branch commits in this review cycle are documentation-only and do not change that product/config source.
 - **b16 CI**: Run `33009246356` succeeded, proving exact b16 source compiles/packages on the current macOS15/Xcode16.4 CI path.
 - **b16 Artifact**: `9621830284` exists but is **identity-rejected** before runtime because `scripts/build_ipa.sh` still embedded recovery-b15 candidate default and recovery IPA slug. b16 is historical and must not be reused.
-- **Current branch head after evidence/doc updates**: `ea6c7e41f22f8bdc42fde56cca3b596e086a4c10`.
 - **Implementation evidence**: account-scoped/per-conversation resident source, per-conversation detail generations/tasks, coalesced ordinary loads, failed terminal residency, single-flight repository auth acquisition, current-node retention, account reset/list guards and memory-warning resident trimming are written and compiled.
 - **Second source review**: unresolved P0 owner defects remain before the first valid runtime Candidate. In particular: delayed old transport context can currently re-adopt stale account scope; superseded/account-reset waiters can be silently abandoned; hidden Sync A -> B -> A can leave visible A stale after Sync terminal; list request/presentation freshness is incomplete; task-handle attachment has an avoidable cancellation window; mutable repository reads are not fully confined to one execution domain.
 - **Validation**: `Code written = Yes`; `Static/source review = performed with unresolved findings`; `CI = Yes for b16`; `Artifact = produced but identity rejected`; `Runtime/manual/real-device = No`; `Stable/Frozen = No`.

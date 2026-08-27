@@ -2,128 +2,125 @@
 
 ## Status
 
-**Active — b17 core real-device multi-conversation sequences accepted for tested iPhone/iOS17 scope; b18 reserved for the reproduced P1 semantic per-conversation scroll restoration; Stable acceptance still pending**
+**Active — b17 core real-device multi-conversation sequences accepted; b18 exact semantic-scroll Candidate has Code + static review + CI + identity-valid Artifact; b18 real-device scroll validation pending; Stable/Frozen = No**
 
 - **Work ID**: `DEV-multi-conversation-state`
 - **Routing aliases / keywords**: `多会话 / 多会话驻留 / 多会话状态 / 快速切换 / multi-conversation`
 - **Task**: 将单 selected conversation detail/request owner 演进为 account-scoped per-conversation resident state，并建立后续 send/stream 所需的多会话 freshness 与异步所有权基线。
-- **Baseline**: `0.1.0 (15)` Stable recovery; base `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
+- **Baseline**: `0.1.0 (15)` Stable recovery; `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
 - **Working branch / PR**: `dev/multi-conversation-state-20260827`; PR `Not created`.
 - **Last runtime-tested candidate**: `DEV-multi-conversation-state-0.1.0-b17`, version `0.1.0 (17)`.
-- **Reserved next candidate**: `DEV-multi-conversation-state-0.1.0-b18`, version `0.1.0 (18)`; product source pending.
-- **Exact b17 product/config source**: `bc69d58b3245a1ab21b250e16612c11d39ddbf33`, tree `3451585f83c7bac69368709fe6273b90a0294d29`.
-- **Current pre-b18 docs head before product implementation**: Build/Test reservation commit `88dde44b92e4c1839fb7e57ac4b89c0c8a00b4aa`; prior branch head `5603ea7d0ab22cd9c42e6de73e3eb81048bcdafb` was docs-only.
-- **b18 uniqueness/conflict gate**: `main` remains `f155ddb873540f7c80d6e66ebbfeb59ded26f011`; no open PR; `current/dev/` contains only this Active Work plus README; branch Actions contain only historical b16 and b17 product runs; Build/Test Index had no b18 before reservation.
+- **Current exact Candidate**: `DEV-multi-conversation-state-0.1.0-b18`, version `0.1.0 (18)`.
+- **Exact b18 product/config source**: `f30c13b4ac2c40dcda829585682825ca906dceae`; tree `c2797f05a8b8c43bdd1a5064177e3b7c49606614`.
+- **Atomicity evidence**: b18 was assembled off-branch from parent `49be4de3b2918ae72b22e3de7a386136d92c2523`, reviewed, then branch ref moved once. Exact diff contains only `.github/workflows/ios-foundation.yml`, `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Conversation/ConversationFeature.swift`, and `scripts/build_ipa.sh`.
+- **Conflict gate at publication**: `main` remained `f155ddb873540f7c80d6e66ebbfeb59ded26f011`; no open PR; `current/dev/` contained only this Active Work plus README; no duplicate b18 identity existed.
 
 ## Candidate history
 
 ### b16 — historical / rejected before runtime
 
 - Exact source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`; CI Run `33009246356` succeeded.
-- Artifact `9621830284` was identity-rejected because `scripts/build_ipa.sh` embedded recovery-b15 candidate/default IPA slug.
+- Artifact `9621830284` embedded wrong recovery candidate/slug and is permanently rejected/superseded before runtime.
 - Second source review also found stale-scope, waiter, hidden-Sync, list-freshness, task-handle and owner-domain gaps.
-- No real-device run. b16 must never be reused.
+- Never reuse b16.
 
 ### b17 — identity-valid / core runtime-evidenced
 
-- **Static/local**: final `ConversationFeature.swift` blob `1034cff72dea36d6d7e835bdf52dcfe2cdc8e38d`; local Git-blob hash matched; `swiftc -frontend -parse` passed.
-- **CI**: Run `33045536770`, job `98428537619`, success. Exact checkout `bc69d58b3245a1ab21b250e16612c11d39ddbf33`; Xcode 16.4 / build 16F6; Release target `arm64-apple-ios14.0`; log ends `BUILD SUCCEEDED`.
-- **Artifact**: `9635486304`, name `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b17`, uploaded ZIP digest `sha256:bf6aed8cebcb08153fbe8fac6868ce60c0ef4bd7876340246912ba8edbed1c33`.
-- **IPA**: `ChatGPTClient-0.1.0-b17-dev-multi-conversation-state.ipa`; SHA-256 `ed551deac0335e47da56da36ec2a8a20550613ac072ac1ddf0b84790278318dc`; independent SHA equals generated sidecar.
-- **Independent package inspection**: `CFBundleShortVersionString=0.1.0`; `CFBundleVersion=17`; `DiagnosticsCandidate=DEV-multi-conversation-state-0.1.0-b17`; `DiagnosticsSourceCommit=bc69d58b3245`; `MinimumOSVersion=14.0`; `UIDeviceFamily=[1,2]`; Mach-O 64-bit arm64.
-- **Disposition**: core runtime evidence accepted for the exact tested sequences below; Work remains Active.
+- Exact product/config source `bc69d58b3245a1ab21b250e16612c11d39ddbf33`; tree `3451585f83c7bac69368709fe6273b90a0294d29`.
+- Static/local: final `ConversationFeature.swift` blob `1034cff72dea36d6d7e835bdf52dcfe2cdc8e38d`; local Git-blob hash matched; `swiftc -frontend -parse` passed.
+- CI Run `33045536770`, job `98428537619`, success.
+- Artifact `9635486304`; ZIP `sha256:bf6aed8cebcb08153fbe8fac6868ce60c0ef4bd7876340246912ba8edbed1c33`.
+- IPA `ChatGPTClient-0.1.0-b17-dev-multi-conversation-state.ipa`; SHA `ed551deac0335e47da56da36ec2a8a20550613ac072ac1ddf0b84790278318dc`.
+- Real-device iPhone/iOS17 accepted resident return, hidden completion, same-target coalescing, Sync A->B->A rejoin, and rapid different-conversation overlap up to three active operations with no HTTP429 in supplied export.
+- User reproduced P1 scroll defect: A near ~10% -> B scroll -> A returns shifted.
 
-## b17 real-device evidence — 2026-08-27
+### b18 — semantic historical scroll-anchor Candidate
 
-Exact exported diagnostics identify `0.1.0 (17)`, candidate `DEV-multi-conversation-state-0.1.0-b17`, source `bc69d58b3245`, iPhone / iOS17.0. User followed the requested core switching/coalescing/hidden-completion/Sync/rapid-switch sequences and reported no major functional issue except scroll-position restoration.
+#### Code / design
 
-Accepted evidence for the tested sequences:
+- `ConversationRepository` and network/protocol ownership are unchanged.
+- `ConversationDetailViewController` now owns lightweight per-conversation scroll presentation metadata only.
+- Added `displayedConversationID` so the actually displayed A can be captured even though `RootViewController` has already changed repository selection to B.
+- Anchor representation is `messageID + relativeOffset`; no global raw offset is copied between conversations.
+- `showConversation` captures the old displayed conversation before replacing rows, then restores the target's own anchor after reload.
+- If the target has no anchor, presentation starts from normal top instead of inheriting another conversation's offset.
+- Account-scope reset clears all presentation anchors.
+- Same-visible-conversation Sync captures the current historical anchor immediately before rows are refreshed and restores it if the anchored message still exists.
+- Reload captures before clearing rows; successful rebuilt detail restores only if the same anchored message still exists.
+- If an anchored message is absent from the refreshed current branch, the anchor is discarded and the view returns to top; no speculative cross-message fallback.
+- Added privacy-safe `scrollAnchor.saved`, `scrollAnchor.restored`, and `scrollAnchor.discarded` diagnostics with row index/relative offset only; no raw message/conversation ID or body.
+- No fake `isStreaming`, response flag, timer, retry, fallback, watchdog, or future follow-tail enum was added. Future follow-tail eligibility must come from the real Send/Stream response owner.
 
-1. **Resident return**: repeated returns to already-loaded conversations logged `resident.hit` and `resident.firstVisible` without a new same-target Detail request solely because of navigation. Observed `resident.firstVisible.elapsedMs` values are approximately `0.23–0.78 ms`.
-2. **Same-target coalescing while loading**: returning to an in-flight conversation logged `detail.coalesced completionCount=2`; the original Detail operation remained the owner rather than starting a duplicate target request.
-3. **Hidden completion**: a Detail operation completed while another conversation was foreground and logged `resident.stored visibility=hidden`; later navigation returned through `resident.hit`.
-4. **Sync A -> B -> A**: conversation `sha256:8922c7c08d04` started Sync generation 2; after switching away and returning before terminal, the return logged `resident.hit activeOperationKind=sync` and `detail.coalesced completionCount=2`; the same Sync later returned HTTP200 and `latestSync.end status=ok` with 832 visible messages and no duplicate Sync caused by return.
-5. **Rapid multi-conversation overlap**: diagnostics reached `activeOperationCount=3`; different conversations completed independently, including hidden resident stores. No HTTP429 event appears in the supplied b17 diagnostic export.
-6. **Residency scale observed, not capacity evidence**: resident count reached 6 and `residentTotalApproximateTextBytes` reached `6724764`. This remains approximate text correlation only and is not process-memory/LRU-capacity evidence.
+#### Static/source review
 
-### Reproduced P1 defect — per-conversation scroll anchor
+- Prepared final `ConversationFeature.swift` Git blob: `daf60d76b1295a9662a119b28766511039a52e8e`.
+- Source patch reviewed before publication for A->B capture order, target-independent anchors, Sync/Reload preservation, missing-anchor behavior, and account reset.
+- Exact product diff: 4 expected files only; `ConversationRepository` source body is not modified by b18.
+- Xcode Release CI subsequently compiled the exact `ConversationFeature.swift` as part of the exact Candidate source.
 
-User reproduced the previously planned P1 gap: leave conversation A around ~10% scroll position, switch to B and scroll B, then return to A; A no longer stays at the same semantic/visual position. This is **not a resident-data ownership failure**: b17 still returns A from resident state, but the single visible detail presentation does not yet preserve a per-conversation semantic scroll anchor.
+#### CI
 
-The current diagnostic schema does not record table/collection scroll anchor identity/offset, so the defect is grounded by direct user runtime observation rather than inferred from diagnostics.
+- Run `33054012226`, job `98456174184`: **success**.
+- Exact checkout: `f30c13b4ac2c40dcda829585682825ca906dceae`.
+- Toolchain: macOS 15.7.7 runner, Xcode 16.4 / build 16F6, iPhoneOS18.5 SDK.
+- Exact build inputs: `DIAGNOSTICS_CANDIDATE=DEV-multi-conversation-state-0.1.0-b18`; `SOURCE_COMMIT=f30c13b4ac2c`.
+- Swift compile target: `arm64-apple-ios14.0`.
+- Log ends `BUILD SUCCEEDED`.
+- Exactly one intended b18 push workflow run exists; historical branch product runs remain b16/b17.
 
-### User-confirmed future Send/Stream scroll semantics — anchor vs follow-tail
+#### Artifact / independent package inspection
 
-- Per-conversation scroll presentation must distinguish **historical-reading anchor** from **follow-tail/bottom-following intent**; one raw global `contentOffset` is not the product contract.
-- If A is at/near bottom when the user leaves it **and A has an active response**, A is in `follow-tail` semantics. If A continues reasoning/generating hidden and appends content, returning A must show A's current latest bottom, not restore the older pre-answer position.
-- If the user intentionally scrolls upward in A while A is generating, that exits `follow-tail`; later return restores the semantic reading anchor rather than forcing bottom.
-- B scrolling never mutates A presentation state; A hidden growth never mutates B scroll state.
-- This is a user-confirmed product requirement, but automatic hidden-response advancement cannot be Runtime-tested until `DEV-send-stream` establishes the authoritative per-conversation response lifecycle. Do not invent stream protocol/state in b18.
+- Artifact ID `9638821912`, name `ChatGPTClient-DEV-multi-conversation-state-0.1.0-b18`.
+- Artifact ZIP digest from GitHub and independent local SHA: `sha256:36b59b8c4d3bdcadedd463a3554528452ff46478651671b50f4bd9f7fa2b5d2c`.
+- IPA: `ChatGPTClient-0.1.0-b18-dev-multi-conversation-state.ipa`.
+- IPA SHA-256: `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`; independently matches generated `.sha256` sidecar.
+- Embedded identity: `CFBundleShortVersionString=0.1.0`; `CFBundleVersion=18`; `DiagnosticsCandidate=DEV-multi-conversation-state-0.1.0-b18`; `DiagnosticsSourceCommit=f30c13b4ac2c`; `MinimumOSVersion=14.0`; `UIDeviceFamily=[1,2]`; executable = Mach-O 64-bit arm64.
+- Artifact identity is accepted. This is not runtime proof of the scroll fix.
 
-## b18 implementation boundary — semantic historical anchor only
+## User-confirmed future Send/Stream scroll semantics
 
-Real source review before coding found the reproduced cause in `ConversationDetailViewController`:
-
-- one shared `UITableView` is reused for every selected conversation;
-- `showConversation` / `apply` replace `messages` and call `reloadData()`;
-- there is currently no per-conversation scroll presentation state;
-- therefore B's table geometry/content offset can affect the next A presentation even though A's resident data is correct.
-
-Smallest supported correction:
-
-1. Keep scroll state in the existing detail presentation owner; do **not** move it into `ConversationRepository` and do not create a second conversation-data store.
-2. Track the actually displayed conversation separately from repository selection so A's current anchor can be captured before A's rows are replaced by B.
-3. Capture a lightweight semantic anchor from the top visible message identity plus its relative vertical offset.
-4. After a conversation's rows are reloaded, find that message in the target's current visible branch, scroll to that row, lay it out, then reapply the relative offset with normal bounds clamping.
-5. If the target has no saved anchor, start from its normal top rather than inheriting the previous conversation's raw offset.
-6. Clear presentation anchors on account-scope reset.
-7. When Sync/Reload refreshes the same visible conversation, preserve the current historical anchor when the anchored message still exists; if the anchored message no longer exists on the new branch, do not invent a cross-message fallback.
-8. Add only privacy-safe diagnostics needed to prove save/restore/missing-anchor behavior; never log raw message IDs or bodies.
-9. Do **not** add a fake `isStreaming`, timer, response flag, or unused future follow-tail enum. Future `DEV-send-stream` will extend this presentation contract from the real per-conversation response owner.
-
-## b17 owner fixes written and compiled
-
-1. **Stale account context cannot re-adopt scope**: request/transport context only validates against the current Auth owner; repository scope changes are driven by a currently verified `AuthSessionStore` snapshot/change signal.
-2. **Probe commit freshness**: completed account probe rechecks `verifiedAccountContext()` on the main owner before installing its transient session/scope.
-3. **Waiter terminal contract**: replaced same-target operations cancel the old task and deterministically complete old waiters with `operationSuperseded`; account reset completes cancelled operation waiters with `accountContextChanged`.
-4. **Replacement ordering**: new operation owner is installed; old task is cancelled; replacement task is created and its handle synchronously attached on the main owner; only then are old waiters notified.
-5. **Operation-first resident lookup**: an existing per-conversation operation is joined before a loaded/failed resident is returned, allowing return-to-A to observe an in-flight Sync/Reload instead of silently rendering only stale resident data.
-6. **Target-specific recovery**: Sync/Reload capture an explicit conversation ID; they do not derive mutation target from foreground selection after invocation.
-7. **Recovery presentation derives from selected conversation operation**: no global recovery-in-progress authority. Returning to A during active Sync/Reload restores A presentation and coalesces onto its existing operation; B/C remain independent.
-8. **Ordinary presentation freshness**: detail controller uses presentation generation + selected ID guard so obsolete selection-cycle completions cannot overwrite the visible conversation.
-9. **List freshness**: repository list generation rejects obsolete same-scope/account-reset results; sidebar has presentation generation so late old-list completion cannot end a newer presentation state.
-10. **Repository execution domain**: mutable repository state is main-thread confined with explicit preconditions; URLSession callbacks use immutable captured diagnostics fields and commit results through main.
-11. **Memory warning protection**: resident entries belonging to selected or active detail/recovery operations are protected; only eligible inactive terminal residents are trimmed.
-12. **Diagnostics**: one owner logs old->new hashed selection transition; resident diagnostics expose resident/active/protected counts; immediate resident render logs `resident.firstVisible` timing. Approximate text bytes remain correlation only, not process-memory evidence.
-13. **Package identity**: Xcode build/candidate is b17; workflow Artifact name is b17; build-script default candidate is b17 and IPA slug is `dev-multi-conversation-state`.
+- Per-conversation scroll presentation must distinguish **historical-reading anchor** from future **follow-tail** intent.
+- If A is at/near bottom and A has an authoritative active response, hidden growth/completion must make return-to-A land at A's current latest bottom.
+- If the user intentionally scrolls upward while A is generating, that exits follow-tail and later return restores historical reading anchor.
+- B scrolling never mutates A presentation state and hidden A growth never mutates B.
+- b18 intentionally does not invent response lifecycle state; these follow-tail gates remain for `DEV-send-stream`.
 
 ## Evidence labels
 
 ### b17
 - **Code written**: Yes.
 - **Static/local checks**: Passed.
-- **CI passed**: Yes — Run `33045536770`.
-- **Artifact produced**: Yes — Artifact `9635486304`, identity independently accepted.
-- **Runtime/manual/real-device**: Yes, partial/core accepted for tested iPhone/iOS17 sequences; P1 scroll-anchor defect reproduced.
+- **CI passed**: Yes.
+- **Artifact produced**: Yes, identity accepted.
+- **Runtime/manual/real-device**: Core tested sequences accepted; P1 scroll defect reproduced.
 - **Stable/Frozen**: No.
 
 ### b18
-- **Candidate identity**: Reserved — `DEV-multi-conversation-state-0.1.0-b18` / `0.1.0 (18)`.
-- **Code written**: No yet.
-- **Static/local checks**: Pending.
-- **CI passed**: Pending.
-- **Artifact produced**: Pending.
-- **Runtime/manual/real-device**: Pending.
-- **Stable/Frozen**: No.
+- **Code written**: **Yes — exact source published**.
+- **Static/source checks**: **Passed — exact diff/source review; exact source compiled in Release CI**.
+- **CI passed**: **Yes — Run `33054012226`, Job `98456174184`**.
+- **Artifact produced**: **Yes — Artifact `9638821912`, identity independently accepted**.
+- **Runtime/manual/real-device**: **Pending**.
+- **Stable/Frozen**: **No**.
 
-## Remaining acceptance / risks
+## b18 real-device acceptance matrix
 
-- b18 must prove ordinary historical anchor A≈10% -> B scroll -> A returns to the same semantic/visual point, including long conversations.
-- b18 should also prove B maintains its own independent anchor on A<->B repeated switching and that first-time/new target presentation does not inherit another conversation's raw offset.
-- Future follow-tail runtime behavior remains a Send/Stream acceptance gate, not a reason to invent response state in b18.
-- Account-context purge/late-callback isolation still needs a real supported runtime account-switch/logout route before claiming that criterion Runtime-tested.
-- Normal-operation resident/LRU capacity remains Unknown until device/system memory evidence; approximate text bytes are insufficient.
-- Current `userID + accountID` scope remains personal-account evidence only; non-personal workspace isolation is Unknown/Unverified.
-- No XCTest/UI-test target exists.
+1. A long resident conversation: scroll A to a clearly identifiable historical point around ~10%; switch to B; scroll B elsewhere; return A. A should restore the same message/visual offset and diagnostics should show `scrollAnchor.saved` then `scrollAnchor.restored` for A.
+2. Scroll B to a distinct point; switch A -> B repeatedly. A and B must each return to their own independent anchor; neither may inherit the other's raw offset.
+3. Open a conversation C for the first time with no saved anchor after leaving a deeply scrolled A/B. C must start at its normal top.
+4. While reading historical A, run `同步最新消息`. If the anchor message still exists after Sync, A must remain at the same semantic/visual point after refresh.
+5. While reading historical A, run `重载当前会话`. If the anchor message still exists after rebuilt detail, restore it; if not, return to top and emit `scrollAnchor.discarded reason=message_not_found` rather than guessing another message.
+6. Re-run b17 core regression spot checks: resident A->B->A must still avoid navigation-only refetch; hidden/coalesced operation behavior must not regress.
 
-- **Next exact action**: implement the minimal `ConversationDetailViewController` historical semantic-anchor preservation described above, update Xcode/workflow/build identity to b18 in the same intended Candidate product/config commit, run exact Swift parse/static checks, then publish one atomic b18 product/config source and inspect its exact CI/Artifact before real-device A/B anchor validation. Do not rebuild/reuse b17.
+## Remaining Work before Stable
+
+- b18 real-device semantic anchor acceptance above.
+- Isolated target-only Reload replacement regression as applicable.
+- Failed resident navigation with no implicit retry when a natural failure is available.
+- Supported account-switch purge only when a real supported switch/logout path exists.
+- Real process/system memory evidence before choosing a bounded normal LRU capacity; approximate text bytes remain insufficient.
+- Non-personal workspace isolation remains Unknown / Unverified.
+
+## Next exact action
+
+Install/test exact Artifact `9638821912` / IPA SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c` on the target iPhone/iOS17 device. Execute the b18 real-device acceptance matrix above and export diagnostics if any anchor case fails or if exact save/restore evidence is needed. Do not claim Runtime or Stable until that result exists; do not rebuild/reuse b18 for corrected code after this Artifact identity has been produced.

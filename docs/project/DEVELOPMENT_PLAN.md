@@ -24,7 +24,7 @@ Current constraints: native UIKit iOS client; TrollStore IPA; intended primary r
 
 - **V0.1 read-use**: native shell + conversation list/detail/message rendering + manual sync/full reload + usable cold-start login-state recovery.
 - **V0.2 chat-use**: V0.1 + stable multi-conversation state ownership + conversation metadata/preferences + long-conversation answer navigation + text send/new conversation + streaming + stop + user-visible reasoning interaction/haptics + recovery integration.
-- **V0.3 daily-use refinement**: Markdown export, long-conversation tuning, attachments and remaining daily-use conversation features.
+- **V0.3 daily-use refinement**: instant cache-backed conversation-list startup + clipped list previews + Markdown export + long-conversation tuning + attachments and remaining daily-use conversation features.
 
 ## Completed foundations
 
@@ -142,26 +142,63 @@ Quick answer navigation is initially defined against server-backed/current visib
 
 After read/recovery/multi-conversation ownership and the small metadata/navigation/preferences bundle are stable: evidence current text-send/new-conversation protocol, implement composer/stream/stop, bind response identity correctly under switching, integrate manual recovery without automatic resend, and connect the answer-navigation/follow-tail behavior to the real per-conversation response owner.
 
-## Phase 9 — `DEV-markdown-export`
+**As soon as this phase reaches accepted real-device text chat/stream behavior, issue the earliest practical daily-chat Candidate. Do not wait for list-cache/persistence breadth.**
+
+## Phase 9 — `DEV-conversation-list-cache-preview`
+
+### Goal
+
+Make the sidebar feel immediate on process cold start and add useful clipped message previews without causing a Detail-request storm. Durable design: `docs/project/CONVERSATION_LIST_CACHE_PLAN.md`.
+
+### Required behavior
+
+- After the current account/workspace scope is verified, load that scope's persistent list snapshot and render it before waiting for the normal list network response.
+- Then issue exactly one normal current list refresh and incrementally reconcile returned summaries into the cache/UI.
+- Current first-page absence is not deletion evidence because the list route is limited to 28 items; keep older cached rows unless complete pagination or an explicit authoritative action proves removal.
+- Add one clipped secondary preview line under the title when preview data is available.
+- First verify whether the current list response already supplies a usable preview field by inspecting key/type presence only; never log preview values/raw items.
+- If the list response does not supply preview content, update previews only from Detail/Sync/Reload already fetched by normal user activity and later from authoritative local Send/Stream events. **Never request every Detail solely to fill previews.**
+- Persist only bounded preview text + list metadata; no full Detail/raw mapping/body cache in this Work.
+- Cache is account-scoped and never displayed before current scope verification.
+- `ConversationRepository` remains the in-memory product authority; a disk cache store is durable snapshot storage only.
+- Use the centralized preferences owner for `显示会话消息预览`; presentation changes must not trigger network requests.
+
+### Performance / freshness semantics
+
+- Cold start follows cache-first / stale-while-refresh presentation: cached rows first, one server list refresh second.
+- Network refresh failures keep a valid cache visible and surface a non-destructive refresh error; no retry loop.
+- Merge by conversation ID/update time and update changed rows rather than clearing the visible list.
+- A locally cached preview may be stale if another client changed the conversation and the list endpoint does not provide preview text; do not hide that uncertainty behind automatic Detail fetches.
+- Disk writes are atomic and meaningful-event based; future Streaming must not persist preview text token-by-token.
+
+### Scheduling
+
+This Work is deliberately **after the first accepted Send/Stream daily-chat Candidate** so persistence/performance polish does not delay basic chatting. It touches `ConversationRepository`/sidebar ownership and should not run as an unsafe parallel task against an active unmerged Send/Stream implementation.
+
+## Phase 10 — `DEV-markdown-export`
 
 Export authoritative current user-visible branch to Markdown; never scrape mounted cells or expose hidden/internal reasoning/tool content.
 
-## Phase 10 — `DEV-long-conversation`
+## Phase 11 — `DEV-long-conversation`
 
 Measure/improve parse/model/render timing, first-visible latency, mounted-view bounds, memory growth, scrolling/input latency and lifecycle behavior.
 
-## Phase 11 — `DEV-attachments`
+## Phase 12 — `DEV-attachments`
 
 Add native photo/file/video attachment flows after text-chat ownership is stable; evidence current upload protocol before production implementation.
 
-## Phase 12 — remaining daily-use features
+## Phase 13 — remaining daily-use features
 
-Split into isolated Work IDs as dependencies stabilize: search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat, settings/diagnostics refinement and other evidenced daily-use capabilities.
+Split into isolated Work IDs as dependencies stabilize: conversation pagination/load-more, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat, settings/diagnostics refinement and other evidenced daily-use capabilities. Future pagination must reuse the same list-cache/reconciliation owner rather than introduce a second list store.
 
-## Phase 13 — advanced capabilities
+## Phase 14 — advanced capabilities
 
 Later candidates: Projects, web search, image/multimodal, Voice, Memory, Deep Research, GPTs and other current ChatGPT-specific capabilities.
 
 ## Current next action
 
-No development Work is automatically activated by this plan. Finish the currently active multi-conversation Work through its own checkpoint/runtime gate. After it is Stable/merged, the next serialized Work is `DEV-conversation-round-count` with the expanded scope above: round count + message timestamps + adaptive previous/next answer navigation + first centralized preference owner; then proceed directly to `DEV-send-stream`.
+No development Work is automatically activated by this plan. Finish the currently active multi-conversation Work through its own checkpoint/runtime gate. After it is Stable/merged, the serialized core remains:
+
+`DEV-conversation-round-count -> DEV-send-stream -> earliest daily-chat Candidate -> DEV-conversation-list-cache-preview`
+
+The list-cache/preview Work then improves cold-start/sidebar performance before broader daily-use refinements.

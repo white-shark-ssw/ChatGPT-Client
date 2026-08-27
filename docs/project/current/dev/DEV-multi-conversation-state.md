@@ -78,10 +78,12 @@ Useful existing sample points include `resident.miss`, `resident.stored`, `resid
 - b19 repository search before reservation: no existing identity.
 - Branch Actions before reservation: b16/b17/b18 only; no b19 run/artifact.
 - Docs reservation commits: checkpoint `1785bd43b2ae76f40121e0faa7fac009a1703681`; Build Index `593490ddeb82cd173ccde5cfe90d79002545f3d7`.
-- Exact off-branch product commit prepared from parent `593490ddeb82cd173ccde5cfe90d79002545f3d7`: `54a5850b8fc22f18a044c7c80bbff8a5be2cc52e`; tree `fec22bb6eed3e2d64e82ced747116f6ad8bdeaa4`.
+- A publication-gate checkpoint update advanced the branch docs-only to `728220fa41f66cc7df3fd2e3ff13eadb52fd86f2`, so the first prepared off-branch sibling `54a5850b...` was not force-pushed and is not the Candidate source.
+- **Exact final off-branch product commit prepared from latest docs-only parent `728220fa41f66cc7df3fd2e3ff13eadb52fd86f2`: `ea5232548e61b3cf16a91065fad525425a07bb99`; tree `fbdb3b4b50efc7411bfabff5182e16745dadbddd`.**
 - Exact product diff is 4 files only: `ChatGPTClient/Diagnostics/Diagnostics.swift`, Xcode project, workflow, build script. `ConversationFeature.swift` / Repository are unchanged.
+- New Diagnostics blob `5e927b43792535586d8406e1ca5f46cf51c6f041`; Xcode blob `8530571220ba034d49d629031483cccaa6af61a1`; workflow blob `da751e26c2cd0da15b15f3e7aac9730e3b7158fc`; build-script blob `5cac0fcb7a7a201afa57dfe2895eca84970ffad4`.
 - Local syntax-only `swiftc -frontend -parse` passed for the exact new task-VM sampling construct. macOS/iPhoneOS SDK/type availability still requires exact CI compile proof.
-- Publication recheck: branch remained `593490d...`; `main` advanced to `0ea4d729...` only through merged PR #17 docs (`DEVELOPMENT_PLAN.md`, `UI_INTERACTION_BASELINE.md`); open PR list is now empty. No product/config overlap exists.
+- Publication recheck: `main` is `0ea4d729...`, whose delta from prior `main` is only `DEVELOPMENT_PLAN.md` and `UI_INTERACTION_BASELINE.md`; open PR list is empty. No product/config overlap exists.
 
 ## User-confirmed future Send/Stream scroll semantics
 
@@ -120,6 +122,6 @@ Useful existing sample points include `resident.miss`, `resident.stored`, `resid
 
 ## Next exact action
 
-Publish exact off-branch b19 commit `54a5850b8fc22f18a044c7c80bbff8a5be2cc52e` with one branch ref move, then inspect the one intended b19 CI run and Artifact identity. After exact Artifact exists, install it on iPhone/iOS17 and exercise the resident-memory matrix before making any LRU decision.
+Publish exact off-branch b19 commit `ea5232548e61b3cf16a91065fad525425a07bb99` with one branch ref move, then inspect the one intended b19 CI run and Artifact identity. After exact Artifact exists, install it on iPhone/iOS17 and exercise the resident-memory matrix before making any LRU decision.
 
 Before final Work merge, synchronize with current `main@0ea4d7296f574722ec665b40633ecba42fc680e8` and preserve its merged message-timestamp / adaptive-answer-navigation planning.

@@ -1,6 +1,6 @@
 # Multi-Conversation State / Residency Plan
 
-_Last updated: 2026-08-27; refreshed through exact b21 Reload-under-load Runtime acceptance and PR-closure preparation._
+_Last updated: 2026-08-27; completed through PR #23 merge / Stable b21 read-state baseline._
 
 ## Purpose
 
@@ -10,15 +10,13 @@ Core invariant:
 
 > Selecting conversation B changes what is visible; it does not destroy conversation A's authoritative local state, cancel A's owned work merely because A became hidden, or force A to reload merely because A is no longer selected.
 
-This Work is the structural prerequisite for later production Send/Stream ownership. Exact candidate/evidence handoff remains in `current/dev/DEV-multi-conversation-state.md` until merge closure; broader pre-Send gaps remain in `CLIENT_ARCHITECTURE_GAP_REVIEW.md`.
+This Work is complete for the recorded Plus/personal iPhone/iOS17 read-state scope and is the structural prerequisite for later production Send/Stream ownership. Exact historical candidate/evidence remains in `BUILD_TEST_INDEX.md`; broader pre-Send gaps remain in `CLIENT_ARCHITECTURE_GAP_REVIEW.md`.
 
-## Accepted baseline and final Candidate
+## Stable merged baseline and final Candidate
 
-### Stable baseline
+### Recovery baseline
 
 `DEV-conversation-recovery-0.1.0-b15` is merged Stable for recorded Plus/personal iPhone/iOS17 recovery scope.
-
-Current `main` is `4f38cdace0c94fed852534448f1362f1125270de`. Development merge commit `7f2a9776cc419f8e8b30aebbf731e82b3bc24a92` includes that exact main as second parent and preserves its six planning/rules files. GitHub reports the synchronized development branch is `behind_by=0`; exact b21 product/config has not changed during synchronization.
 
 ### Historical b16
 
@@ -58,20 +56,22 @@ Exact b20 source `754580fad96efa69f8a0ce7ea2bf542cacaf156e`, Run `33067148782`, 
 
 b20 added immediate navigation title handoff from selected `ConversationSummary.title`, but first unloaded entry still showed `新对话`: first loading path caused `ConversationDetailViewController.viewDidLoad()` to run after Root installed the summary title, and neutral initialization overwrote it. Second resident-backed entry was correct. The export's earlier cold-start auth HTTP403 was not causal because later account/list verification succeeded before reproduction. No retry/fallback is justified.
 
-### Final b21 Runtime Candidate
+### Stable b21 Runtime Candidate
 
 - Candidate: `DEV-multi-conversation-state-0.1.0-b21`, version `0.1.0 (21)`.
 - Exact product/config source: `6b50ead167bfde305d2ad58dd16fee6edaabf597`.
 - Tree: `01168ce7be8d9cf4888ad1d0718238826730c30d`.
 - Product delta from b20: one Root behavior line, `detailViewController.loadViewIfNeeded()`, after selection and before assigning target summary title.
 - CI: Run `33070183417`, Job `98510113281`, success.
-- Artifact: `9645439329`; ZIP `sha256:b3e2da46ce9ac99fc7028b7f5186476b3264c4a8c0323a426ee275b62c0d7d14`.
+- Runtime Artifact: `9645439329`; ZIP `sha256:b3e2da46ce9ac99fc7028b7f5186476b3264c4a8c0323a426ee275b62c0d7d14`.
 - IPA: `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`.
 - Independent package identity: `0.1.0 (21)`, b21, source `6b50ead167bf`, minimum iOS14.0, `[1,2]`, arm64.
 - Title Runtime: accepted for first unloaded entry, re-entry and rapid A -> B -> C on tested iPhone/iOS17.
 - Reload-under-load Runtime: exact diagnostics contain two ordinary-load generation 1 -> Reload generation 2 replacements. Old task is cancelled, replacement returns HTTP200. In the strengthened case the user switches to an unrelated conversation while Reload remains active, returns to the target and logs `detail.coalesced completionCount=2`; the same replacement finishes without duplicate request or stale overwrite, and unrelated conversation work remains independent.
+- PR merge-view validation: Run `33093117645`, Job `98590935774`, merge view `0520f118d4ada5eacfbac4ff444d9572e322efe1`, success; Artifact `9655230149` is merge-view CI evidence only and does not replace the Runtime Artifact.
+- Merge: PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
 
-Promote this Work to Stable for the recorded Plus/personal iPhone/iOS17 read-state scope only after PR merge. Frozen remains No.
+**Stable for the recorded Plus/personal iPhone/iOS17 read-state scope. Frozen remains No.**
 
 ## State ownership model
 
@@ -93,7 +93,7 @@ Foreground `selectedConversationID` is presentation state only. Loading, Sync, R
 - verified different scope purges old list/residents/operations/session/selection and rejects late old-scope results;
 - invalidated consumers terminate deterministically.
 
-Current source uses `userID + accountID` for personal-account residency. There is no real supported account-switch/logout route in the current product and no accepted non-personal workspace identity evidence. Those conditions remain Unknown / Unverified at this Work's closure; do not invent fake routes to claim Runtime proof.
+Current source uses `userID + accountID` for personal-account residency. There is no real supported account-switch/logout route in the current product and no accepted non-personal workspace identity evidence. Those conditions remain Unknown / Unverified after this Work's closure; do not invent fake routes to claim Runtime proof.
 
 ## Detail operation ownership
 
@@ -107,7 +107,7 @@ Current source uses `userID + accountID` for personal-account residency. There i
 - Every waiter terminates on success, failure, supersede or account invalidation.
 - No arbitrary global concurrency limit, retry, timer, watchdog or fallback without evidence.
 
-Exact b21 now directly accepts the multi-conversation replacement-under-load invariant in addition to earlier independent overlap/coalescing evidence.
+Exact b21 directly accepts the multi-conversation replacement-under-load invariant in addition to earlier independent overlap/coalescing evidence.
 
 ## Resident navigation semantics
 
@@ -119,7 +119,7 @@ On navigation to B:
 4. Failed B remains failed; ordinary navigation does not implicitly retry.
 5. Only missing/evicted B starts one ordinary load.
 
-Loaded return and active same-target coalescing are Runtime accepted. Natural terminal failed-resident navigation remains Runtime-unverified because no natural terminal failure occurred; it is not a known defect and is not a reason to manufacture failure/retry behavior for closure.
+Loaded return and active same-target coalescing are Runtime accepted. Natural terminal failed-resident navigation remains Runtime-unverified because no natural terminal failure occurred; it is not a known defect and is not a reason to manufacture failure/retry behavior.
 
 ## Recovery semantics
 
@@ -170,7 +170,7 @@ Historical anchor and future active-response follow-tail are different semantics
 - If user intentionally scrolls upward while A generates, that exits follow-tail and establishes historical-reading intent.
 - B scrolling never mutates A state; hidden A growth never mutates B state.
 
-Whether a response is active/terminal must come from future authoritative per-conversation Send/Stream response owner. Current read-state work adds no `isStreaming`, response flag, timer, fake follow-tail state or future response authority.
+Whether a response is active/terminal must come from future authoritative per-conversation Send/Stream response owner. Completed read-state work adds no `isStreaming`, response flag, timer, fake follow-tail state or future response authority.
 
 ## Residency / memory policy
 
@@ -187,7 +187,7 @@ Current rules:
 
 No ordinary LRU capacity is implemented or frozen in this Work. Revisit only when stronger future evidence makes it necessary.
 
-## Closure acceptance
+## Stable acceptance boundary
 
 Accepted:
 
@@ -196,6 +196,7 @@ Accepted:
 - b19 observed process-footprint 0→8 resident matrix; no evidence for urgent normal LRU.
 - b21 first-unloaded-entry/re-entry/rapid A -> B -> C title lifecycle matrix.
 - b21 same-target ordinary-load -> Reload replacement-under-load with old-task cancellation, hidden unrelated-conversation independence and return coalescing onto the same replacement.
+- PR #23 merge-view CI succeeded and the PR merged without a product/config change after exact b21 Runtime source.
 
 Superseded/failing:
 
@@ -209,11 +210,13 @@ Explicit non-blocking Unknown / Unverified boundaries:
 4. missing-anchor-message discard Runtime path;
 5. normal LRU capacity if stronger future memory pressure/headroom evidence creates a requirement.
 
-These are evidence boundaries, not claims of success. They do not justify fabricating unsupported behavior to keep this read-state Work open.
+These are evidence boundaries, not claims of success. They do not justify fabricating unsupported behavior.
 
-## Next exact action
+## Closure
 
-Create/review the task PR against synchronized `main@4f38cdace0c94fed852534448f1362f1125270de`. If PR CI/merge review exposes no product/config conflict, merge, promote the recorded Plus/personal iPhone/iOS17 read-state scope to Stable, remove the Active checkpoint, and continue with the current roadmap priority `DEV-conversation-list-cache-core`.
+`DEV-multi-conversation-state` is complete and merged. No b22 is justified by current evidence. Historical task checkpoint is removed at completion; durable evidence remains in this plan, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md` and `BUILD_TEST_INDEX.md`.
+
+The next serialized roadmap priority is `DEV-conversation-list-cache-core`; its activation, branch/checkpoint/candidate identity and implementation belong to its own development session.
 
 ## Non-goals / prohibited shortcuts
 

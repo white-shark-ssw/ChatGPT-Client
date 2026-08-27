@@ -10,6 +10,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device candidates.
 - Accepted production native-read baseline remains `DEV-native-read-path-0.1.0-b9` for tested Plus/personal iPhone/iOS17 scope. Stable, not Frozen.
+- Accepted merged multi-conversation read-state baseline is `DEV-multi-conversation-state-0.1.0-b21` for the recorded Plus/personal iPhone/iOS17 scope; PR #23 merged. Stable, not Frozen.
 
 ## UI / interaction contract
 
@@ -53,7 +54,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Cancellation/task handle is request-lifecycle ownership inside the same repository, not a second conversation authority.
 - b13 runtime proved freshness rejection alone while overlapping replacement requests could HTTP429.
 - b15 Runtime accepted deterministic cancellation-before-replacement for recorded selected-conversation scope: obsolete requests cancelled, replacements HTTP200, no HTTP429.
-- Multi-conversation generalization preserves this same-target rule per conversation. Exact b21 diagnostics now accept two same-target ordinary-load -> Reload replacement sequences in the multi-conversation implementation: older generation cancelled; replacement generation HTTP200; unrelated conversation remained independent; returning to the target while Reload was active coalesced onto the same replacement rather than starting a duplicate request.
+- Merged multi-conversation implementation preserves this same-target rule per conversation. Exact b21 diagnostics accept two same-target ordinary-load -> Reload replacement sequences: older generation cancelled; replacement generation HTTP200; unrelated conversation remained independent; returning to the target while Reload was active coalesced onto the same replacement rather than starting a duplicate request.
 
 ### Recovery diagnostics / prohibited behavior
 
@@ -87,7 +88,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Multi-conversation / state-owner contract
 
-- Exact b21 is the final Runtime Candidate for `DEV-multi-conversation-state` before merge closure. For the tested Plus/personal iPhone/iOS17 read-state scope, accepted evidence includes b17 core residency/coalescing/hidden completion, b18 historical scroll, b19 0→8 resident process-footprint behavior, b21 title lifecycle and b21 same-target Reload replacement-under-load/hidden-rejoin coalescing. Promote the Work to Stable for this recorded scope only after merge; Frozen remains No.
+- `DEV-multi-conversation-state-0.1.0-b21` is the **Stable merged multi-conversation read-state baseline** for the tested Plus/personal iPhone/iOS17 scope. Accepted evidence includes b17 core residency/coalescing/hidden completion, b18 historical scroll, b19 0→8 resident process-footprint behavior, b21 title lifecycle and b21 same-target Reload replacement-under-load/hidden-rejoin coalescing. PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`. Frozen remains No.
 - One `ConversationRepository` remains production conversation authority. Do not create one repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
 - Foreground selection is presentation state only. Loading, Sync, Reload and future response work target authoritative conversation identity without changing selection as side effect.
 - Selection change alone does not cancel another conversation's valid request/work and is not a reason to discard a valid hidden result.
@@ -102,6 +103,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - b19 real task-VM evidence shows no immediate pressure through 8 residents; do not add or freeze an arbitrary normal LRU capacity. Memory warning may trim eligible inactive terminal residents. If stronger future process-limit/headroom/pressure evidence appears, revisit capacity in the owning future Work.
 - Supported account-switch purge remains Runtime-unverified until a real supported switch/logout route exists. Do not create fake account transition UI to prove it.
 - Missing-anchor-message discard remains source/CI-defined and Runtime-unexercised; no current defect evidence justifies destructive branch mutation solely to exercise it.
+- Stable is scoped to the recorded tested behavior only: runtime below iOS17, iPad, non-personal workspaces and the conditional paths above remain Unknown / Unverified where applicable.
 
 ## Per-conversation scroll presentation contract
 

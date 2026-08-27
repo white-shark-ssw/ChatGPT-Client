@@ -1,6 +1,6 @@
 # Client Architecture Gap Review
 
-_Last reviewed: 2026-08-27; refreshed through exact b21 Reload-under-load Runtime acceptance and current-main synchronization._
+_Last reviewed: 2026-08-27; refreshed through PR #23 merge / Stable multi-conversation read-state closure._
 
 ## Purpose
 
@@ -11,14 +11,15 @@ Product rule: **reach a usable daily-chat candidate early; only P0 structural in
 ## Current evidence baseline
 
 - `DEV-conversation-recovery-0.1.0-b15` is merged Stable for recorded Plus/personal iPhone/iOS17 recovery scope.
-- `DEV-multi-conversation-state` is ready for PR/closure on `dev/multi-conversation-state-20260827` for the tested Plus/personal iPhone/iOS17 read-state scope.
+- `DEV-multi-conversation-state-0.1.0-b21` is **merged Stable for the tested Plus/personal iPhone/iOS17 read-state scope**. PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`; Frozen remains No.
 - b16 is historical/rejected before Runtime and must not be reused.
 - b17 exact source `bc69d58b3245...` accepts resident return, hidden completion, same-target coalescing, Sync A->B->A rejoin and rapid different-conversation overlap; it reproduced the historical-scroll defect.
 - b18 exact source `f30c13b4ac2c...` accepts the tested historical-scroll / Sync / Reload-preservation / resident-regression matrix. Missing-anchor-message discard remains Runtime-unexercised.
 - b19 exact source `c6accf16c8cf...` accepts a real-device 0→8 resident process-footprint matrix: 53 valid samples, physical footprint about 16.3–78.1 MiB and generally 55–65 MiB during repeated switching at 8 residents; all observed HTTP statuses 200 and no HTTP429/error. `processMemoryLimitRemainingBytes` was absent, so exact process-limit headroom remains Unverified. There is no evidence for urgent normal-LRU eviction at 8 residents and no normal capacity is frozen.
 - b20 exact source `754580fad96e...` is Code/Static/CI/Artifact valid but Runtime exposed the first unloaded Detail title lifecycle overwrite; it is superseded.
-- Exact b21 source `6b50ead167bfde305d2ad58dd16fee6edaabf597`, tree `01168ce7be8d9cf4888ad1d0718238826730c30d`, Run `33070183417`, Job `98510113281`, Artifact `9645439329`, IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d` is the final Runtime Candidate for this Work. Direct user testing accepts first-unloaded-entry/re-entry/rapid A→B→C title behavior. Exact diagnostics additionally accept two same-target ordinary-load -> Reload replacement-under-load sequences, including hidden unrelated-conversation independence and return coalescing onto the same active Reload.
-- Current `main@4f38cdace0c94fed852534448f1362f1125270de` is synchronized into the development branch by two-parent merge commit `7f2a9776cc419f8e8b30aebbf731e82b3bc24a92`. Its six planning/rules files are preserved exactly. GitHub reports `behind_by=0`; from exact b21 product source to the synchronized head only docs changed.
+- Exact b21 source `6b50ead167bfde305d2ad58dd16fee6edaabf597`, tree `01168ce7be8d9cf4888ad1d0718238826730c30d`, Run `33070183417`, Job `98510113281`, Artifact `9645439329`, IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d` is the final Runtime Candidate for the merged baseline. Direct user testing accepts first-unloaded-entry/re-entry/rapid A→B→C title behavior. Exact diagnostics additionally accept two same-target ordinary-load -> Reload replacement-under-load sequences, including hidden unrelated-conversation independence and return coalescing onto the same active Reload.
+- PR #23 merge-view Run `33093117645`, Job `98590935774` succeeded on merge view `0520f118d4ada5eacfbac4ff444d9572e322efe1`. Merge-view Artifact `9655230149` is CI evidence only, not a replacement Runtime Candidate.
+- PR #23 preserved the current main planning priority for `DEV-conversation-list-cache-core` and the parallel planning/rules documents that existed before merge.
 - There is still no XCTest/UI-test target.
 
 Cold-start login-state recovery belongs to completed recovery baseline. Do not create a separate `DEV-auth-resume` task. Default persistent WebKit storage remains sole persistent auth-secret authority.
@@ -81,7 +82,7 @@ Every operation binds account/context + target conversation + generation/token.
 - Presentation has target/freshness identity so obsolete completion cannot mutate wrong conversation.
 - No timer/retry/watchdog/fallback machinery.
 
-Runtime now directly covers both same-target coalescing and the multi-conversation replacement-under-load invariant. Exact b21 diagnostics show generation 1 ordinary Detail cancellation, generation 2 Reload ownership/HTTP200, unrelated-conversation independence while Reload is hidden, and return coalescing onto that same generation without duplicate Reload or stale overwrite.
+Runtime directly covers both same-target coalescing and the multi-conversation replacement-under-load invariant. Exact b21 diagnostics show generation 1 ordinary Detail cancellation, generation 2 Reload ownership/HTTP200, unrelated-conversation independence while Reload is hidden, and return coalescing onto that same generation without duplicate Reload or stale overwrite.
 
 ### Account/workspace isolation
 
@@ -89,7 +90,7 @@ Runtime now directly covers both same-target coalescing and the multi-conversati
 
 A newly verified different context must invalidate old transient session, purge old list/resident/draft/response state, cancel/invalidate old operations and resolve waiters, reject late old-scope callbacks, never allow stale transport to re-adopt old scope, and never display old-account content under new context.
 
-Current source keys personal scope with `userID + accountID`. There is no supported account-switch/logout path in the current product and no accepted non-personal workspace identity evidence, so those Runtime conditions remain Unknown / Unverified at read-state closure. Do not manufacture fake transitions merely to claim a matrix pass.
+Current source keys personal scope with `userID + accountID`. There is no supported account-switch/logout path in the current product and no accepted non-personal workspace identity evidence, so those Runtime conditions remain Unknown / Unverified after read-state closure. Do not manufacture fake transitions merely to claim a matrix pass.
 
 ### Preserve authoritative node identity
 
@@ -124,7 +125,7 @@ Two scroll modes are user-confirmed:
 
 Intentional upward scroll while A generates exits follow-tail and establishes historical-reading intent.
 
-Exact b18 implements and Runtime-validates historical-reading mode for the tested iPhone/iOS17 paths. Follow-tail eligibility/transition must consume future authoritative Send/Stream response lifecycle; current read-state work adds no UI streaming authority.
+Exact b18 implements and Runtime-validates historical-reading mode for the tested iPhone/iOS17 paths. Follow-tail eligibility/transition must consume future authoritative Send/Stream response lifecycle; completed read-state work adds no UI streaming authority.
 
 ### Selected title presentation lifecycle
 
@@ -135,7 +136,7 @@ b20 proved one lifecycle hazard: assigning the summary title before the Detail V
 ### Conversation pagination / Markdown / settings / background
 
 - Current accepted list call returns first page `offset=0&limit=28&order=updated`; pagination must use current service evidence and never clear resident detail solely because list page/order changes.
-- Current main roadmap now places `DEV-conversation-list-cache-core` immediately after multi-conversation becomes Stable/merged. It adds an account-scoped durable list snapshot behind `ConversationRepository`; it must not become a second list authority or prefetch every Detail.
+- Current roadmap places `DEV-conversation-list-cache-core` immediately after the merged multi-conversation baseline. It adds an account-scoped durable list snapshot behind `ConversationRepository`; it must not become a second list authority or prefetch every Detail.
 - Markdown/code rendering should prioritize development-chat usefulness without broad reparse/reload on every streamed token.
 - First real preference toggle should establish one centralized app preference owner; view controllers consume it rather than inventing independent keys/defaults.
 - Background protection is over an active response set, not a global Boolean.
@@ -155,7 +156,7 @@ Current evidence/rules:
 - no persistent chat-body disk cache;
 - approximate visible-text bytes remain correlation only.
 
-Therefore normal LRU is not a current read-state closure requirement. Revisit only when stronger process-limit/headroom/pressure evidence creates a real requirement.
+Therefore normal LRU is not a current read-state requirement. Revisit only when stronger process-limit/headroom/pressure evidence creates a real requirement.
 
 ## Additional correctness constraints
 
@@ -174,11 +175,11 @@ Real-device evidence remains mandatory for WebKit auth, real networking, HTTP429
 ## Current serialized development state
 
 1. `DEV-conversation-recovery` — Completed / merged / Stable b15.
-2. `DEV-multi-conversation-state` — Ready for PR/closure; exact b21 is final Runtime Candidate for tested Plus/personal iPhone/iOS17 read-state scope.
-3. `DEV-conversation-list-cache-core` — current roadmap priority immediately after multi-conversation is Stable/merged; durable scope in `CONVERSATION_LIST_CACHE_PLAN.md`.
+2. `DEV-multi-conversation-state` — **Completed / merged / Stable b21 for the recorded Plus/personal iPhone/iOS17 read-state scope**.
+3. `DEV-conversation-list-cache-core` — current roadmap priority after multi-conversation; durable scope in `CONVERSATION_LIST_CACHE_PLAN.md`.
 4. `DEV-send-stream` remains the stage where real response ownership/follow-tail can be implemented and tested after the intervening roadmap work.
 
-## Multi-conversation closure boundary
+## Multi-conversation Stable boundary
 
 Accepted on b17/b18/b19/b21:
 
@@ -205,10 +206,10 @@ Conditional boundaries retained without claiming Runtime pass:
 - missing-anchor-message discard;
 - normal LRU capacity if future pressure/headroom evidence creates a need.
 
-These are not current known defects and are not reasons to fabricate unsupported behavior to keep the read-state Work open.
+These are not current known defects and are not reasons to fabricate unsupported behavior.
 
 Future Send/Stream adds separate scroll gate: A active at bottom -> B -> A grows/completes hidden -> return A at current latest bottom; A active -> user scrolls upward -> B -> return A at preserved historical anchor.
 
 ## Next exact action
 
-Create and review the multi-conversation PR against synchronized `main@4f38cdace0c94fed852534448f1362f1125270de`. If PR CI/merge review exposes no product/config conflict, merge and promote the tested Plus/personal iPhone/iOS17 read-state scope to Stable, preserve all conditional boundaries above as Unknown/Unverified, and remove the Active checkpoint. No b22 is justified by current evidence.
+The multi-conversation read-state Work is closed and requires no b22. Preserve the Stable b21 evidence and the Unknown/Unverified boundaries above. The next serialized roadmap task is `DEV-conversation-list-cache-core`; activation, checkpoint ownership, branch/candidate allocation and implementation belong to that task's own development session.

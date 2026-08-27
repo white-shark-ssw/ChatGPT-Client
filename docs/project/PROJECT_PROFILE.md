@@ -40,11 +40,11 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 - **Packaging**: `bash scripts/build_ipa.sh`.
 - **Underlying build**: Release `xcodebuild` for iphoneos with signing disabled for TrollStore packaging.
-- **CI**: GitHub Actions on macOS15; current pipeline compiles `arm64-apple-ios14.0` and b18 used Xcode 16.4 / iPhoneOS18.5.
+- **CI**: GitHub Actions on macOS15; current pipeline compiles `arm64-apple-ios14.0` and b18/b21 validation used Xcode 16.4 / iPhoneOS18.5.
 - **Intended artifact scheme**: `build/artifacts/ChatGPTClient-<version>-b<build>-<work-slug>.ipa` + SHA-256 sidecar.
 - **Packaging status**: b16 historically exposed recovery hard-codes and is rejected. b17 corrected multi-conversation identity. Exact b21 independently verifies filename/version/build/candidate/source/SHA/arm64/iOS14 identity.
-- **Current accepted validation level**: Foundation, embedded Google/WebKit auth architecture, Plus/personal account context, diagnostic list/detail, production native read, manual sync/full reload, public WebKit cold-start warm-up, centered sync feedback, compact startup/native list-detail navigation, stale-generation rejection and selected-detail cancellation/replacement have real-device evidence on iPhone/iOS17 for recorded scopes.
-- **Current multi-conversation validation**: b17 core switching/coalescing/hidden completion accepted; b18 historical scroll accepted; b19 real process-footprint 0→8 resident matrix accepted; b20 first Detail-view-load title lifecycle defect reproduced and superseded; exact b21 title lifecycle plus same-target Reload replacement-under-load/hidden-rejoin coalescing are real-device accepted. The Work is ready for PR/closure for the tested Plus/personal iPhone/iOS17 read-state scope. Remaining natural-failure/account-switch/non-personal/missing-anchor conditions remain explicit Unknown/Unverified boundaries rather than closure blockers; normal LRU is not implemented because b19 supplies no evidence that one is currently needed.
+- **Current accepted validation level**: Foundation, embedded Google/WebKit auth architecture, Plus/personal account context, diagnostic list/detail, production native read, manual sync/full reload, public WebKit cold-start warm-up, centered sync feedback, compact startup/native list-detail navigation, stale-generation rejection, selected-detail cancellation/replacement and the recorded multi-conversation read-state matrix have real-device evidence on iPhone/iOS17 for their recorded scopes.
+- **Merged multi-conversation validation**: b17 core switching/coalescing/hidden completion accepted; b18 historical scroll accepted; b19 real process-footprint 0→8 resident matrix accepted; b20 first Detail-view-load title lifecycle defect reproduced and superseded; exact b21 title lifecycle plus same-target Reload replacement-under-load/hidden-rejoin coalescing are real-device accepted. PR #23 merged this Work at `2057a6241839afabeaf9b81c9daea24d3a0978f6`, making b21 the **Stable merged multi-conversation read-state baseline for the tested Plus/personal iPhone/iOS17 scope**. Remaining natural-failure/account-switch/non-personal/missing-anchor conditions remain explicit Unknown/Unverified boundaries; normal LRU is not implemented because b19 supplies no evidence that one is currently needed. Frozen remains No.
 
 ## Versioning and candidate identity
 
@@ -62,7 +62,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Historical-scroll Runtime Candidate**: `0.1.0 (18)` / b18; exact historical-scroll matrix accepted.
 - **Process-memory Runtime Candidate**: `0.1.0 (19)` / b19; observed 0→8 resident footprint matrix accepted, process-limit headroom Unverified.
 - **Title lifecycle failing predecessor**: `0.1.0 (20)` / b20; Code/CI/Artifact valid but first unloaded Detail entry Runtime showed neutral-title overwrite.
-- **Final Runtime Candidate for current multi-conversation Work**: `0.1.0 (21)` / `DEV-multi-conversation-state-0.1.0-b21`; product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417`; Job `98510113281`; Artifact `9645439329`; IPA `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`; requested title and Reload-under-load Runtime matrices accepted on tested iPhone/iOS17. Promote the Work to Stable for this recorded scope only after PR merge; Frozen remains No.
+- **Stable merged multi-conversation baseline**: `0.1.0 (21)` / `DEV-multi-conversation-state-0.1.0-b21`; product/config source `6b50ead167bfde305d2ad58dd16fee6edaabf597`; tree `01168ce7be8d9cf4888ad1d0718238826730c30d`; Run `33070183417`; Job `98510113281`; Artifact `9645439329`; IPA `ChatGPTClient-0.1.0-b21-dev-multi-conversation-state.ipa`; IPA SHA `490cce1c1252afc5663c700f10b5fa647365205bc8a692f8a4e7b38c8c07234d`; title and Reload-under-load Runtime matrices accepted on tested iPhone/iOS17; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`. Stable for the recorded scope; Frozen No.
 
 ## Runtime / deployment
 
@@ -85,8 +85,8 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b19 reached 8 residents with 53 valid process-memory samples; physical footprint remained about 16.3–78.1 MiB and generally 55–65 MiB during repeated 8-resident switching. No urgent normal-LRU pressure is evidenced; exact process-limit headroom was unavailable.
 - b20 exact real-device export identifies `0.1.0 (20)`, source `754580fad96e`. User reproduced first-entry `新对话`; source proves first Detail `viewDidLoad()` overwrote the summary title. Second resident-backed entry was correct. The export's earlier auth HTTP403 is not causal because later verification/list HTTP200 succeeded before the reproduction.
 - b21 fixes only lifecycle ordering in Root via `loadViewIfNeeded()` before assigning the selected summary title. Direct real-device testing accepts first-entry/re-entry/rapid-switch title behavior. A later exact b21 diagnostics export also accepts two same-target ordinary-load -> Reload replacement sequences: old generation cancelled, replacement HTTP200, unrelated hidden conversation independent, and return to the active Reload coalesced onto the same generation without duplicate request or stale overwrite.
-- Current `main` is `4f38cdace0c94fed852534448f1362f1125270de`. Development merge commit `7f2a9776cc419f8e8b30aebbf731e82b3bc24a92` includes that exact main as second parent and preserves its six planning/rules files. GitHub compare reports the synchronized development branch is `behind_by=0`; from exact b21 product source to the synchronized head only docs changed, so no product/config revalidation candidate is required solely for synchronization.
-- Current main roadmap makes `DEV-conversation-list-cache-core` the next early infrastructure task once multi-conversation is Stable/merged.
+- PR #23 merge-view CI Run `33093117645`, Job `98590935774` succeeded on GitHub merge view `0520f118d4ada5eacfbac4ff444d9572e322efe1`; Artifact `9655230149` is merge-view CI evidence only and does not replace the exact b21 Runtime Artifact.
+- Current roadmap makes `DEV-conversation-list-cache-core` the next early infrastructure task after the now-Stable multi-conversation baseline.
 
 ## Evidence notes
 
@@ -94,7 +94,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Read/recovery/multi-conversation evidence is scoped to tested Plus/personal account; it does not prove Send/Stream/attachments or non-personal workspaces.
 - Current source keys account residency with `userID + accountID`; whether non-personal workspaces require additional identity remains Unknown / Unverified.
 - Approximate resident visible-text bytes are correlation metrics only; b19 real task-VM footprint is the process-memory evidence. Exact process-limit headroom is still Unverified, but current evidence does not justify an arbitrary normal LRU capacity.
-- Natural terminal failed-resident navigation and supported account-switch purge remain Runtime-unverified until those conditions/routes exist naturally; this Work does not manufacture them.
+- Natural terminal failed-resident navigation and supported account-switch purge remain Runtime-unverified until those conditions/routes exist naturally; the completed Work did not manufacture them.
 - Historical scroll presentation is in-memory only; future active-response follow-tail eligibility remains unimplemented until the real Send/Stream response owner exists.
 - Missing-anchor-message discard was not naturally exercised in exact b18 Runtime; source/CI contract exists but no device proof is claimed.
 

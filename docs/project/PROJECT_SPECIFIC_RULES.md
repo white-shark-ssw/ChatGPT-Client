@@ -53,7 +53,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Cancellation/task handle is request-lifecycle ownership inside the same repository, not a second conversation authority.
 - b13 runtime proved freshness rejection alone while overlapping replacement requests could HTTP429.
 - b15 Runtime accepted deterministic cancellation-before-replacement for recorded selected-conversation scope: obsolete requests cancelled, replacements HTTP200, no HTTP429.
-- Multi-conversation generalization preserves this same-target rule per conversation. Exact b18 did not naturally isolate an older in-flight Detail -> newer Reload replacement sequence, so that specific regression gate remains open rather than inferred from ordinary Reload success.
+- Multi-conversation generalization preserves this same-target rule per conversation. Exact b21 diagnostics now accept two same-target ordinary-load -> Reload replacement sequences in the multi-conversation implementation: older generation cancelled; replacement generation HTTP200; unrelated conversation remained independent; returning to the target while Reload was active coalesced onto the same replacement rather than starting a duplicate request.
 
 ### Recovery diagnostics / prohibited behavior
 
@@ -87,7 +87,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Multi-conversation / state-owner contract
 
-- `DEV-multi-conversation-state` is Active after merged recovery. b16 is historical/rejected before runtime; b17 has accepted core real-device evidence with reproduced historical-scroll defect; exact b18 source `f30c13b4ac2c40dcda829585682825ca906dceae` now has Code + source/static + CI + identity-valid Artifact + **real-device historical-scroll Runtime acceptance for the tested iPhone/iOS17 matrix**. Work remains not Stable/Frozen.
+- Exact b21 is the final Runtime Candidate for `DEV-multi-conversation-state` before merge closure. For the tested Plus/personal iPhone/iOS17 read-state scope, accepted evidence includes b17 core residency/coalescing/hidden completion, b18 historical scroll, b19 0→8 resident process-footprint behavior, b21 title lifecycle and b21 same-target Reload replacement-under-load/hidden-rejoin coalescing. Promote the Work to Stable for this recorded scope only after merge; Frozen remains No.
 - One `ConversationRepository` remains production conversation authority. Do not create one repository per screen or use retained UIKit hierarchy/navigation stack as conversation-state authority.
 - Foreground selection is presentation state only. Loading, Sync, Reload and future response work target authoritative conversation identity without changing selection as side effect.
 - Selection change alone does not cancel another conversation's valid request/work and is not a reason to discard a valid hidden result.
@@ -95,12 +95,13 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Account scope comes only from accepted auth owner. Delayed operation/transport context may never re-establish an older scope after newer verified context exists.
 - Current source uses `userID + accountID` for personal-account scope. Do not claim non-personal workspace isolation until current service evidence establishes any additional identity.
 - Retain minimum evidence-backed authoritative branch identity such as `current_node`; do not retain raw multi-megabyte mapping payloads or invent future send graph requirements.
-- Resident terminal failures may remain in memory so navigation does not become implicit network retry. Explicit Reload remains user-owned retry/rebuild action.
+- Resident terminal failures may remain in memory so navigation does not become implicit network retry. Explicit Reload remains user-owned retry/rebuild action. Natural failed-resident Runtime proof remains conditional until a real terminal failure occurs; do not manufacture failure/retry behavior solely for a matrix cell.
 - A loaded conversation may remain visible while explicit Sync is in flight; navigating away/back must not lose target terminal update.
 - List/account presentation needs freshness protection so late old-scope/superseded completion cannot clear/overwrite newer presentation.
 - Mutable resident/session/list/operation authority uses one explicit execution domain. Network transfer/pure parsing may be off-owner.
-- Memory warning may trim eligible inactive terminal residents. Normal bounded LRU policy remains unfrozen until real **process/system memory** measurement; approximate text bytes alone are insufficient.
-- Exact b18 Runtime evidence may close only the tested paths: independent historical anchors, first-time target isolation, Sync/Reload anchor preservation when the anchored message remains, resident return and active Sync coalescing. It does not automatically close natural failure residency, supported account-switch isolation, normal LRU policy or unexercised replacement paths.
+- b19 real task-VM evidence shows no immediate pressure through 8 residents; do not add or freeze an arbitrary normal LRU capacity. Memory warning may trim eligible inactive terminal residents. If stronger future process-limit/headroom/pressure evidence appears, revisit capacity in the owning future Work.
+- Supported account-switch purge remains Runtime-unverified until a real supported switch/logout route exists. Do not create fake account transition UI to prove it.
+- Missing-anchor-message discard remains source/CI-defined and Runtime-unexercised; no current defect evidence justifies destructive branch mutation solely to exercise it.
 
 ## Per-conversation scroll presentation contract
 

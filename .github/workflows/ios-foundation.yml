@@ -1,4 +1,4 @@
-# Candidate: DEV-conversation-round-count-0.1.0-b25
+# Candidate: DEV-conversation-round-count-0.1.0-b26
 name: iOS Conversation Metadata
 
 on:
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-conversation-round-count-0.1.0-b25
+          name: ChatGPTClient-DEV-conversation-round-count-0.1.0-b26
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

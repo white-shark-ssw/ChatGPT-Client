@@ -52,6 +52,16 @@ These accepted sub-results do not make b25 Stable because the same candidate has
    - b26 passes authoritative parsed `total` into reconciliation and caps preserved off-page rows to `max(0, totalCount - authoritativePage.count)`, logging `authoritativeTotalCount` and `discardedExcessOffPageCount`. If authoritative total is absent, conservative preservation remains unchanged rather than inventing deletion evidence.
    - The identity of which stale off-page cached row should be discarded is not server-evidenced by page 1 alone; b26 preserves prior off-page order up to the authoritative count bound. Exact identity correctness remains a Runtime/evidence boundary until pagination/current service evidence can prove it.
 
+## b26 CI / Artifact / PR merge-view evidence
+
+- **Exact Runtime candidate source**: `7f845662185ef4e65a741bd37b09f9e9baebd723`.
+- **Exact push CI**: Run `33114798354`, Job `98666564839`, success; Xcode 16.4; target `arm64-apple-ios14.0`.
+- **Exact Runtime Artifact**: `9664109976`; ZIP digest `sha256:c93951d3756f2440b04f895e8aeca85ad66b4499617ff686cb7c4735d5fa51af`; IPA SHA `24d69c62e370c7d0f8b93405a2cc164417d7798a645b510da0d0543247af308d`.
+- **Artifact extraction check**: downloaded ZIP contained the expected b26 IPA and sidecar; local SHA recomputation matched the CI-reported IPA SHA exactly.
+- **PR merge-view CI**: Run `33114802205`, Job `98666578310`, success. Checkout log proves GitHub built `refs/pull/27/merge` at `b39afb8be316f37091beca0fd707eef75970d6e1`, explicitly `Merge 7f845662185ef4e65a741bd37b09f9e9baebd723 into e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`.
+- **Merge-view Artifact**: `9664058428`; ZIP digest `sha256:25e8a46a3747ef2df6edbfd4c9905ef04edba5d4d3885cb0dc21d260b6d023dc`; merge-view IPA SHA `d3e268fe96372f4823fd436749f6737c53140d3501cb88ac8c37a66509f25dfd`; source marker `b39afb8be316`.
+- Merge-view CI/Artifact is merge evidence only and does not replace exact Runtime Artifact `9664109976`.
+
 ## Current contracts retained
 
 - Round count and answer anchors continue to share one `ConversationRoundProjection` derived only when authoritative visible messages change.
@@ -65,9 +75,8 @@ These accepted sub-results do not make b25 Stable because the same candidate has
 
 - Code written: **b26 Yes** — exact source/config `7f845662185ef4e65a741bd37b09f9e9baebd723`.
 - Static/local: source diff review passed for the four evidenced fixes; local macOS/Xcode unavailable in this environment.
-- CI: exact b26 push Run `33114798354` / Job `98666564839` passed.
-- Artifact: identity-valid b26 Artifact `9664109976` produced; IPA SHA `24d69c62e370c7d0f8b93405a2cc164417d7798a645b510da0d0543247af308d`.
-- Local artifact extraction check: downloaded Artifact ZIP was unpacked; exact IPA file existed and local SHA-256 recomputation matched `24d69c62e370c7d0f8b93405a2cc164417d7798a645b510da0d0543247af308d`.
+- CI: exact b26 push Run `33114798354` / Job `98666564839` passed; PR merge-view Run `33114802205` / Job `98666578310` also passed.
+- Artifact: identity-valid b26 Runtime Artifact `9664109976` produced and locally hash-verified; merge-view Artifact `9664058428` is CI evidence only.
 - Runtime/manual/real-device: **b25 partial/failing; b26 not tested yet**. b25 Copy/time/preferences are accepted sub-results only.
 - Stable/Frozen: **No** for this Work.
 

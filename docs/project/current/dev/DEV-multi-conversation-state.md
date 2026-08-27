@@ -2,47 +2,55 @@
 
 ## Status
 
-**Active — b17 gate in progress after b16 Artifact identity rejection and second source review P0 findings**
+**Active — b17 atomic product/config source published; static/local parse passed; CI/Artifact and runtime evidence pending**
 
 - **Work ID**: `DEV-multi-conversation-state`
 - **Routing aliases / keywords**: `多会话 / 多会话驻留 / 多会话状态 / 快速切换 / multi-conversation`
 - **Task**: 将单 selected conversation detail/request owner 演进为 account-scoped per-conversation resident state，并建立后续 send/stream 所需的多会话 freshness 与异步所有权基线。
-- **Baseline**: `0.1.0 (15)` Stable recovery; `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
-- **Working branch / PR / head commit**: `dev/multi-conversation-state-20260827`; PR `Not created`; current branch head before b17 product allocation is documentation-only.
-- **b16**: `DEV-multi-conversation-state-0.1.0-b16`, source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`; CI Run `33009246356` success; Artifact `9621830284` identity rejected because build script embedded recovery b15 candidate/default slug. No b16 runtime claim. Never reuse b16.
-- **Evidence**: Code written = Yes (b16 source); Static/source review = performed with unresolved P0 findings; CI = Yes for b16 compile/package only; Artifact = produced but rejected identity; Runtime/manual = No; Stable/Frozen = No.
+- **Baseline**: `0.1.0 (15)` Stable recovery; base `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011`; recovery PR #10 merged.
+- **Working branch / PR**: `dev/multi-conversation-state-20260827`; PR `Not created`.
+- **Current candidate**: `DEV-multi-conversation-state-0.1.0-b17`, version `0.1.0 (17)`.
+- **Exact b17 product/config source**: `bc69d58b3245a1ab21b250e16612c11d39ddbf33`, tree `3451585f83c7bac69368709fe6273b90a0294d29`.
+- **Atomicity evidence**: b17 source was assembled as Git blobs/tree/commit off-branch, reviewed, then branch ref advanced exactly once. Compared with parent `76728a4a24e1825df8ee9f356ecdc32b052a035b`, exactly four files changed: `ConversationFeature.swift`, Xcode project, workflow and `scripts/build_ipa.sh`.
+- **Local/static evidence**: exact final `ConversationFeature.swift` blob is `1034cff72dea36d6d7e835bdf52dcfe2cdc8e38d`; local Git-blob hash matched exactly; `swiftc -frontend -parse` passed. This is syntax/static evidence only, not iOS compile/runtime proof.
 
-## Required P0 fixes before first valid runtime Candidate
+## b16 history
 
-1. Reject delayed old transport/account contexts; a request context must never re-adopt stale account scope.
-2. Recheck the authoritative verified `AuthSessionStore` context before committing a completed probe/transient session.
-3. Complete superseded/account-reset coalesced waiters deterministically instead of silently dropping closures.
-4. Give ordinary detail presentation a selection-cycle/freshness identity before obsolete waiter completions are surfaced.
-5. Fix Sync A -> B -> A: returning to A while A recovery is active must observe/attach to its active operation and receive terminal state without duplicate network request.
-6. Make recovery presentation conversation-targeted enough that navigating away/back does not lose the fact that A is still recovering or allow a conflicting second recovery.
-7. Add deterministic same-scope list request/presentation freshness; account reset must not let an old list completion mutate new-list UI state.
-8. Attach the already-resumed detail task handle synchronously on the repository owner domain so b15 cancel-before-replace semantics do not have a scheduling window.
-9. Confine mutable repository reads/writes to one explicit owner domain; URLSession callbacks must not read mutable `conversations` directly.
-10. Add privacy-safe old->new selection transition diagnostics and resident/protected/timing signals needed for A/B/C runtime proof.
-11. Keep normal LRU capacity Unknown until real-device evidence; approximate text bytes are not process-memory evidence.
-12. Current `userID + accountID` scope is personal-account evidence only; non-personal workspace isolation remains Unknown/Unverified.
+- b16 source `81e6774ae1f5eb1f0c6c3b514dfdf29d7611fa08`; CI Run `33009246356` succeeded; Artifact `9621830284` was identity-rejected because build script embedded recovery b15 candidate/default IPA slug.
+- b16 had no real-device run and must never be reused.
 
-## Candidate rule for b17
+## b17 owner fixes now written
 
-- Re-run uniqueness/conflict gate against current `main`, all Active DEV checkpoints, open PRs, `BUILD_TEST_INDEX.md`, Xcode build source and workflow.
-- If b17 is unique, assemble **one atomic product/config commit** containing P0 owner fixes + package identity correction + Xcode/workflow b17 identity. Advance branch ref once so one candidate identity maps to one source/config tree and intended Artifact.
-- Semantic per-conversation scroll-anchor restoration is P1 and is not a blocker for the first valid core b17 runtime Candidate.
+1. **Stale account context cannot re-adopt scope**: request/transport context only validates against the current Auth owner; repository scope changes are driven by a currently verified `AuthSessionStore` snapshot/change signal.
+2. **Probe commit freshness**: completed account probe rechecks `verifiedAccountContext()` on the main owner before installing its transient session/scope.
+3. **Waiter terminal contract**: replaced same-target operations cancel the old task and deterministically complete old waiters with `operationSuperseded`; account reset completes cancelled operation waiters with `accountContextChanged`.
+4. **Replacement ordering**: new operation owner is installed; old task is cancelled; replacement task is created and its handle synchronously attached on the main owner; only then are old waiters notified. This preserves b15 cancel-before-replace while avoiding completion re-entry before the new task handle exists.
+5. **Operation-first resident lookup**: an existing per-conversation operation is joined before a loaded/failed resident is returned, allowing return-to-A to observe an in-flight Sync/Reload instead of silently rendering only stale resident data.
+6. **Target-specific recovery**: Sync/Reload capture an explicit conversation ID; they do not derive mutation target from foreground selection after invocation.
+7. **Recovery presentation derives from selected conversation operation**: no global recovery-in-progress authority. Returning to A during active Sync/Reload restores A's appropriate presentation and coalesces onto its existing operation; B/C remain independent.
+8. **Ordinary presentation freshness**: detail controller uses a presentation generation plus selected ID guard so lifecycle completions for an obsolete selection cycle cannot overwrite the current conversation.
+9. **List freshness**: repository list generation rejects obsolete same-scope/account-reset results; sidebar has a presentation generation so late old-list completion cannot end a newer presentation state.
+10. **Repository execution domain**: mutable repository state is main-thread confined with explicit preconditions; URLSession callbacks use immutable captured diagnostics fields and commit results through main.
+11. **Memory warning protection**: resident entries belonging to selected or active detail/recovery operations are protected; only eligible inactive terminal residents are trimmed.
+12. **Diagnostics**: one owner logs old->new hashed selection transition; resident diagnostics expose resident/active/protected counts; immediate resident render logs `resident.firstVisible` timing. Approximate text bytes remain correlation only, not process-memory evidence.
+13. **Package identity**: Xcode build/candidate advanced to b17; workflow Artifact name is b17; build-script default candidate is b17 and IPA slug is `dev-multi-conversation-state`.
 
-## Runtime acceptance after valid Artifact
+## Evidence labels
 
-- A loaded -> B loaded -> A without a new Detail request.
-- A loading -> B -> hidden A completion retained and B untouched.
-- A loading -> B -> A before completion coalesces and reaches one terminal result.
-- Sync A -> B -> A before Sync terminal updates visible A correctly without duplicate request.
-- Reload/Sync replace only their target conversation.
-- Failed A -> B -> A does not implicitly retry.
-- Rapid A/B/C in-flight overlap records HTTP status/429 pressure without speculative retry/global rate limiter.
-- Account-context purge/late-callback isolation requires a real supported runtime route before claiming acceptance.
-- Memory-warning/residency evidence plus actual device/system memory observations inform later bounded LRU; do not infer capacity from text-byte estimates.
+- **Code written**: **Yes — b17 exact source published**.
+- **Static/local checks**: **Swift parse passed + exact blob identity matched**.
+- **CI passed**: **Pending for b17**. b16 CI does not prove b17.
+- **Artifact produced**: **Pending for b17**.
+- **Runtime/manual/real-device**: **No for this Work**.
+- **Stable/Frozen**: **No**.
 
-- **Next exact action**: finish the b17 uniqueness/conflict gate. If clean, prepare and publish exactly one atomic b17 product/config commit; then source-review exact b17 before accepting CI/Artifact as useful evidence.
+## Remaining acceptance / risks
+
+- CI must compile/package exact b17 and Artifact inspection must prove filename, candidate, source commit, version/build, SHA, arm64/iOS14 identity before device testing.
+- Real-device core matrix: A loaded -> B loaded -> A with no new Detail request; hidden A completion; A->B->A coalescing while loading; Sync A->B->A before terminal; target-only Sync/Reload; failed A return without implicit network retry; rapid A/B/C overlap and HTTP429 observation.
+- Account-context purge/late-callback isolation still needs a real supported runtime account-switch/logout route before claiming runtime acceptance.
+- Normal-operation resident/LRU capacity remains Unknown until device/system memory evidence; approximate text bytes are insufficient.
+- Current `userID + accountID` scope remains personal-account evidence only; non-personal workspace isolation is Unknown/Unverified.
+- Semantic scroll-anchor restoration remains P1 and does not block this core Candidate.
+
+- **Next exact action**: verify the GitHub Actions run triggered by exact b17 source `bc69d58b...`; if CI succeeds, inspect the exact Artifact identity/checksums before offering it for real-device testing. If b17 CI/source fails, record b17 as failed and allocate a new candidate rather than silently reusing b17.

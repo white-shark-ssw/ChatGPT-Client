@@ -615,7 +615,7 @@ final class ConversationRepository {
                     self.diagnostics.warning(category: "conversation", name: "listCache.provisional.completed", fields: ["hit": "false", "durationMs": String(format: "%.2f", durationMs), "reason": reason])
                 case .loaded(let snapshot, let byteCount, let durationMs):
                     guard let namespace else {
-                        self.diagnostics.warning(category: "conversation", name: "listCache.provisional.completed", traceID: span.traceID, fields: ["hit": "false", "reason": "missing_namespace"])
+                        self.diagnostics.warning(category: "conversation", name: "listCache.provisional.completed", fields: ["hit": "false", "reason": "missing_namespace"])
                         completion(.success(()))
                         return
                     }

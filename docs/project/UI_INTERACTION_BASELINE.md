@@ -1,6 +1,6 @@
 # UI / Interaction Baseline — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-27._
+_Last updated: 2026-08-28._
 
 ## Purpose
 
@@ -43,14 +43,17 @@ Do not reintroduce a second custom compact sidebar button on top of UISplitViewC
 
 ## Conversation header metadata
 
-The conversation title remains primary top-bar text. The existing second-line conversation type (`聊天` or `工作`) is the metadata row.
+b25 real-device comparison against the official ChatGPT iOS App establishes the required compact detail-header hierarchy:
 
-The project adds optional conversation round count to the right in a future Work:
-
-- `聊天 · 23轮`
-- `工作 · 23轮`
+- **conversation title is the primary first line**;
+- conversation type / round count is a subdued compact second line;
+- for the currently supported ordinary-chat detail path, round count On presents `聊天 · 23轮` and round count Off presents `聊天`;
+- the metadata row must not sit above the title and must not create prompt-style extra navigation-bar height;
+- detail conversation metadata must therefore not use `navigationItem.prompt` as its presentation owner.
 
 Round count is derived presentation data from authoritative active-branch user messages, never a second mutable authority.
+
+`工作 · N轮` remains the intended Work/Project presentation **only when an authoritative current Work/Project type source is evidenced**. Do not infer `工作` from conversation title or other presentation text merely to imitate the official label.
 
 ## Sidebar / conversation navigation
 
@@ -88,6 +91,15 @@ If another client updates a conversation and the current list response provides 
 
 A future `显示会话消息预览` preference uses the centralized settings owner. Toggling it only changes list presentation; it does not trigger network requests or erase the cached snapshot.
 
+### List refresh presentation
+
+A pull-to-refresh gesture is presentation for an actual manual list refresh, not an independent loading authority.
+
+- If a list load is already active and a new `UIRefreshControl` trigger is rejected as redundant, end that newly-started refresh-control presentation immediately.
+- Do not leave an invisible refresh-control area pushing the first row down until an older load later finishes.
+- Rejecting a redundant refresh must not create a duplicate list request, retry, debounce timer or watchdog.
+- Successful/failed manual refresh continues to use the existing retained-list feedback contract.
+
 ## Conversation messages
 
 ### User messages
@@ -119,6 +131,8 @@ Copy is a required daily-use interaction and must remain easy in the native clie
 - Copy reads the authoritative **user-visible** message text; hidden reasoning/tool/system content is never included merely because it exists in the protocol graph.
 - Copy uses the system pasteboard, does not mutate message state and does not trigger any network request.
 - Provide compact immediate feedback such as `已复制`; exact presentation is implementation-level.
+
+b25 real-device evidence accepts assistant Copy for the tested case. User-message/context Copy and future scoped code Copy remain subject to their applicable Runtime checks.
 
 ### Scoped Copy
 
@@ -165,7 +179,7 @@ This is a user-required long-conversation enhancement and is optional through se
 - `上一轮回答` / `下一轮回答` navigate by derived **round answer anchors**, not raw pixel percentages.
 - A round begins at an authoritative visible user message. Its historical answer anchor is the first visible assistant reply after that user message and before the next visible user message.
 - Multiple tool/reasoning/system nodes do not independently become “rounds”. A missing historical assistant reply does not get a fabricated anchor.
-- The same derived round projection should support header round count and answer navigation, avoiding parallel mutable indexes.
+- The same derived round projection supports header round count and answer navigation, avoiding parallel mutable indexes.
 
 ### Button design and placement
 
@@ -205,14 +219,20 @@ A short native cross-fade/symbol transition when the direction changes is accept
 
 ### Tap / scrolling behavior
 
-Tapping must produce visible spatial continuity:
+Tapping must produce visible spatial continuity and semantic one-answer progression:
 
 - resolve the adjacent answer anchor in the chosen direction from the current visible round context;
-- scroll the existing `UITableView`/`UIScrollView` to that assistant-answer start with native animation;
-- position the answer start with a modest readable top inset below the navigation area;
+- scroll the existing `UITableView` to the assistant-answer row start using native animated row scrolling;
 - do **not** instantly teleport to a final raw offset;
 - do **not** fake a long jump with timer-stepped offsets;
 - a user touch/drag may naturally interrupt the animation and takes priority.
+
+b25 diagnostics proved that recomputing every tap only from the still-moving visible rows can repeatedly request the same answer (`targetRow=61`, later `105`, `143`) during rapid taps. The corrected interaction contract is:
+
+- while native programmatic scrolling is still in flight, consecutive button taps advance from the **last requested derived answer target**, not from a stale intermediate visible viewport;
+- this programmatic target cursor is transient presentation state only and points into the existing derived answer-row projection; it is not a second semantic round/answer authority;
+- a real user drag clears that cursor and re-establishes navigation context from the actual user-controlled viewport;
+- target positioning uses native `.top` row semantics so the assistant answer start, not an estimated raw pixel offset for a self-sizing row, is the navigation destination.
 
 For long conversations, derive/store the lightweight answer-row/index projection when message data changes. Do not scan all messages during every `scrollViewDidScroll` callback.
 
@@ -374,6 +394,7 @@ UI remains a consumer of authoritative state.
 - Copy reads authoritative user-visible message/block content and never hidden reasoning/tool/system payloads.
 - First-entry latest-message placement and returned-conversation semantic restoration are two states of the same per-conversation presentation owner; raw loading/top offsets are not a second reading-position authority.
 - Answer-jump anchors are a lightweight derived presentation index over the authoritative visible active branch; they are rebuilt after authoritative message projection changes.
+- A rapid-tap programmatic answer-target cursor is transient UI state pointing into that projection; it is cleared by real user drag and cannot become a second semantic answer/scroll authority.
 - Per-conversation semantic scroll state remains owned by the existing conversation presentation owner; quick navigation cannot introduce a competing saved-offset store.
 - Stream/reasoning state belongs to owning conversation/response lifecycle.
 - Pending outgoing attachments belong to the owning conversation composer/draft state.
@@ -384,13 +405,15 @@ UI remains a consumer of authoritative state.
 
 ## Validation expectations
 
-Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. Selected-detail cancellation/replacement, future reasoning UI/haptics, composer behavior, round-count behavior, message-timestamp behavior, adaptive answer-jump behavior, Copy, attachment transfer and persistent list-cache/preview behavior require their own runtime acceptance as applicable.
+Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. b25 real-device testing accepts assistant Copy, historical message-time display for the tested case and persisted conversation-display Preferences, while rejecting the prompt-style header, rapid answer-jump behavior and redundant refresh-control presentation; b25 diagnostics also expose a `30/29` list reconciliation invariant failure. b26 contains evidence-backed corrections but remains Runtime pending.
 
 For conversation entry/scroll behavior, real-device validation should include: first entry into a long unloaded conversation lands at the latest message without visible top-to-bottom traversal; first display of a hidden-completed Detail with no saved anchor also lands at latest; A -> B -> A restores A's previously established semantic reading position; loading placeholders never overwrite that anchor behavior.
 
-For answer navigation, real-device validation should include a long conversation, repeated upward/downward direction changes, first/last-boundary behavior, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
+For b26 header validation, compare against the supplied official-app reference: title first, `聊天 · N轮` second, normal compact navigation-bar height, and round-count Off leaving `聊天` without altering title hierarchy. `工作` is not accepted until authoritative type evidence exists.
 
-For list cache/preview, real-device validation should include warm-cache cold start, one-request refresh/reconciliation, network-failure cache retention, no automatic Detail fan-out, account-scope isolation, first-page-28 merge behavior, and relaunch persistence of a preview derived from an already-opened conversation.
+For answer navigation, real-device validation must include a long conversation, rapid repeated taps while animation is still moving, upward/downward real-drag direction changes, first/last boundaries, target answer start alignment, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
+
+For list cache/preview, real-device validation should include warm-cache cold start, one-request refresh/reconciliation, network-failure cache retention, no automatic Detail fan-out, account-scope isolation, first-page-28 merge behavior, and relaunch persistence of a preview derived from an already-opened conversation. For the b26 regression specifically, redundant pull-refresh during an existing load must leave no invisible top spacer and must not start a duplicate request; with authoritative `totalCount=29`, reconciled `resultCount` must not exceed 29.
 
 For Copy, validate user + assistant whole-message actions and later code-block Copy; clipboard output must match user-visible content and exclude hidden material/UI decorations.
 

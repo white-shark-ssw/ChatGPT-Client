@@ -1,31 +1,32 @@
 # Client Architecture Gap Review
 
-_Last reviewed: 2026-08-27; refreshed after b18 semantic-scroll Candidate CI/Artifact validation._
+_Last reviewed: 2026-08-27; refreshed after exact b18 historical-scroll real-device acceptance._
 
 ## Purpose
 
-Focused pre-send/stream architecture review for the native TrollStore ChatGPT client. It exists to prevent state/concurrency mistakes once multiple conversations, streaming, background execution and long conversations coexist.
+Focused pre-Send/Stream architecture review for the native TrollStore ChatGPT client. It exists to prevent state/concurrency mistakes once multiple conversations, streaming, background execution and long conversations coexist.
 
-Product rule: **reach a usable daily-chat candidate early; only P0 structural invariants may block the first production send/stream path.**
+Product rule: **reach a usable daily-chat candidate early; only P0 structural invariants may block the first production Send/Stream path.**
 
 ## Current evidence baseline
 
 - `DEV-conversation-recovery-0.1.0-b15` is merged Stable for recorded Plus/personal iPhone/iOS17 recovery scope.
-- Merged Stable baseline remains b15 / `main@f155ddb873540f7c80d6e66ebbfeb59ded26f011` until Active Work completes/merges.
-- `DEV-multi-conversation-state` is Active on `dev/multi-conversation-state-20260827`.
+- `DEV-multi-conversation-state` remains Active on `dev/multi-conversation-state-20260827`.
 - b16 is historical/rejected before runtime and must not be reused.
-- b17 exact source `bc69d58b3245...` has accepted core iPhone/iOS17 runtime evidence for resident return, hidden completion, same-target coalescing, Sync A->B->A rejoin and rapid different-conversation overlap; no HTTP429 in supplied export. b17 reproduced the P1 semantic-scroll defect.
-- Current exact b18 product/config source is `f30c13b4ac2c40dcda829585682825ca906dceae`, tree `c2797f05a8b8c43bdd1a5064177e3b7c49606614`.
-- b18 Run `33054012226` / Job `98456174184` succeeded; Artifact `9638821912` is identity-valid; IPA SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`.
-- b18 adds only historical per-conversation scroll presentation metadata in `ConversationDetailViewController`; `ConversationRepository`, account/protocol ownership and network routes are unchanged.
-- **b18 Runtime/manual/real-device is pending.** CI/Artifact does not prove the scroll defect is fixed.
+- b17 exact source `bc69d58b3245...` has accepted core iPhone/iOS17 Runtime evidence for resident return, hidden completion, same-target coalescing, Sync A->B->A rejoin and rapid different-conversation overlap. It reproduced the historical-scroll defect.
+- Exact b18 product/config source is `f30c13b4ac2c40dcda829585682825ca906dceae`, tree `c2797f05a8b8c43bdd1a5064177e3b7c49606614`; Run `33054012226` / Job `98456174184` succeeded; Artifact `9638821912` is identity-valid; IPA SHA `296870630ac57f439d559a2b8b823094885d0362f547a190e48982696187877c`.
+- b18 changes only historical per-conversation scroll presentation metadata in `ConversationDetailViewController`; `ConversationRepository`, account/protocol ownership and network routes are unchanged.
+- Exact b18 iPhone/iOS17 Runtime now accepts the tested historical-scroll matrix: independent A/B anchors, first-time target isolation, visible Sync/Reload anchor preservation when the anchored message remains, resident return and active same-target Sync coalescing. The user reported no issue.
+- b18 export: 195 events, all `info`; 21 anchor saves, 19 restores, 17 resident hits/first-visible events; all 17 recorded HTTP statuses are 200; no error, HTTP429 or anchor discard.
+- Missing-anchor-message discard did not occur naturally and remains source/CI-defined rather than device-proven.
+- Current `main@2c33dacbefa613292eb89cbf606b0172a241e81e` advanced after b18 Artifact through docs-only message-timestamp planning. This does not invalidate exact b18 product/runtime evidence; synchronize before final merge.
 - There is still no XCTest/UI-test target.
 
 Cold-start login-state recovery belongs to completed recovery baseline. Do not create a separate `DEV-auth-resume` task. Default persistent WebKit storage remains sole persistent auth-secret authority.
 
 ## Priority classification
 
-### P0 — required before production send/stream becomes authoritative
+### P0 — required before production Send/Stream becomes authoritative
 
 1. Per-conversation resident state instead of one loaded-detail slot.
 2. Async operation freshness / stale-result protection with deterministic consumer termination.
@@ -35,19 +36,19 @@ Cold-start login-state recovery belongs to completed recovery baseline. Do not c
 6. Own responses per conversation/message identity instead of a global streaming flag.
 7. Define Sync/Reload ownership transitions when target conversation has an active response.
 
-b17 addresses the evidenced pre-send owner/race/account-scope portion of 1–4 and has direct runtime evidence for tested navigation/coalescing/hidden-Sync paths. Items 5–7 require current Send/Stream protocol evidence and must not be guessed.
+b17 addresses the evidenced pre-Send owner/race/account-scope portion of 1–4 and has direct Runtime evidence for tested navigation/coalescing/hidden-Sync paths. b18 does not alter those owners and adds Runtime-accepted presentation isolation for historical scroll. Items 5–7 require current Send/Stream protocol evidence and must not be guessed.
 
 ### P1 — around first daily-chat candidates
 
 1. Basic Markdown/code-block rendering.
 2. Conversation-list pagination/load-more beyond first 28 items.
-3. Per-conversation draft and **semantic scroll presentation state**, including historical-reading anchor restoration and future active-response `follow-tail` semantics while process remains alive.
+3. Per-conversation draft and semantic scroll presentation state.
 4. Hidden-conversation generating/completed status after streaming exists.
 5. One centralized app-settings preference owner.
 6. Background continuation over an active response set, not global Boolean.
 7. Large-conversation phase timing: network / parse-model / first-visible-render.
 
-b18 is the exact historical-scroll correction Candidate. Active-response follow-tail remains future Send/Stream integration work because response activity must come from authoritative response ownership.
+Historical-reading anchor restoration is now Runtime accepted on exact b18 for the tested matrix. Active-response `follow-tail` remains future Send/Stream integration because response activity must come from authoritative response ownership.
 
 ### P2 — after daily-chat loop is stable
 
@@ -55,7 +56,7 @@ b18 is the exact historical-scroll correction Candidate. Active-response follow-
 2. Persistent chat-body/disk cache only after explicit privacy/storage requirement.
 3. Advanced edit/regenerate/branch cache optimization.
 4. Advanced unread/history synchronization with other clients.
-5. Broad lower-iOS/iPad optimization after exact runtime evidence.
+5. Broad lower-iOS/iPad optimization after exact Runtime evidence.
 
 ## P0 invariants
 
@@ -63,19 +64,15 @@ b18 is the exact historical-scroll correction Candidate. Active-response follow-
 
 Foreground selection is presentation state only.
 
-Conceptually:
-
 `verified account/workspace context + conversation ID -> resident conversation state`
 
 Selecting B must not destroy A, cancel A merely because it becomes hidden, or force A to reload on return. Use one production conversation authority with per-conversation entries; do not create one repository per screen and do not keep full UIKit hierarchies alive as data cache.
 
 ### Single state-owner execution domain
 
-Resident dictionaries, list state, operation generations/tasks, account-scope binding and transient-session ownership read/mutate through one explicit repository execution domain. Network transfer and pure parsing may occur off-owner. Thread safety must fix owner invariant, not create second store.
+Resident dictionaries, list state, operation generations/tasks, account-scope binding and transient-session ownership read/mutate through one explicit repository execution domain. Network transfer and pure parsing may occur off-owner. Thread safety must fix owner invariant, not create a second store.
 
 ### Async freshness / race protection
-
-Selection change alone must not discard valid target result, but obsolete operations cannot overwrite newer authoritative state.
 
 Every operation binds account/context + target conversation + generation/token.
 
@@ -85,7 +82,7 @@ Every operation binds account/context + target conversation + generation/token.
 - Presentation has target/freshness identity so obsolete completion cannot mutate wrong conversation.
 - No timer/retry/watchdog/fallback machinery.
 
-b17 runtime directly confirms same-target coalescing and A Sync rejoin for supplied sequences.
+b17 Runtime directly confirms same-target coalescing and A Sync rejoin. b18 also re-confirms coalescing when returning to B while B Sync is active.
 
 ### Account/workspace isolation
 
@@ -93,7 +90,7 @@ b17 runtime directly confirms same-target coalescing and A Sync rejoin for suppl
 
 A newly verified different context must invalidate old transient session, purge old list/resident/draft/response state, cancel/invalidate old operations and resolve waiters, reject late old-scope callbacks, never allow stale transport to re-adopt old scope, and never display old-account content under new context.
 
-Current source keys personal scope with `userID + accountID`; non-personal workspace identity remains Unknown / Unverified.
+Current source keys personal scope with `userID + accountID`; supported account-switch Runtime proof and non-personal workspace identity remain open.
 
 ### Preserve authoritative node identity
 
@@ -101,7 +98,7 @@ Visible message array is a projection, not complete authoritative conversation r
 
 ### New-conversation identity handoff
 
-Send protocol probe must establish conversation identity creation, parent/current-node requirements, message/request/response lifecycle, and when new conversation can safely enter list/resident state. Temporary local identity, if required, gets one explicit handoff to authoritative identity; temporary and server identities must not remain independent owners.
+Send protocol evidence must establish conversation identity creation, parent/current-node requirements, message/request/response lifecycle, and when a new conversation can safely enter list/resident state. Temporary local identity, if required, gets one explicit handoff to authoritative identity; temporary and server identities must not remain independent owners.
 
 ### Per-conversation response ownership
 
@@ -113,111 +110,87 @@ A may continue generating while B is visible. Navigation never calls Stop just b
 
 ### Sync/Reload while response active
 
-`同步最新消息` targets one conversation and never resends. `重载当前会话` rebuilds one conversation only. Exact interaction with active future response follows current Send/Stream evidence and is not guessed pre-send.
+`同步最新消息` targets one conversation and never resends. `重载当前会话` rebuilds one conversation only. Exact interaction with active future response follows current Send/Stream evidence and is not guessed pre-Send.
 
 ## P1 implementation notes
 
-### Markdown/code rendering
-
-Prioritize paragraphs/headings/lists, inline/fenced code, code-copy, links and tables when current content requires them. Do not broad-reload/reparse whole conversation on every streamed token.
-
-### Conversation pagination
-
-Current accepted list call returns first page (`offset=0&limit=28&order=updated`). Pagination must use current service evidence, deduplicate by authoritative conversation ID and never clear resident detail because list page/order changes.
-
 ### Per-conversation UI state
 
-Within live process preserve lightweight semantic scroll presentation, later composer draft, and useful reasoning-detail expansion state. Avoid raw pixel-only restoration for growing long conversations.
+Within the live process preserve lightweight semantic scroll presentation, later composer draft, and useful reasoning-detail expansion state. Avoid raw pixel-only restoration for growing long conversations.
 
 Two scroll modes are user-confirmed:
 
-1. **Historical-reading anchor** — if user is reading away from bottom, preserve anchor tied to message identity plus relative visual offset where practical. A->B->A restores A's own anchor; B scrolling does not move A.
-2. **Follow-tail** — if user leaves A at/near bottom while authoritative A response is active, hidden growth/completion keeps A attached to newest tail; returning A shows current latest bottom, not old pre-growth anchor.
+1. **Historical-reading anchor** — preserve message identity + relative visual offset; A->B->A restores A's own anchor and B scrolling does not move A.
+2. **Follow-tail** — if the user leaves A at/near bottom while authoritative A response is active, hidden growth/completion keeps A attached to newest tail; returning A shows current latest bottom, not old pre-growth anchor.
 
-Intentional upward scroll while A is generating exits follow-tail and establishes historical-reading intent.
+Intentional upward scroll while A generates exits follow-tail and establishes historical-reading intent.
 
-b18 implements only historical-reading mode using lightweight presentation metadata. It tracks actually displayed conversation separately from repository selection, captures top visible message identity + relative offset, restores after rows reload, resets no-anchor target to top, clears anchors on account reset, and preserves through visible Sync/Reload only when same anchor message remains. If anchor message disappears, it discards anchor and returns top rather than inventing fallback.
+Exact b18 implements and Runtime-validates the historical-reading mode for the tested iPhone/iOS17 paths. It tracks actually displayed conversation separately from repository selection, captures top visible message identity + relative offset, restores after rows reload, resets no-anchor target to top, clears anchors on account reset, and preserves through visible Sync/Reload only when the same anchor message remains.
 
-Follow-tail eligibility/transition must consume future authoritative Send/Stream response lifecycle; b18 does not add UI streaming authority.
+The anchored-message-disappears branch was not naturally triggered on device; `scrollAnchor.discarded -> top` remains source/CI-defined and must not be reported as Runtime-proven.
 
-### Hidden response status
+Follow-tail eligibility/transition must consume future authoritative Send/Stream response lifecycle; b18 adds no UI streaming authority.
 
-After Send/Stream exists, sidebar may derive generating/completed-unseen presentation from authoritative response owner; it is not a second response store and not a claim about service unread API.
+### Conversation pagination / Markdown / settings / background
 
-### Central settings owner
-
-First real preference toggle should establish one small app preference owner around `UserDefaults`/system state. View controllers consume settings; they do not invent independent keys/defaults.
-
-### Multi-response background semantics
-
-Background protection is over active protected-response set. A finishing must not release protection while B remains active. Completion notification is deduplicated per response lifecycle.
-
-### Long-conversation timing
-
-Before major performance rewrites, instrument safe phase timing for network completion, JSON parse/model construction, first visible presentation and later Markdown/layout. End-to-end duration alone does not identify bottleneck.
+- Current accepted list call returns first page `offset=0&limit=28&order=updated`; pagination must use current service evidence and never clear resident detail solely because list page/order changes.
+- Markdown/code rendering should prioritize development-chat usefulness without broad reparse/reload on every streamed token.
+- First real preference toggle should establish one centralized app preference owner; view controllers consume it rather than inventing independent keys/defaults.
+- Background protection is over an active response set, not a global Boolean.
 
 ## Additional correctness constraints
 
-### Resident freshness
-
-Conversation may change on another client. Newer list `update_time` may be stale hint but must not silently trigger reload without accepted product rule. `同步最新消息` remains explicit reconciliation.
-
-### `聊天` / `工作` derivation
-
-UI requirement exists, but authoritative service field distinguishing modes remains Unverified. Do not infer from title/UI text.
-
-### Process death
-
-In-memory residency/presentation may disappear after process termination/force quit. Acceptable early. Do not add persistent chat-body cache solely to hide relaunch cost.
-
-### Network/rate-limit failures
-
-Keep failures observable. No reachability-driven resend, duplicate stream after network transition, speculative retry chain or global concurrency limiter without evidence. b17 rapid overlap reached three active operations without HTTP429 for supplied run only.
+- `同步最新消息` remains explicit reconciliation; list `update_time` must not silently become automatic reload policy.
+- UI `聊天` / `工作` derivation remains Unverified unless current service evidence supplies authoritative identity.
+- In-memory residency/presentation may disappear after process termination; do not add persistent chat-body cache solely to hide relaunch cost.
+- Keep network/rate-limit failures observable. No reachability resend, speculative retry chain or global concurrency limiter without evidence.
 
 ## Testing gap
 
 No test target today. Add only smallest deterministic support when state logic justifies project-file churn.
 
-High-value future pure tests include current-branch/node normalization, resident lookup/eviction eligibility, same-target coalescing/waiter termination, stale-generation/account rejection, list freshness, semantic scroll anchor<->follow-tail transitions once authoritative response activity exists, and future response lifecycle/stream parser.
-
 Real-device evidence remains mandatory for WebKit auth, real networking, HTTP429 behavior, UI switching, memory behavior, background execution and TrollStore mechanisms.
 
-## Current serialized development sequence
+## Current serialized development state
 
 1. `DEV-conversation-recovery` — Completed / merged / Stable b15.
-2. `DEV-multi-conversation-state` — Active; b18 exact Candidate now awaits real-device historical-scroll validation.
-3. `DEV-conversation-round-count` / preferences integration.
-4. `DEV-send-stream`.
-5. Markdown export, long-conversation tuning, attachments and remaining daily-use work.
+2. `DEV-multi-conversation-state` — Active; b17 core Runtime and b18 historical-scroll Runtime accepted for tested scope; remaining owner/memory gates below.
+3. Current durable roadmap is `DEVELOPMENT_PLAN.md`; current `main` includes message-timestamp/display-preference planning that must be preserved during final synchronization.
+4. `DEV-send-stream` remains the stage where real response ownership/follow-tail can be implemented and tested.
 
-Do not create separate `DEV-auth-resume` Work.
-
-## Current multi-conversation runtime gate
+## Current multi-conversation Runtime gate
 
 Accepted on b17:
 
-- A loaded -> B loaded -> A without navigation-only A Detail refetch.
-- hidden A completion retained while B untouched.
-- A -> B -> A before completion coalesces onto one A operation.
-- Sync A -> B -> A before terminal remains attached to same Sync and applies terminal state.
+- loaded A -> B -> A without navigation-only A Detail refetch;
+- hidden completion retained;
+- same-target in-flight return coalesces;
+- Sync A -> B -> A remains attached to same Sync;
 - rapid A/B/C overlap without HTTP429 in supplied export.
-- resident/active/protected counts across several conversations including large ones.
 
-Pending on exact b18:
+Accepted on exact b18:
 
-- A around ~10% -> B scroll -> A returns to same semantic/visual historical anchor.
-- A and B maintain independent saved anchors over repeated switching.
-- first-time/new target with no anchor starts at normal top, not previous conversation's offset.
-- visible Sync/Reload preserve anchor when same anchor message remains; absent anchor message discards to top.
-- spot-check no regression in resident/coalesced navigation behavior.
+- A historical position -> B scroll -> A restores same practical semantic/visual anchor;
+- A and B maintain independent anchors over repeated switching;
+- first-time third target does not inherit previous conversation offset;
+- visible Sync preserves the historical anchor when the anchored message remains;
+- Reload preserves the historical anchor when the anchored message remains;
+- active B Sync survives B->A->B and re-coalesces onto the same operation;
+- resident returns continue without navigation-only refetch;
+- no issue reported by user; export contains only info-level events, HTTP200 statuses, no HTTP429/error.
 
 Still open before full Work Stable acceptance:
 
-- isolated target-only Reload replacement as applicable;
-- failed resident navigation with no implicit retry when natural failure available;
-- supported account-scope runtime isolation only when real switch/logout route exists;
-- real process/system memory evidence sufficient to choose bounded normal LRU capacity.
+- isolated same-target Reload replacement while an older Detail is actually in flight;
+- failed resident navigation with no implicit retry when a natural terminal failure is available;
+- supported account-scope Runtime isolation when a real switch/logout route exists;
+- real process/system memory evidence sufficient to choose a bounded normal LRU policy;
+- non-personal workspace isolation remains Unknown / Unverified.
 
 Future Send/Stream adds separate scroll gate: A active at bottom -> B -> A grows/completes hidden -> return A at current latest bottom; A active -> user scrolls upward -> B -> return A at preserved historical anchor.
 
-Normal LRU capacity remains Unknown until device evidence exists. Approximate text bytes cannot freeze capacity.
+## Next exact action
+
+Do not change product code yet. Collect real iPhone process/system memory evidence while several small and large conversations remain resident and are repeatedly switched. Use that evidence, not approximate visible-text bytes, to decide whether a normal bounded LRU policy is needed now and what capacity is defensible.
+
+Before final PR/merge, synchronize with current `main@2c33dacbefa613292eb89cbf606b0172a241e81e` without overwriting its message-timestamp planning, then rerun only validation materially affected by synchronized product source.

@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import QuartzCore
 import UIKit
 import WebKit
 
@@ -1486,6 +1487,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
         answerJumpButton.backgroundColor = .secondarySystemBackground
         answerJumpButton.tintColor = .label
+        answerJumpButton.titleLabel?.font = .systemFont(ofSize: 11, weight: .semibold)
         answerJumpButton.layer.cornerRadius = 22
         answerJumpButton.layer.shadowColor = UIColor.black.cgColor
         answerJumpButton.layer.shadowOpacity = 0.12
@@ -1910,9 +1912,21 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         if clearTarget { programmaticAnswerTargetRow = nil }
     }
 
+    private func showAnswerJumpPositioningFeedback() {
+        answerJumpButton.setImage(nil, for: .normal)
+        answerJumpButton.setTitle("定位中", for: .normal)
+        answerJumpButton.accessibilityLabel = "正在定位"
+        answerJumpButton.setNeedsLayout()
+        answerJumpButton.layoutIfNeeded()
+        answerJumpButton.layer.displayIfNeeded()
+        answerJumpButton.titleLabel?.layer.displayIfNeeded()
+        CATransaction.flush()
+    }
+
     private func updateAnswerJumpButton() {
         guard preferences.showsAnswerQuickNavigation else {
             currentAnswerJumpDirection = nil
+            answerJumpButton.setTitle(nil, for: .normal)
             answerJumpButton.isHidden = true
             return
         }
@@ -1928,11 +1942,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         else { direction = lastUserDragDirection }
         guard let direction else {
             currentAnswerJumpDirection = nil
+            answerJumpButton.setTitle(nil, for: .normal)
             answerJumpButton.isHidden = true
             return
         }
-        if currentAnswerJumpDirection != direction {
+        if currentAnswerJumpDirection != direction || answerJumpButton.currentImage == nil {
             currentAnswerJumpDirection = direction
+            answerJumpButton.setTitle(nil, for: .normal)
             answerJumpButton.setImage(UIImage(systemName: direction == .previous ? "chevron.up" : "chevron.down"), for: .normal)
             answerJumpButton.accessibilityLabel = direction == .previous ? "上一轮" : "下一轮"
         }
@@ -1953,19 +1969,23 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         programmaticAnswerTargetRow = targetRow
         let indexPath = IndexPath(row: targetRow, section: 0)
         diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "targetRole": "user", "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY), "presentationMode": "direct_then_ease_out"])
-        view.layoutIfNeeded()
-        tableView.layoutIfNeeded()
+        showAnswerJumpPositioningFeedback()
+        let preparationStartedAt = ProcessInfo.processInfo.systemUptime
+        let directPositionStartedAt = preparationStartedAt
         tableView.scrollToRow(at: indexPath, at: .top, animated: false)
-        tableView.layoutIfNeeded()
+        let directPositionDurationMs = (ProcessInfo.processInfo.systemUptime - directPositionStartedAt) * 1000
         let finalOffset = tableView.contentOffset
+        let targetVisible = tableView.indexPathsForVisibleRows?.contains(indexPath) ?? false
         let bounds = answerJumpScrollBounds()
         let requestedLeadY = direction == .previous ? finalOffset.y + Self.answerJumpLeadDistance : finalOffset.y - Self.answerJumpLeadDistance
         let leadY = min(max(requestedLeadY, bounds.minimumY), bounds.maximumY)
         let leadDistance = abs(finalOffset.y - leadY)
         tableView.setContentOffset(CGPoint(x: finalOffset.x, y: leadY), animated: false)
+        let preparationDurationMs = (ProcessInfo.processInfo.systemUptime - preparationStartedAt) * 1000
+        diagnostics.info(category: "interaction", name: "answerJump.positioned", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "direct_then_ease_out", "targetVisible": targetVisible ? "true" : "false", "directPositionDurationMs": String(format: "%.2f", directPositionDurationMs), "preparationDurationMs": String(format: "%.2f", preparationDurationMs)])
+        updateAnswerJumpButton()
         guard leadDistance > 0.5 else {
             diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "direct_then_ease_out", "leadDistancePoints": String(format: "%.2f", leadDistance), "landingErrorPoints": String(format: "%.2f", tableView.contentOffset.y - finalOffset.y)])
-            updateAnswerJumpButton()
             return
         }
         let animator = UIViewPropertyAnimator(duration: Self.answerJumpAnimationDuration, curve: .easeOut) { [weak self] in
@@ -1980,7 +2000,6 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             self.updateAnswerJumpButton()
         }
         animator.startAnimation()
-        updateAnswerJumpButton()
     }
 
     @objc private func reloadCurrentConversation() {

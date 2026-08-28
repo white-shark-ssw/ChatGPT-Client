@@ -1207,7 +1207,6 @@ final class ConversationSidebarViewController: UITableViewController {
     private var loading = false
     private var loadPresentationGeneration = 0
     private var errorView: UIView?
-    private var pendingRefreshTopNormalization = false
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -1224,11 +1223,10 @@ final class ConversationSidebarViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ConversationCell")
         tableView.rowHeight = 58
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "设置", style: .plain, target: self, action: #selector(openSettings))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversations))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversationsFromButton))
         refreshControl = UIRefreshControl()
         refreshControl?.tintColor = .secondaryLabel
-        setRefreshControlTitle("下拉刷新")
-        refreshControl?.addTarget(self, action: #selector(reloadConversations), for: .valueChanged)
+        refreshControl?.addTarget(self, action: #selector(refreshControlChanged), for: .valueChanged)
         loadConversations(forceRefresh: false)
     }
 
@@ -1265,7 +1263,15 @@ final class ConversationSidebarViewController: UITableViewController {
         tableView.reloadData()
     }
 
-    @objc private func reloadConversations() { loadConversations(forceRefresh: true) }
+    @objc private func reloadConversationsFromButton() {
+        diagnostics.info(category: "ui", name: "conversationList.manualRefreshRequested", fields: ["source": "button"])
+        loadConversations(forceRefresh: true)
+    }
+
+    @objc private func refreshControlChanged() {
+        diagnostics.info(category: "ui", name: "conversationList.manualRefreshRequested", fields: ["source": "pull"])
+        loadConversations(forceRefresh: true)
+    }
 
     private func loadConversations(forceRefresh: Bool) {
         guard !loading else {
@@ -1277,10 +1283,7 @@ final class ConversationSidebarViewController: UITableViewController {
         let presentationGeneration = loadPresentationGeneration
         errorView?.removeFromSuperview()
         errorView = nil
-        if forceRefresh {
-            setRefreshControlTitle("正在刷新…")
-            navigationItem.prompt = "正在刷新会话列表…"
-        }
+        if forceRefresh { navigationItem.prompt = "正在刷新会话列表…" }
         navigationItem.rightBarButtonItem?.isEnabled = false
         repository.loadConversations(forceRefresh: forceRefresh) { [weak self] result in
             guard let self, self.loadPresentationGeneration == presentationGeneration else { return }
@@ -1304,38 +1307,13 @@ final class ConversationSidebarViewController: UITableViewController {
         }
     }
 
-    private func setRefreshControlTitle(_ text: String) {
-        refreshControl?.attributedTitle = NSAttributedString(string: text, attributes: [.foregroundColor: UIColor.secondaryLabel])
-    }
-
     private func finishRefreshPresentation(reason: String) {
         let wasRefreshing = refreshControl?.isRefreshing ?? false
         let offsetBefore = tableView.contentOffset.y
-        let topY = -tableView.adjustedContentInset.top
-        let overscrolled = offsetBefore < topY - 0.5
+        let insetBefore = tableView.adjustedContentInset.top
         refreshControl?.endRefreshing()
-        setRefreshControlTitle("下拉刷新")
-        let shouldDefer = overscrolled && (tableView.isDragging || tableView.isDecelerating)
-        pendingRefreshTopNormalization = shouldDefer
-        if overscrolled && !shouldDefer { tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: topY), animated: false) }
-        diagnostics.info(category: "ui", name: "conversationList.refreshPresentation", fields: ["reason": reason, "wasRefreshing": wasRefreshing ? "true" : "false", "overscrolled": overscrolled ? "true" : "false", "deferred": shouldDefer ? "true" : "false", "contentOffsetY": String(format: "%.2f", offsetBefore), "adjustedInsetTop": String(format: "%.2f", tableView.adjustedContentInset.top)])
+        diagnostics.info(category: "ui", name: "conversationList.refreshPresentation", fields: ["reason": reason, "wasRefreshing": wasRefreshing ? "true" : "false", "contentOffsetY": String(format: "%.2f", offsetBefore), "adjustedInsetTop": String(format: "%.2f", insetBefore)])
     }
-
-    private func normalizePendingRefreshTopIfNeeded(reason: String) {
-        guard pendingRefreshTopNormalization, !tableView.isDragging, !tableView.isDecelerating else { return }
-        pendingRefreshTopNormalization = false
-        let topY = -tableView.adjustedContentInset.top
-        let offsetBefore = tableView.contentOffset.y
-        guard offsetBefore < topY - 0.5 else { return }
-        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: topY), animated: false)
-        diagnostics.info(category: "ui", name: "conversationList.refreshTopNormalized", fields: ["reason": reason, "contentOffsetY": String(format: "%.2f", offsetBefore), "adjustedInsetTop": String(format: "%.2f", tableView.adjustedContentInset.top)])
-    }
-
-    override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        if !decelerate { normalizePendingRefreshTopIfNeeded(reason: "drag_end") }
-    }
-
-    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { normalizePendingRefreshTopIfNeeded(reason: "deceleration_end") }
 
     private func showError(_ error: Error) {
         let label = UILabel()
@@ -1348,7 +1326,7 @@ final class ConversationSidebarViewController: UITableViewController {
         let retryButton = UIButton(type: .system)
         retryButton.setTitle("重新加载", for: .normal)
         retryButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        retryButton.addTarget(self, action: #selector(reloadConversations), for: .touchUpInside)
+        retryButton.addTarget(self, action: #selector(reloadConversationsFromButton), for: .touchUpInside)
 
         var arrangedSubviews: [UIView] = [label, retryButton]
         if let repositoryError = error as? ConversationRepositoryError, repositoryError == .authenticationNotAvailable {
@@ -1413,6 +1391,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var roundProjection = ConversationRoundProjection(rounds: [])
     private var answerRows: [Int] = []
     private var programmaticAnswerTargetRow: Int?
+    private var answerJumpAnimationInFlight = false
     private var currentAnswerJumpDirection: AnswerJumpDirection?
     private var lastUserDragDirection: AnswerJumpDirection = .previous
     private var previousContentOffsetY: CGFloat = 0
@@ -1550,6 +1529,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         captureScrollAnchorForDisplayedConversation()
         displayedConversationID = id
         programmaticAnswerTargetRow = nil
+        answerJumpAnimationInFlight = false
         lastUserDragDirection = .previous
         previousContentOffsetY = tableView.contentOffset.y
         presentationGeneration += 1
@@ -1593,6 +1573,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         loadingConversationID = nil
         displayedConversationID = nil
         programmaticAnswerTargetRow = nil
+        answerJumpAnimationInFlight = false
         scrollAnchorsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
@@ -1625,6 +1606,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         roundProjection = ConversationRoundProjection(rounds: [])
         answerRows = []
         programmaticAnswerTargetRow = nil
+        answerJumpAnimationInFlight = false
         currentAnswerJumpDirection = nil
         navigationItem.prompt = nil
         answerJumpButton.isHidden = true
@@ -1638,6 +1620,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         for (row, message) in messages.enumerated() where rowsByMessageID[message.id] == nil { rowsByMessageID[message.id] = row }
         answerRows = roundProjection.answerMessageIDs.compactMap { rowsByMessageID[$0] }
         programmaticAnswerTargetRow = nil
+        answerJumpAnimationInFlight = false
     }
 
     private func updateHeaderMetadata() {
@@ -1872,6 +1855,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         return adjacentAnswerRows(relativeToAnswerRow: targetRow)
     }
 
+    private func answerTargetOffsetY(for row: Int) -> CGFloat {
+        let rowRect = tableView.rectForRow(at: IndexPath(row: row, section: 0))
+        let minimumY = -tableView.adjustedContentInset.top
+        let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
+        return min(max(rowRect.minY - tableView.adjustedContentInset.top, minimumY), maximumY)
+    }
+
     private func updateAnswerJumpButton() {
         guard preferences.showsAnswerQuickNavigation else {
             currentAnswerJumpDirection = nil
@@ -1904,9 +1894,14 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             updateAnswerJumpButton()
             return
         }
+        let retargeting = answerJumpAnimationInFlight
+        if retargeting { tableView.setContentOffset(tableView.contentOffset, animated: false) }
+        let currentOffsetY = tableView.contentOffset.y
+        let targetOffsetY = answerTargetOffsetY(for: targetRow)
         programmaticAnswerTargetRow = targetRow
-        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow)])
-        tableView.scrollToRow(at: IndexPath(row: targetRow, section: 0), at: .top, animated: true)
+        answerJumpAnimationInFlight = true
+        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY), "targetOffsetY": String(format: "%.2f", targetOffsetY)])
+        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: targetOffsetY), animated: true)
         updateAnswerJumpButton()
     }
 
@@ -1943,6 +1938,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        answerJumpAnimationInFlight = false
         programmaticAnswerTargetRow = nil
         previousContentOffsetY = scrollView.contentOffset.y
         updateAnswerJumpButton()
@@ -1970,7 +1966,16 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
 
-    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        answerJumpAnimationInFlight = false
+        if let targetRow = programmaticAnswerTargetRow, messages.indices.contains(targetRow) {
+            let targetOffsetY = answerTargetOffsetY(for: targetRow)
+            let landingError = tableView.contentOffset.y - targetOffsetY
+            if abs(landingError) > 0.5 { tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: targetOffsetY), animated: false) }
+            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "landingErrorPoints": String(format: "%.2f", landingError)])
+        }
+        updateAnswerJumpButton()
+    }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messages.count }
 
@@ -2031,14 +2036,15 @@ final class ConversationMessageCell: UITableViewCell {
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         bubbleView.addSubview(messageLabel)
 
-        let copyImage = UIImage(systemName: "doc.on.doc", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .regular))
+        let copyImage = UIImage(systemName: "doc.on.doc", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .regular))
         copyButton.setImage(copyImage, for: .normal)
         copyButton.tintColor = .secondaryLabel
         copyButton.backgroundColor = .clear
+        copyButton.contentHorizontalAlignment = .left
         copyButton.accessibilityLabel = "复制"
         copyButton.addTarget(self, action: #selector(copyTapped), for: .touchUpInside)
-        copyButton.widthAnchor.constraint(equalToConstant: 36).isActive = true
-        copyButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        copyButton.widthAnchor.constraint(equalToConstant: 28).isActive = true
+        copyButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
         actionStack.axis = .horizontal
         actionStack.alignment = .center
         actionStack.spacing = 0
@@ -2055,7 +2061,7 @@ final class ConversationMessageCell: UITableViewCell {
         timestampTrailingConstraint = timestampLabel.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
         actionLeadingConstraint = actionStack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)
         timestampToBubbleConstraint = bubbleView.topAnchor.constraint(equalTo: timestampLabel.bottomAnchor, constant: 3)
-        bubbleToActionConstraint = actionStack.topAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 2)
+        bubbleToActionConstraint = actionStack.topAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 4)
 
         NSLayoutConstraint.activate([
             timestampLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 7),
@@ -2099,7 +2105,7 @@ final class ConversationMessageCell: UITableViewCell {
             bubbleView.backgroundColor = .clear
             bubbleView.layer.cornerRadius = 0
             copyButton.isHidden = false
-            bubbleToActionConstraint.constant = 2
+            bubbleToActionConstraint.constant = 4
             timestampLabel.textAlignment = .left
             NSLayoutConstraint.activate([assistantLeadingConstraint, assistantTrailingConstraint])
         }

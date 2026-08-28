@@ -2,15 +2,15 @@
 
 ## Status
 
-**Active — b32 Runtime partial/failing; b33 correction prepared; non-atomic continuation recovery point active**
+**Active — b32 Runtime partial/failing; Batch A synchronized; b33 product/config Batch B pending**
 
 - **Work ID**: `DEV-conversation-round-count`
 - **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮 / 下一轮 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
 - **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive round navigation, centralized persisted Preferences, first-entry latest placement, and evidence-backed list/detail presentation corrections.
 - **Working branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open.
-- **Current branch head before b33 write chain**: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`.
+- **Current synchronized branch head before b33 product Batch B**: `9e90e8591dd03de618f951ee090ce1af7e7750f0`.
 - **Current main**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
-- **Resume-guard finding**: checkpoint had recorded older `main@55216bde...` and PR mergeable state. Current GitHub truth is `main@a6e3b2bc...`; compare from `55216bde...` to current main is 8 commits touching only `AGENTS.md` and `docs/project/DOCUMENTATION_POLICY.md`. PR #27 is currently non-mergeable until that governance-only main advance is synchronized. No product/state-owner overlap is evidenced by that main delta.
+- **Resume-guard finding resolved**: checkpoint had recorded older `main@55216bde...` and PR mergeable state. Current main advanced by 8 governance-only commits touching `AGENTS.md` and `docs/project/DOCUMENTATION_POLICY.md`. Batch A merged current main into the Work branch at `9e90e859...`; branch verification succeeded and PR #27 is mergeable again against `main@a6e3b2bc...`.
 - **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for their recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
 
 ## Candidate history summary
@@ -64,34 +64,36 @@ These blobs are staging evidence only until a verified commit/ref update attache
 
 - Work: `DEV-conversation-round-count`
 - Branch: `dev/conversation-round-count-20260828`
-- Branch head before chain: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`
-- PR: #27 open; head above; current mergeability false because `main` advanced.
-- Current main: `a6e3b2bc185b8d5df90b846040387262a64e6154`
+- Original b32 branch head: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`
+- Recovery checkpoint commit: `bba11dedcacbb687b392de38a20c434c634d78a7`
+- Batch A synchronized head: `9e90e8591dd03de618f951ee090ce1af7e7750f0`
+- PR: #27 open and mergeable against current `main@a6e3b2bc185b8d5df90b846040387262a64e6154` after Batch A.
 - b32 identity is already produced/tested and permanently reserved; **never rewrite corrected code as b32**.
 - Intended fresh identity: `DEV-conversation-round-count-0.1.0-b33` / `0.1.0 (33)`.
 
 **Intended write batches**
 
-- **Batch A — governance synchronization**: merge/synchronize current `main@a6e3b2bc...` into the Work branch, preserving branch product source and importing only current governance changes (`AGENTS.md`, `docs/project/DOCUMENTATION_POLICY.md` from the verified main delta). Verify resulting branch head and PR state before product work.
+- **Batch A — governance synchronization**: merge/synchronize current main into the Work branch, preserving branch product source and importing only current governance changes. **Completed and verified at `9e90e859...`.**
 - **Batch B — b33 product/config commit**: attach only the prepared b33 `ConversationFeature.swift`, Xcode Build/Candidate identity and matching workflow identity to the synchronized branch tree. Verify exact diff and identity before depending on the commit.
 - **Batch C — CI / Artifact evidence**: allow the normal branch/pull-request workflows to run, verify exact push Candidate build and current-main PR merge view, then obtain Artifact IDs, Candidate/source markers, IPA SHA and package identity.
 - **Batch D — documentation evidence**: update this checkpoint and durable `BUILD_TEST_INDEX.md` / `PROJECT_STATE.md` / `MODULE_STATUS.md` / `PROJECT_PROFILE.md` or other relevant current docs with the exact b32 Runtime and b33 Code/CI/Artifact truth. Avoid pushing docs in a way that obscures which exact product/config commit owns the Runtime Candidate.
 
 **Confirmed complete writes**
 
-- Recovery-point checkpoint write itself is the first confirmed batch boundary.
+- Recovery-point checkpoint write committed at `bba11ded...`.
+- Batch A merge tree/commit/ref completed and branch verification confirms `9e90e859...` with parents `bba11ded...` + `main@a6e3b2bc...`.
+- PR #27 verification after Batch A: open, mergeable, base `main@a6e3b2bc...`, head `9e90e859...`.
 - The three prepared b33 blobs listed above already exist in GitHub object storage, but no branch commit/ref is claimed for them yet.
 
 **Remaining writes**
 
-- Batch A governance synchronization.
 - Batch B b33 product/config commit + branch ref update.
 - Batch C exact CI / Artifact verification.
 - Batch D durable docs/checkpoint evidence refresh.
 
 **Next exact action**
 
-Create and verify Batch A synchronization from branch head `ea2b7bf4...` with current `main@a6e3b2bc...`; only after the real branch head is verified should Batch B be constructed from that synchronized tree.
+Construct Batch B from synchronized tree `fa590065f4cb6459f8232895941109177c91bd4b`, attaching only the three prepared b33 blobs, create the product/config commit with parent `9e90e859...`, fast-forward the Work branch, then verify the real diff/Build/Candidate identity before waiting on CI.
 
 **Recovery must not touch / replay**
 
@@ -100,6 +102,10 @@ Create and verify Batch A synchronization from branch head `ea2b7bf4...` with cu
 - Do not rewrite accepted b31/b32 semantic round derivation or b32 recipient filter/Copy merely to chase smoothness.
 - Do not add retry, timer, watchdog, speculative row-height cache, alternate navigation owner, new network route, or second conversation/list authority.
 - If interrupted, re-read this checkpoint and current GitHub branch/main/PR state; perform only missing deterministic batches. Never blindly replay a prior tree/commit/ref write.
+
+## Connector-side cleanup note
+
+An unintended temporary branch `tmp-should-not-create` was created at `bba11ded...` during tool discovery. It contains no unique product/config change and is not a Work branch, PR, Candidate or authority. The currently exposed GitHub connector functions do not provide branch/ref deletion, so it must not be reused as task state; remove it when an authorized delete-ref path is available. This side effect does not change the selected Work identity.
 
 ## Validation state
 
@@ -111,4 +117,4 @@ Create and verify Batch A synchronization from branch head `ea2b7bf4...` with cu
 
 ## Next human gate
 
-After Batch A-D complete and exact identity-valid b33 IPA exists, hand that exact IPA to the user for real-device testing focused on bottom rubber-band direction, long-jump smoothness, landing accuracy, and regression of tool filtering/Copy. Do not merge PR #27 or claim Stable before exact b33 Runtime acceptance.
+After Batch B-D complete and exact identity-valid b33 IPA exists, hand that exact IPA to the user for real-device testing focused on bottom rubber-band direction, long-jump smoothness, landing accuracy, and regression of tool filtering/Copy. Do not merge PR #27 or claim Stable before exact b33 Runtime acceptance.

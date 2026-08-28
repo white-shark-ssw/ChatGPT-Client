@@ -2012,9 +2012,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        answerJumpAnimationInFlight = false
         if let targetRow = programmaticAnswerTargetRow, messages.indices.contains(targetRow) {
             let indexPath = IndexPath(row: targetRow, section: 0)
+            guard tableView.indexPathsForVisibleRows?.contains(indexPath) == true else {
+                diagnostics.info(category: "interaction", name: "answerJump.completionIgnored", fields: ["targetRow": String(targetRow), "targetRole": "user", "reason": "current_target_not_visible"])
+                return
+            }
+            answerJumpAnimationInFlight = false
             let nativeTargetOffsetY = answerTargetOffsetY(for: targetRow)
             let nativeLandingError = tableView.contentOffset.y - nativeTargetOffsetY
             let correctionApplied = abs(nativeLandingError) > 1.0
@@ -2022,6 +2026,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             let finalTargetOffsetY = answerTargetOffsetY(for: targetRow)
             let landingError = tableView.contentOffset.y - finalTargetOffsetY
             diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "nativeLandingErrorPoints": String(format: "%.2f", nativeLandingError), "landingCorrectionApplied": correctionApplied ? "true" : "false", "landingErrorPoints": String(format: "%.2f", landingError)])
+        } else {
+            answerJumpAnimationInFlight = false
         }
         updateAnswerJumpButton()
     }

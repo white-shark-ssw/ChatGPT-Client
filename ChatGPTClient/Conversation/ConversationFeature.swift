@@ -1207,6 +1207,7 @@ final class ConversationSidebarViewController: UITableViewController {
     private var loading = false
     private var loadPresentationGeneration = 0
     private var errorView: UIView?
+    private var pendingRefreshTopNormalization = false
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -1225,6 +1226,8 @@ final class ConversationSidebarViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "设置", style: .plain, target: self, action: #selector(openSettings))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversations))
         refreshControl = UIRefreshControl()
+        refreshControl?.tintColor = .secondaryLabel
+        setRefreshControlTitle("下拉刷新")
         refreshControl?.addTarget(self, action: #selector(reloadConversations), for: .valueChanged)
         loadConversations(forceRefresh: false)
     }
@@ -1254,7 +1257,7 @@ final class ConversationSidebarViewController: UITableViewController {
     func resetForAccountScopeChange() {
         loadPresentationGeneration += 1
         loading = false
-        refreshControl?.endRefreshing()
+        finishRefreshPresentation(reason: "account_scope_reset")
         navigationItem.prompt = nil
         navigationItem.rightBarButtonItem?.isEnabled = true
         errorView?.removeFromSuperview()
@@ -1266,7 +1269,7 @@ final class ConversationSidebarViewController: UITableViewController {
 
     private func loadConversations(forceRefresh: Bool) {
         guard !loading else {
-            if forceRefresh { refreshControl?.endRefreshing() }
+            if forceRefresh { finishRefreshPresentation(reason: "ignored_existing_load") }
             return
         }
         loading = true
@@ -1274,12 +1277,15 @@ final class ConversationSidebarViewController: UITableViewController {
         let presentationGeneration = loadPresentationGeneration
         errorView?.removeFromSuperview()
         errorView = nil
-        if forceRefresh { navigationItem.prompt = "正在刷新会话列表…" }
+        if forceRefresh {
+            setRefreshControlTitle("正在刷新…")
+            navigationItem.prompt = "正在刷新会话列表…"
+        }
         navigationItem.rightBarButtonItem?.isEnabled = false
         repository.loadConversations(forceRefresh: forceRefresh) { [weak self] result in
             guard let self, self.loadPresentationGeneration == presentationGeneration else { return }
             self.loading = false
-            self.refreshControl?.endRefreshing()
+            self.finishRefreshPresentation(reason: "load_completed")
             self.navigationItem.rightBarButtonItem?.isEnabled = true
             switch result {
             case .success:
@@ -1297,6 +1303,39 @@ final class ConversationSidebarViewController: UITableViewController {
             }
         }
     }
+
+    private func setRefreshControlTitle(_ text: String) {
+        refreshControl?.attributedTitle = NSAttributedString(string: text, attributes: [.foregroundColor: UIColor.secondaryLabel])
+    }
+
+    private func finishRefreshPresentation(reason: String) {
+        let wasRefreshing = refreshControl?.isRefreshing ?? false
+        let offsetBefore = tableView.contentOffset.y
+        let topY = -tableView.adjustedContentInset.top
+        let overscrolled = offsetBefore < topY - 0.5
+        refreshControl?.endRefreshing()
+        setRefreshControlTitle("下拉刷新")
+        let shouldDefer = overscrolled && (tableView.isDragging || tableView.isDecelerating)
+        pendingRefreshTopNormalization = shouldDefer
+        if overscrolled && !shouldDefer { tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: topY), animated: false) }
+        diagnostics.info(category: "ui", name: "conversationList.refreshPresentation", fields: ["reason": reason, "wasRefreshing": wasRefreshing ? "true" : "false", "overscrolled": overscrolled ? "true" : "false", "deferred": shouldDefer ? "true" : "false", "contentOffsetY": String(format: "%.2f", offsetBefore), "adjustedInsetTop": String(format: "%.2f", tableView.adjustedContentInset.top)])
+    }
+
+    private func normalizePendingRefreshTopIfNeeded(reason: String) {
+        guard pendingRefreshTopNormalization, !tableView.isDragging, !tableView.isDecelerating else { return }
+        pendingRefreshTopNormalization = false
+        let topY = -tableView.adjustedContentInset.top
+        let offsetBefore = tableView.contentOffset.y
+        guard offsetBefore < topY - 0.5 else { return }
+        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: topY), animated: false)
+        diagnostics.info(category: "ui", name: "conversationList.refreshTopNormalized", fields: ["reason": reason, "contentOffsetY": String(format: "%.2f", offsetBefore), "adjustedInsetTop": String(format: "%.2f", tableView.adjustedContentInset.top)])
+    }
+
+    override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if !decelerate { normalizePendingRefreshTopIfNeeded(reason: "drag_end") }
+    }
+
+    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { normalizePendingRefreshTopIfNeeded(reason: "deceleration_end") }
 
     private func showError(_ error: Error) {
         let label = UILabel()
@@ -1849,10 +1888,12 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             answerJumpButton.isHidden = true
             return
         }
-        currentAnswerJumpDirection = direction
-        answerJumpButton.setImage(UIImage(systemName: direction == .previous ? "chevron.up" : "chevron.down"), for: .normal)
-        answerJumpButton.accessibilityLabel = direction == .previous ? "上一轮回答" : "下一轮回答"
-        answerJumpButton.isHidden = false
+        if currentAnswerJumpDirection != direction {
+            currentAnswerJumpDirection = direction
+            answerJumpButton.setImage(UIImage(systemName: direction == .previous ? "chevron.up" : "chevron.down"), for: .normal)
+            answerJumpButton.accessibilityLabel = direction == .previous ? "上一轮回答" : "下一轮回答"
+        }
+        if answerJumpButton.isHidden { answerJumpButton.isHidden = false }
     }
 
     @objc private func jumpToAdjacentAnswer() {
@@ -1904,18 +1945,32 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         programmaticAnswerTargetRow = nil
         previousContentOffsetY = scrollView.contentOffset.y
+        updateAnswerJumpButton()
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let currentY = scrollView.contentOffset.y
         if scrollView.isDragging {
             let delta = currentY - previousContentOffsetY
-            if delta > 0.5 { lastUserDragDirection = .next }
-            else if delta < -0.5 { lastUserDragDirection = .previous }
+            let newDirection: AnswerJumpDirection?
+            if delta > 0.5 { newDirection = .next }
+            else if delta < -0.5 { newDirection = .previous }
+            else { newDirection = nil }
+            if let newDirection, newDirection != lastUserDragDirection {
+                lastUserDragDirection = newDirection
+                updateAnswerJumpButton()
+            }
         }
         previousContentOffsetY = currentY
-        updateAnswerJumpButton()
     }
+
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if !decelerate { updateAnswerJumpButton() }
+    }
+
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
+
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messages.count }
 
@@ -1942,8 +1997,8 @@ final class ConversationMessageCell: UITableViewCell {
 
     private let bubbleView = UIView()
     private let messageLabel = UILabel()
-    private let metadataStack = UIStackView()
     private let timestampLabel = UILabel()
+    private let actionStack = UIStackView()
     private let copyButton = UIButton(type: .system)
     private var onCopy: (() -> Void)?
     private var userLeadingConstraint: NSLayoutConstraint!
@@ -1951,14 +2006,23 @@ final class ConversationMessageCell: UITableViewCell {
     private var assistantLeadingConstraint: NSLayoutConstraint!
     private var assistantTrailingConstraint: NSLayoutConstraint!
     private var maxWidthConstraint: NSLayoutConstraint!
-    private var metadataLeadingConstraint: NSLayoutConstraint!
-    private var metadataTrailingConstraint: NSLayoutConstraint!
+    private var timestampLeadingConstraint: NSLayoutConstraint!
+    private var timestampTrailingConstraint: NSLayoutConstraint!
+    private var actionLeadingConstraint: NSLayoutConstraint!
+    private var timestampToBubbleConstraint: NSLayoutConstraint!
+    private var bubbleToActionConstraint: NSLayoutConstraint!
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         backgroundColor = .systemBackground
         contentView.backgroundColor = .systemBackground
+
+        timestampLabel.font = .preferredFont(forTextStyle: .caption2)
+        timestampLabel.textColor = .tertiaryLabel
+        timestampLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        timestampLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(timestampLabel)
 
         bubbleView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(bubbleView)
@@ -1967,40 +2031,44 @@ final class ConversationMessageCell: UITableViewCell {
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         bubbleView.addSubview(messageLabel)
 
-        timestampLabel.font = .preferredFont(forTextStyle: .caption2)
-        timestampLabel.textColor = .tertiaryLabel
-        timestampLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        copyButton.setImage(UIImage(systemName: "doc.on.doc"), for: .normal)
+        let copyImage = UIImage(systemName: "doc.on.doc", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .regular))
+        copyButton.setImage(copyImage, for: .normal)
+        copyButton.tintColor = .secondaryLabel
+        copyButton.backgroundColor = .clear
         copyButton.accessibilityLabel = "复制"
         copyButton.addTarget(self, action: #selector(copyTapped), for: .touchUpInside)
-        copyButton.widthAnchor.constraint(equalToConstant: 28).isActive = true
-        copyButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
-        metadataStack.axis = .horizontal
-        metadataStack.alignment = .center
-        metadataStack.spacing = 8
-        metadataStack.addArrangedSubview(copyButton)
-        metadataStack.addArrangedSubview(timestampLabel)
-        metadataStack.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(metadataStack)
+        copyButton.widthAnchor.constraint(equalToConstant: 36).isActive = true
+        copyButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        actionStack.axis = .horizontal
+        actionStack.alignment = .center
+        actionStack.spacing = 0
+        actionStack.addArrangedSubview(copyButton)
+        actionStack.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(actionStack)
 
         userLeadingConstraint = bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.layoutMarginsGuide.leadingAnchor, constant: 44)
         userTrailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
         assistantLeadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)
         assistantTrailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
         maxWidthConstraint = bubbleView.widthAnchor.constraint(lessThanOrEqualTo: contentView.widthAnchor, multiplier: 0.82)
-        metadataLeadingConstraint = metadataStack.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor)
-        metadataTrailingConstraint = metadataStack.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor)
+        timestampLeadingConstraint = timestampLabel.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)
+        timestampTrailingConstraint = timestampLabel.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor)
+        actionLeadingConstraint = actionStack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)
+        timestampToBubbleConstraint = bubbleView.topAnchor.constraint(equalTo: timestampLabel.bottomAnchor, constant: 3)
+        bubbleToActionConstraint = actionStack.topAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 2)
 
         NSLayoutConstraint.activate([
-            bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 7),
+            timestampLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 7),
+            timestampLeadingConstraint,
+            timestampTrailingConstraint,
+            timestampToBubbleConstraint,
             messageLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 12),
             messageLabel.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -12),
             messageLabel.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 9),
             messageLabel.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -9),
-            metadataStack.topAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 2),
-            metadataStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -7),
-            metadataLeadingConstraint,
-            metadataTrailingConstraint
+            bubbleToActionConstraint,
+            actionLeadingConstraint,
+            actionStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -7)
         ])
     }
 
@@ -2017,18 +2085,21 @@ final class ConversationMessageCell: UITableViewCell {
         messageLabel.text = message.text
         timestampLabel.text = showTimestamp ? Self.timestampText(for: message.createTime) : nil
         timestampLabel.isHidden = timestampLabel.text == nil
+        timestampToBubbleConstraint.constant = timestampLabel.isHidden ? 0 : 3
         NSLayoutConstraint.deactivate([userLeadingConstraint, userTrailingConstraint, assistantLeadingConstraint, assistantTrailingConstraint, maxWidthConstraint])
         switch message.role {
         case .user:
             bubbleView.backgroundColor = .secondarySystemBackground
             bubbleView.layer.cornerRadius = 18
             copyButton.isHidden = true
+            bubbleToActionConstraint.constant = 0
             timestampLabel.textAlignment = .right
             NSLayoutConstraint.activate([userLeadingConstraint, userTrailingConstraint, maxWidthConstraint])
         case .assistant:
             bubbleView.backgroundColor = .clear
             bubbleView.layer.cornerRadius = 0
             copyButton.isHidden = false
+            bubbleToActionConstraint.constant = 2
             timestampLabel.textAlignment = .left
             NSLayoutConstraint.activate([assistantLeadingConstraint, assistantTrailingConstraint])
         }

@@ -2,123 +2,100 @@
 
 ## Status
 
-**Active — PR #27 open; b28 Runtime partial/failing; b29 identity-valid CI/Artifact ready for Runtime**
+**Active — PR #27 open; b29 Runtime partial/failing; b30 identity-valid CI/Artifact ready for Runtime**
 
 - **Work ID**: `DEV-conversation-round-count`
 - **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮回答 / 下一轮回答 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
-- **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style conversation header, active-branch round count, historical message time, visible-text Copy, adaptive answer navigation, centralized persisted Preferences, first-entry latest placement, and evidenced list-refresh presentation corrections.
+- **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive answer navigation, centralized persisted Preferences, first-entry latest placement, and evidenced list-refresh presentation corrections.
 - **Baseline / branch / PR**: `main@e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`; branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable.
-- **Exact b29 product/config source**: `0b0c2fea44503423e75696f777fbf627aefac500`. Later docs-only commits do not redefine this Runtime Candidate product source.
-- **Active-work conflict guard**: only this Active dev checkpoint plus README exists; no competing Active Work/candidate conflict was found at b29 allocation.
-- **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for their recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
+- **Exact b30 product/config source**: `a091327508d8393822784bb286245aff64c028a8`. Later docs-only commits do not redefine the Runtime Candidate source.
+- **Active-work conflict guard**: only this Active dev checkpoint plus README exists; no competing Active Work/candidate conflict.
+- **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
 
 ## Candidate history
 
 - **b24**: Artifact identity rejected / permanently reserved; never reuse.
-- **b25**: Runtime partial/failing. Accepted Copy function, historical time and preference persistence; rejected header, repeated answer-jump behavior and refresh presentation; exposed `30/29` reconcile defect.
+- **b25**: Runtime partial/failing. Copy function, historical time and preference persistence accepted; header/jump/refresh rejected; exposed `30/29` reconcile defect.
 - **Rejected reused-b25 output**: source-fix output reused an already-produced b25 identity; permanently invalid for testing.
-- **b26**: Runtime partial/failing. Accepted authoritative-total bound (`30 -> 29`, repeated `29/29`), sequential answer targets and compact header; jump smoothness/presentation defects remained.
-- **b27**: Runtime partial/failing. On 1063 visible messages / 2331 mapping nodes semantic targets remained sequential but animation still paused/hitched; right-top refresh inflated adjusted top inset ~97.67 -> 131.67 while list stayed `28/29 -> 29`; Copy visual remained too large.
-- **b28**: exact source `eacd3e68469e976f6cb41a600729c211f6cd32af`, Run `33149698659`, Artifact `9677214430`, IPA SHA `9ab99321e08695a8298fd3e40231110303d47bd6bbb75d4e9814dc4e275d962f`. **Runtime partial/failing and superseded by b29.**
-- **b29 current Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b29`, `0.1.0 (29)`, exact product/config source `0b0c2fea44503423e75696f777fbf627aefac500`.
+- **b26**: Runtime partial/failing. Accepted authoritative-total bound (`30 -> 29`, repeated `29/29`), sequential answer targets and compact header.
+- **b27**: Runtime partial/failing. 1063-message stress run retained sequential targets but jump still paused/hitched; right-top refresh inflated adjusted top inset ~97.67 -> 131.67; Copy visual rejected as too large.
+- **b28**: Runtime partial/failing. 1577-message run showed large answer landing drift (~-1950/-7330/-11407pt), direction flips without real drag, first entry at top, refresh blank band persisted.
+- **b29**: Runtime partial/failing. List top blank-region fix is accepted, but message self-sizing layout catastrophically regressed; current body/row presentation became deformed/invisible, making jump/first-entry visual validation unreliable. Superseded by b30.
+- **b30 current Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b30`, `0.1.0 (30)`, exact product/config source `a091327508d8393822784bb286245aff64c028a8`.
 
-## b28 real-device evidence — 2026-08-28
+## b29 real-device evidence — 2026-08-28
 
-The user explicitly reported that a new recording was unnecessary because the overall behavior matched the previous run. The supplied exact-b28 diagnostics are sufficient to classify the failures below.
+### Accepted: conversation-list top blank region
 
-### Answer jump accuracy and hitch
+- User explicitly reports the previous blank region above the first conversation is fixed on exact b29.
+- Diagnostics retained normal top presentation around `adjustedInsetTop≈97.67` / `contentOffsetY≈-97.67` through right-top refresh.
+- Known list reconciliation stayed bounded at authoritative total (`pageCount=28`, `totalCount=29`, `resultCount=29`).
+- Therefore the b29 list-presentation correction — no ordinary refresh status through `navigationItem.prompt` — is retained in b30 and should only receive regression sanity.
 
-- Stress conversation reached `visibleMessageCount=1577`.
-- b28 no longer merely showed a subjective hitch: animation-completion diagnostics recorded material target drift, including approximately:
-  - target row 31: landing error `-1950 pt`;
-  - target row 121: landing error `-7330 pt`;
-  - target row 236: landing error `-11407 pt`.
-- Current source used self-sizing rows with `estimatedRowHeight=96` while computing off-screen target geometry through `rectForRow`. The large error growth as real heights resolved is consistent with the Runtime evidence.
-- The b28 execution path is therefore rejected for long-conversation target accuracy/smoothness. This is evidence for removing the fixed estimated-row geometry from target calculations, not evidence for adding a speculative height-cache subsystem.
+### Rejected: message self-sizing layout
 
-### Direction flips without user drag
+- Exact b29 screenshots show conversation rows badly deformed: visible text largely disappears, user bubbles collapse into thin bars, assistant rows leave large blank areas, while timestamps/Copy glyphs remain visible.
+- Diagnostics prove this is not a network/parser absence: successful Detail responses still produced hundreds/thousands of visible messages (examples 367 and 1630 visible messages).
+- The only b29 layout change directly relevant to this failure was `UITableView.automaticDimension` row sizing combined with `tableView.estimatedRowHeight = 0`.
+- This b29 route is rejected. Disabling row-height estimation is not a valid long-conversation optimization for this UIKit table.
+- Because the body layout is broken, b29 cannot honestly accept answer-jump accuracy/smoothness or first-entry latest presentation even if code paths execute.
 
-- During continuous programmatic taps, diagnostics showed direction changes such as `next -> previous -> next -> previous` without corresponding real user-drag input.
-- Source confirmed the cause: when both adjacent targets existed, `updateAnswerJumpButton()` fell back to `lastUserDragDirection`; that value is initialized to `.previous` on conversation presentation.
-- Contract: programmatic motion is not user intent. While a programmatic target cursor exists and both directions remain valid, retain the current clicked direction; only a real drag or a boundary may override it.
+### Copy official-size reference
 
-### First entry was incorrectly at the top
+- User supplied an official ChatGPT iOS screenshot and explicitly pointed to the assistant Copy quick-action glyph.
+- Screenshot is 1290px wide for a 430pt @3x device presentation. Measured Copy glyph bounds are roughly 44×44px ≈ 14.7×14.7pt, with a subdued gray outline, transparent/no visible button background and response-row left alignment around the ordinary content margin.
+- Current implementation is already evidence-aligned at the glyph level: 14pt regular `doc.on.doc`, dynamic `.secondaryLabel`, clear background, left aligned. Its invisible layout slot remains 28×28pt for interaction/layout.
+- Do not shrink to an arbitrary 10/12pt only to compensate for b29's broken row layout. Final visual scale remains Runtime pending after normal message layout is restored.
 
-- The documented product/UI contract already requires: no valid saved reading anchor => present latest/bottom of the current visible branch, without visibly animating through a long conversation.
-- Exact b28 diagnostics on the 1577-message conversation showed the first jump beginning from `contentOffsetY≈-97.67`, i.e. the ordinary top.
-- Source confirmed `restoreScrollAnchor` called `resetScrollPositionToTop()` when no saved anchor existed.
-- This is a current Phase 8/read-presentation defect, not a future Send/Stream-only feature.
+## b30 product correction
 
-### Right-top refresh blank region — corrected root cause
+- Restore normal UIKit self-sizing behavior by changing only `tableView.estimatedRowHeight` from `0` to `UITableView.automaticDimension` while retaining `rowHeight = UITableView.automaticDimension`.
+- Do not change the b29 list-refresh fix, Repository/network/reconcile, Preferences, answer semantic projection/cursor, first-entry latest logic, or Copy glyph configuration in this correction.
+- No timer, debounce, retry, watchdog, fallback, height cache or secondary state owner is introduced.
 
-- b28 had already removed `UIRefreshControl.attributedTitle`, yet the blank top region still reproduced.
-- Source still wrote right-button refresh status through `navigationItem.prompt` (`正在刷新…`, success/failure status). `navigationItem.prompt` changes navigation-bar height and therefore changes the table's adjusted top inset.
-- The durable b27/b28 explanation that the refresh-control title itself was the root cause is superseded. The accepted current root owner is the prompt-height presentation path.
-- Repository list data/reconciliation remains correct and unchanged; this remains a presentation defect.
+### Scoped source audit
 
-## b29 product corrections
+Formal b30 Candidate commit relative to the preceding docs head changes exactly three files:
 
-### Stable target geometry without a second semantic authority
+1. `ChatGPTClient/Conversation/ConversationFeature.swift` — one-line self-sizing estimate restoration.
+2. `ChatGPTClient.xcodeproj/project.pbxproj` — Build/Candidate 29 -> 30.
+3. `.github/workflows/ios-foundation.yml` — b30 Candidate/Artifact label.
 
-- `ConversationRoundProjection`, `answerRows` and the transient semantic target cursor remain unchanged as the sole answer-target derivation.
-- `UITableView.estimatedRowHeight` is disabled (`0`) so long-distance row geometry is not based on the b28 fixed 96pt estimate.
-- Before resolving/retargeting an answer offset, the table is laid out and the current real row rect is used.
-- Interruptible native `setContentOffset(..., animated:true)` remains; rapid retargeting still stops the previous programmatic animation at the current visible offset before targeting the next derived answer.
-- No timer, debounce, watchdog, retry or speculative row-height cache was added.
+`ConversationRepository`, list request/reconcile, auth, cache and Preferences owners are untouched.
 
-### Direction ownership
+## Exact b30 Candidate evidence
 
-- When a programmatic answer target exists and both directions remain available, the button retains `currentAnswerJumpDirection` instead of falling back to stale `lastUserDragDirection`.
-- A real user drag still clears the programmatic target and re-establishes direction from actual user movement.
-- Boundaries still force the only valid adjacent direction.
-
-### First-entry latest placement
-
-- No saved reading anchor now uses `scrollToLatestMessage`: nonanimated `.bottom` placement of the last visible authoritative message after layout.
-- A privacy-safe diagnostic `scrollAnchor.defaultLatest` records only target row and content offset.
-- Existing per-conversation saved-anchor restoration remains unchanged.
-- Existing missing-saved-anchor-message discard behavior remains a separate conditional path and was not broadened speculatively.
-
-### Refresh presentation
-
-- `navigationItem.prompt` is no longer used for ordinary list refresh/cache status.
-- Fixed-height navigation title text is used for `正在刷新…`, success/failure/cache status; nil restores `ChatGPT`.
-- Right-top refresh still never begins or mutates `UIRefreshControl`.
-- `endRefreshing()` is called only when the pull control is actually refreshing.
-- Repository request/reconcile behavior is unchanged.
-
-## Exact b29 Candidate evidence
-
-- **Candidate**: `DEV-conversation-round-count-0.1.0-b29`
-- **Version / Build**: `0.1.0 (29)`
-- **Product/config source**: `0b0c2fea44503423e75696f777fbf627aefac500`
-- **Scoped source audit**: temporary audit commit changed only `ConversationFeature.swift`; final atomic Candidate commit changed exactly `ConversationFeature.swift`, Xcode Build/Candidate identity and workflow Candidate/Artifact label. Repository/network/reconcile/Preferences owners were untouched.
-- **Exact push CI**: Run `33155124626`, Job `98795968389`, success; checkout exact `0b0c2fea44503423e75696f777fbf627aefac500`; Xcode 16.4; target `arm64-apple-ios14.0`.
-- **Runtime Artifact**: `9679291236`; Artifact ZIP digest `sha256:a6b481acd410c97a7db37c467decc11504f3925e2a45fa9b7e2e5ba3a10e907c`.
-- **IPA**: `ChatGPTClient-0.1.0-b29-dev-conversation-round-count.ipa`; SHA-256 `4378fe9b6a7340ea64a5c82063b0f7e3368e92deaf567d5e0ac40c08055a5360`.
-- **Embedded identity independently rechecked after download**: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=29`, `DiagnosticsCandidate=DEV-conversation-round-count-0.1.0-b29`, `DiagnosticsSourceCommit=0b0c2fea4450`, `MinimumOSVersion=14.0`, `UIDeviceFamily=[1,2]`; executable is Mach-O arm64.
-- **Initial PR merge-view CI**: Run `33155126832`, Job `98795975759`, success; checkout `refs/pull/27/merge` at `a9a0cc286856e36df7378aa62be67f379ca631c2`, explicitly `Merge 0b0c2fea44503423e75696f777fbf627aefac500 into e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`.
-- **Merge-view Artifact**: `9679295199`; ZIP digest `sha256:873fe48beef6d5626e3fc1eae5b42ff0c3fba5cb37eba77f586f6f9f950c7fd1`; merge-view IPA SHA `15dfed506a9ddc725c2b072222b2111ae23cc8e8d51079eebccbf75f76e4a3d9`. Merge-view output is merge evidence only and must not replace Runtime Artifact `9679291236`.
+- **Candidate**: `DEV-conversation-round-count-0.1.0-b30`
+- **Version / Build**: `0.1.0 (30)`
+- **Product/config source**: `a091327508d8393822784bb286245aff64c028a8`
+- **Exact push CI**: Run `33160005440`, Job `98811893174`, success; checkout exact b30 source; Xcode 16.4; target `arm64-apple-ios14.0`.
+- **Runtime Artifact**: `9681236213`; Artifact ZIP digest `sha256:18de824c977fc825f041a6ae1e38974011f92888c6a7ba1eb38fb155f5ecd52f`.
+- **IPA**: `ChatGPTClient-0.1.0-b30-dev-conversation-round-count.ipa`; SHA-256 `91f5ee21e904fbe66932e306b7184dc645f33006e5bb10c33f8b3e3b22639db9`.
+- **Independent package inspection after download**: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=30`, `DiagnosticsCandidate=DEV-conversation-round-count-0.1.0-b30`, `DiagnosticsSourceCommit=a091327508d8`, `MinimumOSVersion=14.0`, `UIDeviceFamily=[1,2]`; executable Mach-O arm64; local SHA matches CI sidecar/log.
+- **Initial b30 PR merge-view CI**: Run `33160008270`, Job `98811903542`, success; checkout `fe7eb9f15bd06279338d96b5628f9873f813968d`, explicitly `Merge a091327508d8393822784bb286245aff64c028a8 into e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`.
+- **Merge-view output**: Artifact `9681226498`; ZIP digest `sha256:03d1f259fb77b907ad4709516734751f67a2a81df24080317626abf22cd3ea4d`; merge-view IPA SHA `cb2eca27416e61f18cc0e432023ae43ce97fe0e27f32a7ae90c1a7fb9898efcf`. Merge-view output is merge evidence only and must not replace Runtime Artifact `9681236213`.
 
 ## Current contracts retained
 
 - Round count and answer anchors share one derived `ConversationRoundProjection`; hidden tool/reasoning/system nodes do not create rounds.
 - Message time uses authoritative `createTime`; missing time is omitted.
 - `AppPreferences` remains the single persisted settings owner; all three current defaults remain On.
-- Current ordinary-chat detail may present `聊天`; `工作` requires an authoritative Work/Project type source and must not be guessed.
-- `ConversationRepository` remains sole list/detail authority; b26 accepted total-count reconciliation is unchanged in b29.
-- First visible presentation with no valid saved reading anchor defaults to latest/bottom; loading-placeholder offsets are not anchors.
-- No new network request, retry, timer, watchdog, polling, fallback endpoint, second list owner or second conversation authority.
+- Current ordinary-chat detail may present `聊天`; `工作` requires authoritative Work/Project type evidence and must not be guessed.
+- `ConversationRepository` remains sole list/detail authority; b26 accepted total-count reconciliation remains unchanged.
+- No valid saved reading anchor => first presentation should show latest/bottom without visibly scrolling through history.
+- Right-top list refresh must not use `navigationItem.prompt` or mutate pull-refresh presentation; b29 Runtime accepts the tested top-blank correction.
+- Copy uses only visible authoritative text and stays a small official-style response action; hidden reasoning/tool/system material is never copied.
+- No new request path, retry, timer, watchdog, polling, fallback endpoint, second list owner or second conversation authority.
 
 ## Validation state
 
-- **Code written**: b29 yes at exact source `0b0c2fea44503423e75696f777fbf627aefac500`.
-- **Static/source audit**: Passed for the scoped b29 diff.
-- **CI**: exact push CI passed; initial b29 PR merge-view CI passed.
-- **Artifact produced**: exact identity-valid Runtime Artifact `9679291236`; downloaded ZIP/IPA identity and SHA independently verified.
-- **Runtime/manual/real-device**: **Pending for b29**. b28 is recorded partial/failing Runtime evidence.
+- **Code written**: b30 yes at exact source `a091327508d8393822784bb286245aff64c028a8`.
+- **Static/source audit**: Passed for the scoped b30 diff.
+- **CI**: exact b30 push CI passed; initial b30 PR merge-view CI passed.
+- **Artifact produced**: exact identity-valid Runtime Artifact `9681236213`; downloaded ZIP/IPA identity and SHA independently verified.
+- **Runtime/manual/real-device**: **Pending for b30**. b29 is recorded Runtime partial/failing; list top blank correction accepted, message layout rejected.
 - **Stable/Frozen**: **No** for this Work.
 
 ## Next exact action
 
-Install exact b29 Runtime Artifact `9679291236` / IPA SHA `4378fe9b6a7340ea64a5c82063b0f7e3368e92deaf567d5e0ac40c08055a5360` on the accepted iPhone/iOS17 scope. Focus on: (1) first entry into a long conversation with no saved reading anchor starts directly at latest/bottom; (2) rapid repeated answer taps keep the clicked direction until real drag/boundary, land at the intended assistant start and no longer show b28-scale landing errors/hitch; (3) real drag immediately regains direction/context; (4) right-top refresh does not create the prior blank top band or change normal adjusted top inset; (5) genuine pull refresh still shows/collapses the native spinner without duplicate request; (6) Copy/time/preferences/header remain sane; (7) list remains at/below authoritative total; (8) A/B anchors and Sync/Reload remain sane. Do not merge PR #27 or claim Stable before exact b29 passes Runtime.
+Install exact b30 Runtime Artifact `9681236213` / IPA SHA `91f5ee21e904fbe66932e306b7184dc645f33006e5bb10c33f8b3e3b22639db9` on the accepted iPhone/iOS17 scope. First verify that message bodies, user bubbles, assistant text, timestamps and row heights are visually normal again. Then verify the b29-accepted list top blank fix did not regress and compare the assistant Copy glyph against the supplied official screenshot. Only after normal body layout is confirmed should answer-jump accuracy/smoothness/direction and first-entry latest/bottom be judged again. Do not merge PR #27 or claim Stable before exact b30 passes Runtime.

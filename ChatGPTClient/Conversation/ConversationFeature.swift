@@ -1624,7 +1624,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         roundProjection = ConversationRoundProjection.derive(from: messages)
         var rowsByMessageID: [String: Int] = [:]
         for (row, message) in messages.enumerated() where rowsByMessageID[message.id] == nil { rowsByMessageID[message.id] = row }
-        answerRows = roundProjection.answerMessageIDs.compactMap { rowsByMessageID[$0] }
+        answerRows = roundProjection.rounds.compactMap { rowsByMessageID[$0.userMessageID] }
         programmaticAnswerTargetRow = nil
         answerJumpAnimationInFlight = false
     }
@@ -1905,7 +1905,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         if currentAnswerJumpDirection != direction {
             currentAnswerJumpDirection = direction
             answerJumpButton.setImage(UIImage(systemName: direction == .previous ? "chevron.up" : "chevron.down"), for: .normal)
-            answerJumpButton.accessibilityLabel = direction == .previous ? "上一轮回答" : "下一轮回答"
+            answerJumpButton.accessibilityLabel = direction == .previous ? "上一轮" : "下一轮"
         }
         if answerJumpButton.isHidden { answerJumpButton.isHidden = false }
     }
@@ -1920,13 +1920,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         }
         let retargeting = answerJumpAnimationInFlight
         if retargeting { tableView.setContentOffset(tableView.contentOffset, animated: false) }
-        tableView.layoutIfNeeded()
         let currentOffsetY = tableView.contentOffset.y
-        let targetOffsetY = answerTargetOffsetY(for: targetRow)
         programmaticAnswerTargetRow = targetRow
         answerJumpAnimationInFlight = true
-        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY), "targetOffsetY": String(format: "%.2f", targetOffsetY)])
-        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: targetOffsetY), animated: true)
+        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "targetRole": "user", "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY)])
+        tableView.scrollToRow(at: IndexPath(row: targetRow, section: 0), at: .top, animated: true)
         updateAnswerJumpButton()
     }
 
@@ -1994,10 +1992,12 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         answerJumpAnimationInFlight = false
         if let targetRow = programmaticAnswerTargetRow, messages.indices.contains(targetRow) {
+            let indexPath = IndexPath(row: targetRow, section: 0)
+            tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+            tableView.layoutIfNeeded()
             let targetOffsetY = answerTargetOffsetY(for: targetRow)
             let landingError = tableView.contentOffset.y - targetOffsetY
-            if abs(landingError) > 0.5 { tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: targetOffsetY), animated: false) }
-            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "landingErrorPoints": String(format: "%.2f", landingError)])
+            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "landingErrorPoints": String(format: "%.2f", landingError)])
         }
         updateAnswerJumpButton()
     }
@@ -2061,7 +2061,7 @@ final class ConversationMessageCell: UITableViewCell {
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         bubbleView.addSubview(messageLabel)
 
-        let copyImage = UIImage(systemName: "doc.on.doc", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .regular))
+        let copyImage = UIImage(systemName: "doc.on.doc", withConfiguration: UIImage.SymbolConfiguration(pointSize: 10, weight: .regular))
         copyButton.setImage(copyImage, for: .normal)
         copyButton.tintColor = .secondaryLabel
         copyButton.backgroundColor = .clear

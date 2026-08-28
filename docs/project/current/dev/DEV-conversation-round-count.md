@@ -5,8 +5,8 @@
 **Active — PR #27 open; b30 Runtime partial/failing; b31 correction in progress**
 
 - **Work ID**: `DEV-conversation-round-count`
-- **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮回答 / 下一轮回答 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
-- **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive answer navigation, centralized persisted Preferences, first-entry latest placement, and evidenced list-refresh presentation corrections.
+- **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮 / 下一轮 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
+- **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive round navigation, centralized persisted Preferences, first-entry latest placement, and evidenced list-refresh presentation corrections.
 - **Baseline / branch / PR**: `main@e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`; branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable.
 - **Exact b30 product/config source**: `a091327508d8393822784bb286245aff64c028a8`. Later docs-only commits do not redefine the b30 Runtime Candidate source.
 - **Current branch head before b31 product allocation**: docs may advance beyond b30 source; exact product identity remains tied to the Candidate source recorded above.
@@ -24,12 +24,13 @@
 - **b29**: Runtime partial/failing. List top blank-region fix accepted, but `estimatedRowHeight=0` catastrophically broke message self-sizing/body presentation.
 - **b30**: Runtime partial/failing. Message body/self-sizing is restored and the former severe jump hitch is materially reduced, but Copy visual remains too large and long-distance answer landing remains grossly inaccurate. Superseded for correction by b31.
 
-## Accepted semantic contract — round vs jump target
+## Current semantic contract — round and jump target
 
-- A visible authoritative **user** message starts one round.
-- The **first following visible assistant message before the next user message** is that round's answer anchor.
-- Therefore header `N轮` is user-turn-derived, while `上一轮回答 / 下一轮回答` must land at the corresponding **assistant answer start**, not the user bubble.
-- `ConversationRoundProjection` already implements exactly this contract; b30 Runtime does not justify changing semantic ownership or introducing a second index.
+- A visible authoritative **user** message starts one round and remains the source of header `N轮` counting.
+- The first following visible assistant message before the next user message remains derivable metadata for that round, but **b31 quick round navigation is allowed to target the round-start user message instead of the assistant reply**.
+- Latest explicit user requirement on 2026-08-28: if user-message targeting makes accurate jumping simpler and more reliable, that behavior is acceptable and preferred over preserving assistant-start landing with unstable long-distance geometry.
+- Therefore b31 should use the existing `ConversationRoundProjection.rounds[].userMessageID` as the navigation semantic identity. Do not create a second mutable round index.
+- Hidden tool/reasoning/system nodes do not create rounds.
 
 ## b29 accepted Runtime evidence retained
 
@@ -69,8 +70,8 @@ This is exact b30 Runtime evidence, not a stale package.
 - Median absolute landing error is about **3271pt**; maximum observed absolute error is about **64252.66pt**.
 - Concrete failures include target row 801 around `+27804.33pt`, row 716 around `+64249.66pt`, row 360 around `+63542.66pt`, row 206 around `+62010.33pt` and row 105 around `+29559.67pt`.
 - Nearby/already-resolved targets can still land at `-0.00pt`, proving the semantic target cursor itself is not universally wrong. The failure scales with unresolved self-sizing geometry over long distances.
-- Current b30 path computes an absolute `targetOffsetY` from `rectForRow`, then fixes that numeric offset into `setContentOffset(..., animated:true)`. As rows are measured during travel, the destination row's real Y changes while the animation target does not. Recomputing another numeric rect at animation end is insufficient when the intended target row is still not the actually materialized row.
-- b31 must retain assistant answer semantics and the transient semantic cursor, but use UITableView's row-targeting semantics for the final/authoritative landing rather than treating an estimated absolute Y as authoritative.
+- Current b30 path computes an absolute `targetOffsetY` from `rectForRow`, then fixes that numeric offset into `setContentOffset(..., animated:true)`. As rows are measured during travel, the destination row's real Y changes while the animation target does not.
+- b31 no longer needs to preserve assistant-start landing. It may simplify to the round-start user row and use UITableView row-targeting semantics directly, prioritizing accurate one-round-at-a-time navigation.
 
 ### Copy visual still rejected
 
@@ -82,14 +83,15 @@ This is exact b30 Runtime evidence, not a stale package.
 
 ## b31 evidence-backed correction direction
 
-### Answer landing
+### Round landing
 
-- Keep `ConversationRoundProjection`, `answerRows`, `programmaticAnswerTargetRow`, direction ownership and rapid-tap semantic progression unchanged.
+- Keep `ConversationRoundProjection` as the only round derivation authority.
+- Derive navigation rows from `rounds[].userMessageID`, because user messages already define round boundaries and the latest explicit requirement accepts user-start landing for precision/simplicity.
+- Keep the transient programmatic row cursor, real-drag direction ownership and rapid-tap sequential progression, but rename semantics in code/UI accessibility away from “answer” where practical so the implementation does not claim it lands on an assistant answer.
+- Use UITableView row identity (`scrollToRow(..., .top, animated:true)`) for the requested user row. Do not precompute/fix a long-distance absolute Y target.
+- Preserve interruptibility: if another tap arrives during programmatic scrolling, stop the current animation at the current offset before requesting the next semantic round row.
+- At animation completion, use the same target user row as the correctness identity. No speculative full height cache, timer, debounce, retry or watchdog.
 - Keep normal automatic row estimation; b29 proved disabling it breaks message presentation.
-- Stop treating an off-screen estimated `rectForRow` absolute Y as the authoritative final destination.
-- Use UITableView row targeting for the requested assistant row so self-sizing layout can resolve against the row identity rather than a stale absolute coordinate. Preserve interruptibility by stopping an in-flight programmatic animation before a new semantic target is requested.
-- At animation completion, verify the target row's real placement; if correction is required, correct by **row identity** (`scrollToRow(..., .top, animated:false)`) and only then compute/log residual placement error. This is not a second semantic authority; it is the same target row enforced through UITableView's own row API.
-- Do not add debounce, timer, retry, watchdog, fallback endpoint, speculative full height cache or duplicate answer index.
 
 ### Copy
 
@@ -109,7 +111,6 @@ This is exact b30 Runtime evidence, not a stale package.
 
 ## Current contracts retained
 
-- Round count and answer anchors share one derived `ConversationRoundProjection`; hidden tool/reasoning/system nodes do not create rounds.
 - Message time uses authoritative `createTime`; missing time is omitted.
 - `AppPreferences` remains the single persisted settings owner; all three defaults remain On.
 - Ordinary-chat detail may present `聊天`; `工作` requires authoritative Work/Project evidence and must not be guessed.
@@ -130,4 +131,4 @@ This is exact b30 Runtime evidence, not a stale package.
 
 ## Next exact action
 
-Implement the smallest b31 source correction: preserve user-defined round / assistant-defined answer semantics, replace stale absolute-offset authority with row-identity landing/verification, and reduce the rendered assistant Copy glyph to 10pt while preserving its hit slot. Allocate a fresh unique `DEV-conversation-round-count-0.1.0-b31` identity atomically with product/config source, run exact CI/Artifact identity verification and PR merge-view CI, then real-device test answer landing accuracy/smoothness plus Copy visual. Do not merge PR #27 or claim Stable before exact b31 Runtime acceptance.
+Implement the smallest b31 source correction: use user-turn rows as round-jump targets with direct UITableView row targeting, retain real-drag direction and rapid sequential progression, reduce the rendered assistant Copy glyph to 10pt while preserving its hit slot, and allocate fresh unique `DEV-conversation-round-count-0.1.0-b31` identity atomically with product/config source. Then run exact CI/Artifact identity verification and PR merge-view CI, followed by real-device testing of round landing accuracy/smoothness and Copy visual. Do not merge PR #27 or claim Stable before exact b31 Runtime acceptance.

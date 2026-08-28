@@ -190,3 +190,33 @@ When evidence conflicts, prefer:
 5. old history/plans.
 
 Never treat an old plan as proof that code exists.
+
+## 16. Autonomous development continuation and human test gate
+
+Once a Development/Feature task has been selected and its required resume/new-task preflight has passed, routine progress reporting is not an approval gate. While the current execution still has the ability to act and no existing rule requires user input, continue through the next evidence-backed development actions without asking the user to reply `继续` merely because an intermediate milestone was reached.
+
+Do not stop solely because:
+
+- code has been written;
+- static/local checks passed;
+- a commit/push or PR was created;
+- CI is running or a CI failure has a clear source-backed minimal correction;
+- packaging or artifact production is the next normal step;
+- a checkpoint/status update was written.
+
+For this repository, when the selected development task's next required evidence gate is Runtime/manual/real-device testing and the normal packaging path is available, autonomously continue as far as the current execution permits toward a uniquely identified testable IPA: perform the required base/conflict/candidate checks, obtain the relevant CI evidence, produce the Artifact, verify its version/build/candidate/source/artifact identity, then hand the IPA to the user with the exact real-device test focus. Preserve the evidence ladder: Artifact success is still not Runtime proof.
+
+Stopping earlier is appropriate only when a real human-only gate exists, including:
+
+- a product/architecture choice or missing requirement that cannot be resolved from current evidence;
+- user credentials, permission, physical-device action or other information that only the user can supply;
+- a branch/PR/head/candidate/baseline mismatch or parallel-development conflict that existing governance requires the user to resolve;
+- insufficient evidence to justify a safe next code change;
+- a genuine external/tool/environment blocker that prevents further progress;
+- an operation whose destructive or privileged effect requires explicit approval.
+
+If CI or another tool returns an error and current evidence supports a deterministic minimal correction, make that correction and continue through the normal validation path. Do not convert this rule into blind retries, polling, watchdogs, repeated reruns of unexplained external failures, speculative fallbacks or other prohibited recovery machinery.
+
+Status messages may be sent during the work, but they must make clear whether execution is continuing or whether a real human gate has been reached. A progress update by itself must not silently become a request for the user to say `继续`.
+
+This rule governs agent behavior while the current execution context can still act. It does not claim that the agent can continue running after the platform/tool execution has ended or stopped returning control.

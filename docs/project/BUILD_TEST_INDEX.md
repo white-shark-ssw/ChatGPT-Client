@@ -45,7 +45,8 @@ Every new testable Active task/candidate must allocate a unique candidate/build 
 | `DEV-conversation-round-count-0.1.0-b30` | `DEV-conversation-round-count` | `0.1.0 (30)` | `a091327508d8393822784bb286245aff64c028a8`; PR #27 | Push Run `33160005440`; Job `98811893174`; Artifact `9681236213`; ZIP `sha256:18de824c977fc825f041a6ae1e38974011f92888c6a7ba1eb38fb155f5ecd52f`; IPA SHA `91f5ee21e904fbe66932e306b7184dc645f33006e5bb10c33f8b3e3b22639db9` | Message self-sizing restored; severe hitch improved; Copy too large and assistant-answer long-distance landing grossly inaccurate | **Runtime partial/failing / superseded** |
 | `DEV-conversation-round-count-0.1.0-b31` | `DEV-conversation-round-count` | `0.1.0 (31)` | `9b0fae856380b44a5d0495f32618ea6da31a0e0d`; PR #27 | Push Run `33169669050`; Job `98843431963`; Artifact `9685082018`; ZIP `sha256:166d13cd8f298903e3620e3fbf286f50ca5d3d67caeac6f6528add31c3132bde`; IPA SHA `bd3cb30630538c6e3bb9c3f8e9d4d8e1d426691e8c06c8291b530f41fc81f422` | Precise user-round landing accepted; hitch/raw internal rows/Copy visual still rejected | **Runtime partial/failing / superseded** |
 | `DEV-conversation-round-count-0.1.0-b32` | `DEV-conversation-round-count` | `0.1.0 (32)` | `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`; PR #27 | Push Run `33177491033`; Job `98869786437`; Artifact `9688235425`; ZIP `sha256:17c6639b5ec2b106cab936c5de357b65671c116701127ed88dfbe92bb8378445`; IPA SHA `f1eb4e6fb8cda58db0216df080ea90098ce681e1ed47962eebda57f803f9be80` | Recipient/tool filtering, compact Copy direction and precise semantic landing accepted; jump smoothness + bottom rubber-band direction rejected | **Runtime partial/failing / superseded by b33** |
-| `DEV-conversation-round-count-0.1.0-b33` | `DEV-conversation-round-count` | `0.1.0 (33)` | `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`; PR #27 | Push Run `33195740528`; Job `98932282377`; Runtime Artifact `9695669835`; ZIP `sha256:841b682ffe27a2788b2c297225705c0b4fb6bc18b527fd4e8f30c62e10312407`; IPA SHA `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855`; merge Run `33195744651`, Job `98932296906`, merge `ca28819de6e5ed345087d04005ed05d74508881c`, merge Artifact `9695673573` | Runtime pending; b33 only corrects physical-boundary direction + conditional >1pt native landing re-anchor/diagnostics | **Current identity-valid Runtime Candidate; not Stable/Frozen** |
+| `DEV-conversation-round-count-0.1.0-b33` | `DEV-conversation-round-count` | `0.1.0 (33)` | `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`; PR #27 | Push Run `33195740528`; Job `98932282377`; Runtime Artifact `9695669835`; ZIP `sha256:841b682ffe27a2788b2c297225705c0b4fb6bc18b527fd4e8f30c62e10312407`; IPA SHA `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855` | Bottom rubber-band direction + final semantic precision accepted; long-distance/rapid jump remains gear-like; 14/74 completions corrected | **Runtime partial/failing / superseded by b34** |
+| `DEV-conversation-round-count-0.1.0-b34` | `DEV-conversation-round-count` | `0.1.0 (34)` | exact product/config source `bf66c7080347660e0154952a261230a24bb94f7d`; PR #27 | Push Run `33200768537`; Job `98949366655`; Runtime Artifact `9697664416`; ZIP `sha256:0b05a435888c041286b331c554f31f7e64dda0a30d214014bf2a144d8b696c65`; IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6`; PR merge Run `33200813591`; Job `98949517057`; merge `a42408a64a4ff7fba7d799f39c897ae6930daf6f`; merge Artifact `9697686876` | Runtime pending; stale animation completion cannot correct/clear newer target while current target row is not visible | **Current identity-valid Runtime Candidate; not Stable/Frozen** |
 
 ## Current conversation-round-count evidence
 
@@ -53,31 +54,22 @@ Every new testable Active task/candidate must allocate a unique candidate/build 
 - Post-b25 source-fix output that reused b25 remains permanently identity-invalid.
 - The later b31 staging output at source `50ec1c72b1638eebc2b485ed423f4d5d294ae4c9`, Run `33167629825`, Artifact `9684234692` reused already-produced b30 identity and is permanently identity-invalid; never install/test it.
 - b26 accepted the authoritative-total cap: cold 30 cached entries + `pageCount=28 / totalCount=29` produced `resultCount=29`; repeated manual refresh remained 29. Preserve this bound.
-- b29 accepted the right-top list refresh blank-region correction. b29's `estimatedRowHeight=0` route is rejected; automatic self-sizing restored in b30 and retained.
-- b31 changed the physical quick-navigation target to the semantic **user-message round start**, fixing gross assistant-answer Y-offset landing errors.
-- b32 exact long/tool-heavy Runtime accepts recipient filtering (`filteredRecipientMessageCount=748`, ordinary visible messages `84`), compact Copy direction/function and precise semantic user-round landing. It still rejects long-jump smoothness and physical-bottom rubber-band direction.
-- b33 exact source `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba` keeps b32 filtering/round/Copy/list/network ownership unchanged. Physical top/bottom boundaries outrank drag delta; native animation completion measures landing and performs one nonanimated same-target re-anchor only when absolute error exceeds `1pt`; privacy-safe landing diagnostics were added.
-- Downloaded b33 Runtime Artifact `9695669835` independently verifies `0.1.0 (33)`, Candidate b33, source marker `0ba15ec48fe8`, minimum iOS14 and Mach-O arm64.
-- Current-main PR #27 merge-view CI against `main@a6e3b2bc185b8d5df90b846040387262a64e6154` passed on merge view `ca28819de6e5ed345087d04005ed05d74508881c`. Merge-view output is CI evidence only and does not replace exact Runtime Artifact `9695669835`.
-- `工作` remains unavailable until authoritative Work/Project type evidence exists; never infer from title/presentation text.
-- **Current evidence boundary**: b33 has Code/static/CI/Artifact/current-main merge-view evidence only. Bottom-rubber-band direction, long-jump smoothness, conditional landing correction behavior and full regression matrix remain Runtime pending.
+- b29 accepted the right-top refresh/top-blank correction; do not reintroduce prompt/refresh inset compensation.
+- b30 restored automatic self-sizing after b29's rejected `estimatedRowHeight=0` route.
+- b31 accepted semantic user-message round-start landing.
+- b32 accepted recipient/internal filtering, compact Copy direction and precise semantic landing; long-jump smoothness and physical-bottom rubber-band direction failed.
+- b33 accepted the physical-bottom/rubber-band direction fix and retained final precision. Runtime diagnostics exposed 14 corrections across 74 completed jumps, including extreme rapid-retarget native errors up to about 8258.67pt before correction; long-distance smoothness remained rejected.
+- b34 changes only animation-completion ownership: if current target row is not visible, `answerJump.completionIgnored` is logged and no correction/in-flight reset occurs. When current target is visible, the b33 >1pt final accuracy guard remains.
 
-## Current conversation-list-cache-core evidence
+## Exact b34 current-main merge-view
 
-- b23 remains the merged Stable cache-core baseline for recorded Plus/personal iPhone/iOS17 scope.
-- b26 accepted the authoritative-total cap for stale excess cached rows (`30 -> 29`, repeated `29/29`); unchanged in b33.
-- b29 Runtime accepts the current right-button refresh top presentation for the tested scope.
-- Still conditional Unknown/Unverified: supported account-switch mismatch, provisional-row Detail-block path, corrupt/schema rejection, iPad, iOS below 17 and non-personal workspace identity.
+- Current main at validation: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
+- PR head at merge-view: docs/checkpoint head `d9b3a4846e05bf04a2bce962beeef918d7b91d26`; product/config source remains `bf66c7080347660e0154952a261230a24bb94f7d`.
+- PR Run / Job `33200813591` / `98949517057`, success.
+- GitHub checkout merge `a42408a64a4ff7fba7d799f39c897ae6930daf6f` explicitly merges `d9b3a484...` into `main@a6e3b2...`.
+- Merge-view IPA SHA `54614e6a1f995b8232bc81c6af518984cc7f286bbc9d98fbd0844aba7d7e6e9e`; merge Artifact `9697686876`; merge ZIP digest `sha256:82efb395840a01403fba0b4dad61c2957e6cc84c2c70b0f34f94fcfa19cc192c`.
+- Merge-view output is CI evidence only. **Real-device Runtime must use exact push Artifact `9697664416` / IPA SHA `1705a2a...` from product source `bf66c708...`.**
 
-## Current multi-conversation evidence
+## Evidence boundary
 
-- b21 remains merged Stable multi-conversation read-state baseline. Missing-anchor discard, natural failed-resident navigation, supported account switch and non-personal workspace identity remain conditional Unknown/Unverified.
-
-## Foundation / toolchain facts
-
-- Current CI targets `arm64-apple-ios14.0`; Runtime evidence currently covers iPhone/iOS17 unless explicitly stated.
-- Default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority; native copies remain transient.
-
-## Uniqueness / evidence labels
-
-Do not reuse exact candidate/build/artifact identities. Evidence labels remain: Code written; Static/local checks; CI passed; Artifact produced; Runtime/manual/real-device tested; Stable/Frozen.
+Current b34 is **Code written + exact source audit + exact push CI passed + identity-valid Runtime Artifact produced + current-main PR merge-view CI passed**. Runtime/manual/real-device: **Pending**. Stable/Frozen: **No**.

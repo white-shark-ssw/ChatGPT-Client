@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; product/runtime profile refreshed 2026-08-29 through exact b33 Candidate/Artifact evidence and b32 Runtime result.**
+**Initialized — 2026-08-25; product/runtime profile refreshed 2026-08-29 through exact b33 Runtime and exact b34 Candidate/CI/Artifact evidence.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -34,7 +34,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Conversation-list persistent storage**: private `ConversationListCacheStore`; storage-only, schema-versioned summary snapshot + privacy-safe last-verified scope namespace hint. It is not list/account authority.
 - **Conversation presentation**: `ConversationDetailViewController`; owns lightweight per-conversation historical reading anchors, no-anchor first-entry placement, metadata and round-jump presentation.
 - **Sidebar presentation**: `ConversationSidebarViewController`; presentation only. b29 Runtime accepts the right-top refresh blank-region correction.
-- **Message presentation**: `ConversationMessageCell`; visible message body, authoritative timestamp and assistant Copy visual only. Automatic self-sizing restored in b30 and retained through b33.
+- **Message presentation**: `ConversationMessageCell`; visible plain message body, authoritative timestamp and assistant Copy visual only. Automatic self-sizing restored in b30 and retained through b34. Markdown/rich annotation is not implemented yet.
 - **Settings owner**: `AppPreferences` in `SettingsViewController.swift`; persisted display/interaction booleans only.
 - **Round derivation**: `ConversationRoundProjection`; derived from authoritative visible `ConversationDetail.messages`, not mutable conversation authority.
 - **Test roots**: no XCTest/UI-test target yet.
@@ -43,7 +43,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 - Packaging: `bash scripts/build_ipa.sh`.
 - Underlying build: Release `xcodebuild` for iphoneos, signing disabled for TrollStore packaging.
-- CI: GitHub Actions macOS15; current pipeline compiles `arm64-apple-ios14.0`; b33 uses Xcode 16.4 / iPhoneOS18.5 SDK.
+- CI: GitHub Actions macOS15; current pipeline compiles `arm64-apple-ios14.0`; b34 uses Xcode 16.4 / iPhoneOS18.5 SDK.
 - Artifact scheme: `build/artifacts/ChatGPTClient-<version>-b<build>-dev-<work-slug>.ipa` + SHA-256 sidecar.
 - Package identity authority: expanded built `Info.plist` is authoritative for version/build/Candidate. Build script validates Candidate/version/build agreement and emitted IPA identity. Workflow container label alone is not identity proof.
 - Historical packaging defects: b16 and b24 had identity mismatches and are permanently rejected. Exact produced identities are never reused after Artifact production.
@@ -68,21 +68,26 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b24: Artifact identity rejected/permanently reserved.
 - b25-b30: partial/failing iterations that established accepted Copy/time/preferences, compact header, bounded list reconciliation, right-top refresh correction and restored automatic message self-sizing while exposing answer-jump geometry/smoothness defects.
 - b31: precise user-message round-start landing accepted; remaining hitch/internal-row/Copy issues required correction.
-- b32: exact Runtime accepts recipient/tool filtering, compact Copy direction and precise semantic user-round landing; remaining defects are long-jump smoothness and physical-bottom rubber-band direction.
+- b32: Runtime accepts recipient/tool filtering, compact Copy direction and precise semantic user-round landing; long-jump smoothness and physical-bottom rubber-band direction remained.
+- b33: Runtime accepts physical-bottom/rubber-band direction and final semantic precision; long-distance/rapid jump remains gear-like. Diagnostics show 14 corrections across 74 completed jumps, including extreme rapid-retarget native errors up to about 8258.67pt before correction.
 
-### Current b33 Runtime Candidate
+### Current b34 Runtime Candidate
 
-- Candidate `DEV-conversation-round-count-0.1.0-b33`.
-- Version/build `0.1.0 (33)`.
-- Exact product/config source `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`.
-- Product correction is intentionally narrow: physical top/bottom boundaries outrank drag delta (including rubber-band overscroll); retain native animated `scrollToRow`; after animation, measure native landing and apply one same-target nonanimated re-anchor only when absolute error exceeds `1pt`; add privacy-safe `nativeLandingErrorPoints` / `landingCorrectionApplied` diagnostics.
-- b32 recipient filtering, round derivation, Copy, list reconciliation, network behavior and ownership remain unchanged.
-- Exact push Run/Job `33195740528` / `98932282377`, success.
-- Runtime Artifact `9695669835`; ZIP `sha256:841b682ffe27a2788b2c297225705c0b4fb6bc18b527fd4e8f30c62e10312407`.
-- IPA `ChatGPTClient-0.1.0-b33-dev-conversation-round-count.ipa`; SHA `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855`.
-- Independent package inspection: `0.1.0 (33)`, Candidate b33, source `0ba15ec48fe8`, minimum iOS14.0, Mach-O arm64.
-- Current-main PR merge-view Run/Job `33195744651` / `98932296906`, success on merge view `ca28819de6e5ed345087d04005ed05d74508881c` against `main@a6e3b2bc185b8d5df90b846040387262a64e6154`; merge Artifact `9695673573` is CI evidence only.
-- Evidence level: **Code written + scoped source/static audit + exact Candidate CI + identity-valid Artifact + current-main merge-view CI. Runtime/manual b33 Pending. Stable/Frozen No.**
+- Candidate `DEV-conversation-round-count-0.1.0-b34`.
+- Version/build `0.1.0 (34)`.
+- Exact product/config source `bf66c7080347660e0154952a261230a24bb94f7d`.
+- Product correction is intentionally narrow: when an animation-completion callback arrives, the existing >1pt landing correction is allowed only if the **current target row is visible**. If it is not visible, log `answerJump.completionIgnored` / `current_target_not_visible`, preserve the newer animation/cursor ownership and do not snap/correct.
+- Native animated `scrollToRow` remains movement owner. Accepted b33 bottom-direction behavior, semantic round derivation, b32 recipient filtering, Copy, list reconciliation, network behavior and state ownership remain unchanged.
+- Exact push Run/Job `33200768537` / `98949366655`, success on exact source `bf66c708...`.
+- Runtime Artifact `9697664416`; ZIP `sha256:0b05a435888c041286b331c554f31f7e64dda0a30d214014bf2a144d8b696c65`.
+- IPA `ChatGPTClient-0.1.0-b34-dev-conversation-round-count.ipa`; SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6`.
+- Independent package inspection: `0.1.0 (34)`, Candidate b34, source `bf66c7080347`, minimum iOS14.0, bundle `com.whitesharkssw.chatgptclient`, Mach-O arm64.
+- Current-main PR merge-view against unchanged `main@a6e3b2bc185b8d5df90b846040387262a64e6154`: Run/Job `33200813591` / `98949517057`, success on merge `a42408a64a4ff7fba7d799f39c897ae6930daf6f`; merge Artifact `9697686876`. Merge-view output is CI evidence only.
+- Evidence level: **Code written + exact source/static audit + exact Candidate CI + identity-valid Artifact + current-main merge-view CI. Runtime/manual b34 Pending. Stable/Frozen No.**
+
+## Rendering scope boundary
+
+The current client has plain `UILabel.text` message presentation and no Markdown/rich-annotation renderer. The supplied official-app comparison recording confirms raw Markdown/table syntax and raw `filecite`-adjacent boxed glyphs in this client. Markdown/rich citation presentation belongs to Phase 11 `DEV-message-rendering`, not the current metadata/settings Work; do not strip or reinterpret those markers speculatively here.
 
 ## Versioning and candidate identity
 
@@ -90,8 +95,8 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Build source: `CURRENT_PROJECT_VERSION`.
 - Candidate scheme: `DEV-<work-slug>-<marketing-version>-b<build>`.
 - Bundle ID: `com.whitesharkssw.chatgptclient`; accepted, not Frozen.
-- Current active Candidate: `0.1.0 (33)` / `DEV-conversation-round-count-0.1.0-b33`.
-- Exact produced identities b24-b33 are reserved and are never reused for corrected product output.
+- Current active Candidate: `0.1.0 (34)` / `DEV-conversation-round-count-0.1.0-b34`.
+- Exact produced identities b24-b34 are reserved and are never reused for corrected product output.
 
 ## Runtime / deployment
 
@@ -102,12 +107,13 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 ## Evidence boundaries
 
+- b33 Runtime is partial/failing; b34 Runtime is Pending.
 - iOS17 success does not prove iOS14–16 or iPad.
 - Recorded read/recovery/multi-conversation/cache evidence is primarily Plus/personal; non-personal workspace identity remains Unknown/Unverified.
 - Current personal scope uses `userID + accountID`; do not invent extra workspace identity without evidence.
 - Supported account-switch purge, natural terminal failed-resident navigation, missing-anchor-message discard and some corrupt/provisional cache paths remain conditional Runtime-unverified.
-- b33 Runtime behavior is **not accepted yet**. CI/Artifact success does not prove bottom-rubber-band direction, long-jump smoothness, landing-correction behavior, first-entry latest placement or regressions.
 - Current source has no evidenced authoritative Chat/Work type owner; do not infer `工作` from title/presentation text.
+- CI/Artifact success does not prove b34 smoothness or regression behavior.
 
 ## Auto-refresh rule
 

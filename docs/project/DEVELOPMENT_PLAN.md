@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-29 through exact b33 Runtime result._
+_Last updated: 2026-08-29 through exact b33 Runtime and exact b34 Candidate/CI/Artifact/merge-view evidence._
 
 ## Purpose
 
@@ -46,7 +46,7 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 ## Phase 8 — `DEV-conversation-round-count`
 
-**Active after exact b33 Runtime partial/failure.** Branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable. Do not merge/close or claim Stable until a corrected Candidate passes real-device Runtime.
+**Active at exact b34 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable. Do not merge/close or claim Stable until exact b34 passes real-device Runtime.
 
 ### User-facing bundle
 
@@ -68,7 +68,9 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 - Real user drag controls user intent; programmatic motion is not user intent.
 - Rapid taps advance from the last requested derived round target via one transient presentation cursor; real drag clears/replaces that cursor.
 - Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll; exact b33 Runtime accepts this for the tested physical-bottom path.
-- Native animated `scrollToRow(..., .top, animated:true)` remains the movement owner unless stronger Runtime evidence justifies a different native strategy.
+- Native animated `scrollToRow(..., .top, animated:true)` remains the movement owner.
+- End-of-animation accuracy correction may act only when the current target row is visible. A completion received while the newer current target is not visible is stale/superseded presentation completion: log `answerJump.completionIgnored`, do not snap/correct and do not clear newer in-flight ownership.
+- When current target is visible, retain the existing single >1pt nonanimated same-target final accuracy guard.
 - No debounce, timer, watchdog or speculative row-height cache subsystem.
 
 ### Candidate / Runtime history
@@ -78,6 +80,7 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 - **b31**: precise user-message round-start landing accepted; remaining hitch/internal-row/Copy issues required correction.
 - **b32**: Runtime partial/failing. Recipient/tool filtering, compact Copy direction and precise semantic landing accepted; long-jump smoothness and physical-bottom rubber-band direction rejected.
 - **b33**: Runtime partial/failing. Physical-bottom direction and final semantic landing accepted; long-distance smoothness still rejected.
+- **b34**: exact Code/source audit/CI/Artifact/current-main merge-view ready; Runtime pending.
 
 ### Exact b33 Runtime evidence
 
@@ -88,19 +91,29 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 - Diagnostics show 74 completed jumps and 14 end corrections. Ordinary corrections include roughly 66.67–504pt; rapid retargeting produced extreme native errors before correction up to about 8258.67pt while final corrected error returned to ~0.
 - Therefore b33 is not Stable; b33 identity is permanently reserved.
 
-### b34 evidence-backed direction
+### Exact b34 Candidate / evidence
 
-`DEV-conversation-round-count-0.1.0-b34` / `0.1.0 (34)` is the next reserved corrected identity; no b34 product output exists yet.
+- Candidate `DEV-conversation-round-count-0.1.0-b34`, version/build `0.1.0 (34)`.
+- Exact product/config source `bf66c7080347660e0154952a261230a24bb94f7d`.
+- Exact product delta from `b891cffb...` is only workflow identity, Xcode build/Candidate identity and 7+/1- in `ConversationFeature.swift`.
+- Minimal correction: before b33's >1pt end correction, require the current target row to be visible. If not visible, log privacy-safe ignored completion and preserve newer animation/cursor ownership without hard snap.
+- Accepted b33 physical-bottom direction, semantic user-row derivation, b32 recipient filter, Copy/timestamps/preferences/header, list/cache/network semantics and state ownership are unchanged.
+- Exact push Run / Job `33200768537` / `98949366655`, success on exact source `bf66c708...`.
+- Runtime Artifact `9697664416`; ZIP `sha256:0b05a435888c041286b331c554f31f7e64dda0a30d214014bf2a144d8b696c65`.
+- IPA `ChatGPTClient-0.1.0-b34-dev-conversation-round-count.ipa`; IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6`.
+- Independent package inspection matches `0.1.0 (34)`, Candidate b34, source `bf66c7080347`, iOS14 minimum, arm64.
+- Current-main PR merge-view against `main@a6e3b2bc185b8d5df90b846040387262a64e6154`: Run / Job `33200813591` / `98949517057`, success on merge `a42408a64a4ff7fba7d799f39c897ae6930daf6f`; merge Artifact `9697686876`; merge-view IPA SHA `54614e6a1f995b8232bc81c6af518984cc7f286bbc9d98fbd0844aba7d7e6e9e`.
+- Merge-view output is CI evidence only. Runtime must use exact push Artifact `9697664416` from product source `bf66c708...`.
 
-Current b33 retarget path cancels the older animation nonanimated, assigns a new current target, then starts another native animated row scroll. `scrollViewDidEndScrollingAnimation` has no target identity and currently corrects against whatever target is current when the callback arrives. The rapid-retarget trace strongly supports stale/cancelled completion callbacks being able to act on a newer target.
+### b34 Runtime acceptance focus
 
-Minimal b34 correction:
+1. Long-distance previous/next jumps and rapid repeated taps should no longer show the b33 stale-completion hard snap/gear effect.
+2. Final semantic landing must remain precise at the intended user-message round start.
+3. Physical-bottom/rubber-band direction must remain accepted.
+4. Diagnostics may show `answerJump.completionIgnored` when a stale callback arrives while the current target is not visible; huge correction against a not-yet-visible newer target should disappear.
+5. Regression sanity: recipient/tool filtering, Copy, first-entry latest, A/B anchors, timestamps/preferences, list reconcile, Sync/Reload remain intact.
 
-- before applying the existing >1pt end correction, require that the **current target row is visible**;
-- if it is not visible, treat this callback as stale/superseded presentation completion, emit a privacy-safe ignored-completion diagnostic and do not snap/correct or clear current target ownership;
-- when the current target is visible, retain the existing landing measurement/correction path so final semantic precision remains protected.
-
-Do not alter b33-accepted physical-bottom direction, semantic user-row derivation, b32 recipient filter, Copy/timestamps/preferences/header, list/cache/network semantics or state ownership.
+If b34 is rejected, record the defect first and allocate b35 or later before any corrected product output. Never rebuild b34.
 
 ### Rendering scope boundary from supplied recording
 
@@ -153,4 +166,4 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-Do not rebuild b33. Produce the smallest b34 product/config change described above, run exact source audit + push CI/Artifact + current-main PR merge-view, verify b34 package identity, then real-device test long-distance/rapid round navigation with special attention to whether stale-completion snaps disappear while final precision and b33 physical-bottom direction remain intact.
+Install/test exact b34 Runtime Artifact `9697664416` / IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6` on the accepted iPhone/iOS17 scope. If accepted, record Runtime evidence, re-check current main/PR conflicts and merge-view, then merge/close Phase 8 and promote only the tested accepted scope to Stable. If rejected, record the defect first and allocate b35+ before corrected product output.

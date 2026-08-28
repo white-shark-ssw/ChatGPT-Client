@@ -10,7 +10,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device Candidates.
 - Stable merged read baselines remain b9 native read, b15 recovery, b21 multi-conversation read state and b23 conversation-list cache core for recorded scopes. Stable does not mean Frozen.
-- `DEV-conversation-round-count-0.1.0-b33` is the current identity-valid metadata Runtime Candidate. b32 is real-device partial/failing; b33 is not Stable until exact Runtime passes.
+- `DEV-conversation-round-count-0.1.0-b34` is the current identity-valid metadata Runtime Candidate. b33 is real-device partial/failing; b34 is not Stable until exact Runtime passes.
 
 ## UI / interaction contract
 
@@ -39,11 +39,12 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 - Use one adaptive floating control. Real user drag owns user intent; programmatic scrolling is not user intent.
 - Rapid taps advance from the last requested derived round target via one transient presentation cursor; this is not a second semantic authority. A real user drag clears/replaces programmatic intent.
-- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because the drag delta reverses.
+- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because the drag delta reverses. b33 Runtime accepts this tested path.
 - Native `UITableView.scrollToRow(..., .top, animated: true)` remains the movement owner. Do not replace it with timer-stepped/debounce/watchdog animation machinery.
 - b31/b32 accepted precise semantic landing at user-message round starts. Do not return to long-distance assistant-answer Y-offset prediction or fixed estimated-row geometry.
-- At native animation completion, measure landing against the intended round-start row. Apply at most one nonanimated same-target re-anchor **only when absolute native landing error exceeds `1pt`**. This correction is a final accuracy guard, not a second scrolling authority.
-- Diagnostics may record privacy-safe `nativeLandingErrorPoints`, `landingCorrectionApplied`, row indices and offsets; never message identity/body.
+- At native animation completion, the final accuracy guard may measure/correct only against the **current target row when that row is visible**. If the current target row is not visible, treat the callback as stale/superseded presentation completion: log privacy-safe `answerJump.completionIgnored` / `current_target_not_visible`, do not snap/correct and do not clear the newer in-flight animation/cursor ownership.
+- When the current target row is visible, apply at most one nonanimated same-target re-anchor **only when absolute native landing error exceeds `1pt`**. This correction is a final accuracy guard, not a second scrolling authority.
+- Diagnostics may record privacy-safe `nativeLandingErrorPoints`, `landingCorrectionApplied`, `answerJump.completionIgnored`, row indices and offsets; never message identity/body.
 - No speculative row-height cache, debounce, retry, timer or watchdog may be added without new exact Runtime evidence.
 
 ## Message self-sizing contract
@@ -62,6 +63,12 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Exact b18 accepts the tested historical-anchor matrix. Missing-anchor-message discard remains Runtime-unexercised.
 - Future follow-tail belongs to authoritative Send/Stream response lifecycle; do not invent UI streaming flags/timers before that owner exists.
 
+## Message rendering scope contract
+
+- Current Phase 8 message body presentation is plain string content. Markdown headings/lists/links/emphasis/code/tables and rich citation/annotation rendering belong to future `DEV-message-rendering`.
+- Supplied real-device comparison shows raw Markdown and raw `filecite`-adjacent boxed glyphs in the current client. Do not strip/rewrite those markers in Phase 8 without authoritative rich-content/annotation evidence.
+- If later evidence shows file citations map to attachment/file-card ownership, coordinate with attachment rendering rather than inventing a second representation.
+
 ## Fast usable Candidate contract
 
 - Do not hold usable functionality until the entire roadmap is complete.
@@ -71,7 +78,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
 - `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch; it must not override Candidate with stale per-Work defaults.
 - A package-identity failure permanently rejects/reserves that build even when compilation/upload succeed. b24 is the concrete current-Work example.
-- Exact b24-b33 identities are reserved once emitted. Corrected product code after b33, if needed, must allocate b34 or later.
+- Exact b24-b34 identities are reserved once emitted. Corrected product code after b34, if needed, must allocate b35 or later.
 
 ## Manual recovery contract
 
@@ -112,7 +119,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Temporary auth transport failure may retain valid provisional rows without converting it into logout or automatic retry.
 - Exact b23 accepts the current 60-second rapid-relaunch freshness window. Manual refresh bypasses suppression and issues exactly one user-requested list refresh.
 - Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; b26 later accepted the authoritative-total cap for stale excess rows (`30 -> 29`, repeated `29/29`). Preserve that bound.
-- b29 Runtime accepts the tested right-top list refresh presentation: no persistent blank band above the first conversation and no prompt-induced top-inset growth. Preserve this behavior in b33+.
+- b29 Runtime accepts the tested right-top list refresh presentation: no persistent blank band above the first conversation and no prompt-induced top-inset growth. Preserve this behavior in b34+.
 - Never add timer/polling/watchdog/retry, alternate list/auth endpoints, per-row Detail prefetch or another list/account authority solely for cache behavior.
 
 ## Protocol evidence contract
@@ -128,7 +135,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Never log/export passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
 - Multi-conversation correlation uses privacy-safe hashes/counts/generations.
 - Cache diagnostics may record schema/hit/age/count/duration/scope hash/decision only.
-- Scroll/round diagnostics may record non-secret row indices, content offsets, native landing error and correction Boolean, never message identity/body.
+- Scroll/round diagnostics may record non-secret row indices, content offsets, native landing error, correction Boolean and ignored-completion reason, never message identity/body.
 - Approximate visible-text bytes are correlation only, not memory-pressure proof.
 
 ## Multi-conversation / state-owner contract

@@ -940,7 +940,8 @@ final class ConversationRepository {
                 return
             }
 
-            let messages = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
+            let projection = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
+            let messages = projection.messages
             let title = Self.normalizedTitle(payload["title"] as? String)
             let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages)
             var fields = callbackFields
@@ -948,6 +949,7 @@ final class ConversationRepository {
             fields["byteCount"] = String(data.count)
             fields["mappingCount"] = String(mapping.count)
             fields["visibleMessageCount"] = String(messages.count)
+            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
             self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .success(detail))
@@ -1165,7 +1167,7 @@ final class ConversationRepository {
         }
     }
 
-    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> [ConversationMessage] {
+    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {
         var nodeIDs: [String] = []
         var visited = Set<String>()
         var nodeID: String? = currentNode
@@ -1176,14 +1178,23 @@ final class ConversationRepository {
         }
 
         var messages: [ConversationMessage] = []
+        var filteredRecipientMessageCount = 0
         for id in nodeIDs.reversed() {
-            guard let node = mapping[id] as? [String: Any], let message = node["message"] as? [String: Any], let author = message["author"] as? [String: Any], let rawRole = author["role"] as? String, let role = ConversationMessage.Role(rawValue: rawRole), let content = message["content"] as? [String: Any] else { continue }
+            guard let node = mapping[id] as? [String: Any], let message = node["message"] as? [String: Any], let author = message["author"] as? [String: Any], let rawRole = author["role"] as? String, let role = ConversationMessage.Role(rawValue: rawRole) else { continue }
+            if role == .assistant, let recipient = message["recipient"] as? String {
+                let normalizedRecipient = recipient.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !normalizedRecipient.isEmpty, normalizedRecipient != "all" {
+                    filteredRecipientMessageCount += 1
+                    continue
+                }
+            }
+            guard let content = message["content"] as? [String: Any] else { continue }
             let text = visibleText(from: content)
             guard !text.isEmpty else { continue }
             let messageID = (message["id"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? id
             messages.append(ConversationMessage(id: messageID, role: role, text: text, createTime: (message["create_time"] as? NSNumber)?.doubleValue))
         }
-        return messages
+        return (messages, filteredRecipientMessageCount)
     }
 
     private static func visibleText(from content: [String: Any]) -> String {
@@ -2061,7 +2072,7 @@ final class ConversationMessageCell: UITableViewCell {
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         bubbleView.addSubview(messageLabel)
 
-        let copyImage = UIImage(systemName: "doc.on.doc", withConfiguration: UIImage.SymbolConfiguration(pointSize: 10, weight: .regular))
+        let copyImage = UIImage(systemName: "square.on.square", withConfiguration: UIImage.SymbolConfiguration(pointSize: 10, weight: .regular))
         copyButton.setImage(copyImage, for: .normal)
         copyButton.tintColor = .secondaryLabel
         copyButton.backgroundColor = .clear

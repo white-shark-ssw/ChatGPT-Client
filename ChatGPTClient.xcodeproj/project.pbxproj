@@ -244,8 +244,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
-				DIAGNOSTICS_CANDIDATE = "DEV-conversation-round-count-0.1.0-b31";
+				CURRENT_PROJECT_VERSION = 32;
+				DIAGNOSTICS_CANDIDATE = "DEV-conversation-round-count-0.1.0-b32";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -269,8 +269,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
-				DIAGNOSTICS_CANDIDATE = "DEV-conversation-round-count-0.1.0-b31";
+				CURRENT_PROJECT_VERSION = 32;
+				DIAGNOSTICS_CANDIDATE = "DEV-conversation-round-count-0.1.0-b32";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (

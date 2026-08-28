@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-29 through exact b33 CI/Artifact evidence and b32 Runtime result._
+_Last updated: 2026-08-29 through exact b33 Runtime result._
 
 ## Current accepted baseline
 
@@ -16,54 +16,63 @@ The merged accepted read/cache baseline remains b23. `DEV-conversation-round-cou
 
 ## Active development — DEV-conversation-round-count
 
-- **Branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open.
-- **Current main**: `a6e3b2bc185b8d5df90b846040387262a64e6154` at b33 Candidate production/documentation finalization.
-- **Exact Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b33`, `0.1.0 (33)`.
-- **Exact product/config source**: `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`. Later docs-only commits do not redefine this source.
+- **Branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open/mergeable.
+- **Current main**: `a6e3b2bc185b8d5df90b846040387262a64e6154` at the b33 Runtime result.
+- **Latest tested Candidate**: `DEV-conversation-round-count-0.1.0-b33`, `0.1.0 (33)`.
+- **Exact b33 product/config source**: `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`.
+- **Next reserved corrected identity**: `DEV-conversation-round-count-0.1.0-b34`, `0.1.0 (34)`; no corrected product output exists yet.
 - **Scope**: compact title-first metadata, active-branch round count, authoritative historical timestamps, visible-text Copy, adaptive previous/next round navigation, centralized persisted Preferences, first-entry latest placement, and evidence-backed list/detail presentation corrections.
 - **Authority boundary**: `ConversationRepository` remains sole conversation/list authority. `AppPreferences` owns persisted presentation booleans only. `ConversationRoundProjection` is derived from authoritative visible messages and is not mutable conversation authority.
-- **Type boundary**: ordinary supported detail may show `聊天 · N轮`; `工作` remains deferred until authoritative Work/Project type evidence exists.
-- **Preference defaults**: `显示会话轮数` On, `显示消息时间` On, `显示轮次快速跳转` On.
 
 ## Candidate progression
 
 - **b24**: package identity rejected/permanently reserved.
-- **b25**: Runtime partial/failing. Copy function, historical timestamps and preference persistence accepted; header/jump/refresh failed and `30/29` list mismatch exposed.
-- **b26**: Runtime partial/failing. Accepted authoritative-total bound (`30 -> 29`, repeated `29/29`), sequential targets and compact title-first header.
-- **b27**: Runtime partial/failing. Long-conversation jump hitch persisted; right-top refresh inflated top inset; Copy visual rejected.
-- **b28**: Runtime partial/failing. Large answer-target drift, programmatic direction flips, first-entry top and refresh blank band reproduced.
-- **b29**: Runtime partial/failing. Right-top refresh/top blank correction accepted; `estimatedRowHeight=0` caused severe self-sizing message-layout regression and is rejected.
-- **b30**: Runtime partial/failing. Automatic self-sizing restored and severe hitch improved, but Copy remained too large and assistant-answer landing was grossly inaccurate.
-- **b31**: Runtime partial/failing. User-message semantic round-start targeting produced precise landing, but jump hitch remained; raw internal/tool rows and Copy visual still required correction.
-- **b32**: Runtime partial/failing. Exact long/tool-heavy sample accepted recipient filtering (`filteredRecipientMessageCount=748`, ordinary visible messages `84`), compact Copy direction and precise semantic landing. Raw tool/internal rows no longer appeared as ordinary chat rows. Remaining defects: jump smoothness and physical-bottom rubber-band direction.
-- **b33**: Code/source audit/CI/Artifact and current-main merge-view evidence complete; Runtime pending.
+- **b25-b30**: Runtime partial/failing iterations that established accepted Copy/time/preferences, compact header, bounded list reconciliation, right-top refresh correction and restored automatic message self-sizing while exposing navigation defects.
+- **b31**: Runtime partial/failing. User-message semantic round-start targeting produced precise landing; hitch/internal-row/Copy defects remained.
+- **b32**: Runtime partial/failing. Accepted recipient/tool filtering, compact Copy direction and precise semantic landing; rejected long-jump smoothness and physical-bottom rubber-band direction.
+- **b33**: **Runtime partial/failing**. Physical-bottom direction and final semantic precision are accepted; long-distance smoothness remains rejected.
 
-## Exact b32 Runtime evidence
-
-- Candidate `DEV-conversation-round-count-0.1.0-b32`, `0.1.0 (32)`.
-- Product/config source `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`.
-- Push Run / Job `33177491033` / `98869786437`, success.
-- Runtime Artifact `9688235425`; ZIP `sha256:17c6639b5ec2b106cab936c5de357b65671c116701127ed88dfbe92bb8378445`.
-- IPA `ChatGPTClient-0.1.0-b32-dev-conversation-round-count.ipa`; SHA `f1eb4e6fb8cda58db0216df080ea90098ce681e1ed47962eebda57f803f9be80`.
-- Accepted: semantic user-round landing accuracy, recipient/tool filtering, compact Copy direction/function regression sanity.
-- Rejected: long-jump smoothness and bottom-rubber-band adaptive-direction behavior.
-
-## Exact b33 Candidate / CI / Artifact
+## Exact b33 identity / CI / Artifact
 
 - Candidate `DEV-conversation-round-count-0.1.0-b33`, `0.1.0 (33)`.
 - Exact product/config source `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`.
-- Scoped product correction only:
-  1. physical top/bottom boundaries outrank drag delta, including rubber-band overscroll;
-  2. native animated `scrollToRow` remains the movement owner;
-  3. after animation, measure native landing and apply one nonanimated same-target re-anchor only when absolute error exceeds `1pt`;
-  4. add privacy-safe `nativeLandingErrorPoints` and `landingCorrectionApplied` diagnostics;
-  5. retain b32 recipient filtering, round derivation, Copy, list reconciliation, network semantics and state owners unchanged.
 - Exact push Run / Job `33195740528` / `98932282377`, success.
-- Runtime Artifact `9695669835`; Artifact name `ChatGPTClient-DEV-conversation-round-count-0.1.0-b33`; ZIP `sha256:841b682ffe27a2788b2c297225705c0b4fb6bc18b527fd4e8f30c62e10312407`.
+- Runtime Artifact `9695669835`; ZIP `sha256:841b682ffe27a2788b2c297225705c0b4fb6bc18b527fd4e8f30c62e10312407`.
 - IPA `ChatGPTClient-0.1.0-b33-dev-conversation-round-count.ipa`; SHA `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855`.
-- Independent package inspection: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=33`, Candidate b33, source marker `0ba15ec48fe8`, minimum iOS14.0, Mach-O arm64.
-- Current-main PR merge-view against `main@a6e3b2bc185b8d5df90b846040387262a64e6154`: Run / Job `33195744651` / `98932296906`, success; merge view `ca28819de6e5ed345087d04005ed05d74508881c`; merge Artifact `9695673573`; ZIP `sha256:74799aec08cbf43cedbf1dc9c1b7bb8fd75ef524c1a0335425048f90e670f608`; merge-view IPA SHA `29b578eb6c060d2e528313940e3614e476eee6c36a8d6b354f0bf8ac7f594123`.
-- Merge-view output is CI evidence only. Real-device testing must use exact push Artifact `9695669835`.
+- Independent package inspection: `0.1.0 (33)`, Candidate b33, source marker `0ba15ec48fe8`, minimum iOS14.0, arm64.
+- Product-source PR merge-view against `main@a6e3b2bc185b8d5df90b846040387262a64e6154`: Run / Job `33195744651` / `98932296906`, success; merge `ca28819de6e5ed345087d04005ed05d74508881c`; merge Artifact `9695673573` is CI evidence only.
+
+## Exact b33 Runtime evidence
+
+User-tested exact b33 on iPhone/iOS17; supplied diagnostics metadata identifies build 33, Candidate b33 and source `0ba15ec48fe8`.
+
+Accepted for the tested path:
+
+- Physical-bottom adaptive direction including rubber-band overscroll: when a previous round exists, control stays/resolves to `上一轮` rather than flipping from overscroll delta.
+- Final semantic landing remains precise at the intended user-message round start.
+- Existing recipient filtering remains operational; one supplied long/tool-heavy Detail response had `mappingCount=3959`, `filteredRecipientMessageCount=1639`, `visibleMessageCount=96`.
+
+Blocking result:
+
+- Long-distance previous/next movement still feels insufficiently smooth / has visible gear-like snapping.
+- Supplied diagnostics contain 74 `answerJump.completed` events; 14 applied `landingCorrectionApplied=true`.
+- Non-retarget corrections include roughly 66.67pt, 203pt, 202.33pt, 496.33pt and 504pt.
+- Rapid retargeting produced much larger native landing errors before nonanimated correction, including `-1804.33`, `-2897`, `-3356.67`, `-4932.67`, `-7047.67`, `-8237` and `-8258.67` points; post-correction error was ~0.
+- This directly supports the current hypothesis that end-of-animation correction contributes materially to the perceived snap. It is Runtime evidence, not yet proof of the complete root cause.
+
+## b34 correction boundary
+
+Current b33 source cancels an in-flight jump with nonanimated `setContentOffset`, replaces `programmaticAnswerTargetRow`, starts another native animated `scrollToRow`, and handles every `scrollViewDidEndScrollingAnimation` callback against the current target.
+
+The next minimal correction is to allow end-of-animation landing correction only when the **current target row is visible**. A callback arriving while the newer current target is not visible is treated as stale/superseded presentation completion: no snap/correction, current cursor/animation ownership remains, and a privacy-safe ignored-completion diagnostic is emitted. The final visible-target completion may still apply the existing >1pt correction.
+
+Do not alter accepted bottom-direction behavior, semantic user-row targets, b32 recipient filtering, Copy/timestamps/preferences/header, cache/list/network behavior or state ownership. No timer/debounce/watchdog/row-height cache/fallback owner.
+
+## Rendering scope observation
+
+The supplied official-app/current-client recording shows raw Markdown syntax in this client where the official app renders headings, bold, inline code and tables. Current source simply concatenates `content.text`/string `parts` and assigns the result to `UILabel.text`; no Markdown/rich-annotation renderer exists.
+
+This formatting work belongs to roadmap Phase 11 `DEV-message-rendering`, not the current Phase 8 metadata/settings task. Boxed-question-mark glyphs adjacent to raw `filecite ...` text appear to be unparsed citation/rich-content markers rather than a plain font-only defect; investigate them with rendering/rich-content evidence instead of stripping them speculatively in Phase 8.
 
 ## Current architecture / ownership
 
@@ -72,7 +81,7 @@ The merged accepted read/cache baseline remains b23. `DEV-conversation-round-cou
 - `ConversationRepository`: sole authoritative conversation/list/read/recovery owner.
 - `ConversationListCacheStore`: storage-only persistent summary snapshot + privacy-safe last-verified scope hint.
 - `ConversationDetailViewController`: Detail/recovery presentation, semantic anchors, first-entry latest placement and round navigation presentation.
-- `ConversationMessageCell`: visible message/timestamp/assistant-Copy presentation.
+- `ConversationMessageCell`: plain visible message/timestamp/assistant-Copy presentation; no Markdown renderer yet.
 - `ConversationSidebarViewController`: list presentation; b29 accepted the right-top refresh blank-region correction.
 - `AppPreferences`: centralized persisted display/interaction preference owner.
 - `ConversationRoundProjection`: derived active-branch round projection; no second mutable semantic index.
@@ -80,20 +89,13 @@ The merged accepted read/cache baseline remains b23. `DEV-conversation-round-cou
 - default persistent `WKWebsiteDataStore`: sole persistent auth-secret authority.
 - `AuthSessionStore`: sole verified auth/account-context owner.
 
-## Current Runtime gate
+## Current next action
 
-Exact b33 Runtime is **Pending**. Test focus:
-
-1. At physical bottom, including rubber-band overscroll, adaptive control resolves/stays `上一轮` when a previous round exists; overscroll delta must not flip it to `下一轮`.
-2. Long previous/next jumps use one smooth native animation without the prior serious end-of-animation hitch.
-3. Landing remains precise at the intended user-message round start; rapid repeated taps advance one semantic round per tap.
-4. Diagnostics may show `nativeLandingErrorPoints` and `landingCorrectionApplied`; normal accurate native landings should generally avoid correction.
-5. Regression sanity: tool/internal rows remain filtered; Copy remains accepted compact visual/function; A/B anchors, first-entry latest, timestamps/preferences, list reconcile, Sync/Reload remain intact.
-
-Do not merge/close PR #27 or claim Stable until exact b33 real-device Runtime acceptance.
+b33 is permanently reserved and must not be rebuilt. Produce corrected product code only under b34 or later after exact branch/base/conflict checks. Current b34 target is the smallest stale animation-completion guard described above; then run exact CI/Artifact/merge-view validation and hand the identity-verified IPA to the user for focused smoothness testing.
 
 ## Evidence boundaries
 
+- b33 Runtime is **partial/failing**, not Stable.
 - iOS17 success does not prove iOS14–16 or iPad.
 - Read/recovery/multi-conversation/cache evidence is primarily Plus/personal; non-personal workspace identity remains Unknown/Unverified.
 - Supported account-switch purge, natural terminal failed-resident navigation, missing-anchor-message discard and some corrupt/provisional cache paths remain conditional Runtime-unverified.

@@ -2,44 +2,23 @@
 
 ## Status
 
-**Active — b32 Runtime partial/failing; exact b33 Code/Static/CI/Artifact ready; Runtime human gate**
+**Active — exact b33 Runtime partial/failing; b34 correction planned, not yet produced**
 
 - **Work ID**: `DEV-conversation-round-count`
 - **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮 / 下一轮 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
 - **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive round navigation, centralized persisted Preferences, first-entry latest placement, and evidence-backed list/detail presentation corrections.
-- **Working branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open.
+- **Working branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open/mergeable.
 - **Exact b33 product/config source**: `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`.
-- **Durable-docs finalization commit**: `cfd9d53898d68dd4d4647875c0ec37a96cf27600`; exactly six durable project docs changed from the previous checkpoint head, no product/config/workflow change.
-- **Current main verified after durable-docs finalization**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
-- Stable predecessors b21 multi-conversation and b23 list-cache-core remain Stable for their recorded scopes, not Frozen. `ConversationRepository` remains sole conversation/list authority.
+- **Current main at b33 Runtime result**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
+- Stable predecessors b21 multi-conversation and b23 list-cache-core remain Stable for recorded scopes, not Frozen. `ConversationRepository` remains sole conversation/list authority.
 
 ## Runtime / Candidate history
 
 - b24 identity rejected/reserved.
 - b25-b30 partial/failing iterations.
 - b31 accepted precise user-row semantic landing but rejected residual hitch/raw internal rows/Copy visual.
-- b32 exact Runtime accepted recipient filtering, compact Copy direction and precise semantic landing; still rejected jump smoothness and physical-bottom rubber-band direction.
-
-### Exact b32 Runtime
-
-- Candidate `DEV-conversation-round-count-0.1.0-b32`; version/build `0.1.0 (32)`.
-- Product/config source `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`.
-- Push Run/Job `33177491033` / `98869786437`, success.
-- Runtime Artifact `9688235425`; ZIP `sha256:17c6639b5ec2b106cab936c5de357b65671c116701127ed88dfbe92bb8378445`.
-- IPA `ChatGPTClient-0.1.0-b32-dev-conversation-round-count.ipa`; SHA `f1eb4e6fb8cda58db0216df080ea90098ce681e1ed47962eebda57f803f9be80`.
-- Long/tool-heavy sample: `filteredRecipientMessageCount=748`, ordinary visible messages `84`; raw tool/internal rows no longer ordinary chat rows. User-round landing remained precise. Bottom direction + jump smoothness rejected.
-
-## b33 evidence-backed correction
-
-Only these product changes are in scope and were audited in the exact product commit:
-
-1. Preserve `ConversationRoundProjection`, user-message semantic targets, transient cursor, real-drag ownership and native animated `scrollToRow`.
-2. Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll.
-3. At animation completion, measure native landing; apply one nonanimated same-target re-anchor only when absolute native landing error exceeds `1pt`.
-4. Add privacy-safe `nativeLandingErrorPoints` and `landingCorrectionApplied` diagnostics.
-5. Do not change accepted recipient filtering, round derivation, Copy presentation, list reconciliation, network behavior or state ownership.
-
-Exact parent→product diff from pre-product checkpoint head `3ad0136e...` is exactly 3 files: workflow identity 2+/2-, Xcode build/Candidate identity 4+/4-, `ConversationFeature.swift` 28+/15-. Earlier dirty staged blob `a09eb28b...` is rejected and unused.
+- b32 Runtime accepted recipient filtering, compact Copy direction and precise semantic landing; rejected jump smoothness and physical-bottom rubber-band direction.
+- b33 Runtime now accepts physical-bottom direction and final semantic precision; long-distance smoothness still fails.
 
 ## Exact b33 Candidate / CI / Artifact
 
@@ -47,65 +26,96 @@ Exact parent→product diff from pre-product checkpoint head `3ad0136e...` is ex
 - **Version / Build**: `0.1.0 (33)`
 - **Exact product/config source**: `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`
 - **Exact push Run / Job**: `33195740528` / `98932282377` — success
-- **Toolchain / target**: Xcode 16.4; `arm64-apple-ios14.0`; iPhoneOS 18.5 SDK
 - **Runtime Artifact**: `9695669835`
-- **Artifact name**: `ChatGPTClient-DEV-conversation-round-count-0.1.0-b33`
 - **Artifact ZIP digest**: `sha256:841b682ffe27a2788b2c297225705c0b4fb6bc18b527fd4e8f30c62e10312407`
 - **IPA**: `ChatGPTClient-0.1.0-b33-dev-conversation-round-count.ipa`
 - **IPA SHA-256**: `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855`
-- **Embedded identity independently inspected**: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=33`, `DiagnosticsCandidate=DEV-conversation-round-count-0.1.0-b33`, `DiagnosticsSourceCommit=0ba15ec48fe8`, `MinimumOSVersion=14.0`, Mach-O arm64.
+- **Embedded identity**: `0.1.0 (33)`, Candidate b33, source marker `0ba15ec48fe8`, minimum iOS14.0, arm64.
 
-## Merge / docs-head evidence
+## Exact b33 Runtime evidence — 2026-08-29
 
-Against unchanged `main@a6e3b2bc185b8d5df90b846040387262a64e6154`:
+User-tested exact b33 on iPhone/iOS17; diagnostics metadata confirms build 33 / Candidate b33 / source `0ba15ec48fe8`.
 
-- Exact product-source PR merge-view Run/Job `33195744651` / `98932296906` succeeded on merge `ca28819de6e5ed345087d04005ed05d74508881c`. Merge-view Artifact `9695673573` is merge evidence only.
-- Durable docs were finalized in commit `cfd9d53898d68dd4d4647875c0ec37a96cf27600`; compare from prior head shows exactly `BUILD_TEST_INDEX.md`, `DEVELOPMENT_PLAN.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `PROJECT_SPECIFIC_RULES.md`, `PROJECT_STATE.md` changed.
-- Final durable-docs PR Run/Job `33197708898` / `98938976553` succeeded.
-- GitHub current merge view for durable-docs head is `239fbe080911cd18884a7a9172e3f281787afa39`, explicitly `Merge cfd9d538... into a6e3b2bc...`.
-- Docs-head CI Artifact `9696449913` is CI/merge evidence only. **It does not replace exact Runtime Artifact `9695669835`.**
+Accepted:
 
-## Batch recovery point — completed
+1. Physical bottom including rubber-band overscroll now keeps/resolves to **上一轮** when a previous round exists. The b32 direction defect is accepted fixed for this tested path.
+2. Final landing remains precise at the intended user-message round start.
+3. Existing recipient/tool filtering and read-state behavior remained operational in supplied diagnostics; a 19 MB Detail sample parsed 3959 mapping nodes to 96 ordinary visible messages with `filteredRecipientMessageCount=1639`.
 
-- Batch A governance synchronization: complete.
-- Batch B exact clean b33 product/config commit: complete and verified.
-- Batch C exact push CI/Artifact + current-main product merge-view: complete and identity verified.
-- Batch D six durable project docs: complete at `cfd9d53898d68dd4d4647875c0ec37a96cf27600`; exact six-file diff verified; docs-head PR CI/merge view succeeded.
-- This checkpoint write is handoff state only and does not redefine b33 product/Candidate identity.
+Rejected / blocking:
 
-## Current human gate / next exact action
+1. Long-distance round jumps still feel insufficiently smooth / have a visible "gear" sensation.
+2. Diagnostics contain 74 `answerJump.completed` events, of which 14 applied `landingCorrectionApplied=true`.
+3. Some ordinary non-retarget completions required corrections of about 66.67pt, 203pt, 202.33pt, 496.33pt and 504pt.
+4. During rapid retargeting, corrections became extreme: examples include `-1804.33`, `-2897`, `-3356.67`, `-4932.67`, `-7047.67`, `-8237`, and `-8258.67` points, while final post-correction error logged as ~0.
+5. This supports the user's suspicion that the nonanimated end correction contributes materially to the perceived gear/snap behavior. b33 is therefore **Runtime partial/failing**, not Stable.
 
-Install and test **exact Runtime Artifact `9695669835`** / `ChatGPTClient-0.1.0-b33-dev-conversation-round-count.ipa` / SHA `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855` on the accepted iPhone/iOS17 scope using the matrix below.
+## Source-backed b34 correction direction
 
-After Runtime result:
+Current b33 source does this on retarget:
 
-- If accepted: record exact b33 Runtime evidence, re-check current main/PR merge view and conflicts, then merge/close Phase 8 and promote only the accepted tested scope to Stable.
-- If a defect remains: record the observed defect first; b33 stays permanently reserved; allocate b34 or later before any corrected product output. Do not rebuild b33.
+1. if an animation is in flight, call `tableView.setContentOffset(tableView.contentOffset, animated: false)` to stop it;
+2. assign the new `programmaticAnswerTargetRow`;
+3. start a new native `scrollToRow(... animated:true)`;
+4. every `scrollViewDidEndScrollingAnimation` callback measures/corrects against the **current** target row.
 
-## Recovery must not touch / replay
+The b33 rapid-retarget trace strongly indicates that an old/cancelled animation-end callback can arrive after a newer target has become current, then apply a nonanimated correction toward that newer target before the newer animation has actually completed.
 
-- Do not reuse b24-b32 or b33 Candidate/Artifact identity for corrected product code.
-- Do not rewrite accepted b31/b32 semantic round derivation, b32 recipient filter, or Copy merely to chase smoothness.
-- Do not add retry/timer/watchdog/row-height cache/alternate navigation owner/network route/duplicate request start/second conversation authority.
-- Do not modify another task checkpoint.
+**Minimal b34 rule:** an animation-end callback may run the >1pt correction only when the current target row is actually visible. If the current target row is not visible, treat that callback as stale/superseded presentation completion, log a privacy-safe ignored-completion diagnostic, keep the current animation/cursor ownership intact, and do not snap/correct. The final callback for the current target may still measure/correct once that target is visible.
 
-## Connector-side cleanup note
+This change must not alter:
 
-Temporary branches created during earlier tool discovery are not task state, Candidate, PR or authority and must never be reused: `tmp-should-not-create`, `tmp-b33-recovery-do-not-use`, `tmp-b33-recovery-do-not-use-2`, `tmp-b33-recovery-do-not-use-3`, `tmp-b33-recovery-do-not-use-4`, `tmp-b33-recovery-do-not-use-5`. Remove only when an authorized branch/ref deletion path is available.
+- physical top/bottom direction rule accepted on b33;
+- `ConversationRoundProjection` or semantic user-row targets;
+- b32 recipient filtering;
+- Copy/timestamps/preferences/header;
+- list reconciliation/cache/network behavior;
+- repository/state ownership;
+- native animated `scrollToRow` movement owner;
+- no timer/debounce/watchdog/row-height cache/fallback owner.
+
+## Rendering observation from supplied recording — out of Phase 8 scope
+
+The supplied official-app vs current-client recording shows headings, bold, inline code and tables rendered structurally in the official app while this client shows raw Markdown syntax. It also shows boxed-question-mark glyphs adjacent to raw `filecite ...` marker text.
+
+Current source confirms `visibleText(from:)` merely concatenates `content.text` / string `parts`, and `ConversationMessageCell` assigns the resulting plain string directly to `UILabel.text`. There is no Markdown/rich-annotation renderer in Phase 8.
+
+Scope decision:
+
+- Markdown/heading/list/table/code formatting belongs to roadmap Phase 11 `DEV-message-rendering`, not this metadata/settings Work.
+- The `filecite`/boxed-glyph observation appears to be an unparsed rich citation/annotation representation rather than an ordinary font-only problem. It should be investigated with message rendering/rich-content evidence, not mixed into b34.
+- Do not strip or reinterpret citation markers in Phase 8 without authoritative content/annotation evidence.
+
+## Candidate allocation
+
+- b33 is permanently reserved and must never be rebuilt with corrected code.
+- Search found no existing `DEV-conversation-round-count-0.1.0-b34` identity in repository state.
+- **Next candidate reserved for corrected product output: `DEV-conversation-round-count-0.1.0-b34`, `0.1.0 (34)`**, subject to final source/config commit and CI identity verification.
 
 ## Validation state
 
-- **Code written**: Yes — exact b33 product/config source `0ba15ec...`.
-- **Static/source audit**: Passed for exact 3-file b33 product delta.
-- **CI**: Exact b33 push passed; exact product merge-view passed; durable-docs head PR CI passed.
-- **Artifact produced**: Yes — exact Runtime Artifact `9695669835`, identity independently verified.
-- **Runtime/manual/real-device**: b32 partial/failing; b33 **Pending**.
+- **b33 Code written**: Yes.
+- **b33 Static/source audit**: Passed.
+- **b33 CI / Artifact**: Passed / produced / identity verified.
+- **b33 Runtime/manual/real-device**: **Partial/failing** — direction + final precision accepted; long-distance smoothness rejected.
 - **Stable/Frozen**: **No**.
 
-## b33 real-device focus
+## Next exact action
 
-1. At physical bottom, including rubber-band overscroll, adaptive control must stay/resolve to **上一轮** when a previous round exists; it must not flip to 下一轮 merely from overscroll delta.
-2. Long previous/next jumps should use one smooth native animation without the prior serious end-of-animation hitch.
-3. Landing must remain precise at the intended user-message round start; rapid repeated taps still advance one semantic round per tap.
-4. If a correction occurs, diagnostics should show `nativeLandingErrorPoints` and `landingCorrectionApplied=true`; normal accurate native landings should often avoid correction.
-5. Regression sanity: tool/internal rows remain filtered, Copy remains accepted compact visual/function, first-entry latest/bottom, A/B anchors, timestamps/preferences, list reconcile, Sync/Reload remain intact.
+On the latest checkpoint head, create the smallest b34 product/config commit: build/Candidate identity 34 plus the current-target-visible guard for end-of-animation correction and an ignored-completion diagnostic. Audit the exact diff, fast-forward the Work branch, run exact push CI/Artifact and current-main PR merge-view, verify package identity, update durable docs, then hand exact b34 IPA to the user for focused real-device testing.
+
+## b34 Runtime focus
+
+1. Re-run long-distance previous/next jumps and rapid repeated taps; the prior large nonanimated gear/snap events from stale retarget completions should disappear.
+2. Final semantic landing must remain precise.
+3. Bottom rubber-band direction must remain accepted.
+4. Diagnostics should distinguish ignored stale completion from genuine visible-target completion/correction; huge corrections against a not-yet-visible current target should no longer occur.
+5. Regression sanity: recipient/tool filtering, Copy, first-entry latest, A/B anchors, timestamps/preferences, list reconcile, Sync/Reload remain intact.
+
+## Recovery must not touch / replay
+
+- Never reuse b24-b33 Candidate/Artifact identities for corrected product code.
+- Do not rewrite accepted semantic round derivation, recipient filter, Copy, cache/list/network behavior or state owners.
+- Do not fold Markdown/rich-content rendering into this Work.
+- Do not add retry/timer/watchdog/row-height cache/alternate navigation owner/network route/duplicate request start/second conversation authority.
+- Do not modify another task checkpoint.

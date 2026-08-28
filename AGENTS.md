@@ -220,3 +220,30 @@ If CI or another tool returns an error and current evidence supports a determini
 Status messages may be sent during the work, but they must make clear whether execution is continuing or whether a real human gate has been reached. A progress update by itself must not silently become a request for the user to say `继续`.
 
 This rule governs agent behavior while the current execution context can still act. It does not claim that the agent can continue running after the platform/tool execution has ended or stopped returning control.
+
+## 17. Non-atomic GitHub write chains and batch recovery points
+
+When one logical task requires multiple sequential GitHub mutations that cannot be committed atomically by the available tool path, treat the sequence as a recoverable write chain rather than assuming all writes will succeed together.
+
+Before starting a materially non-atomic write chain, update the selected checkpoint with a **batch recovery point** containing:
+
+- exact known baseline/head and task identity;
+- the small coherent write batches about to be performed;
+- writes already confirmed complete;
+- writes still pending;
+- the next exact action;
+- identities or files that must not be touched by recovery.
+
+Then:
+
+1. perform one small coherent batch at a time;
+2. after each batch, verify actual GitHub state before depending on it;
+3. refresh the checkpoint before the next batch whenever interruption at that boundary would make resume ambiguous;
+4. if a tool error, interruption or new session occurs, first re-read the checkpoint **and** current GitHub state, then perform only the missing deterministic writes;
+5. never blindly replay the whole chain and never infer success/failure of an earlier mutation from the later tool result alone.
+
+A batch recovery point is a handoff/recovery record, **not** a transaction, rollback mechanism or permission to tolerate inconsistent product identity. Stronger branch/PR/candidate/version/artifact/conflict rules still apply. In particular, checkpointing does not make a partially emitted or reused Candidate safe; if actual package/Candidate identity became ambiguous or was already produced under an invalid combination, preserve/reserve/reject it according to the existing identity rules rather than silently overwriting history.
+
+Do not create checkpoint noise for a single ordinary atomic edit. Use this rule when partial completion of a multi-write chain could otherwise leave the next session unable to tell what actually happened.
+
+Rules sessions write recovery state only to the Rules checkpoint. Development sessions write it only to the selected task checkpoint; never use another Active task's checkpoint as a cross-task recovery log.

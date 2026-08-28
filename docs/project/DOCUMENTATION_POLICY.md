@@ -36,6 +36,16 @@ Conversation limits are unpredictable. Create task checkpoints early after goal 
 
 Keep the latest checkpoint sufficient for a new session to know what task is active, which branch/PR/commit/candidate it owns, what is done, current evidence, what remains, exact next action, rejected routes and conflict risks.
 
+### Non-atomic GitHub write-chain recovery
+
+When one logical task needs several sequential GitHub mutations that the available tool path cannot commit atomically, record a small **batch recovery point** in the selected checkpoint before beginning the chain. The recovery point must state the known baseline/head, intended write batches, confirmed completed writes, remaining writes, next exact action, and identities/files that recovery must not touch.
+
+Perform and verify one coherent batch at a time. If execution is interrupted or a later tool call fails, a new session must compare the checkpoint with current GitHub state and continue only the missing deterministic writes; it must not blindly replay the whole chain or assume earlier writes succeeded/failed from a later result.
+
+This recovery record is a handoff aid, not a transaction or rollback mechanism. It never weakens branch/PR/candidate/version/artifact/conflict rules and does not make partially emitted or reused Candidate identity valid. Avoid checkpoint noise for ordinary single atomic edits.
+
+Development work stores this recovery state only in its selected task checkpoint. Rules work stores it only in `CURRENT_WORK_RULES.md`.
+
 ## Parallel isolation
 
 Rules and multiple development tasks may all be Active. Each development task writes only its own checkpoint. Rules work writes only the rules checkpoint and durable rule files. No session may clear, merge or repurpose another Active task's checkpoint.

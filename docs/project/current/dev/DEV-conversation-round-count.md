@@ -2,107 +2,71 @@
 
 ## Status
 
-**Active — b32 Runtime partial/failing; b33 clean source/config audited; final ref target prepared**
+**Active — b32 Runtime partial/failing; b33 clean product/config commit prepared on latest checkpoint head**
 
 - **Work ID**: `DEV-conversation-round-count`
 - **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮 / 下一轮 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
 - **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive round navigation, centralized persisted Preferences, first-entry latest placement, and evidence-backed list/detail presentation corrections.
 - **Working branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open.
-- **Current branch head before final product ref update**: `8209ab7fbc4cbefd0ecfdd7a07a99ae2edac7498`.
+- **Verified branch head before this checkpoint write**: `7712a44df56eae68bc4731cabc548ca368bc46cb`.
 - **Current main**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
-- **Batch A synchronization**: complete. Governance-only current main was merged into this Work; PR was mergeable and no product/state-owner conflict was found.
-- **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for their recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
+- **Batch A**: governance synchronization complete; no product/state-owner overlap evidenced.
 
-## Candidate history summary
+## Runtime / candidate history
 
-- **b24**: Artifact identity rejected / permanently reserved; never reuse.
-- **b25-b30**: Runtime partial/failing iterations; accepted pieces are retained only where later Runtime did not reject them.
-- **b31**: precise user-message round landing accepted; jump hitch, raw tool/internal rows and Copy glyph rejected.
-- **b32**: exact identity valid; recipient filtering and Copy visual correction implemented. Runtime accepted internal/tool-row suppression, the compact Copy direction, and continued precise semantic landing; Runtime still rejects jump smoothness and exposed a bottom rubber-band direction bug.
+- b24 identity rejected/reserved.
+- b25-b30 partial/failing iterations.
+- b31 accepted precise user-row landing but rejected hitch/raw internal rows/Copy glyph.
+- b32 exact identity valid. Runtime accepted recipient filtering, compact Copy direction and precise semantic landing; still rejects jump smoothness and bottom-rubber-band direction.
 
-## Exact b32 identity / CI / Artifact
+### Exact b32
 
-- **Candidate**: `DEV-conversation-round-count-0.1.0-b32`
-- **Version / Build**: `0.1.0 (32)`
-- **Exact product/config source**: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`
-- **Exact push CI**: Run `33177491033`, Job `98869786437`, success; Xcode 16.4; target `arm64-apple-ios14.0`.
-- **Runtime Artifact**: `9688235425`; ZIP `sha256:17c6639b5ec2b106cab936c5de357b65671c116701127ed88dfbe92bb8378445`.
-- **IPA**: `ChatGPTClient-0.1.0-b32-dev-conversation-round-count.ipa`; SHA-256 `f1eb4e6fb8cda58db0216df080ea90098ce681e1ed47962eebda57f803f9be80`.
-- **Embedded identity from CI**: Candidate b32; source marker `ea2b7bf4ee89`.
-- **PR merge-view against then-current main**: Run `33177494444`, Job `98869798207`, success on merge view `7ce392714645c62549ec99162ffe1153e6b21059`; merge-view Artifact `9688245700`; merge-view IPA SHA `dc6441790e7e9a216d8c0d3c80003377ae64266d6cd7c7710a73edd83f0e454a`. Merge-view Artifact is CI evidence only.
+- Candidate `DEV-conversation-round-count-0.1.0-b32`; version/build `0.1.0 (32)`.
+- Product/config source `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`.
+- Push Run/Job `33177491033` / `98869786437`, success.
+- Runtime Artifact `9688235425`; ZIP `sha256:17c6639b5ec2b106cab936c5de357b65671c116701127ed88dfbe92bb8378445`.
+- IPA `ChatGPTClient-0.1.0-b32-dev-conversation-round-count.ipa`; SHA `f1eb4e6fb8cda58db0216df080ea90098ce681e1ed47962eebda57f803f9be80`.
+- b32 Runtime long/tool-heavy sample: `filteredRecipientMessageCount=748`, ordinary visible messages `84`; raw tool rows no longer ordinary chat rows. Landing remained precise. Bottom direction + jump smoothness rejected.
 
-## b32 real-device evidence
+## b33 scoped correction
 
-- Exact b32 Runtime remains **partial/failing**, not Stable.
-- Recipient filtering is effective in the tested long/tool-heavy conversation: diagnostics reported `filteredRecipientMessageCount=748` and ordinary visible messages reduced to `84`; the previously exposed raw connector/tool invocation rows are no longer ordinary chat rows.
-- Precise semantic landing at user-message rows remains accepted.
-- Copy visual/function is no longer the current blocking target.
-- **Failure 1 — bottom direction**: when the table is physically at/beyond the bottom during rubber-band overscroll, delta-based drag logic can flip the adaptive control to `下一轮` even though no next round exists. Physical boundary must outrank drag delta.
-- **Failure 2 — jump smoothness**: native travel still has a serious hitch even after tool-row suppression. Current b32 completion path always performs a second non-animated `scrollToRow + layoutIfNeeded` re-anchor, so the next minimal correction is to measure native landing first and correct only when actual error exceeds a small threshold.
+1. Keep `ConversationRoundProjection`, user-message semantic targets, transient cursor, real-drag ownership and native animated `scrollToRow`.
+2. Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll.
+3. On animation completion, measure native landing; only apply a nonanimated re-anchor when absolute error exceeds `1pt`.
+4. Log privacy-safe `nativeLandingErrorPoints` and `landingCorrectionApplied`.
+5. Do not change recipient filter, round derivation, Copy presentation, list reconciliation, network behavior, or state ownership.
 
-## b33 evidence-backed correction
+## Clean b33 audit / recovery point
 
-Only these changes are in scope:
+- Candidate identity: `DEV-conversation-round-count-0.1.0-b33` / `0.1.0 (33)`.
+- Clean source blob `027c8b3df05b0bd7a15957fe3db78c551008f744`.
+- Xcode identity blob `96a8b2124a2a6dd84ec6f682aaa9c60b205db37e`.
+- Workflow identity blob `2d3fb98fd7c1c6b129c4d1dc57558e924a14f9d0`.
+- Clean product/config commit prepared on latest verified pre-write head: `856a578e1ae6064864ee1c52a169a86f100812f6`, parent `7712a44d...`, tree `173c06903b19f203f75569d66971f234e00aa04c`.
+- Parent→product diff is exactly 3 files: workflow identity 2+/2-, Xcode build/Candidate identity 4+/4-, source 28+/15-.
+- Audit confirms the earlier dirty staged blob is not used. No duplicate request-start `.resume()` changes remain; `AuthTransientSession.dataTask` remains request-start authority.
+- Source delta is only physical-boundary direction + conditional landing correction/diagnostics. No retry/timer/watchdog/cache/network/list/filter/Copy/state-owner changes.
 
-1. Preserve `ConversationRoundProjection`, user-message semantic targets, transient requested-row cursor, real-drag ownership and native animated `scrollToRow`.
-2. In adaptive direction resolution, physical top/bottom boundaries outrank the latest drag delta. Bottom including rubber-band overscroll resolves previous/up when a previous round exists; top analogously resolves next/down when applicable.
-3. At `scrollViewDidEndScrollingAnimation`, measure native landing error for the requested semantic row. Apply one non-animated exact re-anchor only when absolute error is greater than `1pt`; otherwise accept the native landing without the unconditional second `scrollToRow/layoutIfNeeded` work.
-4. Add privacy-safe diagnostics for `nativeLandingErrorPoints` and whether `landingCorrectionApplied` was required.
-5. Do not change the accepted recipient filter, round derivation, Copy presentation, list reconciliation, network behavior, or state ownership.
+Because this checkpoint write itself advances branch history, **do not force the branch backward to `856a578e...`**. Recovery must read the new checkpoint-created branch head, rebuild the exact same deterministic 3-file b33 tree on that head, compare the parent→new commit diff for exact equivalence, then fast-forward the branch. Do not write another checkpoint before that ref update.
 
-## Batch recovery point — final Batch B ref boundary
+## Remaining batches
 
-**Known baseline / identity**
-
-- Work: `DEV-conversation-round-count`
-- Branch: `dev/conversation-round-count-20260828`
-- Verified branch head before this checkpoint write: `8209ab7fbc4cbefd0ecfdd7a07a99ae2edac7498`.
-- PR #27: open; base current main `a6e3b2bc185b8d5df90b846040387262a64e6154`.
-- b32 is permanently reserved/tested; never reuse.
-- Fresh Candidate: `DEV-conversation-round-count-0.1.0-b33` / `0.1.0 (33)`.
-
-**Clean b33 assets**
-
-- Source blob: `027c8b3df05b0bd7a15957fe3db78c551008f744`.
-- Xcode identity blob: `96a8b2124a2a6dd84ec6f682aaa9c60b205db37e`.
-- Workflow identity blob: `2d3fb98fd7c1c6b129c4d1dc57558e924a14f9d0`.
-- Final clean product/config commit object prepared on verified head: `607e40fffad8f893e0755f6af53abb59cdf36946`; parent `8209ab7f...`; tree `3a566c4aa2269c4829684e983cc2f235e5adc518`.
-- Diff from parent is exactly 3 files: workflow identity 2+/2-, Xcode build/Candidate identity 4+/4-, source 28+/15-.
-- Audit confirms no accidental duplicate request-start `.resume()` changes and no network/repository/list/filter/Copy/state-owner changes.
-
-**Confirmed complete writes**
-
-- Batch A governance synchronization.
-- Clean b33 source/config construction and diff audit.
-- This checkpoint records the final deterministic ref target. Earlier staged/audit commits are unreferenced history only and must not be used as Candidate identity.
-
-**Remaining writes**
-
-- Fast-forward the actual branch from the checkpoint-created head to a commit carrying the exact same clean three-file b33 delta; because this checkpoint write itself advances branch history, recovery must rebuild that deterministic three-file tree on the now-current checkpoint head rather than forcing backward to `607e40ff...`.
-- Verify resulting branch and PR head/base/mergeability.
-- Batch C exact push CI / Runtime Artifact / current-main PR merge-view evidence.
-- Batch D durable docs/checkpoint evidence refresh.
-
-**Next exact action**
-
-Re-read the branch head created by this checkpoint write, create exactly one b33 product/config commit on that latest head using the three clean blobs above, verify the parent->commit diff is the same exact 3-file delta, then fast-forward branch ref and continue directly through CI/Artifact.
-
-**Recovery must not touch / replay**
-
-- Do not recreate/reuse b24-b32 Candidate identities or Artifacts.
-- Do not use dirty blob `a09eb28b...`.
-- Do not force branch backward to any earlier staged product commit; checkpoint history must remain in ancestry.
-- Do not add retry/timer/watchdog/row-height cache/alternate navigation owner/network route/duplicate request start/second list or conversation authority.
-- Do not modify another task checkpoint.
+- **Batch B**: read branch head after this checkpoint; rebuild exact 3-file b33 commit on it; verify diff; `update_ref` fast-forward; verify branch + PR.
+- **Batch C**: exact b33 push CI/Runtime Artifact + current-main PR merge-view; verify package identity, IPA SHA, Candidate/source markers.
+- **Batch D**: update checkpoint and durable project docs with exact b32 Runtime + b33 Code/CI/Artifact truth. Docs-only commits must not redefine product/config source.
 
 ## Validation state
 
-- **Code written**: b33 clean source/config exists and is source-audited, but final branch product commit must be rebuilt on the checkpoint-created head before claiming branch Code written.
-- **Static/source audit**: clean b33 3-file delta passed.
-- **CI / Artifact**: b33 pending.
-- **Runtime/manual/real-device**: b32 partial/failing; b33 pending.
-- **Stable/Frozen**: **No**.
+- Code written: b33 clean source/config constructed and audited; final branch commit pending only because checkpoint ancestry must be retained.
+- Static/source audit: passed for the exact 3-file b33 delta.
+- CI/Artifact: b33 pending.
+- Runtime/manual/real-device: b32 partial/failing; b33 pending.
+- Stable/Frozen: No.
 
-## Next human gate
+## Do not repeat
 
-After exact identity-valid b33 IPA exists and CI/package identity is verified, hand that exact IPA to the user for real-device testing of bottom rubber-band direction, long-jump smoothness, landing accuracy, tool-filter regression and Copy regression. Do not merge PR #27 or claim Stable before b33 Runtime acceptance.
+Do not reuse b24-b32 identities; do not use dirty source blob `a09eb28b...`; do not force branch backward to staged commits; do not add retry/timer/watchdog/row-height cache/alternate navigation owner/network route/duplicate request start/second conversation authority; do not modify another task checkpoint.
+
+## Next exact action
+
+Read the branch head created by this checkpoint write, build the exact same clean 3-file b33 product commit on that latest head, verify the diff, fast-forward the branch without another pre-ref checkpoint write, then immediately verify PR/base and continue into CI/Artifact.

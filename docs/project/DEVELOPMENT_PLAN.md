@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-29 through exact b33 Runtime and exact b34 Candidate/CI/Artifact/merge-view evidence._
+_Last updated: 2026-08-29 through exact b35 Runtime and exact b36 Candidate/CI/Artifact/current-main merge-view evidence._
 
 ## Purpose
 
@@ -46,7 +46,7 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 ## Phase 8 — `DEV-conversation-round-count`
 
-**Active at exact b34 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable. Do not merge/close or claim Stable until exact b34 passes real-device Runtime.
+**Active at exact b36 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable, not merged. Do not claim Stable or merge until exact b36 passes real-device Runtime.
 
 ### User-facing bundle
 
@@ -59,61 +59,69 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 - first-entry latest/bottom when no valid saved reading anchor exists;
 - evidence-backed list refresh/reconcile presentation corrections without a second list/network owner.
 
-### Shared derivation / round navigation contracts
+### Shared derivation / navigation contracts
 
 - Round count and navigation share one derived active-branch `ConversationRoundProjection`.
 - A visible authoritative user message starts a round. Accepted physical quick-navigation target is the **round-start user-message row**.
 - Tool/reasoning/system/internal-recipient nodes do not create ordinary chat rounds/rows.
 - Derive rows only when authoritative visible messages change; do not scan all messages in every scroll callback.
-- Real user drag controls user intent; programmatic motion is not user intent.
-- Rapid taps advance from the last requested derived round target via one transient presentation cursor; real drag clears/replaces that cursor.
-- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll; exact b33 Runtime accepts this for the tested physical-bottom path.
-- Native animated `scrollToRow(..., .top, animated:true)` remains the movement owner.
-- End-of-animation accuracy correction may act only when the current target row is visible. A completion received while the newer current target is not visible is stale/superseded presentation completion: log `answerJump.completionIgnored`, do not snap/correct and do not clear newer in-flight ownership.
-- When current target is visible, retain the existing single >1pt nonanimated same-target final accuracy guard.
-- No debounce, timer, watchdog or speculative row-height cache subsystem.
+- Real user drag controls user intent; programmatic presentation is not user intent.
+- Rapid taps advance from the last requested derived target via one transient presentation cursor; real drag clears/replaces that cursor.
+- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll; b33 Runtime accepts the tested physical-bottom path.
+- The user's current explicit requirement is one **uniform method for short and long jumps**.
+- Current presentation route: direct nonanimated positioning to the semantic target row, capture exact final offset, shift to a direction-consistent lead of about 120pt, then animate only that short final segment for about 0.22s ease-out.
+- Do not return to full-distance animated traversal or the old end-correction snap without new exact Runtime evidence.
+- b36 removes explicit root/table forced layouts from jump preparation and reuses the existing round button as immediate `定位中` feedback. New `answerJump.positioned` timing tells whether remaining latency belongs to direct positioning itself.
+- No speculative debounce, timer, watchdog, retry or row-height cache subsystem.
 
 ### Candidate / Runtime history
 
 - **b24**: package identity invalid; permanently rejected/reserved.
 - **b25-b30**: partial/failing iterations that established accepted Copy/time/preferences, compact header, bounded list reconciliation, right-top refresh correction and restored automatic self-sizing while exposing navigation defects.
 - **b31**: precise user-message round-start landing accepted; remaining hitch/internal-row/Copy issues required correction.
-- **b32**: Runtime partial/failing. Recipient/tool filtering, compact Copy direction and precise semantic landing accepted; long-jump smoothness and physical-bottom rubber-band direction rejected.
-- **b33**: Runtime partial/failing. Physical-bottom direction and final semantic landing accepted; long-distance smoothness still rejected.
-- **b34**: exact Code/source audit/CI/Artifact/current-main merge-view ready; Runtime pending.
+- **b32**: recipient/tool filtering, compact Copy direction and precise semantic landing accepted; long-jump smoothness and physical-bottom direction rejected.
+- **b33**: physical-bottom direction and final semantic landing accepted; long-distance movement still gear-like.
+- **b34**: Runtime still rejected movement feel although its tested trace had 42 requested / 42 completed jumps, 0 landing corrections and 0 ignored completions. This ruled out the old correction snap as the remaining tested cause.
+- **b35**: replaced full-distance traversal with the uniform direct+ease-out route; completed landings were precise but multi-second tap-to-position stalls remained around long-message regions.
+- **b36**: exact Code/Static/CI/Artifact/current-main merge-view complete; Runtime pending.
 
-### Exact b33 Runtime evidence
+### Exact b35 Runtime evidence
 
-- Candidate `DEV-conversation-round-count-0.1.0-b33`, version/build `0.1.0 (33)`, exact source `0ba15ec48fe86ad0c9a3b69ac5415d128bcd8aba`.
-- Exact push Run / Job `33195740528` / `98932282377`, Runtime Artifact `9695669835`, IPA SHA `54c598e827bdfa2f1ae5a631d518f7914959e8e31aba1c687a4f0ceb24978855`.
-- User accepts physical-bottom/rubber-band direction and final user-round precision.
-- User rejects long-distance movement as not sufficiently smooth / gear-like.
-- Diagnostics show 74 completed jumps and 14 end corrections. Ordinary corrections include roughly 66.67–504pt; rapid retargeting produced extreme native errors before correction up to about 8258.67pt while final corrected error returned to ~0.
-- Therefore b33 is not Stable; b33 identity is permanently reserved.
+- Candidate `DEV-conversation-round-count-0.1.0-b35`, build `0.1.0 (35)`, exact source `c3addf775483de17a0a0a9eb81d602fc18ebe611`.
+- Push Run/Job `33203663621` / `98959137672`; Runtime Artifact `9698781544`; IPA SHA `b1391d06f81bc8c57d124e16a22ef138dd8151e0bd8e338db601729c6f583b0f`.
+- Exact real-device trace had 52 `answerJump.requested` / 36 `answerJump.completed`; suspicious gaps around 4s, 10s and 8s appeared near long-message regions.
+- Completed jumps report `landingErrorPoints=0.00` and lead distance 120pt; therefore the blocking b35 issue is tap-to-position latency rather than final landing precision.
+- Source performed synchronous root/table forced layout around direct `scrollToRow(false)` after the request log, providing the evidence-backed b36 optimization target.
+- b35 is Runtime partial/failing and permanently reserved.
 
-### Exact b34 Candidate / evidence
+### Exact b36 Candidate / evidence
 
-- Candidate `DEV-conversation-round-count-0.1.0-b34`, version/build `0.1.0 (34)`.
-- Exact product/config source `bf66c7080347660e0154952a261230a24bb94f7d`.
-- Exact product delta from `b891cffb...` is only workflow identity, Xcode build/Candidate identity and 7+/1- in `ConversationFeature.swift`.
-- Minimal correction: before b33's >1pt end correction, require the current target row to be visible. If not visible, log privacy-safe ignored completion and preserve newer animation/cursor ownership without hard snap.
-- Accepted b33 physical-bottom direction, semantic user-row derivation, b32 recipient filter, Copy/timestamps/preferences/header, list/cache/network semantics and state ownership are unchanged.
-- Exact push Run / Job `33200768537` / `98949366655`, success on exact source `bf66c708...`.
-- Runtime Artifact `9697664416`; ZIP `sha256:0b05a435888c041286b331c554f31f7e64dda0a30d214014bf2a144d8b696c65`.
-- IPA `ChatGPTClient-0.1.0-b34-dev-conversation-round-count.ipa`; IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6`.
-- Independent package inspection matches `0.1.0 (34)`, Candidate b34, source `bf66c7080347`, iOS14 minimum, arm64.
-- Current-main PR merge-view against `main@a6e3b2bc185b8d5df90b846040387262a64e6154`: Run / Job `33200813591` / `98949517057`, success on merge `a42408a64a4ff7fba7d799f39c897ae6930daf6f`; merge Artifact `9697686876`; merge-view IPA SHA `54614e6a1f995b8232bc81c6af518984cc7f286bbc9d98fbd0844aba7d7e6e9e`.
-- Merge-view output is CI evidence only. Runtime must use exact push Artifact `9697664416` from product source `bf66c708...`.
+- Candidate `DEV-conversation-round-count-0.1.0-b36`, version/build `0.1.0 (36)`.
+- Exact product/config source `8f8614508eef5197f9fff4bb9d10c14354d5821e`.
+- Exact product diff from checkpoint parent `c6c21e0f...` is only workflow identity 2+/2-, Xcode identity 4+/4-, and `ConversationFeature.swift` 25+/6-.
+- Static source parse passed; audited Swift blob `1a710353cb1864c99dda62c66eb7398c82ed5e64`.
+- Removes jump-path `view.layoutIfNeeded()` and pre/post `tableView.layoutIfNeeded()` calls, while retaining UIKit automatic self-sizing generally.
+- Reuses the existing quick-navigation button for immediate `定位中` / accessibility `正在定位` presentation; this is not a second state owner.
+- Keeps one nonanimated target `scrollToRow(false)` and the same 120pt / 0.22s ease-out finish.
+- Adds privacy-safe `answerJump.positioned` timing with `directPositionDurationMs`, `preparationDurationMs`, `targetVisible` and row/role only.
+- No row-height cache, network change, rendering change, retry, timer or watchdog.
+- Exact push Run/Job `33207505424` / `98972194770`, success.
+- Runtime Artifact `9700254733`; ZIP `sha256:718e8500ea41bcc73b41f5bebd9a4850b93246368a87304be0b2c4751702e576`.
+- IPA `ChatGPTClient-0.1.0-b36-dev-conversation-round-count.ipa`; SHA `cdf2c7278ec0a4f6f5125a711f78d7bbda8c606a32dda87f614d710f662bd867`.
+- Independent package inspection matches `0.1.0 (36)`, Candidate b36, source `8f8614508eef`, iOS14 minimum and arm64.
+- Current main remained `a6e3b2bc185b8d5df90b846040387262a64e6154`; PR Run/Job `33207508869` / `98972206567` passed on synthetic merge `e7ff5b368faaea3debbe5d5547c0424996653fa0`, explicitly merging exact b36 source into main.
+- Merge-view output is CI evidence only. Runtime must use exact push Artifact `9700254733`.
 
-### b34 Runtime acceptance focus
+### b36 Runtime acceptance focus
 
-1. Long-distance previous/next jumps and rapid repeated taps should no longer show the b33 stale-completion hard snap/gear effect.
-2. Final semantic landing must remain precise at the intended user-message round start.
-3. Physical-bottom/rubber-band direction must remain accepted.
-4. Diagnostics may show `answerJump.completionIgnored` when a stale callback arrives while the current target is not visible; huge correction against a not-yet-visible newer target should disappear.
-5. Regression sanity: recipient/tool filtering, Copy, first-entry latest, A/B anchors, timestamps/preferences, list reconcile, Sync/Reload remain intact.
+1. Repeat b35 long-message regions; tap-to-visible positioning should no longer stall for several seconds, or should be materially reduced.
+2. If positioning is not immediate, the existing round button must visibly show `定位中` so the tap is never ambiguous.
+3. If any stall remains, export diagnostics and use `answerJump.positioned.directPositionDurationMs` / `preparationDurationMs` to determine whether direct `scrollToRow(false)` itself is still the bottleneck.
+4. Final semantic landing must remain precise at the intended user-message round start.
+5. Rapid taps remain one semantic round per tap; real drag immediately retakes ownership.
+6. Physical-bottom direction plus recipient/tool filtering, Copy, first-entry latest, A/B anchors, timestamps/preferences, list reconcile and Sync/Reload remain intact.
 
-If b34 is rejected, record the defect first and allocate b35 or later before any corrected product output. Never rebuild b34.
+If b36 is rejected, record the exact Runtime defect first and allocate b37 or later before corrected product output. Never rebuild b36.
 
 ### Rendering scope boundary from supplied recording
 
@@ -121,9 +129,9 @@ The supplied official-app/current-client recording shows the current client disp
 
 Current Phase 8 source intentionally has only plain-string presentation: `visibleText(from:)` concatenates `content.text` and string `parts`; `ConversationMessageCell` assigns the resulting string to `UILabel.text`. Therefore:
 
-- Markdown/table/code/list/link rendering is **not** part of Phase 8. It belongs Phase 11 `DEV-message-rendering`.
-- Raw `filecite`/boxed-glyph behavior appears to require rich citation/annotation parsing/rendering evidence; do not blindly strip it as a font workaround in Phase 8.
-- If future protocol evidence shows file citations map to attachment/file-card ownership, coordinate with Phase 10 attachment rendering rather than inventing a second representation.
+- Markdown/table/code/list/link rendering is **not** part of Phase 8. It belongs future `DEV-message-rendering`.
+- Raw `filecite`/boxed-glyph behavior requires rich citation/annotation parsing/rendering evidence; do not blindly strip it as a font workaround in Phase 8.
+- If future protocol evidence shows file citations map to attachment/file-card ownership, coordinate with attachment rendering rather than inventing a second representation.
 
 ## Phase 9 — `DEV-send-stream`
 
@@ -154,7 +162,7 @@ Export authoritative current user-visible branch; never scrape mounted cells or 
 
 ## Phase 14 — `DEV-long-conversation`
 
-Measure network / parse-model / first-visible-render / Markdown-layout timing and optimize only evidenced bottlenecks.
+Measure network / parse-model / first-visible-render / rich-layout timing and optimize only evidenced bottlenecks. Do not duplicate Phase 8 quick-navigation ownership after that Work is accepted.
 
 ## Phase 15 — remaining daily-use features
 
@@ -166,4 +174,4 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-Install/test exact b34 Runtime Artifact `9697664416` / IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6` on the accepted iPhone/iOS17 scope. If accepted, record Runtime evidence, re-check current main/PR conflicts and merge-view, then merge/close Phase 8 and promote only the tested accepted scope to Stable. If rejected, record the defect first and allocate b35+ before corrected product output.
+Install/test exact b36 Runtime Artifact `9700254733` / IPA SHA `cdf2c7278ec0a4f6f5125a711f78d7bbda8c606a32dda87f614d710f662bd867` on the accepted iPhone/iOS17 scope. If accepted, record Runtime evidence, re-check current main/PR conflicts and merge-view, then merge/close Phase 8 and promote only the tested accepted scope to Stable. If rejected, use b36's `answerJump.positioned` timings to identify the remaining direct-position cost, record the defect first and allocate b37+ before corrected product output.

@@ -1727,9 +1727,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func setScrollOffsetY(_ value: CGFloat) {
-        let minimumY = -tableView.adjustedContentInset.top
-        let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
-        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: min(max(value, minimumY), maximumY)), animated: false)
+        let bounds = answerJumpScrollBounds()
+        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: min(max(value, bounds.minimumY), bounds.maximumY)), animated: false)
     }
 
     private func updateConversationMenu() {
@@ -1888,12 +1887,16 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         return adjacentAnswerRows(relativeToAnswerRow: targetRow)
     }
 
-    private func answerTargetOffsetY(for row: Int) -> CGFloat {
-        tableView.layoutIfNeeded()
-        let rowRect = tableView.rectForRow(at: IndexPath(row: row, section: 0))
+    private func answerJumpScrollBounds() -> (minimumY: CGFloat, maximumY: CGFloat) {
         let minimumY = -tableView.adjustedContentInset.top
         let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
-        return min(max(rowRect.minY - tableView.adjustedContentInset.top, minimumY), maximumY)
+        return (minimumY, maximumY)
+    }
+
+    private func answerTargetOffsetY(for row: Int) -> CGFloat {
+        let rowRect = tableView.rectForRow(at: IndexPath(row: row, section: 0))
+        let bounds = answerJumpScrollBounds()
+        return min(max(rowRect.minY - tableView.adjustedContentInset.top, bounds.minimumY), bounds.maximumY)
     }
 
     private func updateAnswerJumpButton() {
@@ -1903,8 +1906,12 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             return
         }
         let targets = effectiveAdjacentAnswerRows()
+        let bounds = answerJumpScrollBounds()
+        let currentY = tableView.contentOffset.y
         let direction: AnswerJumpDirection?
-        if targets.previous == nil { direction = targets.next == nil ? nil : .next }
+        if targets.previous != nil, currentY >= bounds.maximumY - 0.5 { direction = .previous }
+        else if targets.next != nil, currentY <= bounds.minimumY + 0.5 { direction = .next }
+        else if targets.previous == nil { direction = targets.next == nil ? nil : .next }
         else if targets.next == nil { direction = .previous }
         else if programmaticAnswerTargetRow != nil, let currentAnswerJumpDirection { direction = currentAnswerJumpDirection }
         else { direction = lastUserDragDirection }
@@ -1982,8 +1989,12 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let currentY = scrollView.contentOffset.y
         if scrollView.isDragging {
             let delta = currentY - previousContentOffsetY
+            let targets = effectiveAdjacentAnswerRows()
+            let bounds = answerJumpScrollBounds()
             let newDirection: AnswerJumpDirection?
-            if delta > 0.5 { newDirection = .next }
+            if targets.previous != nil, currentY >= bounds.maximumY - 0.5 { newDirection = .previous }
+            else if targets.next != nil, currentY <= bounds.minimumY + 0.5 { newDirection = .next }
+            else if delta > 0.5 { newDirection = .next }
             else if delta < -0.5 { newDirection = .previous }
             else { newDirection = nil }
             if let newDirection, newDirection != lastUserDragDirection {
@@ -2004,11 +2015,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         answerJumpAnimationInFlight = false
         if let targetRow = programmaticAnswerTargetRow, messages.indices.contains(targetRow) {
             let indexPath = IndexPath(row: targetRow, section: 0)
-            tableView.scrollToRow(at: indexPath, at: .top, animated: false)
-            tableView.layoutIfNeeded()
-            let targetOffsetY = answerTargetOffsetY(for: targetRow)
-            let landingError = tableView.contentOffset.y - targetOffsetY
-            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "landingErrorPoints": String(format: "%.2f", landingError)])
+            let nativeTargetOffsetY = answerTargetOffsetY(for: targetRow)
+            let nativeLandingError = tableView.contentOffset.y - nativeTargetOffsetY
+            let correctionApplied = abs(nativeLandingError) > 1.0
+            if correctionApplied { tableView.scrollToRow(at: indexPath, at: .top, animated: false) }
+            let finalTargetOffsetY = answerTargetOffsetY(for: targetRow)
+            let landingError = tableView.contentOffset.y - finalTargetOffsetY
+            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "nativeLandingErrorPoints": String(format: "%.2f", nativeLandingError), "landingCorrectionApplied": correctionApplied ? "true" : "false", "landingErrorPoints": String(format: "%.2f", landingError)])
         }
         updateAnswerJumpButton()
     }

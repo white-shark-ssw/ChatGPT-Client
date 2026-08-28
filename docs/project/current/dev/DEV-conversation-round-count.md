@@ -92,6 +92,18 @@ Scope decision:
 - Search found no existing `DEV-conversation-round-count-0.1.0-b34` identity in repository state.
 - **Next candidate reserved for corrected product output: `DEV-conversation-round-count-0.1.0-b34`, `0.1.0 (34)`**, subject to final source/config commit and CI identity verification.
 
+## Batch recovery point — b34 product emission
+
+- **Verified branch head before this recovery record**: `aede3e1e191d4421c5dca85a86f9a087f24d3d61`.
+- **Verified base**: `main@a6e3b2bc185b8d5df90b846040387262a64e6154`; PR #27 open, mergeable; it is the only open PR found at this checkpoint.
+- **Candidate reserved**: `DEV-conversation-round-count-0.1.0-b34`, build 34. b24-b33 remain permanently reserved.
+- **Batch A pending**: create one atomic product/config commit changing only `.github/workflows/ios-foundation.yml`, `ChatGPTClient.xcodeproj/project.pbxproj`, and `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- **Batch B pending**: audit exact diff and fast-forward branch; verify no unrelated product/config changes.
+- **Batch C pending**: obtain exact b34 push CI/Artifact and current-main PR merge-view; inspect package identity independently.
+- **Batch D pending**: update this checkpoint and durable project docs to exact b33 Runtime + b34 Candidate/Artifact truth; hand exact b34 Runtime IPA to user.
+- **Next exact action**: create the three b34 blobs/tree/commit from this checkpoint head, then fast-forward only this Work branch.
+- **Must not touch/replay**: any prior Candidate identity, Markdown/rich-content scope, repository/list/cache/network ownership, accepted b33 bottom-direction rule, accepted semantic round derivation/filtering/Copy behavior, or any other task checkpoint.
+
 ## Validation state
 
 - **b33 Code written**: Yes.

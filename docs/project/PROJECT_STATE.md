@@ -12,51 +12,39 @@ _Last updated: 2026-08-28._
 - `DEV-multi-conversation-state-0.1.0-b21`: merged Stable multi-conversation read-state baseline for tested Plus/personal iPhone/iOS17 scope; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
 - `DEV-conversation-list-cache-core-0.1.0-b23`: merged Stable conversation-list cache-core baseline for the recorded Plus/personal iPhone/iOS17 scope; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`.
 
-The merged accepted baseline remains b23 for conversation-list cache/read behavior. `DEV-conversation-round-count` is the current Active Work layered on that baseline and is not yet Stable.
+The merged accepted list/read baseline remains b23. `DEV-conversation-round-count` is the current Active Work layered on it and is not yet Stable.
 
 ## Active development — DEV-conversation-round-count
 
-- **Branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open against `main@e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2` at the latest checked state.
-- **Exact current Runtime Candidate product/config source**: `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`. Later docs-only commits do not redefine this product source.
-- **Current Candidate**: `DEV-conversation-round-count-0.1.0-b27`, `0.1.0 (27)`.
-- **Scope**: compact official-style conversation header, shared derived active-branch round count/answer anchors, authoritative historical message timestamps, visible-text Copy, one adaptive previous/next answer navigation control, centralized persisted Preferences, plus evidence-backed list-refresh presentation corrections.
-- **Authority boundary**: `ConversationRepository` remains sole conversation/list authority. `AppPreferences` owns display/interaction booleans only. `ConversationRoundProjection` is derived from authoritative visible `ConversationDetail.messages`; no second mutable counter/index authority and no new network path.
-- **Type metadata boundary**: current ordinary-chat detail may present `聊天 · N轮` (`聊天` when round count is Off). `工作` still requires an authoritative Work/Project type source and must not be inferred from title/presentation text.
+- **Branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open against unchanged `main@e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2` at b28 product-CI time.
+- **Current Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b28`, `0.1.0 (28)`.
+- **Exact product/config source**: `eacd3e68469e976f6cb41a600729c211f6cd32af`; later docs-only commits do not redefine the Runtime Candidate source.
+- **Scope**: compact title-first conversation metadata, shared derived round count/answer anchors, authoritative timestamps, visible-text Copy, adaptive previous/next answer navigation, centralized persisted Preferences, and evidence-backed list-refresh presentation corrections.
+- **Authority boundary**: `ConversationRepository` remains sole conversation/list authority. `AppPreferences` owns display/interaction booleans only. `ConversationRoundProjection` is derived from authoritative visible messages. No second mutable semantic index, list owner or network path exists.
+- **Type boundary**: ordinary supported detail may show `聊天 · N轮`; `工作` still requires an authoritative Work/Project source and must never be inferred from title/presentation text.
 - **Preferences defaults**: round count On, message timestamps On, answer quick navigation On.
 
 ### Candidate history
 
-#### Rejected b24
+- **b24**: package identity rejected; permanently reserved, never reuse.
+- **b25**: Runtime partial/failing. Copy function, historical time and settings persistence accepted; header, rapid answer-jump progression, refresh presentation and `30/29` reconcile behavior rejected.
+- **b26**: Runtime partial/failing. Real-device accepted authoritative-total bound for the tested `28/29` sequence, sequential answer targets and compact header; still failed jump smoothness and requested timestamp/Copy/refresh presentation changes.
+- **b27**: exact source `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`, Run `33144420732`, Runtime Artifact `9675208202`, IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`. Real-device evidence on a 1063-visible-message conversation retained sequential targets but still showed tap/start and mid-animation hitch. Right-top refresh changed `adjustedInsetTop` from about `97.67` to `131.67` while list data remained `28/29 -> 29`, proving the blank region was refresh-control/inset presentation rather than missing data or stranded overscroll. Assistant Copy visual remained too large. **b27 is Runtime partial/failing and superseded.**
 
-`DEV-conversation-round-count-0.1.0-b24` / `0.1.0 (24)` is permanently reserved and Artifact-identity rejected. Never rebuild or reuse it.
+### Current b28
 
-#### b25 Runtime partial/failing
-
-- Candidate `DEV-conversation-round-count-0.1.0-b25`, `0.1.0 (25)`, exact source `5e6a61a45b5aae1d6d4ddb210a8685094a2e74a8`.
-- Run `33110228837`, Artifact `9662219000`, IPA SHA `91ea6b79b67ac06f45771606d425221e10d80e7992c524be697a73bf320c923b`.
-- Runtime accepted assistant Copy function, historical timestamp display and persistence of all three preferences.
-- Runtime rejected the prompt-based header hierarchy, repeated same-target rapid answer jumps, redundant refresh presentation and unbounded `28 + 2 -> 30` list reconciliation.
-- Source-fix commit `2a0d313346d44dae548d996c9037fa0ac305b974` later triggered an already-used b25 output; that build is identity-invalid for testing.
-
-#### b26 Runtime partial/failing
-
-- Candidate `DEV-conversation-round-count-0.1.0-b26`, `0.1.0 (26)`, exact source `7f845662185ef4e65a741bd37b09f9e9baebd723`.
-- Push Run `33114798354`, Job `98666564839`, Artifact `9664109976`, IPA SHA `24d69c62e370c7d0f8b93405a2cc164417d7798a645b510da0d0543247af308d`.
-- **Runtime accepted/improved**: authoritative-total reconciliation bounded the tested `pageCount=28 / totalCount=29` sequence to `resultCount=29`, including discarding one stale excess off-page cached row and remaining at 29 on repeated manual refresh; compact title-first header was present; rapid answer targets progressed sequentially rather than repeatedly requesting the same row.
-- **Runtime blocking**: occasional tap-to-scroll start delay and mid-animation hitch remained; user requested timestamps above each message; assistant Copy visual treatment was too large/prominent; top list pull/refresh could still expose a blank region with no visible refresh indication.
-- The accepted total-count reconciliation is now evidence-backed and must not be changed without new contradictory evidence.
-
-#### Current b27 Runtime Candidate
-
-- **Candidate**: `DEV-conversation-round-count-0.1.0-b27`, `0.1.0 (27)`.
-- **Exact product/config source**: `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`.
-- **Exact push CI**: Run `33144420732`, Job `98762229798`, success on Xcode 16.4; target `arm64-apple-ios14.0`.
-- **Exact Runtime Artifact**: `9675208202`; ZIP digest `sha256:038d3fe60ea49257a1f6ad0f09752facce8aeaecda484042b5df5cdb0f854cbd`.
-- **IPA**: `ChatGPTClient-0.1.0-b27-dev-conversation-round-count.ipa`; SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`.
-- **Embedded identity**: Candidate `DEV-conversation-round-count-0.1.0-b27`; source marker `3bda8d8d78ec`.
-- **PR merge-view CI**: Run `33144422834`, Job `98762236037`, success after checkout of `refs/pull/27/merge` at `3080dee98e3f6a1029dd66c992b99bfcb09e28a4`, explicitly merging b27 product head into unchanged main.
-- **Corrections written**: removed answer-button recomputation from programmatic scroll frames; update direction/control state only at semantic drag/animation/tap boundaries; moved timestamps above their messages; restyled assistant Copy to compact dynamic-system treatment; added visible refresh-control presentation and top-overscroll normalization diagnostics without changing repository reconciliation/network semantics.
-- **Evidence level**: Code written + source/static diff audit + exact CI + identity-valid Artifact + PR merge-view CI. **Runtime/manual/real-device: Pending. Stable/Frozen: No.**
+- **Candidate**: `DEV-conversation-round-count-0.1.0-b28`, `0.1.0 (28)`.
+- **Exact product/config source**: `eacd3e68469e976f6cb41a600729c211f6cd32af`.
+- **Corrections written**:
+  - answer jump preserves the same derived semantics but replaces repeated `scrollToRow(animated:)` with interruptible native content-offset animation; rapid retargeting stops the old programmatic motion at the current visible position before targeting the next derived answer;
+  - right-top refresh and pull-to-refresh now have separate presentation sources; right-top refresh no longer alters `UIRefreshControl`; attributed refresh titles and b27 top-offset normalization were removed; real pull uses native spinner/endRefreshing only;
+  - assistant Copy remains visible-text/system-pasteboard behavior but uses a 14pt `doc.on.doc` in a compact 28×28 left-aligned clear slot with `.secondaryLabel` tint.
+- **Static/source audit**: pre-branch product audit changed only `ConversationFeature.swift`; final Candidate commit changes exactly that file plus Xcode build/Candidate identity and workflow Candidate/Artifact label. Repository/network/reconciliation/Preferences owners are unchanged.
+- **Exact push CI**: Run `33149698659`, Job `98778576898`, success on Xcode 16.4; checkout exact b28 product source; target `arm64-apple-ios14.0`.
+- **Runtime Artifact**: `9677214430`; ZIP `sha256:0f51b3172aad23471991f3c04c467bb9da1b6256558001c8f60e55fca5f26c7b`; IPA `ChatGPTClient-0.1.0-b28-dev-conversation-round-count.ipa`; IPA SHA `9ab99321e08695a8298fd3e40231110303d47bd6bbb75d4e9814dc4e275d962f`.
+- **Independent package inspection**: embedded version/build `0.1.0 (28)`, Candidate `DEV-conversation-round-count-0.1.0-b28`, source marker `eacd3e68469e`, minimum iOS14, device families iPhone+iPad, executable arm64.
+- **PR merge-view evidence**: Run `33149701577`, Job `98778585595`, success on `f548cc8f568136d08128cc024612f89667680616`, explicitly merging `eacd3e68469e976f6cb41a600729c211f6cd32af` into unchanged main. Merge-view Artifact `9677198538`, IPA SHA `6bdc868fc1e673554a8bd2badf10d9667e4d497bc7953fd079b7f2f571d99a48`; merge-view output is CI evidence only.
+- **Evidence level**: Code + scoped source/static audit + exact Candidate CI + identity-valid Artifact + initial PR merge-view CI. **Runtime/manual/real-device for b28: Pending. Stable/Frozen: No.**
 
 ## Stable predecessor boundaries retained
 
@@ -64,31 +52,31 @@ The merged accepted baseline remains b23 for conversation-list cache/read behavi
 
 PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`; exact Runtime Candidate `DEV-multi-conversation-state-0.1.0-b21`, product source `6b50ead167bfde305d2ad58dd16fee6edaabf597`. Accepted scope includes resident return, hidden completion, same-target coalescing/replacement, historical scroll and title lifecycle for tested Plus/personal iPhone/iOS17. Conditional account/workspace/natural-failure boundaries remain Unverified. Not Frozen.
 
-### Conversation-list cache b23
+### Conversation-list cache b23 + active bounded correction
 
-PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`; exact Runtime Candidate `DEV-conversation-list-cache-core-0.1.0-b23`, source `d2af0fc157f6e2d037636c55f963c18071a332d5`, Run `33101116431`, Artifact `9658508764`. Runtime accepted provisional cache in ~4 ms, `recent_skip`, offline cache retention, explicit manual-refresh failure/success presentation, and a genuine `28 + 1 -> 29` page-1 reconciliation. b25 later exposed that unconstrained stale off-page candidates could violate authoritative total; the b26 Active-Work bounded correction is now real-device accepted for the tested `28 / total 29` sequence, while the surrounding Phase 8 Work remains unmerged and not Stable.
+PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`; exact Runtime Candidate `DEV-conversation-list-cache-core-0.1.0-b23`, source `d2af0fc157f6e2d037636c55f963c18071a332d5`, Run `33101116431`, Artifact `9658508764`. b23 accepted provisional cache, `recent_skip`, offline retention, explicit manual-refresh feedback, and real `28 + 1 -> 29` page-1 preservation. b26 within the Active metadata Work later real-device accepted the authoritative-total cap for cold `30 -> 29` plus repeated `29/29`. That correction remains unchanged in b28.
 
 Cache/privacy ownership remains unchanged: `ConversationRepository` is sole in-memory list owner; `ConversationListCacheStore` is storage-only; `AuthSessionStore` is sole verified auth/account owner; default persistent WebKit storage is sole persistent auth-secret authority. No retry/timer/watchdog/polling or alternate endpoint is introduced.
 
 ## Current architecture
 
-- `AppDelegate`: lifecycle plus accepted WebKit warm-up-before-root sequencing.
+- `AppDelegate`: lifecycle + accepted WebKit warm-up sequencing.
 - `RootViewController`: native compact list/detail navigation owner.
-- `ConversationRepository`: sole authoritative conversation/list/read/recovery owner with account-scoped residents and persistent-list-cache integration; authoritative-total reconciliation bounding is retained unchanged in b27.
-- `ConversationListCacheStore`: storage-only persistent summary snapshot + privacy-safe last-verified scope namespace hint.
-- `ConversationDetailViewController`: detail/messages/recovery presentation, per-conversation historical scroll metadata, compact header metadata and adaptive answer-jump presentation.
-- `ConversationMessageCell`: visible message/timestamp/assistant-Copy presentation; b27 places timestamp above the owning message and uses compact dynamic Copy styling.
-- `ConversationSidebarViewController`: list presentation and single manual refresh presentation; b27 adds visible refresh affordance/top normalization only, not list authority.
-- `AppPreferences`: centralized persisted display/interaction preference owner; not conversation authority.
-- `ConversationRoundProjection`: derived active-branch round/answer projection; not mutable data authority.
-- `DiagnosticsLogger`: accepted structured diagnostics authority.
+- `ConversationRepository`: sole authoritative conversation/list/read/recovery owner; accepted total-count reconciliation unchanged in b28.
+- `ConversationListCacheStore`: storage-only persistent summary snapshot + privacy-safe last-verified scope hint.
+- `ConversationDetailViewController`: detail/messages/recovery presentation, historical scroll metadata, compact header and b28 interruptible answer-jump presentation.
+- `ConversationMessageCell`: message/timestamp/assistant-Copy presentation; timestamp remains above its owning message; b28 shrinks assistant Copy visual only.
+- `ConversationSidebarViewController`: list presentation; b28 separates right-top button refresh presentation from native pull-to-refresh without changing repository request authority.
+- `AppPreferences`: centralized persisted display/interaction preference owner.
+- `ConversationRoundProjection`: derived round/answer projection, not mutable authority.
+- `DiagnosticsLogger`: structured diagnostics authority.
 - default persistent `WKWebsiteDataStore`: sole persistent auth-secret authority.
 - `AuthSessionStore`: sole verified auth/account-context owner.
 
 ## Roadmap handoff
 
-`DEV-conversation-round-count` remains Active. b26 is Runtime partial/failing and permanently superseded for correction testing. b27 is the current identity-valid Runtime Candidate and awaits focused real-device acceptance. Do not merge/close or describe this Work as Stable until b27 passes Runtime. After accepted merge, the next serialized development priority remains `DEV-send-stream`.
+`DEV-conversation-round-count` remains Active at the **b28 Runtime gate**. Do not merge/close PR #27 or describe this Work as Stable until exact b28 real-device acceptance. After accepted merge, the next serialized priority remains `DEV-send-stream`.
 
 ## Evidence rule
 
-Always distinguish Code written, static/local checks, CI passed, Artifact produced, Runtime/manual/real-device tested, Stable and Frozen acceptance. CI/Artifact success is not Runtime proof.
+Always distinguish Code written, static/local checks, CI passed, Artifact produced, Runtime/manual/real-device tested, Stable and Frozen. CI/Artifact success is not Runtime proof.

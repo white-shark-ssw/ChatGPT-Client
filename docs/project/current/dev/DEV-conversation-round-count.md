@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — b32 Runtime partial/failing; clean b33 product/config commit audited; Batch B ref update pending**
+**Active — b32 Runtime partial/failing; clean b33 product/config commit re-based on latest checkpoint; Batch B ref update pending**
 
 - **Work ID**: `DEV-conversation-round-count`
 - **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮 / 下一轮 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
 - **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive round navigation, centralized persisted Preferences, first-entry latest placement, and evidence-backed list/detail presentation corrections.
 - **Working branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open.
-- **Current branch head before clean b33 ref update**: `f240383c676bfaa1fd75a1568d67d65b41ba24c7`.
+- **Current branch head before final b33 ref update**: `0a826e95df5ddc3ff6dbe316fa610dd63e3715bb`.
 - **Current main**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
 - **Batch A synchronization**: complete. Governance-only current main was merged into this Work; PR became mergeable and no product/state-owner conflict was found.
 - **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for their recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
@@ -55,8 +55,9 @@ Only these changes are in scope:
 - Clean source blob: `027c8b3df05b0bd7a15957fe3db78c551008f744`.
 - Xcode b33 identity blob: `96a8b2124a2a6dd84ec6f682aaa9c60b205db37e`.
 - Workflow b33 identity blob: `2d3fb98fd7c1c6b129c4d1dc57558e924a14f9d0`.
-- Audited final product/config commit, not yet branch-referenced at this checkpoint: `155d19b043f0db86aef27ff8b881bf23f7db902d`; parent `f240383c...`; tree `e521826066720a0c216f20f961b472b9f2ca5df8`.
-- Exact diff from `f240383c...` is **3 files only**: workflow identity (2+/2-), Xcode build/Candidate identity (4+/4-), and `ConversationFeature.swift` (28+/15-).
+- The earlier audited commit `155d19b0...` was based on the pre-checkpoint head and remains unreferenced. Because writing this recovery checkpoint itself advanced the branch, the clean tree was deterministically rebuilt on the verified current checkpoint head rather than force-replaying/overwriting it.
+- **Final b33 product/config commit prepared for ref update**: `8d10d8fcccae0e88f3fc89aaf73f5322dcd6f6cd`; parent `0a826e95...`; tree `301e416e2232fbed865f470de7e4aef34844adb1`.
+- Exact diff from `0a826e95...` is **3 files only**: workflow identity (2+/2-), Xcode build/Candidate identity (4+/4-), and `ConversationFeature.swift` (28+/15-).
 - Source audit confirms the previously detected accidental duplicate request starts are absent: no added `}.resume()` on the list request and no added `task.resume()` after storing Detail task. `AuthTransientSession.dataTask` remains the existing request-start authority.
 - The source diff contains only the evidenced physical-boundary and conditional-landing-correction changes described above; no repository/list reconciliation, recipient filtering, Copy, network route, retry, timer, watchdog or second state owner change.
 
@@ -66,7 +67,7 @@ Only these changes are in scope:
 
 - Work: `DEV-conversation-round-count`
 - Branch: `dev/conversation-round-count-20260828`
-- Branch head before Batch B ref update: `f240383c676bfaa1fd75a1568d67d65b41ba24c7`
+- Branch head before final Batch B ref update: `0a826e95df5ddc3ff6dbe316fa610dd63e3715bb`
 - PR: #27 open/mergeable against current main.
 - Current main: `a6e3b2bc185b8d5df90b846040387262a64e6154`
 - b32 identity is already produced/tested and permanently reserved; **never rewrite corrected code as b32**.
@@ -75,38 +76,39 @@ Only these changes are in scope:
 **Intended write batches**
 
 - **Batch A — governance synchronization**: complete and verified.
-- **Batch B — b33 product/config commit**: clean commit `155d19b0...` audited; branch ref update still pending at this recovery boundary.
+- **Batch B — b33 product/config commit**: clean commit `8d10d8fc...` audited against the actual latest checkpoint head; branch ref update still pending at this recovery boundary.
 - **Batch C — CI / Artifact evidence**: after Batch B ref verification, verify exact push Candidate build and current-main PR merge view, then obtain Artifact IDs, Candidate/source markers, IPA SHA and package identity.
 - **Batch D — documentation evidence**: update this checkpoint and durable `BUILD_TEST_INDEX.md` / `PROJECT_STATE.md` / `MODULE_STATUS.md` / `PROJECT_PROFILE.md` / applicable current rules with exact b32 Runtime and b33 Code/CI/Artifact truth.
 
 **Confirmed complete writes**
 
 - Batch A governance synchronization.
-- Clean b33 blobs, tree and audited final commit object exist.
-- Checkpoint now records the exact clean audit boundary before ref mutation.
+- Clean b33 blobs, latest-base tree and audited final commit object exist.
+- Recovery checkpoint now records the exact latest-base commit boundary before ref mutation.
 
 **Remaining writes**
 
-- Move Work branch ref forward to audited commit `155d19b0...` and verify branch/PR state.
+- Fast-forward Work branch ref to `8d10d8fc...` and verify branch/PR state.
 - Batch C exact CI / Artifact verification.
 - Batch D durable docs/checkpoint evidence refresh.
 
 **Next exact action**
 
-Fast-forward `dev/conversation-round-count-20260828` from current verified head to `155d19b043f0db86aef27ff8b881bf23f7db902d`, verify actual branch and PR head/base/mergeability, then continue directly into exact b33 CI/Artifact evidence.
+Fast-forward `dev/conversation-round-count-20260828` from actual verified head `0a826e95...` to `8d10d8fcccae0e88f3fc89aaf73f5322dcd6f6cd`, verify actual branch and PR head/base/mergeability, then continue directly into exact b33 CI/Artifact evidence.
 
 **Recovery must not touch / replay**
 
 - Do not recreate or reuse b24-b32 Candidate identities or Artifacts.
 - Do not modify another task checkpoint.
-- Do not use the earlier dirty prepared source blob `a09eb28b...` or unreferenced WIP inspection commits as b33 source identity.
+- Do not use the earlier dirty prepared source blob `a09eb28b...` or unreferenced WIP/audit commits as b33 source identity.
+- Do not force branch ref backward merely to preserve an older staged commit; always rebuild deterministic pending writes on the verified latest branch checkpoint.
 - Do not rewrite accepted b31/b32 semantic round derivation or b32 recipient filter/Copy merely to chase smoothness.
 - Do not add retry, timer, watchdog, speculative row-height cache, alternate navigation owner, new network route, duplicate request-start call, or second conversation/list authority.
 - If interrupted, re-read this checkpoint and current GitHub branch/main/PR state; perform only missing deterministic batches. Never blindly replay a prior tree/commit/ref write.
 
 ## Validation state
 
-- **Code written**: b32 yes; clean b33 code/config audited as commit object, branch ref pending.
+- **Code written**: b32 yes; clean b33 code/config audited as latest-base commit object, branch ref pending.
 - **Static/source audit**: clean b33 scoped diff passed.
 - **CI / Artifact**: b32 passed/produced; b33 pending.
 - **Runtime/manual/real-device**: b32 partial/failing — filtering + landing accepted; bottom direction + jump smoothness rejected.

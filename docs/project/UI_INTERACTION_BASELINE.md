@@ -95,9 +95,13 @@ A future `显示会话消息预览` preference uses the centralized settings own
 
 A pull-to-refresh gesture is presentation for an actual manual list refresh, not an independent loading authority.
 
+- The active pull/refresh region must have a visible native/system indication; do not expose a blank spacer above the first row with no indication of why it exists.
+- Use dynamic system styling so the refresh affordance remains readable in Light/Dark appearance without hard-coded per-theme colors.
 - If a list load is already active and a new `UIRefreshControl` trigger is rejected as redundant, end that newly-started refresh-control presentation immediately.
 - Do not leave an invisible refresh-control area pushing the first row down until an older load later finishes.
+- When refresh presentation ends, if the table remains stranded above `-adjustedContentInset.top` and the user is no longer dragging/decelerating, normalize it back to the real top. If the user's gesture is still active, defer that normalization until drag/deceleration ends instead of fighting the gesture.
 - Rejecting a redundant refresh must not create a duplicate list request, retry, debounce timer or watchdog.
+- Presentation diagnostics may record refresh state, `contentOffset`/adjusted inset and a reason, but must not include conversation titles/IDs merely to diagnose this UI issue.
 - Successful/failed manual refresh continues to use the existing retained-list feedback contract.
 
 ## Conversation messages
@@ -105,12 +109,12 @@ A pull-to-refresh gesture is presentation for an actual manual list refresh, not
 ### User messages
 Use a compact rounded bubble/background treatment similar to the official App.
 
-When `显示消息时间` is enabled, show subdued timestamp metadata below each visible user bubble, aligned to the user-message side. The timestamp is not part of the message body and must not change message identity or copying/export semantics.
+When `显示消息时间` is enabled, show subdued timestamp metadata **above** each visible user bubble, aligned to the user-message side. The timestamp is not part of the message body and must not change message identity or copying/export semantics.
 
 ### Assistant messages
 Use wide readable document-style content without a large enclosing bubble. Later support Markdown/headings/lists/links/code/tables/visible attachments as evidence and roadmap require.
 
-When `显示消息时间` is enabled, show subdued timestamp metadata below each visible assistant response, aligned to the assistant/document side. Reasoning/status rows are not independent assistant messages merely because they are visible UI; timestamp ownership follows the actual visible assistant message model supplied by the service/response owner.
+When `显示消息时间` is enabled, show subdued timestamp metadata **above** each visible assistant response, aligned to the assistant/document side. Reasoning/status rows are not independent assistant messages merely because they are visible UI; timestamp ownership follows the actual visible assistant message model supplied by the service/response owner.
 
 ### Message timestamp source and formatting
 
@@ -127,12 +131,14 @@ Copy is a required daily-use interaction and must remain easy in the native clie
 ### Basic message Copy
 
 - Visible assistant textual replies expose a compact official-style Copy action in the response action area.
+- The assistant Copy visual should use a small `doc.on.doc`-style system symbol, clear/no emphasized button background and a subdued dynamic system tint such as `.secondaryLabel`; it must follow Light/Dark appearance automatically rather than use a large bright-blue custom treatment.
+- Keep the assistant action row compact; hiding Copy for a user-message cell must collapse that action slot rather than reserve assistant-action height.
 - Visible user messages expose Copy through the native message/context action surface without requiring manual text selection.
 - Copy reads the authoritative **user-visible** message text; hidden reasoning/tool/system content is never included merely because it exists in the protocol graph.
 - Copy uses the system pasteboard, does not mutate message state and does not trigger any network request.
 - Provide compact immediate feedback such as `已复制`; exact presentation is implementation-level.
 
-b25 real-device evidence accepts assistant Copy for the tested case. User-message/context Copy and future scoped code Copy remain subject to their applicable Runtime checks.
+b25 real-device evidence accepts assistant Copy function for the tested case. b27 changes the requested visual treatment only; its compact Light/Dark appearance remains Runtime-pending until tested. User-message/context Copy and future scoped code Copy remain subject to their applicable Runtime checks.
 
 ### Scoped Copy
 
@@ -233,6 +239,13 @@ b25 diagnostics proved that recomputing every tap only from the still-moving vis
 - this programmatic target cursor is transient presentation state only and points into the existing derived answer-row projection; it is not a second semantic round/answer authority;
 - a real user drag clears that cursor and re-establishes navigation context from the actual user-controlled viewport;
 - target positioning uses native `.top` row semantics so the assistant answer start, not an estimated raw pixel offset for a self-sizing row, is the navigation destination.
+
+b26 real-device diagnostics show that this transient target cursor materially improved semantic progression, including rapid `214 -> 221 -> 227` targets, but the user still observed occasional start delay and mid-animation hitch. Therefore b27 adds the following interaction-performance rule without changing semantic ownership:
+
+- do not recompute/reset the answer-jump control on every programmatic `scrollViewDidScroll` frame;
+- update direction/control presentation at semantic events such as tap target change, real drag-direction change/end, deceleration end and programmatic animation end;
+- avoid resetting the same symbol/accessibility state when the effective direction did not change;
+- keep native row animation and user interruption; do not replace this with debounce/timers/watchdogs or speculative height-cache machinery.
 
 For long conversations, derive/store the lightweight answer-row/index projection when message data changes. Do not scan all messages during every `scrollViewDidScroll` callback.
 
@@ -405,17 +418,17 @@ UI remains a consumer of authoritative state.
 
 ## Validation expectations
 
-Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. b25 real-device testing accepts assistant Copy, historical message-time display for the tested case and persisted conversation-display Preferences, while rejecting the prompt-style header, rapid answer-jump behavior and redundant refresh-control presentation; b25 diagnostics also expose a `30/29` list reconciliation invariant failure. b26 contains evidence-backed corrections but remains Runtime pending.
+Distinguish visual/code implementation, CI/build, artifact availability and real-device interaction. b14 compact startup/list-detail navigation is real-device accepted for iPhone/iOS17. b25 real-device testing accepted assistant Copy function, historical message-time display for the tested case and persisted conversation-display Preferences, while rejecting the prompt-style header, rapid answer-jump behavior and redundant refresh-control presentation; b25 diagnostics also exposed a `30/29` list reconciliation invariant failure. b26 real-device testing then accepted the compact title-first header, sequential answer-target progression and the authoritative-total `29/29` list bound for the tested sequence, while still reporting answer-jump smoothness hitch and a blank top refresh region and explicitly requesting timestamp-above/compact-Copy presentation changes. b27 contains the scoped corrections described above and is **Code + source diff audit + exact CI + identity-valid Artifact + PR merge-view CI only; Runtime pending**.
 
 For conversation entry/scroll behavior, real-device validation should include: first entry into a long unloaded conversation lands at the latest message without visible top-to-bottom traversal; first display of a hidden-completed Detail with no saved anchor also lands at latest; A -> B -> A restores A's previously established semantic reading position; loading placeholders never overwrite that anchor behavior.
 
-For b26 header validation, compare against the supplied official-app reference: title first, `聊天 · N轮` second, normal compact navigation-bar height, and round-count Off leaving `聊天` without altering title hierarchy. `工作` is not accepted until authoritative type evidence exists.
+For the current header validation, compare against the supplied official-app reference: title first, `聊天 · N轮` second, normal compact navigation-bar height, and round-count Off leaving `聊天` without altering title hierarchy. `工作` is not accepted until authoritative type evidence exists.
 
-For answer navigation, real-device validation must include a long conversation, rapid repeated taps while animation is still moving, upward/downward real-drag direction changes, first/last boundaries, target answer start alignment, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate rather than teleport.
+For b27 answer navigation, real-device validation must include a long conversation, rapid repeated taps while animation is still moving, upward/downward real-drag direction changes, manual interruption, first/last boundaries, target answer start alignment, A/B independent scroll anchors, Sync/Reload anchor rebuild, keyboard/composer coexistence when available, and confirmation that jumps visibly animate without the prior start/mid-animation hitch. If hitch remains after removing the evidenced per-frame updater, measure before adding any row-height cache or other optimization.
 
-For list cache/preview, real-device validation should include warm-cache cold start, one-request refresh/reconciliation, network-failure cache retention, no automatic Detail fan-out, account-scope isolation, first-page-28 merge behavior, and relaunch persistence of a preview derived from an already-opened conversation. For the b26 regression specifically, redundant pull-refresh during an existing load must leave no invisible top spacer and must not start a duplicate request; with authoritative `totalCount=29`, reconciled `resultCount` must not exceed 29.
+For list cache/preview, real-device validation should include warm-cache cold start, one-request refresh/reconciliation, network-failure cache retention, no automatic Detail fan-out, account-scope isolation, first-page-28 merge behavior, and relaunch persistence of a preview derived from an already-opened conversation. For the b27 regression specifically, top pull/manual refresh must show a visible refresh affordance, redundant pull during an existing load must not start a duplicate request, completion must not leave a persistent blank top region, and with authoritative `totalCount=29` reconciled `resultCount` must remain at or below 29. If the blank region reproduces, capture the privacy-safe `conversationList.refreshPresentation` / `conversationList.refreshTopNormalized` diagnostics.
 
-For Copy, validate user + assistant whole-message actions and later code-block Copy; clipboard output must match user-visible content and exclude hidden material/UI decorations.
+For b27 timestamps/Copy, verify timestamps appear above both user and assistant messages, assistant Copy remains functional and visually compact, and the symbol/tint remains appropriate in both Light and Dark appearance. Clipboard output must still match user-visible content and exclude hidden material/UI decorations.
 
 For attachment receive/download/share, validate a real assistant file card, one user-triggered download, valid local file, immediate system share sheet, explicit failure/no auto retry, conversation/account isolation and safe local-file reuse.
 

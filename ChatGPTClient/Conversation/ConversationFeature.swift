@@ -1445,7 +1445,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         tableView.separatorStyle = .none
         tableView.keyboardDismissMode = .interactive
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 0
+        tableView.estimatedRowHeight = UITableView.automaticDimension
         tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.reuseIdentifier)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)

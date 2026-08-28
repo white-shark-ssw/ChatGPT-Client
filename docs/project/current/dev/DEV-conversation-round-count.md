@@ -2,132 +2,113 @@
 
 ## Status
 
-**Active — PR #27 open; b31 Runtime partial/failing; b32 correction direction evidenced**
+**Active — b32 Runtime partial/failing; b33 correction prepared; non-atomic continuation recovery point active**
 
 - **Work ID**: `DEV-conversation-round-count`
 - **Routing aliases / keywords**: `会话元数据 / 设置 / 会话轮数 / round count / 消息时间 / 上一轮 / 下一轮 / Copy / Preferences / 顶部栏 / 会话列表刷新 / 首次进入底部`
 - **Task**: Implement and real-device tune the Phase 8 conversation metadata/settings bundle: compact official-style header, active-branch round count, historical message time, visible-text Copy, adaptive round navigation, centralized persisted Preferences, first-entry latest placement, and evidence-backed list/detail presentation corrections.
-- **Branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open/mergeable.
-- **Current branch head before b32 product work**: `384c88ac4fedd08ddf226f7c430230f8bd9ee90c`.
-- **Current main**: `55216bde139f1058517ad852d98669f1c5cb54f1`; its send-stream preflight docs do not overlap this Work's current product correction.
-- **Only Active development checkpoint**: this Work plus `current/dev/README.md`; no duplicate branch/candidate conflict found.
-- **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
+- **Working branch / PR**: `dev/conversation-round-count-20260828`; PR #27 open.
+- **Current branch head before b33 write chain**: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`.
+- **Current main**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
+- **Resume-guard finding**: checkpoint had recorded older `main@55216bde...` and PR mergeable state. Current GitHub truth is `main@a6e3b2bc...`; compare from `55216bde...` to current main is 8 commits touching only `AGENTS.md` and `docs/project/DOCUMENTATION_POLICY.md`. PR #27 is currently non-mergeable until that governance-only main advance is synchronized. No product/state-owner overlap is evidenced by that main delta.
+- **Stable predecessors**: merged b21 multi-conversation read-state and merged b23 conversation-list cache-core remain Stable for their recorded scopes, not Frozen. `ConversationRepository` remains sole list/detail authority.
 
-## Candidate history
+## Candidate history summary
 
 - **b24**: Artifact identity rejected / permanently reserved; never reuse.
-- **b25**: Runtime partial/failing. Copy function, historical time and preference persistence accepted; header/jump/refresh rejected; exposed `30/29` reconcile defect.
-- **Rejected reused-b25 output**: source-fix output reused an already-produced b25 identity; permanently invalid for testing.
-- **b26**: Runtime partial/failing. Accepted authoritative-total bound (`30 -> 29`, repeated `29/29`), sequential targets and compact header.
-- **b27**: Runtime partial/failing. 1063-message stress run retained sequential targets but jump paused/hitched; right-top refresh inflated adjusted top inset; Copy visual rejected as too large.
-- **b28**: Runtime partial/failing. 1577-message run showed large answer landing drift, direction flips without real drag, first entry at top and refresh blank band.
-- **b29**: Runtime partial/failing. Right-top list blank-region fix accepted; `estimatedRowHeight=0` catastrophically broke message self-sizing/body presentation.
-- **b30**: Runtime partial/failing. Message body/self-sizing restored and severe hitch materially improved, but Copy remained too large and long-distance assistant-answer landing remained grossly inaccurate.
-- **Rejected duplicate b30 staging output**: Run `33167629825`, Artifact `9684234692`; reused an already-produced b30 identity and is permanently invalid.
-- **b31**: Runtime partial/failing. **Accepted: precise semantic round landing at user-message rows. Rejected: serious jump hitch during travel, raw tool-call/internal assistant nodes rendered as ordinary chat rows with Copy, Copy glyph shape still unlike official reference.** Superseded for correction by fresh b32.
+- **b25-b30**: Runtime partial/failing iterations; accepted pieces are retained only where later Runtime did not reject them.
+- **b31**: precise user-message round landing accepted; jump hitch, raw tool/internal rows and Copy glyph rejected.
+- **b32**: exact identity valid; recipient filtering and Copy visual correction implemented. Runtime accepted internal/tool-row suppression, the compact Copy direction, and continued precise semantic landing; Runtime still rejects jump smoothness and exposed a bottom rubber-band direction bug.
 
-## Exact b31 identity / CI / Artifact
+## Exact b32 identity / CI / Artifact
 
-- **Candidate**: `DEV-conversation-round-count-0.1.0-b31`
-- **Version / Build**: `0.1.0 (31)`
-- **Exact product/config source**: `9b0fae856380b44a5d0495f32618ea6da31a0e0d`
-- **Exact push CI**: Run `33169669050`, Job `98843431963`, success; Xcode 16.4; target `arm64-apple-ios14.0`.
-- **Runtime Artifact**: `9685082018`; ZIP `sha256:166d13cd8f298903e3620e3fbf286f50ca5d3d67caeac6f6528add31c3132bde`.
-- **IPA**: `ChatGPTClient-0.1.0-b31-dev-conversation-round-count.ipa`; SHA-256 `bd3cb30630538c6e3bb9c3f8e9d4d8e1d426691e8c06c8291b530f41fc81f422`.
-- **Independent package inspection**: embedded `0.1.0 (31)`, Candidate b31, source `9b0fae856380`, minimum iOS14, device families `[1,2]`, Mach-O arm64.
-- **PR merge-view against current main**: Run `33169672792`, Job `98843444383`, success on `64a906bc4bc8cdc4c0c67d52efe566eafc715201`; checkout explicitly merged b31 source into `main@55216bde139f1058517ad852d98669f1c5cb54f1`. Merge-view Artifact is merge evidence only.
+- **Candidate**: `DEV-conversation-round-count-0.1.0-b32`
+- **Version / Build**: `0.1.0 (32)`
+- **Exact product/config source**: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`
+- **Exact push CI**: Run `33177491033`, Job `98869786437`, success; Xcode 16.4; target `arm64-apple-ios14.0`.
+- **Runtime Artifact**: `9688235425`; ZIP `sha256:17c6639b5ec2b106cab936c5de357b65671c116701127ed88dfbe92bb8378445`.
+- **IPA**: `ChatGPTClient-0.1.0-b32-dev-conversation-round-count.ipa`; SHA-256 `f1eb4e6fb8cda58db0216df080ea90098ce681e1ed47962eebda57f803f9be80`.
+- **Embedded identity from CI**: Candidate b32; source marker `ea2b7bf4ee89`.
+- **PR merge-view against then-current main**: Run `33177494444`, Job `98869798207`, success on merge view `7ce392714645c62549ec99162ffe1153e6b21059`; merge-view Artifact `9688245700`; merge-view IPA SHA `dc6441790e7e9a216d8c0d3c80003377ae64266d6cd7c7710a73edd83f0e454a`. Merge-view Artifact is CI evidence only.
 
-## b31 real-device evidence — 2026-08-28
+## b32 real-device evidence
 
-### Exact identity confirmed
+- Exact b32 Runtime remains **partial/failing**, not Stable.
+- Recipient filtering is effective in the tested long/tool-heavy conversation: diagnostics reported `filteredRecipientMessageCount=748` and ordinary visible messages reduced to `84`; the previously exposed raw connector/tool invocation rows are no longer ordinary chat rows.
+- Precise semantic landing at user-message rows remains accepted.
+- Copy visual/function is no longer the current blocking target.
+- **Failure 1 — bottom direction**: when the table is physically at/beyond the bottom during rubber-band overscroll, delta-based drag logic can flip the adaptive control to `下一轮` even though no next round exists. Physical boundary must outrank drag delta.
+- **Failure 2 — jump smoothness**: native travel still has a serious hitch even after tool-row suppression. Current b32 completion path always performs a second non-animated `scrollToRow + layoutIfNeeded` re-anchor, so the next minimal correction is to measure native landing first and correct only when actual error exceeds a small threshold.
 
-The user supplied `ChatGPTClient-Diagnostics-20260828-122548.json` from exact b31:
+## b33 evidence-backed correction
 
-- `appVersion=0.1.0`
-- `buildNumber=31`
-- `candidate=DEV-conversation-round-count-0.1.0-b31`
-- `sourceCommit=9b0fae856380`
-- device class iPhone / iOS 17.0.
+Only these changes are in scope:
 
-### Round landing accuracy — accepted
+1. Preserve `ConversationRoundProjection`, user-message semantic targets, transient requested-row cursor, real-drag ownership and native animated `scrollToRow`.
+2. In adaptive direction resolution, physical top/bottom boundaries outrank the latest drag delta. Bottom including rubber-band overscroll must resolve to previous/up when a previous round exists; top analogously resolves next/down when applicable.
+3. At `scrollViewDidEndScrollingAnimation`, measure native landing error for the requested semantic row. Apply one non-animated exact re-anchor only when absolute error is greater than `1pt`; otherwise accept the native landing without the unconditional second `scrollToRow/layoutIfNeeded` work.
+4. Add privacy-safe diagnostics for `nativeLandingErrorPoints` and whether `landingCorrectionApplied` was required.
+5. Do not change the accepted recipient filter, round derivation, Copy presentation, list reconciliation, network behavior, or state ownership.
 
-- User reports round jumping is now precise.
-- The supplied diagnostics contain **32 `answerJump.requested` + 32 `answerJump.completed` events**.
-- Every completion targets `targetRole=user` and records `landingErrorPoints=-0.00`; observed max absolute landing error is 0 in this sample.
-- This accepts the b31 semantic/physical landing choice: navigation rows derive from `ConversationRoundProjection.rounds[].userMessageID` and native table row targeting.
-- **Do not rewrite this accepted semantic landing algorithm in b32 merely to chase smoothness.**
+Prepared but **not yet referenced by branch history** at this recovery point:
 
-### Jump smoothness — rejected
+- b33 `ConversationFeature.swift` blob: `a09eb28b0ce0042bb3f4b8191b479940cf986e12`
+- b33 Xcode project blob: `96a8b2124a2a6dd84ec6f682aaa9c60b205db37e`
+- b33 workflow blob: `2d3fb98fd7c1c6b129c4d1dc57558e924a14f9d0`
 
-- User explicitly reports a comparatively serious hitch/stutter during jump travel despite accurate landing.
-- Perfect landing diagnostics do not contradict a frame-time/rendering hitch; accuracy and smoothness are separate acceptance dimensions.
-- Current b31 diagnostics for the tested conversation report approximately **14.25 MB Detail payload, `mappingCount=2105`, `visibleMessageCount=832`, and resident visible-text bytes about 460,926**.
-- The supplied screenshot header reports only **23 rounds**, while the body visibly contains many raw GitHub connector/tool-call JSON rows. This makes over-projected intermediate assistant/tool rows a concrete high-cost presentation factor to remove before introducing any new scrolling subsystem.
+These blobs are staging evidence only until a verified commit/ref update attaches them to the intended branch.
 
-### Raw tool/internal rows — rejected presentation
+## Batch recovery point — 2026-08-29 b33 continuation
 
-- The screenshot visibly shows raw connector invocations such as GitHub `fetch_file`/argument JSON rendered as ordinary assistant text, each receiving an assistant Copy action.
-- Current source explains it: `parseCurrentBranch` accepts any `user`/`assistant` node, while `visibleText(from:)` blindly concatenates textual `content.text` / `content.parts`; it does not inspect assistant `recipient` routing before publishing the node.
-- The conversation graph containing tool/internal nodes is expected protocol data. **Rendering raw tool invocation payloads as ordinary user-facing assistant messages is not the intended client presentation.**
-- Current assistant Copy duplication is largely a consequence of this over-projection because every projected assistant row gets a Copy action.
+**Known baseline / identity**
 
-### Copy visual — size close, glyph shape rejected
+- Work: `DEV-conversation-round-count`
+- Branch: `dev/conversation-round-count-20260828`
+- Branch head before chain: `ea2b7bf4ee89acbb748f2b3aec5fcfc61555b2bc`
+- PR: #27 open; head above; current mergeability false because `main` advanced.
+- Current main: `a6e3b2bc185b8d5df90b846040387262a64e6154`
+- b32 identity is already produced/tested and permanently reserved; **never rewrite corrected code as b32**.
+- Intended fresh identity: `DEV-conversation-round-count-0.1.0-b33` / `0.1.0 (33)`.
 
-- User says the b31 Copy size is now broadly close, but the visible `doc.on.doc` shape remains too document-like/sharp compared with the official screenshot.
-- Official reference shows a simpler, rounder overlapping-square Copy glyph.
-- b32 should keep the current 10pt-class visual scale and 28×28pt invisible hit/layout slot, but use system `square.on.square` for the visible assistant quick action.
+**Intended write batches**
 
-## b32 evidence-backed correction direction
+- **Batch A — governance synchronization**: merge/synchronize current `main@a6e3b2bc...` into the Work branch, preserving branch product source and importing only current governance changes (`AGENTS.md`, `docs/project/DOCUMENTATION_POLICY.md` from the verified main delta). Verify resulting branch head and PR state before product work.
+- **Batch B — b33 product/config commit**: attach only the prepared b33 `ConversationFeature.swift`, Xcode Build/Candidate identity and matching workflow identity to the synchronized branch tree. Verify exact diff and identity before depending on the commit.
+- **Batch C — CI / Artifact evidence**: allow the normal branch/pull-request workflows to run, verify exact push Candidate build and current-main PR merge view, then obtain Artifact IDs, Candidate/source markers, IPA SHA and package identity.
+- **Batch D — documentation evidence**: update this checkpoint and durable `BUILD_TEST_INDEX.md` / `PROJECT_STATE.md` / `MODULE_STATUS.md` / `PROJECT_PROFILE.md` or other relevant current docs with the exact b32 Runtime and b33 Code/CI/Artifact truth. Avoid pushing docs in a way that obscures which exact product/config commit owns the Runtime Candidate.
 
-### 1. Preserve accepted round-navigation semantics
+**Confirmed complete writes**
 
-- Keep `ConversationRoundProjection` as the sole round derivation authority.
-- Keep b31 `rounds[].userMessageID` physical targets, transient requested-row cursor, real-drag direction ownership, native `scrollToRow(..., .top, animated:true)` and completion re-anchor.
-- Do not add debounce, timer, watchdog, speculative row-height cache or another navigation state owner.
+- Recovery-point checkpoint write itself is the first confirmed batch boundary.
+- The three prepared b33 blobs listed above already exist in GitHub object storage, but no branch commit/ref is claimed for them yet.
 
-### 2. Suppress explicit tool-recipient assistant invocations from ordinary visible chat
+**Remaining writes**
 
-Use the smallest semantic filter supported by current source/protocol shape:
+- Batch A governance synchronization.
+- Batch B b33 product/config commit + branch ref update.
+- Batch C exact CI / Artifact verification.
+- Batch D durable docs/checkpoint evidence refresh.
 
-- During current-branch projection, for an `assistant` message inspect top-level `message["recipient"]` when it is a string.
-- Normalize whitespace.
-- Preserve nil/empty recipient and `all` as potentially user-facing.
-- If recipient is explicitly non-empty and not `all`, do **not** publish that node as an ordinary `ConversationMessage`; increment only a privacy-safe filtered count.
-- Do not hard-code GitHub/tool names, inspect JSON text heuristically, or log recipient names/bodies.
-- Add a count such as `filteredRecipientMessageCount` to `detail.response` diagnostics so exact Runtime can prove whether this filter addresses the observed over-projection.
-- This is intentionally conservative. If Runtime still exposes raw tool rows, gather new protocol evidence rather than guessing additional fields.
+**Next exact action**
 
-### 3. Copy symbol
+Create and verify Batch A synchronization from branch head `ea2b7bf4...` with current `main@a6e3b2bc...`; only after the real branch head is verified should Batch B be constructed from that synchronized tree.
 
-- Visible assistant quick-action glyph: switch `doc.on.doc` -> `square.on.square`.
-- Retain 10pt regular configuration, dynamic `.secondaryLabel`, clear background, left alignment and existing 28×28pt hit/layout slot.
-- User context-menu Copy is not the visual target and need not be changed for this correction.
+**Recovery must not touch / replay**
 
-### 4. Smoothness verification order
-
-- First remove the evidenced internal/tool rows and re-measure the same long conversation.
-- Expectation to test, not claim: substantially fewer visible self-sizing rows should reduce layout work during long native jumps.
-- If hitch remains after the projection is corrected, collect new exact b32 diagnostics/runtime evidence before modifying the accepted b31 navigation implementation.
-
-## Current contracts retained
-
-- Visible authoritative user messages define round count.
-- Historical time uses authoritative `createTime`; absent means omit.
-- `AppPreferences` remains sole persisted settings owner; all three defaults On.
-- Ordinary supported detail may show `聊天`; `工作` requires authoritative type evidence.
-- `ConversationRepository` remains sole list/detail authority; b26 total-count reconcile and b29 list-refresh correction remain unchanged.
-- No valid saved reading anchor => first presentation should show latest/bottom without visible history travel.
-- Copy never includes hidden/internal/tool payloads that are not projected as user-visible chat.
-- No new network route, retry, timer, watchdog, polling, fallback endpoint, second list owner or second conversation authority.
+- Do not recreate or reuse b24-b32 Candidate identities or Artifacts.
+- Do not modify another task checkpoint.
+- Do not rewrite accepted b31/b32 semantic round derivation or b32 recipient filter/Copy merely to chase smoothness.
+- Do not add retry, timer, watchdog, speculative row-height cache, alternate navigation owner, new network route, or second conversation/list authority.
+- If interrupted, re-read this checkpoint and current GitHub branch/main/PR state; perform only missing deterministic batches. Never blindly replay a prior tree/commit/ref write.
 
 ## Validation state
 
-- **Code written**: b31 yes; b32 pending at this checkpoint.
-- **Static/source audit**: b31 passed; b32 pending.
-- **CI / Artifact**: b31 passed/produced; b32 pending.
-- **Runtime/manual/real-device**: **b31 partial/failing** — landing accuracy accepted; jump smoothness, raw tool-row presentation and Copy glyph shape rejected.
+- **Code written**: b32 yes; b33 prepared as unattached blobs, not yet branch Code written.
+- **Static/source audit**: b32 passed; b33 final branch diff pending.
+- **CI / Artifact**: b32 passed/produced; b33 pending.
+- **Runtime/manual/real-device**: b32 partial/failing — filtering + landing accepted; bottom direction + jump smoothness rejected.
 - **Stable/Frozen**: **No** for this Work.
 
-## Next exact action
+## Next human gate
 
-Allocate fresh unique `DEV-conversation-round-count-0.1.0-b32` / `0.1.0 (32)` and implement only the three evidenced b32 deltas: conservative explicit non-`all` assistant-recipient filtering with privacy-safe filtered count diagnostics, `square.on.square` assistant Copy visual at the existing scale/hit slot, and build/workflow identity. Keep the accepted b31 jump algorithm unchanged. Run exact CI/Artifact identity verification and PR merge-view against current main, then real-device test the same long/tool-heavy conversation for filtered-row count, raw tool JSON disappearance, Copy appearance and jump smoothness. Do not merge PR #27 or claim Stable before exact b32 Runtime acceptance.
+After Batch A-D complete and exact identity-valid b33 IPA exists, hand that exact IPA to the user for real-device testing focused on bottom rubber-band direction, long-jump smoothness, landing accuracy, and regression of tool filtering/Copy. Do not merge PR #27 or claim Stable before exact b33 Runtime acceptance.

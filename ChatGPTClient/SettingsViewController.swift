@@ -111,7 +111,7 @@ final class SettingsViewController: UIViewController {
             preferencesTitle,
             makePreferenceRow(title: "显示会话轮数", control: roundCountSwitch),
             makePreferenceRow(title: "显示消息时间", control: messageTimeSwitch),
-            makePreferenceRow(title: "显示回答快速跳转", control: answerJumpSwitch),
+            makePreferenceRow(title: "显示轮次快速跳转", control: answerJumpSwitch),
             metadataTitle,
             metadataLabel,
             diagnosticsTitle,

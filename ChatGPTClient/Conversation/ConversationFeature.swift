@@ -1245,9 +1245,10 @@ final class ConversationSidebarViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         guard repository.canOpenConversationFromList else {
-            navigationItem.prompt = "当前仅显示缓存，联网验证账户后可打开会话"
+            setListNavigationStatus("当前仅显示缓存")
             return
         }
+        setListNavigationStatus()
         onSelectConversation?(repository.conversations[indexPath.row].id)
         tableView.reloadData()
     }
@@ -1256,7 +1257,7 @@ final class ConversationSidebarViewController: UITableViewController {
         loadPresentationGeneration += 1
         loading = false
         finishRefreshPresentation(reason: "account_scope_reset")
-        navigationItem.prompt = nil
+        setListNavigationStatus()
         navigationItem.rightBarButtonItem?.isEnabled = true
         errorView?.removeFromSuperview()
         errorView = nil
@@ -1283,7 +1284,7 @@ final class ConversationSidebarViewController: UITableViewController {
         let presentationGeneration = loadPresentationGeneration
         errorView?.removeFromSuperview()
         errorView = nil
-        if forceRefresh { navigationItem.prompt = "正在刷新会话列表…" }
+        setListNavigationStatus(forceRefresh ? "正在刷新…" : nil)
         navigationItem.rightBarButtonItem?.isEnabled = false
         repository.loadConversations(forceRefresh: forceRefresh) { [weak self] result in
             guard let self, self.loadPresentationGeneration == presentationGeneration else { return }
@@ -1293,25 +1294,30 @@ final class ConversationSidebarViewController: UITableViewController {
             switch result {
             case .success:
                 self.tableView.reloadData()
-                self.navigationItem.prompt = forceRefresh ? "已刷新 · \(self.repository.conversations.count) 条" : nil
+                self.setListNavigationStatus(forceRefresh ? "已刷新 · \(self.repository.conversations.count) 条" : nil)
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 if !self.repository.conversations.isEmpty {
-                    self.navigationItem.prompt = forceRefresh ? "刷新失败 · 当前显示缓存" : "网络不可用 · 当前显示缓存"
+                    self.setListNavigationStatus(forceRefresh ? "刷新失败 · 当前显示缓存" : "网络不可用 · 当前显示缓存")
                     self.tableView.reloadData()
                     return
                 }
-                self.navigationItem.prompt = nil
+                self.setListNavigationStatus()
                 self.showError(error)
             }
         }
+    }
+
+    private func setListNavigationStatus(_ text: String? = nil) {
+        navigationItem.prompt = nil
+        title = text ?? "ChatGPT"
     }
 
     private func finishRefreshPresentation(reason: String) {
         let wasRefreshing = refreshControl?.isRefreshing ?? false
         let offsetBefore = tableView.contentOffset.y
         let insetBefore = tableView.adjustedContentInset.top
-        refreshControl?.endRefreshing()
+        if wasRefreshing { refreshControl?.endRefreshing() }
         diagnostics.info(category: "ui", name: "conversationList.refreshPresentation", fields: ["reason": reason, "wasRefreshing": wasRefreshing ? "true" : "false", "contentOffsetY": String(format: "%.2f", offsetBefore), "adjustedInsetTop": String(format: "%.2f", insetBefore)])
     }
 
@@ -1439,7 +1445,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         tableView.separatorStyle = .none
         tableView.keyboardDismissMode = .interactive
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 96
+        tableView.estimatedRowHeight = 0
         tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.reuseIdentifier)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
@@ -1664,7 +1670,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             return
         }
         guard let anchor = scrollAnchorsByConversationID[id] else {
-            resetScrollPositionToTop()
+            scrollToLatestMessage(for: id)
             return
         }
         guard let row = messages.firstIndex(where: { $0.id == anchor.messageID }) else {
@@ -1685,6 +1691,22 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         fields["anchorRowIndex"] = String(row)
         fields["relativeOffsetPoints"] = String(format: "%.2f", anchor.relativeOffset)
         diagnostics.info(category: "conversation", name: "scrollAnchor.restored", fields: fields)
+    }
+
+    private func scrollToLatestMessage(for id: String) {
+        guard let lastRow = messages.indices.last else {
+            resetScrollPositionToTop()
+            return
+        }
+        view.layoutIfNeeded()
+        tableView.layoutIfNeeded()
+        tableView.scrollToRow(at: IndexPath(row: lastRow, section: 0), at: .bottom, animated: false)
+        tableView.layoutIfNeeded()
+        previousContentOffsetY = tableView.contentOffset.y
+        var fields = repository.diagnosticsFields(for: id)
+        fields["targetRowIndex"] = String(lastRow)
+        fields["contentOffsetY"] = String(format: "%.2f", tableView.contentOffset.y)
+        diagnostics.info(category: "conversation", name: "scrollAnchor.defaultLatest", fields: fields)
     }
 
     private func resetScrollPositionToTop() {
@@ -1856,6 +1878,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func answerTargetOffsetY(for row: Int) -> CGFloat {
+        tableView.layoutIfNeeded()
         let rowRect = tableView.rectForRow(at: IndexPath(row: row, section: 0))
         let minimumY = -tableView.adjustedContentInset.top
         let maximumY = max(minimumY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
@@ -1872,6 +1895,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let direction: AnswerJumpDirection?
         if targets.previous == nil { direction = targets.next == nil ? nil : .next }
         else if targets.next == nil { direction = .previous }
+        else if programmaticAnswerTargetRow != nil, let currentAnswerJumpDirection { direction = currentAnswerJumpDirection }
         else { direction = lastUserDragDirection }
         guard let direction else {
             currentAnswerJumpDirection = nil
@@ -1896,6 +1920,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         }
         let retargeting = answerJumpAnimationInFlight
         if retargeting { tableView.setContentOffset(tableView.contentOffset, animated: false) }
+        tableView.layoutIfNeeded()
         let currentOffsetY = tableView.contentOffset.y
         let targetOffsetY = answerTargetOffsetY(for: targetRow)
         programmaticAnswerTargetRow = targetRow

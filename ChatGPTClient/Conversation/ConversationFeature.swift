@@ -1389,6 +1389,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         case next
     }
 
+    private static let answerJumpLeadDistance: CGFloat = 120
+    private static let answerJumpAnimationDuration: TimeInterval = 0.22
+
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
     private let preferences = AppPreferences.shared
@@ -1408,7 +1411,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var roundProjection = ConversationRoundProjection(rounds: [])
     private var answerRows: [Int] = []
     private var programmaticAnswerTargetRow: Int?
-    private var answerJumpAnimationInFlight = false
+    private var answerJumpAnimator: UIViewPropertyAnimator?
     private var currentAnswerJumpDirection: AnswerJumpDirection?
     private var lastUserDragDirection: AnswerJumpDirection = .previous
     private var previousContentOffsetY: CGFloat = 0
@@ -1426,6 +1429,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     deinit {
+        answerJumpAnimator?.stopAnimation(true)
         if let preferenceObserver { NotificationCenter.default.removeObserver(preferenceObserver) }
     }
 
@@ -1543,10 +1547,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func showConversation(id: String) {
         guard repository.selectedConversationID == id else { return }
+        stopAnswerJumpAnimation(clearTarget: true)
         captureScrollAnchorForDisplayedConversation()
         displayedConversationID = id
-        programmaticAnswerTargetRow = nil
-        answerJumpAnimationInFlight = false
         lastUserDragDirection = .previous
         previousContentOffsetY = tableView.contentOffset.y
         presentationGeneration += 1
@@ -1586,11 +1589,10 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func resetForAccountScopeChange() {
         presentationGeneration += 1
+        stopAnswerJumpAnimation(clearTarget: true)
         hideSyncToast()
         loadingConversationID = nil
         displayedConversationID = nil
-        programmaticAnswerTargetRow = nil
-        answerJumpAnimationInFlight = false
         scrollAnchorsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
@@ -1619,11 +1621,10 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func clearVisibleMessagePresentation() {
+        stopAnswerJumpAnimation(clearTarget: true)
         messages = []
         roundProjection = ConversationRoundProjection(rounds: [])
         answerRows = []
-        programmaticAnswerTargetRow = nil
-        answerJumpAnimationInFlight = false
         currentAnswerJumpDirection = nil
         navigationItem.prompt = nil
         answerJumpButton.isHidden = true
@@ -1632,12 +1633,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func rebuildRoundProjection() {
+        stopAnswerJumpAnimation(clearTarget: true)
         roundProjection = ConversationRoundProjection.derive(from: messages)
         var rowsByMessageID: [String: Int] = [:]
         for (row, message) in messages.enumerated() where rowsByMessageID[message.id] == nil { rowsByMessageID[message.id] = row }
         answerRows = roundProjection.rounds.compactMap { rowsByMessageID[$0.userMessageID] }
-        programmaticAnswerTargetRow = nil
-        answerJumpAnimationInFlight = false
     }
 
     private func updateHeaderMetadata() {
@@ -1899,6 +1899,17 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         return min(max(rowRect.minY - tableView.adjustedContentInset.top, bounds.minimumY), bounds.maximumY)
     }
 
+    private func stopAnswerJumpAnimation(clearTarget: Bool) {
+        if let animator = answerJumpAnimator {
+            if animator.state == .active { animator.pauseAnimation() }
+            let currentOffset = tableView.contentOffset
+            animator.stopAnimation(true)
+            answerJumpAnimator = nil
+            tableView.setContentOffset(currentOffset, animated: false)
+        }
+        if clearTarget { programmaticAnswerTargetRow = nil }
+    }
+
     private func updateAnswerJumpButton() {
         guard preferences.showsAnswerQuickNavigation else {
             currentAnswerJumpDirection = nil
@@ -1936,13 +1947,39 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             updateAnswerJumpButton()
             return
         }
-        let retargeting = answerJumpAnimationInFlight
-        if retargeting { tableView.setContentOffset(tableView.contentOffset, animated: false) }
+        let retargeting = answerJumpAnimator != nil
+        stopAnswerJumpAnimation(clearTarget: false)
         let currentOffsetY = tableView.contentOffset.y
         programmaticAnswerTargetRow = targetRow
-        answerJumpAnimationInFlight = true
-        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "targetRole": "user", "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY)])
-        tableView.scrollToRow(at: IndexPath(row: targetRow, section: 0), at: .top, animated: true)
+        let indexPath = IndexPath(row: targetRow, section: 0)
+        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "targetRole": "user", "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY), "presentationMode": "direct_then_ease_out"])
+        view.layoutIfNeeded()
+        tableView.layoutIfNeeded()
+        tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+        tableView.layoutIfNeeded()
+        let finalOffset = tableView.contentOffset
+        let bounds = answerJumpScrollBounds()
+        let requestedLeadY = direction == .previous ? finalOffset.y + Self.answerJumpLeadDistance : finalOffset.y - Self.answerJumpLeadDistance
+        let leadY = min(max(requestedLeadY, bounds.minimumY), bounds.maximumY)
+        let leadDistance = abs(finalOffset.y - leadY)
+        tableView.setContentOffset(CGPoint(x: finalOffset.x, y: leadY), animated: false)
+        guard leadDistance > 0.5 else {
+            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "direct_then_ease_out", "leadDistancePoints": String(format: "%.2f", leadDistance), "landingErrorPoints": String(format: "%.2f", tableView.contentOffset.y - finalOffset.y)])
+            updateAnswerJumpButton()
+            return
+        }
+        let animator = UIViewPropertyAnimator(duration: Self.answerJumpAnimationDuration, curve: .easeOut) { [weak self] in
+            self?.tableView.contentOffset = finalOffset
+        }
+        answerJumpAnimator = animator
+        animator.addCompletion { [weak self, weak animator] _ in
+            guard let self, let animator, self.answerJumpAnimator === animator, self.programmaticAnswerTargetRow == targetRow else { return }
+            self.answerJumpAnimator = nil
+            let landingError = self.tableView.contentOffset.y - finalOffset.y
+            self.diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "direct_then_ease_out", "leadDistancePoints": String(format: "%.2f", leadDistance), "landingErrorPoints": String(format: "%.2f", landingError)])
+            self.updateAnswerJumpButton()
+        }
+        animator.startAnimation()
         updateAnswerJumpButton()
     }
 
@@ -1979,8 +2016,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        answerJumpAnimationInFlight = false
-        programmaticAnswerTargetRow = nil
+        stopAnswerJumpAnimation(clearTarget: true)
         previousContentOffsetY = scrollView.contentOffset.y
         updateAnswerJumpButton()
     }
@@ -2010,27 +2046,6 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
-
-    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        if let targetRow = programmaticAnswerTargetRow, messages.indices.contains(targetRow) {
-            let indexPath = IndexPath(row: targetRow, section: 0)
-            guard tableView.indexPathsForVisibleRows?.contains(indexPath) == true else {
-                diagnostics.info(category: "interaction", name: "answerJump.completionIgnored", fields: ["targetRow": String(targetRow), "targetRole": "user", "reason": "current_target_not_visible"])
-                return
-            }
-            answerJumpAnimationInFlight = false
-            let nativeTargetOffsetY = answerTargetOffsetY(for: targetRow)
-            let nativeLandingError = tableView.contentOffset.y - nativeTargetOffsetY
-            let correctionApplied = abs(nativeLandingError) > 1.0
-            if correctionApplied { tableView.scrollToRow(at: indexPath, at: .top, animated: false) }
-            let finalTargetOffsetY = answerTargetOffsetY(for: targetRow)
-            let landingError = tableView.contentOffset.y - finalTargetOffsetY
-            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "nativeLandingErrorPoints": String(format: "%.2f", nativeLandingError), "landingCorrectionApplied": correctionApplied ? "true" : "false", "landingErrorPoints": String(format: "%.2f", landingError)])
-        } else {
-            answerJumpAnimationInFlight = false
-        }
-        updateAnswerJumpButton()
-    }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messages.count }
 

@@ -90,7 +90,7 @@ User-supplied diagnostics identify exact `DEV-conversation-round-count-0.1.0-b26
 - **Code written**: b27 yes at exact source `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`.
 - **Static/local**: source-only dry-run/diff audit passed before branch allocation; final candidate diff is exactly `ConversationFeature.swift`, `project.pbxproj`, and workflow, with repository reconcile/network unchanged. No separate local Xcode environment evidence exists beyond CI.
 - **CI**: exact b27 push Run `33144420732` / Job `98762229798` success; PR merge-view Run `33144422834` / Job `98762236037` success.
-- **Artifact produced**: exact Runtime Artifact `9675208202`, IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`, source marker `3bda8d8d78ec`.
+- **Artifact produced**: exact Runtime Artifact `9675208202`, IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`, source marker `3bda8d8d78ec`. The downloaded exact Artifact ZIP was unpacked after CI; it contained the expected b27 IPA and `.sha256` sidecar, and a fresh local `sha256sum` of the IPA exactly matched `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b` and the sidecar value.
 - **Runtime/manual/real-device**: **Pending for b27**. b26 remains partial/failing; b27 has not yet been installed or manually tested.
 - **Stable/Frozen**: **No** for this Work.
 

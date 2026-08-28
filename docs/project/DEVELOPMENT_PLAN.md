@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-28 through b28 Candidate evidence._
+_Last updated: 2026-08-28 through b29 Candidate evidence and b28 Runtime failure._
 
 ## Purpose
 
@@ -48,27 +48,29 @@ Completed / merged / Stable b21 for recorded Plus/personal iPhone/iOS17 read-sta
 
 ### Conversation-entry scroll semantics
 
-- First visible presentation with **no valid saved reading anchor** should default to latest/bottom of the current branch without visibly animating through a long conversation.
+- First visible presentation with **no valid saved reading anchor** defaults to latest/bottom of the current branch without visibly animating through a long conversation.
 - Loading-placeholder offsets are not reading anchors.
 - Once A has a real semantic reading anchor, A -> B -> A restores A.
 - Sync/Reload preserve an established resolvable anchor.
 - Future active-response follow-tail belongs to Send/Stream and must not pull a user out of intentional history browsing.
+- b28 Runtime proved the no-anchor latest rule had not actually been implemented: a 1577-visible-message conversation remained at ordinary top (`contentOffsetY≈-97.67`). b29 corrects the current read/presentation path; this is not deferred to Send/Stream.
 
 ### Phase 7 — `DEV-conversation-list-cache-core`
 Completed / merged / Stable b23 for recorded Plus/personal iPhone/iOS17 scope; PR #24. Accepted storage-only account-scoped summary snapshot behind `ConversationRepository`, fast provisional cached titles, 60-second rapid-relaunch `recent_skip`, offline retained cache, one-request manual refresh, explicit retained-list feedback and real `28 + 1 -> 29` page-1 preservation. Conditional account-switch/corrupt-cache/iPad/lower-iOS/non-personal paths remain Unverified.
 
 ## Phase 8 — `DEV-conversation-round-count`
 
-**Active at b28 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open. Do not merge/close or claim Stable until exact b28 passes real-device Runtime.
+**Active at b29 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open. Do not merge/close or claim Stable until exact b29 passes real-device Runtime.
 
 ### Candidate history
 
 - **b24**: package identity invalid; permanently rejected/reserved.
-- **b25**: identity-valid Runtime partial/failing. Copy/time/preferences accepted; header, rapid jump, refresh presentation rejected; diagnostics exposed authoritative `total=29` but result 30.
+- **b25**: identity-valid Runtime partial/failing. Copy/time/preferences accepted; header, rapid jump and refresh presentation rejected; diagnostics exposed authoritative `total=29` but result 30.
 - Post-b25 source-fix output reused b25 identity before b26 allocation; permanently invalid for testing.
-- **b26**: Runtime partial/failing. Accepted cold `30 -> 29` authoritative-total bound plus repeated `29/29`, sequential rapid answer targets and compact title-first header. Remaining blockers: jump start/mid-animation hitch, timestamp-above request, large Copy visual and blank top refresh region.
-- **b27**: exact source `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`, Run `33144420732`, Artifact `9675208202`, IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`. Real-device partial/failing. In a stress conversation with 1063 visible messages / 2331 mapping nodes, targets remained sequential but tap-to-motion delay and animation hitch persisted. Right-top refresh changed adjusted top inset from about 97.67 to 131.67 while list reconciliation stayed `28/29 -> 29`, proving the blank band was refresh-control/inset presentation rather than missing data or stranded overscroll. Copy visual remained too large. Superseded.
-- **Current b28**: Candidate `DEV-conversation-round-count-0.1.0-b28`, `0.1.0 (28)`, exact product/config source `eacd3e68469e976f6cb41a600729c211f6cd32af`. Push Run `33149698659` / Job `98778576898` success; Runtime Artifact `9677214430`; IPA SHA `9ab99321e08695a8298fd3e40231110303d47bd6bbb75d4e9814dc4e275d962f`; ZIP `sha256:0f51b3172aad23471991f3c04c467bb9da1b6256558001c8f60e55fca5f26c7b`. Initial PR merge-view Run `33149701577` / Job `98778585595` success on merge `f548cc8f568136d08128cc024612f89667680616`. Runtime pending.
+- **b26**: Runtime partial/failing. Accepted cold `30 -> 29` authoritative-total bound plus repeated `29/29`, sequential rapid answer targets and compact title-first header. Remaining blockers were jump start/mid-animation hitch, timestamp-above request, large Copy visual and blank top refresh region.
+- **b27**: exact source `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`, Run `33144420732`, Artifact `9675208202`, IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`. Runtime partial/failing. In a stress conversation with 1063 visible messages / 2331 mapping nodes, targets remained sequential but tap-to-motion delay and animation hitch persisted. Right-top refresh changed adjusted top inset from about 97.67 to 131.67 while list reconciliation stayed `28/29 -> 29`; Copy visual remained too large. Superseded.
+- **b28**: Candidate `DEV-conversation-round-count-0.1.0-b28`, source `eacd3e68469e976f6cb41a600729c211f6cd32af`, push Run `33149698659`, Runtime Artifact `9677214430`, IPA SHA `9ab99321e08695a8298fd3e40231110303d47bd6bbb75d4e9814dc4e275d962f`. Runtime partial/failing. On a 1577-visible-message conversation, completion diagnostics showed major target drift (examples about `-1950`, `-7330`, `-11407` pt); continuous taps could flip direction without real drag; first entry remained at top; right-top refresh still produced the blank top region after refresh-control attributed text was already removed. Superseded.
+- **Current b29**: Candidate `DEV-conversation-round-count-0.1.0-b29`, `0.1.0 (29)`, exact product/config source `0b0c2fea44503423e75696f777fbf627aefac500`. Push Run `33155124626` / Job `98795968389` success; Runtime Artifact `9679291236`; IPA SHA `4378fe9b6a7340ea64a5c82063b0f7e3368e92deaf567d5e0ac40c08055a5360`; ZIP `sha256:a6b481acd410c97a7db37c467decc11504f3925e2a45fa9b7e2e5ba3a10e907c`. Initial PR merge-view Run `33155126832` / Job `98795975759` success on merge `a9a0cc286856e36df7378aa62be67f379ca631c2`. Runtime pending.
 
 ### User-facing bundle
 
@@ -77,7 +79,8 @@ Completed / merged / Stable b23 for recorded Plus/personal iPhone/iOS17 scope; P
 - historical user/assistant timestamps from authoritative `createTime`;
 - one adaptive previous/next answer control;
 - assistant visible-text Copy + user native context Copy;
-- centralized persisted Preferences for round count, message time and quick answer navigation.
+- centralized persisted Preferences for round count, message time and quick answer navigation;
+- first-entry latest/bottom presentation when no valid saved reading anchor exists.
 
 ### Header/type rule
 
@@ -98,36 +101,47 @@ One `AppPreferences` owner persists all three. Toggling presentation must not mu
 - Derive answer rows only when authoritative visible messages change; do not scan all messages in every scroll callback.
 - Real user drag controls semantic direction; programmatic motion is not user intent.
 - Rapid taps advance from the last requested derived answer target via a transient presentation cursor; a real drag clears the cursor.
-- b27 Runtime retained correct target progression but disproved repeated long-distance `scrollToRow(...animated:true)` as sufficiently smooth on a 1063-message conversation.
-- **b28 execution contract**: resolve the derived answer-row start, compute its valid table offset, and use native `setContentOffset(...animated:true)`. If another answer tap arrives during programmatic motion, stop that motion at the current visible offset and immediately retarget the next derived answer. User drag interrupts and takes priority.
-- At animation end, privacy-safe diagnostics may record target/actual offset and landing error; a small final position correction may be nonanimated when required.
-- No debounce, timer, watchdog or speculative height-cache subsystem. Add broader row-height caching only if b28 Runtime still provides evidence that layout cost is the bottleneck.
+- b26/b27 Runtime retained correct sequential target progression.
+- b27 disproved repeated long-distance `scrollToRow(...animated:true)` as sufficiently smooth.
+- b28 replaced that execution with interruptible native content-offset animation, but Runtime then proved off-screen target coordinates derived from self-sizing rows with a fixed 96pt estimate could drift by thousands of points as actual heights resolved.
+- **b29 execution contract**: retain the same derived semantic cursor; disable the fixed estimated-row height, lay out before resolving target row rect/offset, then use the existing interruptible native content-offset animation. While a programmatic target exists and both directions remain available, retain the current clicked direction; only real user drag or a boundary changes direction.
+- At animation end, privacy-safe diagnostics may record target/actual offset and landing error; a small final nonanimated correction may remain when necessary.
+- No debounce, timer, watchdog or speculative height-cache subsystem. Add broader row-height caching only if exact b29 Runtime still provides evidence that a cache is required.
 
 ### Timestamp / Copy
 
 - Historical timestamps remain authoritative `createTime` and appear above their owning visible messages; missing time is omitted.
 - Copy never includes hidden reasoning/tool/system material and never triggers network requests.
-- Assistant Copy uses official small response-action direction. b28 uses a 14pt `doc.on.doc`, clear background, dynamic `.secondaryLabel`, compact 28×28 left-aligned slot. User context Copy remains native. Exact b28 visual remains Runtime-pending.
+- Assistant Copy uses official small response-action direction: 14pt `doc.on.doc`, clear background, dynamic `.secondaryLabel`, compact 28×28 left-aligned slot. User context Copy remains native.
 
 ### List refresh presentation
 
 - Repository list request/reconciliation semantics remain unchanged; `ConversationRepository` is sole authority.
 - Right-top refresh and pull-to-refresh are separate presentation sources over the same manual refresh request path.
-- Right-top refresh uses navigation feedback only and must never begin/resize/change `UIRefreshControl`.
-- Genuine pull refresh uses the native `UIRefreshControl` spinner and `endRefreshing()` only. Do not assign attributed title text that reserves extra height.
-- b27 top contentOffset-normalization workaround is removed because Runtime showed the table considered the inflated adjusted inset its real top; overscroll was not the root cause.
+- Right-top refresh must never begin/resize/change `UIRefreshControl`.
+- Genuine pull refresh uses native `UIRefreshControl` spinner and `endRefreshing()` only; no attributed/text title is assigned.
+- b28 Runtime disproved the narrower assumption that removing refresh-control attributed text alone fixed the blank band. The b28 source still used `navigationItem.prompt`; prompt changes nav-bar height/adjusted inset.
+- **b29 rule**: ordinary refresh/cache status must stay in fixed-height navigation presentation (current implementation uses the title) and must not use `navigationItem.prompt`.
+- b27 top contentOffset-normalization workaround remains rejected because Runtime showed the table considered the changed adjusted inset its real top; overscroll was not the root cause.
 - Redundant manual trigger while a list load is active must not start a second request; a newly started pull presentation ends promptly.
-- With authoritative total present, page-1 reconcile may preserve no more than `max(0, total - authoritativePage.count)` prior off-page items. b26 real-device accepts this for the tested `28/29` sequence; b28 does not change it.
+- With authoritative total present, page-1 reconcile may preserve no more than `max(0, total - authoritativePage.count)` prior off-page items. b26 accepts this for the tested `28/29` sequence; b29 does not change it.
 
-### b28 Runtime acceptance focus
+### First-entry / historical scroll
 
-- In the same long/stress conversation, rapidly tap previous/next while motion is still active: each tap must advance one semantic answer, motion should begin promptly and remain visually continuous, and a real drag must immediately regain control.
-- Verify answer landing is at intended assistant answer start and diagnostics do not show material landing error.
-- Click right-top refresh repeatedly: the first row must not shift down; adjusted top inset should remain at its ordinary value rather than reproduce the ~34pt b27 increase.
-- Exercise actual pull refresh: native spinner must appear/collapse cleanly with no persistent blank band and no duplicate request.
-- Verify assistant Copy is visibly closer to official small quick-action scale in Light/Dark and remains functional; user context Copy still works.
-- Verify timestamps remain above both roles.
-- Confirm list `pageCount=28 / totalCount=29` remains `resultCount<=29`.
+- No valid saved reading anchor => nonanimated latest/bottom placement of the current visible branch.
+- Loading/empty placeholder top offset is never adopted as a reading anchor.
+- Established A/B semantic anchors remain independent and restore on return.
+- Sync/Reload preserve an established anchor only when the same message still exists; missing-anchor-message discard remains an explicit separate path.
+- Future response follow-tail remains Phase 9 and must consume authoritative Send/Stream lifecycle rather than being guessed now.
+
+### b29 Runtime acceptance focus
+
+- Enter the same long/stress conversation with no saved local reading anchor: it must appear directly at latest/bottom without visibly scrolling through history.
+- Rapidly tap previous/next while motion is active: each tap must advance one semantic answer; the clicked direction must not flip without real drag or boundary; landing should be at intended assistant start and diagnostics must not reproduce b28-scale errors.
+- Real drag must immediately regain viewport authority/direction.
+- Click right-top refresh repeatedly: first row must remain at ordinary top; adjusted top inset must not grow from navigation prompt height; no persistent blank band.
+- Exercise actual pull refresh: native spinner must appear/collapse cleanly with no duplicate request.
+- Verify Copy/time/preferences/header remain sane and list `resultCount<=authoritative total` for the known `28/29` sequence.
 - Retain A/B independent semantic anchors and Sync/Reload answer-anchor rebuild.
 - Basic Dynamic Type/VoiceOver sanity.
 
@@ -171,4 +185,4 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-Install/test exact b28 Runtime Artifact `9677214430` / IPA SHA `9ab99321e08695a8298fd3e40231110303d47bd6bbb75d4e9814dc4e275d962f` on the accepted iPhone/iOS17 scope using the b28 matrix above. If any Runtime defect remains, record it first and allocate a fresh unique Candidate before corrected product output. Only after accepted b28 Runtime update docs/evidence, confirm final PR merge-view against current main, merge/close Phase 8 as Stable for the tested scope, then proceed to `DEV-send-stream`.
+Install/test exact b29 Runtime Artifact `9679291236` / IPA SHA `4378fe9b6a7340ea64a5c82063b0f7e3368e92deaf567d5e0ac40c08055a5360` on the accepted iPhone/iOS17 scope using the b29 matrix above. If any Runtime defect remains, record it first and allocate a fresh unique Candidate before corrected product output. Only after accepted b29 Runtime update docs/evidence, confirm final PR merge-view against current main, merge/close Phase 8 as Stable for the tested scope, then proceed to `DEV-send-stream`.

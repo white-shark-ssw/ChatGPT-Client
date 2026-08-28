@@ -10,7 +10,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device candidates.
 - Stable merged read baselines remain b9 native read, b15 recovery, b21 multi-conversation read state and b23 conversation-list cache core for their recorded scopes. Stable does not mean Frozen.
-- `DEV-conversation-round-count-0.1.0-b28` is the current identity-valid metadata Runtime Candidate. b27 is real-device partial/failing and superseded. b28 is not Stable until exact real-device Runtime passes.
+- `DEV-conversation-round-count-0.1.0-b29` is the current identity-valid metadata Runtime Candidate. b28 is real-device partial/failing and superseded. b29 is not Stable until exact real-device Runtime passes.
 
 ## UI / interaction contract
 
@@ -19,9 +19,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Ordinary conversation actions live in official-style overflow/context surfaces.
 - On compact iPhone with no selected conversation, initial useful surface is the conversation list; revealing navigation must not start the initial list request.
 - UISplitViewController/native navigation remains the sole compact list/detail navigation owner for the accepted shell.
-- Conversation-list manual refresh feedback uses the existing navigation prompt (`正在刷新会话列表…`, success count, or retained-cache failure), but **right-top button refresh and pull-to-refresh presentation are distinct**. The right-top button must not begin/resize `UIRefreshControl`; genuine pull refresh uses the native spinner and `endRefreshing()` only.
-- Do not add attributed refresh-control text that permanently increases top inset. b27 Runtime proved the prior attributed-title presentation could shift adjusted top inset from about 97.67 to 131.67 while list data remained correct.
-- Do not reintroduce the b27 contentOffset/top-normalization workaround for that defect; Runtime disproved stranded overscroll as the root cause.
+- Conversation-list right-top refresh and pull-to-refresh are distinct presentation sources over the same repository manual-refresh request path. Right-top refresh must never begin/resize/mutate `UIRefreshControl`; genuine pull uses native spinner + `endRefreshing()` only.
+- **Do not use `navigationItem.prompt` for ordinary conversation-list refresh/cache status.** b28 Runtime reproduced the blank top region after refresh-control attributed-title removal, and current source still used prompt status. Because prompt changes navigation-bar height, it changes adjusted top inset. Current fixed-height title/status presentation may be used instead.
+- Do not assign attributed/text titles to `UIRefreshControl`, and do not reintroduce b27 contentOffset/top-normalization compensation. The former is unnecessary; Runtime disproved stranded overscroll as the root cause.
 - `导出 Markdown` remains an enhancement, not official-App evidence.
 
 ## Conversation metadata / Preferences contract
@@ -32,12 +32,23 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `AppPreferences` is the single persisted settings owner. Current defaults remain: `显示会话轮数` On, `显示消息时间` On, `显示回答快速跳转` On.
 - Message timestamps use authoritative historical `createTime`; if absent, omit rather than fabricate. Formatting uses current locale/time zone.
 - Copy reads only authoritative user-visible message text, uses system pasteboard, does not mutate message state and does not issue network requests. Hidden reasoning/tool/system content is never copied.
-- Assistant Copy follows the official compact quick-action visual: small `doc.on.doc`-style outline glyph, clear background, subdued dynamic tint and compact response action row. Current b28 implementation is 14pt glyph in a 28×28 layout slot; this exact visual remains Runtime-pending until b28 is tested.
+- Assistant Copy follows the official compact quick-action visual: small `doc.on.doc`-style outline glyph, clear background, subdued dynamic tint and compact response action row. Current implementation uses 14pt glyph in a 28×28 layout slot; function/time/preferences have prior Runtime acceptance, while final visual scale remains part of the current Work's acceptance.
 - Quick answer navigation uses one adaptive floating control and real user-drag direction. Programmatic scrolling is not user intent; no timer-stepped animation or auto-hide watchdog.
 - Rapid taps advance from the last requested derived answer target. This transient cursor points into the existing derived answer projection and is not a second semantic authority.
-- b27 real-device evidence on 1063 visible messages retained sequential targets but showed `scrollToRow(...animated:true)` start/mid-animation hitch. b28 therefore uses **interruptible native content-offset animation to the derived answer-row start**: if another tap arrives during motion, stop at the current visible offset and immediately retarget the next derived answer. A real user drag clears programmatic targeting and regains viewport authority.
-- No debounce, timer, watchdog or speculative row-height cache may be added without new evidence. A broad height-cache subsystem remains deferred unless b28 Runtime still proves layout cost.
+- b28 Runtime on a 1577-visible-message conversation rejected fixed estimated-row geometry for long-distance answer targets: completion errors grew to thousands of points while self-sizing rows resolved. b29 disables the fixed `estimatedRowHeight=96`, lays out before target-offset resolution, and retains the existing interruptible native content-offset animation.
+- While a programmatic answer cursor exists and both previous/next remain valid, keep the current clicked direction. Only a **real user drag** or a boundary may change it. b28 Runtime directly rejected falling back to stale `lastUserDragDirection` during continuous programmatic taps.
+- No debounce, timer, watchdog or speculative row-height cache may be added without new evidence. Disabling an evidenced-wrong fixed estimate is not authorization for a new height-cache subsystem.
 - Current source has no evidenced authoritative Chat/Work conversation-type owner. Ordinary supported detail may present `聊天`; do not infer `工作` from title/presentation text.
+
+## Per-conversation scroll presentation contract
+
+- Scroll presentation belongs to the detail presentation owner, not `ConversationRepository` and not a retained UIKit hierarchy cache.
+- Historical reading uses semantic message anchor + relative offset where practical; one global raw offset is prohibited.
+- A/B anchors are independent. Account-scope reset clears presentation anchors.
+- **First visible presentation with no valid saved reading anchor must show latest/bottom of the current visible branch without visibly animating through history.** Loading/empty placeholder offsets are not reading anchors. b28 Runtime proved this contract was not implemented; b29 adds nonanimated latest placement.
+- Sync/Reload may preserve an established anchor only when the same anchored message remains; otherwise discard explicitly rather than invent cross-message fallback.
+- Exact b18 accepts the tested historical-anchor matrix. Missing-anchor-message discard remains Runtime-unexercised.
+- Future follow-tail belongs to authoritative Send/Stream response lifecycle; do not invent UI streaming flags/timers before that owner exists.
 
 ## Fast usable candidate contract
 
@@ -87,7 +98,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Automatic cold start may provisionally publish last-successfully-verified cached **titles only** before current network verification. Provisional rows cannot authorize Detail until current scope is verified.
 - Temporary auth transport failure may retain valid provisional rows without converting it into logout or automatic retry.
 - Exact b23 accepts the current 60-second rapid-relaunch freshness window. Manual refresh bypasses suppression and issues exactly one user-requested list refresh.
-- Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; b26 later real-device accepted the authoritative-total cap for stale excess cached rows (`30 -> 29`, repeated `29/29`). b28 does not change that reconciliation.
+- Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; b26 later real-device accepted the authoritative-total cap for stale excess cached rows (`30 -> 29`, repeated `29/29`). b29 does not change that reconciliation.
 - Never add timer/polling/watchdog/retry, alternate list/auth endpoints, per-row Detail prefetch or another list/account authority solely for cache behavior.
 
 ## Protocol evidence contract
@@ -115,15 +126,6 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Current personal scope uses `userID + accountID`; non-personal workspace isolation remains Unknown/Unverified until evidenced.
 - Retain minimum current-node identity only; do not persist raw multi-megabyte graph payloads or invent future send state.
 - No arbitrary normal LRU capacity: b19 evidence through 8 residents does not justify one. Memory warnings may trim eligible inactive terminal residents.
-
-## Per-conversation scroll presentation contract
-
-- Scroll presentation belongs to the detail presentation owner, not `ConversationRepository` and not a retained UIKit hierarchy cache.
-- Historical reading uses semantic message anchor + relative offset where practical; one global raw offset is prohibited.
-- A/B anchors are independent. Account-scope reset clears presentation anchors.
-- Sync/Reload may preserve an established anchor only when the same anchored message remains; otherwise discard explicitly rather than invent cross-message fallback.
-- Exact b18 accepts the tested historical-anchor matrix. Missing-anchor-message discard remains Runtime-unexercised.
-- Future follow-tail belongs to authoritative Send/Stream response lifecycle; do not invent UI streaming flags/timers before that owner exists.
 
 ## Markdown export / background / compatibility
 

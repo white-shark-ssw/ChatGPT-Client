@@ -1,6 +1,6 @@
 # UI / Interaction Baseline — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-28 through b28 Candidate evidence._
+_Last updated: 2026-08-28 through b29 Candidate evidence and b28 Runtime failure._
 
 ## Purpose
 
@@ -69,19 +69,21 @@ The accepted b23 cache core supplies an account-scoped persistent summary snapsh
 
 Manual list refresh is one repository request path with two distinct presentation sources:
 
-1. **Right-top refresh button** — uses the existing navigation prompt/status feedback. It must never begin, resize or mutate `UIRefreshControl` presentation.
-2. **Pull-to-refresh gesture** — uses the native `UIRefreshControl` spinner and `endRefreshing()` only.
+1. **Right-top refresh button** — must stay within fixed-height navigation presentation and must never begin, resize or mutate `UIRefreshControl`.
+2. **Pull-to-refresh gesture** — uses native `UIRefreshControl` spinner and `endRefreshing()` only.
 
-Durable rules from b27 real-device evidence:
+Durable Runtime rules:
 
-- Do not assign an attributed/text title to `UIRefreshControl`. b27 showed ordinary top `adjustedInsetTop≈97.67`; right-button refresh then produced `≈131.67` while `contentOffsetY` simply followed the new top and `overscrolled=false`. The extra ~34pt blank band was therefore refresh-control/inset presentation, not missing list data.
-- Do not reintroduce b27's contentOffset/top-normalization workaround for this defect. Runtime disproved stranded overscroll as the root cause.
+- b27 showed ordinary top `adjustedInsetTop≈97.67`; after right-button refresh it became `≈131.67` while list data remained correct and the table did not report stranded overscroll. The blank band is therefore presentation/inset height, not missing data.
+- b28 removed `UIRefreshControl.attributedTitle`, but the user still reproduced the blank band. Source inspection showed right-button refresh/status still used `navigationItem.prompt`; prompt itself changes navigation-bar height and adjusted top inset. The earlier rule that refresh-control title was the root cause is superseded.
+- **Do not use `navigationItem.prompt` for ordinary conversation-list refresh/cache status.** Current b29 implementation uses fixed-height navigation title text instead.
+- Do not assign an attributed/text title to `UIRefreshControl`.
+- Do not reintroduce b27's contentOffset/top-normalization workaround. Runtime disproved stranded overscroll as the root cause.
 - The pull region must visibly show the native spinner while genuinely refreshing and collapse cleanly at completion.
 - If a manual list load is already active, reject a redundant trigger without starting a second request. If the redundant trigger came from pull-to-refresh, end that newly started spinner presentation promptly.
-- Right-button refresh must leave the first row at the same normal top position; it must not reserve pull-control height.
-- Successful/failed manual refresh continues to use existing navigation feedback (`正在刷新会话列表…`, success count, retained-cache failure).
+- Right-button refresh must leave the first row at the same normal top position; it must not reserve pull-control/prompt height.
 - Diagnostics may record refresh source, spinner state, `contentOffset` and adjusted inset, but not conversation titles/IDs.
-- Repository reconcile/network semantics are not presentation concerns. b26 real-device accepted the authoritative-total bound for the tested `28/29 -> 29` sequence; b28 leaves it unchanged.
+- Repository reconcile/network semantics are not presentation concerns. b26 real-device accepted the authoritative-total bound for the tested `28/29 -> 29` sequence; b29 leaves it unchanged.
 
 ## Conversation messages
 
@@ -111,7 +113,7 @@ Copy is a required daily-use interaction.
 - User explicitly requires this treatment to visually match the official ChatGPT iOS action scale rather than merely be generically “official-style”.
 - Baseline: small outline `doc.on.doc`-style glyph, no emphasized button background, subdued dynamic system tint, left aligned with assistant content and compact action-row spacing.
 - b27's 17pt glyph / 36×32 slot remained visibly too large in real-device recording.
-- b28 uses a **14pt** `doc.on.doc` glyph in a compact **28×28** clear layout slot with `.secondaryLabel` tint. This exact size is current implementation direction, not yet Runtime-accepted until exact b28 is tested.
+- Current implementation uses a **14pt** `doc.on.doc` glyph in a compact **28×28** clear layout slot with `.secondaryLabel` tint.
 - Do not add unrelated official-App actions merely to fill the row before their functionality exists.
 
 ### User Copy
@@ -136,6 +138,8 @@ Official-style default is **latest-message first**, while an established per-con
 - Loading/empty placeholder position is not a reading anchor.
 - A long conversation should appear at final placement without visibly animating from top through history.
 - Hidden-completed Detail shown first time with no anchor follows the same rule.
+- b28 Runtime explicitly proved this had not been implemented: after loading a 1577-visible-message conversation, the first answer-jump diagnostics began from ordinary top `contentOffsetY≈-97.67`.
+- b29 implements nonanimated `.bottom` placement of the final visible message when no valid saved reading anchor exists. Exact Runtime acceptance remains pending.
 
 ### Return to already-read conversation
 
@@ -180,8 +184,10 @@ Use **one adaptive floating button**, not two permanent large controls.
 - Real user drag toward older content => previous/up state.
 - Real user drag toward newer content => next/down state.
 - Programmatic movement is not user intent and must not flip direction merely because content moved.
+- While a programmatic answer cursor exists and both directions are available, retain the currently clicked direction. Only real drag or boundary can override it.
 - At boundaries, the only valid adjacent target wins; with no useful target the control hides.
 - No auto-hide timer/watchdog.
+- b28 Runtime directly rejected the previous fallback: continuous programmatic taps produced `next -> previous -> next -> previous` without matching real drag because source reused stale `lastUserDragDirection`.
 
 ### Rapid tap semantics
 
@@ -191,21 +197,18 @@ b25 proved recomputing from a still-moving viewport can repeat a stale answer ta
 - the cursor is transient presentation state pointing into existing `answerRows`, never a second semantic index;
 - real user drag clears the cursor and re-establishes context from the actual viewport.
 
-b26/b27 diagnostics prove sequential target progression, including `214 -> 221 -> 227`, so semantic cursor/projection is retained.
+b26/b27 diagnostics proved sequential target progression, including `214 -> 221 -> 227`, so semantic cursor/projection is retained.
 
-### b28 scrolling execution
+### Long-conversation scrolling execution
 
-b27 real-device stress on **1063 visible messages / 2331 mapping nodes** showed sequential targets but still had a noticeable pause after tap and non-uniform/hitching movement. Per-frame answer-button recomputation had already been removed, so b28 changes only the execution path:
-
-- resolve the intended derived assistant row start;
-- lay out the table as needed and compute that row's valid content offset;
-- use native `setContentOffset(..., animated:true)` for spatial continuity;
-- if another answer tap arrives while programmatic motion is active, first stop the old animation **at the current visible offset**, then immediately target the next derived answer;
-- a real drag interrupts/clears programmatic state and takes priority;
-- at animation end, compare target vs actual offset; a small nonanimated landing correction is allowed if necessary;
+- b27 real-device stress on **1063 visible messages / 2331 mapping nodes** showed sequential targets but noticeable pause/hitch with repeated long-distance `scrollToRow(...animated:true)`.
+- b28 switched to interruptible native `setContentOffset(..., animated:true)`, stopping current programmatic motion before rapid retargeting.
+- b28 Runtime on a **1577-visible-message** conversation then recorded material target-coordinate drift as self-sizing cells resolved, including examples around `-1950`, `-7330`, and `-11407` pt landing error. Source still used fixed `estimatedRowHeight=96` for unseen rows.
+- **b29 execution direction**: keep the same semantic cursor and interruptible native offset animation, but disable the fixed estimated-row geometry and lay out before resolving the target row rect/offset.
+- At animation end, compare target vs actual offset; a small nonanimated landing correction remains acceptable when required.
 - diagnostics may record target row index, start/target/actual offset and landing error, not message identity/body.
 
-Do **not** use debounce, timer stepping, watchdogs or a speculative full row-height cache. A height-cache subsystem may only be considered if exact b28 Runtime still provides evidence that self-sizing layout cost is the remaining bottleneck.
+Do **not** use debounce, timer stepping, watchdogs or a speculative full row-height cache. Disabling an evidenced-wrong fixed estimate does not justify a second height-cache authority. A cache may only be considered if exact b29 Runtime still provides evidence requiring it.
 
 For long conversations, keep the lightweight derived answer-row projection updated only when authoritative messages change; never rescan all messages on every `scrollViewDidScroll`.
 
@@ -273,17 +276,19 @@ UI is a consumer of authoritative state.
 - b14 compact startup/navigation real-device accepted.
 - b25 accepted Copy function/time/preferences but rejected header/jump/refresh and exposed `30/29` list issue.
 - b26 accepted compact header, sequential answer targets and bounded `29/29`; smoothness/Copy/refresh presentation still failed.
-- b27 exact real-device evidence retained sequential target semantics but still showed long-conversation animation delay/hitch; proved right-top refresh inflated adjusted top inset ~34pt despite correct list data; rejected Copy visual as too large.
-- b28 contains the scoped corrections above and currently has **Code + source/static audit + exact Candidate CI + identity-valid Runtime Artifact + initial PR merge-view CI only. Runtime pending.**
+- b27 retained sequential target semantics but still showed long-conversation animation delay/hitch; right-top refresh inflated adjusted top inset ~34pt despite correct list data; Copy visual too large.
+- b28 is **Runtime partial/failing**: long-row target geometry drifted by thousands of points, programmatic direction flipped without drag, first entry remained at top and right-top refresh blank region persisted.
+- b29 contains the scoped corrections above and currently has **Code + source/static audit + exact Candidate CI + identity-valid Runtime Artifact + initial PR merge-view CI only. Runtime pending.**
 
-### Focused b28 real-device matrix
+### Focused b29 real-device matrix
 
-- Long conversation: rapid previous/next while motion is active, prompt start, smooth continuity, one semantic target per tap, correct answer-start landing, real-drag interruption.
-- Right-top refresh: first row stays flush at ordinary top; adjusted top inset does not reproduce b27 ~97.67→131.67 growth.
+- First entry to long conversation with no saved reading anchor: directly latest/bottom, no visible top-to-bottom animation.
+- Long conversation: rapid previous/next while motion is active, one semantic target per tap, clicked direction retained unless real drag/boundary, correct answer-start landing, no b28-scale landing error/hitch.
+- Real drag: immediately regains viewport/direction authority.
+- Right-top refresh: first row stays flush at ordinary top; adjusted top inset does not grow from prompt height; no blank top band.
 - Real pull refresh: native spinner appears and collapses cleanly; no persistent blank region or duplicate request.
-- List reconcile remains `resultCount<=authoritative total` for the known `28/29` sequence.
-- Copy: smaller official-scale assistant glyph in Light/Dark, functional visible-text clipboard; user context Copy remains functional.
-- Timestamps remain above both roles.
+- List reconcile remains `resultCount<=authoritative total` for known `28/29` sequence.
+- Copy/time/preferences/header remain functional/presented correctly.
 - A/B independent reading anchors and Sync/Reload answer-anchor rebuild remain sane.
 - Basic Dynamic Type/VoiceOver sanity.
 

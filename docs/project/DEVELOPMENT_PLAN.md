@@ -78,15 +78,17 @@ Conditional supported account-switch mismatch, corrupt/schema rejection, provisi
 
 ## Phase 8 — `DEV-conversation-round-count`
 
-**Active at b26 Runtime gate.** Dedicated branch `dev/conversation-round-count-20260828`; PR #27 open.
+**Active at b27 Runtime gate.** Dedicated branch `dev/conversation-round-count-20260828`; PR #27 open.
 
 ### Candidate history and current evidence
 
 - **b24**: compiled but package identity was invalid because stale packaging overrode the intended Candidate with cache-core b23 and retained the cache-core IPA slug. Permanently rejected/reserved; never installed.
 - **b25**: exact identity-valid Runtime Candidate `DEV-conversation-round-count-0.1.0-b25`, product/config source `5e6a61a45b5aae1d6d4ddb210a8685094a2e74a8`, Run `33110228837`, Artifact `9662219000`, IPA SHA `91ea6b79b67ac06f45771606d425221e10d80e7992c524be697a73bf320c923b`. Real-device result is **partial/failing**: Copy, message timestamps and persisted Preferences accepted; compact header, rapid answer-jump accuracy/progression and redundant pull-refresh presentation rejected. Diagnostics also exposed `pageCount=28`, authoritative `totalCount=29`, but `resultCount=30` from unconstrained off-page cache preservation.
 - Source-fix commit `2a0d313346d44dae548d996c9037fa0ac305b974` auto-triggered a successful workflow before b26 allocation and therefore reused the already-tested b25 identity. Its Artifact is permanently identity-invalid for testing.
-- **Current b26**: `DEV-conversation-round-count-0.1.0-b26` / `0.1.0 (26)`, exact product/config source `7f845662185ef4e65a741bd37b09f9e9baebd723`. Exact push Run `33114798354` / Job `98666564839` succeeded; Artifact `9664109976`; ZIP `sha256:c93951d3756f2440b04f895e8aeca85ad66b4499617ff686cb7c4735d5fa51af`; IPA `ChatGPTClient-0.1.0-b26-dev-conversation-round-count.ipa`; IPA SHA `24d69c62e370c7d0f8b93405a2cc164417d7798a645b510da0d0543247af308d`; embedded Candidate `DEV-conversation-round-count-0.1.0-b26`; source marker `7f845662185e`.
-- b26 evidence level is **Code + static/source review + exact CI + identity-valid Artifact**. Runtime/manual/real-device is pending. Stable/Frozen No.
+- **b26**: `DEV-conversation-round-count-0.1.0-b26` / `0.1.0 (26)`, exact source `7f845662185ef4e65a741bd37b09f9e9baebd723`, Run `33114798354`, Artifact `9664109976`, IPA SHA `24d69c62e370c7d0f8b93405a2cc164417d7798a645b510da0d0543247af308d`. Real-device result is **partial/failing**. It accepted the authoritative-total list bound for the tested sequence (`30` cached -> `28/29` authoritative -> `29`, then repeated `29/29` manual refresh), showed sequential rapid answer targets such as `214 -> 221 -> 227`, and presented the compact title-first header. Remaining blockers were occasional answer-jump start/mid-animation hitch, requested timestamp-above placement, oversized/prominent assistant Copy styling, and a still-reproducible blank top refresh region without visible indication.
+- **Current b27**: `DEV-conversation-round-count-0.1.0-b27` / `0.1.0 (27)`, exact product/config source `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`. Exact push Run `33144420732` / Job `98762229798` succeeded; Runtime Artifact `9675208202`; ZIP `sha256:038d3fe60ea49257a1f6ad0f09752facce8aeaecda484042b5df5cdb0f854cbd`; IPA `ChatGPTClient-0.1.0-b27-dev-conversation-round-count.ipa`; IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b`; embedded Candidate `DEV-conversation-round-count-0.1.0-b27`; source marker `3bda8d8d78ec`.
+- PR #27 merge-view Run `33144422834` / Job `98762236037` also succeeded after checking out merge `3080dee98e3f6a1029dd66c992b99bfcb09e28a4`, explicitly merging b27 product head into unchanged `main@e884afdb36c6e62d54e3c8dfe25ff1765bfb11c2`.
+- b27 evidence level is **Code + source diff audit + exact CI + identity-valid Artifact + PR merge-view CI**. Runtime/manual/real-device is pending. Stable/Frozen No.
 
 ### User-facing bundle
 
@@ -97,9 +99,9 @@ Conditional supported account-switch mismatch, corrupt/schema rejection, provisi
 - basic one-tap Copy for visible user and assistant message text;
 - first centralized Preferences owner for these toggles and later settings.
 
-### Header/type rule from b25 Runtime evidence
+### Header/type rule from Runtime evidence
 
-Official-app comparison supplied during b25 testing establishes the required visual hierarchy: **title first**, compact metadata second. For the currently supported ordinary-chat detail path, b26 presents `聊天 · N轮` when round count is enabled and `聊天` when it is disabled.
+Official-app comparison supplied during b25 testing establishes the required visual hierarchy: **title first**, compact metadata second. For the currently supported ordinary-chat detail path, the current implementation presents `聊天 · N轮` when round count is enabled and `聊天` when it is disabled; b26 real-device evidence shows the compact title-first hierarchy present.
 
 This does **not** establish a generic Chat/Work identity resolver. `工作` remains deferred until current service/source evidence exposes an authoritative Work/Project type. Never infer `工作` from conversation title or presentation text.
 
@@ -118,21 +120,26 @@ All three are persisted by the single centralized `AppPreferences` owner. Toggli
 - Tool/reasoning/system nodes do not create rounds.
 - Recompute answer anchors only when authoritative visible messages change, not on every scroll callback.
 - Quick-jump direction follows real user drag intent; programmatic jump animation must not masquerade as a new user drag, and valid boundary availability wins.
-- b26 keeps only a transient presentation cursor into the already-derived `answerRows` so rapid consecutive taps advance from the last requested target until a real user drag clears the cursor. This is not a second semantic answer authority.
+- A transient presentation cursor into the already-derived `answerRows` lets rapid consecutive taps advance from the last requested target until a real user drag clears the cursor. This is not a second semantic answer authority.
 - Jump positioning uses native `UITableView.scrollToRow(..., .top, animated: true)` to target the assistant-answer row start. No debounce/timer/watchdog is introduced.
-- Redundant pull-refresh while a list load is already active ends the newly-started refresh-control presentation and does not start a duplicate request.
-- When authoritative list `total` exists, page-1 reconciliation may preserve at most `max(0, total - authoritativePage.count)` prior off-page items; excess cached candidates are logged/discarded. Without authoritative total, conservative preservation remains unchanged.
+- b27 removes answer-button recomputation/resetting from every programmatic animation frame. Direction/control presentation updates only at semantic tap/real-drag/drag-end/deceleration-end/animation-end boundaries, and identical symbol/accessibility state is not reset unnecessarily. Self-sizing-row cost remains Unverified and must not gain a speculative height-cache subsystem without new Runtime evidence.
+- Message timestamps remain authoritative `createTime` presentation but are placed **above** their owning user/assistant message in b27.
+- Assistant Copy remains visible-text/system-pasteboard behavior, but b27 uses a compact small `doc.on.doc`, clear background and dynamic `.secondaryLabel` tint. User Copy remains the native context action.
+- Redundant pull-refresh while a list load is already active ends only the newly-started refresh-control presentation and does not start a duplicate request.
+- b27 makes pull-refresh state visibly identifiable with dynamic system styling and normalizes any stranded negative top overscroll to `-adjustedContentInset.top` after the gesture is no longer active; privacy-safe diagnostics record only refresh state/offset/inset/reason.
+- When authoritative list `total` exists, page-1 reconciliation may preserve at most `max(0, total - authoritativePage.count)` prior off-page items; b26 real-device evidence accepts this bound for the tested `28/29` sequence. b27 does not change this logic.
 - Copy never includes hidden reasoning/tool/system material and never triggers network requests.
 - Historical timestamps use existing authoritative service time; if it is absent, omit the timestamp rather than fabricate one.
 
-### Runtime acceptance focus for b26
+### Runtime acceptance focus for b27
 
-- compare the compact top bar against the official-app reference: title must be first line, `聊天 · N轮` second line, with no prompt-style extra navigation-bar height; turning round count Off must leave `聊天` without changing title hierarchy;
-- rapidly tap previous/next through a long conversation while native scrolling is still moving; each tap must advance one semantic answer target and land at the intended assistant-answer start, including first/last boundaries;
-- perform a real user drag after programmatic jumps and confirm direction/adjacency re-resolve from the new reading context rather than the old programmatic cursor;
-- reproduce pull-to-refresh while an existing automatic/list load is active and confirm no invisible refresh spacer remains and no duplicate list request is issued;
-- inspect diagnostics after list refresh: with `pageCount=28` and authoritative `totalCount=29`, `resultCount` must not exceed 29; confirm excess off-page discard fields if stale cache contains more than one candidate;
-- recheck already-accepted b25 sub-results for regression only: Copy, timestamps, persisted Preferences;
+- rapidly tap previous/next through a long conversation while native scrolling is still moving; each tap must advance one semantic answer target, land at the intended assistant-answer start and avoid the b26 start-delay/mid-animation hitch;
+- interrupt a programmatic jump with a real user drag and confirm direction/adjacency re-resolve from the actual reading context rather than the old programmatic cursor;
+- verify timestamps appear above both user and assistant messages while retaining authoritative date/time behavior;
+- verify assistant Copy remains functional, visually compact and subdued in both Light and Dark appearance; user context Copy must still work;
+- repeatedly exercise cold list load, manual refresh and top pull. Refresh state must be visibly identifiable and completion must not leave a persistent blank top region or trigger a duplicate list request;
+- if top blankness reproduces, capture `conversationList.refreshPresentation` / `conversationList.refreshTopNormalized` diagnostics so offset/inset state is evidenced;
+- inspect diagnostics after list refresh: with `pageCount=28` and authoritative `totalCount=29`, `resultCount` must remain at or below 29; do not alter the already-accepted reconciliation without contradictory evidence;
 - retain A/B independent semantic scroll anchors and Sync/Reload re-derived answer anchors;
 - basic Dynamic Type/VoiceOver sanity for the compact header/actions/control.
 
@@ -213,13 +220,12 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-`DEV-conversation-round-count` remains the Active serialized development Work. Exact b26 product/config source is `7f845662185ef4e65a741bd37b09f9e9baebd723`; later governance/docs-only commits do not redefine the Runtime Candidate.
+`DEV-conversation-round-count` remains the Active serialized development Work. Exact b27 product/config source is `3bda8d8d78ecd03e4a8d0b2343458189df4b000e`; later governance/docs-only commits do not redefine the Runtime Candidate.
 
 Next sequence:
 
-1. finish durable docs/PR synchronization without modifying b26 product/config source;
-2. install/test exact b26 Artifact `9664109976` on the accepted iPhone/iOS17 scope using the focused matrix above;
-3. if any b26 Runtime defect remains, record evidence first and allocate a new unique candidate before producing corrected test output;
-4. only after accepted Runtime update checkpoint/state/index and obtain final PR merge-view CI evidence as applicable;
-5. merge/close this Work as Stable for the tested scope only after those gates pass;
-6. then proceed `DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`.
+1. install/test exact b27 Runtime Artifact `9675208202` / IPA SHA `a8cccaf41a850d55b455d0484f4baaf3c051075ba5bad9045a739311f1c6288b` on the accepted iPhone/iOS17 scope using the focused matrix above;
+2. if any b27 Runtime defect remains, record evidence first and allocate a new unique candidate before producing corrected test output;
+3. only after accepted Runtime update checkpoint/state/index and obtain/confirm final PR merge-view evidence as applicable;
+4. merge/close this Work as Stable for the tested scope only after those gates pass;
+5. then proceed `DEV-send-stream -> earliest daily-chat Candidate -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`.

@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-29 through b44 Runtime rejection plus explicit API-product rejection and hybrid-Web background-resilience gate._
+_Last updated: 2026-08-29 through exact b45 Native-realtime-handoff diagnostic Candidate; Runtime handoff evidence pending._
 
 ## Current accepted merged baseline
 
@@ -15,7 +15,7 @@ _Last updated: 2026-08-29 through b44 Runtime rejection plus explicit API-produc
 
 Exact b42 (`e8946e48a0b5ad86b402faf5eabba627e3393adf`, legitimate Artifact `9709824510`) proved successful tested ChatGPT-account Send requires browser anti-abuse challenge output: PoW, Turnstile and `so` required; non-empty PoW + Turnstile were finalized before Send.
 
-Therefore pure-native/transient-auth ChatGPT-account Send remains blocked. Prohibited routes remain solver/bypass, browser-fingerprint replay, captured proof/token replay, guessed fallback endpoint, hidden/shadow challenge WebView, challenge harvesting, DOM/message scraping that creates a second native response authority, covered-Web Native composer injection and synthetic hidden Send clicks.
+Therefore pure-native/transient-auth ChatGPT-account Send remains blocked. Prohibited routes remain solver/bypass, browser-fingerprint replay, captured proof/token replay, guessed fallback endpoint, hidden/shadow challenge WebView, challenge harvesting, DOM answer/reasoning scraping, covered-Web Native composer injection, synthetic hidden Send clicks and hidden file-input injection.
 
 ### b43 visible-Web feasibility baseline
 
@@ -26,13 +26,13 @@ Primary-device Runtime:
 - first/re-entry, keyboard/typing, visible Web Send, stream scrolling, rapid scrolling and native return had no material reported problem;
 - Web `+` -> picker latency was roughly **100–200 ms**, not rejected as excessive;
 - Web photo selection filtered video assets;
-- standalone Settings Web-chat UX was not accepted as the final product interaction.
+- standalone Settings Web-chat UX was not accepted as final product interaction.
 
-Verified iOS17 boundary: the public `WKUIDelegate.runOpenPanelWith...` replacement hook is iOS18.4+, so the iOS17 target cannot publicly swap the page's upload chooser for a custom PHPicker through that delegate. Proper iOS17 photo+video attachment support still requires separately evidenced native attachment upload/handoff.
+Verified iOS17 boundary: public `WKUIDelegate.runOpenPanelWith...` replacement is iOS18.4+, so iOS17 cannot publicly replace the page's upload chooser with a custom PHPicker through that delegate. Proper iOS17 photo+video attachment support still requires separately evidenced native attachment upload/handoff.
 
-### b44 integrated full-page hybrid trial
+### b44 integrated full-page hybrid trial — product form rejected
 
-Exact identity:
+Exact b44:
 
 - Candidate `DEV-send-stream-0.1.0-b44`, `0.1.0 (44)`;
 - product/config source `f1503cf7121512a84e5c55a3642181c17324d791`;
@@ -42,74 +42,81 @@ Exact identity:
 - ZIP `sha256:33ba4a99fe933241ce8023e811f15d55dfa0d95cac2693f039bb6138d813face`;
 - IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
 
-Exact-device Runtime established:
+Runtime established that Web Send and tested `/c/<id>` A/B mapping worked, but immediate Native Sync could expose the just-sent user message while assistant output already visible in Web remained absent until a later Sync. No stable readiness delay/signal was established. The same conversation also had to be loaded by Native and then Web. The full-page Native -> Web -> Native product form is rejected / superseded; do not patch it with arbitrary delay, polling or repeated automatic Sync.
 
-1. Web Send worked.
-2. Immediate `返回并同步` could surface the just-sent user message while assistant output already visible in Web was still absent from Native.
-3. Repeated immediate Native Sync still could miss that assistant output.
-4. A later Sync after waiting could expose it.
-5. Tested Native A/B IDs mapped to the corresponding Web `/c/<id>` conversations.
-6. A/B switching caused Web to load/render the selected conversation again.
+## Current product decision — Web Send only if Native can own realtime response
 
-Conclusion: Native Detail is eventually consistent relative to Web generation in this tested sequence; no stable readiness delay/signal was established. Do not add timer/poll/retry/repeated automatic Sync. The full-page Native -> Web -> Native product form is rejected / superseded.
+The user explicitly rejects the separate API product route.
 
-## Latest product decision — API route rejected
+The user's preferred architecture is now:
 
-The user explicitly stated that the separately authenticated/billed officially supported API product architecture will **not** be accepted for this client.
+`Native composer/history/presentation -> user-visible official Web performs the legal protected Send -> Native attaches/resumes/subscribes to the same already-started response without resending prompt -> Native owns user-visible reasoning/final streaming and later background lifecycle.`
 
-Do not keep the API product as an active Phase-9 alternative unless the user explicitly reverses that decision.
+This is the current **target**, not an accepted capability. The key unknown is whether the official ChatGPT account flow exposes a same-response continuation mechanism that Native can legitimately consume without issuing another Send.
 
-The active product question is now only:
+The user's alternative suggestion of completely hiding Web and hooking/injecting the Web Send control is not an accepted route because it would make the protected browser Send flow a hidden/shadow transport under a Native facade.
 
-1. prove an existing-ChatGPT-account visible-Web-assisted architecture can meet the required interaction/background behavior; or
-2. defer ChatGPT-account Send.
+## Exact b45 — Native realtime handoff diagnostic probe
 
-## New hard gate — background reasoning/stream resilience
+Candidate identity:
 
-The user reports a high-frequency failure mode that is unacceptable: while reasoning/streaming, putting the client in background for a while can lead to timeout/disconnect and force manual refresh on return.
+- `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`;
+- exact product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`;
+- Push Run / Job `33248952646` / `99091176390` — success;
+- PR Run / Job `33248954018` / `99091179731` — success;
+- Push Artifact `9713774868`;
+- Artifact ZIP digest `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`;
+- IPA `ChatGPTClient-0.1.0-b45-dev-send-stream.ipa`;
+- IPA SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`;
+- package identity independently verified as `0.1.0 (45)`, Candidate b45, source marker `accd7bdf29e4`, Release, iOS14 minimum, `[1,2]`, arm64.
 
-For any existing-account Web-assisted architecture, **background/lock survival or transparent foreground recovery is now a hard architecture gate before UI polish**.
+b45 adds an observation-only `ProtocolHandoffProbeViewController`, reached from Settings as `实时接管协议探测（诊断）`.
 
-Public iOS baseline:
+The probe structurally observes:
 
-- Apple documents that ordinary apps are suspended shortly after backgrounding unless granted additional finite execution time;
-- `beginBackgroundTask` is finite and may expire/terminate early;
-- therefore it may be used as a short-duration baseline but cannot be presented as a long-thinking guarantee.
+- original `/backend-api/f/conversation` SSE;
+- presence/shape only for `resume_conversation_token`, response/turn/conversation/message/async-task identity fields;
+- official-page post-Send same-origin fetch/XHR/EventSource/WebSocket connections;
+- stream-status / turn-stream / handoff / resume / subscribe / continuation-like route classes;
+- HTTP status/content type, header names, query names, structural JSON shape and identity-value shape only;
+- whether a later official-page connection naturally receives continuation-like events without another Send.
 
-TrollStore feasibility question:
+It does **not** replay resume tokens, guess endpoints, resend prompts, inject into hidden Web controls, scrape answer/reasoning text or capture protected values.
 
-- the repository already has a true-background experiment plan;
-- however keeping the main app process alive does **not** yet prove WebKit WebContent/network processes or the official ChatGPT stream remain alive;
-- exact-device Runtime must prove this on the primary iPhone 15 Pro Max / iOS17.0 TrollStore environment.
+**b45 classification: Code / CI / Artifact / package identity passed. Runtime handoff capability Unknown / Unverified. Stable/Frozen Send No.**
 
-New durable owner: `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`.
+## Background ordering — still a hard requirement, now downstream of handoff feasibility
 
-Required outcome:
+The user requires that long reasoning/streaming not routinely break after background/lock and force manual refresh.
 
-- preferred: same visible official-Web response remains alive across the user's normal background/lock habit and resumes without reload;
-- acceptable recovery: when a **known** background/WebKit lifecycle interruption occurs, foreground return performs one deterministic same-conversation recovery without resending the prompt and without requiring manual refresh;
-- rejected: routine manual refresh, timer/poll/retry loops, fake keepalive timers, hidden DOM recovery or permanent idle process immortality.
+TD-026 remains a hard product gate, but implementation order changed:
 
-A silently stalled Web response with no native-observable failure signal remains Unknown/Unverified and must be exercised in Runtime testing.
+- if b45/b46 prove Native can own/resume the response stream, background work should protect that Native response lifecycle;
+- only if Native handoff is disproven does WebKit true-background remain relevant to the fallback visible-Web architecture;
+- do not spend a Candidate on Web background/UI polish before the handoff evidence is interpreted.
 
-## Current architecture gate
+## Current Runtime gate
 
-### Active direction — existing ChatGPT account/history continuity, conditional
+Primary authority: iPhone 15 Pro Max / iOS17.0 TrollStore runtime.
 
-Native list/history/read/navigation + an **explicitly visible official-Web composer/live-response surface** remains the only non-deferred Send direction.
+Exact b45 test:
 
-It is **not accepted** until the background-resilience gate passes. Do not allocate a polished embedded-Web b45 merely to test layout first.
+1. Settings -> clear diagnostics if practical.
+2. Open `实时接管协议探测（诊断）`.
+3. Use default ChatGPT / primary assistant.
+4. Send one sufficiently long new-chat prompt and let it run normally.
+5. If practical, send one existing-chat prompt and let it run normally.
+6. Do not manually refresh during capture.
+7. Export diagnostics JSON and analyze for an official same-response continuation mechanism.
 
-### Deferred direction
-
-If the background-resilience experiment is No-go — Web generation routinely disconnects/stalls after normal background/lock and cannot transparently recover without violating security/authority rules — defer ChatGPT-account Send rather than hiding a fragile Web transport behind Native UI.
+If positive evidence exists, the next Candidate may test Native no-resend continuation parity against the **exact observed** route/structure. If negative, do not guess a resume endpoint.
 
 ## Candidate / PR state
 
-- b39-b44 identities are permanently reserved.
-- No b45 is allocated.
+- b39-b45 identities are permanently reserved.
+- b45 is the current Runtime diagnostic Candidate; any corrected product code after Artifact emission requires b46+.
 - PR #29 remains open/mergeable as an evidence branch and must not be merged as accepted production Send UX.
-- Exact b44 product source remains `f1503cf7121512a84e5c55a3642181c17324d791`; subsequent requirement/docs commits do not redefine that product Candidate.
+- Product source authority for b45 remains `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`; later docs-only commits do not redefine it.
 
 ## Authority / evidence rule
 
@@ -119,5 +126,5 @@ If the background-resilience experiment is No-go — Web generation routinely di
 - UI text/title is never identity authority.
 - Native Sync/Reload never resend/regenerate.
 - CI/Artifact success is not Runtime proof.
-- main-app process survival is not WebKit-stream survival proof.
+- no second Send may be created merely to obtain a response stream.
 - iOS17 evidence does not prove lower iOS/iPad; non-personal workspace/account switch and native attachment handoff remain Unknown/Unverified where not explicitly tested.

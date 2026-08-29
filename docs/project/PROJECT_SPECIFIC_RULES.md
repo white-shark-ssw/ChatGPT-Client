@@ -9,8 +9,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device Candidates.
-- Stable merged read baselines remain b9 native read, b15 recovery, b21 multi-conversation read state and b23 conversation-list cache core for recorded scopes. Stable does not mean Frozen.
-- Exact Phase 8 accepted Candidate is `DEV-conversation-round-count-0.1.0-b38`, product source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`, Runtime Artifact `9708425762`. Stable promotion waits only for final merge/state sync; Frozen remains No.
+- Stable merged baselines include b9 native read, b15 recovery, b21 multi-conversation read state, b23 conversation-list cache core, and **b38 Phase 8 conversation metadata/settings/round navigation** for their recorded scopes. Stable does not mean Frozen.
+- Exact Phase 8 accepted Candidate is `DEV-conversation-round-count-0.1.0-b38`, exact tested product source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`, Runtime Artifact `9708425762`; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`. Phase 8 is Stable / merged, Frozen No.
 
 ## UI / interaction contract
 
@@ -35,13 +35,13 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Long-conversation presentation geometry contract
 
-- b36 exact Runtime proved the dominant stutter owner was deferred giant-row/table geometry, not the quick-navigation animation alone: direct positioning reached ~3952ms in the tested trace and ordinary right-side scroll-indicator dragging also severely stuttered.
-- The accepted b37/b38 presentation baseline therefore uses `ConversationMessagePresentationProjection` as **ephemeral derived presentation state only**. It is not conversation authority and must never become a persistent second message store.
+- b36 exact Runtime proved the dominant stutter owner was deferred giant-row/table geometry, not quick-navigation animation alone: direct positioning reached ~3952ms in the tested trace and ordinary right-side scroll-indicator dragging also severely stuttered.
+- The Stable b37/b38 presentation baseline uses `ConversationMessagePresentationProjection` as **ephemeral derived presentation state only**. It is not conversation authority and must never become a persistent second message store.
 - Very long plain-text messages are split into bounded display chunks for presentation virtualization. Concatenated authoritative message content is unchanged; Copy always reads the full authoritative message.
 - Presentation derives deterministic row heights and prefix offsets for the current detail/layout width before interaction. Round targets and scroll anchors consume this geometry rather than asking UITableView to discover giant self-sized rows while scrolling.
 - `ConversationMessageCell` uses deterministic manual frame layout for one bounded display chunk. Do not restore one unbounded whole-message multiline UILabel + deferred automatic estimated geometry without new exact Runtime evidence.
 - Width/presentation changes may rebuild this ephemeral geometry. Do not persist row heights across unrelated details/layout widths as a new durable cache owner.
-- b37 exact-device feedback **“这次确实不卡了”** accepts this geometry/performance direction. b38 retains it unchanged and is also accepted.
+- b37 exact-device feedback accepted this geometry/performance direction; b38 preserved it and the merged Phase 8 baseline is Stable, Frozen No.
 
 ## Round-navigation contract
 
@@ -49,8 +49,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Rapid taps advance from the last requested derived round target via one transient presentation cursor; this is not a second semantic authority. A real user drag clears/replaces programmatic intent.
 - Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because drag delta reverses. b33 Runtime accepts this tested path.
 - Short and long quick-navigation distances use **one unified method**.
-- Accepted b38 programmatic presentation contract: resolve the semantic target through the already-derived O(1) deterministic prefix geometry, then continuously animate from the **current viewport offset** to the final target offset using one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`.
-- Do not perform a nonanimated pre-jump teleport/120pt lead step in the accepted path. b38 replaced that b35/b37 presentation style after the geometry bottleneck was removed.
+- Stable b38 programmatic presentation contract: resolve the semantic target through the already-derived O(1) deterministic prefix geometry, then continuously animate from the **current viewport offset** to the final target offset using one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`.
+- Do not perform a nonanimated pre-jump teleport/120pt lead step in the accepted path.
 - Do not call `scrollToRow` merely to discover target geometry during round navigation. The target offset is derived from presentation geometry.
 - Rapid retargeting stops the active animator at its current visual position and immediately starts toward the next semantic target. No debounce/wait gate.
 - Real finger drag cancels the programmatic animator and clears programmatic target ownership immediately.
@@ -80,7 +80,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Once a Candidate/Artifact identity has been produced, do not rebuild corrected product code under that same identity.
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
 - `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch.
-- Exact b24-b38 Phase 8 identities are permanently reserved once emitted. Any future correction must allocate a later unique Candidate.
+- Exact b24-b38 Phase 8 identities are permanently reserved once emitted. Any future correction must allocate a later unique Candidate under the appropriate Work.
 
 ## Manual recovery contract
 
@@ -120,7 +120,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Automatic cold start may provisionally publish last-successfully-verified cached **titles only** before current network verification. Provisional rows cannot authorize Detail until current scope is verified.
 - Temporary auth transport failure may retain valid provisional rows without converting it into logout or automatic retry.
 - Exact b23 accepts the current 60-second rapid-relaunch window. Manual refresh bypasses suppression and issues exactly one user-requested list refresh.
-- Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; b26 later accepted the authoritative-total cap for stale excess rows (`30 -> 29`, repeated `29/29`). Preserve that bound.
+- Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; merged Phase 8 b26 behavior accepts the authoritative-total cap for stale excess rows (`30 -> 29`, repeated `29/29`). Preserve that bound.
 - b29 Runtime accepts the tested right-top list refresh presentation with no persistent blank band above the first conversation.
 - Never add timer/polling/watchdog/retry, alternate list/auth endpoints, per-row Detail prefetch or another list/account authority solely for cache behavior.
 
@@ -159,7 +159,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source, and final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint's batch recovery point and never replay already-confirmed Candidate writes blindly.
-- Tooling-only temporary assembly branches are never Work/Candidate authority. Exact accepted Phase 8 product authority is b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
+- Tooling-only temporary assembly branches are never Work/Candidate authority. Exact Stable Phase 8 product authority is b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
 
 ## Critical invariants / prohibited routes
 
@@ -177,4 +177,4 @@ Follow existing repository style and established APIs/names. Do not rename inter
 
 ## Rule maintenance
 
-Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses remain in an Active checkpoint.
+Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses belong to an Active checkpoint; completed Work keeps durable conclusions here and history in Git/index.

@@ -5,8 +5,8 @@ This file records durable, evidence-backed technical decisions and rejected rout
 ## Current decisions
 
 ### TD-001 — Product direction is an iOS native ChatGPT client
-- **Status**: Confirmed; qualified by TD-024 for ChatGPT-account Send
-- **Decision**: Develop a native Swift/UIKit ChatGPT client as the product shell and native read/navigation baseline. Historical hidden-WebView chat architecture is not the product source baseline. TD-024 explicitly allows one user-visible official-Web Send surface because current account-session native Send is security-boundary blocked.
+- **Status**: Confirmed; qualified by TD-024/TD-025 for ChatGPT-account Send
+- **Decision**: Develop a native Swift/UIKit ChatGPT client as the product shell and native read/navigation baseline. Historical hidden-WebView chat architecture is not the product source baseline. TD-024 allows a user-visible official-Web Send surface because current account-session native Send is security-boundary blocked; TD-025 records that b44's full-page hybrid form is not acceptable product UX.
 
 ### TD-002 — Previous-project history is reference-only evidence
 - **Status**: Confirmed
@@ -48,7 +48,7 @@ This file records durable, evidence-backed technical decisions and rejected rout
 
 ### TD-011 — Official ChatGPT iOS interaction is default UI baseline
 - **Status**: Confirmed
-- **Decision**: Use official interaction patterns where acceptable, implemented natively where the architecture permits. TD-024's user-visible official Web surface must still be wrapped in native UIKit navigation and must meet the user's explicit smoothness gate.
+- **Decision**: Use official interaction patterns where acceptable, implemented natively where the architecture permits. Any TD-024 Web Send surface must still be wrapped/integrated with native UIKit and meet the user's explicit smoothness/product-coherence gates.
 
 ### TD-012 — Ship small usable candidates before roadmap completeness
 - **Status**: Confirmed
@@ -58,10 +58,11 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Status**: Confirmed / Runtime accepted for recorded recovery scope
 - **Decision**: `同步最新消息`, `重载当前会话` and terminal `重新加载` operate through authoritative `ConversationRepository` and never resend/regenerate or form retry/watchdog chains. Newer same-target recovery cancels/replaces the older active request before replacement ownership proceeds; generation/freshness rejects obsolete completions.
 - **Evidence**: b15/b21 recorded cancellation/rejoin behavior; PR #10 merged.
+- **Phase 9 extension**: b44 proved that an immediate Sync after Web Send may expose the user message while assistant output already visible in Web is still absent from native Detail; a later Sync can expose it. This does not authorize automatic polling/timer retry because no readiness signal or stable delay was evidenced.
 
 ### TD-014 — Reasoning UI includes expandable user-visible detail and two-pulse transition haptic
 - **Status**: Confirmed requirement; native implementation remains future/evidence-dependent
-- **Decision**: When an accepted native response owner receives explicitly user-visible reasoning detail/status, use subdued active reasoning/shimmer, explicit expand/collapse visible detail and two short haptic pulses on real-time reasoning→final transition. Never expose hidden chain-of-thought. b43 visible-Web Send does not scrape or mirror Web reasoning into native state.
+- **Decision**: When an accepted native response owner receives explicitly user-visible reasoning detail/status, use subdued active reasoning/shimmer, explicit expand/collapse visible detail and two short haptic pulses on real-time reasoning→final transition. Never expose hidden chain-of-thought. Visible-Web Send does not scrape or mirror Web reasoning into native state.
 
 ### TD-015 — Production detail diagnostics use privacy-safe hashed identity + list position
 - **Status**: Confirmed
@@ -77,11 +78,11 @@ This file records durable, evidence-backed technical decisions and rejected rout
 
 ### TD-018 — Compact read-mode startup uses native primary/list root and one navigation owner
 - **Status**: Confirmed for tested iPhone/iOS17 scope
-- **Decision**: With no selected conversation, compact startup uses `.primary` conversation list as the useful root. `UISplitViewController`/native navigation remains the native shell navigation owner. The b43 hybrid surface is entered explicitly through native navigation rather than replacing startup.
+- **Decision**: With no selected conversation, compact startup uses `.primary` conversation list as the useful root. `UISplitViewController`/native navigation remains the native shell navigation owner.
 
 ### TD-019 — Multi-conversation data remains one account-scoped repository authority
 - **Status**: Confirmed / merged Stable for recorded read-state scope; Frozen No
-- **Decision**: One `ConversationRepository` owns native production conversation state scoped by verified account context and keyed per authoritative conversation identity. Foreground selection is presentation only; selecting B does not delete A or cancel valid hidden A work. Do not retain raw graph payloads or UIKit hierarchies as cache. No arbitrary normal LRU capacity; memory-warning trimming remains evidence-backed policy. The visible Web surface is not another native repository.
+- **Decision**: One `ConversationRepository` owns native production conversation state scoped by verified account context and keyed per authoritative conversation identity. Foreground selection is presentation only; selecting B does not delete A or cancel valid hidden A work. Do not retain raw graph payloads or UIKit hierarchies as cache. No arbitrary normal LRU capacity; memory-warning trimming remains evidence-backed policy. A visible Web surface is not another native repository.
 
 ### TD-020 — Per-conversation scroll presentation is semantic anchor or follow-tail, not one raw offset
 - **Status**: Historical-reading anchor Runtime accepted; native active-response follow-tail still pending an accepted native response owner
@@ -112,17 +113,29 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Rejected**: PoW/Turnstile/Sentinel solver or bypass, browser-fingerprint emulation/replay, captured proof/token replay, guessed alternate/fallback endpoints, hidden production WebView transport, or presenting CI/Artifact/protocol-probe success as native Send success.
 - **Allowed path selected later**: TD-024 records the user's explicit selection of a user-visible official-Web Send surface.
 
-### TD-024 — ChatGPT-account Send uses an explicit user-visible official-Web surface while native read/navigation remain authoritative
-- **Status**: Architecture selected; exact b43 Code/CI/Artifact valid; Runtime acceptance pending; Stable/Frozen No
+### TD-024 — ChatGPT-account Send may use an explicit user-visible official-Web surface while native read/navigation remain authoritative
+- **Status**: Architecture permission retained; b43 visible-Web feasibility largely accepted; b44 full-page integrated form rejected; Stable/Frozen No
 - **Date**: 2026-08-29
-- **User decision**: After TD-023/b42 Path B, the user explicitly selected Option 2: keep the native shell/read/navigation and use a **user-visible official ChatGPT Web surface** for ChatGPT-account Send.
-- **Decision**: The visible Web surface may execute the official page's normal browser Send/challenge behavior using the existing default persistent `WKWebsiteDataStore`. It must be visibly presented to the user and wrapped in native UIKit navigation. It is not pure-native Send and must never be described as such.
-- **b43 implementation**: one process-resident shared `AuthWebViewController.hybridChat` loads `https://chatgpt.com/` on first visible presentation and reuses the same controller/WebView on ordinary return/re-entry without automatic reload. Settings exposes the explicit entry. No Root or `ConversationFeature.swift` product change.
-- **Exact b43 evidence**: source `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`; push Run/Job `33241032864` / `99070294478`; Artifact `9711364573`; IPA SHA `f2de8d02f3da7d9a8a8f58cd3028480a40849095b2b4b21e418e9c2e758d8108`; PR Run/Job `33241035013` / `99070299776`; independent package identity `0.1.0 (43)`, Candidate b43, source marker `f602d68ae95d`, iOS14 minimum, arm64. **This is not Runtime acceptance.**
-- **Hard Runtime gates**: first-entry responsiveness, resident re-entry/no avoidable reload, keyboard/typing, visible Web Send/stream scrolling, rapid scroll, native Back/return and attachment `+` responsiveness must be acceptable on exact iPhone/iOS17. Functional Send alone is insufficient.
-- **Rejected**: hidden/shadow WebView challenge harvesting, continuous DOM observation/state mirroring, prompt/answer scraping, native replay of captured challenge outputs, guessed current-conversation deep links, or programmatic file-input injection without evidence.
-- **Authority boundary**: `ConversationRepository` remains sole native conversation/list/detail/recovery authority; `AuthSessionStore` remains native auth/account authority; default persistent WebKit store remains persistent auth-secret authority. The visible Web surface owns only its own Web session/Send interaction while presented.
-- **Identity incident**: Artifact `9710515489` from Run `33238065644` carried b42 identity over newer hybrid code and is permanently rejected; it does not redefine legitimate b42 Artifact `9709824510`.
+- **User decision**: After TD-023/b42 Path B, the user selected Option 2: keep the native shell/read/navigation and use a **user-visible official ChatGPT Web surface** for ChatGPT-account Send.
+- **Decision**: A visible Web surface may execute the official page's normal browser Send/challenge behavior using the existing default persistent `WKWebsiteDataStore`. It must be visibly presented to the user and integrated with native UIKit. It is not pure-native Send and must never be described as such.
+- **b43 evidence**: one process-resident shared `AuthWebViewController.hybridChat` was smooth/resident enough in the tested sequence; Web `+` latency was ~100–200ms. The standalone Settings Web-chat form was not accepted as final UX; Web Photos filtered video on iOS17.
+- **b44 evidence**: native detail -> visible `/c/<id>` Web -> explicit `返回并同步` worked structurally, and tested A/B native IDs mapped to the corresponding Web conversations. However immediate Native reconciliation could expose the user message while assistant output already visible in Web remained unreadable until a later Sync. The same conversation was loaded by Native and then again by Web. User rejected this full-page interaction as making Native lose its purpose.
+- **Rejected**: hidden/shadow WebView challenge harvesting, continuous DOM observation/state mirroring, prompt/answer scraping, native replay of captured challenge outputs, Native composer injection into a covered/hidden Web composer, synthetic hidden Web Send clicks, and programmatic file-input injection without a supported/evidenced path.
+- **Authority boundary**: `ConversationRepository` remains sole native conversation/list/detail/recovery authority; `AuthSessionStore` remains native auth/account authority; default persistent WebKit store remains persistent auth-secret authority. A visible Web surface owns only its own Web session/Send interaction while presented.
+- **Identity incident**: Artifact `9710515489` from Run `33238065644` carried b42 identity over newer hybrid code and is permanently rejected; legitimate b42 remains Artifact `9709824510`.
+
+### TD-025 — b44 proves a product-architecture ceiling for existing-account hybrid Send
+- **Status**: Confirmed by exact b44 Runtime; new product code blocked pending explicit architecture choice
+- **Date**: 2026-08-29
+- **Exact evidence**: b44 `DEV-send-stream-0.1.0-b44`, source `f1503cf7121512a84e5c55a3642181c17324d791`, Artifact `9712583513`, IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`; detailed Runtime record `docs/project/runtime-evidence/DEV-send-stream-b44-runtime.md`.
+- **Runtime conclusion**: Web Send can succeed and `/c/<id>` mapping can be correct while immediate Native Detail reconciliation still lacks assistant output already visible in Web. Later Sync can expose it. No stable completion/readiness delay or signal was established. A/B switching also causes Web to reload/render the conversation separately from the already-loaded Native Detail.
+- **Decision**: Do not patch the b44 architecture with arbitrary delay, automatic polling/retry or repeated Sync. Treat the full-page Native->Web->Native form as product-rejected.
+- **Native-over-hidden-Web proposal**: A Native composer that forwards text into a fully covered/hidden official Web composer would require programmatic DOM/JS/input automation of the protected browser Send flow under current evidence. This is not accepted; it would turn Web into hidden/shadow transport rather than the explicitly visible user interaction permitted by TD-024.
+- **Architecture gate**:
+  1. **A — account-compatible compromise**: Native history/read/navigation + an **explicitly visible** embedded official-Web composer/live-response panel directly operated by the user. This removes b44's separate full-page browser-like navigation but does not pretend Send/stream is fully Native.
+  2. **B — truly Native supported API product**: separate officially supported API auth/billing, then Native composer/stream/attachments. Current OpenAI documentation states ChatGPT subscription billing and API billing are separate; do not claim API conversations are the existing ChatGPT-account history/session without explicit support evidence.
+  3. **C — defer account Send** until a supported ChatGPT-account transport exists that does not require browser-owned challenge output.
+- **Candidate rule**: b39-b44 remain permanently reserved. No b45 is allocated until the user explicitly resolves this architecture gate.
 
 ## Rule
 

@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-29 through exact b38 Runtime acceptance and final merge preparation.**
+**Initialized — 2026-08-25; refreshed 2026-08-29 through exact b38 Runtime acceptance and Phase 8 merge.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -52,7 +52,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Expanded built `Info.plist` is package identity authority for version/build/Candidate/source marker. Workflow Artifact name alone is not proof.
 - Once an Artifact identity is emitted it is permanently reserved; corrected product code must use a new Candidate/build.
 
-## Stable / accepted baselines
+## Stable / accepted merged baselines
 
 - Foundation b1 Stable/merged.
 - Auth/account b6 Stable/merged for recorded Plus/personal iPhone/iOS17 scope.
@@ -61,18 +61,21 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Recovery b15 Stable/merged; PR #10.
 - Multi-conversation read state b21 Stable/merged; PR #23; Frozen No.
 - Conversation-list cache core b23 Stable/merged; PR #24; Frozen No.
-- Phase 8 `DEV-conversation-round-count` exact b38 is **Runtime accepted** on the recorded iPhone/iOS17 scope and awaiting final PR merge/state sync before durable Stable promotion. Frozen remains No.
+- **Conversation metadata/settings/round navigation b38 Stable/merged; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`; Frozen No.**
 
-## Accepted Phase 8 product identity / evidence
+## Phase 8 accepted product identity / evidence
 
+- Work `DEV-conversation-round-count` completed and merged.
 - Candidate `DEV-conversation-round-count-0.1.0-b38`, version/build `0.1.0 (38)`.
-- Exact product/config source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
+- Exact tested product/config source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
 - Exact push Run / Job `33230823568` / `99043233637`, success.
 - Runtime Artifact `9708425762`; ZIP `sha256:50f77adb71bfce20a9fad4b63e4b879db04e23deb257c3810d157e6214730bf6`.
 - IPA `ChatGPTClient-0.1.0-b38-dev-conversation-round-count.ipa`; SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
 - Independent package inspection: Candidate b38, `0.1.0 (38)`, source marker `0d1801137e4e`, MinimumOSVersion 14.0, arm64.
-- Product-head PR merge-view Run / Job `33230825189` / `99043238346` succeeded on synthetic merge `fd1ed7508f04e9045b99239cad88dca8f6e01450` against then-current `main@a6e3b2bc...`; final merge still requires a fresh current-head/current-main check after docs-only commits.
-- User exact-device acceptance after b38: **“没问题了”**. No new diagnostics file accompanied the acceptance; do not invent numerical b38 Runtime timings.
+- User exact-device acceptance after b37 no-stutter baseline and b38 animation restoration: **“没问题了”**.
+- Final PR head `57b3efe576dbf187171439a68d6d2dfe2fba0ebc`; product source→final PR head delta was docs-only.
+- Fresh current-head synthetic merge before merge: `8168fc1aad006ab665f13f77972159f633361b61`, explicitly merging final PR head into then-current `main@a6e3b2bc...`.
+- Actual merged main commit: `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
 
 ## Accepted Phase 8 behavior / architecture
 
@@ -89,17 +92,16 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 ## Rendering scope boundary
 
-Current message body remains plain-string presentation. Markdown headings/lists/links/emphasis/code/tables and rich citation/annotation rendering belong to future `DEV-message-rendering`. Supplied comparison material showed raw Markdown/table syntax and raw `filecite`-adjacent boxed glyphs; do not strip/reinterpret them speculatively in Phase 8.
+Current message body remains plain-string presentation. Markdown headings/lists/links/emphasis/code/tables and rich citation/annotation rendering belong to future `DEV-message-rendering`. Supplied comparison material showed raw Markdown/table syntax and raw `filecite`-adjacent boxed glyphs; do not strip/reinterpret them speculatively in completed Phase 8 behavior.
 
 ## Runtime / evidence boundaries
 
-- Exact b38 Runtime is accepted on recorded iPhone/iOS17 scope.
-- Final Stable promotion is pending only PR merge and post-merge state/document synchronization; Frozen remains No.
+- Exact b38 Runtime is accepted on recorded iPhone/iOS17 scope and the recorded Phase 8 scope is Stable/merged. Frozen No.
 - iOS17 evidence does not prove iOS14–16 or iPad.
 - Read/recovery/multi-conversation/cache evidence remains primarily Plus/personal; non-personal workspace isolation remains Unknown/Unverified.
 - Supported real account-switch paths, some corrupt/provisional cache paths and other explicitly untested branches remain conditional/Unverified.
 - Current source has no evidenced authoritative Chat/Work type owner; never infer `工作` from title text.
-- CI/Artifact/merge-view success is never Runtime proof.
+- CI/Artifact/merge-view success is never Runtime proof; Phase 8 Stable status rests on both exact Runtime acceptance and final merge.
 
 ## Auto-refresh rule
 

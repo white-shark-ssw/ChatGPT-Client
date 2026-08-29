@@ -34,7 +34,7 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b46 诊断：请在官方 ChatGPT Web 正常发送，并在流式回答时短暂断网再恢复。官方 Web 自己成功打开 /backend-api/f/conversation/resume 后，本页会把该次真实 conversation_id + offset 仅暂存在内存，并用现有 WebKit 派生的临时 Cookie + Bearer 发一次 Native 同 body resume。不会复制 Conduit、Sentinel、Turnstile、PoW 或其他浏览器挑战值；不会记录提示词、回复/思考正文、原始 ID，也不会重发提示词或写入原生会话状态。"
+        explanationLabel.text = "b47 诊断：请在官方 ChatGPT Web 正常发送，并在流式回答时短暂断网再恢复。官方 Web 自己成功打开 /backend-api/f/conversation/resume 后，本页仍只发一次 Native 同 body resume；新增记录官方/Native header 名称和 Native 拒绝 JSON 的结构/安全错误码，不记录 header 值、提示词、回复/思考正文、原始 ID 或挑战值，也不会复制 Conduit/OAI 浏览器 header、重发提示词或写入原生会话状态。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -70,7 +70,7 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
         ])
 
         updateStatusLabel()
-        diagnostics.info(category: "protocol", name: "nativeResumeParityProbe.opened", fields: ["mode": "visible_web_official_resume_to_native_once_v1"])
+        diagnostics.info(category: "protocol", name: "nativeResumeParityProbe.opened", fields: ["mode": "visible_web_official_resume_to_native_once_v2"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -101,7 +101,11 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
             diagnostics.info(category: "protocol", name: "nativeResumeParityProbe.sendObserved", fields: ["pageKind": Self.safeToken(body["pageKind"] as? String)])
         case "official_resume_open":
             officialResumeOpenCount += 1
-            var fields = ["bodyValid": Self.safeBoolString(body["bodyValid"]), "pageKind": Self.safeToken(body["pageKind"] as? String)]
+            var fields = [
+                "bodyValid": Self.safeBoolString(body["bodyValid"]),
+                "pageKind": Self.safeToken(body["pageKind"] as? String),
+                "requestHeaderNames": Self.safeStringArray(body["requestHeaderNames"])
+            ]
             if let offset = body["offset"] as? NSNumber { fields["offset"] = offset.stringValue }
             diagnostics.info(category: "protocol", name: "nativeResumeParityProbe.officialResumeOpen", fields: fields)
             updateStatusLabel()
@@ -112,7 +116,9 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
                 "httpStatus": Self.safeNumberString(body["status"]),
                 "contentType": Self.safeToken(body["contentType"] as? String),
                 "bodyValid": Self.safeBoolString(body["bodyValid"]),
-                "pageKind": Self.safeToken(body["pageKind"] as? String)
+                "pageKind": Self.safeToken(body["pageKind"] as? String),
+                "requestHeaderNames": Self.safeStringArray(body["requestHeaderNames"]),
+                "responseHeaderNames": Self.safeStringArray(body["responseHeaderNames"])
             ]
             if let offset = body["offset"] as? NSNumber { fields["offset"] = offset.stringValue }
             diagnostics.info(category: "protocol", name: "nativeResumeParityProbe.officialResumeResponse", fields: fields)
@@ -155,6 +161,14 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
                 return
             }
 
+            let explicitHeaderNames = Self.safeHeaderNames(request.allHTTPHeaderFields?.keys.map { $0 } ?? [])
+            self.diagnostics.info(category: "protocol", name: "nativeResumeParityProbe.nativeRequestContext", fields: [
+                "explicitHeaderNames": explicitHeaderNames,
+                "transientAuthorizationInjection": "authorization",
+                "cookieSource": "ephemeral_webkit_derived",
+                "offset": String(offset)
+            ])
+
             let startedAt = Date()
             transientSession.dataTask(with: request) { [weak self] data, response, error in
                 guard let self else { return }
@@ -177,8 +191,13 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
                 let contentType = (httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "").split(separator: ";", maxSplits: 1).first.map(String.init)?.lowercased() ?? "none"
                 fields["httpStatus"] = String(httpResponse.statusCode)
                 fields["contentType"] = Self.safeToken(contentType)
+                fields["responseHeaderNames"] = Self.safeHeaderNames(httpResponse.allHeaderFields.keys.map { String(describing: $0) })
                 if let data {
-                    fields.merge(Self.summarizeSSE(data), uniquingKeysWith: { _, new in new })
+                    if (200..<300).contains(httpResponse.statusCode) && contentType == "text/event-stream" {
+                        fields.merge(Self.summarizeSSE(data), uniquingKeysWith: { _, new in new })
+                    } else {
+                        fields.merge(Self.summarizeRejectedBody(data), uniquingKeysWith: { _, new in new })
+                    }
                 } else {
                     fields["byteCount"] = "0"
                     fields["frameCount"] = "0"
@@ -243,6 +262,66 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
         ]
     }
 
+    private static func summarizeRejectedBody(_ data: Data) -> [String: String] {
+        var fields = ["byteCount": String(data.count), "frameCount": "0", "jsonFrameCount": "0", "terminal": "false"]
+        guard let object = try? JSONSerialization.jsonObject(with: data) else {
+            fields["rejectionBodyShape"] = "non_json"
+            return fields
+        }
+        fields["jsonFrameCount"] = "1"
+        fields["rejectionBodyShape"] = structuralJSONShape(object)
+        let tokens = safeErrorTokens(object, path: [], depth: 0)
+        if !tokens.isEmpty { fields["safeErrorTokens"] = tokens.sorted().prefix(16).joined(separator: ",") }
+        return fields
+    }
+
+    private static func structuralJSONShape(_ value: Any) -> String {
+        guard let shape = JSONShape(value, depth: 0), JSONSerialization.isValidJSONObject(shape), let data = try? JSONSerialization.data(withJSONObject: shape, options: [.sortedKeys]), let text = String(data: data, encoding: .utf8) else { return "unsupported" }
+        return String(text.prefix(4000))
+    }
+
+    private static func JSONShape(_ value: Any, depth: Int) -> Any? {
+        guard depth <= 6 else { return "depth_limit" }
+        if value is NSNull { return "null" }
+        if value is String { return "string" }
+        if value is Bool { return "bool" }
+        if value is NSNumber { return "number" }
+        if let array = value as? [Any] {
+            var result: [String: Any] = ["type": "array", "count": array.count]
+            if let first = array.first, let item = JSONShape(first, depth: depth + 1) { result["item"] = item }
+            return result
+        }
+        if let dictionary = value as? [String: Any] {
+            var result: [String: Any] = [:]
+            for key in dictionary.keys.sorted().prefix(64) {
+                let safeKey = safeStructuralKey(key)
+                guard safeKey != "{key}", let child = dictionary[key], let childShape = JSONShape(child, depth: depth + 1) else { continue }
+                result[safeKey] = childShape
+            }
+            return result
+        }
+        return "unsupported"
+    }
+
+    private static func safeErrorTokens(_ value: Any, path: [String], depth: Int) -> [String] {
+        guard depth <= 6 else { return [] }
+        if let array = value as? [Any] { return array.prefix(16).flatMap { safeErrorTokens($0, path: path, depth: depth + 1) } }
+        guard let dictionary = value as? [String: Any] else { return [] }
+        var result: [String] = []
+        let allowedValueKeys: Set<String> = ["code", "error_code", "type", "error_type", "status"]
+        for key in dictionary.keys.sorted().prefix(64) {
+            let safeKey = safeStructuralKey(key)
+            guard safeKey != "{key}", let child = dictionary[key] else { continue }
+            let nextPath = path + [safeKey]
+            if allowedValueKeys.contains(key.lowercased()), let string = child as? String {
+                let token = safeToken(string)
+                if token != "none_or_redacted" { result.append("\(nextPath.joined(separator: "."))=\(token)") }
+            }
+            result.append(contentsOf: safeErrorTokens(child, path: nextPath, depth: depth + 1))
+        }
+        return result
+    }
+
     private static func scanStructure(_ value: Any, depth: Int, eventTypes: inout Set<String>, identityKeys: inout Set<String>) {
         guard depth <= 7 else { return }
         if let array = value as? [Any] {
@@ -269,10 +348,25 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
     }
 
     private static let safeTokenCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./:{}-+,")
+    private static let safeStructuralKeyCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:-")
 
     private static func safeToken(_ value: String?) -> String {
         guard let value, !value.isEmpty, value.count <= 180, value.unicodeScalars.allSatisfy({ safeTokenCharacters.contains($0) }) else { return "none_or_redacted" }
         return value
+    }
+
+    private static func safeStructuralKey(_ value: String) -> String {
+        guard !value.isEmpty, value.count <= 80, value.unicodeScalars.allSatisfy({ safeStructuralKeyCharacters.contains($0) }) else { return "{key}" }
+        return value
+    }
+
+    private static func safeHeaderNames<S: Sequence>(_ values: S) -> String where S.Element == String {
+        values.map { $0.lowercased() }.filter { safeStructuralKey($0) != "{key}" }.sorted().prefix(64).joined(separator: ",")
+    }
+
+    private static func safeStringArray(_ value: Any?) -> String {
+        guard let values = value as? [Any] else { return "none" }
+        return values.prefix(64).compactMap { $0 as? String }.map { $0.lowercased() }.filter { safeStructuralKey($0) != "{key}" }.sorted().joined(separator: ",")
     }
 
     private static func safeNumberString(_ value: Any?) -> String {
@@ -306,6 +400,28 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
         } catch (_) { return null; }
       };
 
+      const collectHeaderNames = (input, init) => {
+        const names = new Set();
+        const add = headers => {
+          if (!headers) return;
+          try {
+            const normalized = new Headers(headers);
+            for (const key of normalized.keys()) names.add(String(key).toLowerCase());
+          } catch (_) {}
+        };
+        try {
+          if (typeof Request !== 'undefined' && input instanceof Request) add(input.headers);
+          else if (input && input.headers) add(input.headers);
+        } catch (_) {}
+        if (init && init.headers) add(init.headers);
+        return Array.from(names).sort().slice(0, 64);
+      };
+
+      const responseHeaderNames = response => {
+        try { return Array.from(response.headers.keys()).map(value => String(value).toLowerCase()).sort().slice(0, 64); }
+        catch (_) { return []; }
+      };
+
       window.fetch = async function(input, init) {
         let path = '';
         let host = '';
@@ -324,13 +440,14 @@ final class NativeResumeParityProbeViewController: UIViewController, WKNavigatio
         }
 
         const candidate = isResume ? parseResumeBody(init && Object.prototype.hasOwnProperty.call(init, 'body') ? init.body : null) : null;
-        if (isResume) post({ kind: 'official_resume_open', pageKind: pageKind(), bodyValid: !!candidate, offset: candidate ? candidate.offset : null });
+        const requestHeaderNames = isResume ? collectHeaderNames(input, init) : [];
+        if (isResume) post({ kind: 'official_resume_open', pageKind: pageKind(), bodyValid: !!candidate, offset: candidate ? candidate.offset : null, requestHeaderNames });
 
         try {
           const response = await originalFetch(input, init);
           if (isResume) {
             const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-            post({ kind: 'official_resume_response', pageKind: pageKind(), status: response.status, contentType, bodyValid: !!candidate, offset: candidate ? candidate.offset : null });
+            post({ kind: 'official_resume_response', pageKind: pageKind(), status: response.status, contentType, bodyValid: !!candidate, offset: candidate ? candidate.offset : null, requestHeaderNames, responseHeaderNames: responseHeaderNames(response) });
             if (candidate && response.status === 200 && contentType === 'text/event-stream') {
               post({ kind: 'native_resume_ready', conversationID: candidate.conversationID, offset: candidate.offset });
             }

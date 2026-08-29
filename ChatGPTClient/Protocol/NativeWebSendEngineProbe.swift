@@ -55,7 +55,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b50 诊断：继续验证原生输入 + 官方 Web protected Send；本版在已证实的 assistant compact append 上下文中继续接收 value-only v:string 连续帧，使长回答正文在进入 Web React 前完整转给 Native。不会把提示词/回答写入诊断日志。仍只验证新会话与连续两轮，不代表生产架构已接受。"
+        explanationLabel.text = "b51 诊断：继续验证原生输入 + 官方 Web protected Send；本版仅修正新会话首轮的已证实结构差异：assistant value-only 连续正文遇到 title_generation 时不再清空 continuation，并记录该事件是否确实发生在正文上下文中。不会把提示词/回答写入诊断日志。仍属诊断例外，不代表生产架构已接受。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -118,7 +118,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b50_native_composer_value_continuation_filter", "surface": "native_over_fullsize_web", "scope": "new_chat_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b51_native_composer_title_generation_preserve", "surface": "native_over_fullsize_web", "scope": "new_chat_diagnostic"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -227,6 +227,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "explicitTextPatchCount": Self.safeNumberString(body["explicitTextPatchCount"]),
                 "contextualValueStringCount": Self.safeNumberString(body["contextualValueStringCount"]),
                 "contextualValueStringCharacters": Self.safeNumberString(body["contextualValueStringCharacters"]),
+                "titleGenerationWhileContinuationCount": Self.safeNumberString(body["titleGenerationWhileContinuationCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
@@ -435,7 +436,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         removedTextCharacters: aggregate.removedTextCharacters,
         explicitTextPatchCount: aggregate.explicitTextPatchCount,
         contextualValueStringCount: aggregate.contextualValueStringCount,
-        contextualValueStringCharacters: aggregate.contextualValueStringCharacters
+        contextualValueStringCharacters: aggregate.contextualValueStringCharacters,
+        titleGenerationWhileContinuationCount: aggregate.titleGenerationWhileContinuationCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -483,6 +485,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           return '';
         }
 
+        const titleGenerationWhileContinuation = aggregate.textContinuationActive && payload && typeof payload === 'object' && !Array.isArray(payload) && payload.type === 'title_generation' && !Object.prototype.hasOwnProperty.call(payload, 'o') && !Object.prototype.hasOwnProperty.call(payload, 'p');
+        if (titleGenerationWhileContinuation) {
+          aggregate.titleGenerationWhileContinuationCount += 1;
+          const nonDataLines = lines.filter(line => !line.startsWith('data:'));
+          return nonDataLines.concat(['data: ' + JSON.stringify(payload)]).join('\n') + '\n\n';
+        }
+
         aggregate.textContinuationActive = false;
         const result = scrubTextPatches(payload);
         aggregate.removedTextPatchCount += result.removedTextPatchCount;
@@ -496,7 +505,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
       const filteredResponse = response => {
         if (!response.body || typeof response.body.getReader !== 'function' || typeof ReadableStream !== 'function') return response;
         const reader = response.body.getReader();
-        const aggregate = { frameCount: 0, removedTextPatchCount: 0, removedTextCharacters: 0, explicitTextPatchCount: 0, contextualValueStringCount: 0, contextualValueStringCharacters: 0, textContinuationActive: false, terminal: false };
+        const aggregate = { frameCount: 0, removedTextPatchCount: 0, removedTextCharacters: 0, explicitTextPatchCount: 0, contextualValueStringCount: 0, contextualValueStringCharacters: 0, titleGenerationWhileContinuationCount: 0, textContinuationActive: false, terminal: false };
         let buffer = '';
         const body = new ReadableStream({
           async pull(controller) {

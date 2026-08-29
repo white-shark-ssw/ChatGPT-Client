@@ -1452,8 +1452,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         case next
     }
 
-    private static let answerJumpLeadDistance: CGFloat = 120
-    private static let answerJumpAnimationDuration: TimeInterval = 0.22
+    private static let answerJumpAnimationDuration: TimeInterval = 0.35
 
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
@@ -2104,33 +2103,22 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         stopAnswerJumpAnimation(clearTarget: false)
         let currentOffsetY = tableView.contentOffset.y
         programmaticAnswerTargetRow = targetRow
-        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "targetRole": "user", "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY), "presentationMode": "geometry_then_ease_out"])
-        let geometryStartedAt = ProcessInfo.processInfo.systemUptime
         let finalOffsetY = answerTargetOffsetY(for: targetRow)
-        let geometryLookupDurationMs = (ProcessInfo.processInfo.systemUptime - geometryStartedAt) * 1000
-        let finalOffset = CGPoint(x: tableView.contentOffset.x, y: finalOffsetY)
-        let bounds = answerJumpScrollBounds()
-        let requestedLeadY = direction == .previous ? finalOffsetY + Self.answerJumpLeadDistance : finalOffsetY - Self.answerJumpLeadDistance
-        let leadY = min(max(requestedLeadY, bounds.minimumY), bounds.maximumY)
-        let leadDistance = abs(finalOffsetY - leadY)
-        let leadPositionStartedAt = ProcessInfo.processInfo.systemUptime
-        tableView.setContentOffset(CGPoint(x: finalOffset.x, y: leadY), animated: false)
-        let leadPositionDurationMs = (ProcessInfo.processInfo.systemUptime - leadPositionStartedAt) * 1000
-        diagnostics.info(category: "interaction", name: "answerJump.positioned", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "geometry_then_ease_out", "geometryLookupDurationMs": String(format: "%.2f", geometryLookupDurationMs), "leadPositionDurationMs": String(format: "%.2f", leadPositionDurationMs), "leadDistancePoints": String(format: "%.2f", leadDistance)])
+        let travelDistance = abs(finalOffsetY - currentOffsetY)
+        diagnostics.info(category: "interaction", name: "answerJump.requested", fields: ["direction": direction.rawValue, "targetRow": String(targetRow), "targetRole": "user", "retargeting": retargeting ? "true" : "false", "currentOffsetY": String(format: "%.2f", currentOffsetY), "travelDistancePoints": String(format: "%.2f", travelDistance), "presentationMode": "continuous_geometry_animation"])
         updateAnswerJumpButton()
-        guard leadDistance > 0.5 else {
-            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "geometry_then_ease_out", "leadDistancePoints": String(format: "%.2f", leadDistance), "landingErrorPoints": String(format: "%.2f", tableView.contentOffset.y - finalOffsetY)])
+        guard travelDistance > 0.5 else {
+            diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "continuous_geometry_animation", "travelDistancePoints": String(format: "%.2f", travelDistance), "landingErrorPoints": String(format: "%.2f", tableView.contentOffset.y - finalOffsetY)])
             return
         }
-        let animator = UIViewPropertyAnimator(duration: Self.answerJumpAnimationDuration, curve: .easeOut) { [weak self] in
-            self?.tableView.contentOffset = finalOffset
-        }
+        let finalOffset = CGPoint(x: tableView.contentOffset.x, y: finalOffsetY)
+        let animator = UIViewPropertyAnimator(duration: Self.answerJumpAnimationDuration, curve: .easeInOut) { [weak self] in self?.tableView.contentOffset = finalOffset }
         answerJumpAnimator = animator
         animator.addCompletion { [weak self, weak animator] _ in
             guard let self, let animator, self.answerJumpAnimator === animator, self.programmaticAnswerTargetRow == targetRow else { return }
             self.answerJumpAnimator = nil
             let landingError = self.tableView.contentOffset.y - finalOffsetY
-            self.diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "geometry_then_ease_out", "leadDistancePoints": String(format: "%.2f", leadDistance), "landingErrorPoints": String(format: "%.2f", landingError)])
+            self.diagnostics.info(category: "interaction", name: "answerJump.completed", fields: ["targetRow": String(targetRow), "targetRole": "user", "presentationMode": "continuous_geometry_animation", "travelDistancePoints": String(format: "%.2f", travelDistance), "landingErrorPoints": String(format: "%.2f", landingError)])
             self.updateAnswerJumpButton()
         }
         animator.startAnimation()

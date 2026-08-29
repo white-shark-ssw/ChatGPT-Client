@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b50 Runtime materially passes the core diagnostic architecture on turns 2–3: Native composer -> official Web protected Send -> intercepted SSE -> incremental Native assistant text -> terminal -> next Native turn all work, while Web assistant DOM text remains small. New-chat turn 1 still truncates after one contextual value-only continuation. Historical b40/b41 evidence says new-chat first Send emits `title_generation`; b50 clears assistant-text continuation on every non-value structural frame, so b51 is allocated to test the smallest evidence-backed correction: preserve continuation only across `title_generation`, with a structural counter proving whether that event actually occurred while continuation was active. TD-024/TD-025 remain unchanged; b48-b51 are diagnostic exceptions only.**
+**Active — exact b50 Runtime materially passes the core diagnostic architecture on turns 2–3: Native composer -> official Web protected Send -> intercepted SSE -> incremental Native assistant text -> terminal -> next Native turn all work, while Web assistant DOM text remains small. New-chat turn 1 still truncates after one contextual value-only continuation. Historical b40/b41 evidence says new-chat first Send emits `title_generation`; b51 now implements only the smallest test of that structural difference by preserving assistant-text continuation across exact `title_generation` and recording whether it occurred while continuation was active. b51 Code/CI/Artifact/package identity are complete; exact-device Runtime is the next human gate. TD-024/TD-025 remain unchanged; b48-b51 are diagnostic exceptions only.**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / Native composer / Web Send engine / filtered SSE / hidden Web diagnostic`
@@ -10,80 +10,70 @@
 - **PR**: #29 — open / mergeable / not merged; evidence branch only.
 - **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
 - **Stable native predecessor**: b38.
-- **Exact b50 Candidate**: `DEV-send-stream-0.1.0-b50`, `0.1.0 (50)`.
-- **Exact b50 product/config source**: `837d5feeff05d198785f884ccf9cc4c1f71412ec`; permanently reserved.
-- **b50 Push CI**: `33270436935 / 99147835200` — success.
-- **b50 PR CI**: `33270439156 / 99147841433` — success.
-- **b50 Artifact**: `9719942650`.
-- **b50 ZIP SHA-256**: `dde656d41ea767714586a92a46740bb9bfe51531b74673e266a58aeec5dce99b`.
-- **b50 IPA SHA-256**: `26431faabe0b2c836fd6c1d7aa84d31cf8811ea09d57a8ad692e127ecb42613c`.
-- **b50 package identity**: `0.1.0 (50)` / Candidate b50 / source marker `837d5feeff05` / Release / iOS14 minimum / `[1,2]` / arm64.
-- **Allocated next Candidate**: `DEV-send-stream-0.1.0-b51`, `0.1.0 (51)`.
+- **Exact b50 Candidate**: `DEV-send-stream-0.1.0-b50`, `0.1.0 (50)`; product source `837d5feeff05d198785f884ccf9cc4c1f71412ec`; Artifact `9719942650`; IPA SHA `26431faabe0b2c836fd6c1d7aa84d31cf8811ea09d57a8ad692e127ecb42613c`; permanently reserved.
+- **Exact b51 Candidate**: `DEV-send-stream-0.1.0-b51`, `0.1.0 (51)`.
+- **Exact b51 product/config source**: `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`; permanently reserved after Artifact emission.
+- **b51 Push CI**: Run `33271794573`, Job `99151433241` — success.
+- **b51 PR CI**: Run `33271796259`, Job `99151437702` — success.
+- **b51 Artifact**: `9720327648`.
+- **b51 Artifact ZIP digest**: `sha256:247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`.
+- **b51 IPA SHA-256**: `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
+- **b51 package identity**: independently verified `0.1.0 (51)` / Candidate b51 / `DiagnosticsSourceCommit=bd8f056cc4d1` / Release / iOS14 minimum / UIDeviceFamily `[1,2]` / arm64.
 - **Stable/Frozen Send**: No.
 
 ## Resume / conflict guard
 
-Current-session Full/Light guard:
+Current-session Full/Light guard passed before b51 product edits:
 
 - reread current branch `AGENTS.md`, then `docs/project/START_HERE.md`, Development router, project profile/state/module/technical/rules/docs policy, `CLIENT_ARCHITECTURE_GAP_REVIEW.md` and `SEND_STREAM_PREFLIGHT.md`;
-- user feedback uniquely continues `DEV-send-stream` exact b50 Runtime;
-- real feature branch before this checkpoint was `93229404fe62c8a44eb79fa20e564abea5aec695`;
-- branch delta from exact b50 product source `837d5fe...` to `93229404...` is docs-only checkpoint state;
-- PR #29 remains open / mergeable / not merged;
-- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-- `docs/project/current/dev/` contains no second Active development checkpoint;
-- repository search found no existing b51 allocation;
-- b50 is immutable after Artifact emission; any product correction is b51+.
+- user feedback uniquely continued `DEV-send-stream` exact b50 Runtime;
+- PR #29 remained open / mergeable / not merged;
+- `main` remained `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
+- no second Active development checkpoint existed;
+- b50 product source -> pre-b51 branch head was docs-only;
+- b51 identity was unallocated.
+
+Batch A completed at `4d1fd43059a9ca9811af0726a1df0774a5ea712f` with b50 Runtime evidence + b51 checkpoint allocation. Tooling-only assembly branch `assembly/dev-send-stream-b51-20260830` was created from that exact head. Audit showed exactly four expected files and no product-owner spillover:
+
+- `.github/workflows/ios-foundation.yml`
+- `ChatGPTClient.xcodeproj/project.pbxproj`
+- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`
+- `ChatGPTClient/SettingsViewController.swift`
+
+Core Swift audit showed only b51 label/mode, one structural metric, exact title-generation continuation preservation, and aggregate-field changes. Immediately before publish the real branch still exactly matched `4d1fd430...`; non-force fast-forward to exact b51 product/config source `bd8f056...` succeeded.
 
 ## Exact b50 Runtime — 2026-08-29
 
-Detailed evidence file: `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md`.
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md`.
 
-Uploaded diagnostics identity:
-
-- app `0.1.0`, build `50`;
-- Candidate `DEV-send-stream-0.1.0-b50`;
-- source `837d5feeff05`;
-- Release;
-- iPhone / iOS17.0.
-
-User direct observation:
-
-- three sequential Native-composer turns were tested in one fresh probe session;
-- turns 2 and 3 were complete and visibly incremental, described as effectively character-by-character output;
-- turn 1 was long server-side but Native output lost a middle section;
-- overall interaction quality was reported as very good.
+User tested three sequential Native-composer turns in one fresh probe session and described the overall result as very good. Turns 2 and 3 were complete and visibly incremental, effectively character-by-character; turn 1 was a long server reply whose Native display lost a middle section.
 
 ### Turn 1 — new-chat first turn / incomplete
 
-- official Send HTTP200 `text/event-stream`, `filtered=true`;
-- `frameCount=34`, terminal true, composer ready afterward;
+- official Send HTTP200 `text/event-stream`, `filtered=true`, terminal true, composer ready;
+- `frameCount=34`;
 - `explicitTextPatchCount=2`;
 - `contextualValueStringCount=1`, `contextualValueStringCharacters=16`;
 - `nativeDeltaCount=3`, `nativeCharacters=35`;
-- `removedTextPatchCount=3`, `removedTextCharacters=35`;
-- `webAssistantTextCharacters=45`;
-- direct user observation says answer was materially longer, so complete Native interception is rejected for this turn.
+- `webAssistantTextCharacters=45`.
+
+Complete Native interception is rejected for this turn because direct user observation says the answer was materially longer.
 
 ### Turn 2 — accepted positive diagnostic turn
 
-- official Send HTTP200 SSE, terminal true, composer ready;
-- `frameCount=21`;
+- HTTP200 SSE, terminal true, composer ready;
 - `explicitTextPatchCount=2`;
 - `contextualValueStringCount=8`, `contextualValueStringCharacters=152`;
 - `nativeDeltaCount=10`, `nativeCharacters=191`;
-- `removedTextPatchCount=10`, `removedTextCharacters=191`;
 - `webAssistantTextCharacters=45`;
 - user observed complete incremental output.
 
 ### Turn 3 — strongest accepted positive diagnostic turn
 
-- official Send HTTP200 SSE, terminal true, composer ready;
-- `frameCount=42`;
+- HTTP200 SSE, terminal true, composer ready;
 - `explicitTextPatchCount=2`;
 - `contextualValueStringCount=29`, `contextualValueStringCharacters=652`;
 - `nativeDeltaCount=31`, `nativeCharacters=671`;
-- `removedTextPatchCount=31`, `removedTextCharacters=671`;
 - `webAssistantTextCharacters=45`;
 - user observed complete incremental output.
 
@@ -91,102 +81,65 @@ Accepted b50 conclusions:
 
 1. Context-bound value-only `v:string` continuation is real and carries most assistant text on successful turns.
 2. Native incremental text delivery is Runtime Confirmed for this diagnostic path; it is not a completion-time dump.
-3. Three sequential Native submissions all reached official protected Send HTTP200 SSE and terminal, so continuity through at least three turns is positive.
-4. Web assistant DOM text stayed small while Native captured 191/671 characters on turns 2/3, supporting the intended pre-React text removal direction.
-5. b50 does **not** pass the complete parser gate because fresh new-chat turn 1 truncated.
+3. Three sequential Native submissions all reached official protected Send HTTP200 SSE and terminal.
+4. Web assistant DOM text stayed small while Native captured materially larger answer text on turns 2/3.
+5. b50 does not pass the complete parser gate because fresh new-chat turn 1 truncated.
 
-## b51 evidence-backed hypothesis and exact scope
+## b51 exact implementation
 
-Historical exact b40/b41 Runtime already established that a new-chat first Send emits `title_generation`. b50 currently executes `aggregate.textContinuationActive = false` for every parsed frame that is neither explicit assistant append nor contextual value-only string.
+Historical exact b40/b41 Runtime established that a new-chat first Send emits `title_generation`. b50 cleared `textContinuationActive` on every parsed frame that was neither explicit assistant append nor contextual value-only string. b51 changes only this narrow rule:
 
-The only cross-turn structural distinction established by current evidence is that turn 1 is the fresh/new-chat turn while turns 2/3 are subsequent existing-conversation turns. Therefore b51 tests only this narrow hypothesis:
+- when continuation is active and an exact top-level object has `type == "title_generation"` with no `o`/`p`, preserve `textContinuationActive`;
+- forward that title-generation frame unchanged to Web;
+- increment `titleGenerationWhileContinuationCount`;
+- keep every other b50 continuation/reset rule unchanged.
 
-> a `title_generation` frame may occur after assistant text continuation begins; it is metadata for the new conversation and must not invalidate the compressed assistant append context.
-
-b51 may only:
-
-- detect exact top-level `payload.type === "title_generation"` while assistant text continuation is active;
-- preserve `textContinuationActive` across that frame instead of clearing it;
-- forward the `title_generation` frame unchanged to Web;
-- count `titleGenerationWhileContinuationCount` structurally in terminal metrics;
-- keep all other b50 continuation/reset behavior unchanged;
-- update diagnostic label/mode and Candidate/build/workflow identity to b51.
-
-Do **not** preserve continuation generically across arbitrary structural frames. Do not modify `ConversationRepository`, `AuthSessionStore`, `RootViewController`, `ConversationFeature`, build scripts, attachments, history virtualization, resume behavior, TD-024/TD-025 or Stable b38 presentation. No retry/timer/watchdog/fallback.
+No generic structural-frame preservation was added. No `ConversationRepository`, `AuthSessionStore`, `RootViewController`, `ConversationFeature`, build-script, attachment, history-virtualization or resume change was made. No retry/timer/watchdog/fallback was added.
 
 ## b51 Runtime gate
 
-Use a fresh/new-chat diagnostic because that is the only failing b50 case:
+Use a fresh/new-chat probe because that is the only failing b50 case:
 
-1. clear diagnostics and open b51 probe;
-2. first Native turn must request a genuinely long answer;
-3. verify the first answer remains incrementally visible through the entire body with no missing middle;
-4. wait terminal and send a second Native turn;
+1. clear diagnostics and open `Native 输入 / Web Send（b51诊断）`;
+2. first Native turn should request a genuinely long answer;
+3. verify the first answer grows incrementally through the entire body with no missing middle;
+4. wait for terminal, then send a second Native turn;
 5. export diagnostics after second terminal.
 
 Required first-turn evidence:
 
 - HTTP200 SSE / terminal true;
 - `titleGenerationWhileContinuationCount > 0` if the hypothesis is correct;
-- `contextualValueStringCount` and Native character count rise to long-answer scale instead of b50's 1 / 35-character pattern;
-- user-visible first answer is complete, not only beginning/end fragments;
+- contextual value-only count and Native character count rise to long-answer scale instead of b50's `1 / 35` pattern;
+- user-visible first answer is complete;
 - Web assistant DOM remains small relative to Native captured text;
 - second turn still succeeds.
 
-If `titleGenerationWhileContinuationCount == 0` or first turn still truncates, do not broaden parser grammar by guess. Add/inspect only the smallest structural evidence needed to identify the actual reset frame.
+If `titleGenerationWhileContinuationCount == 0` or the first turn still truncates, do not broaden parser grammar by guess. Collect only the smallest structural evidence needed to identify the actual reset frame.
 
 ## Evidence ladder
 
 - b50 Code/CI/Artifact/package identity: Passed.
 - b50 Runtime/manual: **Partial pass** — core architecture and complete incremental turns 2/3 confirmed; new-chat turn 1 parser incomplete.
-- b51 Code: Pending.
-- b51 CI: Pending.
-- b51 Artifact: Pending.
-- b51 Runtime: Pending.
+- b51 Code written: Yes.
+- b51 CI: Passed.
+- b51 Artifact produced: Yes.
+- b51 package identity: Verified.
+- b51 Runtime/manual: Pending.
 - Phase 9 Stable/Frozen: No.
 
 ## Durable boundary retained
 
-`ConversationRepository` remains sole native production conversation/response authority; `AuthSessionStore` remains auth owner; default persistent `WKWebsiteDataStore` remains persistent auth-secret authority. b48-b51 remain diagnostic exceptions. TD-024/TD-025 are not changed by these tests.
+`ConversationRepository` remains sole native production conversation/response authority; `AuthSessionStore` remains auth owner; default persistent `WKWebsiteDataStore` remains persistent auth-secret authority. b48-b51 remain diagnostic exceptions. TD-024/TD-025 are not changed by these tests. PR #29 remains evidence-only and must not be merged as accepted production Send UX.
 
-## Non-atomic GitHub write-chain recovery point
+## Non-atomic recovery state
 
-Known baseline before b51 work: `dev/send-stream-20260829@93229404fe62c8a44eb79fa20e564abea5aec695`; exact b50 product source `837d5fe...` is immutable.
-
-### Batch A — b50 Runtime evidence + b51 allocation
-
-- checkpoint b50 Runtime/b51 allocation: this write;
-- add `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md`;
-- verify branch head and file presence before product assembly.
-
-### Batch B — non-CI b51 assembly
-
-Create tooling-only assembly branch from post-Batch-A head. Expected product/config paths only:
-
-- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`
-- `ChatGPTClient/SettingsViewController.swift`
-- `ChatGPTClient.xcodeproj/project.pbxproj`
-- `.github/workflows/ios-foundation.yml`
-
-### Batch C — audit / publish
-
-- compare assembly against exact post-Batch-A development head;
-- require exactly four expected paths;
-- inspect core Swift diff for title-generation-only continuation preservation;
-- Light Guard real branch head immediately before publish;
-- non-force fast-forward complete assembly to feature branch.
-
-### Batch D — CI / Artifact
-
-- accept only CI whose head is exact b51 product/config source;
-- require Push + PR CI when both emit;
-- inspect Push Artifact package identity and SHA independently;
-- once Artifact emits, b51 is permanently reserved.
-
-### Batch E — durable docs / PR
-
-Synchronize stale `PROJECT_STATE`, `MODULE_STATUS`, `PROJECT_PROFILE`, `BUILD_TEST_INDEX`, `PROJECT_SPECIFIC_RULES` and PR #29 to b48-b51 truth as warranted. Product/config source must not change during this docs-only batch.
+- Batch A — b50 Runtime evidence + b51 allocation: complete.
+- Batch B — non-CI b51 assembly: complete.
+- Batch C — exact four-file audit + Light Guard + non-force publish: complete.
+- Batch D — exact-source Push/PR CI + Push Artifact + package inspection: complete.
+- Batch E — durable docs / PR synchronization: in progress; product/config source must remain exact `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`.
 
 ## Next exact action
 
-Complete Batch A by adding exact b50 Runtime evidence, then build b51 on a tooling-only assembly branch, audit/publish non-force, continue autonomously through exact CI/Artifact/package verification, and hand the uniquely identified b51 IPA to the user for the fresh-new-chat Runtime gate.
+Finish docs-only b48-b51 durable-state/PR synchronization without changing product/config source, then hand exact Artifact `9720327648` IPA to the user. The next human-only gate is fresh-new-chat b51 Runtime using the procedure above. Do not rebuild b51; any later product correction requires b52+.

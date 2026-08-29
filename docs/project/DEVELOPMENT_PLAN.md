@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-29 through exact b45 first realtime-handoff Runtime capture._
+_Last updated: 2026-08-29 through exact b45 repeated active-response background/lock Runtime._
 
 ## Purpose
 
@@ -37,7 +37,7 @@ Exact b38: Candidate `DEV-conversation-round-count-0.1.0-b38`, source `0d1801137
 
 Retain native list/detail/recovery ownership, per-conversation resident state, Copy/timestamps/preferences/round count, bounded long-message chunks, deterministic row geometry/manual cell layout, and continuous O(1)-target round navigation. Do not replace this baseline merely to accommodate Web Send.
 
-## Phase 9 — `DEV-send-stream` — Active realtime-handoff evidence gate
+## Phase 9 — `DEV-send-stream` — Active forced-reconnect evidence gate
 
 ### Accepted security/product evidence
 
@@ -66,53 +66,72 @@ Fully hidden Web + Native DOM/button injection remains rejected.
 
 b45 observes original Send SSE and official-page post-Send fetch/XHR/EventSource/WebSocket continuation candidates, structurally only. It never replays tokens, guesses routes, issues a second Send, scrapes answer/reasoning text or captures protected values.
 
-### b45 first Runtime — what was established
-
-Exact-device export matched b45 / iPhone / iOS17.0.
-
-Normal uninterrupted response behavior:
+### b45 first Runtime — uninterrupted path
 
 - `POST /backend-api/f/conversation` returned HTTP200 `text/event-stream`.
 - `resume_conversation_token` appeared at original SSE event 2.
 - original-stream structure later included conversation identity, `request_id` and message identity markers.
-- official page opened `GET /backend-api/conversation/{id}/stream_status`; in this capture it was HTTP200 `application/json` with structural `{status:string}` only.
-- the original Send `fetch` SSE stayed the response transport through `message_stream_complete` and `[DONE]` for both ~32-second captures.
-- no secondary EventSource/WebSocket/turn-stream/handoff/resume/subscribe response stream was observed while those uninterrupted responses were active.
-- the second Send request included `conversation_mode.gizmo_id`; it is not accepted as a clean default-primary new-chat sample.
+- official page opened `GET /backend-api/conversation/{id}/stream_status`; observed response was HTTP200 JSON `{status:string}` only.
+- original Send `fetch` SSE stayed the response transport through `message_stream_complete` and `[DONE]`.
+- no secondary EventSource/WebSocket/turn-stream/handoff/resume/subscribe response stream was observed while uninterrupted responses were active.
 
-This does **not** prove that no continuation/reconnect mechanism exists. The official page never lost its original active stream, so it had no reason to reconnect. All background intervals in the export occurred before Send or after the corresponding response had already completed.
+This did not prove or disprove an interruption-only reconnect path.
+
+### b45 second Runtime — clean new-chat active background / lock
+
+The user explicitly identifies the later capture as a new conversation. The observed Send body had neither top-level `conversation_id` nor `conversation_mode.gizmo_id`, so this is accepted as the clean default-primary new-chat sample.
+
+While the original Send SSE remained active, the app was backgrounded/locked for approximately:
+
+- 35 seconds;
+- 34 seconds;
+- 126 seconds.
+
+Cumulative active-response background time was ~195 seconds / 3m15s; Send-to-terminal elapsed time was ~227 seconds / 3m47s.
+
+At the end of the final ~126-second interval, the **same original `conversation_send` / `fetch` stream** delivered `server_ste_metadata -> message_stream_complete -> conversation_detail_metadata -> [DONE]` immediately on foreground return.
+
+No second Send, no new SSE response, no resume/handoff/turn-stream/subscription stream and no manual refresh/resend were observed.
+
+Interpretation:
+
+- positive exact-device evidence that the tested WebKit/original-fetch response path can survive or buffer through repeated ordinary short background/lock;
+- not proof of continuous event delivery while suspended;
+- not proof of 5/15-minute background behavior;
+- not proof of Native handoff;
+- ordinary short background is now a poor mechanism for discovering a reconnect route because the original transport survives.
 
 Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
 
-### Current exact next step — reuse b45, do not allocate b46 yet
+### Current exact next step — reuse b45, force a real transport break
 
-Use the same exact b45 Candidate:
+Do **not** allocate b46 yet. Reuse exact b45 in an existing long default-primary conversation:
 
 1. clear diagnostics;
-2. use default ChatGPT / primary assistant only;
-3. start a response expected to stream comfortably longer than 30 seconds;
-4. while output is visibly still active, background or lock the device for roughly 20–30 seconds;
-5. return before expected completion, with no manual refresh/resend/Stop/GPT switch;
-6. let official Web recover/continue/finish naturally;
+2. start a response expected to remain active long enough to observe recovery;
+3. while visibly streaming, deliberately remove connectivity for about 10–15 seconds, then restore it;
+4. preferred deterministic test: Airplane Mode / both Wi-Fi and cellular unavailable, then restore; Wi-Fi -> cellular is also useful after a stable Wi-Fi baseline;
+5. do not refresh, resend, Stop, switch GPT or navigate away;
+6. let official Web recover or fail naturally;
 7. export diagnostics.
 
-Evidence question: does official Web retain the same original stream, or does it open a status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send?
+Evidence question: after a genuine transport break, does official Web open an official status/resume/handoff/turn-stream/subscription connection that continues the same already-started response without a second Send?
 
-Only positive observed reconnect structure can justify a later b46 Native no-resend parity experiment. If the response simply remains on the same WebKit stream, that is useful background-survival evidence but not Native handoff evidence. If it fails and official Web opens no continuation route, record that negative Runtime before changing architecture.
+Only positive observed reconnect structure can justify a later b46 Native no-resend parity experiment. If no reconnect mechanism appears after a real transport failure, record that negative evidence and reassess the account-compatible architecture ceiling rather than guessing from `resume_conversation_token`.
 
 ### Background ordering
 
-Background resilience remains P0, but implementation depends on response ownership:
+Background resilience remains P0. Exact b45 now provides a positive short-background signal, but full product acceptance still requires longer/process/network evidence.
 
 - if Native handoff is proven, background work should protect Native response lifecycle;
 - if handoff is disproven, WebKit true-background is relevant only to fallback visible-Web architecture;
-- the next short active-stream background/lock capture is an **evidence trigger**, not yet the full long-background acceptance matrix.
+- 5-minute, 15-minute, WebContent/process termination, network transition and battery/thermal remain separate gates.
 
 ### Candidate sequencing
 
 - b39-b45 are permanently reserved.
 - Do not modify b45 product/config source after Artifact emission.
-- Do not allocate b46 merely because b45 Runtime was captured; allocate b46 only when exact observed official reconnect structure justifies a concrete Native parity experiment or another evidenced product change requires it.
+- Do not allocate b46 merely because b45 Runtime exists; allocate it only when exact official reconnect traffic justifies a concrete Native parity experiment or another evidenced product change requires it.
 
 ## Phase 10 — `DEV-attachments` — high priority but Send-owner dependent
 
@@ -151,10 +170,10 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-**Human Runtime gate on the same exact b45 IPA:** capture one default-primary response with a deliberate 20–30 second background/lock interval while the original SSE is visibly still active, then export diagnostics. Do not refresh/resend/Stop or use a custom GPT during the capture.
+**Human Runtime gate on the same exact b45 IPA:** use an existing long default-primary conversation and deliberately break connectivity for ~10–15 seconds while the response is visibly streaming, then restore connectivity and let official Web recover or fail naturally. Do not refresh/resend/Stop/switch GPT/navigate away. Export diagnostics afterward.
 
 After that evidence is interpreted, either:
 
 - observed official reconnect/continuation structure -> fresh guard -> allocate b46 for the smallest Native no-resend parity experiment;
-- same original stream survives -> record WebKit survival evidence, but Native handoff remains unproven;
-- interruption loses response and no official continuation appears -> record negative evidence and reassess the existing-account architecture ceiling.
+- no reconnect route after genuine transport failure -> record negative Runtime and reassess the architecture ceiling;
+- response survives despite the intended break -> refine the interruption method from exact evidence rather than guessing a Native API.

@@ -55,7 +55,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b51 诊断：继续验证原生输入 + 官方 Web protected Send；本版仅修正新会话首轮的已证实结构差异：assistant value-only 连续正文遇到 title_generation 时不再清空 continuation，并记录该事件是否确实发生在正文上下文中。不会把提示词/回答写入诊断日志。仍属诊断例外，不代表生产架构已接受。"
+        explanationLabel.text = "b52 诊断：保留 b51 已验证的 title_generation continuation 行为，仅新增结构计数，用于定位 GitHub/工具类回答开头少量截断究竟发生在 exact 顶层 patch、非 exact 顶层 patch、嵌套 patch 还是 continuation reset 之后。不会把提示词/回答写入诊断日志，也不会放宽 parser。仍属诊断例外，不代表生产架构已接受。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -118,7 +118,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b51_native_composer_title_generation_preserve", "surface": "native_over_fullsize_web", "scope": "new_chat_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b52_native_composer_structural_gap_classify", "surface": "native_over_fullsize_web", "scope": "tool_style_gap_diagnostic"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -225,8 +225,15 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "removedTextPatchCount": Self.safeNumberString(body["removedTextPatchCount"]),
                 "removedTextCharacters": Self.safeNumberString(body["removedTextCharacters"]),
                 "explicitTextPatchCount": Self.safeNumberString(body["explicitTextPatchCount"]),
+                "exactTopLevelTextPatchCount": Self.safeNumberString(body["exactTopLevelTextPatchCount"]),
+                "rootNonExactTextPatchCount": Self.safeNumberString(body["rootNonExactTextPatchCount"]),
+                "nestedTextPatchCount": Self.safeNumberString(body["nestedTextPatchCount"]),
                 "contextualValueStringCount": Self.safeNumberString(body["contextualValueStringCount"]),
                 "contextualValueStringCharacters": Self.safeNumberString(body["contextualValueStringCharacters"]),
+                "inactiveValueStringCount": Self.safeNumberString(body["inactiveValueStringCount"]),
+                "inactiveValueStringCharacters": Self.safeNumberString(body["inactiveValueStringCharacters"]),
+                "continuationResetWhileActiveCount": Self.safeNumberString(body["continuationResetWhileActiveCount"]),
+                "firstInactiveValueContext": Self.safeToken(body["firstInactiveValueContext"] as? String),
                 "titleGenerationWhileContinuationCount": Self.safeNumberString(body["titleGenerationWhileContinuationCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
@@ -435,8 +442,15 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         removedTextPatchCount: aggregate.removedTextPatchCount,
         removedTextCharacters: aggregate.removedTextCharacters,
         explicitTextPatchCount: aggregate.explicitTextPatchCount,
+        exactTopLevelTextPatchCount: aggregate.exactTopLevelTextPatchCount,
+        rootNonExactTextPatchCount: aggregate.rootNonExactTextPatchCount,
+        nestedTextPatchCount: aggregate.nestedTextPatchCount,
         contextualValueStringCount: aggregate.contextualValueStringCount,
         contextualValueStringCharacters: aggregate.contextualValueStringCharacters,
+        inactiveValueStringCount: aggregate.inactiveValueStringCount,
+        inactiveValueStringCharacters: aggregate.inactiveValueStringCharacters,
+        continuationResetWhileActiveCount: aggregate.continuationResetWhileActiveCount,
+        firstInactiveValueContext: aggregate.firstInactiveValueContext,
         titleGenerationWhileContinuationCount: aggregate.titleGenerationWhileContinuationCount
       });
 
@@ -460,17 +474,24 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         let payload;
         try { payload = JSON.parse(data); }
         catch (_) {
+          if (aggregate.textContinuationActive) {
+            aggregate.continuationResetWhileActiveCount += 1;
+            aggregate.inactiveContext = 'after_parse_failure';
+          }
           aggregate.textContinuationActive = false;
           return frame + '\n\n';
         }
 
         const payloadKeys = payload && typeof payload === 'object' && !Array.isArray(payload) ? Object.keys(payload) : [];
-        const exactTopLevelTextAppend = payloadKeys.length === 3 && payloadKeys.includes('o') && payloadKeys.includes('p') && payloadKeys.includes('v') && payload.o === 'append' && payload.p === '/message/content/parts/0' && typeof payload.v === 'string';
+        const rootTextAppend = payload && typeof payload === 'object' && !Array.isArray(payload) && payload.o === 'append' && payload.p === '/message/content/parts/0' && typeof payload.v === 'string';
+        const exactTopLevelTextAppend = payloadKeys.length === 3 && payloadKeys.includes('o') && payloadKeys.includes('p') && payloadKeys.includes('v') && rootTextAppend;
         if (exactTopLevelTextAppend) {
           aggregate.textContinuationActive = true;
+          aggregate.inactiveContext = 'after_exact_root';
           aggregate.removedTextPatchCount += 1;
           aggregate.removedTextCharacters += payload.v.length;
           aggregate.explicitTextPatchCount += 1;
+          aggregate.exactTopLevelTextPatchCount += 1;
           if (payload.v) post({ kind: 'native_delta', text: payload.v });
           return '';
         }
@@ -492,11 +513,32 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           return nonDataLines.concat(['data: ' + JSON.stringify(payload)]).join('\n') + '\n\n';
         }
 
+        const inactiveValueString = !aggregate.textContinuationActive && payloadKeys.length === 1 && payloadKeys[0] === 'v' && typeof payload.v === 'string';
+        if (inactiveValueString) {
+          aggregate.inactiveValueStringCount += 1;
+          aggregate.inactiveValueStringCharacters += payload.v.length;
+          if (aggregate.firstInactiveValueContext === 'none') aggregate.firstInactiveValueContext = aggregate.inactiveContext || 'unknown';
+        }
+
+        const continuationWasActive = aggregate.textContinuationActive;
+        if (continuationWasActive) {
+          aggregate.continuationResetWhileActiveCount += 1;
+          aggregate.inactiveContext = 'after_reset';
+        }
         aggregate.textContinuationActive = false;
         const result = scrubTextPatches(payload);
         aggregate.removedTextPatchCount += result.removedTextPatchCount;
         aggregate.removedTextCharacters += result.removedTextCharacters;
         aggregate.explicitTextPatchCount += result.removedTextPatchCount;
+        if (result.removedTextPatchCount > 0) {
+          if (rootTextAppend) {
+            aggregate.rootNonExactTextPatchCount += 1;
+            aggregate.inactiveContext = 'after_nonexact_root';
+          } else {
+            aggregate.nestedTextPatchCount += result.removedTextPatchCount;
+            aggregate.inactiveContext = 'after_nested';
+          }
+        }
         if (result.skip) return '';
         const nonDataLines = lines.filter(line => !line.startsWith('data:'));
         return nonDataLines.concat(['data: ' + JSON.stringify(result.value)]).join('\n') + '\n\n';
@@ -505,7 +547,25 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
       const filteredResponse = response => {
         if (!response.body || typeof response.body.getReader !== 'function' || typeof ReadableStream !== 'function') return response;
         const reader = response.body.getReader();
-        const aggregate = { frameCount: 0, removedTextPatchCount: 0, removedTextCharacters: 0, explicitTextPatchCount: 0, contextualValueStringCount: 0, contextualValueStringCharacters: 0, titleGenerationWhileContinuationCount: 0, textContinuationActive: false, terminal: false };
+        const aggregate = {
+          frameCount: 0,
+          removedTextPatchCount: 0,
+          removedTextCharacters: 0,
+          explicitTextPatchCount: 0,
+          exactTopLevelTextPatchCount: 0,
+          rootNonExactTextPatchCount: 0,
+          nestedTextPatchCount: 0,
+          contextualValueStringCount: 0,
+          contextualValueStringCharacters: 0,
+          inactiveValueStringCount: 0,
+          inactiveValueStringCharacters: 0,
+          continuationResetWhileActiveCount: 0,
+          firstInactiveValueContext: 'none',
+          inactiveContext: 'no_prior_text',
+          titleGenerationWhileContinuationCount: 0,
+          textContinuationActive: false,
+          terminal: false
+        };
         let buffer = '';
         const body = new ReadableStream({
           async pull(controller) {

@@ -77,6 +77,20 @@ final class SettingsViewController: UIViewController {
         answerJumpSwitch.isOn = preferences.showsAnswerQuickNavigation
         answerJumpSwitch.addTarget(self, action: #selector(answerJumpPreferenceChanged), for: .valueChanged)
 
+        let hybridTitle = UILabel()
+        hybridTitle.font = .preferredFont(forTextStyle: .headline)
+        hybridTitle.text = "混合发送"
+
+        let hybridDetail = UILabel()
+        hybridDetail.font = .preferredFont(forTextStyle: .body)
+        hybridDetail.textColor = .secondaryLabel
+        hybridDetail.numberOfLines = 0
+        hybridDetail.text = "使用用户可见的官方 ChatGPT Web 完成发送与浏览器挑战。页面首次打开后会保留并复用，退出再进入不会主动重建或刷新。"
+
+        let hybridChatButton = UIButton(type: .system)
+        hybridChatButton.setTitle("打开官方 ChatGPT（混合发送）", for: .normal)
+        hybridChatButton.addTarget(self, action: #selector(openHybridChat), for: .touchUpInside)
+
         let metadataTitle = UILabel()
         metadataTitle.font = .preferredFont(forTextStyle: .headline)
         metadataTitle.text = "构建与运行信息"
@@ -116,6 +130,9 @@ final class SettingsViewController: UIViewController {
             makePreferenceRow(title: "显示会话轮数", control: roundCountSwitch),
             makePreferenceRow(title: "显示消息时间", control: messageTimeSwitch),
             makePreferenceRow(title: "显示轮次快速跳转", control: answerJumpSwitch),
+            hybridTitle,
+            hybridDetail,
+            hybridChatButton,
             metadataTitle,
             metadataLabel,
             diagnosticsTitle,
@@ -166,6 +183,13 @@ final class SettingsViewController: UIViewController {
     @objc private func messageTimePreferenceChanged() { preferences.showsMessageTimestamps = messageTimeSwitch.isOn }
 
     @objc private func answerJumpPreferenceChanged() { preferences.showsAnswerQuickNavigation = answerJumpSwitch.isOn }
+
+    @objc private func openHybridChat() {
+        let controller = AuthWebViewController.hybridChat
+        guard controller.navigationController == nil else { return }
+        diagnostics.info(category: "navigation", name: "officialWebChat.open", fields: ["entry": "settings"])
+        navigationController?.pushViewController(controller, animated: true)
+    }
 
     @objc private func openProtocolSendProbe() {
         diagnostics.info(category: "navigation", name: "conversationSendProbe.open")

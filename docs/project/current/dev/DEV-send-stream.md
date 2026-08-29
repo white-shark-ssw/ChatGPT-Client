@@ -8,7 +8,7 @@
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / 新对话 / Stop / reasoning / follow-tail`
 - **Task**: Implement the first evidence-backed production text Send/new-conversation/streaming-response path, including exact response ownership, Stop integration, user-visible reasoning compatibility, follow-tail and new-chat identity handoff.
 - **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; predecessor `DEV-conversation-round-count` Stable b38 merged by PR #27.
-- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified PR head before this requirement-record write is docs-only `a7cb78fb1ac0b7e4ea12d01c9a16ce32d1bdc9c4`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
+- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified PR head before this requirement-record write is docs-only `46f7c4e1c0fe6f79e48a194b25ac1fd6139b91e3`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
 - **State-owner boundary remains fixed**: `ConversationRepository` = sole conversation/list/detail/recovery/response authority; `AuthSessionStore` = auth/account authority; default persistent `WKWebsiteDataStore` = sole persistent auth-secret authority. No second repository/global `isStreaming`, hidden production WebView transport, copied persistent credentials, retry/watchdog/fallback endpoints, anti-abuse solver/bypass, browser-fingerprint replay, captured proof/token replay, or hidden-CoT presentation.
 
 ## Exact Candidate history
@@ -72,6 +72,19 @@ If option 2 is selected, implementation and Runtime acceptance must prioritize:
 
 This requirement does not prove that a WKWebView can be pixel-for-pixel or frame-for-frame identical to UIKit. If exact-device testing still exposes material WebView jank or web-specific interaction latency after minimal evidence-backed optimization, option 2 is not accepted merely because it works functionally.
 
+### Attachment-entry responsiveness requirement
+
+The user also requires attachment sending to preserve the same native-grade responsiveness. In particular, tapping the composer `+` must not wait noticeably for a Web page load, network request, Sentinel/Turnstile work, upload preparation, or other remote activity before presenting the next local selection UI.
+
+If option 2 is selected and later attachment support is added:
+
+- the `+` interaction must provide immediate local visual response and begin presenting a native iOS attachment action surface / picker in the same user interaction;
+- photo/image choice should use the accepted native Photos/PHPicker path and general files should use the accepted native document picker path where current platform semantics allow;
+- picker presentation is a local UI action and must not be blocked on ChatGPT network/challenge/upload work;
+- privacy-safe diagnostics should measure tap-to-picker/action-surface presentation duration so exact-device Runtime can identify regressions; do not invent a synthetic spinner to mask latency;
+- the exact mechanism for handing a user-selected native file into the user-visible official-Web send surface is **Unknown / Unverified** until current WebKit/official-Web behavior is inspected and tested. Do not assume the app can programmatically populate or drive the Web file-input path;
+- if official-Web/WebKit constraints force a materially delayed attachment chooser or require an unsafe hidden-browser/challenge workaround, that implementation is not accepted merely because file sending eventually works.
+
 ## Durable evidence / docs synchronized
 
 - `docs/project/runtime-evidence/DEV-send-stream-b42-protocol.md` records exact b42 Runtime and Path B.
@@ -82,13 +95,11 @@ This requirement does not prove that a WKWebView can be pixel-for-pixel or frame
 - `DEVELOPMENT_PLAN.md` records Phase 9 block and architecture gate; no b43 is planned by default.
 - PR #29 body is synchronized to b42 Path B and explicitly states native production Send is not implemented/accepted.
 
-## Batch recovery point — b42 Runtime closure complete
+## Batch recovery point — attachment UX requirement docs
 
 - **Exact product source / Artifact**: `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`; these remain the b42 Runtime authority regardless of later docs-only head movement.
-- **Verified docs-only PR head before this requirement-record write**: `a7cb78fb1ac0b7e4ea12d01c9a16ce32d1bdc9c4`; PR #29 open + mergeable.
-- **Batch A complete**: exact b42 Runtime + Path B recorded in checkpoint.
-- **Batch B complete**: b42 runtime-evidence file + build index updated; historical drift correction verified.
-- **Batch C complete**: module status, technical decision TD-023, project state and roadmap updated. Compare from `1ef9d4f67058191c5c1f06f35af74748439a3b69` to `151dc496e44f665a580a8a584aa86e1f8a20a5c5` contains exactly those four durable docs and no product/config files.
-- **Batch D complete**: PR #29 body refreshed; checkpoint carries the current architecture gate and the option-2 native-grade-smoothness acceptance requirement.
+- **Known PR head before this requirement write**: `46f7c4e1c0fe6f79e48a194b25ac1fd6139b91e3`; PR #29 open + mergeable; base remains `main@34811877896ca88c6656be6676f5466a19931ce6`.
+- **Confirmed complete / never replay**: b39-b42 identities/Artifacts and b42 Runtime closure; option-2 native-grade Web smoothness requirement already recorded.
+- **Current docs batch**: this checkpoint now records the new `+` / attachment-picker responsiveness requirement. Pending writes are `ATTACHMENT_TRANSFER_PLAN.md` and `UI_INTERACTION_BASELINE.md` only; no product/config changes and no Candidate allocation.
 - **Recovery must not touch/reuse**: b39-b42 identities/Artifacts; exact b42 product source; Stable b38 product/state-owner contracts; other task checkpoints; main branch.
-- **Next exact action**: wait for the user's explicit architecture choice among the permitted directions above. If option 2 is chosen, treat native-grade perceived smoothness on exact device as a required Runtime acceptance gate before broader hybrid-send integration. Before any resumed code work, re-run normal resume identity/base/conflict guard and allocate a fresh Candidate only if the chosen architecture produces new testable product code. No further product code or Candidate is justified before that decision.
+- **Next exact action**: update the attachment plan and UI interaction baseline with immediate local picker presentation + exact-device latency acceptance, verify the docs-only diff, then refresh this checkpoint to mark the batch complete. The architecture choice among options 1/2/3 remains a human gate; this requirement does not itself silently choose option 2.

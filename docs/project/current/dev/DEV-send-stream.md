@@ -2,15 +2,21 @@
 
 ## Status
 
-**Active — b45 native realtime handoff evidence probe authorized; Web should carry Send only if Native can own live response**
+**Active — exact b45 Native realtime handoff evidence Candidate ready for primary-device Runtime**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream`
 - **Branch / PR**: `dev/send-stream-20260829`; PR #29 open/mergeable; do not merge as accepted Send UX.
 - **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; Stable native predecessor remains b38.
-- **Resume guard 2026-08-29**: branch `d2a8fb7aa07fcac1ca57b1ebde54dc34f2aac51d`; PR #29 open/mergeable; main unchanged; only this Active dev checkpoint; no peer conflict.
-- **Exact b44 product source**: `f1503cf7121512a84e5c55a3642181c17324d791`; Artifact `9712583513`; IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
-- **Candidate rule**: b39-b44 permanently reserved. `DEV-send-stream-0.1.0-b45` / build 45 is now allocated for the realtime-handoff diagnostic probe. No b45 Artifact exists yet.
+- **Resume guard before b45**: branch `d2a8fb7aa07fcac1ca57b1ebde54dc34f2aac51d`; PR #29 open/mergeable; main unchanged; only this Active dev checkpoint; no peer conflict.
+- **Exact b45 product/config source**: `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
+- **Candidate**: `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`; permanently reserved because an Artifact now exists.
+- **Push Run / Job**: `33248952646` / `99091176390` — success.
+- **PR Run / Job**: `33248954018` / `99091179731` — success.
+- **Push Artifact**: `9713774868`; Artifact ZIP digest `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`.
+- **IPA**: `ChatGPTClient-0.1.0-b45-dev-send-stream.ipa`; SHA-256 `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`.
+- **Package inspection**: `0.1.0 (45)`, Candidate b45, source marker `accd7bdf29e4`, Release, iOS14 minimum, UIDeviceFamily `[1,2]`, arm64.
+- **Evidence classification**: Code / CI / Artifact / package identity passed. Runtime handoff capability **Unknown / Unverified**. Stable/Frozen Send: No.
 
 ## Security / transport boundary retained
 
@@ -18,7 +24,7 @@ Exact b42 proved successful tested ChatGPT-account Send requires browser anti-ab
 
 Never implement PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay, captured challenge/proof replay, guessed alternate Send endpoints, hidden challenge-harvesting WebViews, DOM answer/reasoning scraping, Native composer injection into a covered/hidden Web composer, synthetic hidden Send clicks, or private file-input injection.
 
-The user's latest visual suggestion — hook the Web send button and hide Web completely — remains rejected for implementation because it would turn the protected browser Send flow into hidden/shadow transport. The useful goal instead is to minimize Web responsibility to the smallest **user-visible legal Send initiation** and move response ownership to Native if protocol evidence supports it.
+The user's proposed visual idea of fully hiding Web and hooking its Send button is **not** an accepted implementation path. It would turn the protected browser Send path into hidden/shadow transport. b45 instead tests whether Web can be reduced to a user-visible legal Send initiator while Native legitimately attaches to the same already-started response.
 
 ## Accepted b40-b44 evidence retained
 
@@ -28,60 +34,70 @@ The user's latest visual suggestion — hook the Web send button and hide Web co
 - b43: visible Web feasibility/smoothness largely accepted; Web `+` ~100–200ms; Web Photos filtered videos on iOS17.
 - b44: `/c/<id>` A/B mapping worked, but immediate Native reconciliation could lag Web assistant output; full-page Native->Web->Native UX rejected.
 
-## Latest product architecture decision
+## Current target architecture
 
-The user explicitly rejects the separate API product route and now accepts this as the desired architecture only if evidence supports it:
+The user explicitly rejects the separate API product route and selected this target **if current protocol evidence supports it**:
 
-`Native composer/history/presentation -> user-visible official Web performs legal Send -> Native attaches/resumes/subscribes to the same in-progress response without resending prompt -> Native owns reasoning/final streaming presentation and later background lifecycle.`
+`Native composer/history/presentation -> user-visible official Web performs legal Send -> Native attaches/resumes/subscribes to that same in-progress response without resending prompt -> Native owns reasoning/final streaming presentation -> Native response lifecycle later owns background continuation.`
 
-This architecture is **not yet proven**. Web must not remain the realtime-response authority merely because it can Send.
+This is intentionally different from the b43/b44 hybrid forms. Web should not remain the realtime-response UI owner merely because it can Send.
 
-## b45 evidence question
+## b45 implementation scope
 
-Before any new hybrid UI or TrollStore background work, determine whether official ChatGPT Web exposes a same-response continuation mechanism that Native could legitimately consume **without a second Send**.
+b45 adds an observation-only `ProtocolHandoffProbeViewController` and Settings entry `实时接管协议探测（诊断）`.
 
-The existing probe currently observes only selected fetch/XHR routes and the original `/f/conversation` SSE. It does not yet provide enough evidence for Native handoff.
+It structurally observes:
 
-b45 must observe, structurally only:
+1. original `/backend-api/f/conversation` Send SSE;
+2. first presence/shape of `resume_conversation_token`, response/turn/conversation/message/async-task identity fields;
+3. official-page follow-up same-origin fetch/XHR/EventSource/WebSocket connections after Send;
+4. route classes for stream-status / turn-stream / handoff / resume / subscribe / continuation candidates;
+5. response status/content type, header **names only**, query **names only**, structural JSON shape and identity-value shape only;
+6. whether a later official-page connection naturally receives continuation-like events without another Send.
 
-1. when `resume_conversation_token` / response / turn / handoff identity first appears in the original Send SSE;
-2. whether the official page subsequently opens any additional same-origin fetch/XHR/EventSource/WebSocket connection associated with the active response;
-3. route/path class, method, transport, content-type/framing, header **names only**, JSON key/type structure, and safe identity-presence/shape only;
-4. whether any `stream_handoff`, turn-stream, resume, subscribe, stream-status or equivalent official-page behavior occurs naturally;
-5. whether a later connection appears to receive continuation events without issuing another Send.
+b45 does **not** replay a resume token, guess a continuation endpoint, create a second Send, inject prompts, click hidden Web controls, scrape answer/reasoning text or capture protected values.
 
-Do **not** log prompt/answer/reasoning text, raw conversation/message/response/resume IDs, Cookie/Authorization values, Sentinel/Turnstile/PoW/conduit values, or raw payloads.
+Never record/export prompt/answer/reasoning text, raw conversation/message/response/resume IDs, Cookie/Authorization values, Sentinel/Turnstile/PoW/conduit values, or raw payloads.
 
-b45 is observation-only: do not replay a resume token or guess a continuation endpoint yet. If the official page itself demonstrates a continuation request, a later Candidate may test Native parity against that exact observed route/structure.
+## Background ordering
 
-## Background ordering changed
+TD-026 background resilience remains a hard product requirement, but implementation is now deferred behind realtime-handoff feasibility.
 
-TD-026 background resilience remains a hard product requirement, but implementation is now **deferred behind realtime-handoff feasibility**. If Native can own/resume the response stream, background work should protect the Native response lifecycle rather than WebKit. Only if Native handoff is disproven would WebKit true-background remain relevant to the fallback visible-Web architecture.
+- If Native handoff is proven, background work should preserve the Native-owned response lifecycle rather than WebKit.
+- Only if Native handoff is disproven does WebKit true-background remain relevant to the fallback visible-Web architecture.
+- Do not spend a new Candidate on Web background/UI polish before interpreting b45 Runtime evidence.
 
-## b45 Runtime target
+## Exact b45 Runtime procedure
 
-On the exact primary iPhone/iOS17 device:
+Primary authority: iPhone 15 Pro Max / iOS17.0 TrollStore runtime.
 
-1. Settings -> Send protocol probe.
-2. Use default ChatGPT / primary assistant, preferably a response long enough to expose reasoning/stream behavior.
-3. Send one new-chat prompt and one existing-chat prompt if practical.
-4. Let each response progress normally; do not manually refresh during the capture.
-5. Export diagnostics JSON.
+1. Install exact b45 IPA above.
+2. In Settings, preferably `清理诊断日志` first.
+3. Open `实时接管协议探测（诊断）`.
+4. Use default ChatGPT / primary assistant, not a custom GPT/Gizmo.
+5. Start a **new chat** and send one prompt long enough to produce noticeable reasoning/streaming; let it run normally without manual refresh.
+6. If practical, open an **existing chat** in the same probe and send one more prompt; again let it run normally.
+7. Return to Settings and export the diagnostics JSON.
+8. Upload that JSON for evidence analysis.
 
-Acceptance of the probe means only that the needed structural evidence was captured. It does **not** mean Native handoff exists until the evidence shows a real continuation mechanism.
+The probe is accepted only as a diagnostic instrument when it captures the intended structural traffic safely. Native realtime handoff itself is accepted only if evidence shows an actual continuation mechanism suitable for a no-resend Native connection.
 
-## Batch recovery point — b45 assembly
+## Docs-only handoff batch
 
-Known baseline before allocation: `dev/send-stream-20260829@d2a8fb7aa07fcac1ca57b1ebde54dc34f2aac51d`; PR #29 open/mergeable; `main@34811877896ca88c6656be6676f5466a19931ce6`; no peer Active dev Work; b45 previously absent from Build Index.
+After exact b45 product source, update durable docs with:
 
-Planned coherent product batch:
+- b45 exact Candidate/CI/Artifact/package identity;
+- Web-Send-only + Native-realtime-handoff target architecture;
+- background/UI work ordered after handoff feasibility;
+- hidden/shadow Web button-hook route remains rejected;
+- PR #29 remains Runtime-gated and unmerged.
 
-- `ChatGPTClient/Protocol/ProtocolReadProbe.swift` — extend structural observation to handoff/resume-related SSE semantics and additional browser transports/routes, without raw protected values.
-- `ChatGPTClient.xcodeproj/project.pbxproj` — build 45 / Candidate b45.
-- `.github/workflows/ios-foundation.yml` — b45 workflow/artifact identity.
-
-Because product-file pushes on the real dev branch trigger CI, assemble these three changes first on a non-triggering tooling branch, verify its exact diff, then non-force fast-forward the real dev branch once to the complete b45 commit chain. Never publish product code under stale b44 metadata.
+No Swift/Xcode/workflow/product mutation is permitted after `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072` under b45 identity. Any corrected product code after this Artifact requires b46+.
 
 ## Next exact action
 
-Create the non-CI assembly branch from this checkpoint commit, implement the smallest observation-only probe, change build/workflow identity to b45, audit the three-file product/config diff, then fast-forward the real branch and continue through CI/Artifact/package verification. Do not stop for approval before the Runtime handoff gate unless a real blocker appears.
+**Human-only Runtime gate:** install exact b45, run the new-chat + existing-chat realtime handoff capture, export diagnostics JSON, and analyze whether official Web demonstrates a real same-response continuation path.
+
+- If yes: allocate b46 only after a fresh guard and implement the smallest **Native no-resend continuation parity** experiment against the exact observed route/structure.
+- If no: do not guess a resume endpoint. Record the negative evidence and reassess the architecture ceiling.
+- Do not proceed to hidden Web automation, polished hybrid UI, or TrollStore background implementation before this evidence is interpreted.

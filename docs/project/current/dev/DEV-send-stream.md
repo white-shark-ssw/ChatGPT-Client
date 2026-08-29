@@ -9,7 +9,7 @@
 - **Branch / PR**: `dev/send-stream-20260829`; PR #29 open/mergeable; do not merge as accepted Send UX.
 - **Stable native predecessor**: b38.
 - **Original branch base**: `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; main advanced by 3 commits only in root `AGENTS.md`. No Swift/Xcode/workflow/product/state-owner overlap was found. Branch is not yet synchronized to that docs/rules-only base advance.
+- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; main advanced by 3 commits only in root `AGENTS.md`. No Swift/Xcode/workflow/product/state-owner overlap was found. Branch is not yet synchronized to that rules-only base advance.
 - **Exact b45 product/config source**: `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
 - **Candidate**: `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`; permanently reserved.
 - **Push Run / Job**: `33248952646` / `99091176390` — success.
@@ -71,7 +71,7 @@ It does **not** prove that WebKit processed/delivered every stream event continu
 
 It also does **not** prove Native same-response handoff. In fact, because the original transport survived, official Web again had no need to reveal any separate reconnect API. `resume_conversation_token` remains an observed field, not an authorized Native continuation contract.
 
-This capture therefore advances TD-026 short-background evidence but does not close its 5/15-minute or forced-interruption matrix and does not justify guessing a b46 Native resume endpoint.
+This capture advances TD-026 short-background evidence but does not close its 5/15-minute or forced-interruption matrix and does not justify guessing a b46 Native resume endpoint.
 
 ## Architecture consequence / next evidence strategy
 
@@ -81,28 +81,35 @@ The next highest-value Runtime experiment reuses exact b45 and **forces a real t
 
 1. Use an existing long conversation / default primary assistant.
 2. Start a response expected to run long enough to observe recovery.
-3. While the response is visibly streaming, briefly break connectivity (preferred controlled test: disable Wi-Fi and cellular / Airplane Mode for about 10–15s, then restore; alternatively Wi-Fi -> cellular transition after a stable Wi-Fi baseline).
+3. While the response is visibly streaming, briefly break connectivity for about 10–15s and then restore it; preferred controlled test is Airplane Mode / both Wi-Fi and cellular unavailable, with Wi-Fi -> cellular transition as a secondary variant after a stable Wi-Fi baseline.
 4. Do not refresh, resend, Stop, switch GPT or navigate away.
 5. Let official Web recover or fail naturally, then export diagnostics.
 
-Evidence question: after a genuine transport break, does official Web open a new official status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send, or does it only surface a failure / later history refresh path?
+Evidence question: after a genuine transport break, does official Web open a new official status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send, or does it only surface a failure / later history recovery path?
 
 If a real reconnect route appears, only that exact observed structure may justify a later b46 Native no-resend parity experiment. If no reconnect appears, record the negative architecture evidence; do not guess from `resume_conversation_token`.
 
-## Batch recovery point — Runtime docs chain
+## Completed Runtime docs batch
 
-Known head before this docs batch: `77f2fc6eef92ca61e5c08ff31a4d9251905ee9bf`.
+Confirmed docs-only writes for the second b45 Runtime capture:
 
-This checkpoint update is the first confirmed write of the batch. Remaining deterministic docs-only writes:
+- `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`;
+- `PROJECT_STATE.md`;
+- `MODULE_STATUS.md`;
+- `PROJECT_PROFILE.md`;
+- `DEVELOPMENT_PLAN.md`;
+- `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`;
+- `TECHNICAL_DECISIONS.md` / TD-026 / TD-027;
+- complete `BUILD_TEST_INDEX.md` with b45 Runtime row and Phase 9 boundary.
 
-- append this second exact b45 Runtime capture to `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`;
-- update `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`, `TECHNICAL_DECISIONS.md`/TD-027, `BUILD_TEST_INDEX.md`, and PR #29 body/title where needed;
-- final compare from exact b45 product source `accd7bdf...` to branch head must still show docs-only changes.
+PR #29 metadata and final product-source drift audit remain the last deterministic handoff actions for this turn.
 
-Do **not** touch Swift/Xcode/workflow/build scripts, exact b45 product source, Candidate/Artifact identity, or merge PR #29 during recovery.
+Do **not** touch Swift/Xcode/workflow/build scripts, exact b45 product source, Candidate/Artifact identity, or merge PR #29.
 
 ## Next exact action
 
-Complete the docs-only Runtime evidence batch above. Then the human-only gate is one **forced transport interruption** on exact b45 in an existing long default-primary conversation, without refresh/resend/Stop. Export diagnostics after the official page naturally recovers or fails.
+Update PR #29 to the forced-transport-interruption gate, then audit exact b45 product source `accd7bdf...` -> final branch head for docs-only drift.
+
+After that, the human-only gate is one **forced connectivity interruption** on exact b45 in an existing long default-primary conversation, without refresh/resend/Stop/navigation. Export diagnostics after the official page naturally recovers or fails.
 
 Do not allocate b46, rebuild b45, or merge PR #29 until that evidence is interpreted.

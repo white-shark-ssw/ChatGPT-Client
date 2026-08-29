@@ -8,7 +8,7 @@
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / 新对话 / Stop / reasoning / follow-tail`
 - **Task**: Implement the first evidence-backed production text Send/new-conversation/streaming-response path, including exact response ownership, Stop integration, user-visible reasoning compatibility, follow-tail and new-chat identity handoff.
 - **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; predecessor `DEV-conversation-round-count` Stable b38 merged by PR #27.
-- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified PR head before this final checkpoint write is docs-only `151dc496e44f665a580a8a584aa86e1f8a20a5c5`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
+- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified PR head before this requirement-record write is docs-only `a7cb78fb1ac0b7e4ea12d01c9a16ce32d1bdc9c4`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
 - **State-owner boundary remains fixed**: `ConversationRepository` = sole conversation/list/detail/recovery/response authority; `AuthSessionStore` = auth/account authority; default persistent `WKWebsiteDataStore` = sole persistent auth-secret authority. No second repository/global `isStreaming`, hidden production WebView transport, copied persistent credentials, retry/watchdog/fallback endpoints, anti-abuse solver/bypass, browser-fingerprint replay, captured proof/token replay, or hidden-CoT presentation.
 
 ## Exact Candidate history
@@ -56,6 +56,22 @@ The original production-native implementation cannot continue safely under the c
 
 Do not choose among these without the user's product decision.
 
+## Conditional UX requirement if option 2 is chosen
+
+The user added a hard acceptance requirement for the user-visible official-Web send direction: the Web portion must feel **as close as practical to native iOS controls in responsiveness and smoothness** on the recorded primary device/runtime (iPhone 15 Pro Max / iOS 17.0). Merely making Send functional is not sufficient.
+
+If option 2 is selected, implementation and Runtime acceptance must prioritize:
+
+- no avoidable full-page reload on ordinary send/return flows;
+- keep the visible official-Web session warm/resident where lifecycle and memory evidence permit instead of reconstructing it for every tap;
+- use native UIKit navigation/container transitions around the Web surface;
+- preserve immediate keyboard/input/tap response and smooth touch scrolling;
+- avoid JS/native bridge chatter or DOM observation that continuously drives presentation/state and causes frame drops;
+- do not hide the WebView solely to harvest challenge output for native transport; the official-Web send surface remains user-visible and owns its own browser-side challenge execution;
+- evaluate smoothness by exact real-device Runtime, including repeated enter/return, keyboard show/hide, typing, send, streamed response scrolling, rapid scrolling and ordinary navigation. CI/Artifact or simulator smoothness is not acceptance evidence.
+
+This requirement does not prove that a WKWebView can be pixel-for-pixel or frame-for-frame identical to UIKit. If exact-device testing still exposes material WebView jank or web-specific interaction latency after minimal evidence-backed optimization, option 2 is not accepted merely because it works functionally.
+
 ## Durable evidence / docs synchronized
 
 - `docs/project/runtime-evidence/DEV-send-stream-b42-protocol.md` records exact b42 Runtime and Path B.
@@ -69,10 +85,10 @@ Do not choose among these without the user's product decision.
 ## Batch recovery point — b42 Runtime closure complete
 
 - **Exact product source / Artifact**: `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`; these remain the b42 Runtime authority regardless of later docs-only head movement.
-- **Verified docs-only PR head before this checkpoint write**: `151dc496e44f665a580a8a584aa86e1f8a20a5c5`; PR #29 open + mergeable.
+- **Verified docs-only PR head before this requirement-record write**: `a7cb78fb1ac0b7e4ea12d01c9a16ce32d1bdc9c4`; PR #29 open + mergeable.
 - **Batch A complete**: exact b42 Runtime + Path B recorded in checkpoint.
 - **Batch B complete**: b42 runtime-evidence file + build index updated; historical drift correction verified.
 - **Batch C complete**: module status, technical decision TD-023, project state and roadmap updated. Compare from `1ef9d4f67058191c5c1f06f35af74748439a3b69` to `151dc496e44f665a580a8a584aa86e1f8a20a5c5` contains exactly those four durable docs and no product/config files.
-- **Batch D complete**: PR #29 body refreshed; this checkpoint is the final recovery/handoff record.
+- **Batch D complete**: PR #29 body refreshed; checkpoint carries the current architecture gate and the option-2 native-grade-smoothness acceptance requirement.
 - **Recovery must not touch/reuse**: b39-b42 identities/Artifacts; exact b42 product source; Stable b38 product/state-owner contracts; other task checkpoints; main branch.
-- **Next exact action**: wait for the user's explicit architecture choice among the permitted directions above. Before any resumed code work, re-run normal resume identity/base/conflict guard and allocate a fresh Candidate only if the chosen architecture produces new testable product code. No further product code or Candidate is justified before that decision.
+- **Next exact action**: wait for the user's explicit architecture choice among the permitted directions above. If option 2 is chosen, treat native-grade perceived smoothness on exact device as a required Runtime acceptance gate before broader hybrid-send integration. Before any resumed code work, re-run normal resume identity/base/conflict guard and allocate a fresh Candidate only if the chosen architecture produces new testable product code. No further product code or Candidate is justified before that decision.

@@ -6,6 +6,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 - Product goal remains an **iOS native ChatGPT client shell/read experience**, with one explicit Phase 9 exception recorded by TD-024: ChatGPT-account Send may use a **user-visible official ChatGPT Web surface** because exact b42 Runtime proved the pure-native account-session Send path depends on browser anti-abuse challenge output.
 - The hybrid Send surface is not pure-native Send and must never be described as such.
+- TD-025 records a second boundary: exact b44 Runtime rejected the full-page Native -> Web -> Native interaction as final product UX and reopened the architecture gate. Do not treat a structurally working hybrid route as an accepted product merely because Send succeeds.
 - Previous-project history is reference-only, not current protocol authority.
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
@@ -26,16 +27,21 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## User-visible hybrid Web Send contract
 
-- The user explicitly selected the Option-2 architecture after b42: native shell/read/navigation + **user-visible official ChatGPT Web Send**.
-- The Web surface must be visibly presented as the user's active interaction surface. It must never become a hidden/shadow WebView used to harvest Sentinel/Turnstile/PoW output for a native replay path.
+- The user selected the Option-2 architecture after b42: native shell/read/navigation + **user-visible official ChatGPT Web Send**. TD-025 now narrows that permission after exact b44 Runtime.
+- The Web surface must be visibly presented as a user's real interaction surface. It must never become a hidden/shadow WebView used only to execute browser anti-abuse challenge + Send under a Native facade.
 - Use the existing default persistent `WKWebsiteDataStore`; do not add another persistent credential/challenge store.
-- `ConversationRepository` remains sole native conversation/list/detail/recovery authority. `AuthSessionStore` remains native auth/account authority. The visible Web surface owns only its own official Web session/Send interaction while presented and does not become a second native repository.
-- The first accepted implementation direction is one process-resident shared visible Web controller/WebView so ordinary Back -> re-entry can reuse the loaded page instead of avoidable reconstruction/reload.
+- `ConversationRepository` remains sole native conversation/list/detail/recovery authority. `AuthSessionStore` remains native auth/account authority. A visible Web surface owns only its own official Web session/Send interaction while presented and does not become a second native repository.
+- b43 established that one process-resident visible Web controller/WebView can meet the tested iPhone/iOS17 smoothness/residency baseline: entry/re-entry, keyboard/typing, Send/stream scrolling and rapid scrolling had no material reported problem; Web `+` -> picker was roughly 100–200 ms.
+- b43's standalone Settings Web-chat form was not accepted as the final product interaction.
+- b44 established tested `/c/<conversation-id>` A/B mapping and explicit Native reconciliation, but the full-page Native -> Web -> Native flow is **product-rejected**. Immediate `返回并同步`/Native Sync could expose the user message while assistant output already visible in Web remained absent until a later Sync; no stable readiness signal/delay was established.
+- Do not patch b44's eventual-read visibility with arbitrary delay, timer, polling or automatic repeated Sync. The current evidence supports an architecture mismatch, not a delay constant.
 - Do not continuously observe the DOM, scrape prompt/answer/reasoning text, mirror Web message state into native state, capture challenge/token values, or replay browser proof output.
-- Do not guess current-conversation Web deep links such as `/c/<id>` or programmatic Web file-input injection without current evidence.
-- Functional Web Send alone is insufficient. Exact-device Runtime on the primary iPhone/iOS17 target must accept first-entry response, resident re-entry, keyboard/typing, Send/stream scrolling, rapid scrolling, native return and attachment `+` responsiveness.
-- Attachment `+` is a hard UX gate: local selection UI must not be delayed by page navigation, network, Sentinel/Turnstile or upload preparation. The exact native-picker -> official-Web handoff remains Unknown/Unverified until separately evidenced.
-- Exact b43 `DEV-send-stream-0.1.0-b43`, source `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`, Artifact `9711364573`, is Code/CI/Artifact valid but **not Runtime accepted** until exact-device user testing passes.
+- Do not implement a Native composer that secretly injects text into a fully covered/hidden Web DOM/contenteditable and triggers synthetic hidden Send clicks. Under current evidence this would turn Web into hidden/shadow protected transport and violates TD-023/TD-024/TD-025.
+- If existing ChatGPT-account/history continuity remains required, the only currently recommended hybrid experiment is **Native read/history + an explicitly visible embedded official-Web composer/live-response panel directly operated by the user**. This may reduce the b44 browser-like full-screen transition but does not make Send/stream fully Native.
+- A truly Native composer/stream requires a separately supported transport such as an officially supported API product; do not equate that with the user's existing ChatGPT subscription/history without explicit support evidence.
+- Attachment `+` remains a hard UX gate. Exact b43 Web `+` latency ~100–200 ms was not rejected, but the Web Photos chooser filtered videos.
+- Public WebKit upload-panel replacement via `WKUIDelegate.runOpenPanelWith...` is iOS18.4+, not the primary iOS17 target. Do not use private WebKit or DOM/file-input injection to fake a photo+video picker fix. iOS17 video attachment support requires separately evidenced native attachment upload/handoff.
+- No b45 product Candidate is allocated until the architecture gate is explicitly resolved.
 
 ## Conversation metadata / Preferences contract
 
@@ -94,7 +100,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Once a Candidate/Artifact identity has been produced, do not rebuild corrected product code under that same identity.
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
 - `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch.
-- Exact b24-b43 identities and emitted artifacts are permanently reserved. The accidental newer-code Artifact `9710515489` carrying b42 identity is permanently rejected and must never be installed; legitimate b42 remains Artifact `9709824510`.
+- Exact b24-b44 identities and emitted artifacts are permanently reserved. The accidental newer-code Artifact `9710515489` carrying b42 identity is permanently rejected and must never be installed; legitimate b42 remains Artifact `9709824510`.
+- No b45 may be allocated while `DEV-send-stream` is blocked at TD-025's architecture gate.
 
 ## Manual recovery contract
 
@@ -104,6 +111,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Preserve an already loaded detail on sync failure where applicable.
 - Keep available during ordinary initial Detail loading.
 - Accepted feedback remains centered `正在同步最新消息…`, then `已是最新` or `已同步最新消息` for about 2 seconds.
+- b44 adds an important boundary: an immediate Sync after visible-Web Send may still lack assistant output already visible in Web. A later explicit Sync can expose it. Do not convert this into automatic polling/retry without a real server readiness signal.
 
 ### `重载当前会话`
 
@@ -146,6 +154,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Do not preemptively add account headers, duplicate browser headers, alternate endpoints or compatibility shims without concrete current failure.
 - `ProtocolReadProbe` remains diagnostic-only; `ConversationRepository` remains native production authority.
 - b40-b42 private Send observations remain protocol evidence and do not authorize native replay around browser protections.
+- b44 public-Web `/c/<id>` mapping Runtime evidence does not make the private Send challenge flow a native-supported transport.
 
 ## Diagnostics / logging contract
 
@@ -178,11 +187,11 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source, and final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint's batch recovery point and never replay already-confirmed Candidate writes blindly.
-- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; exact b43 product/config authority is `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c` pending Runtime.
+- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; b43/b44 exact sources remain immutable historical test authorities, and no b45 exists while the architecture gate is unresolved.
 
 ## Critical invariants / prohibited routes
 
-- Historical hidden WebView chat code is not the native product baseline. The only current Send exception is TD-024's **explicit user-visible official-Web Send surface**; hidden/shadow Web transport remains prohibited.
+- Historical hidden WebView chat code is not the native product baseline. TD-024 permits only an **explicit user-visible official-Web Send surface**; TD-025 rejects converting that permission into a fully covered/shadow Web transport driven by Native DOM/input automation.
 - UI text/titles are never identity authority.
 - CI/Artifact success is never Runtime proof.
 - Manual Sync/Reload/list refresh never create competing state stores or automatic retry machinery.

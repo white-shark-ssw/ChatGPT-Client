@@ -66,14 +66,14 @@ Because Artifact `9721532867` exists, b52 is permanently reserved. Any product-c
 
 ## Recovery state
 
-**Batch F — b51 Runtime -> b52 structural diagnostic** is complete through PR metadata and exact Artifact/package verification.
+**Batch F — b51 Runtime -> b52 structural diagnostic is complete through exact Artifact/package verification, PR metadata and durable documentation synchronization.**
 
 - b51 Runtime evidence persisted at `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
 - exact b52 product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
 - exact b52 Push/PR CI and Artifact/package identities verified above.
-- PR #29 title/body now describe the b52 focused Runtime gate.
-
-Durable project docs/build-test index still need the same b51/b52 evidence reflected before the next code correction/merge decision; this checkpoint remains the immediate resume source if interrupted.
+- PR #29 title/body describe the b52 focused Runtime gate.
+- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `BUILD_TEST_INDEX.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md` and `PROJECT_SPECIFIC_RULES.md` are synchronized through b51 Runtime / b52 Artifact truth.
+- later branch commits after `5c0690ce...` are docs-only and do not redefine the exact b52 product/config source.
 
 ## Next exact action
 

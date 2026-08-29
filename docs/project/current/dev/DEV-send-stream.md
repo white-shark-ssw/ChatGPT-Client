@@ -2,13 +2,12 @@
 
 ## Status
 
-**Active — b45 first Runtime captured; uninterrupted Web traffic did not expose a separate continuation stream; exact-b45 active-stream interruption capture is next**
+**Active — b45 first Runtime captured; uninterrupted Web traffic did not expose a separate continuation stream; exact-b45 active-stream interruption capture is the human gate**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream`
-- **Branch / PR**: `dev/send-stream-20260829`; PR #29 open/mergeable; do not merge as accepted Send UX.
+- **Branch / PR**: `dev/send-stream-20260829`; PR #29 open/mergeable; title `DEV-send-stream: b45 realtime handoff reconnect evidence gate`; do not merge as accepted Send UX.
 - **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; Stable native predecessor remains b38.
-- **Resume guard before interpreting uploaded b45 diagnostics**: branch head `1a61298fa829b45ead2bfc0e28a2cddf869e7db3`; PR #29 open/mergeable with matching head; main unchanged; only this Active dev checkpoint; no peer conflict.
 - **Exact b45 product/config source**: `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
 - **Candidate**: `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`; permanently reserved.
 - **Push Run / Job**: `33248952646` / `99091176390` — success.
@@ -69,25 +68,30 @@ Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md
 
 Evidence question: after foreground return, does official Web keep consuming the same original stream, or open a new status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send?
 
-## Batch recovery point — PR metadata and final audit
+## Completed b45 first-Runtime documentation chain
 
-Known state before this final docs-only batch: b45 product source remains immutable at `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`; Runtime evidence and durable docs are already updated; full `BUILD_TEST_INDEX.md` history was restored after an intermediate docs-only narrowing mistake and now includes all historical rows plus the updated b45 Runtime row.
+- `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md` records the exact capture and evidence boundary.
+- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md`, `TECHNICAL_DECISIONS.md` (TD-027), and the complete `BUILD_TEST_INDEX.md` are aligned to this Runtime result.
+- An intermediate docs-only Build Index narrowing was detected immediately and repaired from the pre-write full blob; final `BUILD_TEST_INDEX.md` retains the complete historical Candidate table and the updated b45 row.
+- PR #29 metadata is updated to the b45 reconnect evidence gate and remains open/mergeable/not merged.
 
-Confirmed complete:
+## Final product-source drift audit
 
-- b45 first Runtime interpreted and recorded.
-- runtime evidence file created.
-- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md`, `TECHNICAL_DECISIONS.md`, and complete `BUILD_TEST_INDEX.md` aligned to the current b45 evidence boundary.
+Audit performed from exact b45 product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072` to docs head `0503faf7592919bd2e067444a26c7f5787072465` before this final checkpoint commit:
 
-Pending deterministic writes/checks:
-
-1. update PR #29 title/body from stale pre-b45 wording to the exact b45 first Runtime / active-stream reconnect gate;
-2. verify actual branch/PR head and main;
-3. compare exact b45 product source to final branch head and prove all post-product changes are docs-only;
-4. refresh this checkpoint with final head and exact human-only Runtime action.
-
-Recovery must not modify Swift/Xcode/workflow/product/config files, rebuild b45, allocate b46, or merge PR #29.
+- compare status: ahead only, no divergence;
+- changed paths were **only under `docs/project/**`**;
+- no Swift, Xcode project, workflow, build script, asset or product/config file changed after the exact b45 source;
+- therefore exact b45 Runtime product authority remains `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072` and Artifact `9713774868`; later docs-only commits do not redefine it.
 
 ## Next exact action
 
-Update PR #29 metadata, perform the final identity/diff audit, then stop at the human-only exact-b45 active-stream interruption Runtime gate.
+**Human-only Runtime gate:** reuse the exact installed b45 IPA and perform one default-primary response with a deliberate 20–30 second background/lock interval while the original response is visibly still streaming. Return before expected completion, do not refresh/resend/Stop/switch GPT, let official Web recover/finish, then export and upload the diagnostics JSON.
+
+After that evidence:
+
+- official reconnect/continuation traffic observed -> re-run full guard and consider b46 for the smallest Native no-resend parity experiment;
+- same original stream simply survives -> record WebKit survival evidence, Native handoff remains Unverified;
+- response is lost and no official continuation appears -> record negative evidence and reassess the existing-account architecture ceiling.
+
+Do not allocate b46, rebuild b45 or merge PR #29 before that evidence is interpreted.

@@ -8,7 +8,7 @@
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / 新对话 / Stop / reasoning / follow-tail`
 - **Task**: Implement the first evidence-backed production text Send/new-conversation/streaming-response path, including exact response ownership, Stop integration, user-visible reasoning compatibility, follow-tail and new-chat identity handoff.
 - **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; predecessor `DEV-conversation-round-count` Stable b38 merged by PR #27.
-- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified PR head before this requirement-record write is docs-only `46f7c4e1c0fe6f79e48a194b25ac1fd6139b91e3`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
+- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified docs-only head before this final requirement checkpoint write is `d04db771a4b4de433f408bb33b72a421f8a18ec3`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
 - **State-owner boundary remains fixed**: `ConversationRepository` = sole conversation/list/detail/recovery/response authority; `AuthSessionStore` = auth/account authority; default persistent `WKWebsiteDataStore` = sole persistent auth-secret authority. No second repository/global `isStreaming`, hidden production WebView transport, copied persistent credentials, retry/watchdog/fallback endpoints, anti-abuse solver/bypass, browser-fingerprint replay, captured proof/token replay, or hidden-CoT presentation.
 
 ## Exact Candidate history
@@ -93,13 +93,15 @@ If option 2 is selected and later attachment support is added:
 - `TECHNICAL_DECISIONS.md` adds TD-023 for the b42 anti-abuse challenge boundary.
 - `PROJECT_STATE.md` records Phase 9 Active but architecture-blocked while preserving Stable b38.
 - `DEVELOPMENT_PLAN.md` records Phase 9 block and architecture gate; no b43 is planned by default.
-- PR #29 body is synchronized to b42 Path B and explicitly states native production Send is not implemented/accepted.
+- `ATTACHMENT_TRANSFER_PLAN.md` now owns the explicit immediate `+` / native-picker responsiveness contract, diagnostics expectation and exact-device Runtime matrix. `UI_INTERACTION_BASELINE.md` is intentionally not duplicated with the same rule; it already points attachment behavior to the attachment plan, avoiding two durable authorities for the same interaction.
+- PR #29 body remains synchronized to b42 Path B and explicitly states native production Send is not implemented/accepted.
 
-## Batch recovery point — attachment UX requirement docs
+## Batch recovery point — attachment UX requirement docs complete
 
 - **Exact product source / Artifact**: `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`; these remain the b42 Runtime authority regardless of later docs-only head movement.
-- **Known PR head before this requirement write**: `46f7c4e1c0fe6f79e48a194b25ac1fd6139b91e3`; PR #29 open + mergeable; base remains `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **Confirmed complete / never replay**: b39-b42 identities/Artifacts and b42 Runtime closure; option-2 native-grade Web smoothness requirement already recorded.
-- **Current docs batch**: this checkpoint now records the new `+` / attachment-picker responsiveness requirement. Pending writes are `ATTACHMENT_TRANSFER_PLAN.md` and `UI_INTERACTION_BASELINE.md` only; no product/config changes and no Candidate allocation.
+- **Verified docs-only head before this final checkpoint write**: `d04db771a4b4de433f408bb33b72a421f8a18ec3`; PR #29 remained open + mergeable; base `main@34811877896ca88c6656be6676f5466a19931ce6`.
+- **Requirement docs batch complete**: checkpoint + `ATTACHMENT_TRANSFER_PLAN.md` record immediate local picker presentation, no network/challenge gating, privacy-safe latency diagnostics and exact-device acceptance. The attachment-plan commit was audited and changed only that plan.
+- **Intentional scope decision**: `UI_INTERACTION_BASELINE.md` was left unchanged to avoid duplicating the attachment-specific contract; the durable attachment plan remains the owner.
+- **No product change / no Candidate**: no source/config/CI/Artifact change was justified by this requirement alone; b39-b42 remain reserved.
 - **Recovery must not touch/reuse**: b39-b42 identities/Artifacts; exact b42 product source; Stable b38 product/state-owner contracts; other task checkpoints; main branch.
-- **Next exact action**: update the attachment plan and UI interaction baseline with immediate local picker presentation + exact-device latency acceptance, verify the docs-only diff, then refresh this checkpoint to mark the batch complete. The architecture choice among options 1/2/3 remains a human gate; this requirement does not itself silently choose option 2.
+- **Next exact action**: the architecture choice among options 1/2/3 remains the human gate. If option 2 is explicitly selected later, both native-grade Web smoothness and immediate local attachment-picker presentation become required Runtime acceptance gates before broader hybrid-send/attachment integration.

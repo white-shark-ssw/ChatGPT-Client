@@ -55,7 +55,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b48 诊断：正常情况下只操作这里的原生输入框。底层官方 ChatGPT Web 仍负责自己的登录、浏览器挑战和 protected Send；回答正文 SSE 在进入 Web React 前过滤并仅在内存中转给此 Native 视图。不会把提示词/回答写入诊断日志。首版只验证新会话与连续两轮，不代表生产架构已接受。"
+        explanationLabel.text = "b49 诊断：继续验证原生输入 + 官方 Web protected Send；本版只修正已证实的 compact o/p/v SSE patch 解析，使回答正文在进入 Web React 前过滤并仅在内存中转给 Native 视图。不会把提示词/回答写入诊断日志。仍只验证新会话与连续两轮，不代表生产架构已接受。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -118,7 +118,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b48_native_composer_filtered_send_sse", "surface": "native_over_fullsize_web", "scope": "new_chat_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b49_native_composer_compact_patch_filter", "surface": "native_over_fullsize_web", "scope": "new_chat_diagnostic"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -408,9 +408,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           return { value: output, skip: false, removedTextPatchCount, removedTextCharacters };
         }
         if (node && typeof node === 'object') {
-          if (node.op === 'append' && node.path === '/message/content/parts/0' && typeof node.value === 'string') {
-            if (node.value) post({ kind: 'native_delta', text: node.value });
-            return { value: null, skip: true, removedTextPatchCount: 1, removedTextCharacters: node.value.length };
+          if (node.o === 'append' && node.p === '/message/content/parts/0' && typeof node.v === 'string') {
+            if (node.v) post({ kind: 'native_delta', text: node.v });
+            return { value: null, skip: true, removedTextPatchCount: 1, removedTextCharacters: node.v.length };
           }
           const output = {};
           let removedTextPatchCount = 0;

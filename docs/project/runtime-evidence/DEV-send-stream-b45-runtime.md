@@ -17,130 +17,119 @@ _Date: 2026-08-29_
 
 ## Device / export identity
 
-Both uploaded diagnostics reported exact b45 identity:
+All accepted exports reported exact b45 identity: Candidate `DEV-send-stream-0.1.0-b45`, app `0.1.0`, build `45`, source `accd7bdf29e4`, Release, iPhone / iOS17.0.
 
-- Candidate `DEV-send-stream-0.1.0-b45`
-- app `0.1.0`, build `45`
-- source `accd7bdf29e4`
-- Release
-- iPhone / iOS17.0
+## Capture A — uninterrupted existing-conversation path
 
-Both exports are accepted as exact-b45 real-device evidence for the structural observations below.
+- `POST /backend-api/f/conversation` -> HTTP200 `text/event-stream`.
+- Original stream emitted protocol marker `v1`, then very early `resume_conversation_token`, conversation/request/message identity structure, and normal terminal events.
+- `GET /backend-api/conversation/{id}/stream_status` returned HTTP200 JSON with structural `{status:string}` only.
+- No secondary continuation stream was needed while the original Send SSE remained intact.
 
-## Capture A — uninterrupted existing-conversation classified page
+Accepted conclusion: uninterrupted Web keeps the original Send SSE as response transport; token existence/name alone did not establish a Native continuation contract.
 
-- Send at `2026-08-29T11:17:15Z`.
-- `POST /backend-api/f/conversation` via `fetch`.
-- HTTP200 `text/event-stream` at `11:17:16Z`.
-- Original stream event 1: protocol marker `v1`.
-- Event 2: `resume_conversation_token`; `conversation_id` structurally present; token value redacted.
-- Later original-stream structure exposes `conversation_id`, then `conversation_id + request_id`, then `message_id` markers.
-- At `11:17:16Z`, official page opened `GET /backend-api/conversation/{id}/stream_status` via `fetch`.
-- `stream_status` returned HTTP200 `application/json`; observed payload shape was `{status: string}` only.
-- No EventSource, WebSocket, turn-stream, handoff, resume, subscribe, or other continuation-event transport was observed while the response was active.
-- Original Send SSE remained the active response transport until `message_stream_complete` around `11:17:46Z`, `conversation_detail_metadata`, and `[DONE]` around `11:17:47Z`.
-- Approximate observed Send-to-DONE duration: 32 seconds.
+## Capture B — Gizmo/custom-GPT-associated uninterrupted sample
 
-## Capture B — `new_or_other` page with Gizmo structure
-
-- Send at `2026-08-29T11:19:39Z`.
-- `POST /backend-api/f/conversation` via `fetch`.
-- HTTP200 `text/event-stream` at `11:19:40Z`.
-- Original stream again emitted `resume_conversation_token` at event 2.
-- Original-stream structure again exposed `conversation_id + request_id` and later `message_id`.
-- Request structure contained both top-level `conversation_id` and `conversation_mode.gizmo_id`.
-- Therefore this capture is **not accepted as a clean default-primary new-chat sample**; it is Gizmo/custom-GPT-associated structural evidence only.
-- No follow-up continuation transport was observed while this response was active.
-- Original Send SSE reached `message_stream_complete`, `conversation_detail_metadata`, and `[DONE]` around `11:20:11Z`.
-- Approximate observed Send-to-DONE duration: 32 seconds.
+- Same Send route/framing as Capture A.
+- Request structure included `conversation_mode.gizmo_id`; therefore this sample is not a clean default-primary new-chat sample.
+- Original Send SSE again remained transport through completion.
 
 ## Capture C — clean default-primary new-chat with repeated active background / lock
 
-The user explicitly states this was a **new conversation** and deliberately performed several suspend/lock cycles while the answer was still active.
+The user explicitly identified this as a new conversation. The Send body had no top-level `conversation_id` and no `conversation_mode.gizmo_id`, so it is accepted as a clean default-primary new-chat sample.
 
-### Request structure
+While the same original Send SSE remained active, the app was backgrounded/locked for approximately 35s, 34s and 126s; cumulative active-response background time was ~195s / 3m15s. Send-to-terminal was ~227s / 3m47s.
 
-- Probe page initially loaded as `new_or_other` at `12:44:05Z`.
-- One pre-Send background interval lasted about 64 seconds and is not part of active-response evidence.
-- Send began at `12:45:20Z`: `POST /backend-api/f/conversation` via `fetch`.
-- HTTP200 `text/event-stream` returned in the same second.
-- The observed Send body had **no top-level `conversation_id`** and **no `conversation_mode.gizmo_id`**.
-- Together with the user's explicit statement, Capture C is accepted as the clean default-primary new-chat sample despite the probe classifying the page as `existing_conversation` by Send time.
-- Original SSE event 2 again emitted `resume_conversation_token`.
-- Events 3/4 exposed conversation identity and then `conversation_id + request_id`; event 13 exposed message identity.
-- Official Web again opened `GET /backend-api/conversation/{id}/stream_status`; it returned HTTP200 JSON with structural `{status:string}` only.
+On final foreground return, the same original `conversation_send` / `fetch` stream immediately delivered `server_ste_metadata -> message_stream_complete -> conversation_detail_metadata -> [DONE]`. No second Send, new SSE, resume/handoff/turn-stream/subscription connection, manual refresh or resend was observed.
 
-### Active-response background intervals
+Accepted conclusion: on the primary iPhone/iOS17 runtime, the tested WebKit/original-fetch response path can survive or buffer across repeated ordinary background/lock intervals, including ~126s continuous, and still complete normally. This does not prove continuous background event delivery or 5/15-minute behavior.
 
-While the original Send SSE remained active:
+## Capture D — official no-resend resume transport confirmed
 
-1. `12:45:27Z` -> `12:46:02Z`: approximately **35 seconds** background.
-2. `12:46:15Z` -> `12:46:49Z`: approximately **34 seconds** background.
-3. `12:47:01Z` -> `12:49:07Z`: approximately **126 seconds** background.
+Uploaded export time: `2026-08-29T13:35:23Z`.
 
-Total observed active-response background time: approximately **195 seconds / 3m15s**.
+This sample's initial Send request contained both top-level `conversation_id` and `conversation_mode.gizmo_id`, so it is an existing/Gizmo-associated response. It is accepted for the generic official resume transport structure, not as default-primary parity proof.
 
-Send-to-terminal elapsed time: approximately **227 seconds / 3m47s**.
+### Original response before interruption
 
-### Foreground completion behavior
+- Send request: `POST /backend-api/f/conversation` at `13:28:44Z`.
+- Send response: HTTP200 `text/event-stream` at `13:28:56Z`.
+- Original stream event 2: `resume_conversation_token` with conversation identity structurally present.
+- Events 3/4: conversation + request identity structure.
+- Original event 11: `message_marker` at `13:29:08Z`.
+- The original Send stream did not later produce terminal events in this export; recovery traffic took over after the interruption.
 
-Before the first active background interval the probe had observed original-stream event 13 (`message_marker`).
+### Official resume request contract
 
-At the end of the final ~126-second background interval, `willEnterForeground` occurred at `12:49:07Z`. In that same second the **same original `conversation_send` / `fetch` stream** emitted:
+After the original transport was disrupted, the official page repeatedly opened:
 
-- event 464 `server_ste_metadata`;
-- event 465 `message_stream_complete`;
-- event 466 `conversation_detail_metadata`;
-- event 467 terminal `[DONE]`.
+`POST /backend-api/f/conversation/resume`
 
-No second `conversation_send`, no new `text/event-stream` response, and no resume/handoff/turn-stream/subscribe/EventSource/WebSocket continuation connection was observed after any of the three active-response background intervals.
+Observed JSON body shape on every captured attempt:
 
-The user did not need a manual refresh or prompt resend for this capture.
+`{ conversation_id: string, offset: number }`
 
-## What Capture C proves
+Observed request header names included `accept`, `authorization`, `content-type`, normal OAI client/session/route headers and `x-conduit-token`. No Sentinel proof, Turnstile or PoW header names were present on the resume request. Diagnostics captured header **names only**, never values.
 
-1. On exact b45 / primary iPhone / iOS17.0, the tested official-Web response path can **survive or buffer across multiple ordinary background/lock intervals**, including one approximately 126 seconds long, and still reach normal stream completion without a second Send.
-2. The original `/backend-api/f/conversation` fetch remained the observable transport owner from Send to terminal.
-3. Natural short-to-medium backgrounding on this device did not force official Web to expose a separate reconnect transport.
-4. The clean default-primary new-chat request shape is now evidenced without top-level `conversation_id` and without `gizmo_id` in this capture.
+### Offline/error phase
 
-## What Capture C does not prove
+From `13:29:23Z` through `13:29:46Z`, the official page repeatedly attempted the same resume route and each attempt ended in `transportError` while connectivity was unavailable. This is official Web retry behavior; it is Runtime evidence only and does not authorize Native retry machinery.
 
-- It does **not** prove that WebKit delivered every SSE event continuously while the app was suspended. The probe cannot distinguish continuous background delivery from server/network/WebKit continuation plus buffered delivery on foreground.
-- It does **not** prove 5-minute, 15-minute, network-transition, WebContent-process-termination or battery/thermal behavior.
-- It does **not** prove Native same-response handoff.
-- It does **not** authorize Native use/replay of `resume_conversation_token`.
-- It does **not** prove that no official reconnect mechanism exists after a genuine TCP/network/WebContent failure, because the original transport evidently remained viable here.
+### First successful continuation
 
-## Updated architecture conclusion
+At `13:29:50Z` official Web opened `/resume` again. At `13:29:53Z` it returned:
 
-Current desired architecture remains conditional:
+- HTTP200;
+- `Content-Type: text/event-stream`;
+- continuation event 1 with `conversation_id + request_id` identity structure.
 
-`user-visible official Web legal Send -> Native no-resend attach/resume to same response -> Native owns visible realtime response lifecycle`.
+No second `/f/conversation` Send was observed.
 
-The second b45 Runtime capture improves the WebKit/background side of the architecture: ordinary background/lock did not break this response, including across a ~126-second interval.
+### Second successful continuation after another interruption
 
-However it still provides **no separate official continuation channel** that Native can reproduce. The early `resume_conversation_token` remains only an observed structural field.
+A later interruption produced further official resume traffic. At `13:32:10Z`, `/resume` again returned HTTP200 `text/event-stream` with continuation event 1 carrying conversation + request identity structure.
 
-Therefore b46 Native continuation implementation is still not justified.
+### Third successful continuation and normal terminal tail
 
-## Next exact Runtime experiment — force the transport to really break, reuse b45
+After a later background interval, official Web opened `/resume` at `13:35:00Z`. It returned HTTP200 `text/event-stream` at `13:35:02Z`.
 
-Natural short background is now a weak discovery mechanism because the original WebKit fetch survived all three active-response intervals.
+That continuation stream then emitted:
 
-Use the same exact b45 instrumentation and force one controlled connectivity interruption instead:
+- event 1: conversation + request identity structure;
+- event 9: `message_marker` with conversation + message identity;
+- event 85: `server_ste_metadata` with conversation/message/request identity and metadata keys including `turn_exchange_id`, `working_turn_id`, `resume_with_websockets`, `streaming_async_status` and related structural fields;
+- event 86: `message_stream_complete`;
+- event 87: `conversation_detail_metadata`;
+- event 88: terminal `[DONE]`.
 
-1. Clear diagnostics.
-2. Use default ChatGPT / primary assistant in an **existing long conversation**.
-3. Start a response expected to stream long enough to observe recovery.
-4. While visibly streaming, deliberately break connectivity for about **10–15 seconds** and then restore it. Preferred deterministic test: Airplane Mode / both Wi-Fi and cellular unavailable, then restore. A Wi-Fi -> cellular transition is also useful after a stable Wi-Fi baseline.
-5. Do not refresh, resend, Stop, switch GPT or navigate away.
-6. Let official Web recover or fail naturally.
-7. Export diagnostics.
+The continuation reached the same normal terminal grammar previously seen on the original Send stream.
 
-Evidence question: after a genuine transport break, does official Web open an official status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send, or does it only expose failure / eventual history recovery?
+## What Capture D proves
 
-Only an exact observed reconnect mechanism may justify a later b46 Native no-resend parity experiment. If no reconnect path appears, record the negative evidence and reassess the architecture ceiling rather than guessing an endpoint.
+1. Current official ChatGPT Web has a real post-Send no-resend continuation endpoint: `POST /backend-api/f/conversation/resume`.
+2. The observed request body structural contract is exactly `{conversation_id: string, offset: number}`.
+3. A successful resume returns HTTP200 `text/event-stream` and can carry the already-started response through ordinary message identity, metadata, `message_stream_complete`, `conversation_detail_metadata`, and `[DONE]`.
+4. The official page can perform this recovery repeatedly across multiple interruptions without a second `conversation_send`.
+5. The endpoint is a continuation/read path after browser-owned Send; it does not bypass the b42 protected Send challenge boundary.
+
+## What Capture D does not prove
+
+- Exact numeric `offset` semantics/value relationship to the original stream cursor were not logged by b45.
+- Required resume headers beyond the already accepted transient cookies + bearer are not yet known. Header-name presence is not proof every browser header is mandatory.
+- Native access to `/resume` is not yet proven.
+- Default-primary Native resume parity is not yet proven because Capture D's Send was Gizmo-associated.
+- Current `AuthTransientSession.dataTask` buffers the full response; incremental Native streaming is still unimplemented/unverified.
+- Official Web's repeated retry schedule is not a design contract for Native and must not be copied as timer/retry machinery.
+
+## Architecture consequence
+
+The prior condition for a minimal Native no-resend parity experiment is now satisfied.
+
+The next candidate may test only this narrow question:
+
+> After visible official Web performs the protected Send and official Web itself exposes a successful `/resume` body, can Native use the same `conversation_id + offset` once through the existing WebKit-derived transient cookie + bearer boundary and receive the same endpoint's SSE without copying browser challenge or Conduit values?
+
+This experiment must remain diagnostic-only, one attempt, no retries, no production `ConversationRepository` mutation and no second Send.
 
 ## Evidence classification
 
@@ -148,9 +137,10 @@ Only an exact observed reconnect mechanism may justify a later b46 Native no-res
 - CI passed: Yes
 - Artifact produced: Yes
 - Package identity verified: Yes
-- Runtime/manual/real-device: **Yes — uninterrupted protocol capture + repeated active-background/lock capture**
-- Short active-response WebKit/original-fetch background survival: **Positive on exact recorded scope, up to ~126s continuous interval / ~195s cumulative**
-- 5/15-minute hybrid background matrix: **Unknown / Unverified**
-- Forced network-failure reconnect behavior: **Unknown / Unverified**
-- Native same-response handoff capability: **Unknown / Unverified**
+- Runtime/manual/real-device: **Yes — uninterrupted, short-background, and forced-interruption official-resume captures**
+- Ordinary active-response background survival/buffering: **Positive on exact recorded scope up to ~126s continuous / ~195s cumulative**
+- Official no-resend resume route/method/body-shape/SSE framing: **Runtime Confirmed for captured existing/Gizmo response**
+- Native `/resume` parity: **Unknown / Unverified — b46 gate**
+- Default-primary Native continuation: **Unknown / Unverified**
+- Incremental Native response ownership/reasoning/follow-tail/background lifecycle: **Unknown / Unverified**
 - Stable/Frozen Send: **No**

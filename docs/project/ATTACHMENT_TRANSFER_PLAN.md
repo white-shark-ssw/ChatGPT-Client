@@ -1,6 +1,6 @@
 # Attachment Transfer / Download / Share Plan
 
-_Last planned: 2026-08-27._
+_Last planned: 2026-08-29; refreshed with explicit attachment-entry responsiveness requirement._
 
 ## Purpose
 
@@ -41,7 +41,8 @@ Unknown / Unverified until then:
 - whether assistant-returned files use direct URLs, signed temporary URLs or authenticated download routes;
 - server file-size/type/count limits;
 - multi-attachment ordering/limits;
-- background/resume semantics.
+- background/resume semantics;
+- if a future user-visible official-Web Send architecture is selected, the exact supported WebKit mechanism for handing a native-picker selection into the official-Web attachment input/send flow.
 
 ## Core scope — user sending images/files
 
@@ -53,6 +54,18 @@ Use native iOS pickers compatible with the deployment target:
 - generic files/documents through `UIDocumentPickerViewController` or the accepted system file picker path.
 
 Do not invent a custom filesystem browser.
+
+### Picker responsiveness contract
+
+Attachment entry is a high-frequency interaction and has an explicit user acceptance requirement: tapping the composer `+` must not be followed by a long pause before the attachment action surface or picker appears.
+
+- The `+` tap must produce immediate local visual response and begin presenting the native iOS attachment action surface / picker in the same user interaction.
+- Picker presentation is a **local UI action**. It must not wait for WebView navigation, page warm-up, ChatGPT network requests, Sentinel/Turnstile work, upload negotiation or server acknowledgement.
+- Do not insert a fake loading spinner merely to hide avoidable picker-entry latency.
+- Privacy-safe diagnostics should record picker-entry source/type and tap-to-action-surface / tap-to-picker presentation duration, but never selected filenames or contents by default.
+- Exact-device Runtime on the primary iPhone/iOS17 target is the acceptance authority. Functional file sending with clearly perceptible picker-entry lag is not sufficient.
+- Test both a warm ordinary chat state and any future hybrid user-visible Web Send state; Web lifecycle state must not turn a local `+` tap into a network-gated action.
+- If a future hybrid Web Send architecture is chosen, the exact file-selection handoff into official Web remains **Unknown / Unverified** until inspected and tested. Do not assume native code can programmatically populate or drive a Web file input, and do not use a hidden WebView/challenge workaround to force it.
 
 ### Composer presentation
 
@@ -186,7 +199,7 @@ When Markdown/code rendering is implemented:
 
 Privacy-safe events may include:
 
-- picker opened/type/count;
+- picker opened/type/count and picker-entry presentation duration;
 - attachment selected/removed count;
 - upload started/completed/failed with byte counts/duration/type category only;
 - assistant file card detected count;
@@ -200,19 +213,21 @@ Never log filenames when they may contain private content unless a later explici
 
 At minimum on exact iPhone/iOS17 candidates:
 
-1. Send one normal image with accompanying text.
-2. Send one normal document/file with accompanying text.
-3. Remove a selected attachment before Send; nothing uploads/sends unexpectedly.
-4. Switch A -> B with unsent attachment draft when per-conversation draft ownership exists; no cross-conversation leakage.
-5. Upload failure remains visible and does not duplicate the eventual message.
-6. Assistant-returned downloadable file renders as a file card.
-7. Tap assistant file -> download completes -> system share sheet appears.
-8. Save to Files/AirDrop or another available share destination receives a valid file.
-9. Download failure does not crash/blank the conversation and a later explicit tap can retry.
-10. Large-enough file transfer uses file-backed transport without obvious whole-file memory spikes.
-11. Account-context change rejects late attachment callbacks from the old scope.
-12. Copy user message and assistant message with one action; clipboard text matches visible content and excludes hidden material.
-13. When code-block rendering exists, code-copy returns the expected code content.
+1. Repeatedly tap composer `+` from an ordinary warm chat state; local action surface / picker begins presenting without clearly perceptible delay and without waiting on network activity.
+2. If a hybrid user-visible Web Send architecture is selected, repeat `+` after Web enter/return and while the visible Web session is already resident; picker entry remains locally responsive and is not gated on page/challenge work.
+3. Send one normal image with accompanying text.
+4. Send one normal document/file with accompanying text.
+5. Remove a selected attachment before Send; nothing uploads/sends unexpectedly.
+6. Switch A -> B with unsent attachment draft when per-conversation draft ownership exists; no cross-conversation leakage.
+7. Upload failure remains visible and does not duplicate the eventual message.
+8. Assistant-returned downloadable file renders as a file card.
+9. Tap assistant file -> download completes -> system share sheet appears.
+10. Save to Files/AirDrop or another available share destination receives a valid file.
+11. Download failure does not crash/blank the conversation and a later explicit tap can retry.
+12. Large-enough file transfer uses file-backed transport without obvious whole-file memory spikes.
+13. Account-context change rejects late attachment callbacks from the old scope.
+14. Copy user message and assistant message with one action; clipboard text matches visible content and excludes hidden material.
+15. When code-block rendering exists, code-copy returns the expected code content.
 
 Additional file types/multi-attachment counts follow current server evidence rather than guessed capability.
 
@@ -245,6 +260,9 @@ Do **not** block `DEV-attachments` on this manager.
 - Keep attachment sending near the end of the roadmap despite explicit high-frequency use.
 - Build a full download manager before basic tap-download-share works.
 - Guess private upload/download endpoints or headers.
+- Make local attachment picker presentation wait on Web page/network/challenge/upload work.
+- Hide picker-entry latency behind synthetic loading UI instead of fixing the local interaction path.
+- Assume an unverified native-to-Web file-input handoff or use hidden browser/challenge work to force one.
 - Download assistant files fully into memory when file-backed transfer is available.
 - Persist copied auth secrets for downloads.
 - Auto-retry uploads/downloads in loops.

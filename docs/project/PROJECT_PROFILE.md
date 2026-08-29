@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b50 Runtime and exact b51 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b51 Runtime and exact b52 Code/CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -14,7 +14,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Primary distribution**: TrollStore IPA.
 - **Primary tested runtime**: iPhone 15 Pro Max / iOS17.0; lower iOS compatibility preferred where practical.
 - **Current Send constraint**: pure-native ChatGPT-account protected Send is blocked by exact b42 browser-challenge evidence. The user rejects the separately billed/supported API-product architecture and does not want primary-account Sub2API/Codex-subscription Runtime because of account-safety risk.
-- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b51 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine; their existence does not change the durable hidden/shadow-Web production boundary.
+- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b52 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine; their existence does not change the durable hidden/shadow-Web production boundary.
 
 ## Technology stack
 
@@ -113,23 +113,35 @@ Current rules include autonomous continuation, rolling checkpoints, batched non-
 
 Detailed b50 evidence: `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md`.
 
-### b51 current exact Candidate
+### b51 exact Runtime result
 
 - Candidate `DEV-send-stream-0.1.0-b51`, `0.1.0 (51)`.
 - Exact product/config source `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`.
-- Push Run / Job `33271794573` / `99151433241` — success.
-- PR Run / Job `33271796259` / `99151437702` — success.
-- Artifact `9720327648`; ZIP digest `sha256:247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`.
-- IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
-- Package: Release / source `bd8f056cc4d1` / iOS14 / `[1,2]` / arm64.
-- b51 changes only the new-chat first-turn hypothesis: exact top-level `title_generation` no longer clears an already-active assistant-text continuation; a structural count records whether it occurred while continuation was active.
-- Runtime/manual: Pending. b51 is permanently reserved after Artifact emission.
+- Push Run / Job `33271794573` / `99151433241`; PR Run / Job `33271796259` / `99151437702` — success.
+- Artifact `9720327648`; IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
+- Fresh first long response: 11,618 Native chars / 284 deltas / `titleGenerationWhileContinuationCount=1`, terminal true, Web assistant text 0; user visually judged it complete.
+- Second long response was also visually complete.
+- Third GitHub/project-progress response reached terminal but user observed a small **leading truncation**; title-generation count was 0.
+- Accepted: b51 Runtime confirms the narrow `title_generation` continuation-preserve rule fixes the b50 fresh-new-chat missing-middle defect. Complete parser coverage remains unaccepted because the separate tool-style leading gap remains.
+- Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
+
+### b52 current exact Candidate
+
+- Candidate `DEV-send-stream-0.1.0-b52`, `0.1.0 (52)`.
+- Exact product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
+- Push Run / Job `33276080936` / `99162937523` — success.
+- PR Run / Job `33276082767` / `99162942750` — success.
+- Artifact `9721532867`; ZIP digest `sha256:2ffd7e46e80019d3c4e8d6cbfa5c91dffa2a5f88222a30d5c4d5fb1e4fd752fc`.
+- IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
+- Package: Release / `0.1.0 (52)` / Candidate b52 / source `5c0690ce062e` / iOS14 / `[1,2]` / arm64.
+- b52 keeps b51 parser/output semantics and adds only structural aggregate counters for exact/non-exact/nested assistant text patches, inactive value-only strings, continuation resets and first inactive-gap context.
+- Runtime/manual: Pending. b52 is permanently reserved after Artifact emission.
 
 ## Current next Candidate boundary
 
-b39-b51 emitted identities are permanently reserved. Any product-code change after b51 requires `DEV-send-stream-0.1.0-b52`, `0.1.0 (52)` or later.
+b39-b52 emitted identities are permanently reserved. Any product-code correction after b52 requires `DEV-send-stream-0.1.0-b53`, `0.1.0 (53)` or later.
 
-Do not allocate b52 unless exact b51 Runtime provides evidence for a further correction. The next gate is fresh-new-chat b51 Runtime, specifically whether the first long answer becomes complete and whether `titleGenerationWhileContinuationCount > 0` explains b50's first-turn truncation.
+Do not allocate b53 unless exact b52 Runtime identifies a concrete structural gap class. The next gate is one focused GitHub/tool-style b52 reproduction with diagnostics export; b52 itself must remain behavior-neutral.
 
 ## Attachment boundary
 
@@ -144,8 +156,9 @@ Do not allocate b52 unless exact b51 Runtime provides evidence for a further cor
 - b42 remains security/transport evidence, not native Send acceptance.
 - b45 official no-resend resume is Runtime Confirmed.
 - b46/b47 Native duplicated Cookie+Bearer-only resume are Runtime Rejected for their exact attempts.
-- b50 materially confirms the diagnostic Native composer -> official Web Send -> pre-React SSE interception -> Native incremental text path on established turns, but the fresh-new-chat first-turn parser is incomplete.
-- b51 Runtime is pending and does not yet prove the title-generation hypothesis.
+- b50 materially confirms the diagnostic Native composer -> official Web Send -> pre-React SSE interception -> Native incremental text path on established turns.
+- b51 Runtime confirms the fresh-new-chat title-generation fix but exposes a separate tool/GitHub-style leading truncation, so complete parser coverage is not accepted.
+- b52 is Code/CI/Artifact/package verified, behavior-neutral, and Runtime pending.
 - Full-Web long-conversation composer viability failed on the primary device/workload reported at b47.
 - Native production response ownership/reasoning/follow-tail/background lifecycle, existing-conversation pre-React history virtualization, 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified where not explicitly tested.
 - CI/Artifact success is never Runtime proof.

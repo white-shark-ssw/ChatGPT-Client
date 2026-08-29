@@ -97,6 +97,10 @@ final class SettingsViewController: UIViewController {
         diagnosticsDetail.numberOfLines = 0
         diagnosticsDetail.text = "日志只保存有界的本地结构化元数据。默认不记录密码、OAuth Code、Token、Cookie、完整聊天正文、请求/响应正文或附件内容；导出时会再次脱敏敏感标识。"
 
+        let protocolSendProbeButton = UIButton(type: .system)
+        protocolSendProbeButton.setTitle("Send 协议探测（诊断）", for: .normal)
+        protocolSendProbeButton.addTarget(self, action: #selector(openProtocolSendProbe), for: .touchUpInside)
+
         let sampleButton = UIButton(type: .system)
         sampleButton.setTitle("写入测试诊断事件", for: .normal)
         sampleButton.addTarget(self, action: #selector(writeSampleEvent), for: .touchUpInside)
@@ -116,6 +120,7 @@ final class SettingsViewController: UIViewController {
             metadataLabel,
             diagnosticsTitle,
             diagnosticsDetail,
+            protocolSendProbeButton,
             sampleButton,
             exportButton,
             clearButton
@@ -161,6 +166,11 @@ final class SettingsViewController: UIViewController {
     @objc private func messageTimePreferenceChanged() { preferences.showsMessageTimestamps = messageTimeSwitch.isOn }
 
     @objc private func answerJumpPreferenceChanged() { preferences.showsAnswerQuickNavigation = answerJumpSwitch.isOn }
+
+    @objc private func openProtocolSendProbe() {
+        diagnostics.info(category: "navigation", name: "conversationSendProbe.open")
+        navigationController?.pushViewController(ProtocolSendProbeViewController(), animated: true)
+    }
 
     @objc private func writeSampleEvent() {
         let span = diagnostics.startSpan(category: "diagnostics", name: "sample", fields: ["origin": "settings"])

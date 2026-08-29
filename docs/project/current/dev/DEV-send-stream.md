@@ -130,8 +130,8 @@ If `titleGenerationWhileContinuationCount == 0` or the first turn still truncate
 - Batch B — non-CI b51 assembly: complete.
 - Batch C — exact four-file audit + Light Guard + non-force publish: complete.
 - Batch D — exact-source Push/PR CI + Push Artifact + package inspection: complete.
-- Batch E — durable synchronization: `MODULE_STATUS`, `PROJECT_STATE`, `PROJECT_PROFILE`, `PROJECT_SPECIFIC_RULES`, `DEVELOPMENT_PLAN`, and `BUILD_TEST_INDEX` updated to b51 truth. PR #29 metadata + final checkpoint closeout remain.
+- Batch E — durable files `MODULE_STATUS`, `PROJECT_STATE`, `PROJECT_PROFILE`, `PROJECT_SPECIFIC_RULES`, `DEVELOPMENT_PLAN`, and `BUILD_TEST_INDEX` are complete. Only PR #29 metadata and final checkpoint closeout remain.
 
 ## Next exact action
 
-Update PR #29 to the b51 fresh-new-chat Runtime gate, then mark Batch E complete without changing exact b51 product/config source. Hand exact Artifact `9720327648` IPA to the user. The next human-only gate is fresh-new-chat b51 Runtime. Do not rebuild b51; any later product correction requires b52+.
+Update PR #29 title/body to the exact b51 fresh-new-chat Runtime gate, then mark Batch E complete without changing exact b51 product/config source. Hand exact Artifact `9720327648` IPA to the user. The next human-only gate is fresh-new-chat b51 Runtime. Do not rebuild b51; any later product correction requires b52+.

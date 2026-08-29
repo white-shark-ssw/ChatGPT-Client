@@ -23,6 +23,8 @@ final class AuthWebViewController: UIViewController {
     private var hybridPageLoaded = false
     private var hybridPresentationCount = 0
     private var hybridNavigationStartedAt: TimeInterval?
+    private var hybridTargetConversationID: String?
+    private var hybridSyncHandler: (() -> Void)?
 
     init(mode: AuthVerificationMode = .authentication) {
         self.mode = mode
@@ -58,7 +60,10 @@ final class AuthWebViewController: UIViewController {
 
         switch mode {
         case .hybridChat:
-            navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadHybridChat))
+            navigationItem.rightBarButtonItems = [
+                UIBarButtonItem(title: "返回并同步", style: .done, target: self, action: #selector(returnAndSyncHybridChat)),
+                UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadHybridChat))
+            ]
         case .authentication, .protocolRead:
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "重新开始", style: .plain, target: self, action: #selector(restartLogin))
             startLogin()
@@ -68,20 +73,31 @@ final class AuthWebViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         guard mode == .hybridChat else { return }
+        navigationController?.setToolbarHidden(true, animated: false)
         hybridPresentationCount += 1
-        diagnostics.info(category: "webSend", name: "surface.presented", fields: ["presentationCount": String(hybridPresentationCount), "residentReuse": hybridPageLoaded ? "true" : "false"])
-        guard !hybridPageLoaded else { return }
-        hybridPageLoaded = true
-        hybridNavigationStartedAt = ProcessInfo.processInfo.systemUptime
-        diagnostics.info(category: "webSend", name: "surface.initialLoad", fields: ["destination": "chatgpt"])
-        webView.load(URLRequest(url: Self.chatURL))
+        let targetMatch = hybridTargetConversationID.map { Self.webConversationID(from: webView.url) == $0 } ?? false
+        diagnostics.info(category: "webSend", name: "surface.presented", fields: ["presentationCount": String(hybridPresentationCount), "residentReuse": targetMatch ? "true" : "false", "targetMatch": targetMatch ? "true" : "false"])
+        loadHybridTargetIfNeeded()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        guard mode == .hybridChat, isMovingFromParent else { return }
+        navigationController?.setToolbarHidden(false, animated: false)
+    }
+
+    func prepareForConversation(id: String, onSyncRequested: @escaping () -> Void) {
+        guard mode == .hybridChat else { return }
+        hybridTargetConversationID = id
+        hybridSyncHandler = onSyncRequested
+        title = "发送消息"
     }
 
     private var initialTitle: String {
         switch mode {
         case .authentication: return "登录验证"
         case .protocolRead: return "协议读取验证"
-        case .hybridChat: return "官方 ChatGPT"
+        case .hybridChat: return "发送消息"
         }
     }
 
@@ -96,6 +112,25 @@ final class AuthWebViewController: UIViewController {
         webView.load(URLRequest(url: Self.loginURL))
     }
 
+    private func loadHybridTargetIfNeeded() {
+        guard mode == .hybridChat else { return }
+        let destination: URL
+        if let id = hybridTargetConversationID {
+            if Self.webConversationID(from: webView.url) == id {
+                hybridPageLoaded = true
+                return
+            }
+            destination = Self.chatURL.appendingPathComponent("c").appendingPathComponent(id)
+        } else {
+            guard !hybridPageLoaded else { return }
+            destination = Self.chatURL
+        }
+        hybridPageLoaded = true
+        hybridNavigationStartedAt = ProcessInfo.processInfo.systemUptime
+        diagnostics.info(category: "webSend", name: "surface.targetLoad", fields: ["route": hybridTargetConversationID == nil ? "root" : "conversation", "residentReuse": "false"])
+        webView.load(URLRequest(url: destination))
+    }
+
     @objc private func restartLogin() {
         diagnostics.info(category: "auth", name: "webBootstrap.restart")
         startLogin()
@@ -106,6 +141,18 @@ final class AuthWebViewController: UIViewController {
         hybridNavigationStartedAt = ProcessInfo.processInfo.systemUptime
         diagnostics.info(category: "webSend", name: "surface.reload", fields: Self.safeLocationFields(webView.url))
         webView.reload()
+    }
+
+    @objc private func returnAndSyncHybridChat() {
+        guard mode == .hybridChat else { return }
+        diagnostics.info(category: "webSend", name: "nativeReturn.syncRequested", fields: ["targetMatch": currentHybridTargetMatches ? "true" : "false"])
+        hybridSyncHandler?()
+        navigationController?.popViewController(animated: true)
+    }
+
+    private var currentHybridTargetMatches: Bool {
+        guard let id = hybridTargetConversationID else { return false }
+        return Self.webConversationID(from: webView.url) == id
     }
 
     private func startAccountProbeIfNeeded() {
@@ -163,11 +210,24 @@ final class AuthWebViewController: UIViewController {
         }
     }
 
+    private static func webConversationID(from url: URL?) -> String? {
+        guard let url, let host = url.host?.lowercased(), host == "chatgpt.com" || host.hasSuffix(".chatgpt.com") else { return nil }
+        let components = url.pathComponents.filter { $0 != "/" }
+        guard components.count >= 2, components[0] == "c" else { return nil }
+        return components[1]
+    }
+
     private static func safeLocationFields(_ url: URL?) -> [String: String] {
         guard let url, let host = url.host?.lowercased() else { return ["destination": "unknown"] }
         let destination: String
         if host == "chatgpt.com" || host.hasSuffix(".chatgpt.com") {
-            destination = url.path.hasPrefix("/auth") ? "chatgpt_auth" : "chatgpt"
+            if url.path.hasPrefix("/auth") {
+                destination = "chatgpt_auth"
+            } else if webConversationID(from: url) != nil {
+                destination = "chatgpt_conversation"
+            } else {
+                destination = "chatgpt"
+            }
         } else if host == "auth.openai.com" || host.hasSuffix(".openai.com") {
             destination = "openai_auth"
         } else if host == "accounts.google.com" {
@@ -197,6 +257,7 @@ extension AuthWebViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         var fields = Self.safeLocationFields(navigationAction.request.url)
         fields["navigationType"] = Self.navigationTypeName(navigationAction.navigationType)
+        if mode == .hybridChat, let target = hybridTargetConversationID { fields["targetMatch"] = Self.webConversationID(from: navigationAction.request.url) == target ? "true" : "false" }
         diagnostics.info(category: mode == .hybridChat ? "webSend" : "auth", name: "web.navigation.request", fields: fields)
         decisionHandler(.allow)
     }
@@ -204,6 +265,7 @@ extension AuthWebViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
         var fields = Self.safeLocationFields(navigationResponse.response.url)
         if let response = navigationResponse.response as? HTTPURLResponse { fields["httpStatus"] = String(response.statusCode) }
+        if mode == .hybridChat, let target = hybridTargetConversationID { fields["targetMatch"] = Self.webConversationID(from: navigationResponse.response.url) == target ? "true" : "false" }
         diagnostics.info(category: mode == .hybridChat ? "webSend" : "auth", name: "web.navigation.response", fields: fields)
         decisionHandler(.allow)
     }
@@ -211,16 +273,18 @@ extension AuthWebViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         guard mode == .hybridChat else { return }
         if hybridNavigationStartedAt == nil { hybridNavigationStartedAt = ProcessInfo.processInfo.systemUptime }
-        diagnostics.info(category: "webSend", name: "navigation.started", fields: Self.safeLocationFields(webView.url))
+        var fields = Self.safeLocationFields(webView.url)
+        fields["targetMatch"] = currentHybridTargetMatches ? "true" : "false"
+        diagnostics.info(category: "webSend", name: "navigation.started", fields: fields)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        let fields = Self.safeLocationFields(webView.url)
+        var fields = Self.safeLocationFields(webView.url)
         if mode == .hybridChat {
-            var hybridFields = fields
-            if let hybridNavigationStartedAt { hybridFields["durationMs"] = String(format: "%.2f", (ProcessInfo.processInfo.systemUptime - hybridNavigationStartedAt) * 1000) }
+            fields["targetMatch"] = currentHybridTargetMatches ? "true" : "false"
+            if let hybridNavigationStartedAt { fields["durationMs"] = String(format: "%.2f", (ProcessInfo.processInfo.systemUptime - hybridNavigationStartedAt) * 1000) }
             self.hybridNavigationStartedAt = nil
-            diagnostics.info(category: "webSend", name: "navigation.finished", fields: hybridFields)
+            diagnostics.info(category: "webSend", name: "navigation.finished", fields: fields)
             return
         }
 

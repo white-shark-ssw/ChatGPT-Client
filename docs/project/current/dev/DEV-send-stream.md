@@ -9,7 +9,7 @@
 - **Task**: deliver a usable ChatGPT-account Send path without circumventing browser anti-abuse protections. Native read/navigation remains the product shell; Send is explicitly allowed to use a **user-visible official ChatGPT Web surface**.
 - **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; Stable predecessor b38 remains the merged native read/metadata/round-navigation baseline.
 - **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Resume guard verified no peer Active development checkpoint and unchanged base main.
-- **Candidate identity**: b39-b42 are permanently reserved. `DEV-send-stream-0.1.0-b43` was confirmed absent before allocation and is now the next required valid identity for the hybrid product code.
+- **Candidate identity**: b39-b42 are permanently reserved. `DEV-send-stream-0.1.0-b43` is allocated for the first hybrid visible-Web feasibility/smoothness Candidate.
 
 ## Exact b42 decision evidence retained
 
@@ -63,7 +63,18 @@ The corresponding PR-triggered run `33238066937` also succeeded at the same wron
 
 ## First valid hybrid Candidate — b43
 
-`DEV-send-stream-0.1.0-b43` is allocated now. Before any further product-triggering push, Xcode package metadata and workflow Artifact naming must be changed to b43. Because the workflow itself auto-runs on either Xcode/workflow-file changes, update them through one atomic Git commit if the available Git-data tools permit it; do not intentionally emit another mixed b42/b43 package boundary through sequential contents-API writes.
+`DEV-send-stream-0.1.0-b43` is allocated.
+
+To avoid another mixed identity, b43 metadata was prepared atomically in Git data rather than by sequential contents-API writes:
+
+- parent branch head before allocation commit: `e30113ea6c1cbe135dd0c4e870388a570b77bede`;
+- parent tree: `35d3f79d0ad10e0700173633bcba29937bf4b85d`;
+- b43 Xcode metadata blob: `f26636045934e94873b05fa21664a9a1e90735a8` (`CURRENT_PROJECT_VERSION=43`, Candidate b43 for Debug/Release);
+- b43 workflow blob: `ddf5ee61aae265b41cc06a34924be18cbaf7f647` (`iOS Hybrid Web Send`, Artifact name b43);
+- combined tree: `aa4634e81f71b8a54204523f557cd6ff00828d9b`;
+- combined commit prepared but not yet moved onto the branch at this checkpoint: `b615df4ce7556f792e89a0fc2f5b03ed8d597daf`.
+
+This is one atomic identity commit. Recovery must either fast-forward the branch to this exact commit once, or verify that it already happened; never reconstruct it by writing the two files separately.
 
 ### b43 exact-device Runtime focus
 
@@ -85,21 +96,21 @@ The corresponding PR-triggered run `33238066937` also succeeded at the same wron
 
 ## Non-atomic batch recovery point — hybrid implementation
 
-Known current state:
+Known current state before b43 publication:
 
-- exact product head before valid b43 metadata: `8be4da4e6af3dad146bc43888ddeb3f4cd2037b8`;
+- docs branch head after this checkpoint will differ from the product head, but exact hybrid product changes are the two files described above;
 - base `main@34811877896ca88c6656be6676f5466a19931ce6`;
 - PR #29 open + mergeable;
 - exact legitimate b42 source/Artifact remain `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`;
 - accidental Artifact `9710515489` is permanently rejected as identity-invalid;
 - no peer Active dev task;
-- b43 allocated, not yet emitted as a valid Artifact.
+- b43 atomic metadata commit `b615df4ce7556f792e89a0fc2f5b03ed8d597daf` is prepared.
 
 Batches:
 
 - **Batch A complete**: Option 2 selection + hard UX requirements recorded.
 - **Batch B complete**: minimal user-visible resident/reusable Web surface + Settings entry written; exact net diff audited to two files.
-- **Batch C active**: atomically establish b43 Xcode/workflow identity before any further product-triggering push, then inspect the resulting run/package.
+- **Batch C active**: fast-forward branch to the prepared atomic b43 identity commit, verify the resulting push/PR CI and package identity.
 - **Batch D pending**: verify exact valid b43 Artifact/IPA identity and hand IPA to user for real-device hybrid smoothness/attachment-entry test.
 - **Batch E pending**: record actual CI/Artifact/Runtime evidence and update durable docs/PR body.
 
@@ -114,4 +125,4 @@ Recovery rules:
 
 ## Next exact action
 
-Use Git-data atomic tree/commit tooling if available to change both Xcode build/Candidate metadata and workflow Candidate/Artifact name to b43 in one commit. Then fast-forward the branch once, verify the resulting push/PR CI and package identity, and continue to the real-device gate.
+Fast-forward `dev/send-stream-20260829` exactly once to prepared commit `b615df4ce7556f792e89a0fc2f5b03ed8d597daf`, then verify the b43 push/PR CI and Artifact identity. If CI fails with a deterministic source-backed compile issue, make the minimal correction under a new Candidate because b43 will have emitted if an Artifact was produced; if the build fails before Artifact emission, preserve b43 according to actual emission evidence rather than guessing.

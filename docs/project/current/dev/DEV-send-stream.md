@@ -2,15 +2,15 @@
 
 ## Status
 
-**Active — exact b51 Runtime confirms the fresh-new-chat `title_generation` fix: the first long response was complete/incremental with `titleGenerationWhileContinuationCount=1`. A third GitHub/tool-style turn still showed a small leading truncation with `titleGenerationWhileContinuationCount=0`. Exact b52 is now Code/config written as a diagnostic-only structural classifier; CI/Artifact pending. TD-024/TD-025 remain unchanged; PR #29 remains evidence-only.**
+**Active — exact b51 Runtime confirms the fresh-new-chat `title_generation` fix: the first long response was complete/incremental with `titleGenerationWhileContinuationCount=1`. A third GitHub/tool-style turn still showed a small leading truncation with `titleGenerationWhileContinuationCount=0`. Exact b52 is a diagnostic-only structural classifier and is now Code/CI/Artifact/package verified; the next gate is one focused exact-device GitHub/tool-style reproduction. TD-024/TD-025 remain unchanged; PR #29 remains evidence-only.**
 
 - **Work ID**: `DEV-send-stream`
 - **Branch**: `dev/send-stream-20260829`
-- **PR**: #29 — open / not merged; evidence branch only.
+- **PR**: #29 — open / mergeable / not merged; evidence branch only; title/body synchronized to b52 Runtime gate.
 - **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
 - **Stable native predecessor**: b38.
 - **Exact b51**: `DEV-send-stream-0.1.0-b51`, `0.1.0 (51)`, product/config source `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`, Push `33271794573 / 99151433241`, PR `33271796259 / 99151437702`, Artifact `9720327648`, ZIP `sha256:247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`, IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
-- **Exact b52**: `DEV-send-stream-0.1.0-b52`, `0.1.0 (52)`, product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`; CI/Artifact pending.
+- **Exact b52**: `DEV-send-stream-0.1.0-b52`, `0.1.0 (52)`, product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`, Push `33276080936 / 99162937523`, PR `33276082767 / 99162942750`, Artifact `9721532867`, ZIP `sha256:2ffd7e46e80019d3c4e8d6cbfa5c91dffa2a5f88222a30d5c4d5fb1e4fd752fc`, IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`, Release/iOS14/`[1,2]`/arm64.
 - **Stable/Frozen Send**: No.
 
 ## Exact b51 Runtime
@@ -40,13 +40,24 @@ Exact b52 source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f` preserves b51 filter
 
 b52 does **not** send inactive value-only strings to Native, does not preserve any new structural frame, and does not alter the b51 `title_generation` behavior.
 
-The Swift source, both target build configurations (`CURRENT_PROJECT_VERSION=52`, Candidate b52), and workflow Artifact identity `ChatGPTClient-DEV-send-stream-0.1.0-b52` were assembled in one Git tree/commit and the feature ref moved once. This avoids any intermediate feature head containing b52 code under b51 identity.
+The Swift source, both target build configurations (`CURRENT_PROJECT_VERSION=52`, Candidate b52), and workflow Artifact identity `ChatGPTClient-DEV-send-stream-0.1.0-b52` were assembled in one Git tree/commit and the feature ref moved once. This avoided an intermediate feature head containing b52 code under b51 identity.
+
+## b52 validation / package identity
+
+- Push Run / Job `33276080936 / 99162937523` — success.
+- PR Run / Job `33276082767 / 99162942750` — success.
+- Push Artifact `9721532867`; digest `sha256:2ffd7e46e80019d3c4e8d6cbfa5c91dffa2a5f88222a30d5c4d5fb1e4fd752fc`.
+- IPA `ChatGPTClient-0.1.0-b52-dev-send-stream.ipa`; SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
+- Independent package inspection: `0.1.0 (52)`, Candidate `DEV-send-stream-0.1.0-b52`, source marker `5c0690ce062e`, minimum iOS14.0, UIDeviceFamily `[1,2]`, arm64.
+- Runtime/manual: Pending.
+
+Because Artifact `9721532867` exists, b52 is permanently reserved. Any product-code correction after b52 requires b53+ and must be justified by exact b52 Runtime.
 
 ## Evidence ladder
 
 - b50 Code/CI/Artifact/package: Passed; Runtime partial pass.
 - b51 Code/CI/Artifact/package: Passed; Runtime **partial pass with fresh-new-chat fix confirmed; separate tool/GitHub-style leading truncation remains**.
-- b52 Code/config: Written at `5c0690ce...`; CI/Artifact/package pending; Runtime pending.
+- b52 Code/CI/Artifact/package: Passed; Runtime pending.
 - Phase 9 Stable/Frozen: No.
 
 ## Durable boundary
@@ -55,25 +66,15 @@ The Swift source, both target build configurations (`CURRENT_PROJECT_VERSION=52`
 
 ## Recovery state
 
-**Batch F — b51 Runtime -> b52 structural diagnostic**
+**Batch F — b51 Runtime -> b52 structural diagnostic** is complete through PR metadata and exact Artifact/package verification.
 
-Baseline: `main@1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
+- b51 Runtime evidence persisted at `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
+- exact b52 product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
+- exact b52 Push/PR CI and Artifact/package identities verified above.
+- PR #29 title/body now describe the b52 focused Runtime gate.
 
-Completed:
-
-1. checkpointed b51 Runtime / b52 plan;
-2. persisted `DEV-send-stream-b51-runtime.md` at commit `436b376259e01ad9ce9ab226efe882d42060d289`;
-3. assembled b52 Swift + build/Candidate + workflow identity in one tree;
-4. moved feature branch to exact b52 source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
-
-Remaining:
-
-5. verify exact b52 Push/PR CI, Artifact and package identity;
-6. update durable project docs / `BUILD_TEST_INDEX.md` and PR #29 metadata;
-7. hand exact b52 Artifact to user for one focused GitHub/tool-style reproduction.
-
-If interrupted, re-read this checkpoint and actual GitHub state; perform only missing deterministic writes. Never rebuild corrected code under b51.
+Durable project docs/build-test index still need the same b51/b52 evidence reflected before the next code correction/merge decision; this checkpoint remains the immediate resume source if interrupted.
 
 ## Next exact action
 
-Verify CI for exact source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`. If CI/Artifact/package are valid, persist b52 identity/evidence and hand it to the user. The b52 Runtime gate is one focused reproduction of a GitHub/tool-style response that previously showed leading truncation, plus diagnostics export. Parser behavior remains frozen until that evidence identifies the actual gap class.
+Hand exact Artifact `9721532867` to the user. Runtime gate: clear diagnostics, open `Native 输入 / Web Send（b52诊断）`, reproduce one GitHub/tool-style answer similar to the b51 third turn, observe whether the beginning truncates, wait for terminal, and export diagnostics. Do not change parser behavior until the new structural counters identify the actual gap class. Do not allocate b53 by guess.

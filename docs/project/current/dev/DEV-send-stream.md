@@ -69,11 +69,9 @@ The b43 identity update is represented by one atomic Git-data commit so workflow
 
 - Xcode metadata blob `f26636045934e94873b05fa21664a9a1e90735a8`: `CURRENT_PROJECT_VERSION=43`, `DIAGNOSTICS_CANDIDATE=DEV-send-stream-0.1.0-b43` for Debug/Release;
 - workflow blob `ddf5ee61aae265b41cc06a34924be18cbaf7f647`: workflow `iOS Hybrid Web Send`, Artifact container b43;
-- current branch parent before publication commit: `c0616193b8430f15cf8e3e53a0d92ecd7f05a3c4`;
-- combined b43 tree: `c87e576c5720cebcd2c12b42d49b4235306ae55c`;
-- exact atomic b43 commit prepared directly on current branch parent: `049ba55a3b3611fdd9b041e6f766375de02f6816`.
+- exact atomic b43 publication commit: `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`, parent `4a2fb525923dec80e79b6b0dd2c8119642b4cf3a`, tree `68b5976413b3bce764b822a19ed4ad9c9c8fa171`.
 
-Earlier unpublished preparation commits `b615df4ce7556f792e89a0fc2f5b03ed8d597daf` and `566ed4fe6df06a012addbb919f89ee67cd7c0189` were based on older checkpoint parents and are superseded tooling state only; neither was branch head and neither may be force-pushed or cited as Candidate source.
+Earlier unpublished preparation commits based on older checkpoint parents are superseded tooling state only; none may be force-pushed or cited as Candidate source.
 
 ### b43 exact-device Runtime focus
 
@@ -95,21 +93,20 @@ Earlier unpublished preparation commits `b615df4ce7556f792e89a0fc2f5b03ed8d597da
 
 ## Non-atomic batch recovery point — hybrid implementation
 
-Known current state before publication:
+Known state:
 
-- branch head before b43 publication is the checkpoint chain ending at `c0616193b8430f15cf8e3e53a0d92ecd7f05a3c4`;
 - base `main@34811877896ca88c6656be6676f5466a19931ce6`;
 - PR #29 open + mergeable;
 - exact legitimate b42 source/Artifact remain `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`;
 - accidental Artifact `9710515489` is permanently rejected as identity-invalid;
 - no peer Active dev task;
-- exact b43 atomic identity commit `049ba55a3b3611fdd9b041e6f766375de02f6816` is prepared directly on the current branch parent.
+- exact b43 atomic publication commit is `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`.
 
 Batches:
 
 - **Batch A complete**: Option 2 selection + hard UX requirements recorded.
 - **Batch B complete**: minimal user-visible resident/reusable Web surface + Settings entry written; exact net diff audited to two files.
-- **Batch C active**: move branch exactly once to `049ba55a3b3611fdd9b041e6f766375de02f6816`, then verify resulting b43 push/PR CI and package identity.
+- **Batch C ready for publication**: move branch exactly once to `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`, then verify resulting b43 push/PR CI and package identity.
 - **Batch D pending**: verify exact valid b43 Artifact/IPA identity and hand IPA to user for real-device hybrid smoothness/attachment-entry test.
 - **Batch E pending**: record actual CI/Artifact/Runtime evidence and update durable docs/PR body.
 
@@ -125,4 +122,4 @@ Recovery rules:
 
 ## Next exact action
 
-Fast-forward `dev/send-stream-20260829` to `049ba55a3b3611fdd9b041e6f766375de02f6816`, verify the resulting b43 push/PR CI and Artifact identity, then continue autonomously to the real-device gate.
+Move `dev/send-stream-20260829` to `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`, verify b43 push/PR CI and Artifact identity, then continue autonomously to the real-device gate.

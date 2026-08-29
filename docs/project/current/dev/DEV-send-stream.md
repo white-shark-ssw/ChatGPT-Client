@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b45 now proves the official Web no-resend resume transport; b46 Native resume parity Candidate is authorized and in progress.**
+**Active — b45 official no-resend resume is Runtime Confirmed; exact b46 Native cookie+bearer-only duplicated resume is Runtime Rejected with HTTP404 JSON; b47 diagnostic clarification is authorized.**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream`
@@ -10,113 +10,142 @@
 - **PR**: #29 — open / mergeable / not merged.
 - **Stable native predecessor**: b38.
 - **Original feature base**: `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; target advance is root-`AGENTS.md` only and has no product/state-owner overlap.
-- **Pre-Runtime-3 branch head**: `eafe65cf46b405335adcb70efec90c9667a38e08`.
-- **Exact b45 product/config source**: `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
-- **b45 Candidate**: `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`; permanently reserved.
-- **b45 Artifact**: `9713774868`; ZIP `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`; IPA SHA-256 `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`.
-- **b45 validation**: Code / CI / Artifact / package identity passed. Three exact-device Runtime evidence sets now accepted.
+- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; current main-only delta from original base is repository-governance `AGENTS.md` changes. No product/state-owner overlap found.
+- **Pre-this-checkpoint branch head**: `c6d70eb662848bf70b2754df3f8e9b8371090313`.
 - **Stable/Frozen Send**: No.
+
+## Current governance / resume guard
+
+Latest repository `main` `AGENTS.md` + `docs/project/START_HERE.md` were reloaded on 2026-08-29 at the user's explicit request. Current rules include autonomous continuation, rolling checkpoints, batched non-atomic GitHub recovery, same-conversation identity reuse, and Full/Light Resume Guards.
+
+Full Resume Guard for this continuation:
+
+- branch exists and current head is `c6d70eb662848bf70b2754df3f8e9b8371090313` before this checkpoint write;
+- PR #29 open / mergeable / not merged;
+- exact b46 product/config source remains `4ab9be3ef2809204e88fcb0d44884e35b43726b1`;
+- `4ab9be3... -> c6d70e...` is docs-only (`PROJECT_STATE.md`); no product drift;
+- Xcode config is `0.1.0 (46)` / `DEV-send-stream-0.1.0-b46`;
+- workflow identity is b46;
+- legitimate b46 Artifact remains `9715903443`, digest `sha256:4747df63cc1eb0069fbb8e1d5204941e0df4cd15edd475313f464ccfc133d35c`;
+- no peer Active development checkpoint exists on current feature/main routing state, so no branch/Candidate/state-owner conflict is present;
+- current `main` is 3 governance commits ahead of the original feature base; final synchronization is still required before merge, but it does not block this isolated diagnostic work.
 
 ## Security / product boundary retained
 
-Exact b42 still blocks pure-native ChatGPT-account **Send** because the successful Send path requires browser anti-abuse challenge output. The API-product route remains explicitly rejected by the user.
+Exact b42 still blocks pure-native ChatGPT-account **Send** because successful protected Send requires browser anti-abuse challenge output. The API-product route remains explicitly rejected by the user.
 
 Permitted target remains:
 
-`Native history/presentation -> user-visible official Web performs legal protected Send -> Native attaches/resumes to that already-started response without a second Send -> Native eventually owns visible realtime response/background lifecycle.`
+`Native history/presentation -> user-visible official Web performs legal protected Send -> Native attaches/resumes to the same already-started response without a second Send -> Native eventually owns visible realtime response/background lifecycle.`
 
 Still prohibited: Sentinel/Turnstile/PoW solver/bypass/replay, copied challenge/proof values, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Send clicks, DOM answer/reasoning scraping, guessed continuation endpoints and hidden file-input injection.
 
-The newly evidenced `/backend-api/f/conversation/resume` route is a **post-Send continuation read**, not a Send bypass.
+The evidenced `/backend-api/f/conversation/resume` route is a **post-Send continuation read**, not a protected-Send bypass.
 
-## b45 Runtime 1 — uninterrupted path
+## Accepted b45 Runtime evidence
 
-- `POST /backend-api/f/conversation` -> HTTP200 `text/event-stream`.
-- `resume_conversation_token` appears very early.
-- Original Send `fetch` remains the response transport to terminal when uninterrupted.
-- `GET /backend-api/conversation/{id}/stream_status` was status-only JSON `{status:string}`.
-- No secondary continuation stream was needed on the uninterrupted path.
+Exact b45 Candidate `DEV-send-stream-0.1.0-b45`, source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`, legitimate Artifact `9713774868` is permanently reserved.
 
-## b45 Runtime 2 — ordinary background/lock survival
+Accepted evidence:
 
-Clean default-primary new-chat capture: original Send SSE survived/buffered across active-response background intervals of about 35s, 34s and 126s; cumulative ~195s. Same original fetch produced terminal events on foreground return with no resend/refresh.
+1. uninterrupted `/backend-api/f/conversation` Send remains the SSE owner through terminal when intact;
+2. clean default-primary new chat survived/buffered repeated active-response background/lock intervals including ~126s continuous without resend/refresh;
+3. forced transport failure exposed official `POST /backend-api/f/conversation/resume` with body `{conversation_id: string, offset: number}`;
+4. official `/resume` can return HTTP200 `text/event-stream`, repeatedly continue the same response without a second Send, and reach `message_stream_complete -> conversation_detail_metadata -> [DONE]`;
+5. official resume request header-name evidence included normal auth/client headers and `x-conduit-token`, but no Sentinel proof/Turnstile/PoW header names. Header-name presence does not prove every browser header is required.
 
-Accepted only as short-background survival/buffering evidence; not proof of 5/15-minute behavior or Native continuation.
+## Exact b46 identity
 
-## b45 Runtime 3 — official resume transport confirmed
+- Candidate: `DEV-send-stream-0.1.0-b46`
+- Version/build: `0.1.0 (46)`
+- Exact product/config source: `4ab9be3ef2809204e88fcb0d44884e35b43726b1`
+- Push Run / Job: `33256273567` / `99110448112` — success
+- PR Run / Job: `33256275218` / `99110452786` — success
+- Legitimate Artifact: `9715903443`
+- Artifact ZIP digest: `sha256:4747df63cc1eb0069fbb8e1d5204941e0df4cd15edd475313f464ccfc133d35c`
+- IPA SHA-256: `2c64a6356fdf419ea540b8c40fd9026061f5afaec9631bdb79bbeab8164becec`
+- Package identity: Release, source marker `4ab9be3ef280`, iOS14 minimum, UIDeviceFamily `[1,2]`, arm64.
 
-Uploaded exact-b45 diagnostics metadata: `0.1.0 (45)`, Candidate `DEV-send-stream-0.1.0-b45`, source `accd7bdf29e4`, Release, iPhone, iOS17.0.
+Identity-invalid intermediate artifacts remain permanently rejected: `9715858402`, `9715857814`, `9715907420`, `9715902353`.
 
-This sample's Send request is an existing/Gizmo-associated conversation (`conversation_id` and `conversation_mode.gizmo_id` structurally present), so it is **not** a clean default-primary sample. It is accepted for the generic official resume transport structure only.
+## b46 exact-device Runtime result — Native duplicated resume rejected
 
-### Observed sequence
+Uploaded diagnostics metadata exactly matches b46 / Release / iPhone / iOS17.0 / source `4ab9be3ef280`.
 
-- Original `POST /backend-api/f/conversation` Send request at `13:28:44Z`.
-- Original Send response became HTTP200 `text/event-stream` at `13:28:56Z` and emitted early `resume_conversation_token`, conversation/request identity and a message marker through original event 11 by `13:29:08Z`.
-- After the original transport was disrupted, official Web opened `POST /backend-api/f/conversation/resume` with JSON body structure exactly `{conversation_id: string, offset: number}`.
-- Official resume request header-name set included normal browser/auth/client headers, but no Sentinel proof/Turnstile/PoW header names. Diagnostics recorded names only; no values were captured.
-- `13:29:23Z` through `13:29:46Z`: repeated official `/resume` attempts failed with transport errors while connectivity was unavailable.
-- `13:29:53Z`: official `/resume` returned HTTP200 `text/event-stream`; continuation event 1 carried conversation + request identity structure.
-- A later interruption caused another resume attempt; `13:32:10Z` returned HTTP200 `text/event-stream` with the same structural continuation identity class.
-- After a later background interval, `13:35:00Z` official Web opened `/resume` again; `13:35:02Z` returned HTTP200 `text/event-stream`.
-- That final continuation stream emitted `message_marker`, then `server_ste_metadata`, `message_stream_complete`, `conversation_detail_metadata`, and `[DONE]` at `13:35:03Z`.
-- No second `conversation_send` was observed for these recoveries.
+Observed sequence:
+
+- official Web Send observed at `14:30:01Z`;
+- after connectivity interruption, official `/resume` repeatedly attempted `offset=18` and initially hit transport errors;
+- `14:30:38Z`: official `/resume` returned HTTP200 `text/event-stream` for offset 18;
+- b46 then started exactly one Native parity request using the same in-memory `conversation_id + offset=18`;
+- transient account/cookie/bearer context re-verification succeeded (`/api/auth/session` + accounts-check HTTP200; Plus/personal);
+- `14:30:40Z`: Native `/resume` returned **HTTP404 `application/json`, 116 bytes, 0 SSE frames**;
+- later official Web continued recovering the same response and successfully opened another HTTP200 SSE `/resume` at `offset=54`;
+- no second Native parity attempt was made, preserving the one-attempt/no-retry design.
 
 ### Accepted conclusion
 
-The current official Web has a concrete no-resend same-response continuation transport:
+- Official no-resend resume transport remains **Runtime Confirmed**.
+- Native parity using only WebKit-derived transient Cookie + Bearer + JSON body + ordinary Accept/Content-Type is **Runtime Rejected for this duplicated-after-official-success attempt**.
+- This does **not** yet prove Native resume is impossible.
+- Two unresolved explanations remain evidence-backed:
+  1. one or more official browser/session/route headers may be required beyond cookie+bearer;
+  2. `/resume` may have cursor/consumer ownership semantics, and b46 tested a second consumer only **after** official Web had already claimed offset 18.
+- Observed offset progression `18 -> 54` supports cursor-like progression, but exact units/semantics remain Unknown / Unverified.
 
-`POST /backend-api/f/conversation/resume`
+## b47 minimal scope
 
-with JSON body structural contract:
+Any product/config correction after emitted b46 Artifact requires a new Candidate; b47 is the next available identity.
 
-`{ conversation_id: string, offset: number }`
+b47 remains **diagnostic-only** and must not modify `ConversationRepository` or production response ownership.
 
-and HTTP200 `text/event-stream` response carrying the ongoing response through normal terminal events.
+Evidence-backed scope:
 
-This upgrades official reconnect existence/route/method/body-shape/framing from Unknown to **Runtime Confirmed** for the captured existing/Gizmo-associated response.
+1. preserve visible user-operated official Web protected Send;
+2. preserve one Native parity attempt only; no retry/timer/watchdog/second Send;
+3. on Native non-SSE/HTTP rejection, log only privacy-safe **response JSON structural keys/types** and safe enumerated/error-code tokens where present — never full error/body text, raw IDs, auth values or message content;
+4. log Native response header **names only**;
+5. for the exact successful official `/resume` that triggers Native parity, log official request header **names only** and response header names only;
+6. log the Native request header names actually set/visible before dispatch so official-vs-Native structural header differences can be compared;
+7. do **not** copy `x-conduit-token`, OAI browser/client/session values or any other browser header values in b47;
+8. do not yet suppress official resume or attempt first/exclusive-consumer takeover; first identify whether the 404 itself supplies direct evidence before changing ownership order.
 
-Important remaining unknowns:
+If b47 reveals a concrete missing-context error or another explicit server signal, only that evidence may justify a later minimal parity change. If b47 only reports not-found/cursor ownership style rejection, a later Candidate may investigate first/exclusive resume ordering without guessing browser headers.
 
-- exact `offset` value semantics and relationship to original stream cursor are not yet recorded;
-- which non-secret browser client headers, if any, are required beyond the already accepted transient cookie + bearer boundary is Unverified;
-- Native access to this route is Unverified;
-- default-primary Native parity is Unverified;
-- incremental Native delivery remains Unverified because existing `AuthTransientSession.dataTask` buffers full response.
+## Non-atomic GitHub batch recovery point
 
-## b46 scope — smallest Native no-resend parity experiment
+Known reusable baseline before b47 writes: branch head after this checkpoint write; exact b46 product source remains immutable `4ab9be3ef2809204e88fcb0d44884e35b43726b1` and legitimate Artifact `9715903443`.
 
-Allocate `DEV-send-stream-0.1.0-b46`, `0.1.0 (46)` only for a diagnostic parity experiment; b45 remains immutable.
+Planned batches:
 
-Design:
+1. **b46 Runtime durable-evidence batch** — update b46 Runtime evidence + `PROJECT_STATE`/`MODULE_STATUS`/`PROJECT_PROFILE`/`TECHNICAL_DECISIONS`/`PROJECT_SPECIFIC_RULES`/`DEVELOPMENT_PLAN`/`BUILD_TEST_INDEX` and PR #29 so current truth is no longer b45/b46-pending stale.
+2. **b47 product/config identity batch** — minimally extend `NativeResumeParityProbe.swift` diagnostics, update Settings label only if needed, advance Xcode build/Candidate to 47, update workflow b47 identity. Because GitHub Contents writes are non-atomic and branch CI triggers per product write, any intermediate stale-identity Artifact must be permanently rejected and recorded; never install it.
+3. **b47 validation/artifact batch** — verify exact final source, run normal push/PR CI, accept only Artifact whose built package identity matches b47 exact source; independently inspect package identity/SHA.
+4. **final handoff batch** — roll checkpoint and durable docs to the exact b47 real-device Runtime gate.
 
-1. Keep official ChatGPT Web visibly user-operated for protected Send.
-2. Observe an **official successful** `/backend-api/f/conversation/resume` request in the visible page.
-3. Transiently bridge that exact request's raw `conversation_id` + numeric `offset` into Native memory only; never persist or export the raw ID.
-4. After the official resume itself returns HTTP200 SSE, issue exactly one Native `POST /backend-api/f/conversation/resume` using the same body values through the existing WebKit-derived transient cookie + bearer session.
-5. Native parity request sets only ordinary `Accept: text/event-stream` + `Content-Type: application/json`; it does **not** copy `x-conduit-token`, browser client/session headers, Sentinel/Turnstile/PoW/challenge values or any raw browser header values.
-6. No retry/timer/watchdog. One diagnostic attempt only.
-7. Existing completion-handler transport may buffer the parity SSE to terminal for this first proof. Record only status/content-type/byte+frame counts/terminal + structural event/identity presence; never message/reasoning text or raw IDs.
-8. Do not mutate `ConversationRepository`, native message state, follow-tail or production response ownership in b46. If Native parity succeeds, a later Candidate may add incremental `URLSessionDataDelegate` transport inside the existing auth/repository ownership boundary.
+Recovery must never rewrite/rebuild b45 or b46 identities. After a legitimate b47 Artifact exists, any corrected product code requires b48+.
 
-## Batch recovery point
+## Completed
 
-Known starting branch head before this checkpoint: `eafe65cf46b405335adcb70efec90c9667a38e08`.
+- Latest repository governance reloaded.
+- Full Resume Guard completed.
+- b45 official resume transport confirmed.
+- b46 Code / CI / Artifact / package identity passed.
+- b46 exact-device Native duplicated resume produced deterministic HTTP404 JSON rejection while official Web resume remained healthy.
 
-Planned coherent batches:
+## Validation
 
-1. **Runtime-3 durable evidence batch** — update `runtime-evidence/DEV-send-stream-b45-runtime.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, `DEVELOPMENT_PLAN.md`, `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`, `BUILD_TEST_INDEX.md`, and PR #29 to record the confirmed official resume transport and b46 authorization.
-2. **b46 product/config batch** — add one dedicated Native resume parity diagnostic controller, wire Settings to it, add the source file to the Xcode project, advance build/Candidate to 46, and update workflow Candidate/artifact identity. Do not touch production `ConversationRepository`/Root response ownership.
-3. **Validation/artifact batch** — run CI through normal GitHub Actions, produce/inspect unique b46 Artifact/IPA, then update exact evidence identities.
-4. **Final handoff docs batch** — checkpoint and durable docs to the b46 exact-device Runtime gate.
+- b46 Runtime/manual/real-device: **Yes — Native duplicated resume rejected with HTTP404 JSON**.
+- Native first/exclusive `/resume`: **Unknown / Unverified**.
+- Required browser/client header subset for `/resume`: **Unknown / Unverified**.
+- Native incremental SSE owner/reasoning/follow-tail/background lifecycle: **Unknown / Unverified**.
+- Phase 9 Stable/Frozen: **No**.
 
-Confirmed completed at checkpoint creation: Runtime-3 evidence interpreted; resume route/method/body-shape/framing conclusion established; b46 minimal scope selected.
+## Pending
 
-Pending: all batches above after this checkpoint.
-
-Recovery must never modify/rebuild b45 identity or Artifact `9713774868`; any b46 product correction after an emitted b46 Artifact requires b47+.
+- Durable docs/PR still need b46 Runtime 404 update.
+- b47 diagnostic clarification not yet implemented at this checkpoint.
 
 ## Next exact action
 
-Update Runtime-3 durable evidence, then implement the isolated b46 Native resume parity probe and continue autonomously through CI/Artifact/package-identity verification. Human gate is the resulting exact b46 real-device parity test.
+Complete the b46 Runtime durable-evidence batch, then implement b47 privacy-safe 404/header-structure diagnostics and continue autonomously through exact b47 CI/Artifact/package-identity verification to the next human real-device Runtime gate.

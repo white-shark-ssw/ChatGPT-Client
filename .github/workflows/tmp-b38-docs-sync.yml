@@ -1,0 +1,257 @@
+name: Temporary b38 durable docs sync
+
+on:
+  push:
+    branches:
+      - tmp/b38-docs-sync-20260829
+
+permissions:
+  contents: write
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: tmp/b38-docs-sync-20260829
+
+      - name: Synchronize durable project docs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
+              return text.replace(old, new, 1)
+
+          def replace_section(text, start_marker, end_marker, replacement, label):
+              start = text.find(start_marker)
+              end = text.find(end_marker, start + len(start_marker)) if start >= 0 else -1
+              if start < 0 or end < 0:
+                  raise SystemExit(f'{label}: section markers not found')
+              return text[:start] + replacement.rstrip() + '\n\n' + text[end:]
+
+          # PROJECT_PROFILE.md
+          p = Path('docs/project/PROJECT_PROFILE.md')
+          s = p.read_text()
+          s = replace_exact(s, '**Initialized — 2026-08-25; product/runtime profile refreshed 2026-08-29 through exact b35 Runtime and exact b36 Candidate/CI/Artifact/current-main merge-view evidence.**', '**Initialized — 2026-08-25; product/runtime profile refreshed 2026-08-29 through exact b36 failure, b37 Runtime performance acceptance, and exact b38 Code/Static/CI/Artifact/current-main merge-view evidence.**', 'profile init')
+          s = replace_exact(s, '- Foundation, WebKit, OSLog, CryptoKit; QuartzCore is used only for lightweight b36 quick-navigation button presentation flush.', '- Foundation, WebKit, OSLog, CryptoKit.', 'profile stack')
+          s = replace_exact(s, '- **Message presentation**: `ConversationMessageCell`; visible plain message body, authoritative timestamp and assistant Copy visual only. UIKit automatic self-sizing was restored in b30 and remains through b36. Markdown/rich annotation is not implemented yet.', '- **Message presentation**: `ConversationMessagePresentationProjection` derives bounded plain-text display chunks plus deterministic row metrics/prefix offsets from authoritative messages; `ConversationMessageCell` uses deterministic frame layout for one bounded chunk. Copy still reads the full authoritative message. Markdown/rich annotation is not implemented yet.', 'profile message presentation')
+          s = replace_exact(s, '- **Round-jump presentation**: one transient target cursor + one `UIViewPropertyAnimator`; b36 also reuses the existing quick-nav button for `定位中` presentation. None of these own conversation semantics.', '- **Round-jump presentation**: one transient target cursor + one cancellable `UIViewPropertyAnimator`. b38 continuously animates from the current viewport to the O(1) deterministic target offset derived by the accepted b37 presentation geometry; none of these own conversation semantics.', 'profile jump owner')
+          s = replace_exact(s, '- b36: removes explicit root/table `layoutIfNeeded` calls from the jump path, reuses the existing quick-nav button for immediate `定位中` feedback, and logs direct-position/preparation timing. Runtime pending.', '- b36: Runtime partial/failing. Exact device evidence showed severe geometry/text-layout stalls in both round jumps and right-side scroll-indicator dragging; 47 direct-position events had median ~187ms, P90 ~780ms and max ~3952ms.\n- b37: replaced deferred giant-cell self-sizing with bounded presentation chunks, deterministic row geometry/prefix offsets and manual cell layout. Latest exact-device feedback: “这次确实不卡了”; this accepts the no-stutter geometry/performance direction as the current baseline.\n- b38: preserves b37 geometry unchanged and restores genuine full-distance continuous animation from the current offset to the deterministic target offset. Code/Static/CI/Artifact/current-main merge-view complete; Runtime pending.', 'profile runtime progression')
+          new_candidate = '''### Current b38 Runtime Candidate
+
+- Candidate `DEV-conversation-round-count-0.1.0-b38`.
+- Version/build `0.1.0 (38)`.
+- Exact product/config source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
+- Exact product diff from b38 checkpoint parent `73d09cb83c3eda7b255e09b17b2bd9b0897cea49` is exactly three files: workflow identity 2+/2-, Xcode identity 4+/4-, `ConversationFeature.swift` 8+/20-.
+- b37 deterministic presentation geometry remains unchanged: bounded plain-text chunks, exact row heights/prefix offsets, manual cell layout, full-message Copy semantics and first-row semantic round targets.
+- b38 removes the nonanimated ~120pt lead teleport and `answerJump.positioned` lead-phase path. One `UIViewPropertyAnimator` now animates continuously from the current viewport offset to the already-derived target offset for 0.35s ease-in-out; short and long jumps use the same method.
+- Rapid retargeting stops the current animator at its current presentation offset, advances from the transient semantic cursor, then starts the next continuous animation. Real drag still stops animation and clears programmatic intent.
+- Diagnostics use `presentationMode=continuous_geometry_animation`, target row/role, current offset, travel distance and landing error only.
+- Exact push Run/Job `33230823568` / `99043233637`, success on exact product source.
+- Runtime Artifact `9708425762`; ZIP `sha256:50f77adb71bfce20a9fad4b63e4b879db04e23deb257c3810d157e6214730bf6`.
+- IPA `ChatGPTClient-0.1.0-b38-dev-conversation-round-count.ipa`; SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
+- Independent package inspection: `0.1.0 (38)`, Candidate b38, source `0d1801137e4e`, MinimumOSVersion 14.0, bundle `com.whitesharkssw.chatgptclient`, Mach-O arm64.
+- Current-main PR merge-view against unchanged `main@a6e3b2bc185b8d5df90b846040387262a64e6154`: Run/Job `33230825189` / `99043238346`, success on synthetic merge `fd1ed7508f04e9045b99239cad88dca8f6e01450`, which explicitly merges exact b38 source into main. Merge-view Artifact `9708423606` is CI evidence only.
+- Evidence level: **Code written + Static/source audit + exact push CI + identity-valid Runtime Artifact + current-main merge-view CI. Runtime/manual Pending. Stable/Frozen No.**'''
+          s = replace_section(s, '### Current b36 Runtime Candidate', '## Rendering scope boundary', new_candidate, 'profile candidate section')
+          s = replace_exact(s, '- Current active Candidate: `0.1.0 (36)` / `DEV-conversation-round-count-0.1.0-b36`.', '- Current active Candidate: `0.1.0 (38)` / `DEV-conversation-round-count-0.1.0-b38`.', 'profile current candidate')
+          s = replace_exact(s, '- Exact produced identities b24-b36 are reserved and are never reused for corrected product output.', '- Exact produced identities b24-b38 are reserved and are never reused for corrected product output.', 'profile reserved')
+          s = replace_exact(s, '- b35 Runtime is partial/failing; b36 Runtime is Pending.', '- b36 Runtime is partial/failing; b37 Runtime accepts the no-stutter geometry/performance result; b38 Runtime is Pending.', 'profile evidence boundary')
+          s = replace_exact(s, '- CI/Artifact success does not prove b36 latency or feedback behavior on device.', '- CI/Artifact success does not prove b38 continuous-animation behavior on device.', 'profile ci boundary')
+          p.write_text(s)
+
+          # PROJECT_STATE.md
+          p = Path('docs/project/PROJECT_STATE.md')
+          s = p.read_text()
+          s = replace_exact(s, '_Last updated: 2026-08-29 through exact b35 Runtime result and exact b36 Code/Static/CI/Artifact/current-main merge-view evidence._', '_Last updated: 2026-08-29 through exact b36 Runtime failure, b37 no-stutter Runtime acceptance, and exact b38 Code/Static/CI/Artifact/current-main merge-view evidence._', 'state date')
+          s = replace_exact(s, '- **Current main at b36 validation**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.', '- **Current main at b38 validation**: `a6e3b2bc185b8d5df90b846040387262a64e6154`.', 'state main')
+          s = replace_exact(s, '- **Latest tested Candidate**: b35, Runtime partial/failing.\n- **Current Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b36`, `0.1.0 (36)`; Runtime pending.\n- **Exact b36 product/config source**: `8f8614508eef5197f9fff4bb9d10c14354d5821e`. Later docs/checkpoint commits do not redefine this source.', '- **Latest tested Candidate**: b37, Runtime accepts the no-stutter geometry/performance result.\n- **Current Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b38`, `0.1.0 (38)`; Runtime pending.\n- **Exact b38 product/config source**: `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`. Later docs/checkpoint commits do not redefine this source.', 'state candidates')
+          s = replace_exact(s, '- **Authority boundary**: `ConversationRepository` remains sole conversation/list authority. `AppPreferences` owns persisted presentation booleans only. `ConversationRoundProjection` is derived from authoritative visible messages and is not mutable conversation authority. Round-jump feedback/animator are presentation-only inside `ConversationDetailViewController`.', '- **Authority boundary**: `ConversationRepository` remains sole conversation/list authority. `AppPreferences` owns persisted presentation booleans only. `ConversationRoundProjection` is derived semantic round data. b37 `ConversationMessagePresentationProjection` is ephemeral display geometry/chunking only. The b38 animator/cursor remain presentation-only inside `ConversationDetailViewController`.', 'state authority')
+          s = replace_exact(s, '- **b36**: Code/source audit/CI/Artifact/current-main merge-view complete; Runtime pending.', '- **b36**: Runtime partial/failing. Exact device evidence proved deferred giant-row geometry/text layout was the dominant blocker and also stalled the right-side scroll indicator.\n- **b37**: Runtime accepts the no-stutter geometry/performance result after bounded message virtualization + deterministic row geometry/manual layout.\n- **b38**: Code/source audit/CI/Artifact/current-main merge-view complete; Runtime pending for the restored continuous animation.', 'state progression')
+          insertion = '''## b36 Runtime conclusion / b37 accepted performance baseline / b38 Candidate
+
+- b36 exact-device diagnostics recorded 47 direct-position events with median ~187ms, P90 ~780ms and max ~3952ms; right-side scroll-indicator dragging was also severely stuttery. In the same 161-message conversation, initially estimated bottom geometry around 13.8k points later expanded to about 154.6k points as giant self-sizing rows were realized.
+- b37 replaced one-authoritative-message/one-unbounded-self-sizing-label presentation with bounded display chunks plus deterministic height/prefix geometry and manual frame layout. Latest user feedback on exact b37: **“这次确实不卡了”**. This is Runtime acceptance of the geometry/performance direction, not yet final Phase 8 acceptance.
+- b38 preserves the b37 geometry baseline and changes only round-jump presentation: no lead teleport; one cancellable full-distance `UIViewPropertyAnimator` runs from current offset to the O(1) deterministic target offset for 0.35s ease-in-out.
+- Exact b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; push Run/Job `33230823568` / `99043233637`; Artifact `9708425762`; ZIP `sha256:50f77adb71bfce20a9fad4b63e4b879db04e23deb257c3810d157e6214730bf6`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
+- b38 package independently verifies `0.1.0 (38)`, Candidate b38, source `0d1801137e4e`, iOS14 minimum and arm64.
+- Current-main PR Run/Job `33230825189` / `99043238346` succeeded on synthetic merge `fd1ed7508f04e9045b99239cad88dca8f6e01450`; PR #27 remains open/mergeable/not merged. Merge Artifact `9708423606` is CI evidence only.
+
+'''
+          marker = '## Rendering scope observation'
+          if marker not in s: raise SystemExit('state insertion marker missing')
+          s = s.replace(marker, insertion + marker, 1)
+          s = replace_exact(s, '- `ConversationMessageCell`: plain visible message/timestamp/assistant-Copy presentation; UIKit self-sizing; no Markdown renderer yet.', '- `ConversationMessagePresentationProjection` + `ConversationMessageCell`: bounded plain-text display chunks, deterministic row geometry/manual frame layout, timestamp/assistant-Copy presentation; no Markdown renderer yet.', 'state architecture message')
+          new_gate = '''## Current Runtime gate
+
+Install/test exact Runtime Artifact `9708425762` / b38 IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e` on the accepted iPhone/iOS17 scope.
+
+Acceptance focus:
+
+1. Right-side scroll-indicator dragging must remain as smooth as exact b37; any return of b36 geometry stalls is a regression.
+2. Previous/next round navigation should visibly traverse the whole distance continuously instead of teleporting near the destination.
+3. Short and long distances use the same animation route; rapid repeated taps retarget from the current visual offset and advance one semantic round per tap.
+4. Real finger drag during a programmatic jump immediately retakes ownership.
+5. Final landing remains the intended authoritative user-message round start with no hard correction snap.
+6. b37 chunk completeness, first-entry latest, A/B anchors, Copy/timestamps/preferences/filtering/list reconcile and Sync/Reload remain intact.
+
+Do not merge/close PR #27 or claim Stable until exact b38 Runtime is accepted. If rejected, record the exact Runtime defect first and allocate b39 or later before corrected product output; never rebuild b38.
+'''
+          s = replace_section(s, '## Current Runtime gate', '## Evidence boundaries', new_gate, 'state runtime gate')
+          s = replace_exact(s, '- b35 Runtime is partial/failing; b36 Runtime is Pending.', '- b36 Runtime is partial/failing; b37 Runtime accepts the no-stutter geometry/performance result; b38 Runtime is Pending.', 'state evidence boundary')
+          p.write_text(s)
+
+          # MODULE_STATUS.md
+          p = Path('docs/project/MODULE_STATUS.md')
+          s = p.read_text()
+          s = replace_exact(s, '| Build/runtime metadata | Stable capability + **b36 identity-valid Runtime Candidate** | `AppBuildInfo.swift`, Xcode settings, `Info.plist` | Exact b36 package independently verifies `0.1.0 (36)`, Candidate b36, source `8f8614508eef`, iOS14 minimum and arm64. Runtime pending; b24-b36 identities remain reserved. |', '| Build/runtime metadata | Stable capability + **b38 identity-valid Runtime Candidate** | `AppBuildInfo.swift`, Xcode settings, `Info.plist` | Exact b38 package independently verifies `0.1.0 (38)`, Candidate b38, source `0d1801137e4e`, iOS14 minimum and arm64. Runtime pending; b24-b38 identities remain reserved. |', 'module metadata')
+          s = replace_exact(s, '| Diagnostics / logging | Stable baseline + active b36 answer-navigation timing diagnostics | `Diagnostics.swift` + call sites | b36 adds privacy-safe `answerJump.positioned` direct-position/preparation duration + target visibility/row. Existing request/completed diagnostics remain. No body/secret logging. Not Frozen. |', '| Diagnostics / logging | Stable baseline + active b38 continuous-animation diagnostics | `Diagnostics.swift` + call sites | b38 request/completion diagnostics record privacy-safe target row/role, current offset, travel distance, retargeting and landing error with `continuous_geometry_animation`; no body/secret logging. Not Frozen. |', 'module diagnostics')
+          s = replace_exact(s, '| IPA build / CI packaging | Stable capability + **b36 identity-safe Runtime Artifact** | `scripts/build_ipa.sh`, workflow | Exact push Run `33207505424`, Job `98972194770`, Artifact `9700254733`, ZIP `sha256:718e8500ea41bcc73b41f5bebd9a4850b93246368a87304be0b2c4751702e576`, IPA SHA `cdf2c7278ec0a4f6f5125a711f78d7bbda8c606a32dda87f614d710f662bd867`; identity independently verified. |', '| IPA build / CI packaging | Stable capability + **b38 identity-safe Runtime Artifact** | `scripts/build_ipa.sh`, workflow | Exact push Run `33230823568`, Job `99043233637`, Artifact `9708425762`, ZIP `sha256:50f77adb71bfce20a9fad4b63e4b879db04e23deb257c3810d157e6214730bf6`, IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`; identity independently verified. |', 'module artifact')
+          s = replace_exact(s, '| Conversation message self-sizing presentation | **Active correction retained** | `ConversationDetailViewController` + `ConversationMessageCell` | b29 `estimatedRowHeight=0` route rejected; automatic self-sizing restored in b30 and retained through b36. b36 removes only explicit jump-path root/table forced layouts, not self-sizing. |', '| Conversation message geometry / virtualization | **Active — b37 Runtime performance baseline accepted** | `ConversationMessagePresentationProjection` + `ConversationDetailViewController` + `ConversationMessageCell` | b36 proved automatic giant-row self-sizing caused severe long-conversation/scroll-indicator stalls. b37 uses bounded display chunks, deterministic row metrics/prefix offsets and manual frame layout; exact Runtime reports no stutter. Presentation-only, not a second conversation authority. |', 'module geometry')
+          s = replace_exact(s, '| Conversation metadata / Preferences / round navigation | **Active — b35 Runtime partial/failing; exact b36 CI/Artifact/merge-view ready; Runtime pending** | `DEV-conversation-round-count`; `AppPreferences` + `ConversationRoundProjection` + detail/message/sidebar presentation | b35 unified short/long direct+ease-out but exposed multi-second jump preparation stalls. b36 removes explicit forced jump layouts, reuses existing round button for `定位中` feedback, and times direct positioning. Exact product source `8f861450...`; Artifact `9700254733`. Not Stable/Frozen. |', '| Conversation metadata / Preferences / round navigation | **Active — b37 performance Runtime accepted; exact b38 CI/Artifact/merge-view ready; Runtime pending** | `DEV-conversation-round-count`; `AppPreferences` + `ConversationRoundProjection` + detail/message/sidebar presentation | b37 removes the severe geometry stutter. b38 keeps that baseline and restores genuine continuous full-distance animation from current offset to deterministic target offset. Exact source `0d180113...`; Runtime Artifact `9708425762`. Not Stable/Frozen. |', 'module round nav')
+          s = replace_exact(s, '- b35 is **Runtime partial/failing**: direct+ease-out completed landings remain precise, but several-second tap-to-position stalls were observed around long-message regions.\n- b36 is **Code written + exact source audit + exact push CI + identity-valid Runtime Artifact + current-main PR merge-view CI**. Runtime pending. Stable/Frozen No.', '- b35 is **Runtime partial/failing**: direct+ease-out completed landings remain precise, but several-second tap-to-position stalls were observed around long-message regions.\n- b36 is **Runtime partial/failing**: exact device evidence proved severe deterministic-geometry/text-layout stalls affected both quick navigation and scroll-indicator dragging.\n- b37 is **Runtime accepted for the reported no-stutter geometry/performance result**; this is the retained performance baseline, not final Phase 8 Stable.\n- b38 is **Code written + exact source audit + exact push CI + identity-valid Runtime Artifact + current-main PR merge-view CI**. Runtime pending. Stable/Frozen No.', 'module acceptance')
+          s = replace_exact(s, 'Still unverified as applicable: b36 tap-to-position latency/feedback Runtime behavior, first-entry-latest regression under b36, iPad, iOS below 17, non-personal workspace, supported real account switch, provisional-row Detail-block path and corrupt/schema rejection.', 'Still unverified as applicable: b38 continuous-animation Runtime behavior and regression matrix, iPad, iOS below 17, non-personal workspace, supported real account switch, provisional-row Detail-block path and corrupt/schema rejection.', 'module unverified')
+          p.write_text(s)
+
+          # PROJECT_SPECIFIC_RULES.md
+          p = Path('docs/project/PROJECT_SPECIFIC_RULES.md')
+          s = p.read_text()
+          s = replace_exact(s, '- `DEV-conversation-round-count-0.1.0-b36` is the current identity-valid metadata Runtime Candidate. b35 is exact real-device partial/failing; b36 is not Stable until exact Runtime passes.', '- `DEV-conversation-round-count-0.1.0-b38` is the current identity-valid metadata Runtime Candidate. b36 is exact Runtime partial/failing; b37 accepts the no-stutter geometry/performance baseline; b38 is not Stable until exact Runtime passes.', 'rules candidate')
+          new_round = '''## Round-navigation contract
+
+- Use one adaptive floating control. Real user drag owns user intent; programmatic presentation is not user intent.
+- Rapid taps advance from the last requested derived round target via one transient presentation cursor; this is not a second semantic authority. A real user drag clears/replaces programmatic intent.
+- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because the drag delta reverses. b33 Runtime accepts this tested path.
+- Use one unified jump method for short and long distances.
+- b36 exact Runtime proved the dominant remaining blocker was deferred message/table geometry rather than animation correction: direct-position P50 ~187ms, P90 ~780ms, max ~3952ms, and ordinary right-side scroll-indicator dragging also severely stuttered.
+- b37 is the accepted performance baseline: `ConversationMessagePresentationProjection` derives bounded plain-text display chunks and deterministic row metrics/prefix offsets; `ConversationMessageCell` uses matching deterministic frame layout. The projection is ephemeral presentation state only and never conversation authority.
+- Round targets map authoritative user-message IDs to the first presentation row and use O(1) derived offsets. Do not reintroduce `scrollToRow`/Auto Layout sizing merely to discover jump geometry.
+- Exact b37 real-device feedback reports the severe stutter is gone. Do not roll back b37 geometry/chunking/manual-layout while testing presentation animation.
+- b38 programmatic presentation is one cancellable `UIViewPropertyAnimator` that continuously animates from the **current viewport offset** to the deterministic target offset for 0.35s ease-in-out. There is no nonanimated lead teleport and no final correction snap.
+- Rapid retargeting stops the current animator at its current visual position, keeps the transient semantic cursor, resolves the next round, and starts the next continuous animation. Real drag immediately cancels and clears programmatic intent.
+- b38 diagnostics may record privacy-safe target row/role, current offset, travel distance, retargeting and landing error with `presentationMode=continuous_geometry_animation`; never log message identity/body.
+- Do not add debounce, retry, timer, watchdog, alternate semantic index, persistent geometry cache or second repository/state owner without new exact evidence.'''
+          s = replace_section(s, '## Round-navigation contract', '## Message self-sizing contract', new_round, 'rules round section')
+          new_geometry = '''## Message geometry / virtualization contract
+
+- b29's `estimatedRowHeight=0` workaround was rejected because it deformed/collapsed messages; that historical failure does not require retaining giant-row automatic self-sizing forever.
+- b36 exact Runtime later supplied new evidence that automatic estimated/self-sizing geometry for very long full-message labels was itself the dominant interaction bottleneck.
+- b37 therefore replaces deferred giant-row self-sizing with deterministic presentation geometry: bounded plain-text chunks (currently up to about 1200 Swift `Character`s), prederived row heights/prefix offsets and manual frame layout using matching fonts/insets.
+- Display chunking is virtualization only. `ConversationRepository` and authoritative `ConversationMessage` remain unchanged; concatenated message text semantics are unchanged; Copy uses the full authoritative message; timestamp appears on the first chunk and assistant Copy action on the last chunk.
+- Geometry is ephemeral to the current Detail/width/preferences and is rebuilt when those inputs change. Do not persist row heights as conversation truth.
+- Rich Markdown/citation interpretation remains future `DEV-message-rendering`; Phase 8 chunking must not rewrite or reinterpret body content.'''
+          s = replace_section(s, '## Message self-sizing contract', '## Per-conversation scroll presentation contract', new_geometry, 'rules geometry section')
+          s = replace_exact(s, '- Exact b24-b36 identities are reserved once emitted. Corrected product code after b36, if needed, must allocate b37 or later.', '- Exact b24-b38 identities are reserved once emitted. Corrected product code after b38, if needed, must allocate b39 or later.', 'rules reserved')
+          s = replace_exact(s, '- Scroll/round diagnostics may record non-secret row indices, content offsets, positioning/preparation duration, target visibility, lead distance and landing error, never message identity/body.', '- Scroll/round diagnostics may record non-secret row indices, content offsets, derived geometry timing/height, travel distance, retargeting and landing error, never message identity/body.', 'rules diagnostics')
+          s = replace_exact(s, '- Tooling-only temporary assembly branches are never Work/Candidate authority. Current b36 product authority is exact source `8f8614508eef5197f9fff4bb9d10c14354d5821e` on the real development branch.', '- Tooling-only temporary assembly branches are never Work/Candidate authority. Current b38 product authority is exact source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67` on the real development branch.', 'rules tooling authority')
+          p.write_text(s)
+
+          # DEVELOPMENT_PLAN.md
+          p = Path('docs/project/DEVELOPMENT_PLAN.md')
+          s = p.read_text()
+          s = replace_exact(s, '_Last updated: 2026-08-29 through exact b35 Runtime and exact b36 Candidate/CI/Artifact/current-main merge-view evidence._', '_Last updated: 2026-08-29 through exact b36 Runtime failure, b37 no-stutter Runtime acceptance, and exact b38 Code/Static/CI/Artifact/current-main merge-view evidence._', 'plan date')
+          s = replace_exact(s, '**Active at exact b36 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable, not merged. Do not claim Stable or merge until exact b36 passes real-device Runtime.', '**Active at exact b38 Runtime gate.** Branch `dev/conversation-round-count-20260828`; PR #27 open/mergeable, not merged. b37 is accepted as the no-stutter geometry/performance baseline; do not claim Stable or merge until exact b38 continuous-animation Runtime passes.', 'plan phase status')
+          old_route = '''- Current presentation route: direct nonanimated positioning to the semantic target row, capture exact final offset, shift to a direction-consistent lead of about 120pt, then animate only that short final segment for about 0.22s ease-out.
+- Do not return to full-distance animated traversal or the old end-correction snap without new exact Runtime evidence.
+- b36 removes explicit root/table forced layouts from jump preparation and reuses the existing round button as immediate `定位中` feedback. New `answerJump.positioned` timing tells whether remaining latency belongs to direct positioning itself.
+- No speculative debounce, timer, watchdog, retry or row-height cache subsystem.'''
+          new_route = '''- b36 exact Runtime supplied the missing evidence: long-message/table geometry itself caused multi-second stalls and also blocked ordinary scroll-indicator dragging.
+- b37 is the accepted performance baseline: bounded display chunks + deterministic row metrics/prefix offsets + manual cell layout make target geometry O(1) and remove the reported stutter.
+- b38 keeps that geometry unchanged and restores genuine full-distance visible traversal with one cancellable `UIViewPropertyAnimator` from current offset to deterministic target offset for 0.35s ease-in-out. No lead teleport, `scrollToRow` geometry discovery or final correction snap.
+- No speculative debounce, timer, watchdog, retry or second semantic/geometry authority.'''
+          s = replace_exact(s, old_route, new_route, 'plan route')
+          s = replace_exact(s, '- **b36**: exact Code/Static/CI/Artifact/current-main merge-view complete; Runtime pending.', '- **b36**: Runtime partial/failing; exact device evidence proved giant deferred row geometry/text layout was the blocking owner.\n- **b37**: Runtime accepts the no-stutter geometry/performance direction after deterministic presentation virtualization.\n- **b38**: exact Code/Static/CI/Artifact/current-main merge-view complete; Runtime pending for restored continuous animation.', 'plan progression')
+          new_evidence = '''### Exact b36 -> b37 -> b38 evidence
+
+- b36 Candidate `DEV-conversation-round-count-0.1.0-b36`, exact source `8f8614508eef5197f9fff4bb9d10c14354d5821e`, Runtime Artifact `9700254733`. Exact device feedback rejected it: severe stutter remained in round jumps **and right-side scroll-indicator dragging**. 47 direct-position samples had median ~187ms, P90 ~780ms and max ~3952ms; the same long conversation's estimated geometry expanded by >11x as giant self-sizing rows were realized.
+- b37 Candidate `DEV-conversation-round-count-0.1.0-b37`, exact source `92d9f255f3d2ab993d264bda1a71e92b36b44b6c`, push Run `33210450417`, Runtime Artifact `9701385668`, IPA SHA `7db22b82f3ca131d04b672dec480d2a58fd87fa828c74722a16784bf4397694e`. It replaced deferred giant-row self-sizing with bounded chunks, deterministic height/prefix geometry and manual layout. Latest exact-device feedback: **“这次确实不卡了”**.
+- b38 Candidate `DEV-conversation-round-count-0.1.0-b38`, version/build `0.1.0 (38)`, exact source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
+- b38 changes only identity plus round-jump presentation: removes the 120pt nonanimated lead teleport and animates continuously from current viewport to deterministic target offset for 0.35s ease-in-out; b37 geometry/cell/projection remains unchanged.
+- Exact push Run/Job `33230823568` / `99043233637`, success; Runtime Artifact `9708425762`; ZIP `sha256:50f77adb71bfce20a9fad4b63e4b879db04e23deb257c3810d157e6214730bf6`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
+- Independent package inspection matches `0.1.0 (38)`, Candidate b38, source `0d1801137e4e`, iOS14 minimum and arm64.
+- Current-main PR Run/Job `33230825189` / `99043238346` passed on synthetic merge `fd1ed7508f04e9045b99239cad88dca8f6e01450`, exact b38 into unchanged `main@a6e3b2bc...`; merge Artifact `9708423606` is CI evidence only.
+
+### b38 Runtime acceptance focus
+
+1. Right-side scroll-indicator dragging remains smooth; b36 geometry stalls must not return.
+2. Previous/next visibly traverses full content continuously for both short and long distances.
+3. Rapid repeated taps retarget from the current visual offset and advance one semantic round per tap.
+4. Real finger drag interrupts immediately and owns the viewport.
+5. Final landing is the intended user-message round start with no correction snap.
+6. b37 chunk completeness, first-entry latest, A/B anchors, Copy/timestamps/preferences/filtering/list reconcile and Sync/Reload remain unchanged.
+
+If b38 is rejected, record the exact Runtime defect first and allocate b39 or later. Never rebuild b38.'''
+          s = replace_section(s, '### Exact b36 Candidate / evidence', '### Rendering scope boundary from supplied recording', new_evidence, 'plan evidence section')
+          old_next_start = '## Current next action'
+          next_text = '''## Current next action
+
+Install/test exact b38 Runtime Artifact `9708425762` / IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e` on the accepted iPhone/iOS17 scope. If accepted, record Runtime evidence, re-check current main/PR conflicts and exact merge-view, then merge/close Phase 8 and promote only the tested accepted scope to Stable. If rejected, record the precise animation/retarget/landing regression first and allocate b39+; preserve the accepted b37 deterministic geometry baseline.'''
+          pos = s.find(old_next_start)
+          if pos < 0: raise SystemExit('plan next action missing')
+          s = s[:pos] + next_text + '\n'
+          p.write_text(s)
+
+          # BUILD_TEST_INDEX.md
+          p = Path('docs/project/BUILD_TEST_INDEX.md')
+          s = p.read_text()
+          old_b34 = '| `DEV-conversation-round-count-0.1.0-b34` | `DEV-conversation-round-count` | `0.1.0 (34)` | exact product/config source `bf66c7080347660e0154952a261230a24bb94f7d`; PR #27 | Push Run `33200768537`; Job `98949366655`; Runtime Artifact `9697664416`; ZIP `sha256:0b05a435888c041286b331c554f31f7e64dda0a30d214014bf2a144d8b696c65`; IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6`; PR merge Run `33200813591`; Job `98949517057`; merge `a42408a64a4ff7fba7d799f39c897ae6930daf6f`; merge Artifact `9697686876` | Runtime pending; stale animation completion cannot correct/clear newer target while current target row is not visible | **Current identity-valid Runtime Candidate; not Stable/Frozen** |'
+          new_rows = '''| `DEV-conversation-round-count-0.1.0-b34` | `DEV-conversation-round-count` | `0.1.0 (34)` | `bf66c7080347660e0154952a261230a24bb94f7d`; PR #27 | Push Run `33200768537`; Job `98949366655`; Runtime Artifact `9697664416`; IPA SHA `1705a2a39941ab6aee88e13b53d68d55b2fd9ff3d43d1c50d9cdcb6613c2b9b6` | 42 requested/42 completed, no corrections/ignored completions, yet movement feel still rejected | **Runtime partial/failing / superseded** |
+| `DEV-conversation-round-count-0.1.0-b35` | `DEV-conversation-round-count` | `0.1.0 (35)` | `c3addf775483de17a0a0a9eb81d602fc18ebe611`; PR #27 | Push Run `33203663621`; Job `98959137672`; Runtime Artifact `9698781544`; ZIP `sha256:903b2e51608af144097f2880d1bbb301de29d8b4a21477a74d16523e26bc473d`; IPA SHA `b1391d06f81bc8c57d124e16a22ef138dd8151e0bd8e338db601729c6f583b0f` | Direct+120pt ease-out precise when completed; multi-second positioning stalls remained | **Runtime partial/failing / superseded** |
+| `DEV-conversation-round-count-0.1.0-b36` | `DEV-conversation-round-count` | `0.1.0 (36)` | `8f8614508eef5197f9fff4bb9d10c14354d5821e`; PR #27 | Push Run `33207505424`; Job `98972194770`; Runtime Artifact `9700254733`; ZIP `sha256:718e8500ea41bcc73b41f5bebd9a4850b93246368a87304be0b2c4751702e576`; IPA SHA `cdf2c7278ec0a4f6f5125a711f78d7bbda8c606a32dda87f614d710f662bd867` | Severe table/text geometry stalls remained; right-side scroll-indicator dragging also stuttered | **Runtime partial/failing / superseded** |
+| `DEV-conversation-round-count-0.1.0-b37` | `DEV-conversation-round-count` | `0.1.0 (37)` | `92d9f255f3d2ab993d264bda1a71e92b36b44b6c`; PR #27 | Push Run `33210450417`; Runtime Artifact `9701385668`; ZIP `sha256:d4e682f1dcf4b0fa617eb84461078586f26b26f13392b1cae8578491087d4e58`; IPA SHA `7db22b82f3ca131d04b672dec480d2a58fd87fa828c74722a16784bf4397694e` | User: “这次确实不卡了”; deterministic message geometry/virtualization performance direction accepted | **Runtime accepted performance baseline / superseded by animation trial b38** |
+| `DEV-conversation-round-count-0.1.0-b38` | `DEV-conversation-round-count` | `0.1.0 (38)` | `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; PR #27 | Push Run `33230823568`; Job `99043233637`; Runtime Artifact `9708425762`; ZIP `sha256:50f77adb71bfce20a9fad4b63e4b879db04e23deb257c3810d157e6214730bf6`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`; PR Run `33230825189`; Job `99043238346`; merge `fd1ed7508f04e9045b99239cad88dca8f6e01450`; merge Artifact `9708423606` | Runtime pending; preserves b37 geometry and restores continuous full-distance animation | **Current identity-valid Runtime Candidate; not Stable/Frozen** |'''
+          s = replace_exact(s, old_b34, new_rows, 'index b34-38 rows')
+          pos = s.find('## Current conversation-round-count evidence')
+          if pos < 0: raise SystemExit('index evidence marker missing')
+          tail = '''## Current conversation-round-count evidence
+
+- b24-b38 exact emitted identities are permanently reserved; corrected output must always allocate a later identity.
+- b26 accepted the authoritative-total stale-row cap (`30 -> 29`, repeated `29/29`); b29 accepted the right-top refresh/top-blank correction; preserve both.
+- b31 accepted semantic user-message round-start landing; b32 accepted recipient/internal filtering + compact Copy; b33 accepted physical-bottom/rubber-band direction.
+- b34 showed final correction was not the remaining smoothness root cause. b35/b36 then isolated the blocking owner to long-message/table geometry rather than animation alone.
+- b36 exact Runtime: 47 direct-position samples, median ~187ms, P90 ~780ms, max ~3952ms; right-side scroll-indicator dragging also severely stuttered; same 161-message conversation geometry expanded from roughly 13.8k to 154.6k points as giant self-sizing rows were realized.
+- b37 replaced deferred giant-row self-sizing with bounded plain-text presentation chunks, deterministic row metrics/prefix offsets and manual cell layout. Latest user Runtime feedback: **“这次确实不卡了”**. Treat this geometry/performance architecture as accepted baseline while b38 tests animation.
+- b38 changes only animation presentation and identity: no lead teleport; one cancellable 0.35s ease-in-out `UIViewPropertyAnimator` continuously travels from current offset to the deterministic target offset. No `scrollToRow` geometry discovery and no final correction snap.
+
+## Exact b38 current-main merge-view
+
+- Current main at validation: `a6e3b2bc185b8d5df90b846040387262a64e6154`.
+- PR #27 is open, mergeable and not merged; exact product head `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
+- Push Run/Job `33230823568` / `99043233637`, success; Runtime Artifact `9708425762`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
+- PR Run/Job `33230825189` / `99043238346`, success.
+- GitHub synthetic merge `fd1ed7508f04e9045b99239cad88dca8f6e01450` explicitly merges exact b38 source into current main.
+- Merge Artifact `9708423606` is CI evidence only and must never replace exact Runtime Artifact `9708425762`.
+
+## Evidence boundary
+
+Current b38 is **Code written + exact source audit + exact push CI passed + identity-valid Runtime Artifact produced + current-main PR merge-view CI passed**. Runtime/manual/real-device: **Pending**. b37 geometry/performance result: **Runtime accepted**. Stable/Frozen for the Phase 8 Work: **No/No**.
+'''
+          s = s[:pos] + tail
+          p.write_text(s)
+
+          for path in [
+              'docs/project/PROJECT_PROFILE.md',
+              'docs/project/PROJECT_STATE.md',
+              'docs/project/MODULE_STATUS.md',
+              'docs/project/PROJECT_SPECIFIC_RULES.md',
+              'docs/project/DEVELOPMENT_PLAN.md',
+              'docs/project/BUILD_TEST_INDEX.md',
+          ]:
+              if 'b38' not in Path(path).read_text(): raise SystemExit(f'{path}: b38 missing after sync')
+          PY
+          git diff --check -- docs/project
+          git diff --stat -- docs/project
+
+      - name: Commit synchronized docs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/DEVELOPMENT_PLAN.md docs/project/BUILD_TEST_INDEX.md
+          git commit -m 'TMP: synchronize b37 Runtime and b38 evidence [skip ci]'
+          git push origin HEAD:tmp/b38-docs-sync-20260829

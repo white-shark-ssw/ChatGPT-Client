@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-29 through exact b38 Runtime acceptance and Phase 8 merge._
+_Last updated: 2026-08-29 through exact b42 protocol Runtime; Phase 9 native Send is architecture-blocked._
 
 ## Current accepted merged baseline
 
@@ -24,9 +24,24 @@ _Last updated: 2026-08-29 through exact b38 Runtime acceptance and Phase 8 merge
 - **Runtime result**: accepted on recorded iPhone/iOS17 scope; latest exact-device feedback was **“没问题了”**.
 - **Stable/Frozen**: Stable / No for the recorded accepted Phase 8 scope.
 
+## Current Phase 9 — DEV-send-stream
+
+- **Status**: Active checkpoint, but **blocked at a product/architecture decision gate**. Native production Send/Stream is not implemented or accepted.
+- **Branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable.
+- **Exact decision Candidate**: `DEV-send-stream-0.1.0-b42`, `0.1.0 (42)`.
+- **Exact product/config source**: `e8946e48a0b5ad86b402faf5eabba627e3393adf`.
+- **Push Run / Job**: `33235622532` / `99055977981`, success.
+- **Artifact**: `9709824510`; IPA SHA `c6d1d421ab05a2294784223400291f0dc1683b638b2647ae85b2d9d4f3fcb85b`.
+- **PR merge-view**: Run `33235623896`; Job `99055982148`, success. Merge-view CI/package evidence does not replace exact push Runtime Artifact.
+- **Runtime**: exact iPhone/iOS17 default-ChatGPT `primary_assistant` new-chat probe accepted as protocol/security-boundary evidence.
+- **Protection result**: Sentinel prepare returned `proofOfWorkRequired=true`, `turnstileRequired=true`, and `soRequired=true`; Sentinel finalize submitted non-empty PoW and Turnstile before the successful Send.
+- **Decision**: current pure-native/transient-WebKit-auth ChatGPT-account Send is blocked under the current architecture. Do not implement PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay, captured proof/token replay, hidden production WebView transport, or guessed fallback endpoint.
+- **Stable/Frozen**: No. b42 proves the protocol/security boundary only, not native production Send.
+- **Next gate**: user/product architecture choice is required before more Send code: defer account-session Send, explicitly adopt a user-visible Web send surface, or choose a separately authenticated officially supported API/product path. Do not silently substitute one for another.
+
 ## Authority / architecture
 
-- `ConversationRepository` remains sole authoritative conversation/list/read/recovery owner.
+- `ConversationRepository` remains sole authoritative conversation/list/read/recovery owner and remains the intended future response owner if a permitted production Send transport exists.
 - `AuthSessionStore` remains sole verified auth/account owner; default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - `ConversationListCacheStore` remains storage-only.
 - `AppPreferences` remains sole persisted display/interaction settings owner.
@@ -34,6 +49,7 @@ _Last updated: 2026-08-29 through exact b38 Runtime acceptance and Phase 8 merge
 - `ConversationMessagePresentationProjection` is ephemeral derived presentation virtualization/geometry only: bounded display chunks, message→first-row mapping, deterministic row heights and prefix offsets. It is not conversation authority.
 - `ConversationMessageCell` uses deterministic manual frame layout for one bounded display chunk. Full-message Copy semantics remain authoritative-message based.
 - One transient programmatic target cursor + one cancellable `UIViewPropertyAnimator` own round-jump presentation only.
+- b42 does not justify adding a second response repository, global `isStreaming`, hidden WebView chat authority, copied persistent challenge state, or retry/fallback machinery.
 
 ## Stable Phase 8 behavior
 
@@ -65,9 +81,12 @@ _Last updated: 2026-08-29 through exact b38 Runtime acceptance and Phase 8 merge
 - Fresh pre-merge synthetic merge `8168fc1aad006ab665f13f77972159f633361b61` explicitly merged final PR head into then-current `main@a6e3b2bc...`.
 - PR #27 then merged successfully at actual commit `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
 
-## Next planned development phase
+## Phase 9 protocol evidence retained
 
-Phase 9 is `DEV-send-stream`. It is **planned, not automatically Active**. A new development session must perform normal routing/new-task preflight, read `SEND_STREAM_PREFLIGHT.md` plus required architecture documents, and evidence the current private send/stream protocol before implementation.
+- Existing/new Send route is `POST /backend-api/f/conversation`; existing includes `conversation_id`, new omits it.
+- Normal stream uses `"v1"`, early authoritative conversation identity, message/patch events, `message_stream_complete`, trailing conversation metadata and `[DONE]`; new chat emits `title_generation`.
+- Official server Stop is `POST /backend-api/stop_conversation` with `{ conversation_id, exclude_async_types: [] }`. A successful Stop can close the Send stream without normal completion tail, so a future permitted production transport must model exact-owner `user-stopped` independently from local cancellation.
+- b42 proves the tested successful default-primary-assistant Send requires browser anti-abuse challenge execution; this is the current P0 transport blocker.
 
 ## Rendering scope boundary
 
@@ -76,9 +95,10 @@ Current message body remains plain-string presentation. Markdown/code/table/link
 ## Evidence boundaries
 
 - Exact b38 Runtime is accepted on recorded iPhone/iOS17 scope; recorded Phase 8 scope is Stable/merged, Frozen No.
+- Exact b42 Runtime is accepted only as Phase 9 protocol/security-boundary evidence; native production Send remains unimplemented/unaccepted.
 - iOS17 success does not prove iOS14–16 or iPad.
 - Non-personal workspace identity and other explicitly untested account/cache branches remain Unknown/Unverified.
-- CI/Artifact success remains distinct from Runtime proof; Phase 8 Stable status is supported by exact Runtime acceptance plus final merge.
+- CI/Artifact success remains distinct from Runtime proof.
 
 ## Evidence rule
 

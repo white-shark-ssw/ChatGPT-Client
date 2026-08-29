@@ -98,7 +98,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         stack.translatesAutoresizingMaskIntoConstraints = false
         nativeSurface.addSubview(stack)
 
-        NSLayoutConstraint.activate([
+        var constraints = [
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -110,9 +110,11 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             stack.leadingAnchor.constraint(equalTo: nativeSurface.safeAreaLayoutGuide.leadingAnchor, constant: 12),
             stack.trailingAnchor.constraint(equalTo: nativeSurface.safeAreaLayoutGuide.trailingAnchor, constant: -12),
             stack.topAnchor.constraint(equalTo: nativeSurface.safeAreaLayoutGuide.topAnchor, constant: 8),
-            stack.bottomAnchor.constraint(equalTo: nativeSurface.keyboardLayoutGuide.topAnchor, constant: -10),
             outputTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 180)
-        ])
+        ]
+        if #available(iOS 15.0, *) { constraints.append(stack.bottomAnchor.constraint(equalTo: nativeSurface.keyboardLayoutGuide.topAnchor, constant: -10)) }
+        else { constraints.append(stack.bottomAnchor.constraint(equalTo: nativeSurface.safeAreaLayoutGuide.bottomAnchor, constant: -10)) }
+        NSLayoutConstraint.activate(constraints)
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
@@ -128,7 +130,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.page", fields: ["state": "loaded", "pageKind": Self.pageKind(for: webView.url)])
-        webView.evaluateJavaScript("window.__nativeWebSendEngineProbe && window.__nativeWebSendEngineProbe.probeComposer();", completionHandler: nil)
+        webView.evaluateJavaScript("window.__nativeWebSendEngineProbe && window.__nativeWebSendEngineProbe.probeComposer(true);", completionHandler: nil)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { logNavigationFailure(error) }
@@ -171,7 +173,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         nativeDeltaCount = 0
         nativeCharacterCount = 0
         updateSendButtonState()
-        appendNativeText(sendCount == 1 ? "\n\n你：\(text)\n\nChatGPT：" : "\n\n────────\n你：\(text)\n\nChatGPT：")
+        if sendCount == 1 { outputTextView.text = "" }
+        appendNativeText(sendCount == 1 ? "你：\(text)\n\nChatGPT：" : "\n\n────────\n你：\(text)\n\nChatGPT：")
         composerTextView.text = ""
         diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.nativeSubmit", fields: ["attempt": String(sendCount), "promptCharacters": String(text.count)])
         updateStatusLabel(detail: "正在交给官方 Web Send…")
@@ -229,12 +232,11 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "nativeCharacters": String(nativeCharacterCount)
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamMetrics", fields: fields)
-            if terminal {
-                responseActive = false
-                updateStatusLabel(detail: "本轮完成；等待 Web composer 恢复后可继续第二轮")
-                updateSendButtonState()
-                webView.evaluateJavaScript("window.__nativeWebSendEngineProbe && window.__nativeWebSendEngineProbe.probeComposer();", completionHandler: nil)
-            }
+            responseActive = false
+            if terminal { updateStatusLabel(detail: "本轮完成；Web composer 恢复后可继续第二轮") }
+            else { updateStatusLabel(detail: "SSE 已结束但没有 [DONE]；本轮按失败处理") }
+            updateSendButtonState()
+            webView.evaluateJavaScript("window.__nativeWebSendEngineProbe && window.__nativeWebSendEngineProbe.probeComposer(true);", completionHandler: nil)
         case "stream_error":
             diagnostics.warning(category: "protocol", name: "nativeWebSendEngineProbe.stream", fields: ["state": Self.safeToken(body["state"] as? String)])
             responseActive = false
@@ -319,16 +321,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         return null;
       };
 
-      const probeComposer = () => {
+      const probeComposer = (force = false) => {
         installRenderSuppression();
         const found = findComposer();
         const composer = found && found.element;
-        if (composer !== lastComposer) {
-          lastComposer = composer || null;
-          post({ kind: 'composer_state', ready: !!composer, strategy: found ? found.strategy : 'none' });
-        } else if (composer) {
-          post({ kind: 'composer_state', ready: true, strategy: found.strategy });
-        }
+        if (force || composer !== lastComposer) post({ kind: 'composer_state', ready: !!composer && !activeSend, strategy: found ? found.strategy : 'none' });
+        lastComposer = composer || null;
         return found;
       };
 
@@ -361,7 +359,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
       };
 
       const submit = text => {
-        const found = probeComposer();
+        const found = probeComposer(true);
         if (!found || typeof text !== 'string' || !text.trim()) {
           post({ kind: 'native_submit_result', state: 'composer_not_ready' });
           return;
@@ -436,8 +434,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         aggregate.frameCount += 1;
         if (data.trim() === '[DONE]') {
           aggregate.terminal = true;
+          activeSend = false;
           const metrics = webMetrics();
-          queueMicrotask(() => post(Object.assign({ kind: 'stream_metrics', frameCount: aggregate.frameCount, removedTextPatchCount: aggregate.removedTextPatchCount, removedTextCharacters: aggregate.removedTextCharacters, terminal: true }, metrics)));
+          queueMicrotask(() => {
+            probeComposer(true);
+            post(Object.assign({ kind: 'stream_metrics', frameCount: aggregate.frameCount, removedTextPatchCount: aggregate.removedTextPatchCount, removedTextCharacters: aggregate.removedTextCharacters, terminal: true }, metrics));
+          });
           return frame + '\n\n';
         }
         let payload;
@@ -468,7 +470,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                     buffer = '';
                   }
                   if (!aggregate.terminal) {
+                    activeSend = false;
                     const metrics = webMetrics();
+                    probeComposer(true);
                     post(Object.assign({ kind: 'stream_metrics', frameCount: aggregate.frameCount, removedTextPatchCount: aggregate.removedTextPatchCount, removedTextCharacters: aggregate.removedTextCharacters, terminal: false }, metrics));
                   }
                   controller.close();
@@ -488,6 +492,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 }
               }
             } catch (_) {
+              activeSend = false;
               post({ kind: 'stream_error', state: 'reader_failed' });
               try { controller.error(new Error('native_web_send_engine_stream_failed')); } catch (_) {}
             }
@@ -505,23 +510,31 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         activeSend = true;
         post({ kind: 'send_observed', pageKind: pageKind() });
+        probeComposer(true);
         try {
           const response = await originalFetch(input, init);
           const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
           const filtered = response.status === 200 && contentType === 'text/event-stream';
           post({ kind: 'send_response', status: response.status, contentType, filtered });
-          return filtered ? filteredResponse(response) : response;
+          if (!filtered) {
+            activeSend = false;
+            probeComposer(true);
+            post({ kind: 'stream_error', state: 'send_not_sse' });
+            return response;
+          }
+          return filteredResponse(response);
         } catch (error) {
           activeSend = false;
+          probeComposer(true);
           post({ kind: 'stream_error', state: 'send_transport_error' });
           throw error;
         }
       };
 
-      const observer = new MutationObserver(() => probeComposer());
+      const observer = new MutationObserver(() => probeComposer(false));
       const start = () => {
         installRenderSuppression();
-        probeComposer();
+        probeComposer(true);
         observer.observe(document.documentElement || document, { childList: true, subtree: true });
         post({ kind: 'probe_ready' });
       };

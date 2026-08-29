@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-29 through exact b38 Runtime acceptance and Phase 8 merge._
+_Last updated: 2026-08-29 through exact b42 Phase 9 protocol Runtime; current native Send path is architecture-blocked._
 
 ## Purpose
 
@@ -22,8 +22,8 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 - **V0.1 read-use**: native shell + list/detail + manual recovery + accepted cold-start auth warm-up.
 - **V0.1 cache-use increment**: account-scoped persistent list snapshot and rapid-relaunch suppression.
-- **V0.2 chat-use**: stable multi-conversation ownership + metadata/preferences + Copy + round navigation + text Send/new conversation + stream/stop/reasoning/haptics.
-- **V0.2 attachment-use increment**: image/file sending + assistant-file tap-download-share.
+- **V0.2 chat-use**: stable multi-conversation ownership + metadata/preferences + Copy + round navigation + text Send/new conversation + stream/stop/reasoning/haptics. **Currently blocked on production Send transport architecture.**
+- **V0.2 attachment-use increment**: image/file sending + assistant-file tap-download-share. Blocked until an accepted Send architecture exists.
 - **V0.3 refinement**: Markdown/code/rich-content rendering, conversation previews, export, long-conversation tuning, pagination/search/download manager and remaining daily-use features.
 
 ## Completed foundations
@@ -98,27 +98,43 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 Current message body remains plain-string presentation. Markdown/table/code/list/link/citation rendering is **not** Phase 8 and belongs future `DEV-message-rendering`. Do not strip raw rich-content markers speculatively.
 
-## Phase 9 — `DEV-send-stream`
+## Phase 9 — `DEV-send-stream` — Active / architecture-blocked
 
-**Next planned phase; not automatically Active.** A new development session must pass normal routing/new-task preflight before a checkpoint/branch is created.
+The phase was activated on its own branch/checkpoint/PR and used unique b39-b42 evidence Candidates. It **did not implement production native Send** because exact protocol Runtime established a security/transport blocker before an evidence-backed native precursor existed.
 
-Evidence current text Send/new-conversation/stream/stop protocol and implement composer, pending-to-authoritative identity handoff, per-conversation response lifecycle, incremental stream UI, Stop, visible reasoning and required haptics.
+### Accepted protocol evidence
 
-- Read `SEND_STREAM_PREFLIGHT.md` before activation.
-- Read `CLIENT_ARCHITECTURE_GAP_REVIEW.md` and the current post-recovery sequence before creating/activating the Work.
-- No global response owner.
-- Hidden A may continue responding while B is visible.
-- Sync/Reload never resend.
-- Follow-tail applies only near latest; deliberate history browsing must not be stolen.
-- Issue the earliest practical daily-chat Candidate once exact real-device text chat/stream works.
+- Existing and new conversation Send use `POST /backend-api/f/conversation`; existing includes `conversation_id`, new omits it.
+- Normal response is HTTP 200 `text/event-stream` using `v1`, early authoritative conversation identity, input/message events, assistant patches, `message_stream_complete`, trailing conversation metadata and `[DONE]`; new chat emits `title_generation`.
+- Official server Stop is `POST /backend-api/stop_conversation` with `{ conversation_id, exclude_async_types: [] }`, and a successful Stop may terminate the Send stream without normal `message_stream_complete` / `[DONE]` tail.
+- Exact b42 default-primary-assistant new-chat Runtime shows Sentinel `proofOfWork.required=true`, `turnstile.required=true`, `so.required=true`, followed by non-empty PoW and Turnstile finalize submissions before successful Send.
+
+### Current decision
+
+- Current pure-native/transient-WebKit-auth ChatGPT-account Send is **blocked under the current architecture**.
+- Do not implement PoW/Turnstile/Sentinel challenge solvers or bypasses, browser-fingerprint replay/emulation, captured proof/token replay, hidden production WebView transport, or guessed alternate/fallback endpoints.
+- b42 is accepted protocol/security-boundary Runtime evidence only. Native production Send/Stream, response ownership, follow-tail, reasoning UI and haptics remain unimplemented/unaccepted.
+- No b43 is justified merely to repeat the same challenge decision.
+
+### Architecture gate
+
+Further Phase 9 code requires one explicit product/architecture choice:
+
+1. **Defer account-session Send** and keep the current native read/recovery client until an officially supported/non-challenge ChatGPT-account transport exists.
+2. **Adopt a user-visible official-Web send surface** while retaining native read/navigation where useful; this is not pure native Send and must be treated as a deliberate architecture change.
+3. **Use a separately authenticated officially supported API/product path** if the user explicitly accepts the separate credential/billing/product model; do not silently treat it as the existing ChatGPT-account session.
+
+The agent must not choose among these without the user's product decision.
 
 ## Phase 10 — `DEV-attachments`
 
-Immediately after accepted Send/Stream. Use `ATTACHMENT_TRANSFER_PLAN.md`: Photos/document picker, per-conversation pending attachments, evidenced upload protocol, assistant file cards, explicit tap-download-share; explicit retry only. Full download manager does not block this phase.
+Originally planned immediately after accepted Send/Stream. It is now **dependency-blocked** until a production Send architecture is chosen and accepted. When unblocked, use `ATTACHMENT_TRANSFER_PLAN.md`: Photos/document picker, per-conversation pending attachments, evidenced upload protocol, assistant file cards, explicit tap-download-share; explicit retry only. Full download manager does not block this phase.
 
 ## Phase 11 — `DEV-message-rendering`
 
 Implement native rich message presentation for Markdown paragraphs/headings/lists/links, emphasis, inline/fenced code, code-block Copy and tables as needed. Also investigate current user-visible rich annotation/citation markers such as `filecite` from real protocol content. Preserve authoritative visible text and do not expose hidden reasoning/tool/system content. Avoid full-conversation reparse/reload on every stream token.
+
+This phase does not intrinsically depend on production Send and may be reconsidered as an independent roadmap item if the user explicitly reprioritizes while Phase 9 remains blocked.
 
 ## Phase 12 — `DEV-conversation-list-preview`
 
@@ -136,10 +152,12 @@ Measure network / parse-model / first-visible-render / rich-layout timing and op
 
 Isolated Work IDs for download manager, pagination, background completion, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat and settings/diagnostics refinement.
 
+Background completion remains dependent on a real production response lifecycle and must not be opened while Phase 9 lacks an accepted transport.
+
 ## Phase 16 — advanced capabilities
 
 Projects, web search, image/multimodal generation, Voice, Memory, Deep Research, GPTs and other capabilities, each only with current protocol/UI evidence.
 
 ## Current next action
 
-No Phase 8 action remains after completion checkpoint removal. The next planned development task is `DEV-send-stream`; do not activate it until a user request/session routes to that new task and its preflight passes.
+`DEV-send-stream` is blocked at an explicit architecture-choice human gate after exact b42 Runtime. Do not allocate another Send Candidate or write production Send code until the user chooses a permitted architecture direction. Preserve b39-b42 evidence and the Stable b38 merged baseline.

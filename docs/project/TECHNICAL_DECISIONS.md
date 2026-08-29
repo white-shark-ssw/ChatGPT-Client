@@ -5,8 +5,8 @@ This file records durable, evidence-backed technical decisions and rejected rout
 ## Current decisions
 
 ### TD-001 — Product direction is an iOS native ChatGPT client
-- **Status**: Confirmed; qualified by TD-024/TD-025/TD-026/TD-027 for ChatGPT-account Send
-- **Decision**: Develop a native Swift/UIKit ChatGPT client as the product shell and native read/navigation baseline. Historical hidden-WebView chat architecture is not the product source baseline. TD-024 allows a user-visible official-Web Send surface because current account-session native Send is security-boundary blocked; TD-025 rejects b44's full-page hybrid form; TD-026 retains background resilience as a hard product requirement; TD-027 records the current b45 same-response continuation evidence boundary.
+- **Status**: Confirmed; qualified by TD-024/TD-025/TD-026/TD-027/TD-028 for ChatGPT-account Send
+- **Decision**: Develop a native Swift/UIKit ChatGPT client as the product shell and native read/navigation baseline. Historical hidden-WebView chat architecture is not the product source baseline. TD-024 permits a user-visible official-Web Send surface because current account-session native Send is security-boundary blocked; TD-025 rejects b44's full-page hybrid form; TD-026 retains background resilience as a hard product requirement; TD-027 records the currently confirmed official resume / rejected Native duplicated parity boundary; TD-028 records the exact-device long-conversation full-Web composer viability ceiling.
 
 ### TD-002 — Previous-project history is reference-only evidence
 - **Status**: Confirmed
@@ -69,7 +69,7 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Decision**: Use short irreversible SHA-256-derived conversation marker + 1-based list position for correlation; never raw ID/title/body.
 
 ### TD-016 — Background completion uses public baseline then isolated TrollStore experiment
-- **Status**: Confirmed plan; response-owner ordering qualified by TD-026/TD-027
+- **Status**: Confirmed plan; response-owner ordering qualified by TD-026/TD-027/TD-028
 - **Decision**: For native-owned response lifecycles, first use normal iOS background-task time + local completion notification; any TrollStore true-background experiment remains isolated. A visible-Web page being capable of Send does not itself establish native response ownership/background-completion semantics. Determine the response owner before spending product work on the corresponding background mechanism.
 
 ### TD-017 — Public default-WebKit data-store warm-up is accepted for tested cold-start auth hydration
@@ -114,25 +114,26 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Allowed path selected later**: TD-024 records the user's explicit selection of a user-visible official-Web Send surface.
 
 ### TD-024 — ChatGPT-account Send may use an explicit user-visible official-Web surface while native read/navigation remain authoritative
-- **Status**: Architecture permission retained; b43 visible-Web feasibility largely accepted; b44 full-page integrated form rejected; Stable/Frozen No
+- **Status**: Security permission retained; product viability now constrained by TD-025 and TD-028; Stable/Frozen No
 - **Date**: 2026-08-29
 - **User decision**: After TD-023/b42 Path B, the user selected Option 2: keep the native shell/read/navigation and use a **user-visible official ChatGPT Web surface** for ChatGPT-account Send.
 - **Decision**: A visible Web surface may execute the official page's normal browser Send/challenge behavior using the existing default persistent `WKWebsiteDataStore`. It must be visibly presented to the user and integrated with native UIKit. It is not pure-native Send and must never be described as such.
-- **b43 evidence**: one process-resident shared `AuthWebViewController.hybridChat` was smooth/resident enough in the tested sequence; Web `+` latency was ~100–200ms. The standalone Settings Web-chat form was not accepted as final UX; Web Photos filtered video on iOS17.
+- **b43 evidence**: one process-resident shared `AuthWebViewController.hybridChat` was smooth/resident enough in the tested shorter sequence; Web `+` latency was ~100–200ms. The standalone Settings Web-chat form was not accepted as final UX; Web Photos filtered video on iOS17.
 - **b44 evidence**: native detail -> visible `/c/<id>` Web -> explicit `返回并同步` worked structurally, and tested A/B native IDs mapped to the corresponding Web conversations. However immediate Native reconciliation could expose the user message while assistant output already visible in Web remained unreadable until a later Sync. The same conversation was loaded by Native and then again by Web. User rejected this full-page interaction as making Native lose its purpose.
+- **b47 qualification**: exact-device Runtime now shows that a long-answer conversation can make the mobile-Web composer unusable before Send. TD-024 therefore remains only a security permission, not proof that full-Web-conversation Send is a viable daily-chat product architecture.
 - **Rejected**: hidden/shadow WebView challenge harvesting, continuous DOM observation/state mirroring, prompt/answer scraping, native replay of captured challenge outputs, Native composer injection into a covered/hidden Web composer, synthetic hidden Web Send clicks, and programmatic file-input injection without a supported/evidenced path.
 - **Authority boundary**: `ConversationRepository` remains sole native conversation/list/detail/recovery authority; `AuthSessionStore` remains native auth/account authority; default persistent WebKit store remains persistent auth-secret authority. A visible Web surface owns only its own Web session/Send interaction while presented.
 - **Identity incident**: Artifact `9710515489` from Run `33238065644` carried b42 identity over newer hybrid code and is permanently rejected; legitimate b42 remains Artifact `9709824510`.
 
 ### TD-025 — b44 proves a product-architecture ceiling for full-page existing-account hybrid Send
-- **Status**: Confirmed by exact b44 Runtime; full-page form rejected; later b45 investigates a narrower Web-Send-only target
+- **Status**: Confirmed by exact b44 Runtime; full-page form rejected; later continuation work does not reverse this decision
 - **Date**: 2026-08-29
 - **Exact evidence**: b44 `DEV-send-stream-0.1.0-b44`, source `f1503cf7121512a84e5c55a3642181c17324d791`, Artifact `9712583513`, IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`; detailed Runtime record `docs/project/runtime-evidence/DEV-send-stream-b44-runtime.md`.
 - **Runtime conclusion**: Web Send can succeed and `/c/<id>` mapping can be correct while immediate Native Detail reconciliation still lacks assistant output already visible in Web. Later Sync can expose it. No stable completion/readiness delay or signal was established. A/B switching also causes Web to reload/render the conversation separately from the already-loaded Native Detail.
 - **Decision**: Do not patch the b44 architecture with arbitrary delay, automatic polling/retry or repeated Sync. Treat the full-page Native->Web->Native form as product-rejected.
 - **Native-over-hidden-Web proposal**: A Native composer that forwards text into a fully covered/hidden official Web composer would require programmatic DOM/JS/input automation of the protected browser Send flow under current evidence. This is not accepted; it would turn Web into hidden/shadow transport rather than the explicitly visible user interaction permitted by TD-024.
-- **Current route**: the user explicitly rejected the supported-API product option. A narrower user-visible-Web-Send -> Native-same-response continuation target may be pursued only if current Runtime proves the continuation path.
-- **Candidate rule**: b39-b45 are permanently reserved; exact b45 product source is immutable after Artifact emission.
+- **Current route**: a narrower user-visible-Web-Send -> Native-same-response continuation was investigated by b45-b47, but TD-028 now adds a separate pre-Send long-conversation viability ceiling.
+- **Candidate rule**: emitted b39-b47 identities are permanently reserved.
 
 ### TD-026 — Background/lock resilience remains a hard product requirement, but implementation follows the eventual response owner
 - **Status**: Confirmed product requirement; exact b45 gives positive short-background evidence; full feasibility still Unverified
@@ -141,20 +142,31 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Public iOS boundary**: Apple's public background-task APIs provide finite extra runtime and do not guarantee long-running foreground-equivalent execution. `beginBackgroundTask` may be used as a short-duration baseline only; do not encode fixed-duration guarantees, keepalive timers or unrelated background-mode abuse.
 - **Exact b45 evidence**: on iPhone/iOS17.0, one clean default-primary new-chat response remained on the same original `/backend-api/f/conversation` fetch while the app was backgrounded approximately 35s, 34s and 126s during the active response (~195s cumulative). On final foreground return the same original stream delivered `message_stream_complete` and `[DONE]`; no manual refresh/resend or secondary reconnect transport was observed.
 - **Evidence boundary**: this proves the tested path can survive or buffer across those ordinary background/lock intervals. It does not prove continuous background event delivery, 5/15-minute survival, WebContent termination recovery, network-loss recovery or battery/thermal cost.
-- **Ordering decision**: first determine whether Native can own/resume the response. If Native handoff is proven, later background work protects the Native response lifecycle. If handoff is disproven, WebKit true-background remains relevant only to the fallback visible-Web architecture.
+- **Ordering decision**: first determine the viable production Send/response owner. If Native handoff is eventually accepted, later background work protects the Native response lifecycle. A full-Web fallback is not eligible for production background investment while TD-028's long-conversation Send-surface gate remains unresolved.
 - **Rejected**: manual-refresh-as-normal-use, hidden DOM recovery, timer/poll/retry chains, permanent idle process immortality, or claiming main-app survival equals WebKit-stream survival.
 - **Durable plan**: `docs/project/HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`.
 
-### TD-027 — b45 has not yet exposed an official Native-reproducible same-response continuation path
-- **Status**: Confirmed evidence boundary from two exact b45 Runtime captures; continuation feasibility remains Unverified
+### TD-027 — Official no-resend resume is Runtime Confirmed; Native duplicated Cookie+Bearer-only parity remains rejected
+- **Status**: Confirmed through exact b45-b47 Runtime; Native first/exclusive continuation remains Unverified
 - **Date**: 2026-08-29
-- **Exact evidence**: `DEV-send-stream-0.1.0-b45`, product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`, Artifact `9713774868`, IPA SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`; detailed Runtime record `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
-- **Observed normal path**: official Web `POST /backend-api/f/conversation` returned HTTP200 SSE; `resume_conversation_token` appeared at original-stream event 2; later structure exposed conversation/request/message identities; original `fetch` SSE remained the response transport through `message_stream_complete` and `[DONE]`. `GET /backend-api/conversation/{id}/stream_status` returned JSON `{status:string}` only. No secondary EventSource/WebSocket/turn-stream/handoff/resume/subscribe response stream was observed.
-- **Clean new-chat clarification**: the later Capture C is accepted as a clean default-primary new-chat sample: user explicitly identifies it as a new conversation, and the observed Send body had neither top-level `conversation_id` nor `conversation_mode.gizmo_id`.
-- **Background result**: Capture C deliberately backgrounded/locked during the active response for ~35s, ~34s and ~126s. The original fetch remained the observable owner and completed normally on foreground; it did not need to reconnect. Therefore natural short background is no longer a useful way to force discovery of a reconnect API on this device.
-- **Decision**: do not infer a Native continuation API from the `resume_conversation_token` name and do not reinterpret `stream_status` as a response stream. The existence of a token is not sufficient evidence for route/method/body/identity semantics.
-- **Next evidence**: reuse exact b45 in an existing long default-primary conversation and deliberately cause a short real connectivity loss while the response is actively streaming, then restore connectivity without refresh/resend/Stop/navigation. Observe only what the official page itself does.
-- **Implementation gate**: allocate a b46 Native no-resend parity experiment only if exact official recovery traffic exposes the concrete route/transport/identity structure needed to justify it. If no reconnect path appears after a genuine transport break, record negative evidence and reassess the architecture ceiling rather than guessing.
+- **Exact evidence**: b45 source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072` / Artifact `9713774868`; b46 source `4ab9be3ef2809204e88fcb0d44884e35b43726b1` / Artifact `9715903443`; b47 source `21028bbff7982abeb42f130c56fcb21e6ef44d7a` / Artifact `9716878034`. Detailed records: `DEV-send-stream-b45-runtime.md`, `DEV-send-stream-b46-runtime.md`, `DEV-send-stream-b47-runtime.md`.
+- **Official transport conclusion**: current official Web uses `POST /backend-api/f/conversation/resume` with body `{conversation_id: string, offset: number}` as a post-Send continuation read. After real transport interruption it can return HTTP200 `text/event-stream`, repeatedly continue the same already-started response without another Send and reach terminal events.
+- **b46 Native parity**: after official offset 18 resume succeeded, one Native same-body Cookie+Bearer-only duplicate returned HTTP404 JSON; later official offset 54 succeeded.
+- **b47 Native parity**: after official offset 23 resume succeeded, one Native same-body Cookie+Bearer-only duplicate again returned HTTP404 JSON (~707ms, 116 bytes, 0 SSE frames); later official offset 74 succeeded. Rejection shape was `{"detail":{"code":"string","message":"string"}}`.
+- **Request-context evidence**: successful official resume exposed header names `accept, authorization, content-type, oai-client-build-number, oai-client-version, oai-device-id, oai-echo-logs, oai-language, oai-session-id, x-conduit-token, x-oai-is-client-observation, x-oai-is-pending-updates, x-oai-turn-trace-id, x-openai-target-path, x-openai-target-route`. Native explicitly set only `accept, content-type`, plus the established transient bearer injection and WebKit-derived ephemeral cookies.
+- **Decision**: this structural difference does not authorize copying browser header values. Missing non-challenge request context vs second-consumer/cursor ownership remains unresolved. Native first/exclusive resume is Unknown / Unverified.
+- **Diagnostics note**: b47's intended safe code/type/status export field was named `safeErrorTokens`; current diagnostics sanitizer redacts any key containing `token`, so those safe values were lost. This deterministic defect alone does not justify b48 while TD-028 blocks the production architecture.
+- **Rejected**: guessing required browser headers, copying `x-conduit-token`/OAI browser values without evidence, retry loops, duplicate Send, or treating HTTP404 as proof that Native continuation is universally impossible.
+
+### TD-028 — Full mobile-Web conversation is not an accepted production Send dependency after exact long-conversation composer failure
+- **Status**: Confirmed product architecture gate from exact target-device user Runtime; internal freeze cause Unverified
+- **Date**: 2026-08-29
+- **Evidence**: while preparing exact b47 testing, the user attempted to use an older conversation containing only about three rounds but long answers. On the primary iPhone/iOS17 environment, repeatedly trying to bring up/use the mobile-Web composer froze the page badly enough that the conversation could not be used for the test; the user switched to a new conversation. The exported b47 diagnostics cover the replacement run and therefore do not establish the freeze's internal owner.
+- **Decision**: do not treat `Native history -> full official Web conversation for every protected Send -> Native post-Send resume` as an accepted daily-chat production architecture. The failure occurs **before protected Send begins**, so later Native response handoff cannot repair it.
+- **Evidence boundary**: b43's earlier smooth visible-Web result remains valid only for its shorter tested sequence; it is not long-conversation viability proof. The root cause may involve Web page rendering, WKWebView process behavior, memory pressure, instrumentation or another factor and remains Unknown / Unverified.
+- **Next architecture questions**: investigate only evidence-backed legitimate routes: whether an official supported lightweight **visible send-only** Web surface exists without full conversation-history rendering; whether another account-compatible protected-Send boundary can avoid the full mobile-Web conversation without hidden DOM automation/challenge bypass; otherwise classify visible Web as diagnostic/fallback only.
+- **Human Gate**: product-code advancement pauses here. Do not allocate b48 merely to chase resume headers or fix the diagnostic field name until the production Send boundary is deliberately selected.
+- **Rejected shortcut**: hiding the same slow Web conversation under Native UI, injecting the Native composer into its DOM, or synthetic hidden clicks. That would both preserve the performance owner and violate the protected-Send visibility/security boundary.
 
 ## Rule
 

@@ -17,7 +17,7 @@ _Date: 2026-08-29_
 
 ## Device / export identity
 
-Uploaded diagnostics reported:
+Both uploaded diagnostics reported exact b45 identity:
 
 - Candidate `DEV-send-stream-0.1.0-b45`
 - app `0.1.0`, build `45`
@@ -25,9 +25,9 @@ Uploaded diagnostics reported:
 - Release
 - iPhone / iOS17.0
 
-The export is therefore accepted as exact-b45 real-device evidence for the structural observations below.
+Both exports are accepted as exact-b45 real-device evidence for the structural observations below.
 
-## Capture A — existing-conversation classified page
+## Capture A — uninterrupted existing-conversation classified page
 
 - Send at `2026-08-29T11:17:15Z`.
 - `POST /backend-api/f/conversation` via `fetch`.
@@ -54,47 +54,93 @@ The export is therefore accepted as exact-b45 real-device evidence for the struc
 - Original Send SSE reached `message_stream_complete`, `conversation_detail_metadata`, and `[DONE]` around `11:20:11Z`.
 - Approximate observed Send-to-DONE duration: 32 seconds.
 
-## What b45 proves
+## Capture C — clean default-primary new-chat with repeated active background / lock
 
-1. `resume_conversation_token` is emitted very early by the original official-Web Send SSE in both captured sequences.
-2. The normal uninterrupted official page keeps the original `/backend-api/f/conversation` `fetch` SSE as the live answer transport through completion.
-3. The observed `/conversation/{id}/stream_status` follow-up is a JSON status endpoint in this capture, not an answer-event stream.
-4. No naturally occurring secondary same-response continuation stream was observed during either uninterrupted answer.
-5. No response ID or turn ID was surfaced by this probe in the captured signals; `request_id`, conversation identity and message identity structure were observed on the original stream.
+The user explicitly states this was a **new conversation** and deliberately performed several suspend/lock cycles while the answer was still active.
 
-## What b45 does not prove
+### Request structure
 
-- It does **not** prove that no official reconnect/resume mechanism exists.
-- It does **not** justify Native replay/use of `resume_conversation_token`.
-- It does **not** establish `stream_status` as a continuation endpoint.
-- It does **not** prove a Native same-response handoff path.
-- It does **not** provide a clean default-primary new-chat sample for Capture B because `gizmo_id` was present.
+- Probe page initially loaded as `new_or_other` at `12:44:05Z`.
+- One pre-Send background interval lasted about 64 seconds and is not part of active-response evidence.
+- Send began at `12:45:20Z`: `POST /backend-api/f/conversation` via `fetch`.
+- HTTP200 `text/event-stream` returned in the same second.
+- The observed Send body had **no top-level `conversation_id`** and **no `conversation_mode.gizmo_id`**.
+- Together with the user's explicit statement, Capture C is accepted as the clean default-primary new-chat sample despite the probe classifying the page as `existing_conversation` by Send time.
+- Original SSE event 2 again emitted `resume_conversation_token`.
+- Events 3/4 exposed conversation identity and then `conversation_id + request_id`; event 13 exposed message identity.
+- Official Web again opened `GET /backend-api/conversation/{id}/stream_status`; it returned HTTP200 JSON with structural `{status:string}` only.
 
-The key missing condition is an interruption while the original Send SSE is still active. Every background/foreground interval in this export occurred before a Send or after the corresponding SSE had already completed, so the official page never needed to demonstrate active-response reconnect behavior.
+### Active-response background intervals
 
-## Architecture conclusion
+While the original Send SSE remained active:
+
+1. `12:45:27Z` -> `12:46:02Z`: approximately **35 seconds** background.
+2. `12:46:15Z` -> `12:46:49Z`: approximately **34 seconds** background.
+3. `12:47:01Z` -> `12:49:07Z`: approximately **126 seconds** background.
+
+Total observed active-response background time: approximately **195 seconds / 3m15s**.
+
+Send-to-terminal elapsed time: approximately **227 seconds / 3m47s**.
+
+### Foreground completion behavior
+
+Before the first active background interval the probe had observed original-stream event 13 (`message_marker`).
+
+At the end of the final ~126-second background interval, `willEnterForeground` occurred at `12:49:07Z`. In that same second the **same original `conversation_send` / `fetch` stream** emitted:
+
+- event 464 `server_ste_metadata`;
+- event 465 `message_stream_complete`;
+- event 466 `conversation_detail_metadata`;
+- event 467 terminal `[DONE]`.
+
+No second `conversation_send`, no new `text/event-stream` response, and no resume/handoff/turn-stream/subscribe/EventSource/WebSocket continuation connection was observed after any of the three active-response background intervals.
+
+The user did not need a manual refresh or prompt resend for this capture.
+
+## What Capture C proves
+
+1. On exact b45 / primary iPhone / iOS17.0, the tested official-Web response path can **survive or buffer across multiple ordinary background/lock intervals**, including one approximately 126 seconds long, and still reach normal stream completion without a second Send.
+2. The original `/backend-api/f/conversation` fetch remained the observable transport owner from Send to terminal.
+3. Natural short-to-medium backgrounding on this device did not force official Web to expose a separate reconnect transport.
+4. The clean default-primary new-chat request shape is now evidenced without top-level `conversation_id` and without `gizmo_id` in this capture.
+
+## What Capture C does not prove
+
+- It does **not** prove that WebKit delivered every SSE event continuously while the app was suspended. The probe cannot distinguish continuous background delivery from server/network/WebKit continuation plus buffered delivery on foreground.
+- It does **not** prove 5-minute, 15-minute, network-transition, WebContent-process-termination or battery/thermal behavior.
+- It does **not** prove Native same-response handoff.
+- It does **not** authorize Native use/replay of `resume_conversation_token`.
+- It does **not** prove that no official reconnect mechanism exists after a genuine TCP/network/WebContent failure, because the original transport evidently remained viable here.
+
+## Updated architecture conclusion
 
 Current desired architecture remains conditional:
 
 `user-visible official Web legal Send -> Native no-resend attach/resume to same response -> Native owns visible realtime response lifecycle`.
 
-This first b45 Runtime capture is **insufficient to implement Native parity**. The absence of a second stream during an uninterrupted response is expected and cannot be promoted into a No-go conclusion.
+The second b45 Runtime capture improves the WebKit/background side of the architecture: ordinary background/lock did not break this response, including across a ~126-second interval.
 
-Do not guess a resume endpoint, reinterpret the token name as an API contract, or allocate a Native continuation implementation yet.
+However it still provides **no separate official continuation channel** that Native can reproduce. The early `resume_conversation_token` remains only an observed structural field.
 
-## Next exact Runtime experiment — same exact b45
+Therefore b46 Native continuation implementation is still not justified.
 
-No product change is required to collect the missing evidence because b45 already observes fetch/XHR/EventSource/WebSocket plus continuation-like route classes.
+## Next exact Runtime experiment — force the transport to really break, reuse b45
+
+Natural short background is now a weak discovery mechanism because the original WebKit fetch survived all three active-response intervals.
+
+Use the same exact b45 instrumentation and force one controlled connectivity interruption instead:
 
 1. Clear diagnostics.
-2. Use default ChatGPT / primary assistant only; avoid custom GPT/Gizmo.
-3. Start a prompt long enough to stream well beyond 30 seconds.
-4. While output is visibly still streaming, background or lock the device for roughly 20–30 seconds.
-5. Return before the response would normally have completed.
-6. Do not refresh, resend, Stop, or switch GPTs.
-7. Let official Web recover/continue/finish naturally and export diagnostics.
+2. Use default ChatGPT / primary assistant in an **existing long conversation**.
+3. Start a response expected to stream long enough to observe recovery.
+4. While visibly streaming, deliberately break connectivity for about **10–15 seconds** and then restore it. Preferred deterministic test: Airplane Mode / both Wi-Fi and cellular unavailable, then restore. A Wi-Fi -> cellular transition is also useful after a stable Wi-Fi baseline.
+5. Do not refresh, resend, Stop, switch GPT or navigate away.
+6. Let official Web recover or fail naturally.
+7. Export diagnostics.
 
-Evidence question: after foreground return, does the page continue the same original transport, or does it open an official status/resume/handoff/turn-stream/subscription connection that receives the same response without a second Send?
+Evidence question: after a genuine transport break, does official Web open an official status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send, or does it only expose failure / eventual history recovery?
+
+Only an exact observed reconnect mechanism may justify a later b46 Native no-resend parity experiment. If no reconnect path appears, record the negative evidence and reassess the architecture ceiling rather than guessing an endpoint.
 
 ## Evidence classification
 
@@ -102,6 +148,9 @@ Evidence question: after foreground return, does the page continue the same orig
 - CI passed: Yes
 - Artifact produced: Yes
 - Package identity verified: Yes
-- Runtime/manual/real-device: **Yes for this structural capture**
+- Runtime/manual/real-device: **Yes — uninterrupted protocol capture + repeated active-background/lock capture**
+- Short active-response WebKit/original-fetch background survival: **Positive on exact recorded scope, up to ~126s continuous interval / ~195s cumulative**
+- 5/15-minute hybrid background matrix: **Unknown / Unverified**
+- Forced network-failure reconnect behavior: **Unknown / Unverified**
 - Native same-response handoff capability: **Unknown / Unverified**
 - Stable/Frozen Send: **No**

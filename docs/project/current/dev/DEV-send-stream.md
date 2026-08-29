@@ -130,7 +130,7 @@ If `titleGenerationWhileContinuationCount == 0` or the first turn still truncate
 - Batch B — non-CI b51 assembly: complete.
 - Batch C — exact four-file audit + Light Guard + non-force publish: complete.
 - Batch D — exact-source Push/PR CI + Push Artifact + package inspection: complete.
-- Batch E — all durable file synchronization is complete. PR #29 metadata is the only remaining write before final checkpoint closeout.
+- Batch E — all durable docs files are synchronized to b51. PR #29 metadata is the final pending metadata write.
 
 ## Next exact action
 

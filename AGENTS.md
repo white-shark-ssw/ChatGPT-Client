@@ -191,59 +191,20 @@ When evidence conflicts, prefer:
 
 Never treat an old plan as proof that code exists.
 
-## 16. Autonomous development continuation and human test gate
+## 16. Autonomous continuation / checkpoint / resume
 
-Once a Development/Feature task has been selected and its required resume/new-task preflight has passed, routine progress reporting is not an approval gate. While the current execution still has the ability to act and no existing rule requires user input, continue through the next evidence-backed development actions without asking the user to reply `继续` merely because an intermediate milestone was reached.
-
-Do not stop solely because:
-
-- code has been written;
-- static/local checks passed;
-- a commit/push or PR was created;
-- CI is running or a CI failure has a clear source-backed minimal correction;
-- packaging or artifact production is the next normal step;
-- a checkpoint/status update was written.
-
-For this repository, when the selected development task's next required evidence gate is Runtime/manual/real-device testing and the normal packaging path is available, autonomously continue as far as the current execution permits toward a uniquely identified testable IPA: perform the required base/conflict/candidate checks, obtain the relevant CI evidence, produce the Artifact, verify its version/build/candidate/source/artifact identity, then hand the IPA to the user with the exact real-device test focus. Preserve the evidence ladder: Artifact success is still not Runtime proof.
-
-Stopping earlier is appropriate only when a real human-only gate exists, including:
-
-- a product/architecture choice or missing requirement that cannot be resolved from current evidence;
-- user credentials, permission, physical-device action or other information that only the user can supply;
-- a branch/PR/head/candidate/baseline mismatch or parallel-development conflict that existing governance requires the user to resolve;
-- insufficient evidence to justify a safe next code change;
-- a genuine external/tool/environment blocker that prevents further progress;
-- an operation whose destructive or privileged effect requires explicit approval.
-
-If CI or another tool returns an error and current evidence supports a deterministic minimal correction, make that correction and continue through the normal validation path. Do not convert this rule into blind retries, polling, watchdogs, repeated reruns of unexplained external failures, speculative fallbacks or other prohibited recovery machinery.
-
-Status messages may be sent during the work, but they must make clear whether execution is continuing or whether a real human gate has been reached. A progress update by itself must not silently become a request for the user to say `继续`.
-
-This rule governs agent behavior while the current execution context can still act. It does not claim that the agent can continue running after the platform/tool execution has ended or stopped returning control.
-
-## 17. Non-atomic GitHub write chains and batch recovery points
-
-When one logical task requires multiple sequential GitHub mutations that cannot be committed atomically by the available tool path, treat the sequence as a recoverable write chain rather than assuming all writes will succeed together.
-
-Before starting a materially non-atomic write chain, update the selected checkpoint with a **batch recovery point** containing:
-
-- exact known baseline/head and task identity;
-- the small coherent write batches about to be performed;
-- writes already confirmed complete;
-- writes still pending;
-- the next exact action;
-- identities or files that must not be touched by recovery.
-
-Then:
-
-1. perform one small coherent batch at a time;
-2. after each batch, verify actual GitHub state before depending on it;
-3. refresh the checkpoint before the next batch whenever interruption at that boundary would make resume ambiguous;
-4. if a tool error, interruption or new session occurs, first re-read the checkpoint **and** current GitHub state, then perform only the missing deterministic writes;
-5. never blindly replay the whole chain and never infer success/failure of an earlier mutation from the later tool result alone.
-
-A batch recovery point is a handoff/recovery record, **not** a transaction, rollback mechanism or permission to tolerate inconsistent product identity. Stronger branch/PR/candidate/version/artifact/conflict rules still apply. In particular, checkpointing does not make a partially emitted or reused Candidate safe; if actual package/Candidate identity became ambiguous or was already produced under an invalid combination, preserve/reserve/reject it according to the existing identity rules rather than silently overwriting history.
-
-Do not create checkpoint noise for a single ordinary atomic edit. Use this rule when partial completion of a multi-write chain could otherwise leave the next session unable to tell what actually happened.
-
-Rules sessions write recovery state only to the Rules checkpoint. Development sessions write it only to the selected task checkpoint; never use another Active task's checkpoint as a cross-task recovery log.
+- **Autonomous continuation**: Once a Development/Feature task is selected and required preflight passes, continue through evidence-backed development actions while the current execution can still act; ordinary progress is not an approval gate and must not require the user to reply `继续`.
+- **Default human stop**: When the next required evidence gate is Runtime/manual/real-device testing and normal packaging is available, continue toward a uniquely identified testable Artifact/IPA, verify version/build/Candidate/source/artifact identity, then hand it to the user for exact Runtime testing. Artifact success is not Runtime proof.
+- **Early stop conditions**: Stop early only for a real Human Gate: unresolved product/architecture choice, user-only information/credentials/permission/device action, governance-required branch/PR/head/Candidate/baseline conflict, insufficient evidence for a safe change, genuine external/tool/environment blocker, or an operation that requires explicit approval.
+- **Routine milestones are not gates**: Code written, static/local checks, commit/push, PR creation, CI progress, a deterministically fixable CI error, checkpoint updates, packaging preparation, or ordinary status reporting must not become a request for `继续`.
+- **Deterministic tool/CI correction**: If current evidence supports one minimal deterministic correction, make it and continue through validation. Do not turn this into blind retry, polling, watchdog, repeated unexplained reruns, speculative fallback, or other prohibited recovery machinery.
+- **Rolling checkpoint**: Establish the selected checkpoint early after goal + usable baseline/direction are clear; update it at independently resumable milestones with current branch/head/Candidate, Completed, Validation, Pending and `Next exact action`. Do not wait for CI, Artifact, packaging or final conclusion before checkpointing.
+- **Checkpoint frequency**: Prefer piggybacking checkpoint refreshes on GitHub writes already needed for the work. Do not create per-micro-step checkpoint noise when the step has no independent handoff value.
+- **Non-atomic GitHub write chain**: For chains such as `blob -> tree -> commit -> ref`, batch adjacent writes and record one recovery point when the group has produced reusable persistent identities and materially changed `Next exact action`; do not checkpoint each blob/tree/commit/ref micro-operation separately.
+- **Non-atomic resume safety**: After interruption or tool failure in a non-atomic chain, re-read the selected checkpoint and actual GitHub state, then perform only missing deterministic writes. Never blindly replay the whole chain or infer earlier write success/failure from a later result. A recovery checkpoint never makes ambiguous/reused Candidate identity valid.
+- **Initial Full Resume Guard**: Selecting or genuinely resuming an existing Work requires the full identity checks in section 5 before product edits.
+- **Continuous-session identity reuse**: After one Full Resume Guard succeeds, the same conversation + same Work may reuse that verified identity across ordinary follow-up turns while branch/PR/head/Candidate/base/parallel-conflict facts remain unchanged and certain. Do not repeat the full GitHub recovery scan merely because the user sent another message, asked to continue, a normal CI fix is underway, or packaging is the next step.
+- **Full Guard re-run triggers**: Re-run the full guard for a new conversation taking over, Work switch, platform/tool interruption that may have left partial writes, checkpoint-vs-GitHub uncertainty, external/parallel branch/PR/head/Candidate/base changes, identity mismatch/ambiguity, or the required final CI/Artifact/merge synchronization check.
+- **Light Guard first**: In continuous development, if only one local fact may have changed, verify only that fact rather than rescanning all identity and parallel state.
+- **Guard is not a Human Gate**: When a required Full or Light Guard succeeds and finds no real Human Gate, continue execution immediately; `恢复核对完成` is not itself a stop point.
+- **Platform boundary**: These rules govern behavior only while the current execution context can still act. If the platform/tool execution window ends and no control is returned, the agent cannot self-start a new turn; the checkpoint must make the next turn directly resumable without re-deriving settled direction.

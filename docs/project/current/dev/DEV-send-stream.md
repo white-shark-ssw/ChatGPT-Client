@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — b45 probe validated; uninterrupted Web traffic did not expose a separate response continuation stream; targeted mid-stream interruption capture required**
+**Active — b45 first Runtime captured; uninterrupted Web traffic did not expose a separate continuation stream; exact-b45 active-stream interruption capture is next**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream`
@@ -16,7 +16,7 @@
 - **Push Artifact**: `9713774868`; ZIP `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`.
 - **IPA**: `ChatGPTClient-0.1.0-b45-dev-send-stream.ipa`; SHA-256 `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`.
 - **Package inspection**: `0.1.0 (45)`, Candidate b45, source `accd7bdf29e4`, Release, iOS14 minimum, UIDeviceFamily `[1,2]`, arm64.
-- **Evidence classification**: Code / CI / Artifact / package identity passed. First Runtime capture analyzed. Native same-response handoff remains **Unknown / Unverified**. Stable/Frozen Send: No.
+- **Evidence classification**: Code / CI / Artifact / package identity passed. First Runtime structural capture accepted. Native same-response handoff remains **Unknown / Unverified**. Stable/Frozen Send: No.
 
 ## Security / transport boundary retained
 
@@ -57,16 +57,6 @@ Uploaded diagnostic metadata matches exact b45: `0.1.0 (45)`, Candidate `DEV-sen
 
 Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
 
-## Current architecture interpretation
-
-Desired target remains conditional:
-
-`Native composer/history/presentation -> user-visible official Web performs legal protected Send -> Native attaches/resumes/subscribes to the same already-started response without resending prompt -> Native owns user-visible reasoning/final streaming and background lifecycle.`
-
-b45 first Runtime is **not sufficient to implement Native parity**. Do not guess a resume route from the token name or reinterpret `stream_status` as a stream endpoint.
-
-The next highest-value evidence is to reuse exact b45 and deliberately interrupt the original response while it is still active, then observe official-page behavior on return. No b46 is needed merely to collect this traffic because b45 already instruments fetch/XHR/EventSource/WebSocket and continuation-like routes.
-
 ## Exact next Runtime procedure — reuse b45
 
 1. Keep exact b45 installed; clear diagnostics first.
@@ -79,25 +69,25 @@ The next highest-value evidence is to reuse exact b45 and deliberately interrupt
 
 Evidence question: after foreground return, does official Web keep consuming the same original stream, or open a new status/resume/handoff/turn-stream/subscription connection that continues the same response without a second Send?
 
-## Batch recovery point — b45 Runtime documentation chain
+## Batch recovery point — PR metadata and final audit
 
-Known baseline before docs-only Runtime writes: branch `dev/send-stream-20260829@1a61298fa829b45ead2bfc0e28a2cddf869e7db3`; PR #29 open/mergeable at the same head; `main@34811877896ca88c6656be6676f5466a19931ce6`; exact b45 product source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072` must not be mutated.
+Known state before this final docs-only batch: b45 product source remains immutable at `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`; Runtime evidence and durable docs are already updated; full `BUILD_TEST_INDEX.md` history was restored after an intermediate docs-only narrowing mistake and now includes all historical rows plus the updated b45 Runtime row.
 
-Confirmed complete in this chain:
+Confirmed complete:
 
-- b45 diagnostic JSON parsed and first Runtime conclusion established.
+- b45 first Runtime interpreted and recorded.
 - runtime evidence file created.
-- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md`, and `TECHNICAL_DECISIONS.md` updated to current b45 Runtime truth.
-- `BUILD_TEST_INDEX.md` reviewed: its b45 row already states `Runtime handoff Unverified`, which remains the exact capability classification after this first insufficient/negative-normal-path capture; no identity/status rewrite is required until handoff evidence changes.
+- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md`, `TECHNICAL_DECISIONS.md`, and complete `BUILD_TEST_INDEX.md` aligned to the current b45 evidence boundary.
 
-Still pending:
+Pending deterministic writes/checks:
 
-1. update PR #29 title/body from stale pre-b45 wording to the b45 active-stream reconnect evidence gate;
-2. verify final branch diff from exact b45 product source contains no post-b45 product/config mutation;
-3. refresh this checkpoint with final docs-only head and exact next action.
+1. update PR #29 title/body from stale pre-b45 wording to the exact b45 first Runtime / active-stream reconnect gate;
+2. verify actual branch/PR head and main;
+3. compare exact b45 product source to final branch head and prove all post-product changes are docs-only;
+4. refresh this checkpoint with final head and exact human-only Runtime action.
 
-Recovery must **not** modify Swift/Xcode/workflow product/config files or allocate b46. If interrupted, re-read this checkpoint and actual branch/PR state, then perform only missing docs/PR writes.
+Recovery must not modify Swift/Xcode/workflow/product/config files, rebuild b45, allocate b46, or merge PR #29.
 
 ## Next exact action
 
-Update PR #29 metadata, verify the final docs-only delta from `accd7bdf...`, then hand the user the targeted exact-b45 mid-stream background/lock capture procedure. Do not allocate b46 until official-page reconnect evidence justifies a concrete Native parity experiment.
+Update PR #29 metadata, perform the final identity/diff audit, then stop at the human-only exact-b45 active-stream interruption Runtime gate.

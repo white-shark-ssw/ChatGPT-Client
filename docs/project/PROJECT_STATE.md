@@ -1,118 +1,91 @@
 # Project State
 
-_Last updated: 2026-08-29 through valid b43 hybrid CI/Artifact; exact-device Runtime pending._
+_Last updated: 2026-08-29 through b43 exact-device hybrid-feasibility Runtime and valid b44 integrated-send CI/Artifact._
 
 ## Current accepted merged baseline
 
-- `DEV-app-foundation-0.1.0-b1`: merged Stable foundation.
-- `DEV-auth-bootstrap-0.1.0-b6`: merged Stable authentication/account context for recorded iPhone/iOS17 Plus/personal scope.
-- `DEV-protocol-read-0.1.0-b7`: merged accepted diagnostic read evidence.
-- `DEV-native-read-path-0.1.0-b9`: merged Stable native read path.
-- `DEV-conversation-recovery-0.1.0-b15`: merged Stable recovery; PR #10.
-- `DEV-multi-conversation-state-0.1.0-b21`: merged Stable multi-conversation read state; PR #23; Frozen No.
-- `DEV-conversation-list-cache-core-0.1.0-b23`: merged Stable list-cache core; PR #24; Frozen No.
-- **`DEV-conversation-round-count-0.1.0-b38`: merged Stable Phase 8 metadata/settings/round-navigation baseline; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`; Frozen No.**
-
-## Completed Phase 8 — DEV-conversation-round-count
-
-- **PR**: #27 merged 2026-08-29.
-- **Actual merge commit / merged main baseline**: `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
-- **Accepted Runtime Candidate**: `DEV-conversation-round-count-0.1.0-b38`, `0.1.0 (38)`.
-- **Exact tested product/config source**: `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
-- **Runtime Artifact**: `9708425762`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
-- **Runtime result**: accepted on recorded iPhone/iOS17 scope; user feedback **“没问题了”**.
-- **Stable/Frozen**: Stable / No for the recorded accepted Phase 8 scope.
+- Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-conversation b21, list-cache b23 remain accepted merged baselines for their recorded scopes.
+- **Phase 8 b38** remains the current Stable merged native reading/metadata/round-navigation baseline; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
+- Exact b38 tested source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; Runtime Artifact `9708425762`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
+- Stable does not mean Frozen; Frozen remains No for current native conversation modules.
 
 ## Current Phase 9 — DEV-send-stream
 
-### b42 security/transport decision retained
+### Security boundary retained from b42
 
-- Exact b42 Candidate `DEV-send-stream-0.1.0-b42`, version/build `0.1.0 (42)`.
-- Exact product/config source `e8946e48a0b5ad86b402faf5eabba627e3393adf`; Artifact `9709824510`; IPA SHA `c6d1d421ab05a2294784223400291f0dc1683b638b2647ae85b2d9d4f3fcb85b`.
-- Exact iPhone/iOS17 default-primary-assistant Runtime proved Sentinel `proofOfWorkRequired=true`, `turnstileRequired=true`, `soRequired=true` and non-empty PoW/Turnstile finalize submissions before successful Send.
-- Therefore **pure-native/transient-WebKit-auth ChatGPT-account Send remains blocked**. No PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay, captured proof/token replay, hidden challenge-harvesting WebView or guessed fallback endpoint.
+Exact b42 (`e8946e48a0b5ad86b402faf5eabba627e3393adf`, legitimate Artifact `9709824510`) proved successful tested ChatGPT-account Send requires browser anti-abuse challenge output: PoW, Turnstile and `so` required; non-empty PoW + Turnstile were finalized before Send.
 
-### Explicit architecture change selected
+Therefore pure-native/transient-auth ChatGPT-account Send remains blocked. Prohibited routes remain: solver/bypass, fingerprint replay, captured proof/token replay, guessed fallback endpoint, hidden/shadow challenge WebView, DOM message scraping or challenge harvesting.
 
-The user selected **Option 2: native shell + user-visible official ChatGPT Web Send surface**. This is an intentional hybrid product architecture, not a claim of pure native Send.
+### Product architecture — TD-024
 
-- Native list/detail/recovery/round-navigation remain owned by the accepted native shell and `ConversationRepository`.
+User explicitly selected **native shell/read/navigation + user-visible official ChatGPT Web Send**.
+
+- Native list/detail stays primary.
+- `ConversationRepository` remains sole native conversation/read/recovery authority.
+- `AuthSessionStore` remains native auth/account authority.
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- The visible official-Web surface performs its own normal browser Send/challenge flow while the user is on that surface.
-- Hidden/shadow Web transport remains prohibited.
-- Web smoothness close to native and immediate attachment-entry response are hard Runtime gates.
+- Visible Web owns only its displayed official browser interaction; it is not a second native conversation repository.
 
-### Current b43 Candidate
+### b43 Runtime — visible-Web feasibility largely accepted
 
-- **Status**: Code written; exact push CI passed; exact PR CI passed; valid Artifact produced and independently identity-verified. **Runtime/manual/real-device pending; Stable/Frozen No.**
-- **Branch / PR**: `dev/send-stream-20260829`; PR #29 remains open; do not merge as accepted hybrid Send before Runtime acceptance.
-- **Candidate**: `DEV-send-stream-0.1.0-b43`, version/build `0.1.0 (43)`.
-- **Exact product/config source**: `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`; later docs-only commits do not redefine it.
-- **Push Run / Job**: `33241032864` / `99070294478`, success.
-- **PR Run / Job**: `33241035013` / `99070299776`, success.
-- **Artifact**: `9711364573`; ZIP `sha256:1a9516221ec5ece59741f9f2af2483815f09fa47f051ff6a97a67a12d40d4c23`.
-- **IPA**: `ChatGPTClient-0.1.0-b43-dev-send-stream.ipa`; SHA `f2de8d02f3da7d9a8a8f58cd3028480a40849095b2b4b21e418e9c2e758d8108`.
-- **Independent package identity**: `0.1.0 (43)`, Candidate b43, source `f602d68ae95d`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, Mach-O arm64.
-- **Implementation scope**: one shared process-resident visible `AuthWebViewController.hybridChat` + Settings entry. First presentation loads official `https://chatgpt.com/`; ordinary pop/re-entry reuses the same controller/WebView without automatic reload. No DOM automation, text scraping or challenge/token capture.
+Exact b43 source `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`, Artifact `9711364573`, IPA SHA `f2de8d02f3da7d9a8a8f58cd3028480a40849095b2b4b21e418e9c2e758d8108`.
 
-### Invalid accidental emission retained as rejected evidence
+User tested the requested sequence on the primary iPhone/iOS17 device and reported **“基本上没什么问题”**:
 
-Product commit `8be4da4e6af3dad146bc43888ddeb3f4cd2037b8` was initially auto-built while workflow/Xcode metadata still identified b42:
+- entry/re-entry, keyboard/typing, visible Web Send, stream scrolling, rapid scrolling and native return had no material problem reported;
+- Web `+` -> picker was about **100–200 ms**, not rejected as excessive.
 
-- Run `33238065644`; Artifact `9710515489`; ZIP digest `sha256:d76747ea3c524f31e9a6e512119ab3a85172c5c7fc3492d4264a57f93bd86f7f`.
-- **Permanently rejected / never install / never cite as Runtime.** Legitimate b42 remains Artifact `9709824510`.
+Limitation: Web photo selection filtered videos out of the Photos picker.
 
-### Next gate
+Verified platform boundary: public `WKUIDelegate.runOpenPanelWith...` customization is iOS 18.4+, not iOS17. Therefore b44 does not fake a video fix with private API or DOM/file-input injection. Native iOS17 video-selection/upload needs separately evidenced attachment transfer/handoff work. Current ChatGPT image-input documentation establishes static image input, not video processing support.
 
-Exact-device iPhone/iOS17 Runtime must validate:
+### Current exact b44 Candidate — integrated native-conversation Send trial
 
-- first visible hybrid entry latency;
-- resident Back -> re-entry reuse (`residentReuse=true`, no avoidable reload);
-- keyboard/typing response;
-- ordinary visible-Web Send and streamed-response scrolling;
-- rapid scrolling smoothness;
-- official Web `+` / attachment-entry responsiveness;
-- native-return regression check;
-- privacy-safe diagnostics only.
+- **Candidate**: `DEV-send-stream-0.1.0-b44`, `0.1.0 (44)`.
+- **Exact product/config source**: `f1503cf7121512a84e5c55a3642181c17324d791`.
+- **Push Run / Job**: `33245105815` / `99081114295` — success.
+- **PR Run**: `33245107290` — success.
+- **Artifact**: `9712583513`.
+- **ZIP digest**: `sha256:33ba4a99fe933241ce8023e811f15d55dfa0d95cac2693f039bb6138d813face`.
+- **IPA**: `ChatGPTClient-0.1.0-b44-dev-send-stream.ipa`.
+- **IPA SHA**: `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
+- **Independent package identity**: `0.1.0 (44)`, Candidate b44, source `f1503cf71215`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, arm64.
+- **Evidence level**: Code / CI / Artifact / package identity passed. **Runtime pending; Stable/Frozen No.**
 
-## Authority / architecture
+b44 product behavior:
 
-- `ConversationRepository` remains sole native conversation/list/read/recovery authority.
-- `AuthSessionStore` remains sole verified native auth/account owner; default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- `ConversationListCacheStore` remains storage-only.
-- `AppPreferences` remains sole persisted display/interaction settings owner.
-- `ConversationRoundProjection` is derived semantic round data only.
-- `ConversationMessagePresentationProjection` is ephemeral native presentation geometry only; b43 does not change it.
-- `ConversationMessageCell` deterministic manual frame layout remains the Stable native read baseline.
-- `RootViewController` remains the native shell navigation owner; b43 makes no Root product change.
-- The visible official-Web surface is a Web Send surface, not a second native conversation repository/response authority.
+- native detail now owns a bottom `发送消息…` affordance through Root-owned navigation;
+- selected native conversation prepares the shared visible Web surface for trial route `https://chatgpt.com/c/<conversation-id>`;
+- Web diagnostics report only route class / target-match / timings, never raw conversation ID/body/secrets;
+- explicit `返回并同步` triggers exactly one existing `ConversationRepository.syncLatestMessages(id:)` and re-renders selected native detail on success;
+- ordinary Back does not auto-Sync;
+- standalone ordinary Settings hybrid-chat entry was removed; diagnostic Send probe remains;
+- `ConversationFeature.swift` and Stable b38 deterministic long-message geometry are unchanged.
 
-## Stable Phase 8 behavior retained
+### b44 Runtime gate
 
-- b26 authoritative-total cap: stale `30 -> 29`, repeated `29/29`.
-- b29 right-top refresh/top blank-region correction.
-- b31 semantic landing at authoritative user-message round start.
-- b32 recipient/tool/internal filtering and compact assistant Copy direction.
-- b33 physical-bottom/rubber-band direction.
-- first-entry latest/bottom, independent A/B historical anchors and Sync/Reload anchor re-derivation.
-- b37/b38 deterministic long-message geometry: bounded chunks + exact derived metrics/prefix offsets + manual frame layout.
-- b38 continuous 0.35s `.easeInOut` full-distance round animation from current viewport to O(1) deterministic target; no pre-jump teleport or final correction snap.
+Exact iPhone/iOS17 must establish:
 
-## Phase 9 protocol evidence retained
+1. native selected conversation -> `发送消息…` -> same Web conversation;
+2. text Send and stream smoothness remains at least b43 quality;
+3. explicit `返回并同步` reconciles exactly once into native detail;
+4. ordinary Back does not Sync;
+5. A/B native selection targets the correct A/B Web conversation;
+6. resident same-target re-entry avoids unnecessary reload;
+7. Web `+` remains acceptably responsive; **video filtering remains a known non-fixed iOS17 limitation**;
+8. no regression to b38 native long-conversation/round-navigation behavior.
 
-- Existing/new Web Send route: `POST /backend-api/f/conversation`; existing includes `conversation_id`, new omits it.
-- Normal stream: `v1`, early authoritative conversation identity, message/patch events, `message_stream_complete`, trailing conversation metadata and `[DONE]`; new chat emits `title_generation`.
-- Official server Stop: `POST /backend-api/stop_conversation` with `{ conversation_id, exclude_async_types: [] }`; successful Stop may close the Send stream without normal completion tail.
-- These facts remain protocol evidence. b43 does not convert them into a native private-API transport.
+PR #29 remains open and must not be merged as accepted integrated Send before this Runtime gate passes.
 
-## Evidence boundaries
+## Candidate identity incident retained
 
-- Exact b38 Runtime remains Stable/merged for recorded iPhone/iOS17 scope; Frozen No.
-- Exact b42 Runtime remains accepted security/transport-boundary evidence only.
-- Exact b43 is **CI/Artifact evidence only until user real-device Runtime**.
-- iOS17 evidence does not prove iOS14–16 or iPad.
-- Non-personal workspace identity, supported account switch, native-to-Web attachment handoff and other explicitly untested branches remain Unknown/Unverified.
+Artifact `9710515489` was accidentally emitted with newer hybrid code under stale b42 identity. It is permanently rejected and must never be installed/promoted. Legitimate b42 remains Artifact `9709824510`.
 
-## Evidence rule
+## Authority / evidence rule
 
-Always distinguish Code written, Static/local checks, CI passed, Artifact produced, Runtime/manual/real-device tested, Stable and Frozen.
+- UI text/title is never identity authority.
+- Native Sync/Reload never resend/regenerate.
+- CI/Artifact success is not Runtime proof.
+- b39-b44 identities are permanently reserved once emitted; any corrected b44 product code must use b45+.
+- iOS17 evidence does not prove lower iOS or iPad; non-personal workspace/account-switch and native attachment handoff remain Unknown/Unverified where not explicitly tested.

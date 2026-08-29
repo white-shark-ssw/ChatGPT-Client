@@ -18,15 +18,16 @@
 | Conversation message presentation geometry | **Stable merged performance baseline** | `ConversationMessagePresentationProjection` + `ConversationMessageCell`; b37/b38 | b36 proved giant deferred self-sizing geometry caused severe stutter. b37 bounded chunks + deterministic row metrics/prefix offsets + manual frame layout removed the reported long-conversation/scroll-indicator stutter. b38 preserves this architecture. Frozen No. |
 | Conversation metadata / Preferences / round navigation | **Stable / merged b38** | `AppPreferences` + `ConversationRoundProjection` + detail/message/sidebar presentation; PR #27 | Exact b38 Runtime accepted. Continuous 0.35s ease-in-out navigation uses O(1) deterministic target offsets and preserves b37 no-stutter baseline. PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`. Frozen No. |
 | Conversation message rich rendering | **Planned / not implemented** | Future `DEV-message-rendering` | Current body remains plain string. Markdown/code/table/link/citation rendering remains separate future Work. |
-| Streaming / send | **Next planned phase, not Active** | Future `DEV-send-stream` | Must evidence current send/stream protocol and use per-conversation response ownership. No global stream owner. |
-| Attachments | Planned after accepted Send/Stream | Future `DEV-attachments` | Follow `ATTACHMENT_TRANSFER_PLAN.md`; private transfer protocol must be evidenced. |
+| Streaming / send | **Blocked under current architecture; Runtime protocol evidence accepted, native implementation not accepted** | Active `DEV-send-stream`; b40-b42 protocol probes; PR #29 | Exact b42 default-primary-assistant Runtime shows Sentinel `proofOfWork.required=true`, `turnstile.required=true`, `so.required=true` and non-empty PoW/Turnstile finalize submissions before successful Send. Pure native/transient-auth Send is therefore blocked unless product architecture changes; no solver/bypass/replay. Stable/Frozen No. |
+| Attachments | Planned after accepted Send/Stream | Future `DEV-attachments` | Follow `ATTACHMENT_TRANSFER_PLAN.md`; private transfer protocol must be evidenced. Phase remains blocked by unresolved Send architecture. |
 
 ## Current acceptance boundary
 
 - b1/b6/b7/b9, b15, b21, b23 and exact b38 Phase 8 are Stable/accepted merged baselines for their recorded scopes.
 - Phase 8 exact tested product source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`, Runtime Artifact `9708425762`, PR #27 merge `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
 - b37/b38 establish the Stable long-conversation presentation baseline: deterministic derived geometry + bounded display chunks + continuous full-distance round animation.
-- Exact b24-b38 identities remain permanently reserved; Frozen No.
+- Exact b24-b42 identities are permanently reserved once emitted. b39-b42 are `DEV-send-stream` evidence Candidates; none establishes native production Send acceptance.
+- b42 exact Runtime is accepted as **protocol/security-boundary evidence** for recorded Plus/personal iPhone/iOS17 scope: browser anti-abuse challenge output is required for the tested successful default ChatGPT Send, so current pure-native Send is blocked.
 - Still unverified as applicable: iPad, iOS below 17, non-personal workspace, supported real account switch, provisional-row Detail-block path, corrupt/schema rejection and other explicitly untested branches.
 
 ## Frozen / auto-refresh rule

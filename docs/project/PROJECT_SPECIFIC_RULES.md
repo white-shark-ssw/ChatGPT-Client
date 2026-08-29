@@ -10,7 +10,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
 - Product delivery priority: reach a genuinely usable TrollStore client early, then iterate with exact real-device Candidates.
 - Stable merged read baselines remain b9 native read, b15 recovery, b21 multi-conversation read state and b23 conversation-list cache core for recorded scopes. Stable does not mean Frozen.
-- `DEV-conversation-round-count-0.1.0-b36` is the current identity-valid metadata Runtime Candidate. b35 is exact real-device partial/failing; b36 is not Stable until exact Runtime passes.
+- Exact Phase 8 accepted Candidate is `DEV-conversation-round-count-0.1.0-b38`, product source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`, Runtime Artifact `9708425762`. Stable promotion waits only for final merge/state sync; Frozen remains No.
 
 ## UI / interaction contract
 
@@ -21,57 +21,56 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `UISplitViewController`/native navigation remains the sole compact list/detail navigation owner for the accepted shell.
 - Conversation-list right-top refresh and pull-to-refresh are distinct presentation sources over the same repository manual-refresh request path. Right-top refresh must never begin/resize/mutate `UIRefreshControl`; genuine pull uses native spinner + `endRefreshing()` only.
 - Do not use `navigationItem.prompt` for ordinary conversation-list refresh/cache status. b29 Runtime accepts removal of the prompt-induced blank/top-inset growth for the tested right-top refresh path.
-- Do not assign attributed/text titles to `UIRefreshControl`, and do not reintroduce b27 contentOffset/top-normalization compensation. Runtime disproved stranded overscroll as that blank-region root cause.
-- `导出 Markdown` remains a later enhancement, not official-App evidence.
+- Do not assign attributed/text titles to `UIRefreshControl`, and do not reintroduce b27 contentOffset/top-normalization compensation.
 
 ## Conversation metadata / Preferences contract
 
 - Round count and previous/next round navigation consume one `ConversationRoundProjection` derived from the authoritative visible active branch. Do not maintain a second mutable round counter or semantic navigation index.
-- Each visible authoritative user message starts one round. The first following visible assistant message before the next visible user message may remain derived round metadata, but the accepted physical quick-navigation target is the **round-start user message row**. Hidden tool/reasoning/system nodes do not create ordinary rounds.
-- Recompute the lightweight projection when authoritative visible messages change; scroll callbacks consume derived rows and must not rescan all messages every frame.
-- Recipient/internal filtering must remain upstream of ordinary visible chat-row projection. b32 Runtime accepts the long/tool-heavy sample where `filteredRecipientMessageCount=748` and ordinary visible messages are `84`; raw tool/internal rows must not become ordinary chat rows.
+- Each visible authoritative user message starts one round. The accepted physical quick-navigation target is the **round-start user message**. Hidden tool/reasoning/system/internal-recipient nodes do not create ordinary rounds.
+- Recipient/internal filtering remains upstream of ordinary visible chat-row projection. b32 Runtime accepted filtering of tool/internal recipient rows before round/message presentation.
 - `AppPreferences` is the single persisted settings owner. Current defaults remain: `显示会话轮数` On, `显示消息时间` On, `显示轮次快速跳转` On.
 - Message timestamps use authoritative historical `createTime`; if absent, omit rather than fabricate. Formatting uses current locale/time zone.
 - Copy reads only authoritative user-visible message text, uses system pasteboard, does not mutate message state and does not issue network requests. Hidden reasoning/tool/system content is never copied.
-- Assistant Copy remains a compact official-style quick action with clear background and subdued dynamic tint. User context Copy remains native. Do not change Copy merely to chase answer-jump performance without new evidence.
+- Assistant Copy remains a compact official-style quick action with clear background and subdued dynamic tint. User context Copy remains native.
+
+## Long-conversation presentation geometry contract
+
+- b36 exact Runtime proved the dominant stutter owner was deferred giant-row/table geometry, not the quick-navigation animation alone: direct positioning reached ~3952ms in the tested trace and ordinary right-side scroll-indicator dragging also severely stuttered.
+- The accepted b37/b38 presentation baseline therefore uses `ConversationMessagePresentationProjection` as **ephemeral derived presentation state only**. It is not conversation authority and must never become a persistent second message store.
+- Very long plain-text messages are split into bounded display chunks for presentation virtualization. Concatenated authoritative message content is unchanged; Copy always reads the full authoritative message.
+- Presentation derives deterministic row heights and prefix offsets for the current detail/layout width before interaction. Round targets and scroll anchors consume this geometry rather than asking UITableView to discover giant self-sized rows while scrolling.
+- `ConversationMessageCell` uses deterministic manual frame layout for one bounded display chunk. Do not restore one unbounded whole-message multiline UILabel + deferred automatic estimated geometry without new exact Runtime evidence.
+- Width/presentation changes may rebuild this ephemeral geometry. Do not persist row heights across unrelated details/layout widths as a new durable cache owner.
+- b37 exact-device feedback **“这次确实不卡了”** accepts this geometry/performance direction. b38 retains it unchanged and is also accepted.
 
 ## Round-navigation contract
 
 - Use one adaptive floating control. Real user drag owns user intent; programmatic presentation is not user intent.
 - Rapid taps advance from the last requested derived round target via one transient presentation cursor; this is not a second semantic authority. A real user drag clears/replaces programmatic intent.
-- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because the drag delta reverses. b33 Runtime accepts this tested path.
-- The user explicitly requires **one unified jump method for short and long distances**. Do not branch ordinary quick-navigation behavior by distance.
-- Current programmatic presentation contract is: one nonanimated direct `scrollToRow(..., .top, animated:false)` to the semantic user-row target, capture its resulting exact final offset, move nonanimated to a direction-consistent lead point of about **120pt**, then animate only that short final segment for about **0.22s ease-out**.
-- Full-conversation-distance animated traversal is no longer the contract. b34 Runtime still felt gear-like even with 42 requested / 42 completed jumps and 0 landing corrections/ignored completions; b35 therefore replaced full-distance animation with the unified direct+ease-out route.
-- b35 Runtime accepted precise completed landings but exposed several-second tap-to-position stalls around long-message regions. Exact b35 source performed `view.layoutIfNeeded() -> tableView.layoutIfNeeded() -> scrollToRow(false) -> tableView.layoutIfNeeded()` synchronously after the request diagnostic. Therefore b36 removes those explicit root/table forced-layout calls from the jump path before considering any new geometry cache.
-- b36 reuses the **existing** quick-navigation button as immediate presentation feedback: when a tap is accepted it temporarily displays `定位中` with accessibility `正在定位`; only that small button/layer may be explicitly flushed. Do not create a second semantic/network/task state owner for this feedback.
-- Restore the normal direction arrow after direct positioning preparation. The feedback is presentation only and must not block rapid retargeting or real user drag.
-- Final state is the captured exact target offset. Do **not** reintroduce b33/b34 end-of-animation >1pt correction snaps or stale-completion correction ownership unless new exact Runtime evidence specifically requires a new accuracy strategy.
-- b36 diagnostics may record privacy-safe `answerJump.requested`, `answerJump.positioned`, `answerJump.completed`, row index/role, offsets, `directPositionDurationMs`, `preparationDurationMs`, `targetVisible`, lead distance and landing error. Never log message identity/body.
-- Do not introduce a row-height cache merely because b35 stalled. First use b36 Runtime timing to determine whether the remaining cost is the direct `scrollToRow(false)` operation itself. A geometry strategy requires new exact Runtime evidence and a new Candidate identity.
-- No debounce, retry, timer, watchdog, alternate semantic index or second repository/state owner may be added for round navigation without new exact evidence.
-
-## Message self-sizing contract
-
-- The conversation table uses UIKit self-sizing. b29 Runtime rejected `estimatedRowHeight=0` because message rows deformed/collapsed despite valid Detail data.
-- Retain `rowHeight = UITableView.automaticDimension` and `estimatedRowHeight = UITableView.automaticDimension` unless new evidence justifies a change.
-- b36 removes explicit forced `layoutIfNeeded` work from quick-navigation preparation; it does **not** disable or replace normal UIKit self-sizing.
-- Do not shrink/reshape normal message rows to compensate for navigation defects.
+- Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because drag delta reverses. b33 Runtime accepts this tested path.
+- Short and long quick-navigation distances use **one unified method**.
+- Accepted b38 programmatic presentation contract: resolve the semantic target through the already-derived O(1) deterministic prefix geometry, then continuously animate from the **current viewport offset** to the final target offset using one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`.
+- Do not perform a nonanimated pre-jump teleport/120pt lead step in the accepted path. b38 replaced that b35/b37 presentation style after the geometry bottleneck was removed.
+- Do not call `scrollToRow` merely to discover target geometry during round navigation. The target offset is derived from presentation geometry.
+- Rapid retargeting stops the active animator at its current visual position and immediately starts toward the next semantic target. No debounce/wait gate.
+- Real finger drag cancels the programmatic animator and clears programmatic target ownership immediately.
+- Do **not** reintroduce b33/b34 final correction snaps or stale-completion correction ownership unless new exact Runtime evidence requires a different accuracy strategy.
+- Privacy-safe diagnostics may record presentation mode, row index/role, offsets, travel distance, retargeting and landing error; never message identity/body.
+- No debounce, retry, timer, watchdog, alternate semantic index, duplicate repository/state owner or speculative compatibility shim may be added without new evidence.
 
 ## Per-conversation scroll presentation contract
 
 - Scroll presentation belongs to the detail presentation owner, not `ConversationRepository` and not a retained UIKit hierarchy cache.
-- Historical reading uses semantic message anchor + relative offset where practical; one global raw offset is prohibited.
+- Historical reading uses semantic authoritative-message anchor plus display-chunk position/relative offset where practical; one global raw offset is prohibited.
 - A/B anchors are independent. Account-scope reset clears presentation anchors.
-- First visible presentation with no valid saved reading anchor must show latest/bottom of the current visible branch without visibly animating through history. Loading/empty placeholder offsets are not reading anchors.
-- Sync/Reload may preserve an established anchor only when the same anchored message remains; otherwise discard explicitly rather than invent cross-message fallback.
-- Exact b18 accepts the tested historical-anchor matrix. Missing-anchor-message discard remains Runtime-unexercised.
+- First visible presentation with no valid saved reading anchor shows latest/bottom of the current visible branch without visibly animating through history. Loading/empty placeholder offsets are not reading anchors.
+- Sync/Reload may preserve an established anchor only when the same anchored authoritative message remains; otherwise discard explicitly rather than invent cross-message fallback.
 - Future follow-tail belongs to authoritative Send/Stream response lifecycle; do not invent UI streaming flags/timers before that owner exists.
 
 ## Message rendering scope contract
 
-- Current Phase 8 message body presentation is plain string content. Markdown headings/lists/links/emphasis/code/tables and rich citation/annotation rendering belong to future `DEV-message-rendering`.
-- Supplied real-device comparison shows raw Markdown and raw `filecite`-adjacent boxed glyphs in the current client. Do not strip/rewrite those markers in Phase 8 without authoritative rich-content/annotation evidence.
+- Current message body remains plain string content. Markdown headings/lists/links/emphasis/code/tables and rich citation/annotation rendering belong to future `DEV-message-rendering`.
+- Supplied real-device comparison showed raw Markdown and raw `filecite`-adjacent boxed glyphs in the current client. Do not strip/rewrite those markers without authoritative rich-content/annotation evidence.
 - If later evidence shows file citations map to attachment/file-card ownership, coordinate with attachment rendering rather than inventing a second representation.
 
 ## Fast usable Candidate contract
@@ -79,11 +78,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Do not hold usable functionality until the entire roadmap is complete.
 - Every testable Candidate has a unique build/Candidate/Artifact identity and keeps Code / Static / CI / Artifact / Runtime / Stable evidence separate.
 - Once a Candidate/Artifact identity has been produced, do not rebuild corrected product code under that same identity.
-- Files defining one product Candidate's source, version/build, workflow and package identity must be committed atomically enough that one intended Candidate maps to one intended source/config tree.
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
-- `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch; it must not override Candidate with stale per-Work defaults.
-- A package-identity failure permanently rejects/reserves that build even when compilation/upload succeed. b24 is the concrete current-Work example.
-- Exact b24-b36 identities are reserved once emitted. Corrected product code after b36, if needed, must allocate b37 or later.
+- `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch.
+- Exact b24-b38 Phase 8 identities are permanently reserved once emitted. Any future correction must allocate a later unique Candidate.
 
 ## Manual recovery contract
 
@@ -117,14 +114,14 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Conversation-list persistent cache contract
 
-- b23 is the Stable merged cache-core baseline for recorded Plus/personal iPhone/iOS17 scope; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. Frozen No.
+- b23 is the Stable merged cache-core baseline for recorded Plus/personal iPhone/iOS17 scope; PR #24 merged. Frozen No.
 - `ConversationRepository` remains sole authoritative list/conversation owner; `ConversationListCacheStore` is storage only.
 - Persist only a small versioned account-scoped summary snapshot plus privacy-safe namespace bookkeeping; never Detail/full-body data or copied auth secrets.
 - Automatic cold start may provisionally publish last-successfully-verified cached **titles only** before current network verification. Provisional rows cannot authorize Detail until current scope is verified.
 - Temporary auth transport failure may retain valid provisional rows without converting it into logout or automatic retry.
-- Exact b23 accepts the current 60-second rapid-relaunch freshness window. Manual refresh bypasses suppression and issues exactly one user-requested list refresh.
+- Exact b23 accepts the current 60-second rapid-relaunch window. Manual refresh bypasses suppression and issues exactly one user-requested list refresh.
 - Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; b26 later accepted the authoritative-total cap for stale excess rows (`30 -> 29`, repeated `29/29`). Preserve that bound.
-- b29 Runtime accepts the tested right-top list refresh presentation: no persistent blank band above the first conversation and no prompt-induced top-inset growth. Preserve this behavior through current Work.
+- b29 Runtime accepts the tested right-top list refresh presentation with no persistent blank band above the first conversation.
 - Never add timer/polling/watchdog/retry, alternate list/auth endpoints, per-row Detail prefetch or another list/account authority solely for cache behavior.
 
 ## Protocol evidence contract
@@ -140,8 +137,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Never log/export passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts or raw payloads.
 - Multi-conversation correlation uses privacy-safe hashes/counts/generations.
 - Cache diagnostics may record schema/hit/age/count/duration/scope hash/decision only.
-- Scroll/round diagnostics may record non-secret row indices, content offsets, positioning/preparation duration, target visibility, lead distance and landing error, never message identity/body.
-- Approximate visible-text bytes are correlation only, not memory-pressure proof.
+- Scroll/round diagnostics may record non-secret row indices, content offsets, geometry/presentation durations where applicable, travel distance and landing error, never message identity/body.
 
 ## Multi-conversation / state-owner contract
 
@@ -149,13 +145,10 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Foreground selection is presentation only. Selecting B does not destroy/cancel valid A work merely because A becomes hidden.
 - Same-target obsolete operations are rejected by per-target generation/freshness ownership; equivalent loads may coalesce.
 - Account scope comes only from accepted auth owner; stale operation context may never re-adopt an older scope.
-- Current personal scope uses `userID + accountID`; non-personal workspace isolation remains Unknown/Unverified until evidenced.
-- Retain minimum current-node identity only; do not persist raw multi-megabyte graph payloads or invent future send state.
 - No arbitrary normal LRU capacity: b19 evidence through 8 residents does not justify one. Memory warnings may trim eligible inactive terminal residents.
 
-## Markdown export / background / compatibility
+## Background / compatibility
 
-- Markdown export reads authoritative current user-visible branch, never mounted cells or hidden internal content.
 - Background continuation follows `BACKGROUND_EXECUTION_PLAN.md`: response-scoped, no automatic resend or second stream/store; TrollStore privileged background remains isolated future experiment.
 - Native iOS / TrollStore IPA; intended ceiling iOS17; current build minimum iOS14; current real-device evidence primarily iPhone/iOS17.
 
@@ -166,7 +159,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source, and final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint's batch recovery point and never replay already-confirmed Candidate writes blindly.
-- Tooling-only temporary assembly branches are never Work/Candidate authority. Current b36 product authority is exact source `8f8614508eef5197f9fff4bb9d10c14354d5821e` on the real development branch.
+- Tooling-only temporary assembly branches are never Work/Candidate authority. Exact accepted Phase 8 product authority is b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
 
 ## Critical invariants / prohibited routes
 
@@ -184,4 +177,4 @@ Follow existing repository style and established APIs/names. Do not rename inter
 
 ## Rule maintenance
 
-Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses remain in the Active checkpoint.
+Only promote verified current facts or explicit requirements into durable rules. Temporary hypotheses remain in an Active checkpoint.

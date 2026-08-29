@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b50 Runtime materially passes the core diagnostic architecture on turns 2–3: Native composer -> official Web protected Send -> intercepted SSE -> incremental Native assistant text -> terminal -> next Native turn all work, while Web assistant DOM text remains small. New-chat turn 1 still truncates after one contextual value-only continuation. Historical b40/b41 evidence says new-chat first Send emits `title_generation`; b51 now implements only the smallest test of that structural difference by preserving assistant-text continuation across exact `title_generation` and recording whether it occurred while continuation was active. b51 Code/CI/Artifact/package identity are complete; exact-device Runtime is the next human gate. TD-024/TD-025 remain unchanged; b48-b51 are diagnostic exceptions only.**
+**Active — exact b50 Runtime materially passes the diagnostic core on turns 2–3: Native composer -> official Web protected Send -> intercepted SSE -> incremental Native assistant text -> terminal -> next Native turn all work, while Web assistant DOM text stays small. Fresh-new-chat turn 1 still truncated. Historical b40/b41 evidence says new-chat first Send emits `title_generation`; exact b51 changes only that reset boundary and is Code/CI/Artifact/package verified. The next gate is exact-device fresh-new-chat b51 Runtime. TD-024/TD-025 remain unchanged; b48-b51 are isolated diagnostic exceptions only.**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / Native composer / Web Send engine / filtered SSE / hidden Web diagnostic`
@@ -23,24 +23,16 @@
 
 ## Resume / conflict guard
 
-Current-session Full/Light guard passed before b51 product edits:
+Current-session guard is satisfied:
 
-- reread current branch `AGENTS.md`, then `docs/project/START_HERE.md`, Development router, project profile/state/module/technical/rules/docs policy, `CLIENT_ARCHITECTURE_GAP_REVIEW.md` and `SEND_STREAM_PREFLIGHT.md`;
-- user feedback uniquely continued `DEV-send-stream` exact b50 Runtime;
-- PR #29 remained open / mergeable / not merged;
-- `main` remained `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-- no second Active development checkpoint existed;
-- b50 product source -> pre-b51 branch head was docs-only;
-- b51 identity was unallocated.
-
-Batch A completed at `4d1fd43059a9ca9811af0726a1df0774a5ea712f` with b50 Runtime evidence + b51 checkpoint allocation. Tooling-only assembly branch `assembly/dev-send-stream-b51-20260830` was created from that exact head. Audit showed exactly four expected files and no product-owner spillover:
-
-- `.github/workflows/ios-foundation.yml`
-- `ChatGPTClient.xcodeproj/project.pbxproj`
-- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`
-- `ChatGPTClient/SettingsViewController.swift`
-
-Core Swift audit showed only b51 label/mode, one structural metric, exact title-generation continuation preservation, and aggregate-field changes. Immediately before publish the real branch still exactly matched `4d1fd430...`; non-force fast-forward to exact b51 product/config source `bd8f056...` succeeded.
+- current `AGENTS.md` then `docs/project/START_HERE.md` reloaded before continuation;
+- user request uniquely continues `DEV-send-stream`;
+- branch / PR / exact b51 source / Artifact identity revalidated from current GitHub state;
+- current feature head after b51 product is docs-only over exact source `bd8f056...`;
+- PR #29 remains open / mergeable / not merged;
+- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
+- no second Active development checkpoint exists;
+- no product/config write has occurred after b51 Artifact emission.
 
 ## Exact b50 Runtime — 2026-08-29
 
@@ -138,8 +130,8 @@ If `titleGenerationWhileContinuationCount == 0` or the first turn still truncate
 - Batch B — non-CI b51 assembly: complete.
 - Batch C — exact four-file audit + Light Guard + non-force publish: complete.
 - Batch D — exact-source Push/PR CI + Push Artifact + package inspection: complete.
-- Batch E — durable docs / PR synchronization: in progress; product/config source must remain exact `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`.
+- Batch E — durable synchronization: `MODULE_STATUS`, `PROJECT_STATE`, `PROJECT_PROFILE`, `PROJECT_SPECIFIC_RULES`, `DEVELOPMENT_PLAN` updated to b51 truth; `BUILD_TEST_INDEX`, PR #29 metadata and final checkpoint closeout remain the only deterministic docs/metadata writes.
 
 ## Next exact action
 
-Finish docs-only b48-b51 durable-state/PR synchronization without changing product/config source, then hand exact Artifact `9720327648` IPA to the user. The next human-only gate is fresh-new-chat b51 Runtime using the procedure above. Do not rebuild b51; any later product correction requires b52+.
+Finish the remaining Batch E `BUILD_TEST_INDEX` + PR #29 metadata writes without changing product/config source, then hand exact Artifact `9720327648` IPA to the user. The next human-only gate is fresh-new-chat b51 Runtime using the procedure above. Do not rebuild b51; any later product correction requires b52+.

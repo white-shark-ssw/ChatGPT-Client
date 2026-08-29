@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-29 through exact b45 first realtime-handoff Runtime capture.**
+**Initialized — 2026-08-25; refreshed 2026-08-29 through exact b45 repeated active-response background/lock Runtime.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -14,7 +14,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Primary distribution**: TrollStore IPA.
 - **Primary tested runtime**: iPhone 15 Pro Max / iOS17.0; lower iOS compatibility preferred where practical.
 - **Current Send constraint**: pure-native ChatGPT-account Send is blocked by exact b42 browser-challenge evidence. The user rejects a separately billed/supported API-product architecture. User-visible official Web may perform the protected Send, but hidden/shadow Web automation remains prohibited.
-- **Current Send target**: if current protocol supports it, reduce Web responsibility to user-visible legal Send initiation and let Native attach/resume/subscribe to the same already-started response without a second Send. Exact b45 first Runtime did not yet prove that continuation path.
+- **Current Send target**: if current protocol supports it, reduce Web responsibility to user-visible legal Send initiation and let Native attach/resume/subscribe to the same already-started response without a second Send. Exact b45 now proves ordinary tested background/lock does not necessarily break the original WebKit response transport, but still does not prove a Native continuation path.
 
 ## Technology stack
 
@@ -37,7 +37,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Message presentation geometry**: `ConversationMessagePresentationProjection` + `ConversationMessageCell`; ephemeral deterministic bounded-chunk geometry accepted in b37/b38.
 - **Diagnostics**: `DiagnosticsLogger`; privacy-safe structural evidence only.
 - **Realtime handoff diagnostic owner**: `ProtocolHandoffProbeViewController`; observation-only, not production transport.
-- **Background gate owner**: `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md` supplements `BACKGROUND_EXECUTION_PLAN.md`. If Native response ownership is proven, later background work should protect Native response lifecycle rather than WebKit.
+- **Background gate owner**: `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md` supplements `BACKGROUND_EXECUTION_PLAN.md`. Exact b45 now supplies positive ordinary short-background/lock evidence, but the full 5/15-minute/process/network matrix remains open.
 - **Test roots**: no XCTest/UI-test target yet.
 
 ## Build / CI / package identity
@@ -91,17 +91,24 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Tested `/c/<id>` A/B mapping worked, but immediate Native reconciliation could lag assistant output already visible in Web; later Sync could expose it.
 - No stable readiness signal/delay was established. The full-page Native -> Web -> Native interaction is product-rejected; do not patch it with polling/timer/retry.
 
-### b45 realtime-handoff diagnostic
+### b45 realtime-handoff / background diagnostic
 
 - Candidate `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`.
 - Exact product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
 - Push Run / Job `33248952646` / `99091176390`; PR Run / Job `33248954018` / `99091179731`; all successful.
 - Artifact `9713774868`; ZIP `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`.
 - IPA SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`.
-- First exact-device Runtime captured early `resume_conversation_token`, original `/backend-api/f/conversation` fetch SSE ownership through `message_stream_complete` / `[DONE]`, and one `GET /conversation/{id}/stream_status` JSON `{status:string}` follow-up.
-- No secondary response stream was observed during uninterrupted active responses. This does **not** prove no reconnect mechanism exists because the original stream was never interrupted while active.
-- The second captured Send carried `conversation_mode.gizmo_id`; it is not a clean default-primary new-chat sample.
-- Next evidence reuses exact b45 and intentionally backgrounds/locks while output is still streaming, then observes official-page reconnect behavior without refresh/resend.
+- First exact-device Runtime captured early `resume_conversation_token`, original `/backend-api/f/conversation` fetch SSE ownership through `message_stream_complete` / `[DONE]`, and one `GET /conversation/{id}/stream_status` JSON `{status:string}` follow-up. No secondary response stream appeared during uninterrupted responses.
+- Second exact-device Runtime is a clean default-primary new-chat capture: request had no top-level `conversation_id` and no `gizmo_id`; user performed three active-response background/lock intervals of roughly 35s, 34s and 126s.
+- The same original `conversation_send` / `fetch` stream delivered terminal events immediately on the final foreground return; no second Send or resume/handoff/turn-stream/subscription stream appeared, and no manual refresh/resend was needed.
+- This is positive short-background survival/buffering evidence on the primary device, not proof of continuous background event delivery and not proof of Native continuation.
+- Next evidence reuses exact b45 in an existing long conversation and deliberately breaks connectivity while streaming to force the original transport to fail and reveal official recovery behavior if any.
+
+## Current base / parallel state
+
+- Feature branch remains `dev/send-stream-20260829`; PR #29 open/mergeable.
+- Original feature base was `main@34811877896ca88c6656be6676f5466a19931ce6`.
+- Current main is `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; the intervening three commits modify only root `AGENTS.md`. No product/state-owner overlap was found; branch has not yet synchronized the rules-only main advance.
 
 ## Attachment boundary
 
@@ -115,10 +122,9 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b38 Runtime remains Stable/merged for recorded scope.
 - b42 remains security/transport evidence, not native Send acceptance.
 - b43 is visible-Web feasibility evidence; b44 is accepted only for its exact mapping/eventual-read observations and its product form is rejected.
-- b45 is accepted as a diagnostic instrument for the first captured structural path, but Native same-response continuation remains Unknown/Unverified.
+- b45 is accepted as a diagnostic instrument and now provides positive ordinary short-background/lock response-survival evidence up to the recorded ~126s continuous interval / ~195s cumulative active background.
 - `resume_conversation_token` existence alone is not a Native API contract; `stream_status` is not a continuation stream in the captured path.
-- main-app process survival does not prove WebKit/WebContent/network stream survival.
-- iOS17 does not prove lower iOS or iPad; non-personal workspace/account switch and native attachment handoff remain conditional/Unverified.
+- Native same-response continuation, forced network-failure reconnect, 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown/Unverified where not explicitly tested.
 - CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule

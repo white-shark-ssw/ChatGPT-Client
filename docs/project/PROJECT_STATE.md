@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-29 through exact b45 official-resume Runtime evidence and exact b46 CI/Artifact packaging; b46 Native resume parity Runtime pending._
+_Last updated: 2026-08-29 through exact b46 Native resume parity Runtime; b47 diagnostic clarification authorized._
 
 ## Current accepted merged baseline
 
@@ -11,11 +11,15 @@ _Last updated: 2026-08-29 through exact b45 official-resume Runtime evidence and
 
 ## Current target/base status
 
-`DEV-send-stream` was activated from `main@34811877896ca88c6656be6676f5466a19931ce6`. Current `main` is `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; the intervening target change is root `AGENTS.md` only and has no product/state-owner overlap. Final synchronization remains required before merge.
+`DEV-send-stream` was activated from `main@34811877896ca88c6656be6676f5466a19931ce6`.
+
+Current `main` is `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; the three target-only commits are repository-governance `AGENTS.md` changes and have no product/state-owner overlap. Feature branch final synchronization remains required before merge, but does not block the current isolated diagnostic work.
+
+Current feature branch: `dev/send-stream-20260829`; PR #29 remains open / mergeable / not merged.
 
 ## Phase 9 security/product boundary
 
-Exact b42 proved successful ChatGPT-account **Send** requires browser anti-abuse challenge output: PoW, Turnstile and `so`; non-empty PoW + Turnstile were finalized before successful Send. Pure-native/transient-auth Send therefore remains blocked.
+Exact b42 proved successful ChatGPT-account **Send** requires browser anti-abuse challenge output: PoW, Turnstile and `so`; non-empty PoW + Turnstile were finalized before successful Send. Pure-native/transient-auth protected Send remains blocked.
 
 The user explicitly rejects the separate API-product route.
 
@@ -25,12 +29,14 @@ Permitted target remains:
 
 Still prohibited: challenge solver/bypass/replay, copied proof/token values, guessed Send/continuation endpoints, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Send clicks, DOM answer/reasoning scraping and hidden file-input injection.
 
+The current `/backend-api/f/conversation/resume` work is a **post-Send continuation/read path** and does not weaken the b42 protected-Send boundary.
+
 ## Accepted visible-Web evidence
 
 - b43: visible official-Web interaction sufficiently smooth for tested iPhone/iOS17 sequence; Web `+` ~100–200ms; Photos chooser filtered videos; standalone Web-chat product form not accepted.
-- b44: tested `/c/<id>` A/B mapping worked, but immediate Native reconciliation could lag assistant output already visible in Web; full-page Native -> Web -> Native product form rejected.
+- b44: tested `/c/<id>` A/B mapping worked, but immediate Native reconciliation could lag assistant output already visible in Web; full-page Native -> Web -> Native product form rejected. No arbitrary timer/poll/retry workaround is accepted.
 
-## Exact b45 identity
+## Exact b45 identity / accepted Runtime
 
 - Candidate `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`.
 - Exact product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
@@ -38,93 +44,90 @@ Still prohibited: challenge solver/bypass/replay, copied proof/token values, gue
 - Legitimate Artifact `9713774868`; ZIP `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`.
 - IPA SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`.
 
-## b45 Runtime progression
+Accepted b45 progression:
 
-### Uninterrupted path
+1. uninterrupted original `/backend-api/f/conversation` SSE remains response transport through terminal when intact;
+2. clean default-primary new-chat original fetch survived/buffered repeated active-response background/lock intervals including ~126s continuous without resend/refresh;
+3. forced interruption exposed official `POST /backend-api/f/conversation/resume` with JSON body `{conversation_id: string, offset: number}`;
+4. official `/resume` can return HTTP200 `text/event-stream`, repeatedly continue the same already-started response without a second Send, and reach `message_stream_complete -> conversation_detail_metadata -> [DONE]`;
+5. official resume request header-name evidence included normal auth/client headers and `x-conduit-token`, but no Sentinel proof/Turnstile/PoW header names. Presence does not prove any one header is required.
 
-- `POST /backend-api/f/conversation` -> HTTP200 SSE.
-- `resume_conversation_token` appeared very early.
-- Original Send fetch remained response transport to terminal when intact.
-- `/conversation/{id}/stream_status` was status-only JSON `{status:string}`.
-
-### Ordinary background/lock
-
-Clean default-primary new-chat response survived/buffered across ~35s, ~34s and ~126s active-response background intervals, cumulative ~195s, and completed on the same original fetch with no resend/refresh.
-
-### Official no-resend resume transport — Runtime Confirmed
-
-Exact b45 Capture D finally forced the original transport to fail. The captured Send was existing/Gizmo-associated and therefore is not a clean default-primary parity sample, but it directly established the generic official continuation mechanism:
-
-- official Web opens `POST /backend-api/f/conversation/resume`;
-- exact captured JSON body shape is `{conversation_id: string, offset: number}`;
-- offline attempts may end in transport errors;
-- after connectivity returns, `/resume` returns HTTP200 `text/event-stream`;
-- the continuation carries conversation/request/message identity structure and can reach `server_ste_metadata -> message_stream_complete -> conversation_detail_metadata -> [DONE]`;
-- multiple successful resumes occurred across repeated interruptions;
-- no second `conversation_send` was observed.
-
-Resume request header-name evidence included normal auth/client headers and `x-conduit-token`, but no Sentinel proof/Turnstile/PoW header names. Header-name presence does not prove every browser header is required. No header values were captured.
-
-This endpoint is a post-Send continuation/read path and does **not** change the b42 protected Send boundary.
-
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
+Detailed b45 evidence: `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
 
 ## Exact b46 Native resume parity Candidate
-
-b46 is the smallest diagnostic parity experiment authorized by b45 Runtime; it does not modify production response ownership.
 
 - Candidate `DEV-send-stream-0.1.0-b46`, `0.1.0 (46)`.
 - Exact product/config source `4ab9be3ef2809204e88fcb0d44884e35b43726b1`.
 - Push Run / Job `33256273567` / `99110448112` — success.
 - PR Run / Job `33256275218` / `99110452786` — success.
-- Legitimate Push Artifact `9715903443`; ZIP digest `sha256:4747df63cc1eb0069fbb8e1d5204941e0df4cd15edd475313f464ccfc133d35c`.
-- IPA `ChatGPTClient-0.1.0-b46-dev-send-stream.ipa`; SHA-256 `2c64a6356fdf419ea540b8c40fd9026061f5afaec9631bdb79bbeab8164becec`.
-- Independent package inspection: `0.1.0 (46)`, Candidate b46, source `4ab9be3ef280`, Release, iOS14 minimum, UIDeviceFamily `[1,2]`, arm64.
+- Legitimate Artifact `9715903443`; ZIP digest `sha256:4747df63cc1eb0069fbb8e1d5204941e0df4cd15edd475313f464ccfc133d35c`.
+- IPA SHA-256 `2c64a6356fdf419ea540b8c40fd9026061f5afaec9631bdb79bbeab8164becec`.
+- Package identity independently verified as Release, source `4ab9be3ef280`, iOS14 minimum, `[1,2]`, arm64.
 
-### b46 scope
+Identity-invalid intermediate b46-transition artifacts remain permanently rejected: `9715858402`, `9715857814`, `9715907420`, `9715902353`.
 
-`NativeResumeParityProbeViewController` keeps the official Web visible and user-operated for protected Send. After official Web itself obtains a successful HTTP200 SSE `/resume`, it transiently bridges only the actual `conversation_id + offset` into Native memory and issues exactly **one** Native POST to the same `/resume` through the existing WebKit-derived transient cookie + bearer session.
+### b46 Runtime result — cookie+bearer-only duplicated resume rejected
 
-Native does not copy `x-conduit-token`, OAI browser client/session headers or Sentinel/Turnstile/PoW/challenge values. It sets only ordinary JSON/SSE content negotiation plus the existing transient Authorization/cookie boundary. No retry/timer/watchdog. No second Send. No production `ConversationRepository`, message, reasoning, follow-tail or response-state mutation.
+Exact-device diagnostics match b46 / Release / iPhone / iOS17.0.
 
-Current `AuthTransientSession` still buffers full response; b46 uses that deliberately for a first binary parity question: can Native receive this official continuation endpoint at all? Incremental stream ownership is a later Candidate only if b46 Runtime succeeds.
+- official Web Send observed;
+- official Web `/resume` attempts with `offset=18` failed while offline, then returned HTTP200 `text/event-stream` when connectivity returned;
+- b46 immediately issued exactly one Native parity request using the same in-memory `conversation_id + offset=18`;
+- Native WebKit-derived cookie/bearer account re-verification succeeded (`/api/auth/session` and accounts-check HTTP200; Plus/personal);
+- Native `/resume` returned **HTTP404 `application/json`, 116 bytes, 0 SSE frames**;
+- no Native retry occurred;
+- later official Web successfully resumed the same response again with progressed `offset=54`, returning HTTP200 SSE.
 
-## Identity-invalid intermediate artifacts
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b46-runtime.md`.
 
-During the non-atomic b46 identity transition, GitHub Actions emitted newer-code artifacts under stale b45 workflow/container identity. These are permanently rejected and must never be installed/cited as b45 or b46 Runtime candidates:
+### Accepted b46 conclusion
 
-- Run `33256130472`, Artifact `9715858402`, stale container `ChatGPTClient-DEV-send-stream-0.1.0-b45`, head `7604d75...`.
-- PR Run `33256131950`, Artifact `9715857814`, stale container b45, head `7604d75...`.
-- Push Run `33256258691`, Artifact `9715907420`, stale container b45 over build-46 product config, head `aed59ba...`.
-- PR Run `33256260467`, Artifact `9715902353`, stale container b45 over build-46 product config, head `aed59ba...`.
+- Official no-resend resume remains **Runtime Confirmed**.
+- Native cookie+bearer-only duplicated `/resume`, issued **after official Web already successfully claimed the same offset**, is **Runtime Rejected for this exact b46 attempt**.
+- This does not prove Native resume is impossible.
+- Two evidence-backed possibilities remain unresolved:
+  1. required non-challenge browser/client/session/route request context beyond cookie+bearer;
+  2. cursor/consumer ownership semantics, because b46 tested a second consumer only after official success.
+- Offset progression `18 -> 54` supports cursor-like advancement, but exact units remain Unknown / Unverified.
 
-The legitimate b45 Artifact remains only `9713774868`. The legitimate b46 Runtime candidate starts at exact source `4ab9be3...` / Artifact `9715903443`.
+## b47 diagnostic clarification gate
 
-## Current Runtime gate
+Because b46 Artifact identity is emitted/reserved, any changed product code requires b47+.
 
-Install exact b46 and test the new Settings entry `Native 续流接管探测（b46诊断）`.
+b47 is authorized only as a diagnostic clarification Candidate:
 
-Preferred parity matrix:
+- preserve visible user-operated official Web protected Send;
+- preserve exactly one Native parity attempt; no retry/timer/watchdog/second Send;
+- capture Native HTTP-rejection JSON **structure only** and safe error-code/enum tokens where present; never full response text;
+- capture Native response header names only;
+- capture the triggering official successful `/resume` request and response header names only;
+- capture Native request header names actually set before dispatch;
+- do not copy `x-conduit-token`, OAI browser/client/session values or any browser header values;
+- do not suppress official resume or test first/exclusive consumer ownership yet;
+- do not modify production `ConversationRepository`, native message state, reasoning/follow-tail or response ownership.
 
-1. clear diagnostics;
-2. use default ChatGPT / primary assistant in an existing long conversation;
-3. send a response expected to stream long enough;
-4. while streaming, Airplane Mode for ~10–15s, then restore connectivity;
-5. do not refresh/resend/Stop/navigate/switch GPT;
-6. official Web should attempt `/resume`; after one official HTTP200 SSE resume, b46 automatically issues one Native parity request;
-7. wait for Native parity status/result and the official answer to finish;
-8. export diagnostics.
+Only b47's direct error/header evidence may justify a later request-context change. If the rejection instead points to not-found/cursor/stream ownership, a later Candidate may test Native as first/exclusive resume consumer without speculative browser-header copying.
 
-Acceptance for this diagnostic milestone requires a `nativeResumeParityProbe.nativeResult` showing Native HTTP2xx `text/event-stream` with nonzero SSE structure; terminal `[DONE]` is especially strong evidence but is not required if the duplicated parity starts at an offset whose available window closes before terminal. Failure must be analyzed before adding any browser-specific headers; no speculative header copying.
+## Background ordering
 
-## Authority/evidence boundary
+Background resilience remains a hard product requirement. b45 already provides positive short-background survival/buffering evidence, but response ownership is still unresolved.
+
+- if Native continuation becomes accepted, background work should protect the Native response lifecycle;
+- if Native continuation is disproven, WebKit true-background remains relevant only to a visible-Web fallback;
+- 5/15-minute, process termination, network transition and battery/thermal remain separate gates.
+
+## Authority / evidence boundary
 
 - `ConversationRepository` remains sole native conversation/list/read/recovery/future response authority.
 - `AuthSessionStore` remains native auth/account authority.
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - Sync/Reload never resend/regenerate.
+- no second Send may be created merely to obtain a stream.
+- CI/Artifact is not Runtime proof.
 - b46 Code/CI/Artifact/package identity: **passed**.
-- b46 Runtime/manual/real-device Native parity: **Pending**.
+- b46 Runtime Native duplicated resume: **rejected with HTTP404 JSON**.
+- Native first/exclusive resume: **Unknown / Unverified**.
+- Required browser/client header subset: **Unknown / Unverified**.
 - Native incremental response ownership/reasoning/follow-tail/background lifecycle: **Unknown / Unverified**.
 - Phase 9 Stable/Frozen Send: **No**.
-- PR #29 remains open and must not be merged as accepted Send UX before the Runtime gate is resolved.
+- PR #29 must not be merged as accepted production Send UX while this gate remains unresolved.

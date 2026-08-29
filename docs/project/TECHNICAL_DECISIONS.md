@@ -104,6 +104,14 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Merge evidence**: PR #27 final head `57b3efe576dbf187171439a68d6d2dfe2fba0ebc`; tested product→final head delta was docs-only; PR merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
 - **Rejected without new evidence**: reverting to one giant whole-message self-sizing UILabel with unstable estimated geometry; persistent cross-detail row-height cache; pre-jump direct teleport; `scrollToRow` as target-geometry discovery; final correction snap; debounce/timer/watchdog/retry; alternate semantic index or second repository.
 
+### TD-023 — Current ChatGPT-account native Send is blocked by required browser anti-abuse challenges
+- **Status**: Confirmed by exact b42 protocol Runtime for recorded Plus/personal iPhone/iOS17 scope; production Send not implemented; Stable/Frozen No
+- **Date**: 2026-08-29
+- **Evidence**: Exact b42 `DEV-send-stream-0.1.0-b42`, product source `e8946e48a0b5ad86b402faf5eabba627e3393adf`, Artifact `9709824510`, used a default `primary_assistant` new conversation. Sentinel prepare returned `proofOfWorkRequired=true`, `turnstileRequired=true`, and `soRequired=true`; Sentinel finalize submitted non-empty PoW and Turnstile values before the successful `POST /backend-api/f/conversation` SSE Send.
+- **Decision**: Under the current pure-native/transient-WebKit-auth architecture, do not implement production ChatGPT-account Send because the successful path requires browser-generated anti-abuse challenge output that the current native auth boundary does not legitimately own.
+- **Rejected**: PoW/Turnstile/Sentinel solver or bypass, browser-fingerprint emulation/replay, captured proof/token replay, guessed alternate/fallback endpoints, hidden production WebView transport, or presenting CI/Artifact/protocol-probe success as native Send success.
+- **Allowed next step**: a product/architecture decision may explicitly choose to defer account-session Send, adopt a user-visible Web send surface, or use a separately authenticated officially supported API/product model. Those options are different architectures/products and must not be silently substituted for the existing native ChatGPT-account goal.
+
 ## Rule
 
 Do not write speculation here as fact. Historical plans, CI and Artifacts are not Runtime proof. Stable does not mean Frozen.

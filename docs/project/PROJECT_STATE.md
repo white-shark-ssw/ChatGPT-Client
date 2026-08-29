@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-29 through exact b47 Runtime and the long-conversation visible-Web composer viability failure._
+_Last updated: 2026-08-30 through exact b48 Code/CI/Artifact/package verification; b48 Runtime remains pending._
 
 ## Current accepted merged baseline
 
@@ -13,7 +13,7 @@ _Last updated: 2026-08-29 through exact b47 Runtime and the long-conversation vi
 
 `DEV-send-stream` was activated from `main@34811877896ca88c6656be6676f5466a19931ce6`.
 
-Current `main` is `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; its target-only delta is repository-governance `AGENTS.md` work with no product/state-owner overlap. Final synchronization remains required before any future merge.
+Current `main` is `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; its target-only delta is repository-governance work with no current product/state-owner conflict established. Final synchronization remains required before any future merge.
 
 Current feature branch: `dev/send-stream-20260829`; PR #29 remains open / mergeable / not merged.
 
@@ -21,19 +21,22 @@ Current feature branch: `dev/send-stream-20260829`; PR #29 remains open / mergea
 
 Exact b42 proved successful ChatGPT-account **protected Send** requires browser anti-abuse challenge output: PoW, Turnstile and `so`; non-empty PoW + Turnstile were finalized before successful Send. Pure-native/transient-auth protected Send remains blocked.
 
-The user explicitly rejects the separate API-product route.
+The user explicitly rejects the separately billed API-product route and has also blocked primary-account Sub2API/Codex-subscription Runtime because of account-safety concerns.
 
-Still prohibited: challenge solver/bypass/replay, copied proof/token values, guessed Send/continuation endpoints, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Web Send clicks, DOM answer/reasoning scraping and hidden file-input injection.
+The durable production boundary still prohibits challenge solver/bypass/replay, copied proof/token values, guessed Send/continuation endpoints, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Web Send clicks, DOM answer/reasoning scraping and hidden file-input injection.
 
-`/backend-api/f/conversation/resume` is a **post-Send continuation/read path** and does not weaken the b42 protected-Send boundary.
+**b48 is an explicit diagnostic exception only.** The user asked to try one version before deciding whether to change that durable boundary. Do not interpret b48 Code/CI/Artifact success as production policy change.
+
+`/backend-api/f/conversation/resume` remains a **post-Send continuation/read path** and does not weaken the b42 protected-Send boundary.
 
 ## Visible-Web product evidence
 
 - b43: visible official-Web interaction was sufficiently smooth for its tested shorter iPhone/iOS17 sequence; Web `+` ~100–200ms; Photos chooser filtered videos; standalone Web-chat product form not accepted.
 - b44: tested `/c/<id>` A/B mapping worked, but immediate Native reconciliation could lag assistant output already visible in Web; full-page Native -> Web -> Native product form rejected. No timer/poll/retry workaround is accepted.
-- **b47 exact-device long-conversation result materially narrows b43**: the user reported that an older conversation with only about three rounds but long answers repeatedly froze when trying to bring up/use the mobile-Web composer, making that conversation unusable for the protocol test. The test therefore had to be completed in a new conversation.
+- b47 exact-device long-conversation evidence materially narrows b43: an older conversation with only about three rounds but long answers repeatedly froze when trying to bring up/use the mobile-Web composer, so the user completed protocol testing in a new conversation.
+- The user's prior wrapped-Web/userscript experiment also showed that loading the full conversation and hiding all but roughly two visible rounds did not make the Web `+`/overall interaction acceptable.
 
-The b47 export does not contain the failed long-conversation attempt, so its internal root cause remains Unknown / Unverified. Product impact is nevertheless direct: an architecture requiring the real full Web conversation before every protected Send can fail **before Send initiation**, which Native post-Send handoff cannot repair.
+The internal owner of the b47 composer freeze remains Unknown / Unverified. Product impact is direct: full existing-conversation Web rendering before every protected Send is not accepted as the daily-chat production dependency.
 
 ## Exact b45 official no-resend continuation
 
@@ -44,74 +47,81 @@ The b47 export does not contain the failed long-conversation attempt, so its int
 
 Official resume request header-name evidence includes ordinary auth/client/session/route names and `x-conduit-token`; no Sentinel/Turnstile/PoW names were observed on resume. Header-name presence alone does not establish requirement.
 
-## Exact b46 Native duplicated resume parity
+## Exact b46/b47 Native duplicated resume parity
+
+### b46
 
 - Candidate `DEV-send-stream-0.1.0-b46`, exact source `4ab9be3ef2809204e88fcb0d44884e35b43726b1`, legitimate Artifact `9715903443`, IPA SHA `2c64a6356fdf419ea540b8c40fd9026061f5afaec9631bdb79bbeab8164becec`.
 - Official offset 18 resume returned HTTP200 SSE.
-- Native same-body request using only WebKit-derived transient cookie + bearer returned **HTTP404 `application/json`, 116 bytes, 0 SSE frames**.
+- Native same-body request using WebKit-derived transient cookie + bearer returned HTTP404 `application/json`, 116 bytes, 0 SSE frames.
 - Later official offset 54 resume again returned HTTP200 SSE.
 
-Accepted: official no-resend resume Runtime Confirmed; Native Cookie+Bearer-only **duplicated-after-official-success** resume Runtime Rejected. Missing request context vs cursor/consumer ownership remained unresolved.
+### b47
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b46-runtime.md`.
+- Candidate `DEV-send-stream-0.1.0-b47`, exact source `21028bbff7982abeb42f130c56fcb21e6ef44d7a`, legitimate Artifact `9716878034`, IPA SHA `49d1bd4886310f7761883784f73fc5532fe1a9532773619f0796cd7aab816909`.
+- Official offset 23 resumed with HTTP200 SSE after the forced connectivity interruption.
+- One Native same-body duplicate again returned HTTP404 `application/json`, ~707ms, 116 bytes, 0 SSE frames; rejection shape `{detail:{code:string,message:string}}`.
+- Later official offset 74 resume again returned HTTP200 SSE.
+- No Native retry occurred.
 
-## Exact b47 Candidate / Runtime
+Accepted: official no-resend resume Runtime Confirmed; Native Cookie+Bearer-only **duplicated-after-official-success** resume Runtime Rejected. Native first/exclusive resume and required browser/client context remain Unknown / Unverified.
 
-- Candidate `DEV-send-stream-0.1.0-b47`, `0.1.0 (47)`.
-- Exact product/config source `21028bbff7982abeb42f130c56fcb21e6ef44d7a`.
-- Push Run / Job `33259640112` / `99119258573` — success.
-- PR Run / Job `33259642459` / `99119264902` — success.
-- Legitimate Push Artifact `9716878034`; ZIP digest `sha256:a6915d0a2c48877e8d4d5b7eea966118ad84b321bc1462dafe55c593796e10fc`.
-- IPA SHA `49d1bd4886310f7761883784f73fc5532fe1a9532773619f0796cd7aab816909`.
-- Package identity independently verified: Release, source `21028bbff798`, iOS14 minimum, `[1,2]`, arm64.
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b46-runtime.md`, `docs/project/runtime-evidence/DEV-send-stream-b47-runtime.md`.
 
-### b47 protocol Runtime
+## Exact b48 Native composer / filtered Web Send experiment
 
-Uploaded metadata exactly matched b47 / Release / iPhone / iOS17.0.
+The user explicitly requested one isolated experiment before any durable change to the hidden/shadow-Web boundary.
 
-- official `/resume` offset 23 first hit a transport error while connectivity was unavailable, then official Web retried the same offset and returned HTTP200 SSE;
-- b47 issued exactly one Native same-body parity request;
-- transient account/session verification succeeded;
-- Native `/resume` returned **HTTP404 `application/json`, ~707ms, 116 bytes, 0 SSE frames**;
-- rejection JSON shape was `{"detail":{"code":"string","message":"string"}}`;
-- later official Web resumed again at progressed offset 74 with HTTP200 SSE;
-- no Native retry occurred.
+- Candidate `DEV-send-stream-0.1.0-b48`, version/build `0.1.0 (48)`.
+- Exact product/config source `6ccba03cefaa32a1186f1f468c3e696ed9457699`.
+- Push Run / Job `33266782947` / `99138125987` — success.
+- PR Run / Job `33266784665` / `99138130204` — success.
+- Legitimate Push Artifact `9718885751`.
+- Artifact ZIP digest `sha256:b990c539750e042d2912f3ea197568c9a5253b6393b9103b3cf6d4703f951afd`.
+- IPA SHA `c1f2f6a4e750af8abc7438e289f709cdf23c564f06ce2118b1c9b74f2d8ed850`.
+- Package identity independently verified: `0.1.0 (48)`, Candidate b48, Release, source marker `6ccba03cefaa`, minimum iOS14, `[1,2]`, arm64.
 
-Successful official resume request header names were:
+b48 is a **diagnostic controller only**:
 
-`accept, authorization, content-type, oai-client-build-number, oai-client-version, oai-device-id, oai-echo-logs, oai-language, oai-session-id, x-conduit-token, x-oai-is-client-observation, x-oai-is-pending-updates, x-oai-turn-trace-id, x-openai-target-path, x-openai-target-route`
+- a full-size official `WKWebView` on the default persistent WebKit data store remains behind an opaque Native surface;
+- user normally operates only a Native `UITextView` composer + Native Send button;
+- document-start JavaScript transfers the Native text into the actual Web composer state and invokes the page's own form/Send control;
+- the official page remains responsible for login, browser challenges and protected `/backend-api/f/conversation` construction;
+- the Send SSE is consumed once before Web React; evidenced assistant text append patches at `/message/content/parts/0` are forwarded to Native memory/UI and removed from the stream returned to Web while remaining lifecycle/identity frames and `[DONE]` are preserved;
+- Web user/assistant message elements are CSS-suppressed for the diagnostic surface;
+- no `response.clone()` is used on this interception path;
+- diagnostics record structural counts/status/DOM metrics only, never prompt/answer/reasoning text;
+- no `ConversationRepository` production response state is mutated;
+- no retry/timer/watchdog/fallback is added;
+- b48 is new-chat focused and does **not** yet virtualize existing conversation-detail history before React.
 
-Native explicitly set only `accept, content-type`, plus the established transient Authorization injection and WebKit-derived ephemeral cookies.
+Evidence ladder for b48:
 
-This proves a large request-context structural difference, but does **not** identify a required header subset and does not authorize copying browser values.
+- Code written: **Yes**.
+- CI: **Passed**.
+- Artifact produced: **Yes**.
+- Package identity: **Verified**.
+- Runtime/manual/real-device: **Pending**.
+- Stable/Frozen: **No**.
 
-### b47 diagnostics defect
+Because Artifact `9718885751` now exists, exact b48 source is permanently reserved. Any product-code correction after Runtime must use b49+.
 
-The intended safe error-code export field was named `safeErrorTokens`; current `DiagnosticsSanitizer` redacts every field key containing `token`, so the safe code/type/status values were exported as `<redacted>`. This is a deterministic diagnostic naming defect. Correcting product code would require b48+ because b47 is reserved.
+## b48 Runtime gate
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b47-runtime.md`.
+Exact-device testing must determine:
 
-## Current architecture viability gate
+1. Native composer can submit without the user touching the Web composer.
+2. Official Web protected Send still succeeds.
+3. Native receives incremental assistant text while the corresponding text patch is withheld from Web React.
+4. Web assistant text/DOM footprint stays small during a long answer.
+5. A second Native-composer turn succeeds in the same Web session after terminal `[DONE]`.
+6. Native typing/Send interaction feels smooth.
 
-Previous target:
-
-`Native history/presentation -> user-visible official full Web conversation performs protected Send -> Native attaches/resumes to the same already-started response.`
-
-After the long-conversation composer failure, this exact form is **not accepted for further production integration** without a deliberate architecture decision. The failure occurs before Native handoff can begin.
-
-Do not allocate b48 merely to chase `/resume` headers while the Send surface itself has an exact-device P0 usability failure.
-
-Evidence-backed next questions:
-
-1. Does an official supported **lightweight visible send-only** surface exist that avoids full conversation-history Web rendering?
-2. Is there another legitimate account-compatible protected-Send boundary that avoids full mobile-Web conversation rendering without hidden DOM automation/challenge bypass?
-3. If neither exists, should visible Web remain diagnostic/fallback only rather than the daily-chat production Send architecture?
-
-These are now a Human Architecture Gate; do not guess the product direction.
+Passing b48 would only justify a later experiment on **existing-conversation data-layer history virtualization before React**. It would not by itself change TD-024/TD-025 or prove long existing-chat performance.
 
 ## Background ordering
 
-Background resilience remains a hard product requirement, but implementation stays response-owner dependent. b45 provides positive short-background survival/buffering evidence. Native production continuation ownership is not accepted, and visible-full-Web Send now also has a pre-Send long-conversation viability failure.
+Background resilience remains a hard product requirement, but implementation stays response-owner dependent. b45 provides positive short-background survival/buffering evidence. Native production continuation ownership is not accepted, and visible-full-Web Send has a separate pre-Send long-conversation viability failure.
 
 ## Authority / evidence boundary
 
@@ -120,13 +130,9 @@ Background resilience remains a hard product requirement, but implementation sta
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - Sync/Reload never resend/regenerate.
 - no second Send may be created merely to obtain a stream.
-- b47 Code/CI/Artifact/package identity: **passed**.
-- b47 Runtime/manual: **completed**.
-- b47 Native duplicated resume: **rejected with HTTP404 JSON**.
-- b47 full-Web long-conversation composer viability: **failed for the reported exact-device workload**.
+- b48 is not production state ownership and not a durable security-boundary change.
 - Native first/exclusive resume: **Unknown / Unverified**.
-- Required browser/client header subset: **Unknown / Unverified**.
-- lightweight official visible send-only route: **Unknown / Unverified**.
-- Native incremental response ownership/reasoning/follow-tail/background lifecycle: **Unknown / Unverified**.
+- Existing-conversation history virtualization before Web React: **Unknown / Unverified**.
+- Native production incremental response ownership/reasoning/follow-tail/background lifecycle: **Unknown / Unverified**.
 - Phase 9 Stable/Frozen Send: **No**.
-- PR #29 remains evidence-only and must not be merged as accepted production Send UX while this architecture gate remains unresolved.
+- PR #29 remains evidence-only and must not be merged as accepted production Send UX before b48 Runtime and a later explicit architecture decision.

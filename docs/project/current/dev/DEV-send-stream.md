@@ -65,15 +65,15 @@ The corresponding PR-triggered run `33238066937` also succeeded at the same wron
 
 `DEV-send-stream-0.1.0-b43` is allocated.
 
-The b43 identity update has been prepared as one atomic Git-data commit so workflow and Xcode metadata move together:
+The b43 identity update is represented by one atomic Git-data commit so workflow and Xcode metadata move together:
 
 - Xcode metadata blob `f26636045934e94873b05fa21664a9a1e90735a8`: `CURRENT_PROJECT_VERSION=43`, `DIAGNOSTICS_CANDIDATE=DEV-send-stream-0.1.0-b43` for Debug/Release;
 - workflow blob `ddf5ee61aae265b41cc06a34924be18cbaf7f647`: workflow `iOS Hybrid Web Send`, Artifact container b43;
-- current checkpoint parent tree `5a38bd9df31bd60c65a6c8bc2f9ce18808bdc610`;
-- combined b43 tree `4ab722a46be486ca004022f19bb5f3bf181b920c`;
-- exact atomic b43 commit prepared on the current checkpoint parent: `566ed4fe6df06a012addbb919f89ee67cd7c0189`.
+- current branch parent before publication commit: `c0616193b8430f15cf8e3e53a0d92ecd7f05a3c4`;
+- combined b43 tree: `c87e576c5720cebcd2c12b42d49b4235306ae55c`;
+- exact atomic b43 commit prepared directly on current branch parent: `049ba55a3b3611fdd9b041e6f766375de02f6816`.
 
-An earlier unpublished preparation commit `b615df4ce7556f792e89a0fc2f5b03ed8d597daf` was based on the pre-checkpoint parent and is superseded tooling state only; it was never branch head and must not be force-pushed or cited as Candidate source.
+Earlier unpublished preparation commits `b615df4ce7556f792e89a0fc2f5b03ed8d597daf` and `566ed4fe6df06a012addbb919f89ee67cd7c0189` were based on older checkpoint parents and are superseded tooling state only; neither was branch head and neither may be force-pushed or cited as Candidate source.
 
 ### b43 exact-device Runtime focus
 
@@ -95,21 +95,21 @@ An earlier unpublished preparation commit `b615df4ce7556f792e89a0fc2f5b03ed8d597
 
 ## Non-atomic batch recovery point — hybrid implementation
 
-Known current state before b43 publication:
+Known current state before publication:
 
-- branch head before publication checkpoint: `9aa89594d8e33c0b05e94175d4e0bdd8e0efb84f`;
+- branch head before b43 publication is the checkpoint chain ending at `c0616193b8430f15cf8e3e53a0d92ecd7f05a3c4`;
 - base `main@34811877896ca88c6656be6676f5466a19931ce6`;
 - PR #29 open + mergeable;
 - exact legitimate b42 source/Artifact remain `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`;
 - accidental Artifact `9710515489` is permanently rejected as identity-invalid;
 - no peer Active dev task;
-- exact b43 atomic identity commit `566ed4fe6df06a012addbb919f89ee67cd7c0189` is prepared directly on the verified checkpoint parent.
+- exact b43 atomic identity commit `049ba55a3b3611fdd9b041e6f766375de02f6816` is prepared directly on the current branch parent.
 
 Batches:
 
 - **Batch A complete**: Option 2 selection + hard UX requirements recorded.
 - **Batch B complete**: minimal user-visible resident/reusable Web surface + Settings entry written; exact net diff audited to two files.
-- **Batch C active**: move branch exactly once to `566ed4fe6df06a012addbb919f89ee67cd7c0189`, then verify resulting b43 push/PR CI and package identity.
+- **Batch C active**: move branch exactly once to `049ba55a3b3611fdd9b041e6f766375de02f6816`, then verify resulting b43 push/PR CI and package identity.
 - **Batch D pending**: verify exact valid b43 Artifact/IPA identity and hand IPA to user for real-device hybrid smoothness/attachment-entry test.
 - **Batch E pending**: record actual CI/Artifact/Runtime evidence and update durable docs/PR body.
 
@@ -119,10 +119,10 @@ Recovery rules:
 - accidental Artifact `9710515489` remains rejected and must not be promoted;
 - do not redefine exact legitimate b42 product source;
 - do not weaken Stable b38 geometry/round/navigation contracts;
-- do not force branch to the superseded unpublished preparation commit `b615df4...`;
+- do not force branch to any superseded unpublished preparation commit;
 - do not merge PR #29 as production Send acceptance before exact hybrid Runtime evidence supports the claimed scope;
 - do not implement unverified deep-link/file-input/DOM automation merely to accelerate the milestone.
 
 ## Next exact action
 
-Fast-forward `dev/send-stream-20260829` to `566ed4fe6df06a012addbb919f89ee67cd7c0189`, verify the resulting b43 push/PR CI and Artifact identity, then continue autonomously to the real-device gate.
+Fast-forward `dev/send-stream-20260829` to `049ba55a3b3611fdd9b041e6f766375de02f6816`, verify the resulting b43 push/PR CI and Artifact identity, then continue autonomously to the real-device gate.

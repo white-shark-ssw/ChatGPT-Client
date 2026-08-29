@@ -98,7 +98,7 @@ final class SettingsViewController: UIViewController {
         diagnosticsDetail.text = "日志只保存有界的本地结构化元数据。默认不记录密码、OAuth Code、Token、Cookie、完整聊天正文、请求/响应正文或附件内容；导出时会再次脱敏敏感标识。"
 
         let protocolSendProbeButton = UIButton(type: .system)
-        protocolSendProbeButton.setTitle("Send 协议探测（诊断）", for: .normal)
+        protocolSendProbeButton.setTitle("实时接管协议探测（诊断）", for: .normal)
         protocolSendProbeButton.addTarget(self, action: #selector(openProtocolSendProbe), for: .touchUpInside)
 
         let sampleButton = UIButton(type: .system)
@@ -168,8 +168,8 @@ final class SettingsViewController: UIViewController {
     @objc private func answerJumpPreferenceChanged() { preferences.showsAnswerQuickNavigation = answerJumpSwitch.isOn }
 
     @objc private func openProtocolSendProbe() {
-        diagnostics.info(category: "navigation", name: "conversationSendProbe.open")
-        navigationController?.pushViewController(ProtocolSendProbeViewController(), animated: true)
+        diagnostics.info(category: "navigation", name: "conversationHandoffProbe.open")
+        navigationController?.pushViewController(ProtocolHandoffProbeViewController(), animated: true)
     }
 
     @objc private func writeSampleEvent() {

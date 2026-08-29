@@ -135,24 +135,26 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Candidate rule**: b39-b45 are permanently reserved; exact b45 product source is immutable after Artifact emission.
 
 ### TD-026 — Background/lock resilience remains a hard product requirement, but implementation follows the eventual response owner
-- **Status**: Confirmed product requirement; full feasibility Unverified
+- **Status**: Confirmed product requirement; exact b45 gives positive short-background evidence; full feasibility still Unverified
 - **Date**: 2026-08-29
 - **User decision**: During long reasoning or streamed reasoning/final output, backgrounding/locking the app for a while must not routinely lead to timeout/disconnect that requires manual refresh on return.
 - **Public iOS boundary**: Apple's public background-task APIs provide finite extra runtime and do not guarantee long-running foreground-equivalent execution. `beginBackgroundTask` may be used as a short-duration baseline only; do not encode fixed-duration guarantees, keepalive timers or unrelated background-mode abuse.
+- **Exact b45 evidence**: on iPhone/iOS17.0, one clean default-primary new-chat response remained on the same original `/backend-api/f/conversation` fetch while the app was backgrounded approximately 35s, 34s and 126s during the active response (~195s cumulative). On final foreground return the same original stream delivered `message_stream_complete` and `[DONE]`; no manual refresh/resend or secondary reconnect transport was observed.
+- **Evidence boundary**: this proves the tested path can survive or buffer across those ordinary background/lock intervals. It does not prove continuous background event delivery, 5/15-minute survival, WebContent termination recovery, network-loss recovery or battery/thermal cost.
 - **Ordering decision**: first determine whether Native can own/resume the response. If Native handoff is proven, later background work protects the Native response lifecycle. If handoff is disproven, WebKit true-background remains relevant only to the fallback visible-Web architecture.
-- **Evidence use**: a short background/lock interval may be intentionally applied during exact b45 active streaming to force official reconnect behavior. That capture is protocol evidence, not the full long-background product acceptance matrix.
 - **Rejected**: manual-refresh-as-normal-use, hidden DOM recovery, timer/poll/retry chains, permanent idle process immortality, or claiming main-app survival equals WebKit-stream survival.
 - **Durable plan**: `docs/project/HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`.
 
-### TD-027 — b45 normal Web traffic does not yet prove a Native same-response continuation path
-- **Status**: Confirmed evidence boundary from exact b45 first Runtime; continuation feasibility remains Unverified
+### TD-027 — b45 has not yet exposed an official Native-reproducible same-response continuation path
+- **Status**: Confirmed evidence boundary from two exact b45 Runtime captures; continuation feasibility remains Unverified
 - **Date**: 2026-08-29
 - **Exact evidence**: `DEV-send-stream-0.1.0-b45`, product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`, Artifact `9713774868`, IPA SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`; detailed Runtime record `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
-- **Observed normal path**: official Web `POST /backend-api/f/conversation` returned HTTP200 SSE; `resume_conversation_token` appeared at original-stream event 2; later structure exposed conversation/request/message identities; original `fetch` SSE remained the response transport through `message_stream_complete` and `[DONE]`. A `GET /backend-api/conversation/{id}/stream_status` follow-up returned JSON with structural `{status:string}` only. No secondary EventSource/WebSocket/turn-stream/handoff/resume/subscribe response stream was observed while the uninterrupted responses were active.
-- **Sample caveat**: the second Send carried `conversation_mode.gizmo_id`; it is not accepted as a clean default-primary new-chat sample.
-- **Decision**: do not infer a Native continuation API from the `resume_conversation_token` name and do not reinterpret `stream_status` as a response stream. The normal page did not need to reconnect because its original Send SSE remained intact.
-- **Next evidence**: reuse exact b45 and deliberately background/lock while a default-primary response is visibly still streaming, then observe what the official page itself does on foreground return without refresh/resend/Stop/GPT switch.
-- **Implementation gate**: allocate a b46 Native no-resend parity experiment only if exact official reconnect traffic exposes the concrete route/transport/identity structure needed to justify it. Absence of a secondary stream in the uninterrupted capture alone is not a No-go conclusion.
+- **Observed normal path**: official Web `POST /backend-api/f/conversation` returned HTTP200 SSE; `resume_conversation_token` appeared at original-stream event 2; later structure exposed conversation/request/message identities; original `fetch` SSE remained the response transport through `message_stream_complete` and `[DONE]`. `GET /backend-api/conversation/{id}/stream_status` returned JSON `{status:string}` only. No secondary EventSource/WebSocket/turn-stream/handoff/resume/subscribe response stream was observed.
+- **Clean new-chat clarification**: the later Capture C is accepted as a clean default-primary new-chat sample: user explicitly identifies it as a new conversation, and the observed Send body had neither top-level `conversation_id` nor `conversation_mode.gizmo_id`.
+- **Background result**: Capture C deliberately backgrounded/locked during the active response for ~35s, ~34s and ~126s. The original fetch remained the observable owner and completed normally on foreground; it did not need to reconnect. Therefore natural short background is no longer a useful way to force discovery of a reconnect API on this device.
+- **Decision**: do not infer a Native continuation API from the `resume_conversation_token` name and do not reinterpret `stream_status` as a response stream. The existence of a token is not sufficient evidence for route/method/body/identity semantics.
+- **Next evidence**: reuse exact b45 in an existing long default-primary conversation and deliberately cause a short real connectivity loss while the response is actively streaming, then restore connectivity without refresh/resend/Stop/navigation. Observe only what the official page itself does.
+- **Implementation gate**: allocate a b46 Native no-resend parity experiment only if exact official recovery traffic exposes the concrete route/transport/identity structure needed to justify it. If no reconnect path appears after a genuine transport break, record negative evidence and reassess the architecture ceiling rather than guessing.
 
 ## Rule
 

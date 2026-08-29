@@ -389,7 +389,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
             var result: [String: Any] = [:]
             for key in dictionary.keys.sorted().prefix(48) {
                 let safeKey = safeToken(key)
-                guard safeKey != "none_or_redacted", let sanitized = sanitizeStructure(dictionary[key] as Any, depth: depth + 1) else { continue }
+                guard safeKey != "none_or_redacted", let rawValue = dictionary[key], let sanitized = sanitizeStructure(rawValue, depth: depth + 1) else { continue }
                 result[safeKey] = sanitized
             }
             return result

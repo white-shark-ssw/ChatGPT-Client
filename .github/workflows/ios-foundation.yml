@@ -1,5 +1,5 @@
-# Candidate: DEV-send-stream-0.1.0-b42
-name: iOS Send Stream Probe
+# Candidate: DEV-send-stream-0.1.0-b43
+name: iOS Hybrid Web Send
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b42
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b43
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

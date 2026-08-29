@@ -2,33 +2,33 @@
 
 ## Status
 
-**Blocked — API product explicitly rejected; existing-account hybrid path must prove background resilience before b45**
+**Blocked — API product rejected; existing-account visible-Web Send must pass background-resilience feasibility before any next UI Candidate**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / 新对话 / Stop / reasoning / follow-tail / 官方 Web / hybrid / 后台 / 真后台`
 - **Branch / PR**: `dev/send-stream-20260829`; PR #29 open/mergeable; do not merge as accepted Send UX.
-- **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; Stable native predecessor b38 remains merged.
-- **Current branch head before this docs batch**: `10843c106659186e84d08a181c1e0901f2a54857`.
+- **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; Stable native predecessor remains b38.
 - **Exact b44 product/config source**: `f1503cf7121512a84e5c55a3642181c17324d791`.
 - **Exact b44 Artifact**: `9712583513`; IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
-- **Parallel guard**: current `docs/project/current/dev/` contains only this Active development checkpoint; no peer Active dev conflict found.
-- **Candidate rule**: b39-b44 are permanently reserved. **No b45 is allocated.**
+- **Current docs batch baseline**: branch was `10843c106659186e84d08a181c1e0901f2a54857` before the latest background-requirement updates.
+- **Parallel guard**: only this Active development checkpoint exists under `docs/project/current/dev/`; no peer Active dev conflict found.
+- **Candidate rule**: b39-b44 are permanently reserved. **No b45 or later Send/background Candidate has been allocated.**
 
-## Security / transport boundary retained
+## Security / transport boundary
 
-Exact b42 proved the tested successful ChatGPT-account Send requires browser anti-abuse challenge output (`proofOfWorkRequired=true`, `turnstileRequired=true`, `soRequired=true`, non-empty PoW + Turnstile finalize input). Pure-native/transient-auth ChatGPT-account Send remains blocked.
+Exact b42 proved successful tested ChatGPT-account Send requires browser anti-abuse challenge output (`proofOfWorkRequired=true`, `turnstileRequired=true`, `soRequired=true`, non-empty PoW + Turnstile finalize input). Pure-native/transient-auth account-session Send remains blocked.
 
-Never implement PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay, captured proof/token replay, guessed fallback endpoints, hidden challenge-harvesting WebViews, DOM message/reasoning scraping, covered-Web Native composer injection, synthetic hidden Send clicks or browser challenge extraction/replay.
+Never implement PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay, captured proof/token replay, guessed fallback endpoints, hidden challenge-harvesting WebViews, DOM message/reasoning scraping, covered-Web Native composer injection, synthetic hidden Send clicks or challenge extraction/replay.
 
-TD-024 permits only an **explicit user-visible** official ChatGPT Web Send surface. TD-025 records that b44's full-page Native -> Web -> Native form is not acceptable product UX.
+TD-024 permits only an **explicit user-visible** official ChatGPT Web Send surface. TD-025 records that b44's full-page Native -> Web -> Native form is product-rejected. TD-026 adds the background-resilience gate below.
 
-## b43 / b44 accepted evidence retained
+## b43 / b44 accepted evidence
 
 ### b43 visible-Web feasibility
 
 Exact b43 `DEV-send-stream-0.1.0-b43`, source `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`, Artifact `9711364573`, IPA SHA `f2de8d02f3da7d9a8a8f58cd3028480a40849095b2b4b21e418e9c2e758d8108`.
 
-Primary-device Runtime:
+Primary iPhone/iOS17 Runtime:
 
 - first/re-entry, keyboard/typing, visible Web Send, stream scrolling and rapid scrolling had no material problem reported;
 - Web `+` -> attachment selection roughly **100–200 ms**, not rejected;
@@ -37,14 +37,14 @@ Primary-device Runtime:
 
 Public `WKUIDelegate` file-open-panel replacement is iOS18.4+, not primary iOS17. Do not use private WebKit or DOM/file-input injection to fake an iOS17 photo+video picker fix.
 
-### b44 integrated full-page trial
+### b44 full-page integrated trial
 
-Exact b44 Candidate `DEV-send-stream-0.1.0-b44`, source `f1503cf7121512a84e5c55a3642181c17324d791`, Push Run/Job `33245105815` / `99081114295` success, PR Run `33245107290` success, Artifact `9712583513`, IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
+Exact b44 `DEV-send-stream-0.1.0-b44`, source `f1503cf7121512a84e5c55a3642181c17324d791`, Push Run/Job `33245105815` / `99081114295` success, PR Run `33245107290` success, Artifact `9712583513`, IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
 
 Runtime established:
 
 1. Web Send worked.
-2. Immediate `返回并同步` could expose the new user message but not assistant output already visible in Web.
+2. Immediate `返回并同步` could expose the just-sent user message but not assistant output already visible in Web.
 3. Repeated immediate Native Sync still could miss that assistant output.
 4. A later Sync after waiting could expose it.
 5. Tested Native A/B IDs mapped to corresponding Web `/c/<id>` conversations.
@@ -52,105 +52,89 @@ Runtime established:
 
 Conclusion: Native Detail is eventually consistent relative to Web generation in the tested sequence; no stable readiness delay/signal was established. Do not add timer/poll/retry/repeated automatic Sync. The full-page Native -> Web -> Native product form is rejected / superseded.
 
-## Latest explicit product decision — 2026-08-29
+## Latest explicit product decision
 
-The user explicitly stated that the **separately billed/supported API product path will not be accepted**. Treat former TD-025 option B as rejected for this product unless the user later reverses that decision.
+The user explicitly stated that the **separately authenticated/billed supported API product path will not be accepted**. Do not keep it as an active product option unless the user later reverses that decision.
 
-The user also raised a hard usability requirement for any existing-account Web-assisted architecture:
+The only active non-deferred Send direction is now:
 
-> During long reasoning / streamed reasoning-output / final-answer generation, putting the client into the background or leaving it there for a while must not routinely cause timeout/disconnect that forces the user to manually refresh on return.
+**Native list/history/read/navigation + explicitly visible official-Web composer/live-response for the existing ChatGPT account/history.**
 
-This is now a **hard architecture acceptance gate**, not later polish.
+This direction is conditional on the background gate below.
 
-## Background-resilience evidence boundary
+## TD-026 — background reasoning/stream resilience gate
 
-Apple public iOS behavior is not sufficient as a long-duration guarantee:
+The user identifies this behavior as unacceptable: during long reasoning / streamed reasoning-output / final-answer generation, backgrounding or locking the client for a while can lead to timeout/disconnect and require manual refresh on return.
 
-- `beginBackgroundTask` grants only finite extra runtime;
-- the system may expire the task, suspend the app, or terminate it;
-- therefore ordinary UIKit background time may be a short-duration baseline but cannot honestly guarantee a long reasoning/stream session.
+Required product outcome:
 
-The repository already has `BACKGROUND_EXECUTION_PLAN.md`, including a TrollStore-only true-background experiment. However that plan assumed a native-owned response stream. TD-024 currently uses a visible official Web Send surface, so a new question must be proven:
+- preferred: the same visible official-Web reasoning/stream survives the user's normal background/lock habit and resumes without forced reload;
+- acceptable: a **known** background/WebKit lifecycle interruption triggers one deterministic same-conversation foreground recovery without prompt resend and without routine manual refresh;
+- rejected: timer/poll/retry loops, manual refresh as normal use, hidden DOM recovery, fake keepalive timers, or permanently keeping the app alive while idle.
 
-**Can the primary iPhone 15 Pro Max / iOS17.0 TrollStore environment preserve the visible Web Send surface's actual WebKit/WebContent/network execution across background/lock for meaningful reasoning durations?**
+Public iOS background time is finite. `beginBackgroundTask` is only a short-duration baseline and cannot honestly guarantee a long reasoning/stream session.
 
-Unknown / Unverified until exact-device testing:
+Because this is a TrollStore product, the next feasibility question is whether narrowly scoped process preservation also preserves the relevant **WebKit WebContent/network execution and actual official ChatGPT response stream**. Main-app PID survival alone is not proof.
 
-- keeping the main app process runnable/non-freezable also keeps the relevant WebKit WebContent/Network processes alive;
-- an official Web reasoning/stream connection survives background/lock without page reload;
-- Wi-Fi/cellular transition survives while backgrounded;
-- WebKit process termination can be recovered without user manual refresh;
-- battery/thermal cost is acceptable.
+Durable owner: `docs/project/HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`.
 
-Do not claim success merely because the main app process remains alive.
+Key Unknown / Unverified facts until exact-device Runtime:
 
-## Proposed account-compatible architecture, now conditional
+- WebContent survival;
+- WebKit network-process survival;
+- official ChatGPT stream continuity across background/lock;
+- silent-stall behavior;
+- Wi-Fi/cellular transition;
+- battery/thermal cost;
+- deterministic no-manual-refresh recovery after a known WebKit interruption.
 
-The only active non-API direction remains:
+Since Native has no supported Web terminal signal without prohibited DOM/stream observation, an initial experiment may conservatively preserve the process for the whole background interval when the visible Web Send surface was active at background entry, then release on foreground return. Do not create a fake `isWebStreaming` owner from UI text, timers or DOM scraping.
 
-**Native list/history/read/navigation + explicitly visible official-Web composer/live-response surface**.
+## Go / No-go before UI polish
 
-But do **not** spend b45 on visual embedding first. Before accepting this architecture, prove background behavior.
+Exact primary iPhone/iOS17 TrollStore matrix must include:
 
-Required behavior if this direction proceeds:
+- long visible-Web reasoning/stream -> short background -> return;
+- same with device lock;
+- ~5-minute and ~15-minute intervals when workload permits;
+- longer intervals only when a controlled active response can meaningfully support them;
+- public background-task expiration;
+- observed WebContent/process interruption + one-shot foreground recovery;
+- no prompt resend / no duplicate message;
+- stable Wi-Fi first, then network transition after baseline works;
+- battery/thermal observation.
 
-1. Web composer/live response remains genuinely visible/directly operated while Send is active; no hidden DOM automation.
-2. If the app backgrounds during possible reasoning/streaming, use ordinary `beginBackgroundTask` only as the public short-duration baseline.
-3. Because distribution is TrollStore, evaluate the existing true-background plan as an architecture feasibility experiment for the visible Web surface.
-4. Preservation must be active only when needed; do not immortalize the app at idle.
-5. Since exact Web response terminal state is not available to Native without prohibited DOM/stream scraping, an initial experiment may conservatively preserve the process for the whole background interval when the visible Send surface was active at background entry, then release on foreground return.
-6. If preservation is known to have expired/lost or `WKWebView` content-process termination is observed, foreground recovery may perform **one lifecycle-triggered same-conversation Web recovery/reload**, not a timer/poll/retry loop. This is recovery from a known lifecycle interruption, not an automatic response polling mechanism.
-7. If preservation succeeds, foreground return should resume the same live page/answer state without forced reload.
-8. Manual user refresh must not be the normal recovery path.
-9. Native Detail reconciliation remains eventual and must not be used as a fake real-time stream owner.
+**Go**: normal user background use keeps the live response alive, or a known interruption recovers automatically on foreground without resend/manual refresh.
 
-## Go / no-go Runtime matrix before UI b45
+**No-go**: routine background still requires manual refresh, WebKit execution cannot be preserved reliably, recovery requires prohibited hidden DOM automation, or battery/thermal impact is unacceptable. With API rejected, No-go means defer ChatGPT-account Send.
 
-Any background feasibility Candidate must test on the exact primary iPhone/iOS17 TrollStore device:
+## Requirement/docs batch — completed
 
-- start a long visible Web reasoning/stream response, background for a short interval, return;
-- repeat with device lock;
-- repeat around 5 minutes, 15 minutes, then longer controlled intervals if the response/workload permits;
-- verify whether the same live Web response continues without manual refresh;
-- record whether app process, WebContent/process lifecycle and Web page survive;
-- exercise the public background-task expiration path;
-- exercise a known process/page interruption and verify one-shot foreground recovery does not resend the prompt;
-- verify no duplicate message/send and no challenge/token capture;
-- test Wi-Fi stable first, then network transition only after baseline works;
-- observe battery/thermal impact sufficiently to reject an obviously harmful always-on design.
+Completed after exact b44 product source, with no intentional product/config/workflow mutation:
 
-**Go**: Web reasoning/stream survives reliably enough for the user's background habit, or known interruption recovers automatically on foreground without manual refresh/resend.
-
-**No-go**: long/ordinary background use repeatedly leaves the official Web stream disconnected and requires manual refresh, or keeping the WebKit execution alive is not reliable/acceptable. If no-go, do not proceed with a polished embedded-Web chat architecture; with API rejected, the remaining product-safe route is to defer ChatGPT-account Send.
-
-## Batch recovery point — background requirement docs
-
-Known baseline:
-
-- branch head `10843c106659186e84d08a181c1e0901f2a54857` before this write chain;
-- PR #29 open/mergeable;
-- `main@34811877896ca88c6656be6676f5466a19931ce6` unchanged;
-- no peer Active dev checkpoint;
-- exact b44 product source remains `f1503cf7121512a84e5c55a3642181c17324d791`;
-- no b45 allocated.
-
-Completed:
-
-- user rejected API product route;
-- user promoted background reasoning/stream survival + no-manual-refresh recovery to a hard requirement;
-- checkpoint updated with background architecture gate.
-
-Pending docs-only batch:
-
-- add a focused hybrid Web background-resilience plan under `docs/project/`;
-- update `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_SPECIFIC_RULES.md`, `DEVELOPMENT_PLAN.md`, and PR #29 to reflect API rejection + background go/no-go gate;
-- no Swift/Xcode/workflow/product mutation;
-- no b45 allocation.
+- created `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`;
+- updated `START_HERE.md` to route future hybrid background work;
+- updated `PROJECT_STATE.md`;
+- updated `MODULE_STATUS.md`;
+- updated `PROJECT_PROFILE.md`;
+- updated `DEVELOPMENT_PLAN.md`;
+- updated `TECHNICAL_DECISIONS.md` with TD-026;
+- updated `PROJECT_SPECIFIC_RULES.md`;
+- updated PR #29 title/body to the background-resilience gate;
+- no b45 allocated, no CI/Artifact produced.
 
 ## Next exact action
 
-Finish this docs-only requirement batch. Then stop at the remaining human architecture gate:
+**Human gate:** decide whether to run the existing-account TrollStore/WebKit background-resilience feasibility experiment.
 
-- if the user explicitly chooses to **run the existing-account background feasibility experiment**, create the appropriately isolated/stacked background experiment work according to `BACKGROUND_EXECUTION_PLAN.md`, re-run conflict/candidate preflight, and only then allocate a new Candidate;
-- if the user chooses to defer account Send, leave `DEV-send-stream` blocked;
-- do not reactivate the API route unless the user explicitly reverses the rejection.
+If authorized:
+
+1. reread governance and both background plans;
+2. create the appropriately isolated/stacked background experiment Work because it depends on this unmerged Send branch;
+3. verify exact branch/PR/base/state-owner/Frozen/shared-infrastructure conflicts;
+4. inspect real AppDelegate/WebKit lifecycle/entitlement/signing/package source before changing code;
+5. allocate the next unique Candidate only after identity preflight;
+6. implement the smallest measurement/preservation/recovery experiment first — **not** embedded-Web UI polish;
+7. hand the exact Artifact to the user for the TD-026 matrix.
+
+If not authorized, leave ChatGPT-account Send deferred. Do not reactivate the API product route unless the user explicitly reverses that decision.

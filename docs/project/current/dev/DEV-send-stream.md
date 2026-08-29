@@ -2,177 +2,181 @@
 
 ## Status
 
-**Active — exact b47 Runtime confirms official resume again, Native duplicated resume still HTTP404 JSON, and the current full-Web-conversation Send dependency is now blocked by a long-conversation composer viability gate.**
+**Active — Phase 9 is at a Human Architecture Gate. Official no-resend `/resume` is Runtime Confirmed; b46/b47 Native duplicated parity remains HTTP404; full existing-conversation Web is not accepted as a production Send dependency.**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream`
 - **Branch**: `dev/send-stream-20260829`
-- **PR**: #29 — open / mergeable / not merged.
+- **PR**: #29 — open / mergeable / not merged; evidence branch only.
 - **Stable native predecessor**: b38.
 - **Original feature base**: `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; target-only delta remains repository-governance `AGENTS.md`, with no product/state-owner overlap.
+- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; target-only delta is repository governance, with no current product/state-owner conflict established.
 - **Exact b47 product/config source**: `21028bbff7982abeb42f130c56fcb21e6ef44d7a`.
-- **Current branch head before this checkpoint update**: `f4172cc9f93f5b1ce3a83d5eb90195036f0191db`.
+- **Latest docs/evidence head before this checkpoint write**: `2985c3af693a315d9048fe91d6cddad74e093ab0`.
 - **Stable/Frozen Send**: No.
 
-## Governance / resume guard
+## Governance / identity
 
-Latest `main` `AGENTS.md` and `docs/project/START_HERE.md` were reread for this continuation. Because the previous turn ended during a documentation write chain, Full Resume Guard was rerun.
+Latest repository `AGENTS.md` and `docs/project/START_HERE.md` were reread in the current continuous Work. The most recent Full Resume Guard verified branch / PR / b47 Candidate / Artifact / target main / Active-task uniqueness. Later work in this conversation is docs/evidence-only and has not altered exact b47 product source.
 
-Verified:
+Continuous-session Light Guard confirmed the branch was at `a54a707d85f32a2ebe28633853269d984a23139e` before the newest evidence note; only docs/evidence changed afterward.
 
-- feature branch existed and was at `f731cbd05338f4dc8dd5da538c18a454d5b42233` before the new b47 evidence write;
-- PR #29 remained open / mergeable / not merged;
-- `21028bb... -> f731cbd...` was one checkpoint-only docs commit; exact b47 product source had not drifted;
-- current `main` remained `1ac202c...`;
-- exactly one Active development checkpoint exists (`DEV-send-stream`);
-- exact b47 Candidate/Artifact identity remained unique and consistent.
+## Security boundary retained
 
-Guard success is not a Human Gate; work continued automatically.
+Exact b42 still proves ChatGPT-account protected Send requires browser anti-abuse challenge output on the tested path. The separate supported/billed API-product route remains explicitly rejected by the user.
 
-## Security / product boundary retained
+Still prohibited unless a later explicit rule change is made from evidence:
 
-Exact b42 still blocks pure-native ChatGPT-account **protected Send** because successful Send requires browser anti-abuse challenge output. The separate API-product route remains explicitly rejected by the user.
-
-Still prohibited:
-
-- Sentinel/Turnstile/PoW solver/bypass/replay;
-- copied challenge/proof values;
+- Sentinel / Turnstile / PoW solver, bypass or captured-proof replay;
+- guessed alternate protected-Send endpoints;
 - hidden/shadow protected Web Send;
-- Native injection into a covered Web composer;
-- synthetic hidden Send clicks;
+- Native text injection into a covered Web composer;
+- synthetic hidden Web Send clicks;
 - DOM answer/reasoning scraping;
-- guessed continuation endpoints;
-- hidden file-input injection.
+- hidden file-input injection;
+- copying `x-conduit-token` or OAI browser header values merely because their names were observed.
 
-`/backend-api/f/conversation/resume` remains a **post-Send continuation/read path**, not a protected-Send bypass.
+## Official no-resend continuation — accepted evidence
 
-## Accepted b45 official resume evidence
+Exact b45 forced-interruption Runtime established official:
 
-Exact b45 Candidate `DEV-send-stream-0.1.0-b45`, source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`, legitimate Artifact `9713774868` is permanently reserved.
+`POST /backend-api/f/conversation/resume`
 
-Accepted:
+with JSON body:
 
-1. uninterrupted original `/backend-api/f/conversation` SSE owns the response through terminal when intact;
-2. clean default-primary new-chat response survived/buffered repeated active-response background/lock including ~126s continuous without resend/refresh;
-3. forced interruption exposed official `POST /backend-api/f/conversation/resume` with JSON body `{conversation_id: string, offset: number}`;
-4. official `/resume` can return HTTP200 `text/event-stream`, repeatedly continue the same response without a second Send, and reach terminal `[DONE]`.
+`{conversation_id: string, offset: number}`
 
-## Exact b46 result
+A successful official resume returns HTTP200 `text/event-stream`, can repeatedly continue the same already-started response without a second Send, and can reach terminal `[DONE]`.
 
-- Candidate `DEV-send-stream-0.1.0-b46`, source `4ab9be3ef2809204e88fcb0d44884e35b43726b1`, legitimate Artifact `9715903443`.
-- Official offset 18 resume returned HTTP200 SSE.
-- Native same-body Cookie+Bearer-only duplicated attempt returned HTTP404 `application/json`, 116 bytes, 0 SSE frames.
-- Later official offset 54 resume returned HTTP200 SSE.
+This is a post-Send continuation/read path, not a protected-Send bypass.
 
-Accepted: official resume Runtime Confirmed; Native duplicated-after-official-success Cookie+Bearer-only parity Runtime Rejected. Missing request context vs cursor/consumer ownership remained unresolved.
+## b46 / b47 Native parity boundary
 
-## Exact b47 identity
+### b46
 
-- Candidate: `DEV-send-stream-0.1.0-b47`
-- Version/build: `0.1.0 (47)`
-- Exact product/config source: `21028bbff7982abeb42f130c56fcb21e6ef44d7a`
-- Push Run / Job: `33259640112` / `99119258573` — success
-- PR Run / Job: `33259642459` / `99119264902` — success
-- Legitimate Push Artifact: `9716878034`
-- Artifact ZIP digest: `sha256:a6915d0a2c48877e8d4d5b7eea966118ad84b321bc1462dafe55c593796e10fc`
-- IPA: `ChatGPTClient-0.1.0-b47-dev-send-stream.ipa`
-- IPA SHA-256: `49d1bd4886310f7761883784f73fc5532fe1a9532773619f0796cd7aab816909`
-- Package identity: Release / `0.1.0 (47)` / source `21028bbff798` / iOS14 minimum / UIDeviceFamily `[1,2]` / arm64.
+- Candidate `DEV-send-stream-0.1.0-b46`
+- exact source `4ab9be3ef2809204e88fcb0d44884e35b43726b1`
+- legitimate Artifact `9715903443`
+- official offset 18 resume -> HTTP200 SSE
+- one Native same-body Cookie+Bearer-only duplicate -> HTTP404 JSON, 116 bytes, 0 SSE frames
+- later official offset 54 resume -> HTTP200 SSE
 
-## b47 exact-device Runtime
+### b47
 
-Uploaded diagnostics metadata exactly matched b47 / Release / iPhone / iOS17.0 / source `21028bbff798`.
+- Candidate `DEV-send-stream-0.1.0-b47`, `0.1.0 (47)`
+- exact product/config source `21028bbff7982abeb42f130c56fcb21e6ef44d7a`
+- Push Run / Job `33259640112` / `99119258573` — success
+- PR Run / Job `33259642459` / `99119264902` — success
+- legitimate Push Artifact `9716878034`
+- Artifact ZIP `sha256:a6915d0a2c48877e8d4d5b7eea966118ad84b321bc1462dafe55c593796e10fc`
+- IPA SHA `49d1bd4886310f7761883784f73fc5532fe1a9532773619f0796cd7aab816909`
+- package identity verified: Release / source `21028bbff798` / iOS14 minimum / `[1,2]` / arm64
 
-Protocol sequence:
+Exact-device Runtime:
 
-- official Web Send observed;
-- official `/resume` with offset 23 first hit a transport error while connectivity was unavailable;
-- immediate official retry at the same offset 23 returned HTTP200 `text/event-stream`;
-- b47 issued exactly one Native parity request with the same in-memory conversation identity + offset 23;
-- transient WebKit-derived cookie/bearer account verification succeeded;
-- Native `/resume` returned **HTTP404 `application/json` after ~707 ms, 116 bytes, 0 SSE frames**;
-- rejection JSON structure was `{"detail":{"code":"string","message":"string"}}` only; response text was not captured;
-- later official Web successfully resumed again at progressed offset 74 with HTTP200 SSE;
-- no second Native parity attempt occurred.
+- official offset 23 resume first hit transport error while offline, then official retry at offset 23 returned HTTP200 SSE;
+- b47 issued exactly one Native same-body duplicate;
+- transient auth/account verification succeeded;
+- Native `/resume` again returned HTTP404 `application/json`, ~707ms, 116 bytes, 0 SSE frames;
+- rejection JSON shape: `{"detail":{"code":"string","message":"string"}}`;
+- later official offset 74 resume returned HTTP200 SSE;
+- no Native retry occurred.
 
-Official successful resume request header names:
+Official successful resume request header names include `authorization`, OAI client/session/route names and `x-conduit-token`; Native explicitly set only `accept, content-type` plus the existing transient bearer injection and WebKit-derived ephemeral cookies. This proves a structural difference, not a required header subset.
 
-`accept, authorization, content-type, oai-client-build-number, oai-client-version, oai-device-id, oai-echo-logs, oai-language, oai-session-id, x-conduit-token, x-oai-is-client-observation, x-oai-is-pending-updates, x-oai-turn-trace-id, x-openai-target-path, x-openai-target-route`
+Native first/exclusive resume remains Unknown / Unverified. Do not allocate b48 merely to copy headers or chase this 404 while the production Send surface is unresolved.
 
-Native request explicitly set only `accept, content-type`, plus the established transient bearer injection and WebKit-derived ephemeral cookies.
+Detailed Runtime evidence:
 
-Accepted: the structural context difference is large, but b47 still does **not** identify which header(s), if any, are required. Do not copy browser values based only on name presence.
-
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b47-runtime.md`.
+- `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b46-runtime.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b47-runtime.md`
 
 ## b47 diagnostics defect
 
-`safeErrorTokens` was exported as `<redacted>` because current `DiagnosticsSanitizer.secretFragments` redacts every field key containing `token`. Therefore b47 failed to preserve the intended safe code/type/status token values even though the JSON body shape was captured.
+The intended safe code/type/status field was named `safeErrorTokens`; `DiagnosticsSanitizer` redacts every field key containing `token`, so these safe values were exported as `<redacted>`. Correcting this deterministic naming defect would require b48+ because b47 is reserved. It is not currently important enough to allocate b48 before the architecture gate is resolved.
 
-This is a deterministic diagnostic naming defect. Since b47 Artifact identity is emitted/reserved, correcting it would require b48+. No b48 is allocated yet.
+## Full-Web Send-surface viability evidence
 
-## New P0 product viability evidence — long Web conversation composer freeze
+### Current exact-device b47 preparation
 
-The user could not use the intended older long conversation for the b47 test. The conversation had only about three rounds, but the answers were long. On the target iPhone/iOS17 environment, repeatedly trying to bring up/use the mobile-Web composer caused the page to freeze and made the conversation unusable for the test. The user therefore used a new conversation.
+The intended older test conversation had only about three rounds but long answers. On the target iPhone/iOS17 device, repeatedly trying to bring up/use the mobile-Web composer froze the page badly enough that the user could not use that conversation for the protocol test and switched to a new conversation.
 
-Evidence classification:
+The b47 export covers the replacement new-conversation run, so the internal freeze owner remains Unknown / Unverified. Product impact is direct: a route that requires entering/rendering the real full Web conversation before every protected Send can fail **before Send initiation**, which Native post-Send handoff cannot repair.
 
-- **Runtime/manual exact-device usability failure: Yes.**
-- Internal root cause: **Unknown / Unverified** because the exported b47 diagnostics were captured from the replacement new-conversation run and do not contain the failed long-conversation Web attempt.
-- Product impact: **P0 architecture viability risk.** A flow that requires entering/rendering the real full Web conversation before each protected Send can fail before Send initiation. Native post-Send handoff cannot repair a Web composer that never becomes usable enough to send.
+### Prior user product experiment — DOM pruning does not rescue the full page
 
-This materially weakens the prior b43 conclusion that visible Web was smooth enough: b43 remains valid only for its tested shorter-sequence scope, not as proof of long-conversation daily-use viability.
+The user previously built another IPA that wrapped ChatGPT Web and injected a Tampermonkey-style userscript to reduce long-conversation cost. The script made older turns invisible and kept roughly only the latest two rounds visible.
 
-## Current architecture gate
+User result:
 
-The previous target was:
+- the full Web experience still felt poor;
+- opening the `+` attachment entry still had noticeable lag;
+- the approach was ultimately abandoned.
 
-`Native history/presentation -> user-visible official full Web conversation performs protected Send -> Native attaches/resumes to the same already-started response.`
+Evidence classification: prior-project real-device/product experience supplied explicitly by the user, **not** current b47 Candidate Runtime. It does not identify the internal performance owner, but it is sufficient to reject one concrete mitigation: **loading the full conversation and merely hiding/pruning old visible DOM is not an accepted production solution.**
 
-After the new long-conversation Runtime result, **do not continue this form into production integration or allocate b48 merely to chase resume headers.** The Send surface itself now has a demonstrated exact-device failure mode before the Native handoff point.
+Detailed record: `docs/project/runtime-evidence/DEV-send-stream-full-web-pruning-history.md`.
 
-Potential next directions remain Unknown / unselected and must not be guessed:
+## Current architecture conclusion
 
-1. determine whether an official supported **lightweight visible send-only** Web surface exists that does not render the full conversation history;
-2. determine whether another legitimate account-compatible protected-Send boundary can avoid full mobile-Web conversation rendering without hidden Web/DOM automation or challenge bypass;
-3. if neither exists, treat the visible-Web architecture as a diagnostic/fallback ceiling rather than the production daily-chat architecture.
+The following is no longer an accepted production target:
 
-Choosing between these product directions is now a real Human Architecture Gate.
+`Native history -> full official Web existing conversation for every Send -> Native post-Send resume`
+
+Also rejected as a performance fix:
+
+`load the same full Web conversation -> userscript/CSS hides most history -> use its composer`
+
+A future `lightweight visible send-only` direction is worth pursuing only if it is **structurally lightweight before existing-conversation rendering**, not the same full ChatGPT page with most history hidden after load.
+
+Current public research found no official documented existing-conversation lightweight send-only route. `chatgpt.com/?q=...`-style behavior can be observed around home/new-chat prompt prefill, but current official/public evidence does not establish it as a supported way to continue an existing `/c/<id>` thread. Do not promote it into production from third-party observations.
+
+## Human Architecture Gate
+
+Product-code advancement is paused. **No b48 Candidate is allocated.**
+
+Evidence-backed choices that remain:
+
+1. investigate whether OpenAI exposes an official supported visible send-only surface that can continue an existing conversation without loading the full conversation-history application state;
+2. investigate another legitimate account-compatible protected-Send boundary that avoids full existing-conversation Web rendering without hidden DOM automation or challenge bypass;
+3. if neither exists, classify visible full Web as diagnostic/fallback only and accept that current constraints do not yet provide a production ChatGPT-account Send path for existing conversations.
+
+The user's latest evidence already rejects “full page + DOM pruning” as option 1.
 
 ## Evidence ladder
 
 - b47 Code written: Yes
-- b47 CI passed: Yes
-- b47 Artifact produced: Yes
-- b47 package identity verified: Yes
-- b47 Runtime/manual/real-device: **Yes**
-- b47 Native duplicated resume parity: **Rejected — HTTP404 JSON**
-- b47 long-conversation visible-Web composer viability: **Failed on exact target device for the reported long-conversation workload**
+- b47 CI: Passed
+- b47 Artifact: Produced
+- b47 package identity: Verified
+- b47 Runtime/manual: Completed
+- official no-resend resume: Runtime Confirmed
+- Native duplicated resume: Runtime Rejected with HTTP404 JSON
+- full existing-conversation Web composer viability: Failed for the reported exact-device long-answer workload
+- full-Web userscript/DOM-pruning mitigation: Prior user experiment rejected for UX / `+` lag
 - Native first/exclusive resume: Unknown / Unverified
-- Required browser/client header subset: Unknown / Unverified
-- Lightweight supported visible-Web send-only route: Unknown / Unverified
+- required browser/client header subset: Unknown / Unverified
+- official existing-thread lightweight visible Send surface: Unknown / Unverified
 - Native incremental response ownership/reasoning/follow-tail/background lifecycle: Unknown / Unverified
 - Phase 9 Stable/Frozen: No
 
-## Non-atomic recovery point
+## Completed durable-doc state
 
-Current reusable product identity remains exact b47 source `21028bbff7982abeb42f130c56fcb21e6ef44d7a`; do not rebuild or modify b47 product code.
+Current b47 Runtime / TD-028 architecture gate has already been propagated to:
 
-Completed this turn:
+- `PROJECT_STATE.md`
+- `MODULE_STATUS.md`
+- `PROJECT_PROFILE.md`
+- `TECHNICAL_DECISIONS.md`
+- `PROJECT_SPECIFIC_RULES.md`
+- `DEVELOPMENT_PLAN.md`
+- `BUILD_TEST_INDEX.md`
+- PR #29
+- b47 Runtime evidence
 
-- latest governance reread;
-- Full Resume Guard;
-- exact b47 diagnostics interpretation;
-- new `runtime-evidence/DEV-send-stream-b47-runtime.md`;
-- architecture viability conclusion established.
-
-Pending docs-only maintenance:
-
-- refresh `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, `DEVELOPMENT_PLAN.md`, `BUILD_TEST_INDEX.md` and PR #29 to the b47/architecture-gate truth.
-
-Recovery must perform only missing docs/PR writes and must not touch b47 product identity.
+The newest prior DOM-pruning evidence is recorded separately in `runtime-evidence/DEV-send-stream-full-web-pruning-history.md`. Exact b47 product source remains immutable.
 
 ## Next exact action
 
-Finish the docs/PR evidence batch. Then stop product-code advancement at the Human Architecture Gate: do not allocate b48 until the product Send boundary is deliberately selected from evidence. If the current visible-full-Web path is retained only as fallback/diagnostic, record that explicitly before any later Candidate.
+Do **not** start b48 or resume-header product work. Continue evidence research only on the production protected-Send boundary, with the first question being whether a structurally lightweight **official, visible, existing-conversation** Send surface exists. If current evidence cannot establish one, report that constraint explicitly rather than manufacturing one from DOM injection, unsupported URL parameters or browser-header replay.

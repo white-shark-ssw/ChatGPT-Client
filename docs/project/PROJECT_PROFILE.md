@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-29 through exact b44 integrated-hybrid Runtime rejection and reopened Send architecture gate.**
+**Initialized — 2026-08-25; refreshed 2026-08-29 through b44 Runtime rejection plus existing-account background-resilience gate.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -13,6 +13,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Purpose**: native third-party ChatGPT client for iOS. Stable product value remains the native shell/read/navigation experience. ChatGPT-account Send is constrained by TD-023/TD-024/TD-025: pure-native account-session Send is browser-challenge blocked; a user-visible official-Web Send surface is permitted, but b44 proved the full-page Native -> Web -> Native form is not acceptable final UX.
 - **Primary distribution**: TrollStore IPA.
 - **Primary tested runtime**: iPhone 15 Pro Max / iOS17.0; lower iOS compatibility preferred where practical.
+- **Current product constraint**: user explicitly rejects a separately billed/supported API-product architecture. Existing ChatGPT-account/history continuity remains the only Send direction under evaluation; if its Web-assisted path cannot meet background resilience requirements, Send should be deferred rather than moved to API or hidden Web automation.
 
 ## Technology stack
 
@@ -34,6 +35,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Conversation presentation owner**: `ConversationDetailViewController` for viewport/history/round presentation.
 - **Message presentation geometry**: `ConversationMessagePresentationProjection` + `ConversationMessageCell`; ephemeral deterministic bounded-chunk geometry accepted in b37/b38.
 - **Diagnostics**: `DiagnosticsLogger`; hybrid fields are privacy-safe route class / targetMatch / timing only.
+- **Hybrid background gate owner**: `docs/project/HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md` supplements `BACKGROUND_EXECUTION_PLAN.md` for visible-Web Send survival/recovery on TrollStore.
 - **Test roots**: no XCTest/UI-test target yet.
 
 ## Build / CI / package identity
@@ -67,7 +69,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - User exact-device result: **“没问题了”**.
 - Accepted architecture: bounded long-message chunks + deterministic row geometry/manual cell layout + continuous O(1)-target round animation.
 
-## Phase 9 security / transport evidence
+## Phase 9 security / architecture evidence
 
 - Exact b42 source `e8946e48a0b5ad86b402faf5eabba627e3393adf`, legitimate Artifact `9709824510`.
 - Runtime: PoW, Turnstile and `so` required, with non-empty PoW + Turnstile finalize submissions before successful Send.
@@ -90,23 +92,27 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - PR Run `33245107290`, success.
 - Artifact `9712583513`; ZIP `sha256:33ba4a99fe933241ce8023e811f15d55dfa0d95cac2693f039bb6138d813face`.
 - IPA `ChatGPTClient-0.1.0-b44-dev-send-stream.ipa`; SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
-- Independent package inspection: Candidate b44, `0.1.0 (44)`, source `f1503cf71215`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, arm64.
 - Product flow trial: Native detail -> `发送消息…` -> visible Web `/c/<conversation-id>` -> Send -> explicit `返回并同步` -> Native detail.
 - Exact-device Runtime proved tested A/B native IDs mapped to corresponding Web conversations.
 - Immediate `返回并同步`/Native Sync could show the just-sent user message while assistant output already visible in Web remained absent from Native; a later Sync after waiting could expose the answer.
 - No stable readiness signal/delay was established. Do not add automatic polling/timer/retry to guess readiness.
 - User explicitly rejected the b44 full-page Native -> Web -> Native UX because it duplicates conversation loading and leaves actual interaction fundamentally Web-driven.
-- **b44 classification**: Code/CI/Artifact/package identity passed; route/mapping/reconciliation Runtime observations accepted; integrated full-page product UX rejected; Stable/Frozen No.
 
-## Current Send architecture gate — TD-025
+## Current Phase 9 gate
 
-No b45 is allocated. `DEV-send-stream` is blocked pending an explicit product architecture choice:
+No b45 is allocated.
 
-1. **Existing-account compromise**: Native list/history/read/navigation + an **explicitly visible embedded official-Web composer/live-response panel** directly operated by the user. This may remove b44's full-page browser-like transition but does not make Send/stream fully Native.
-2. **Truly Native supported API product**: separate officially supported API authentication/billing, then Native composer/stream/attachments. Do not claim this is the same ChatGPT subscription/session/history without explicit supported evidence.
-3. **Defer ChatGPT-account Send** until a supported account transport exists that does not require browser-owned challenge output.
+The supported API product path is explicitly rejected by the user. The only active Send direction is an **existing-account visible-Web-assisted architecture**, and it is conditional on the background-resilience gate.
 
-The user's proposed fully covered Web + Native text field forwarding into Web is not currently accepted: under current evidence it requires DOM/JS/input automation of a hidden/covered protected Web Send surface, which violates TD-023/TD-024/TD-025.
+Hard requirement:
+
+- long reasoning / streamed reasoning-output / final-answer generation must not routinely disconnect or require manual refresh merely because the app was backgrounded/locked for a while.
+
+Public UIKit background time is finite and cannot provide a long-duration guarantee. Because this is a TrollStore product, the next useful feasibility work is to prove whether a narrowly scoped true-background mechanism preserves the relevant WebKit page/process/network execution or permits deterministic one-shot foreground recovery after a known lifecycle interruption.
+
+See `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`.
+
+If that matrix is No-go, defer ChatGPT-account Send rather than using API or hidden/shadow Web automation.
 
 ## Attachment boundary
 
@@ -121,6 +127,7 @@ The user's proposed fully covered Web + Native text field forwarding into Web is
 - b42 remains security/transport evidence, not native Send acceptance.
 - b43 is visible-Web feasibility/smoothness evidence with recorded video-picker limitation.
 - b44 is accepted only for its exact Runtime observations; its integrated product form is rejected.
+- main-app process survival does not prove WebKit/WebContent/network stream survival.
 - iOS17 does not prove lower iOS or iPad; non-personal workspace/account switch and native attachment handoff remain conditional/Unverified.
 - CI/Artifact success is never Runtime proof.
 

@@ -7,7 +7,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Product goal remains an **iOS native ChatGPT client shell/read experience**, with one explicit Phase 9 exception recorded by TD-024: ChatGPT-account Send may use a **user-visible official ChatGPT Web surface** because exact b42 Runtime proved the pure-native account-session Send path depends on browser anti-abuse challenge output.
 - The hybrid Send surface is not pure-native Send and must never be described as such.
 - TD-025 records a second boundary: exact b44 Runtime rejected the full-page Native -> Web -> Native interaction as final product UX. Do not treat a structurally working hybrid route as an accepted product merely because Send succeeds.
-- TD-026 records the current product gate: the user explicitly rejects the separate API-product route, and any remaining existing-account visible-Web Send architecture must survive normal background/lock usage or transparently recover without routine manual refresh.
+- TD-026 remains a hard product requirement: long reasoning/streaming must not routinely fail after background/lock and require manual refresh.
+- The user explicitly rejects the separately supported/billed API-product route for this client unless that decision is later reversed.
+- Current Phase-9 target is **user-visible official Web legal Send only -> Native no-resend same-response continuation if and only if current Runtime evidence proves such a continuation path**.
 - Previous-project history is reference-only, not current protocol authority.
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
@@ -27,28 +29,30 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Do not use `navigationItem.prompt` for ordinary conversation-list refresh/cache status. b29 Runtime accepts removal of the prompt-induced blank/top-inset growth for the tested right-top refresh path.
 - Do not assign attributed/text titles to `UIRefreshControl`, and do not reintroduce b27 contentOffset/top-normalization compensation.
 
-## User-visible hybrid Web Send contract
+## User-visible hybrid Web Send / realtime handoff contract
 
-- The user selected the Option-2 architecture after b42: native shell/read/navigation + **user-visible official ChatGPT Web Send**. TD-025 and TD-026 now narrow that permission after exact b44 Runtime and the user's background-resilience requirement.
-- The Web surface must be visibly presented as a user's real interaction surface. It must never become a hidden/shadow WebView used only to execute browser anti-abuse challenge + Send under a Native facade.
+- The user selected the Option-2 architecture after b42: native shell/read/navigation + **user-visible official ChatGPT Web Send**. b44 later rejected the full-page form; b45 now investigates whether Web can be reduced to Send initiation while Native owns the same response.
+- The Web surface must be visibly presented as a user's real interaction surface when it performs protected Send. It must never become a hidden/shadow WebView used only to execute browser anti-abuse challenge + Send under a Native facade.
 - Use the existing default persistent `WKWebsiteDataStore`; do not add another persistent credential/challenge store.
 - `ConversationRepository` remains sole native conversation/list/detail/recovery authority. `AuthSessionStore` remains native auth/account authority. A visible Web surface owns only its own official Web session/Send interaction while presented and does not become a second native repository.
 - b43 established that one process-resident visible Web controller/WebView can meet the tested iPhone/iOS17 smoothness/residency baseline: entry/re-entry, keyboard/typing, Send/stream scrolling and rapid scrolling had no material reported problem; Web `+` -> picker was roughly 100–200 ms.
 - b43's standalone Settings Web-chat form was not accepted as the final product interaction.
 - b44 established tested `/c/<conversation-id>` A/B mapping and explicit Native reconciliation, but the full-page Native -> Web -> Native flow is **product-rejected**. Immediate `返回并同步`/Native Sync could expose the user message while assistant output already visible in Web remained absent until a later Sync; no stable readiness signal/delay was established.
-- Do not patch b44's eventual-read visibility with arbitrary delay, timer, polling or automatic repeated Sync. The current evidence supports an architecture mismatch, not a delay constant.
+- Do not patch b44's eventual-read visibility with arbitrary delay, timer, polling or automatic repeated Sync.
+- Exact b45 first Runtime established that an uninterrupted official-Web response keeps the original `POST /backend-api/f/conversation` `fetch` SSE through `message_stream_complete` / `[DONE]`; `resume_conversation_token` appears very early; one observed `GET /backend-api/conversation/{id}/stream_status` returned JSON `{status:string}` structure only.
+- **Do not infer a Native continuation API from the token name.** The b45 capture did not show official Web using that token to open a second response stream, and `stream_status` was not a continuation stream in the captured path.
+- Absence of a secondary stream during an uninterrupted response is not proof that no reconnect path exists. The next evidence step must deliberately interrupt an active original stream and observe official-page behavior; exact b45 already has the needed instrumentation, so no b46 is required merely to collect that traffic.
+- The b45 second captured Send contained `conversation_mode.gizmo_id`; it is not a clean default-primary new-chat sample. Default-primary evidence must remain explicit.
 - Do not continuously observe the DOM, scrape prompt/answer/reasoning text, mirror Web message state into native state, capture challenge/token values, or replay browser proof output.
 - Do not implement a Native composer that secretly injects text into a fully covered/hidden Web DOM/contenteditable and triggers synthetic hidden Send clicks. Under current evidence this would turn Web into hidden/shadow protected transport and violates TD-023/TD-024/TD-025.
-- The user explicitly rejects the separately supported/billed API-product route for this client. Do not keep it as an active implementation alternative unless the user later reverses that decision.
-- The only active non-deferred Send direction is **Native read/history + an explicitly visible official-Web composer/live-response surface directly operated by the user**, and it is conditional on TD-026 background acceptance.
-- Before polishing that UI, exact-device background testing must establish that long reasoning/streaming either stays alive across the user's normal background/lock habit or transparently recovers from a known lifecycle interruption on foreground without prompt resend and without routine manual refresh.
+- Native no-resend continuation may be implemented only after exact official Runtime traffic exposes the concrete continuation request/transport/identity structure. Never guess a resume/handoff/turn-stream endpoint.
+- Background resilience remains a hard gate, but ownership ordering matters: if Native handoff is proven, later background work protects Native response lifecycle; otherwise WebKit true-background belongs only to the fallback visible-Web architecture.
+- The next b45 evidence run may background/lock for roughly 20–30 seconds **while output is visibly still streaming** to force official reconnect behavior. This is a protocol-evidence trigger, not yet the full long-background product acceptance matrix.
 - `beginBackgroundTask` is a finite public baseline only. It must not be presented as a long-duration guarantee.
 - Main-app process survival is not sufficient proof; distinguish WebContent process, WebKit network/process and actual official-Web stream survival.
-- Do not create a fake `isWebStreaming` authority from UI text, timer inference or DOM scraping. Until a supported response terminal signal exists, a background feasibility experiment may conservatively preserve the process for the entire background interval when the visible Send surface was active at background entry.
-- For a **known** preservation loss or observed WebKit process/navigation failure, one foreground same-conversation recovery/reload is allowed if it does not resend/regenerate. No timer/poll/retry chain and no repeated automatic Native Sync.
+- Do not create a fake `isWebStreaming` authority from UI text, timer inference or DOM scraping.
 - Attachment `+` remains a hard UX gate. Exact b43 Web `+` latency ~100–200 ms was not rejected, but the Web Photos chooser filtered videos.
 - Public WebKit upload-panel replacement via `WKUIDelegate.runOpenPanelWith...` is iOS18.4+, not the primary iOS17 target. Do not use private WebKit or DOM/file-input injection to fake a photo+video picker fix. iOS17 video attachment support requires separately evidenced native attachment upload/handoff.
-- No polished embedded-Web b45 Candidate may be allocated before the background-resilience experiment is explicitly authorized and its required branch/state-owner/candidate preflight is complete.
 
 ## Conversation metadata / Preferences contract
 
@@ -107,8 +111,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Once a Candidate/Artifact identity has been produced, do not rebuild corrected product code under that same identity.
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
 - `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch.
-- Exact b24-b44 identities and emitted artifacts are permanently reserved. The accidental newer-code Artifact `9710515489` carrying b42 identity is permanently rejected and must never be installed; legitimate b42 remains Artifact `9709824510`.
-- No new Send/background Candidate may be allocated until the background feasibility experiment is explicitly authorized and its normal parallel/dependency/conflict/candidate preflight completes.
+- Exact b24-b45 identities and emitted artifacts are permanently reserved. The accidental newer-code Artifact `9710515489` carrying b42 identity is permanently rejected and must never be installed; legitimate b42 remains Artifact `9709824510`.
+- Exact b45 product/config source remains `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`. Reuse the same installed b45 for further observation-only Runtime captures; any corrected product code requires b46+.
+- Do not allocate b46 merely to probe a condition that exact b45 already instruments. Allocate a new Candidate only after fresh branch/state-owner/conflict preflight and concrete evidence-backed product/protocol code scope.
 
 ## Manual recovery contract
 
@@ -162,12 +167,14 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `ProtocolReadProbe` remains diagnostic-only; `ConversationRepository` remains native production authority.
 - b40-b42 private Send observations remain protocol evidence and do not authorize native replay around browser protections.
 - b44 public-Web `/c/<id>` mapping Runtime evidence does not make the private Send challenge flow a native-supported transport.
+- b45 first Runtime proves only the observed normal path: original `/f/conversation` SSE to DONE, early `resume_conversation_token`, status-only `stream_status`, and no secondary active-response stream. It does not authorize token replay or a guessed continuation endpoint.
+- Official reconnect behavior must be observed under a real active-response interruption before any Native parity implementation.
 
 ## Diagnostics / logging contract
 
 - Use existing `DiagnosticsLogger` authority.
 - Never log/export passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts, raw payloads, Sentinel/Turnstile/PoW values or Web prompt/answer text.
-- Hybrid `webSend` diagnostics may record safe presentation/reuse/navigation timing, destination class/host, background-preservation state and failure class only.
+- Hybrid/hand-off diagnostics may record safe route/transport/status/header-name/query-name/structural identity presence/timing only; resume/proof/challenge values remain redacted.
 - Background diagnostics may record app lifecycle, public background-task begin/end/expiration, safe Web process/navigation failure class and foreground recovery reason. No heartbeat timer merely to manufacture activity.
 - Multi-conversation correlation uses privacy-safe hashes/counts/generations.
 - Cache diagnostics may record schema/hit/age/count/duration/scope hash/decision only.
@@ -188,8 +195,8 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Existing-account visible-Web Send additionally follows `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md` and TD-026.
 - Public `beginBackgroundTask` is a finite short-duration baseline only; do not promise long foreground-equivalent execution from it.
 - A visible hybrid Web surface does not establish a native response owner, and main-app process survival does not prove WebKit WebContent/network/stream survival.
-- The first hybrid background experiment may preserve the process for the whole background interval when the visible Send surface was active at background entry because no supported Web terminal signal is currently available to Native without prohibited DOM observation.
-- Normal success resumes the same live Web page without forced reload. A **known** preservation/process failure may trigger one foreground same-conversation recovery without prompt resend; no timer/poll/retry chain.
+- The current short active-stream b45 interruption capture is only to reveal official reconnect behavior. Full background acceptance still requires its own exact-device matrix after the response owner is known.
+- Normal success resumes the same live Web page without forced reload. A **known** preservation/process failure may trigger one foreground same-conversation recovery without prompt resend only when the architecture/evidence supports it; no timer/poll/retry chain.
 - Native iOS / TrollStore IPA; intended ceiling iOS17; current build minimum iOS14; current real-device evidence primarily iPhone/iOS17.
 
 ## Repository governance contract
@@ -199,7 +206,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source, and final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint's batch recovery point and never replay already-confirmed Candidate writes blindly.
-- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; b43/b44 exact sources remain immutable historical test authorities, and no b45 exists while the background gate is unresolved.
+- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; exact b45 product authority is `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`, and later docs-only commits do not redefine it.
 
 ## Critical invariants / prohibited routes
 

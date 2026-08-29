@@ -94,13 +94,25 @@ Its source contains substantial Codex client-identity handling:
 
 `openai_codex_identity.go` explicitly says upstream behavior can depend on client identity/version and that the gateway defaults to enforcing a canonical Codex identity. `openai_codex_fingerprint.go` contains optional identity-convergence logic for shared OAuth accounts.
 
-Sub2API's README also warns users about upstream Terms-of-Service/account-risk concerns generally.
+Sub2API's README explicitly warns about Terms-of-Service and account-ban/service-interruption risk. Recent repository issues also contain community reports of OpenAI accounts being banned while used with this ecosystem, including reports around multi-account/high-concurrency use. Those reports are anecdotal and do **not** prove Sub2API itself caused the bans, but they are sufficient to treat account safety as a real unresolved risk rather than a theoretical one.
+
+Current OpenAI public documentation confirms that Codex itself is included in ChatGPT plans and can be accessed by signing in with a ChatGPT account. That establishes normal first-party Codex use, but it does **not** establish that repackaging ChatGPT/Codex subscription entitlement as an arbitrary third-party Responses client or gateway is an officially supported consumer contract. OpenAI's current Terms of Use also prohibit bypassing rate limits/restrictions/protective measures and certain reverse-engineering/programmatic extraction behavior.
 
 Therefore this source is highly valuable architectural/protocol evidence, but **it is not evidence that arbitrary third-party native use of the Codex internal endpoint is an officially supported ChatGPT consumer-client contract**.
 
+### Primary-account safety gate
+
+The user has explicitly raised concern about account suspension/ban risk. Treat this as an active product constraint:
+
+- **Do not use the user's primary ChatGPT account for Sub2API-style Codex OAuth / subscription-to-Responses feasibility requests.**
+- Do not allocate a Candidate that performs such requests on the primary account unless the user later explicitly accepts that account-risk experiment.
+- Static source research and protocol comparison may continue.
+- First-party Codex use through official OpenAI clients is not the same risk class as reproducing/internalizing Sub2API's gateway behavior.
+- Do not copy Sub2API fingerprint-convergence or client-identity mimicry into ChatGPT Client as a workaround.
+
 ## Relevance to DEV-send-stream
 
-This research materially changes the architecture search space.
+This research materially changes the architecture search space, but account-risk currently blocks primary-account Runtime validation.
 
 Potential architecture, **not yet accepted**:
 
@@ -115,12 +127,12 @@ Potential benefits if independently validated:
 
 Unresolved P0 questions:
 
-1. Can the user's existing ChatGPT subscription/account obtain/use this Codex OAuth entitlement on the target device/account?
-2. Can a minimal client use the OAuth/Codex transport without relying on prohibited browser/challenge bypass or unjustified client-identity spoofing?
-3. What exact request identity/header/body subset is genuinely required for a single-user native client?
-4. Do Codex Responses threads appear in, or map to, ordinary ChatGPT consumer conversation history? Current source evidence does not establish this.
-5. If history is separate, can the product accept a split where existing ChatGPT history remains read-only while new native conversations use Codex Responses? This is a product decision, not a technical assumption.
-6. What reasoning/attachments/tools/background semantics are available on the exact account and target iOS environment?
+1. Can a minimal single-user client use this transport without account-risk behaviors such as unsupported client-identity mimicry?
+2. What exact request identity/header/body subset is genuinely required by the supported first-party Codex contract versus Sub2API-specific gateway compatibility?
+3. Do Codex Responses threads appear in, or map to, ordinary ChatGPT consumer conversation history? Current source evidence does not establish this.
+4. If history is separate, can the product accept a split where existing ChatGPT history remains read-only while new native conversations use Codex Responses? This is a product decision, not a technical assumption.
+5. What reasoning/attachments/tools/background semantics are available through documented/first-party Codex surfaces?
+6. Is there any officially supported path for third-party native integration that preserves ChatGPT subscription billing and avoids private/internal endpoint reliance? Currently Unknown / Unverified.
 
 ## Decision boundary
 
@@ -128,4 +140,4 @@ Do not copy Sub2API's fingerprint/identity-mimicry machinery into ChatGPT Client
 
 Do not allocate product Candidate b48 solely from this external source research.
 
-The next evidence step, if the user wants to pursue this route, should be a **minimal diagnostic feasibility experiment** that validates the user's own account's Codex OAuth entitlement and a single safe Responses request without integrating production conversation state. Candidate identity must be newly allocated only after the current Human Architecture Gate is deliberately resolved in favor of this experiment.
+Because primary-account safety is now a hard constraint, the next evidence step is **static research only** unless the user later explicitly authorizes a risk-bearing experiment on a non-critical account or otherwise changes this gate. Research should focus on documented/first-party Codex auth/transport behavior, consumer-history relationship, and whether any officially supported third-party integration exists.

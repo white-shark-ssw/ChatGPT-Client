@@ -2,208 +2,125 @@
 
 ## Status
 
-**Active — Phase 9 is at a Human Architecture Gate. Official no-resend `/resume` is Runtime Confirmed; b46/b47 Native duplicated parity remains HTTP404; full existing-conversation Web is not accepted as a production Send dependency. External Sub2API source research opened a distinct subscription-backed Codex OAuth/Responses route, but primary-account Runtime is now blocked by an explicit account-safety gate.**
+**Active — b48 diagnostic experiment allocated. Long-term TD-024/TD-025 hidden/shadow-Web boundary is intentionally NOT changed yet. The user's latest explicit requirement authorizes one isolated Runtime experiment to determine whether a Native composer can drive the official Web Send machinery while assistant SSE text is intercepted before Web React/DOM rendering.**
 
 - **Work ID**: `DEV-send-stream`
-- **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream / Codex OAuth / sub2api`
+- **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream / Native composer / Web Send engine`
 - **Branch**: `dev/send-stream-20260829`
 - **PR**: #29 — open / mergeable / not merged; evidence branch only.
+- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
+- **Head before this checkpoint batch**: `ae39bbf6fc0aac893eb0427c7846f7f94991c8b2`.
 - **Stable native predecessor**: b38.
-- **Original feature base**: `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; target-only delta is repository governance, with no current product/state-owner conflict established.
 - **Exact b47 product/config source**: `21028bbff7982abeb42f130c56fcb21e6ef44d7a`.
+- **b47 Runtime Artifact**: `9716878034`; b47 remains immutable/reserved.
+- **Allocated diagnostic Candidate**: `DEV-send-stream-0.1.0-b48`, version/build `0.1.0 (48)`.
 - **Stable/Frozen Send**: No.
 
-## Governance / identity
+## Resume guard / conflict state
 
-Latest repository `AGENTS.md` and `docs/project/START_HERE.md` were reread before the current architecture research. The most recent Full Resume Guard verified branch / PR / b47 Candidate / Artifact / target main / Active-task uniqueness. Later work in this conversation is docs/evidence-only and has not altered exact b47 product source.
+Current-session Light Resume Guard revalidated before b48 allocation:
 
-No b48 Candidate is allocated.
+- latest repository `AGENTS.md` and `docs/project/START_HERE.md` reread;
+- selected task uniquely remains `DEV-send-stream`;
+- branch exists and was at `ae39bbf6fc0aac893eb0427c7846f7f94991c8b2`;
+- PR #29 is open / mergeable / not merged and points to this branch;
+- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
+- `docs/project/current/dev/` contains no other Active development checkpoint;
+- repository search found no existing `DEV-send-stream-0.1.0-b48` / `b48` allocation;
+- b47 exact product source has not been redefined by later docs-only work.
 
-## Security boundary retained
+## Accepted prior evidence that constrains b48
 
-Exact b42 still proves ordinary ChatGPT consumer protected Send through `/backend-api/f/conversation` requires browser anti-abuse challenge output on the tested path. The separate supported/billed OpenAI API-key product route remains explicitly rejected by the user.
+1. Exact b42 proved ordinary ChatGPT consumer protected Send through `/backend-api/f/conversation` requires browser-owned anti-abuse challenge output on the tested account/device path. b48 does **not** solve/replay/harvest Sentinel, Turnstile, PoW or Conduit values.
+2. Exact b40 established ordinary Send as HTTP200 SSE and text patch structure including append `/message/content/parts/0`, plus status/end-turn/metadata lifecycle patches.
+3. Exact b45 established official no-resend `POST /backend-api/f/conversation/resume` with `{conversation_id, offset}` and HTTP200 SSE.
+4. b46/b47 Native duplicated Cookie+Bearer-only resume returned HTTP404 after official Web had already resumed. Native first/exclusive resume remains Unknown.
+5. Exact-device long-answer Web composer use failed badly enough before b47 testing that the user switched to a new conversation.
+6. The user's earlier wrapped-Web/userscript experiment already showed that loading the full conversation then merely hiding all but about two visible rounds did not make the Web `+`/overall interaction acceptable.
+7. Sub2API/Codex OAuth remains static research only; primary-account Runtime is blocked by the user's account-safety concern.
 
-Still prohibited unless a later explicit rule change is made from evidence:
+## Long-term boundary vs this diagnostic exception
 
-- Sentinel / Turnstile / PoW solver, bypass or captured-proof replay;
-- guessed alternate protected-Send endpoints;
-- hidden/shadow protected Web Send;
-- Native text injection into a covered Web composer;
-- synthetic hidden Web Send clicks;
-- DOM answer/reasoning scraping;
-- hidden file-input injection;
-- copying `x-conduit-token` or OAI browser header values merely because their names were observed.
+The durable production rule still rejects hidden/shadow protected Web Send, Native DOM composer injection and synthetic hidden clicks. **Do not edit TD-024/TD-025/PROJECT_SPECIFIC_RULES merely because this experiment exists.**
 
-## Official no-resend continuation — accepted evidence
+The user's latest explicit decision is narrower: try one isolated version first, measure real-device behavior, and only reconsider the durable boundary if the result is good. Therefore b48 is evidence acquisition, not production acceptance.
 
-Exact b45 forced-interruption Runtime established official:
+b48 must not:
 
-`POST /backend-api/f/conversation/resume`
+- copy/replay challenge/proof/Conduit/OAI header values;
+- construct a Native `/f/conversation` protected Send;
+- integrate streamed text into `ConversationRepository`;
+- persist prompt/answer/reasoning text in diagnostics;
+- add retry/timer/watchdog/fallback machinery;
+- implement attachments;
+- claim existing long-conversation performance is solved;
+- change the durable hidden/shadow-Web decision before Runtime.
 
-with JSON body:
+## b48 exact diagnostic scope
 
-`{conversation_id: string, offset: number}`
+Build a separate diagnostic controller, initially **new-chat focused**, with:
 
-A successful official resume returns HTTP200 `text/event-stream`, can repeatedly continue the same already-started response without a second Send, and can reach terminal `[DONE]`.
+- a full-size official `WKWebView` using the existing default persistent `WKWebsiteDataStore`, kept behind an opaque Native surface so Web layout still has normal iPhone dimensions;
+- a Native text composer and Native Send button as the only normal user input surface;
+- one document-start script that finds the official Web composer at runtime, transfers the current Native text into its real editable state and invokes the page's own submit path;
+- the official page remains responsible for its own protected Send/challenge flow;
+- a `window.fetch` wrapper on `/backend-api/f/conversation` that consumes the returned SSE before React, forwards raw assistant text deltas to Native **in memory only**, and removes evidenced append `/message/content/parts/0` text patch operations from the stream returned to Web while preserving the remaining structural lifecycle events and `[DONE]`;
+- no `response.clone()` for the production-like interception path; use one stream transform/reader path so a non-consuming clone cannot accumulate long-answer buffers;
+- privacy-safe structural diagnostics only: Send observed/accepted, frame counts, removed text-patch counts/character counts, terminal state, Web element/message-node counts and Native presentation counts; never log the text itself;
+- no production state mutation.
 
-This is a post-Send continuation/read path, not a protected-Send bypass.
+The first Candidate does **not** yet virtualize an existing conversation-detail response before React. That is a later experiment only if b48 proves the Native composer + filtered-SSE state machine can survive at least two sequential turns.
 
-## b46 / b47 Native parity boundary
+## b48 Runtime questions
 
-### b46
+On the exact iPhone/iOS17 device, determine:
 
-- Candidate `DEV-send-stream-0.1.0-b46`
-- exact source `4ab9be3ef2809204e88fcb0d44884e35b43726b1`
-- legitimate Artifact `9715903443`
-- official offset 18 resume -> HTTP200 SSE
-- one Native same-body Cookie+Bearer-only duplicate -> HTTP404 JSON, 116 bytes, 0 SSE frames
-- later official offset 54 resume -> HTTP200 SSE
+1. Can the user send from the Native composer without touching the Web composer?
+2. Does official protected Send still succeed using the Web page's own machinery?
+3. Does Native receive incremental assistant text while the corresponding assistant text patch is withheld from Web React?
+4. Does the hidden Web message/element footprint stay small enough that a long answer does not create the previous assistant DOM growth?
+5. After the first filtered response reaches terminal `[DONE]`, can a second Native-composer Send in the same Web session succeed without branch/parent/state failure?
+6. Does ordinary typing/Send feel Native-smooth on the target device?
 
-### b47
+Passing b48 does **not** prove existing long-chat viability. It only unlocks a later existing-conversation data-virtualization experiment.
 
-- Candidate `DEV-send-stream-0.1.0-b47`, `0.1.0 (47)`
-- exact product/config source `21028bbff7982abeb42f130c56fcb21e6ef44d7a`
-- Push Run / Job `33259640112` / `99119258573` — success
-- PR Run / Job `33259642459` / `99119264902` — success
-- legitimate Push Artifact `9716878034`
-- Artifact ZIP `sha256:a6915d0a2c48877e8d4d5b7eea966118ad84b321bc1462dafe55c593796e10fc`
-- IPA SHA `49d1bd4886310f7761883784f73fc5532fe1a9532773619f0796cd7aab816909`
-- package identity verified: Release / source `21028bbff798` / iOS14 minimum / `[1,2]` / arm64
+## Non-atomic GitHub write-chain recovery point
 
-Exact-device Runtime:
+### Batch A — checkpoint / allocation
 
-- official offset 23 resume first hit transport error while offline, then official retry at offset 23 returned HTTP200 SSE;
-- b47 issued exactly one Native same-body duplicate;
-- transient auth/account verification succeeded;
-- Native `/resume` again returned HTTP404 `application/json`, ~707ms, 116 bytes, 0 SSE frames;
-- rejection JSON shape: `{"detail":{"code":"string","message":"string"}}`;
-- later official offset 74 resume returned HTTP200 SSE;
-- no Native retry occurred.
+- allocate b48 identity and record diagnostic exception;
+- completed by this checkpoint write.
 
-Official successful resume request header names include `authorization`, OAI client/session/route names and `x-conduit-token`; Native explicitly set only `accept, content-type` plus the existing transient bearer injection and WebKit-derived ephemeral cookies. This proves a structural difference, not a required header subset.
+### Batch B — non-CI assembly branch
 
-Native first/exclusive resume remains Unknown / Unverified. Do not allocate b48 merely to copy headers or chase this 404 while the production Send surface is unresolved.
+Create a temporary assembly branch from the post-checkpoint head so intermediate product/config files cannot trigger the real `dev/send-stream-20260829` workflow. Assemble only the expected b48 files:
 
-Detailed Runtime evidence:
+- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift` — new diagnostic controller/script;
+- `ChatGPTClient/SettingsViewController.swift` — point diagnostic entry to b48;
+- `ChatGPTClient.xcodeproj/project.pbxproj` — add source + Build 48 / Candidate b48;
+- `.github/workflows/ios-foundation.yml` — b48 Candidate/workflow/artifact identity.
 
-- `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`
-- `docs/project/runtime-evidence/DEV-send-stream-b46-runtime.md`
-- `docs/project/runtime-evidence/DEV-send-stream-b47-runtime.md`
+No `ConversationFeature.swift`, `AuthSessionStore.swift`, `RootViewController.swift`, build scripts or stable b38 presentation code are expected to change.
 
-## b47 diagnostics defect
+### Batch C — assembly audit / publish
 
-The intended safe code/type/status field was named `safeErrorTokens`; `DiagnosticsSanitizer` redacts every field key containing `token`, so these safe values were exported as `<redacted>`. Correcting this deterministic naming defect would require b48+ because b47 is reserved. It is not currently important enough to allocate b48 before the architecture gate is resolved.
+- compare assembly against the real development head;
+- require exactly the expected files above;
+- Light Guard real branch head immediately before publish;
+- non-force fast-forward the complete assembly commit chain to `dev/send-stream-20260829` in one ref move.
 
-## Full-Web Send-surface viability evidence
+### Batch D — CI / Artifact
 
-### Current exact-device b47 preparation
+- accept only CI whose head is the exact complete b48 product/config source;
+- require both push/PR CI success where emitted;
+- inspect the Push Artifact package identity independently;
+- reserve/reject any identity-invalid intermediate Artifact if one somehow appears;
+- hand exact IPA to user for Runtime.
 
-The intended older test conversation had only about three rounds but long answers. On the target iPhone/iOS17 device, repeatedly trying to bring up/use the mobile-Web composer froze the page badly enough that the user could not use that conversation for the protocol test and switched to a new conversation.
+### Batch E — docs after evidence milestone
 
-The b47 export covers the replacement new-conversation run, so the internal freeze owner remains Unknown / Unverified. Product impact is direct: a route that requires entering/rendering the real full Web conversation before every protected Send can fail **before Send initiation**, which Native post-Send handoff cannot repair.
-
-### Prior user product experiment — DOM pruning does not rescue the full page
-
-The user previously built another IPA that wrapped ChatGPT Web and injected a Tampermonkey-style userscript to reduce long-conversation cost. The script made older turns invisible and kept roughly only the latest two rounds visible.
-
-User result:
-
-- the full Web experience still felt poor;
-- opening the `+` attachment entry still had noticeable lag;
-- the approach was ultimately abandoned.
-
-Evidence classification: prior-project real-device/product experience supplied explicitly by the user, **not** current b47 Candidate Runtime. It does not identify the internal performance owner, but it is sufficient to reject one concrete mitigation: **loading the full conversation and merely hiding/pruning old visible DOM is not an accepted production solution.**
-
-Detailed record: `docs/project/runtime-evidence/DEV-send-stream-full-web-pruning-history.md`.
-
-## External architecture research — Sub2API / Codex OAuth
-
-Source-code research inspected `Wei-Shaw/sub2api` at upstream `main@b5827cfd54d58c248a9480b800444d0b40f0c6ea`.
-
-Evidence class: **external third-party source evidence only; not ChatGPT Client Runtime proof and not yet a selected product architecture.**
-
-Key findings:
-
-1. Sub2API uses the official Codex CLI OAuth client flow against `auth.openai.com`, including PKCE, refresh tokens and ChatGPT account/plan claims such as `chatgpt_account_id` and `chatgpt_plan_type`.
-2. For OpenAI OAuth-like accounts, its Responses upstream is `https://chatgpt.com/backend-api/codex/responses`, not ordinary consumer-chat `/backend-api/f/conversation` and not the separately billed `api.openai.com` API-key route.
-3. Its quota service reads ChatGPT/Codex subscription usage from `/backend-api/wham/usage`, strongly indicating subscription/Codex entitlement rather than separate API-key billing.
-4. Current source recognizes GPT-5.6 Codex-family models including `gpt-5.6-sol`, `gpt-5.6-terra` and `gpt-5.6-luna`; tests exercise OAuth streaming Responses and GPT-5.6 reasoning effort.
-5. The source does **not** establish continuity with ordinary ChatGPT consumer `/c/<id>` history. Repository search did not reveal ordinary `/backend-api/conversations` integration. Treat consumer-history mapping as Unknown / Unverified.
-6. The gateway contains substantial Codex client-identity logic: canonical User-Agent/originator/version enforcement, session/conversation isolation, optional installation/session/thread/turn/window fingerprint convergence and observed minimum-version behavior. Therefore this is valuable protocol evidence, but it is **not** proof of a clean officially supported arbitrary third-party native contract.
-7. Sub2API itself warns about Terms-of-Service/account risk. Recent repository issues include anecdotal OpenAI account-ban reports, including multi-account/high-concurrency use. These reports do not prove causality, but they materially raise the risk floor for primary-account experimentation.
-8. Current OpenAI public documentation confirms first-party Codex access is included in ChatGPT plans and uses ChatGPT account sign-in. That does not establish third-party repackaging of the subscription entitlement through private/internal Codex Responses transport as an officially supported contract.
-
-Potential architecture, **not selected**:
-
-`Native UI -> Codex OAuth account authorization -> subscription-backed /backend-api/codex/responses -> Native Responses stream`
-
-Potential benefits if independently validated:
-
-- no full mobile ChatGPT conversation page before Send;
-- no dependency on the long-conversation Web composer that failed in b47 preparation;
-- native input and native streaming become structurally possible;
-- uses ChatGPT/Codex subscription entitlement rather than separately billed API-key billing.
-
-### Primary-account safety gate
-
-The user explicitly expressed concern that this API-style use could lead to account suspension/ban. Treat this as a current hard constraint:
-
-- **Do not use the user's primary ChatGPT account for Sub2API-style Codex OAuth / subscription-to-Responses Runtime experiments.**
-- Do not allocate a Candidate that performs these requests on the primary account unless the user later explicitly accepts that account-risk experiment.
-- Do not copy Sub2API fingerprint convergence, forced Codex identity mimicry or multi-user gateway behavior into ChatGPT Client.
-- Static research may continue on documented/first-party Codex behavior and ordinary-history relationship.
-
-Detailed research: `docs/project/SUB2API_CODEX_OAUTH_RESEARCH.md`.
-
-## Current architecture conclusion
-
-The following is no longer an accepted production target:
-
-`Native history -> full official Web existing conversation for every Send -> Native post-Send resume`
-
-Also rejected as a performance fix:
-
-`load the same full Web conversation -> userscript/CSS hides most history -> use its composer`
-
-A future Web `lightweight visible send-only` direction is worth pursuing only if it is **structurally lightweight before existing-conversation rendering**, not the same full ChatGPT page with most history hidden after load.
-
-Separately, Sub2API source research introduces a non-full-Web candidate boundary based on Codex OAuth + `/backend-api/codex/responses`, but primary-account Runtime is currently blocked by account-safety risk and lack of evidence that third-party use is an officially supported contract.
-
-## Human Architecture Gate
-
-Product-code advancement is paused. **No b48 Candidate is allocated.**
-
-Evidence-backed questions that now remain:
-
-1. investigate whether an official supported visible send-only surface can continue an existing ordinary ChatGPT conversation without loading full Web application state;
-2. statically investigate documented/first-party Codex behavior and whether any supported third-party integration exists that does not require private-endpoint/client-identity mimicry;
-3. research whether Codex Responses sessions have any supported relationship to ordinary ChatGPT consumer history;
-4. if no safe path exists, classify visible full Web as diagnostic/fallback only and explicitly record the remaining product constraint.
-
-Do not convert item 2 into a primary-account Runtime experiment without explicit later risk acceptance from the user.
-
-## Evidence ladder
-
-- b47 Code written: Yes
-- b47 CI: Passed
-- b47 Artifact: Produced
-- b47 package identity: Verified
-- b47 Runtime/manual: Completed
-- official ordinary-chat no-resend resume: Runtime Confirmed
-- Native duplicated ordinary-chat resume: Runtime Rejected with HTTP404 JSON
-- full existing-conversation Web composer viability: Failed for the reported exact-device long-answer workload
-- full-Web userscript/DOM-pruning mitigation: Prior user experiment rejected for UX / `+` lag
-- Codex OAuth `/backend-api/codex/responses` subscription-backed route: **External source evidence only**
-- Codex OAuth primary-account Runtime: **Blocked by account-safety gate**
-- ordinary ChatGPT history ↔ Codex Responses mapping: Unknown / Unverified
-- Native first/exclusive ordinary-chat resume: Unknown / Unverified
-- Phase 9 Stable/Frozen: No
-
-## Completed durable-doc state
-
-Current b47 Runtime / TD-028 architecture gate has already been propagated to the main project state documents and PR #29. Additional architecture research and the primary-account risk gate are recorded in `docs/project/SUB2API_CODEX_OAUTH_RESEARCH.md` and this checkpoint. Exact b47 product source remains immutable.
+Update Build/Test Index and PR/checkpoint with exact b48 CI/Artifact identity. Do **not** modify the durable production hidden-Web boundary until Runtime result justifies a separate architecture decision.
 
 ## Next exact action
 
-Do **not** start b48 automatically and do not perform Sub2API-style Codex OAuth Runtime against the user's primary ChatGPT account. Continue static evidence research only: determine whether OpenAI documents a supported third-party Codex integration using ChatGPT subscription identity, whether ordinary ChatGPT consumer history can map to Codex Responses, and whether any official lightweight existing-conversation Send surface exists. If those questions remain negative/Unknown, report the architecture constraint rather than manufacturing a transport through private endpoint identity mimicry.
+Create the non-CI b48 assembly branch from the post-checkpoint head, implement only the four expected b48 product/config files, audit the assembly diff, fast-forward the real development branch, then autonomously continue through CI/package identity verification to the exact-device Runtime gate. Do not wait for an extra `继续` reply at ordinary milestones.

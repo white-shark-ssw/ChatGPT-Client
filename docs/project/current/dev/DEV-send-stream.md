@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — Phase 9 is at a Human Architecture Gate. Official no-resend `/resume` is Runtime Confirmed; b46/b47 Native duplicated parity remains HTTP404; full existing-conversation Web is not accepted as a production Send dependency. External Sub2API source research has opened a distinct subscription-backed Codex OAuth/Responses route that now requires deliberate feasibility selection.**
+**Active — Phase 9 is at a Human Architecture Gate. Official no-resend `/resume` is Runtime Confirmed; b46/b47 Native duplicated parity remains HTTP404; full existing-conversation Web is not accepted as a production Send dependency. External Sub2API source research opened a distinct subscription-backed Codex OAuth/Responses route, but primary-account Runtime is now blocked by an explicit account-safety gate.**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream / Codex OAuth / sub2api`
@@ -131,21 +131,28 @@ Key findings:
 4. Current source recognizes GPT-5.6 Codex-family models including `gpt-5.6-sol`, `gpt-5.6-terra` and `gpt-5.6-luna`; tests exercise OAuth streaming Responses and GPT-5.6 reasoning effort.
 5. The source does **not** establish continuity with ordinary ChatGPT consumer `/c/<id>` history. Repository search did not reveal ordinary `/backend-api/conversations` integration. Treat consumer-history mapping as Unknown / Unverified.
 6. The gateway contains substantial Codex client-identity logic: canonical User-Agent/originator/version enforcement, session/conversation isolation, optional installation/session/thread/turn/window fingerprint convergence and observed minimum-version behavior. Therefore this is valuable protocol evidence, but it is **not** proof of a clean officially supported arbitrary third-party native contract.
+7. Sub2API itself warns about Terms-of-Service/account risk. Recent repository issues include anecdotal OpenAI account-ban reports, including multi-account/high-concurrency use. These reports do not prove causality, but they materially raise the risk floor for primary-account experimentation.
+8. Current OpenAI public documentation confirms first-party Codex access is included in ChatGPT plans and uses ChatGPT account sign-in. That does not establish third-party repackaging of the subscription entitlement through private/internal Codex Responses transport as an officially supported contract.
 
-Potential architecture now worth evaluating, but not selected:
+Potential architecture, **not selected**:
 
 `Native UI -> Codex OAuth account authorization -> subscription-backed /backend-api/codex/responses -> Native Responses stream`
 
-If independently validated on the user's account, this could avoid full mobile ChatGPT Web rendering and could permit native composer/stream ownership. It is materially different from the separately billed API-key route the user already rejected.
+Potential benefits if independently validated:
 
-Unresolved P0 questions:
+- no full mobile ChatGPT conversation page before Send;
+- no dependency on the long-conversation Web composer that failed in b47 preparation;
+- native input and native streaming become structurally possible;
+- uses ChatGPT/Codex subscription entitlement rather than separately billed API-key billing.
 
-- does the user's exact subscription/account have the required Codex entitlement;
-- can a minimal single-user native client use the transport without unjustified identity spoofing/fingerprint mimicry;
-- what exact auth/account/session headers are genuinely required;
-- whether Codex Responses sessions map to ordinary ChatGPT consumer history;
-- whether a split product (existing consumer history read-only, new native Codex conversations separate) would be acceptable if the histories are not unified;
-- exact-device reasoning/attachments/background semantics.
+### Primary-account safety gate
+
+The user explicitly expressed concern that this API-style use could lead to account suspension/ban. Treat this as a current hard constraint:
+
+- **Do not use the user's primary ChatGPT account for Sub2API-style Codex OAuth / subscription-to-Responses Runtime experiments.**
+- Do not allocate a Candidate that performs these requests on the primary account unless the user later explicitly accepts that account-risk experiment.
+- Do not copy Sub2API fingerprint convergence, forced Codex identity mimicry or multi-user gateway behavior into ChatGPT Client.
+- Static research may continue on documented/first-party Codex behavior and ordinary-history relationship.
 
 Detailed research: `docs/project/SUB2API_CODEX_OAUTH_RESEARCH.md`.
 
@@ -161,19 +168,20 @@ Also rejected as a performance fix:
 
 A future Web `lightweight visible send-only` direction is worth pursuing only if it is **structurally lightweight before existing-conversation rendering**, not the same full ChatGPT page with most history hidden after load.
 
-Separately, Sub2API source research introduces a non-full-Web candidate boundary based on Codex OAuth + `/backend-api/codex/responses`. This candidate must not be conflated with ordinary ChatGPT `/f/conversation`, normal consumer history, or separately billed OpenAI API-key usage.
+Separately, Sub2API source research introduces a non-full-Web candidate boundary based on Codex OAuth + `/backend-api/codex/responses`, but primary-account Runtime is currently blocked by account-safety risk and lack of evidence that third-party use is an officially supported contract.
 
 ## Human Architecture Gate
 
 Product-code advancement is paused. **No b48 Candidate is allocated.**
 
-Evidence-backed choices/questions that now remain:
+Evidence-backed questions that now remain:
 
 1. investigate whether an official supported visible send-only surface can continue an existing ordinary ChatGPT conversation without loading full Web application state;
-2. investigate the distinct Codex OAuth/subscription-backed Responses path evidenced by Sub2API, beginning with entitlement and minimal single-user transport feasibility rather than copying its multi-user fingerprint machinery;
-3. if neither path can preserve acceptable product semantics, classify visible full Web as diagnostic/fallback only and explicitly record the remaining product constraint.
+2. statically investigate documented/first-party Codex behavior and whether any supported third-party integration exists that does not require private-endpoint/client-identity mimicry;
+3. research whether Codex Responses sessions have any supported relationship to ordinary ChatGPT consumer history;
+4. if no safe path exists, classify visible full Web as diagnostic/fallback only and explicitly record the remaining product constraint.
 
-The user's prior experiment already rejects “full page + DOM pruning” as option 1's implementation shortcut.
+Do not convert item 2 into a primary-account Runtime experiment without explicit later risk acceptance from the user.
 
 ## Evidence ladder
 
@@ -187,27 +195,15 @@ The user's prior experiment already rejects “full page + DOM pruning” as opt
 - full existing-conversation Web composer viability: Failed for the reported exact-device long-answer workload
 - full-Web userscript/DOM-pruning mitigation: Prior user experiment rejected for UX / `+` lag
 - Codex OAuth `/backend-api/codex/responses` subscription-backed route: **External source evidence only**
-- Codex OAuth exact-account Runtime: Unknown / Unverified
+- Codex OAuth primary-account Runtime: **Blocked by account-safety gate**
 - ordinary ChatGPT history ↔ Codex Responses mapping: Unknown / Unverified
 - Native first/exclusive ordinary-chat resume: Unknown / Unverified
 - Phase 9 Stable/Frozen: No
 
 ## Completed durable-doc state
 
-Current b47 Runtime / TD-028 architecture gate has already been propagated to:
-
-- `PROJECT_STATE.md`
-- `MODULE_STATUS.md`
-- `PROJECT_PROFILE.md`
-- `TECHNICAL_DECISIONS.md`
-- `PROJECT_SPECIFIC_RULES.md`
-- `DEVELOPMENT_PLAN.md`
-- `BUILD_TEST_INDEX.md`
-- PR #29
-- b47 Runtime evidence
-
-Additional architecture research now recorded in `docs/project/SUB2API_CODEX_OAUTH_RESEARCH.md`. Exact b47 product source remains immutable.
+Current b47 Runtime / TD-028 architecture gate has already been propagated to the main project state documents and PR #29. Additional architecture research and the primary-account risk gate are recorded in `docs/project/SUB2API_CODEX_OAUTH_RESEARCH.md` and this checkpoint. Exact b47 product source remains immutable.
 
 ## Next exact action
 
-Do **not** start b48 automatically. Present the Sub2API/Codex OAuth findings as a new architecture option at the Human Gate. If the user selects it for feasibility work, perform a fresh Candidate preflight and design the smallest diagnostic experiment: validate the user's own Codex OAuth entitlement and one safe Responses request/stream without integrating production conversation state or importing Sub2API fingerprint-convergence behavior. If the user instead requires ordinary ChatGPT `/c/<id>` history continuity as a hard condition, research that mapping first and do not assume Codex Responses provides it.
+Do **not** start b48 automatically and do not perform Sub2API-style Codex OAuth Runtime against the user's primary ChatGPT account. Continue static evidence research only: determine whether OpenAI documents a supported third-party Codex integration using ChatGPT subscription identity, whether ordinary ChatGPT consumer history can map to Codex Responses, and whether any official lightweight existing-conversation Send surface exists. If those questions remain negative/Unknown, report the architecture constraint rather than manufacturing a transport through private endpoint identity mimicry.

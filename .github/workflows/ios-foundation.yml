@@ -1,10 +1,10 @@
-# Candidate: DEV-conversation-round-count-0.1.0-b38
-name: iOS Conversation Metadata
+# Candidate: DEV-send-stream-0.1.0-b39
+name: iOS Send Stream Probe
 
 on:
   push:
     branches:
-      - dev/conversation-round-count-20260828
+      - dev/send-stream-20260829
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-conversation-round-count-0.1.0-b38
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b39
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

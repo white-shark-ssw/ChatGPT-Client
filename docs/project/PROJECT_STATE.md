@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-29 through exact b45 Native-realtime-handoff diagnostic Candidate; Runtime handoff evidence pending._
+_Last updated: 2026-08-29 through exact b45 first handoff Runtime capture; targeted active-stream interruption evidence remains pending._
 
 ## Current accepted merged baseline
 
@@ -13,108 +13,90 @@ _Last updated: 2026-08-29 through exact b45 Native-realtime-handoff diagnostic C
 
 ### Security boundary retained
 
-Exact b42 (`e8946e48a0b5ad86b402faf5eabba627e3393adf`, legitimate Artifact `9709824510`) proved successful tested ChatGPT-account Send requires browser anti-abuse challenge output: PoW, Turnstile and `so` required; non-empty PoW + Turnstile were finalized before Send.
+Exact b42 proved successful tested ChatGPT-account Send requires browser anti-abuse challenge output: PoW, Turnstile and `so` required; non-empty PoW + Turnstile were finalized before Send.
 
 Therefore pure-native/transient-auth ChatGPT-account Send remains blocked. Prohibited routes remain solver/bypass, browser-fingerprint replay, captured proof/token replay, guessed fallback endpoint, hidden/shadow challenge WebView, challenge harvesting, DOM answer/reasoning scraping, covered-Web Native composer injection, synthetic hidden Send clicks and hidden file-input injection.
 
-### b43 visible-Web feasibility baseline
+### Visible-Web product evidence retained
 
-Exact b43 source `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`, Artifact `9711364573`, IPA SHA `f2de8d02f3da7d9a8a8f58cd3028480a40849095b2b4b21e418e9c2e758d8108`.
+- b43 accepted visible-Web feasibility/smoothness for the recorded iPhone/iOS17 sequence; Web `+` latency ~100–200 ms; Web Photos filtered video assets; standalone Web-chat form not accepted as final UX.
+- b44 accepted `/c/<id>` A/B route mapping and eventual native read observations, but the full-page Native -> Web -> Native interaction is product-rejected. Immediate Native Sync can lag assistant output already visible in Web; no stable readiness delay/signal was established. Do not patch with timer/poll/retry.
 
-Primary-device Runtime:
-
-- first/re-entry, keyboard/typing, visible Web Send, stream scrolling, rapid scrolling and native return had no material reported problem;
-- Web `+` -> picker latency was roughly **100–200 ms**, not rejected as excessive;
-- Web photo selection filtered video assets;
-- standalone Settings Web-chat UX was not accepted as final product interaction.
-
-Verified iOS17 boundary: public `WKUIDelegate.runOpenPanelWith...` replacement is iOS18.4+, so iOS17 cannot publicly replace the page's upload chooser with a custom PHPicker through that delegate. Proper iOS17 photo+video attachment support still requires separately evidenced native attachment upload/handoff.
-
-### b44 integrated full-page hybrid trial — product form rejected
-
-Exact b44:
-
-- Candidate `DEV-send-stream-0.1.0-b44`, `0.1.0 (44)`;
-- product/config source `f1503cf7121512a84e5c55a3642181c17324d791`;
-- Push Run / Job `33245105815` / `99081114295` — success;
-- PR Run `33245107290` — success;
-- Artifact `9712583513`;
-- ZIP `sha256:33ba4a99fe933241ce8023e811f15d55dfa0d95cac2693f039bb6138d813face`;
-- IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
-
-Runtime established that Web Send and tested `/c/<id>` A/B mapping worked, but immediate Native Sync could expose the just-sent user message while assistant output already visible in Web remained absent until a later Sync. No stable readiness delay/signal was established. The same conversation also had to be loaded by Native and then Web. The full-page Native -> Web -> Native product form is rejected / superseded; do not patch it with arbitrary delay, polling or repeated automatic Sync.
-
-## Current product decision — Web Send only if Native can own realtime response
+## Current product target — Web legal Send only, Native realtime response if provable
 
 The user explicitly rejects the separate API product route.
 
-The user's preferred architecture is now:
+Current target:
 
 `Native composer/history/presentation -> user-visible official Web performs the legal protected Send -> Native attaches/resumes/subscribes to the same already-started response without resending prompt -> Native owns user-visible reasoning/final streaming and later background lifecycle.`
 
-This is the current **target**, not an accepted capability. The key unknown is whether the official ChatGPT account flow exposes a same-response continuation mechanism that Native can legitimately consume without issuing another Send.
+This remains conditional. Fully hiding Web and hooking/injecting the Web Send control is not accepted because it would turn the protected browser Send path into hidden/shadow transport.
 
-The user's alternative suggestion of completely hiding Web and hooking/injecting the Web Send control is not an accepted route because it would make the protected browser Send flow a hidden/shadow transport under a Native facade.
+## Exact b45 identity
 
-## Exact b45 — Native realtime handoff diagnostic probe
+- Candidate `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`.
+- Exact product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`.
+- Push Run / Job `33248952646` / `99091176390` — success.
+- PR Run / Job `33248954018` / `99091179731` — success.
+- Push Artifact `9713774868`.
+- Artifact ZIP digest `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`.
+- IPA `ChatGPTClient-0.1.0-b45-dev-send-stream.ipa`; SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`.
+- Package identity independently verified as Release, `0.1.0 (45)`, Candidate b45, source `accd7bdf29e4`, iOS14 minimum, `[1,2]`, arm64.
 
-Candidate identity:
+## b45 first Runtime result
 
-- `DEV-send-stream-0.1.0-b45`, `0.1.0 (45)`;
-- exact product/config source `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`;
-- Push Run / Job `33248952646` / `99091176390` — success;
-- PR Run / Job `33248954018` / `99091179731` — success;
-- Push Artifact `9713774868`;
-- Artifact ZIP digest `sha256:17843765c861e44e0e93e66e373ba3f2acbd6a772f3ffd43fab572766ca7626d`;
-- IPA `ChatGPTClient-0.1.0-b45-dev-send-stream.ipa`;
-- IPA SHA `9fc53543d652cc42c824feea8e8cc77cb5341c577a44d499e7ed2a3c8b1ec136`;
-- package identity independently verified as `0.1.0 (45)`, Candidate b45, source marker `accd7bdf29e4`, Release, iOS14 minimum, `[1,2]`, arm64.
+Exact-device export metadata matched b45 / iPhone / iOS17.0.
 
-b45 adds an observation-only `ProtocolHandoffProbeViewController`, reached from Settings as `实时接管协议探测（诊断）`.
+### Captured normal active-response behavior
 
-The probe structurally observes:
+- Existing-conversation-classified Send: `POST /backend-api/f/conversation`, HTTP200 `text/event-stream`, original `fetch` SSE remained live through `message_stream_complete` and `[DONE]` for ~32 seconds.
+- Very early original SSE event 2 was `resume_conversation_token`; conversation identity was structurally present and the token value remained redacted.
+- Later original-stream structure exposed `conversation_id`, `request_id`, and message identity markers.
+- The official page opened `GET /backend-api/conversation/{id}/stream_status` during the first active response. In this capture it returned HTTP200 `application/json` with only a structural `{status: string}` payload. It was **not** an answer-event continuation stream.
+- No EventSource/WebSocket/turn-stream/handoff/resume/subscribe secondary response stream was observed while either answer remained active.
+- The second captured Send also stayed on the original SSE through completion, but its request structure contained `conversation_mode.gizmo_id`; it is therefore not accepted as a clean default-primary new-chat sample.
 
-- original `/backend-api/f/conversation` SSE;
-- presence/shape only for `resume_conversation_token`, response/turn/conversation/message/async-task identity fields;
-- official-page post-Send same-origin fetch/XHR/EventSource/WebSocket connections;
-- stream-status / turn-stream / handoff / resume / subscribe / continuation-like route classes;
-- HTTP status/content type, header names, query names, structural JSON shape and identity-value shape only;
-- whether a later official-page connection naturally receives continuation-like events without another Send.
+### Interpretation boundary
 
-It does **not** replay resume tokens, guess endpoints, resend prompts, inject into hidden Web controls, scrape answer/reasoning text or capture protected values.
+This is **not** a No-go result for continuation. During uninterrupted operation the official page has no reason to abandon its original Send SSE, so absence of a second stream does not prove no reconnect mechanism exists.
 
-**b45 classification: Code / CI / Artifact / package identity passed. Runtime handoff capability Unknown / Unverified. Stable/Frozen Send No.**
+The missing evidence is an interruption while the original response is still active. In the uploaded export every background/foreground interval happened before a Send or after the corresponding SSE had already completed.
 
-## Background ordering — still a hard requirement, now downstream of handoff feasibility
+Therefore:
 
-The user requires that long reasoning/streaming not routinely break after background/lock and force manual refresh.
+- `resume_conversation_token` existence alone does not authorize Native use/replay;
+- `stream_status` must not be reinterpreted as a stream endpoint;
+- Native same-response handoff remains Unknown / Unverified;
+- no b46 Native continuation implementation is justified yet.
 
-TD-026 remains a hard product gate, but implementation order changed:
+Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b45-runtime.md`.
 
-- if b45/b46 prove Native can own/resume the response stream, background work should protect that Native response lifecycle;
-- only if Native handoff is disproven does WebKit true-background remain relevant to the fallback visible-Web architecture;
-- do not spend a Candidate on Web background/UI polish before the handoff evidence is interpreted.
+## Next Runtime gate — reuse exact b45
 
-## Current Runtime gate
+No product change is required for the next evidence step because b45 already observes fetch/XHR/EventSource/WebSocket and continuation-like routes.
 
-Primary authority: iPhone 15 Pro Max / iOS17.0 TrollStore runtime.
+On the primary iPhone/iOS17 runtime:
 
-Exact b45 test:
+1. clear diagnostics;
+2. use default ChatGPT / primary assistant only, not a custom GPT/Gizmo;
+3. start a response that will stream well beyond 30 seconds;
+4. while output is visibly still streaming, background or lock the device for roughly 20–30 seconds;
+5. return before the response would normally finish; do not manually refresh/resend/Stop/switch GPT;
+6. let official Web recover/continue/finish naturally and export diagnostics.
 
-1. Settings -> clear diagnostics if practical.
-2. Open `实时接管协议探测（诊断）`.
-3. Use default ChatGPT / primary assistant.
-4. Send one sufficiently long new-chat prompt and let it run normally.
-5. If practical, send one existing-chat prompt and let it run normally.
-6. Do not manually refresh during capture.
-7. Export diagnostics JSON and analyze for an official same-response continuation mechanism.
+Evidence question: after return, does official Web continue the same original transport, or open a status/resume/handoff/turn-stream/subscription connection that receives the same response without another Send?
 
-If positive evidence exists, the next Candidate may test Native no-resend continuation parity against the **exact observed** route/structure. If negative, do not guess a resume endpoint.
+## Background ordering
+
+Background resilience remains a hard requirement. Implementation remains downstream of realtime ownership evidence:
+
+- if Native handoff is eventually proven, background work should protect Native response lifecycle rather than WebKit;
+- if Native handoff is disproven, WebKit true-background remains relevant only to the fallback visible-Web architecture.
 
 ## Candidate / PR state
 
 - b39-b45 identities are permanently reserved.
-- b45 is the current Runtime diagnostic Candidate; any corrected product code after Artifact emission requires b46+.
+- Any corrected product code after b45 Artifact emission requires b46+.
 - PR #29 remains open/mergeable as an evidence branch and must not be merged as accepted production Send UX.
 - Product source authority for b45 remains `accd7bdf29e4d9bcbaad9c51ee18000bc89fe072`; later docs-only commits do not redefine it.
 
@@ -123,8 +105,7 @@ If positive evidence exists, the next Candidate may test Native no-resend contin
 - `ConversationRepository` remains sole native conversation/list/read/recovery authority.
 - `AuthSessionStore` remains native auth/account authority.
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- UI text/title is never identity authority.
 - Native Sync/Reload never resend/regenerate.
+- No second Send may be created merely to obtain a response stream.
 - CI/Artifact success is not Runtime proof.
-- no second Send may be created merely to obtain a response stream.
-- iOS17 evidence does not prove lower iOS/iPad; non-personal workspace/account switch and native attachment handoff remain Unknown/Unverified where not explicitly tested.
+- b45 Runtime proves only the exact structural observations above; Native handoff, native reasoning/follow-tail/background ownership, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown/Unverified where not explicitly tested.

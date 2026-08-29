@@ -222,7 +222,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "诊断专用：页面由 ChatGPT 官方 Web 自己发送。记录协议枚举、ID 形态、Header 名称、JSON 键/类型和流事件结构；不记录提示词、回复正文、Cookie、Authorization、Sentinel/Turnstile/Proof/Conduit Token 值或原始 ID。"
+        explanationLabel.text = "诊断专用：页面由 ChatGPT 官方 Web 自己发送。记录协议枚举、required 布尔、受保护字符串是否为空、ID 形态、Header 名称、JSON 键/类型和流事件结构；不记录提示词、回复正文、Cookie、Authorization、Sentinel/Turnstile/Proof/Conduit Token 值或原始 ID。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -255,7 +255,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         ])
 
         updateStatusLabel()
-        diagnostics.info(category: "protocol", name: "conversationSendProbe.opened", fields: ["mode": "visible_official_web_structural_only_v2"])
+        diagnostics.info(category: "protocol", name: "conversationSendProbe.opened", fields: ["mode": "visible_official_web_structural_only_v3"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -302,6 +302,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
             var fields = baseFields(body)
             fields["contentType"] = Self.safeToken(body["contentType"] as? String)
             fields["responseShape"] = Self.structuralJSON(body["responseShape"])
+            fields["responseSemantic"] = Self.structuralJSON(body["responseSemantic"])
             diagnostics.info(category: "protocol", name: "conversationSendProbe.responseShape", fields: fields)
         case "stream_signature":
             streamSignatureCount += 1
@@ -353,7 +354,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
     }
 
     private func updateStatusLabel() {
-        statusLabel.text = "Send 请求 \(sendRequestCount) · Stream 结构 \(streamSignatureCount) · Terminal \(streamTerminalCount)\n完成 existing + new-chat 各一次后，回到设置导出诊断 JSON。"
+        statusLabel.text = "Send 请求 \(sendRequestCount) · Stream 结构 \(streamSignatureCount) · Terminal \(streamTerminalCount)\n本版请在默认 ChatGPT（非 GPT/Gizmo）新会话发送一次，完成后回设置导出诊断 JSON。"
     }
 
     private static func pageKind(for url: URL?) -> String {
@@ -432,6 +433,8 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         if (/^[A-Za-z0-9_-]{16,}$/.test(value)) return 'opaque';
         return 'other';
       };
+      const stringPresence = value => typeof value !== 'string' ? 'none' : (value.length === 0 ? 'empty' : 'nonempty');
+      const triBool = value => value === true ? true : (value === false ? false : null);
       const sanitizeSegment = value => {
         const s = String(value || '');
         if (/^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(s) || s.length > 28) return '{id}';
@@ -486,7 +489,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
           return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
         } catch (_) { return null; }
       };
-      const requestSemantic = body => {
+      const sendRequestSemantic = body => {
         const payload = parseBodyObject(body);
         if (!payload) return {};
         const messages = Array.isArray(payload.messages) ? payload.messages : [];
@@ -520,6 +523,51 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
           firstMessageEqualsParent: !!(first && typeof first.id === 'string' && typeof payload.parent_message_id === 'string' && first.id === payload.parent_message_id)
         };
       };
+      const supportRequestSemantic = (info, body) => {
+        const payload = parseBodyObject(body);
+        if (!payload || !info) return {};
+        if (info.route === 'conversation_prepare') {
+          const contracts = Array.isArray(payload.model_response_contracts) ? payload.model_response_contracts : [];
+          return {
+            conversationKind: Object.prototype.hasOwnProperty.call(payload, 'conversation_id') ? 'existing' : 'new',
+            action: protocolValue(payload.action),
+            model: protocolValue(payload.model),
+            clientPrepareDispatch: protocolValue(payload.client_prepare_dispatch),
+            clientPrepareSource: protocolValue(payload.client_prepare_source),
+            clientPrepareState: protocolValue(payload.client_prepare_state),
+            conversationModeKind: protocolValue(payload.conversation_mode && payload.conversation_mode.kind),
+            thinkingEffort: protocolValue(payload.thinking_effort),
+            supportedEncodings: Array.isArray(payload.supported_encodings) ? payload.supported_encodings.slice(0, 8).map(protocolValue) : [],
+            supportsBuffering: payload.supports_buffering === true,
+            localFunctionNameCount: Array.isArray(payload.local_function_names) ? payload.local_function_names.length : -1,
+            systemHintCount: Array.isArray(payload.system_hints) ? payload.system_hints.length : -1,
+            responseContractCount: contracts.length,
+            responseProtocolVersions: contracts.slice(0, 8).map(item => item && typeof item.protocol_version === 'number' ? item.protocol_version : -1),
+            parentMessageIDShape: idShape(payload.parent_message_id),
+            conversationIDShape: idShape(payload.conversation_id),
+            partialQueryPresent: !!(payload.partial_query && typeof payload.partial_query === 'object'),
+            asyncTaskIDPresent: typeof payload.async_task_id === 'string' && payload.async_task_id.length > 0
+          };
+        }
+        if (info.route === 'sentinel_prepare') return { pPresence: stringPresence(payload.p), pShape: idShape(payload.p) };
+        if (info.route === 'sentinel_finalize') return { prepareToken: stringPresence(payload.prepare_token), proofOfWork: stringPresence(payload.proofofwork), turnstile: stringPresence(payload.turnstile) };
+        if (info.route === 'stop_candidate') return { conversationIDShape: idShape(payload.conversation_id), excludeAsyncTypeCount: Array.isArray(payload.exclude_async_types) ? payload.exclude_async_types.length : -1 };
+        return {};
+      };
+      const responseSemantic = (info, payload) => {
+        if (!info || !payload || typeof payload !== 'object' || Array.isArray(payload)) return {};
+        if (info.route === 'conversation_prepare') return { status: protocolValue(payload.status), conduitToken: stringPresence(payload.conduit_token) };
+        if (info.route === 'sentinel_prepare') {
+          const pow = payload.proofofwork && typeof payload.proofofwork === 'object' ? payload.proofofwork : null;
+          const turnstile = payload.turnstile && typeof payload.turnstile === 'object' ? payload.turnstile : null;
+          const so = payload.so && typeof payload.so === 'object' ? payload.so : null;
+          return { persona: protocolValue(payload.persona), prepareToken: stringPresence(payload.prepare_token), proofOfWorkRequired: triBool(pow && pow.required), turnstileRequired: triBool(turnstile && turnstile.required), soRequired: triBool(so && so.required) };
+        }
+        if (info.route === 'sentinel_finalize') return { persona: protocolValue(payload.persona), token: stringPresence(payload.token), expireAfterPresent: typeof payload.expire_after === 'number', expireAtPresent: typeof payload.expire_at === 'number' };
+        if (info.route === 'stop_candidate') return { status: protocolValue(payload.status), lastMessageIDShape: idShape(payload.last_message_id) };
+        if (info.route === 'conversation_init') return { type: protocolValue(payload.type), defaultModel: protocolValue(payload.default_model_slug), intendedDefaultModel: protocolValue(payload.intended_default_model_slug) };
+        return {};
+      };
       const headerNames = (input, init) => {
         try {
           const headers = new Headers();
@@ -532,7 +580,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         try { return Array.from(response.headers.keys()).map(v => String(v).toLowerCase()).sort().slice(0, 48); }
         catch (_) { return []; }
       };
-      const emitRequest = (info, method, transport, headers, body) => post({ kind: 'request', transport, route: info.route, safePath: info.safePath, pageKind: pageKind(), method, headerNames: headers, bodyShape: bodyShape(body), requestSemantic: info.route === 'conversation_send' ? requestSemantic(body) : {} });
+      const emitRequest = (info, method, transport, headers, body) => post({ kind: 'request', transport, route: info.route, safePath: info.safePath, pageKind: pageKind(), method, headerNames: headers, bodyShape: bodyShape(body), requestSemantic: info.route === 'conversation_send' ? sendRequestSemantic(body) : supportRequestSemantic(info, body) });
       const observeFetchRequest = (input, init, info, method) => {
         if (!info) return;
         const headers = headerNames(input, init);
@@ -551,7 +599,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
       const observeResponseShape = (response, info, contentType) => {
         if (!info || contentType !== 'application/json' || info.route === 'conversation_send') return;
         try {
-          response.clone().json().then(payload => post({ kind: 'response_shape', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), contentType, responseShape: describe(payload) })).catch(() => {});
+          response.clone().json().then(payload => post({ kind: 'response_shape', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), contentType, responseShape: describe(payload), responseSemantic: responseSemantic(info, payload) })).catch(() => {});
         } catch (_) {}
       };
       const messageFrom = obj => obj && typeof obj === 'object' ? (obj.message || (obj.v && typeof obj.v === 'object' && !Array.isArray(obj.v) ? obj.v.message : null)) : null;
@@ -675,7 +723,10 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
             try { responseHeaderNames = String(this.getAllResponseHeaders() || '').split(/\r?\n/).map(line => line.split(':', 1)[0].trim().toLowerCase()).filter(Boolean).slice(0, 48).sort(); } catch (_) {}
             post({ kind: 'response', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), status: this.status, contentType, responseHeaderNames });
             if (contentType === 'application/json' && probe.info.route !== 'conversation_send') {
-              try { post({ kind: 'response_shape', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), contentType, responseShape: describe(JSON.parse(this.responseText)) }); } catch (_) {}
+              try {
+                const payload = JSON.parse(this.responseText);
+                post({ kind: 'response_shape', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), contentType, responseShape: describe(payload), responseSemantic: responseSemantic(probe.info, payload) });
+              } catch (_) {}
             }
           }, { once: true });
         }

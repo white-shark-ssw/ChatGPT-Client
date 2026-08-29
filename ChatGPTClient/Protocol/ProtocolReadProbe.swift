@@ -222,7 +222,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "诊断专用：页面由 ChatGPT 官方 Web 自己发送。仅记录 route、Header 名称、JSON 键/类型和流事件结构；不记录提示词、回复正文、Cookie、Authorization、Sentinel/Turnstile/Proof Token 或原始 ID。"
+        explanationLabel.text = "诊断专用：页面由 ChatGPT 官方 Web 自己发送。记录协议枚举、ID 形态、Header 名称、JSON 键/类型和流事件结构；不记录提示词、回复正文、Cookie、Authorization、Sentinel/Turnstile/Proof/Conduit Token 值或原始 ID。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -255,7 +255,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         ])
 
         updateStatusLabel()
-        diagnostics.info(category: "protocol", name: "conversationSendProbe.opened", fields: ["mode": "visible_official_web_structural_only"])
+        diagnostics.info(category: "protocol", name: "conversationSendProbe.opened", fields: ["mode": "visible_official_web_structural_only_v2"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -289,13 +289,20 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
             fields["method"] = Self.safeToken(body["method"] as? String)
             fields["headerNames"] = Self.safeStringArray(body["headerNames"])
             fields["bodyShape"] = Self.structuralJSON(body["bodyShape"])
+            fields["requestSemantic"] = Self.structuralJSON(body["requestSemantic"])
             diagnostics.info(category: "protocol", name: "conversationSendProbe.request", fields: fields)
             updateStatusLabel()
         case "response":
             var fields = baseFields(body)
             fields["httpStatus"] = Self.safeNumberString(body["status"])
             fields["contentType"] = Self.safeToken(body["contentType"] as? String)
+            fields["responseHeaderNames"] = Self.safeStringArray(body["responseHeaderNames"])
             diagnostics.info(category: "protocol", name: "conversationSendProbe.response", fields: fields)
+        case "response_shape":
+            var fields = baseFields(body)
+            fields["contentType"] = Self.safeToken(body["contentType"] as? String)
+            fields["responseShape"] = Self.structuralJSON(body["responseShape"])
+            diagnostics.info(category: "protocol", name: "conversationSendProbe.responseShape", fields: fields)
         case "stream_signature":
             streamSignatureCount += 1
             var fields = baseFields(body)
@@ -309,6 +316,10 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
             fields["messageStatus"] = Self.safeToken(body["messageStatus"] as? String)
             fields["hasConversationID"] = Self.safeBoolString(body["hasConversationID"])
             fields["hasMessageID"] = Self.safeBoolString(body["hasMessageID"])
+            fields["conversationIDSource"] = Self.safeToken(body["conversationIDSource"] as? String)
+            fields["messageIDSource"] = Self.safeToken(body["messageIDSource"] as? String)
+            fields["eventKeys"] = Self.safeStringArray(body["eventKeys"])
+            fields["valueKeys"] = Self.safeStringArray(body["valueKeys"])
             fields["hasTitle"] = Self.safeBoolString(body["hasTitle"])
             fields["endTurn"] = Self.safeBoolString(body["endTurn"])
             fields["batchPatches"] = Self.structuralJSON(body["batchPatches"])
@@ -376,18 +387,18 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
 
     private static func structuralJSON(_ value: Any?) -> String {
         guard let value, let sanitized = sanitizeStructure(value, depth: 0), JSONSerialization.isValidJSONObject(sanitized), let data = try? JSONSerialization.data(withJSONObject: sanitized, options: [.sortedKeys]), let text = String(data: data, encoding: .utf8) else { return "none" }
-        return String(text.prefix(3500))
+        return String(text.prefix(5000))
     }
 
     private static func sanitizeStructure(_ value: Any, depth: Int) -> Any? {
-        guard depth <= 6 else { return "depth_limit" }
+        guard depth <= 7 else { return "depth_limit" }
         if value is NSNull { return NSNull() }
         if let number = value as? NSNumber { return number }
         if let string = value as? String { return safeToken(string) }
-        if let array = value as? [Any] { return array.prefix(24).compactMap { sanitizeStructure($0, depth: depth + 1) } }
+        if let array = value as? [Any] { return array.prefix(32).compactMap { sanitizeStructure($0, depth: depth + 1) } }
         if let dictionary = value as? [String: Any] {
             var result: [String: Any] = [:]
-            for key in dictionary.keys.sorted().prefix(48) {
+            for key in dictionary.keys.sorted().prefix(64) {
                 let safeKey = safeToken(key)
                 guard safeKey != "none_or_redacted", let rawValue = dictionary[key], let sanitized = sanitizeStructure(rawValue, depth: depth + 1) else { continue }
                 result[safeKey] = sanitized
@@ -405,6 +416,22 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
       if (!bridge) return;
       const post = value => { try { bridge.postMessage(value); } catch (_) {} };
       const pageKind = () => location.pathname.startsWith('/c/') ? 'existing_conversation' : (location.pathname.startsWith('/auth') ? 'authentication' : 'new_or_other');
+      const protocolValue = value => {
+        if (typeof value !== 'string') return 'none';
+        const s = value.trim();
+        return /^[A-Za-z][A-Za-z0-9_.:+-]{0,47}$/.test(s) ? s : 'other_or_redacted';
+      };
+      const safeStructuralKey = value => {
+        const s = String(value || '');
+        if (/^[A-Za-z_][A-Za-z0-9_.:-]{0,63}$/.test(s)) return s;
+        return '{key}';
+      };
+      const idShape = value => {
+        if (typeof value !== 'string' || !value) return 'none';
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) return 'uuid';
+        if (/^[A-Za-z0-9_-]{16,}$/.test(value)) return 'opaque';
+        return 'other';
+      };
       const sanitizeSegment = value => {
         const s = String(value || '');
         if (/^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(s) || s.length > 28) return '{id}';
@@ -430,43 +457,112 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         } catch (_) { return null; }
       };
       const describe = (value, depth = 0) => {
-        if (depth > 5) return { type: 'depth_limit' };
+        if (depth > 6) return { type: 'depth_limit' };
         if (value === null) return { type: 'null' };
         if (Array.isArray(value)) return { type: 'array', count: value.length, item: value.length ? describe(value[0], depth + 1) : { type: 'empty' } };
         const type = typeof value;
         if (type === 'object') {
-          const keys = Object.keys(value).slice(0, 40).sort();
+          const rawKeys = Object.keys(value).slice(0, 64).sort();
+          const keys = rawKeys.map(safeStructuralKey);
           const fields = {};
-          for (const key of keys) fields[key] = describe(value[key], depth + 1);
+          rawKeys.forEach((rawKey, index) => { fields[keys[index]] = describe(value[rawKey], depth + 1); });
           return { type: 'object', keys, fields };
         }
         return { type };
       };
       const bodyShape = body => {
-        if (body == null) return { type: 'none' };
+        if (body == null || body === '') return { type: 'none' };
         if (typeof body === 'string') {
           try { return describe(JSON.parse(body)); } catch (_) { return { type: 'string', json: false }; }
         }
-        if (body instanceof URLSearchParams) return { type: 'url_search_params', keys: Array.from(body.keys()).slice(0, 40).sort() };
-        if (body instanceof FormData) return { type: 'form_data', keys: Array.from(body.keys()).slice(0, 40).sort() };
+        if (body instanceof URLSearchParams) return { type: 'url_search_params', keys: Array.from(body.keys()).slice(0, 40).map(safeStructuralKey).sort() };
+        if (body instanceof FormData) return { type: 'form_data', keys: Array.from(body.keys()).slice(0, 40).map(safeStructuralKey).sort() };
         return { type: Object.prototype.toString.call(body).replace(/[^A-Za-z]/g, '_') };
+      };
+      const parseBodyObject = body => {
+        if (typeof body !== 'string' || !body) return null;
+        try {
+          const value = JSON.parse(body);
+          return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+        } catch (_) { return null; }
+      };
+      const requestSemantic = body => {
+        const payload = parseBodyObject(body);
+        if (!payload) return {};
+        const messages = Array.isArray(payload.messages) ? payload.messages : [];
+        const first = messages.length && messages[0] && typeof messages[0] === 'object' ? messages[0] : null;
+        const author = first && first.author && typeof first.author === 'object' ? first.author : null;
+        const content = first && first.content && typeof first.content === 'object' ? first.content : null;
+        const contracts = Array.isArray(payload.model_response_contracts) ? payload.model_response_contracts : [];
+        return {
+          conversationKind: Object.prototype.hasOwnProperty.call(payload, 'conversation_id') ? 'existing' : 'new',
+          action: protocolValue(payload.action),
+          model: protocolValue(payload.model),
+          clientPrepareState: protocolValue(payload.client_prepare_state),
+          conversationModeKind: protocolValue(payload.conversation_mode && payload.conversation_mode.kind),
+          thinkingEffort: protocolValue(payload.thinking_effort),
+          forceParallelSwitch: protocolValue(payload.force_parallel_switch),
+          cotSummaryOverride: protocolValue(payload.paragen_cot_summary_display_override),
+          supportedEncodings: Array.isArray(payload.supported_encodings) ? payload.supported_encodings.slice(0, 8).map(protocolValue) : [],
+          supportsBuffering: payload.supports_buffering === true,
+          enableMessageFollowups: payload.enable_message_followups === true,
+          localFunctionNameCount: Array.isArray(payload.local_function_names) ? payload.local_function_names.length : -1,
+          systemHintCount: Array.isArray(payload.system_hints) ? payload.system_hints.length : -1,
+          responseContractCount: contracts.length,
+          responseProtocolVersions: contracts.slice(0, 8).map(item => item && typeof item.protocol_version === 'number' ? item.protocol_version : -1),
+          messageCount: messages.length,
+          firstMessageRole: protocolValue(author && author.role),
+          firstMessageContentType: protocolValue(content && content.content_type),
+          firstMessagePartsCount: content && Array.isArray(content.parts) ? content.parts.length : -1,
+          firstMessageIDShape: idShape(first && first.id),
+          parentMessageIDShape: idShape(payload.parent_message_id),
+          conversationIDShape: idShape(payload.conversation_id),
+          firstMessageEqualsParent: !!(first && typeof first.id === 'string' && typeof payload.parent_message_id === 'string' && first.id === payload.parent_message_id)
+        };
       };
       const headerNames = (input, init) => {
         try {
           const headers = new Headers();
           if (input instanceof Request) input.headers.forEach((_, key) => headers.set(key, '1'));
           if (init && init.headers) new Headers(init.headers).forEach((_, key) => headers.set(key, '1'));
-          return Array.from(headers.keys()).map(v => String(v).toLowerCase()).sort().slice(0, 40);
+          return Array.from(headers.keys()).map(v => String(v).toLowerCase()).sort().slice(0, 48);
         } catch (_) { return []; }
       };
-      const messageFrom = obj => obj && typeof obj === 'object' ? (obj.message || (obj.v && typeof obj.v === 'object' ? obj.v.message : null)) : null;
+      const responseHeaderNames = response => {
+        try { return Array.from(response.headers.keys()).map(v => String(v).toLowerCase()).sort().slice(0, 48); }
+        catch (_) { return []; }
+      };
+      const emitRequest = (info, method, transport, headers, body) => post({ kind: 'request', transport, route: info.route, safePath: info.safePath, pageKind: pageKind(), method, headerNames: headers, bodyShape: bodyShape(body), requestSemantic: info.route === 'conversation_send' ? requestSemantic(body) : {} });
+      const observeFetchRequest = (input, init, info, method) => {
+        if (!info) return;
+        const headers = headerNames(input, init);
+        if (init && Object.prototype.hasOwnProperty.call(init, 'body')) {
+          emitRequest(info, method, 'fetch', headers, init.body);
+          return;
+        }
+        if (input instanceof Request) {
+          try {
+            input.clone().text().then(text => emitRequest(info, method, 'fetch', headers, text)).catch(() => emitRequest(info, method, 'fetch', headers, null));
+            return;
+          } catch (_) {}
+        }
+        emitRequest(info, method, 'fetch', headers, null);
+      };
+      const observeResponseShape = (response, info, contentType) => {
+        if (!info || contentType !== 'application/json' || info.route === 'conversation_send') return;
+        try {
+          response.clone().json().then(payload => post({ kind: 'response_shape', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), contentType, responseShape: describe(payload) })).catch(() => {});
+        } catch (_) {}
+      };
+      const messageFrom = obj => obj && typeof obj === 'object' ? (obj.message || (obj.v && typeof obj.v === 'object' && !Array.isArray(obj.v) ? obj.v.message : null)) : null;
       const summarizeSSE = data => {
         const trimmed = String(data || '').trim();
-        if (trimmed === '[DONE]') return { signature: 'done', terminal: true };
+        if (trimmed === '[DONE]') return { signature: 'done', terminal: true, eventKeys: [], valueKeys: [], conversationIDSource: 'none', messageIDSource: 'none' };
         let obj;
-        try { obj = JSON.parse(trimmed); } catch (_) { return { signature: 'non_json', terminal: false }; }
-        if (typeof obj === 'string') return { signature: obj === 'v1' ? 'marker:v1' : 'json_string', terminal: false };
-        if (!obj || typeof obj !== 'object') return { signature: 'json_primitive', terminal: false };
+        try { obj = JSON.parse(trimmed); } catch (_) { return { signature: 'non_json', terminal: false, eventKeys: [], valueKeys: [], conversationIDSource: 'none', messageIDSource: 'none' }; }
+        if (typeof obj === 'string') return { signature: obj === 'v1' ? 'marker:v1' : 'json_string', terminal: false, eventKeys: [], valueKeys: [], conversationIDSource: 'none', messageIDSource: 'none' };
+        if (!obj || typeof obj !== 'object') return { signature: 'json_primitive', terminal: false, eventKeys: [], valueKeys: [], conversationIDSource: 'none', messageIDSource: 'none' };
+        const valueObject = obj.v && typeof obj.v === 'object' && !Array.isArray(obj.v) ? obj.v : null;
         const eventType = typeof obj.type === 'string' ? obj.type : '';
         const operation = typeof obj.o === 'string' ? obj.o : '';
         const patchPath = typeof obj.p === 'string' ? obj.p : '';
@@ -475,9 +571,18 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         const contentType = message && message.content && typeof message.content.content_type === 'string' ? message.content.content_type : '';
         const status = message && typeof message.status === 'string' ? message.status : '';
         const endTurn = !!(message && message.end_turn === true);
-        const hasConversationID = !!(obj.conversation_id || (obj.v && typeof obj.v === 'object' && obj.v.conversation_id));
-        const hasMessageID = !!(message && message.id);
+        let conversationIDSource = 'none';
+        if (typeof obj.conversation_id === 'string' && obj.conversation_id) conversationIDSource = 'conversation_id';
+        else if (valueObject && typeof valueObject.conversation_id === 'string' && valueObject.conversation_id) conversationIDSource = 'v.conversation_id';
+        let messageIDSource = 'none';
+        if (message && typeof message.id === 'string' && message.id) messageIDSource = 'message.id';
+        else if (typeof obj.message_id === 'string' && obj.message_id) messageIDSource = 'message_id';
+        else if (valueObject && typeof valueObject.message_id === 'string' && valueObject.message_id) messageIDSource = 'v.message_id';
+        const hasConversationID = conversationIDSource !== 'none';
+        const hasMessageID = messageIDSource !== 'none';
         const hasTitle = eventType === 'title_generation' || Object.prototype.hasOwnProperty.call(obj, 'title');
+        const eventKeys = Object.keys(obj).slice(0, 48).map(safeStructuralKey).sort();
+        const valueKeys = valueObject ? Object.keys(valueObject).slice(0, 48).map(safeStructuralKey).sort() : [];
         let batchPatches = [];
         if (operation === 'patch' && Array.isArray(obj.v)) batchPatches = obj.v.slice(0, 16).map(item => ({ operation: item && typeof item.o === 'string' ? item.o : '', patchPath: item && typeof item.p === 'string' ? item.p : '' }));
         let signature = 'object';
@@ -485,7 +590,7 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         else if (operation) signature = 'patch:' + operation + ':' + (patchPath || 'root');
         else if (message) signature = 'message:' + (role || 'unknown') + ':' + (status || 'unknown');
         else if (obj.v && typeof obj.v === 'string') signature = 'value_string_patch';
-        return { signature, terminal: false, eventType, operation, patchPath, messageRole: role, messageContentType: contentType, messageStatus: status, hasConversationID, hasMessageID, hasTitle, endTurn, batchPatches };
+        return { signature, terminal: false, eventType, operation, patchPath, messageRole: role, messageContentType: contentType, messageStatus: status, hasConversationID, hasMessageID, conversationIDSource, messageIDSource, eventKeys, valueKeys, hasTitle, endTurn, batchPatches };
       };
       const inspectSSE = async (response, startedAt, info) => {
         const reader = response.body && response.body.getReader ? response.body.getReader() : null;
@@ -503,9 +608,10 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
           if (firstEventMs === null) firstEventMs = Math.max(0, performance.now() - startedAt);
           const summary = summarizeSSE(data);
           signatureCounts[summary.signature] = (signatureCounts[summary.signature] || 0) + 1;
-          if (!seen.has(summary.signature)) {
-            seen.add(summary.signature);
-            post({ kind: 'stream_signature', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), eventIndex: eventCount, signature: summary.signature, eventType: summary.eventType || '', operation: summary.operation || '', patchPath: summary.patchPath || '', messageRole: summary.messageRole || '', messageContentType: summary.messageContentType || '', messageStatus: summary.messageStatus || '', hasConversationID: !!summary.hasConversationID, hasMessageID: !!summary.hasMessageID, hasTitle: !!summary.hasTitle, endTurn: !!summary.endTurn, batchPatches: summary.batchPatches || [] });
+          const evidenceKey = [summary.signature, summary.conversationIDSource || 'none', summary.messageIDSource || 'none'].join('|');
+          if (!seen.has(evidenceKey)) {
+            seen.add(evidenceKey);
+            post({ kind: 'stream_signature', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), eventIndex: eventCount, signature: summary.signature, eventType: summary.eventType || '', operation: summary.operation || '', patchPath: summary.patchPath || '', messageRole: summary.messageRole || '', messageContentType: summary.messageContentType || '', messageStatus: summary.messageStatus || '', hasConversationID: !!summary.hasConversationID, hasMessageID: !!summary.hasMessageID, conversationIDSource: summary.conversationIDSource || 'none', messageIDSource: summary.messageIDSource || 'none', eventKeys: summary.eventKeys || [], valueKeys: summary.valueKeys || [], hasTitle: !!summary.hasTitle, endTurn: !!summary.endTurn, batchPatches: summary.batchPatches || [] });
           }
           if (summary.terminal) doneSeen = true;
         };
@@ -532,12 +638,13 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
         const info = classify(input);
         const method = String((init && init.method) || (input instanceof Request && input.method) || 'GET').toUpperCase();
         const startedAt = performance.now();
-        if (info) post({ kind: 'request', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), method, headerNames: headerNames(input, init), bodyShape: bodyShape(init && init.body) });
+        observeFetchRequest(input, init, info, method);
         try {
           const response = await originalFetch(input, init);
           if (info) {
             const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-            post({ kind: 'response', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), status: response.status, contentType });
+            post({ kind: 'response', transport: 'fetch', route: info.route, safePath: info.safePath, pageKind: pageKind(), status: response.status, contentType, responseHeaderNames: responseHeaderNames(response) });
+            observeResponseShape(response, info, contentType);
             if (info.route === 'conversation_send' && contentType === 'text/event-stream') inspectSSE(response.clone(), startedAt, info);
           }
           return response;
@@ -561,10 +668,15 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
       XMLHttpRequest.prototype.send = function(body) {
         const probe = this.__nativeSendProbe;
         if (probe && probe.info) {
-          post({ kind: 'request', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), method: probe.method, headerNames: Array.from(new Set(probe.headerNames)).sort(), bodyShape: bodyShape(body) });
+          emitRequest(probe.info, probe.method, 'xhr', Array.from(new Set(probe.headerNames)).sort(), body);
           this.addEventListener('loadend', () => {
             const contentType = String(this.getResponseHeader('content-type') || '').split(';')[0].trim().toLowerCase();
-            post({ kind: 'response', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), status: this.status, contentType });
+            let responseHeaderNames = [];
+            try { responseHeaderNames = String(this.getAllResponseHeaders() || '').split(/\r?\n/).map(line => line.split(':', 1)[0].trim().toLowerCase()).filter(Boolean).slice(0, 48).sort(); } catch (_) {}
+            post({ kind: 'response', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), status: this.status, contentType, responseHeaderNames });
+            if (contentType === 'application/json' && probe.info.route !== 'conversation_send') {
+              try { post({ kind: 'response_shape', transport: 'xhr', route: probe.info.route, safePath: probe.info.safePath, pageKind: pageKind(), contentType, responseShape: describe(JSON.parse(this.responseText)) }); } catch (_) {}
+            }
           }, { once: true });
         }
         return originalSend.apply(this, arguments);

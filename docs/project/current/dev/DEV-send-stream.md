@@ -2,125 +2,103 @@
 
 ## Status
 
-**Active — b48 diagnostic experiment allocated. Long-term TD-024/TD-025 hidden/shadow-Web boundary is intentionally NOT changed yet. The user's latest explicit requirement authorizes one isolated Runtime experiment to determine whether a Native composer can drive the official Web Send machinery while assistant SSE text is intercepted before Web React/DOM rendering.**
+**Active — exact b48 product/config source published; CI/Artifact gate in progress. Long-term TD-024/TD-025 hidden/shadow-Web boundary remains unchanged. b48 is one isolated diagnostic exception explicitly requested by the user to measure real-device feasibility before any durable architecture decision.**
 
 - **Work ID**: `DEV-send-stream`
-- **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / reasoning / follow-tail / 官方 Web / hybrid / realtime handoff / resume / stream / Native composer / Web Send engine`
 - **Branch**: `dev/send-stream-20260829`
 - **PR**: #29 — open / mergeable / not merged; evidence branch only.
-- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
-- **Head before this checkpoint batch**: `ae39bbf6fc0aac893eb0427c7846f7f94991c8b2`.
+- **Target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
 - **Stable native predecessor**: b38.
-- **Exact b47 product/config source**: `21028bbff7982abeb42f130c56fcb21e6ef44d7a`.
-- **b47 Runtime Artifact**: `9716878034`; b47 remains immutable/reserved.
-- **Allocated diagnostic Candidate**: `DEV-send-stream-0.1.0-b48`, version/build `0.1.0 (48)`.
+- **Exact b47 product source**: `21028bbff7982abeb42f130c56fcb21e6ef44d7a`; immutable/reserved.
+- **b47 Runtime Artifact**: `9716878034`.
+- **Candidate**: `DEV-send-stream-0.1.0-b48`.
+- **Version / Build**: `0.1.0 (48)`.
+- **Exact b48 product/config source**: `6ccba03cefaa32a1186f1f468c3e696ed9457699`.
 - **Stable/Frozen Send**: No.
 
-## Resume guard / conflict state
+## Resume / identity guard
 
-Current-session Light Resume Guard revalidated before b48 allocation:
+Current-session Light Resume Guard passed before b48:
 
-- latest repository `AGENTS.md` and `docs/project/START_HERE.md` reread;
-- selected task uniquely remains `DEV-send-stream`;
-- branch exists and was at `ae39bbf6fc0aac893eb0427c7846f7f94991c8b2`;
-- PR #29 is open / mergeable / not merged and points to this branch;
-- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-- `docs/project/current/dev/` contains no other Active development checkpoint;
-- repository search found no existing `DEV-send-stream-0.1.0-b48` / `b48` allocation;
-- b47 exact product source has not been redefined by later docs-only work.
+- latest `AGENTS.md` + `docs/project/START_HERE.md` reread;
+- unique Active Work remains `DEV-send-stream`;
+- branch/PR identity matched;
+- `main` remained `1ac202c...`;
+- no peer Active checkpoint conflict;
+- repository search found no prior b48 allocation;
+- b47 product source had only later docs/evidence changes.
 
-## Accepted prior evidence that constrains b48
+## Why b48 exists
 
-1. Exact b42 proved ordinary ChatGPT consumer protected Send through `/backend-api/f/conversation` requires browser-owned anti-abuse challenge output on the tested account/device path. b48 does **not** solve/replay/harvest Sentinel, Turnstile, PoW or Conduit values.
-2. Exact b40 established ordinary Send as HTTP200 SSE and text patch structure including append `/message/content/parts/0`, plus status/end-turn/metadata lifecycle patches.
-3. Exact b45 established official no-resend `POST /backend-api/f/conversation/resume` with `{conversation_id, offset}` and HTTP200 SSE.
-4. b46/b47 Native duplicated Cookie+Bearer-only resume returned HTTP404 after official Web had already resumed. Native first/exclusive resume remains Unknown.
-5. Exact-device long-answer Web composer use failed badly enough before b47 testing that the user switched to a new conversation.
-6. The user's earlier wrapped-Web/userscript experiment already showed that loading the full conversation then merely hiding all but about two visible rounds did not make the Web `+`/overall interaction acceptable.
-7. Sub2API/Codex OAuth remains static research only; primary-account Runtime is blocked by the user's account-safety concern.
+Prior exact-device evidence established two independent ceilings:
 
-## Long-term boundary vs this diagnostic exception
+1. b42: ordinary `/backend-api/f/conversation` protected Send depends on browser-owned anti-abuse challenge output; pure Native Send remains blocked without bypass/replay.
+2. b47 preparation + the user's older wrapped-Web experiment: full existing-conversation mobile Web can become unusably heavy, and loading the full page then hiding most historical DOM does not adequately fix `+`/composer UX.
 
-The durable production rule still rejects hidden/shadow protected Web Send, Native DOM composer injection and synthetic hidden clicks. **Do not edit TD-024/TD-025/PROJECT_SPECIFIC_RULES merely because this experiment exists.**
+The user therefore requested one experiment that keeps the official Web runtime only as a Send engine while the visible input/output interaction is Native.
 
-The user's latest explicit decision is narrower: try one isolated version first, measure real-device behavior, and only reconsider the durable boundary if the result is good. Therefore b48 is evidence acquisition, not production acceptance.
+This does **not** change durable production policy yet. Do not edit TD-024/TD-025 merely because b48 exists.
 
-b48 must not:
+## b48 implementation scope
 
-- copy/replay challenge/proof/Conduit/OAI header values;
-- construct a Native `/f/conversation` protected Send;
-- integrate streamed text into `ConversationRepository`;
-- persist prompt/answer/reasoning text in diagnostics;
-- add retry/timer/watchdog/fallback machinery;
-- implement attachments;
-- claim existing long-conversation performance is solved;
-- change the durable hidden/shadow-Web decision before Runtime.
+Exact source `6ccba03...` changes exactly four product/config paths relative to the allocation checkpoint:
 
-## b48 exact diagnostic scope
+- `.github/workflows/ios-foundation.yml`
+- `ChatGPTClient.xcodeproj/project.pbxproj`
+- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`
+- `ChatGPTClient/SettingsViewController.swift`
 
-Build a separate diagnostic controller, initially **new-chat focused**, with:
+Assembly audit confirmed no change to `ConversationFeature.swift`, `AuthSessionStore.swift`, `RootViewController.swift`, scripts, or stable b38 presentation code.
 
-- a full-size official `WKWebView` using the existing default persistent `WKWebsiteDataStore`, kept behind an opaque Native surface so Web layout still has normal iPhone dimensions;
-- a Native text composer and Native Send button as the only normal user input surface;
-- one document-start script that finds the official Web composer at runtime, transfers the current Native text into its real editable state and invokes the page's own submit path;
-- the official page remains responsible for its own protected Send/challenge flow;
-- a `window.fetch` wrapper on `/backend-api/f/conversation` that consumes the returned SSE before React, forwards raw assistant text deltas to Native **in memory only**, and removes evidenced append `/message/content/parts/0` text patch operations from the stream returned to Web while preserving the remaining structural lifecycle events and `[DONE]`;
-- no `response.clone()` for the production-like interception path; use one stream transform/reader path so a non-consuming clone cannot accumulate long-answer buffers;
-- privacy-safe structural diagnostics only: Send observed/accepted, frame counts, removed text-patch counts/character counts, terminal state, Web element/message-node counts and Native presentation counts; never log the text itself;
-- no production state mutation.
+The b48 diagnostic controller:
 
-The first Candidate does **not** yet virtualize an existing conversation-detail response before React. That is a later experiment only if b48 proves the Native composer + filtered-SSE state machine can survive at least two sequential turns.
+- keeps a full-size official `WKWebView` on the default persistent `WKWebsiteDataStore` behind an opaque Native surface;
+- exposes a Native `UITextView` composer + Native Send button;
+- at document start, discovers the Web composer and transfers the Native text into its real editable state, then invokes the page's own form/Send control;
+- leaves all login/Sentinel/Turnstile/PoW/protected-Send construction to the official Web page;
+- wraps only `/backend-api/f/conversation` fetch responses;
+- consumes the real SSE once, with no `response.clone()` branch;
+- forwards evidenced append `/message/content/parts/0` text deltas to Native memory/UI and removes those text patch operations from the SSE returned to Web React;
+- preserves the remaining structural lifecycle frames and `[DONE]` for the Web state machine;
+- suppresses Web user/assistant message rendering with CSS while leaving the full-size Web layout/runtime present;
+- records only structural counts/status/DOM metrics in diagnostics, never prompt/answer/reasoning text;
+- does not integrate into `ConversationRepository` or production response ownership;
+- has no retry/timer/watchdog/fallback machinery;
+- is new-chat focused and does not yet virtualize existing conversation-detail history.
 
-## b48 Runtime questions
+## Durable safety boundaries retained
 
-On the exact iPhone/iOS17 device, determine:
+b48 must not be generalized from this diagnostic without later explicit Runtime-backed decision. Still prohibited outside this exception:
 
-1. Can the user send from the Native composer without touching the Web composer?
-2. Does official protected Send still succeed using the Web page's own machinery?
-3. Does Native receive incremental assistant text while the corresponding assistant text patch is withheld from Web React?
-4. Does the hidden Web message/element footprint stay small enough that a long answer does not create the previous assistant DOM growth?
-5. After the first filtered response reaches terminal `[DONE]`, can a second Native-composer Send in the same Web session succeed without branch/parent/state failure?
-6. Does ordinary typing/Send feel Native-smooth on the target device?
+- challenge/proof/Conduit/OAI value harvesting or replay;
+- Native construction of protected `/f/conversation` Send;
+- hidden file-input automation;
+- production DOM answer/reasoning scraping;
+- Sub2API/Codex OAuth Runtime on the user's primary account;
+- speculative resume/header copying;
+- claiming existing long-conversation performance is fixed before testing it.
 
-Passing b48 does **not** prove existing long-chat viability. It only unlocks a later existing-conversation data-virtualization experiment.
+## Runtime gate
 
-## Non-atomic GitHub write-chain recovery point
+Exact-device b48 must answer:
 
-### Batch A — checkpoint / allocation
+1. Native composer can submit without touching the Web composer.
+2. Official Web protected Send still succeeds.
+3. Native receives incremental assistant text while Web React does not receive the corresponding text patch.
+4. Web assistant text/DOM footprint remains small during a long response.
+5. After terminal `[DONE]`, a second Native-composer turn succeeds in the same Web session.
+6. Native typing/Send interaction feels smooth.
 
-- allocate b48 identity and record diagnostic exception;
-- completed by this checkpoint write.
+Passing this gate only unlocks a later existing-conversation data-virtualization experiment; it does not itself approve hidden/shadow Web as production architecture.
 
-### Batch B — non-CI assembly branch
+## Non-atomic write-chain state
 
-Create a temporary assembly branch from the post-checkpoint head so intermediate product/config files cannot trigger the real `dev/send-stream-20260829` workflow. Assemble only the expected b48 files:
-
-- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift` — new diagnostic controller/script;
-- `ChatGPTClient/SettingsViewController.swift` — point diagnostic entry to b48;
-- `ChatGPTClient.xcodeproj/project.pbxproj` — add source + Build 48 / Candidate b48;
-- `.github/workflows/ios-foundation.yml` — b48 Candidate/workflow/artifact identity.
-
-No `ConversationFeature.swift`, `AuthSessionStore.swift`, `RootViewController.swift`, build scripts or stable b38 presentation code are expected to change.
-
-### Batch C — assembly audit / publish
-
-- compare assembly against the real development head;
-- require exactly the expected files above;
-- Light Guard real branch head immediately before publish;
-- non-force fast-forward the complete assembly commit chain to `dev/send-stream-20260829` in one ref move.
-
-### Batch D — CI / Artifact
-
-- accept only CI whose head is the exact complete b48 product/config source;
-- require both push/PR CI success where emitted;
-- inspect the Push Artifact package identity independently;
-- reserve/reject any identity-invalid intermediate Artifact if one somehow appears;
-- hand exact IPA to user for Runtime.
-
-### Batch E — docs after evidence milestone
-
-Update Build/Test Index and PR/checkpoint with exact b48 CI/Artifact identity. Do **not** modify the durable production hidden-Web boundary until Runtime result justifies a separate architecture decision.
+- **Batch A — checkpoint / Candidate allocation:** complete.
+- **Batch B — non-CI assembly:** complete on `assembly/dev-send-stream-b48-20260830`.
+- **Batch C — audit / publish:** complete. Assembly diff was exactly the four expected files; real branch Light Guard matched; non-force fast-forward to exact source `6ccba03cefaa32a1186f1f468c3e696ed9457699` succeeded.
+- **Batch D — CI / Artifact:** pending/in progress. Accept only runs whose exact head is `6ccba03...` or a later docs-only head that packages the same exact product/config source; package identity must still embed source `6ccba03...` if build script uses checkout source marker. If a docs-only checkpoint commit causes a PR run, it does not redefine product source.
+- **Batch E — durable docs / PR:** pending until CI/Artifact identity is known. Do not alter TD-024/TD-025 before Runtime.
 
 ## Next exact action
 
-Create the non-CI b48 assembly branch from the post-checkpoint head, implement only the four expected b48 product/config files, audit the assembly diff, fast-forward the real development branch, then autonomously continue through CI/package identity verification to the exact-device Runtime gate. Do not wait for an extra `继续` reply at ordinary milestones.
+Inspect the b48 push and PR CI generated from the complete published Candidate, fix only deterministic compile/package defects if any, then obtain and independently inspect the legitimate Push Artifact. Roll this checkpoint with exact Run/Job/Artifact/IPA identities and hand the IPA to the user for the six-point real-device Runtime gate. Do not wait for an extra `继续` reply.

@@ -8,9 +8,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Exact b42 Runtime proves the pure-native/transient-auth ChatGPT-account protected Send path depends on browser anti-abuse challenge output. The separately supported/billed API-product route remains explicitly rejected by the user unless that decision changes later.
 - TD-024 permits a **user-visible official ChatGPT Web surface** to perform protected Send, but this is a security permission only; it is not proof that full mobile-Web conversation rendering is an acceptable daily-chat product surface.
 - TD-025 rejects b44's full-page Native -> Web -> Native product form.
-- TD-027 records the current continuation boundary: official `/backend-api/f/conversation/resume` is Runtime Confirmed, while b46/b47 Native duplicated Cookie+Bearer-only resume attempts returned HTTP404 JSON.
-- TD-028 adds the current P0 product ceiling: the user reported an exact target-device long-answer conversation (~3 rounds) where the mobile-Web composer repeatedly froze badly enough that the conversation could not be used for b47 testing. The internal freeze cause is Unknown, but **full Web conversation rendering before every protected Send is no longer an accepted production dependency**.
-- Do not allocate b48 merely to chase resume headers or fix a diagnostic field name while TD-028's production Send boundary remains unresolved.
+- TD-027 records the continuation boundary: official `/backend-api/f/conversation/resume` is Runtime Confirmed, while b46/b47 Native duplicated Cookie+Bearer-only resume attempts returned HTTP404 JSON.
+- TD-028 records the P0 full-Web product ceiling: an exact target-device long-answer conversation (~3 rounds) made the mobile-Web composer unusable before Send. The internal freeze cause is Unknown, but **full Web conversation rendering before every protected Send is not an accepted production dependency**.
+- The user explicitly requested b48-b51 as isolated diagnostic exceptions to test a Native composer over the official Web protected-Send runtime before deciding whether to change TD-024/TD-025. These Candidates do **not** by themselves modify the durable production boundary.
 - Previous-project history is reference-only, not current protocol authority.
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
@@ -30,30 +30,30 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Do not use `navigationItem.prompt` for ordinary conversation-list refresh/cache status. b29 Runtime accepts removal of the prompt-induced blank/top-inset growth for the tested right-top refresh path.
 - Do not assign attributed/text titles to `UIRefreshControl`, and do not reintroduce b27 contentOffset/top-normalization compensation.
 
-## User-visible hybrid Web Send / realtime handoff contract
+## Hybrid Web Send / Native interception diagnostic contract
 
-- Visible official Web may legally perform protected Send because b42 blocks pure-native/transient-auth Send, but the surface must remain genuinely visible and user-operated.
-- The Web surface must never become a hidden/shadow WebView used only to execute browser anti-abuse challenge + Send under a Native facade.
+- Durable production policy still allows only an explicit user-visible official-Web protected Send surface under TD-024; hidden/shadow protected Send remains prohibited unless a later explicit user architecture decision changes that policy.
+- b48-b51 are **diagnostic exceptions requested by the user**. They may keep a full-size official `WKWebView` on the existing default persistent data store behind an opaque Native diagnostic surface while testing whether Native input and pre-React SSE interception can avoid full Web conversation presentation cost. This exception is not production approval.
 - Use the existing default persistent `WKWebsiteDataStore`; do not add another persistent credential/challenge store.
-- `ConversationRepository` remains sole native conversation/list/detail/recovery/future accepted response authority. `AuthSessionStore` remains native auth/account authority. A visible Web surface owns only its own official Web session/Send interaction while presented and does not become a second native repository.
-- b43 established only a **shorter-sequence** smoothness/residency baseline: entry/re-entry, keyboard/typing, Send/stream scrolling and rapid scrolling had no material reported problem; Web `+` -> picker was roughly 100–200 ms. b43 is not long-conversation viability proof.
-- b44 established tested `/c/<conversation-id>` A/B mapping and explicit Native reconciliation, but the full-page Native -> Web -> Native flow is **product-rejected**. Immediate Native Sync could expose the user message while assistant output already visible in Web remained absent until a later Sync. No stable readiness signal/delay was established.
-- Do not patch b44 with arbitrary delay, timer, polling or automatic repeated Sync.
-- b45 later proved official Web has a real no-resend post-Send continuation transport: `POST /backend-api/f/conversation/resume`, JSON body `{conversation_id: string, offset: number}`, HTTP200 `text/event-stream` on successful recovery.
-- b46 and b47 each issued exactly one Native same-body duplicated resume only after an official successful resume; both Native requests returned HTTP404 `application/json` while later official resume remained healthy. Native first/exclusive resume remains Unknown / Unverified.
-- b47 successful official resume request exposed header names `accept, authorization, content-type, oai-client-build-number, oai-client-version, oai-device-id, oai-echo-logs, oai-language, oai-session-id, x-conduit-token, x-oai-is-client-observation, x-oai-is-pending-updates, x-oai-turn-trace-id, x-openai-target-path, x-openai-target-route`; Native explicitly set only `accept, content-type` plus the established transient bearer injection and WebKit-derived ephemeral cookies. Header-name presence does **not** authorize copying browser header values.
-- b47 Native rejection JSON shape was `{"detail":{"code":"string","message":"string"}}`. The intended safe code/type/status export field was named `safeErrorTokens`; current diagnostics sanitization redacts keys containing `token`, so those safe values were lost. Correcting it requires b48+ and is not currently prioritized over the architecture gate.
-- Exact target-device b47 preparation exposed a stronger pre-Send problem: an older conversation with only about three rounds but long answers repeatedly froze when trying to bring up/use the mobile-Web composer. The user had to test with a new conversation.
-- Therefore **do not continue production integration of `Native history -> full official Web conversation for every protected Send -> Native resume`**. A post-Send Native handoff cannot repair a Web composer that becomes unusable before Send.
-- The internal owner of the composer freeze remains Unknown / Unverified because the exported b47 diagnostics cover the replacement new-conversation run, not the failed long-conversation attempt.
-- Evidence-backed next architecture questions are limited to: whether an official supported lightweight **visible send-only** surface exists without full conversation-history rendering; whether another legitimate account-compatible protected-Send boundary can avoid the full mobile-Web conversation without hidden DOM automation/challenge bypass; otherwise whether visible Web is diagnostic/fallback only.
-- Choosing the production Send boundary is a **Human Architecture Gate**. No b48 product code is allocated until that gate is deliberately resolved.
-- Do not continuously observe the DOM, scrape prompt/answer/reasoning text, mirror Web message state into native state, capture challenge/token values, or replay browser proof output.
-- Do not implement a Native composer that secretly injects text into a fully covered/hidden Web DOM/contenteditable and triggers synthetic hidden Send clicks.
-- Do not guess a resume/handoff/turn-stream endpoint or required browser header values.
-- Background resilience remains a hard gate, but response ownership and Send-surface viability must be settled before production background work.
+- `ConversationRepository` remains sole native conversation/list/detail/recovery/future accepted response authority. `AuthSessionStore` remains native auth/account authority. b48-b51 do not mutate production repository response state.
+- The official page remains responsible for its own login, browser challenge handling and protected `/backend-api/f/conversation` request construction. Diagnostics must not capture or replay challenge/proof/header values.
+- b43 established only a shorter-sequence visible-Web smoothness baseline; Web `+` -> picker was roughly 100–200 ms. b43 is not long-conversation viability proof.
+- b44 established tested `/c/<conversation-id>` mapping but the full-page Native -> Web -> Native flow is product-rejected. Immediate Native Sync could lag assistant output already visible in Web. No arbitrary delay/timer/poll/repeated-Sync workaround is accepted.
+- b45 proved official no-resend post-Send continuation: `POST /backend-api/f/conversation/resume`, JSON body `{conversation_id: string, offset: number}`, HTTP200 `text/event-stream` on successful recovery.
+- b46/b47 each issued exactly one Native same-body duplicated resume only after an official successful resume; both returned HTTP404 JSON while later official resume remained healthy. Native first/exclusive resume remains Unknown / Unverified.
+- b47 successful official resume request exposed a much richer header-name set than Native. Header-name presence does **not** authorize copying browser values.
+- b47 exact-device preparation also exposed the stronger pre-Send failure: a long-answer conversation could freeze the mobile-Web composer before Send. Therefore do not return to a production architecture that requires full existing-conversation Web rendering before every Send.
+- The user's earlier wrapped-Web/userscript experiment is additional product evidence: loading the full Web conversation and hiding all but roughly two visible rounds still left `+`/overall interaction too slow. Display-layer hiding is not evidence of data/state-layer unloading.
+- b48 Runtime confirmed two sequential Native-composer submissions could drive the official page's protected Send and preserve enough Web conversation state for a second turn. Its assistant parser failed because it used long-form `op/path/value` instead of the current compact `o/p/v` fields.
+- b49 Runtime confirmed real incremental Native assistant delivery from compact explicit `o/p/v` patches, but only short fragments were captured because contextual value-only `{v:string}` continuation was not yet handled.
+- b50 Runtime materially confirms the diagnostic path for established turns: three sequential Native submissions all reached official protected Send and terminal; turns 2/3 were complete and visibly incremental/effectively character-by-character while Web assistant terminal text stayed small. Fresh new-chat turn 1 still lost a middle section.
+- Historical b40/b41 evidence says fresh new-chat first Send emits `title_generation`. Exact b51 tests only whether that event incorrectly broke b50's assistant-text continuation: when an already-active continuation sees top-level `type == "title_generation"` with no `o`/`p`, b51 forwards it unchanged and preserves continuation while recording a structural count. Every other b50 reset rule remains unchanged.
+- Do not generalize arbitrary `v:string` or arbitrary structural frames into assistant text. Future parser changes require exact structural/runtime evidence.
+- Do not continuously scrape/mirror Web prompt/answer/reasoning DOM state. b48-b51 intercept only evidenced Send SSE text patches before Web React and keep response text in diagnostic memory/UI; exported diagnostics remain structural/aggregate only.
+- Do not guess resume/handoff/turn-stream endpoints or required browser header values.
+- Background resilience remains a hard gate, but production background ownership is not established by these diagnostic Candidates.
 - `beginBackgroundTask` is a finite public baseline only. It must not be presented as a long-duration guarantee.
-- Main-app process survival is not sufficient proof; distinguish WebContent process, WebKit network/process and actual official-Web stream survival.
+- Main-app process survival is not sufficient proof; distinguish WebContent process, WebKit network/process and actual stream survival.
 - Do not create a fake `isWebStreaming` authority from UI text, timer inference or DOM scraping.
 - Attachment `+` remains a hard UX gate. Exact b43 Web `+` latency ~100–200 ms was not rejected, but the Web Photos chooser filtered videos.
 - Public WebKit upload-panel replacement via `WKUIDelegate.runOpenPanelWith...` is iOS18.4+, not the primary iOS17 target. Do not use private WebKit or DOM/file-input injection to fake a photo+video picker fix. iOS17 video attachment support requires separately evidenced native attachment upload/handoff.
@@ -77,20 +77,20 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `ConversationMessageCell` uses deterministic manual frame layout for one bounded display chunk. Do not restore one unbounded whole-message multiline UILabel + deferred automatic estimated geometry without new exact Runtime evidence.
 - Width/presentation changes may rebuild this ephemeral geometry. Do not persist row heights across unrelated details/layout widths as a new durable cache owner.
 - b37 exact-device feedback accepted this geometry/performance direction; b38 preserved it and the merged Phase 8 baseline is Stable, Frozen No.
-- The b47 mobile-Web composer freeze is a **separate Web-surface failure** and is not evidence that the Stable native b38 geometry regressed.
+- The b47 mobile-Web composer freeze is a separate Web-surface failure and is not evidence that the Stable native b38 geometry regressed.
 
 ## Round-navigation contract
 
 - Use one adaptive floating control. Real user drag owns user intent; programmatic presentation is not user intent.
 - Rapid taps advance from the last requested derived round target via one transient presentation cursor; this is not a second semantic authority. A real user drag clears/replaces programmatic intent.
 - Physical top/bottom boundaries outrank drag delta, including rubber-band overscroll. At physical bottom, when a previous round exists, overscroll must not flip the control to `下一轮` merely because drag delta reverses. b33 Runtime accepts this tested path.
-- Short and long quick-navigation distances use **one unified method**.
-- Stable b38 programmatic presentation contract: resolve the semantic target through the already-derived O(1) deterministic prefix geometry, then continuously animate from the **current viewport offset** to the final target offset using one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`.
+- Short and long quick-navigation distances use one unified method.
+- Stable b38 programmatic presentation contract: resolve the semantic target through the already-derived O(1) deterministic prefix geometry, then continuously animate from the current viewport offset to the final target offset using one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`.
 - Do not perform a nonanimated pre-jump teleport/120pt lead step in the accepted path.
 - Do not call `scrollToRow` merely to discover target geometry during round navigation. The target offset is derived from presentation geometry.
 - Rapid retargeting stops the active animator at its current visual position and immediately starts toward the next semantic target. No debounce/wait gate.
 - Real finger drag cancels the programmatic animator and clears programmatic target ownership immediately.
-- Do **not** reintroduce b33/b34 final correction snaps or stale-completion correction ownership unless new exact Runtime evidence requires a different accuracy strategy.
+- Do not reintroduce b33/b34 final correction snaps or stale-completion correction ownership unless new exact Runtime evidence requires a different accuracy strategy.
 - Privacy-safe diagnostics may record presentation mode, row index/role, offsets, travel distance, retargeting and landing error; never message identity/body.
 - No debounce, retry, timer, watchdog, alternate semantic index, duplicate repository/state owner or speculative compatibility shim may be added without new evidence.
 
@@ -101,7 +101,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - A/B anchors are independent. Account-scope reset clears presentation anchors.
 - First visible presentation with no valid saved reading anchor shows latest/bottom of the current visible branch without visibly animating through history. Loading/empty placeholder offsets are not reading anchors.
 - Sync/Reload may preserve an established anchor only when the same anchored authoritative message remains; otherwise discard explicitly rather than invent cross-message fallback.
-- Native follow-tail still belongs to an authoritative native Send/Stream response lifecycle; do not derive it by observing the hybrid Web DOM.
+- Native follow-tail still belongs to an authoritative native Send/Stream response lifecycle; do not derive it from diagnostic Web DOM state.
 
 ## Message rendering scope contract
 
@@ -116,9 +116,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Once a Candidate/Artifact identity has been produced, do not rebuild corrected product code under that same identity.
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
 - `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch.
-- Exact b24-b47 identities and emitted artifacts are permanently reserved. The accidental newer-code Artifact `9710515489` carrying b42 identity is permanently rejected and must never be installed; legitimate b42 remains Artifact `9709824510`.
-- Exact b47 product/config source remains `21028bbff7982abeb42f130c56fcb21e6ef44d7a`; later docs-only commits do not redefine it.
-- **No b48 is currently allocated.** Correcting b47 product code would require b48+, but TD-028 architecture selection precedes any such allocation.
+- Exact b24-b51 identities and emitted Artifacts are permanently reserved. Identity-invalid b46-transition Artifacts and accidental stale-b42 Artifact `9710515489` remain rejected and must never be installed as valid Candidates.
+- Exact current product/config authority for the diagnostic branch is b51 source `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`; later docs-only commits do not redefine it.
+- Any product-code correction after b51 requires b52+ and must be justified by exact b51 Runtime; do not pre-allocate b52 by guess.
 
 ## Manual recovery contract
 
@@ -148,16 +148,16 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority; copied cookies/tokens are transient only.
 - Native `/auth/login` is not an account-context prerequisite. Accepted sequence remains WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
 - b12 accepted public WebKit data-store warm-up for the tested persisted cold-start path.
-- Do not add hidden/shadow WebViews, persistent copied secrets or retry loops.
+- Do not add a second persistent auth store or retry loop.
 - Cache namespace hint is cache bookkeeping only and never establishes verified account/transport/Detail authority.
-- TD-024's explicit visible Web Send permission does not authorize hidden Web hydration/challenge harvesting.
+- b48-b51 diagnostic Web uses the same existing default persistent data store; it does not persist copied auth/challenge material.
 
 ## Conversation-list persistent cache contract
 
 - b23 is the Stable merged cache-core baseline for recorded Plus/personal iPhone/iOS17 scope; PR #24 merged. Frozen No.
 - `ConversationRepository` remains sole authoritative list/conversation owner; `ConversationListCacheStore` is storage only.
 - Persist only a small versioned account-scoped summary snapshot plus privacy-safe namespace bookkeeping; never Detail/full-body data or copied auth secrets.
-- Automatic cold start may provisionally publish last-successfully-verified cached **titles only** before current network verification. Provisional rows cannot authorize Detail until current scope is verified.
+- Automatic cold start may provisionally publish last-successfully-verified cached titles only before current network verification. Provisional rows cannot authorize Detail until current scope is verified.
 - Temporary auth transport failure may retain valid provisional rows without converting it into logout or automatic retry.
 - Exact b23 accepts the current 60-second rapid-relaunch window. Manual refresh bypasses suppression and issues exactly one user-requested list refresh.
 - Page-1 absence is not deletion evidence. b23 proved `28 + 1 -> 29`; merged Phase 8 b26 behavior accepts the authoritative-total cap for stale excess rows (`30 -> 29`, repeated `29/29`). Preserve that bound.
@@ -172,16 +172,16 @@ This file contains repository/product rules backed by explicit requirements, cur
 - `ProtocolReadProbe` remains diagnostic-only; `ConversationRepository` remains native production authority.
 - b40-b42 private Send observations remain protocol evidence and do not authorize native replay around browser protections.
 - b45 proves the official no-resend resume route/method/body/framing after real transport interruption.
-- b46/b47 prove only that a **duplicated-after-official-success** Native Cookie+Bearer-only resume receives HTTP404 JSON; they do not prove Native first/exclusive resume impossible.
-- b47 proves a large official-vs-Native request-header-name structural difference, but no browser header value is authorized for copying from name presence alone.
-- Do not continue resume-parity experiments while the production Send surface is under TD-028's Human Architecture Gate unless the later selected architecture makes that evidence relevant again.
+- b46/b47 prove only that a duplicated-after-official-success Native Cookie+Bearer-only resume receives HTTP404 JSON; they do not prove Native first/exclusive resume impossible.
+- b48-b51 parser/Send-engine experiments must continue to use only exact observed compact SSE structures; no speculative parser/header compatibility.
 
 ## Diagnostics / logging contract
 
 - Use existing `DiagnosticsLogger` authority.
-- Never log/export passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts, raw payloads, Sentinel/Turnstile/PoW values or Web prompt/answer text.
+- Never log/export passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts, raw payloads, Sentinel/Turnstile/PoW values or Web prompt/answer/reasoning text.
 - Hybrid/hand-off diagnostics may record safe route/transport/status/header-name/query-name/structural identity presence/timing only; proof/challenge/header values remain redacted.
-- Current sanitizer redacts any field key containing `token`; therefore diagnostic field names intended to carry safe enum/error-code summaries must avoid `token` in the **field key** if such evidence is needed in a future Candidate.
+- b48-b51 Native Web Send-engine diagnostics may record aggregate frame/patch/character/DOM counts and structural event counts only; the actual prompt/answer remains memory/UI only and is never persisted to diagnostics.
+- Current sanitizer redacts any field key containing `token`; diagnostic field names intended to carry safe enum/error-code summaries must avoid `token` in the field key if such evidence is needed later.
 - Background diagnostics may record app lifecycle, public background-task begin/end/expiration, safe Web process/navigation failure class and foreground recovery reason. No heartbeat timer merely to manufacture activity.
 - Multi-conversation correlation uses privacy-safe hashes/counts/generations.
 - Cache diagnostics may record schema/hit/age/count/duration/scope hash/decision only.
@@ -194,15 +194,14 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Same-target obsolete operations are rejected by per-target generation/freshness ownership; equivalent loads may coalesce.
 - Account scope comes only from accepted auth owner; stale operation context may never re-adopt an older scope.
 - No arbitrary normal LRU capacity: b19 evidence through 8 residents does not justify one. Memory warnings may trim eligible inactive terminal residents.
-- Do not treat a Web page's visible conversation state as a second native resident/message authority.
+- Do not treat a diagnostic Web page's conversation state as a second production native resident/message authority.
 
 ## Background / compatibility
 
 - Generic background continuation follows `BACKGROUND_EXECUTION_PLAN.md`: no automatic prompt resend and no second stream/store; TrollStore privileged background remains an isolated experiment.
 - Public `beginBackgroundTask` is a finite short-duration baseline only; do not promise long foreground-equivalent execution from it.
-- A visible Web surface does not establish a native response owner, and main-app process survival does not prove WebKit WebContent/network/stream survival.
-- b45 exact-device evidence establishes positive short-background/original-stream survival and official recovery after forced interruption, but full background acceptance still requires its own matrix after a viable production response owner is selected.
-- TD-028 means production background work must not optimize a full-Web Send architecture whose composer can fail before Send on long conversations.
+- A Web Send engine does not itself establish a native production response owner, and main-app process survival does not prove WebKit WebContent/network/stream survival.
+- b45 exact-device evidence establishes positive short-background/original-stream survival and official recovery after forced interruption. b49 also observed a long diagnostic response reaching terminal across multiple background intervals. Full background acceptance still requires its own matrix after a production response owner is selected.
 - Native iOS / TrollStore IPA; intended ceiling iOS17; current build minimum iOS14; current real-device evidence primarily iPhone/iOS17.
 
 ## Repository governance contract
@@ -212,18 +211,18 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source, and final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint's batch recovery point and never replay already-confirmed Candidate writes blindly.
-- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; exact b47 product authority is `21028bbff7982abeb42f130c56fcb21e6ef44d7a`, and later docs-only commits do not redefine it.
+- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; exact current Phase 9 diagnostic product authority is b51 source `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`; later docs-only commits do not redefine either.
 
 ## Critical invariants / prohibited routes
 
 - Historical hidden WebView chat code is not the native product baseline.
-- TD-024 permits only an **explicit user-visible official-Web protected Send surface**; TD-025 rejects the b44 full-page integrated form; TD-028 rejects making the full mobile-Web conversation a required production Send surface after its exact-device long-conversation composer failure.
-- Hiding the same slow Web conversation under Native UI is not a performance fix and would violate the protected-Send visibility/security boundary if Native DOM/input automation drives it.
+- TD-024/TD-025/TD-028 durable production restrictions remain in force while b48-b51 run as isolated diagnostic exceptions. Do not silently promote the diagnostic architecture to production.
+- Full existing-conversation Web rendering is not a performance fix merely because it is hidden or CSS-trimmed.
 - UI text/titles are never identity authority.
 - CI/Artifact success is never Runtime proof.
 - Main-app background survival is never WebKit-stream survival proof.
 - Manual Sync/Reload/list refresh never create competing state stores or automatic retry machinery.
-- No speculative timers, watchdogs, retry loops, shadow WebViews, persisted copied auth/challenge secrets, UA spoofing, Cloudflare/Sentinel bypass, fallback conversation endpoints, DOM mirroring/scraping or speculative parser/header compatibility.
+- No speculative timers, watchdogs, retry loops, persisted copied auth/challenge secrets, UA spoofing, Cloudflare/Sentinel bypass, fallback conversation endpoints or speculative parser/header compatibility.
 - Do not raise iOS14 minimum without concrete need.
 - Stable does not mean Frozen; no Frozen business/architecture rules are currently recorded.
 

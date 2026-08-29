@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-30 through exact b50 Runtime and exact b51 Code/CI/Artifact/package verification; b51 Runtime remains pending._
+_Last updated: 2026-08-30 through exact b51 Runtime and exact b52 Code/CI/Artifact/package verification; b52 Runtime remains pending._
 
 ## Current accepted merged baseline
 
@@ -25,7 +25,7 @@ The user rejects the separately billed API-product route and has also blocked pr
 
 The durable production boundary still prohibits challenge solver/bypass/replay, copied proof/token values, guessed Send/continuation endpoints, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Web Send clicks, DOM answer/reasoning scraping and hidden file-input injection.
 
-**b48-b51 are explicit diagnostic exceptions only.** The user requested trying the Native-composer/Web-Send-engine concept before deciding whether to change that durable boundary. Do not interpret diagnostic Code/CI/Artifact/Runtime success as a production policy change by itself.
+**b48-b52 are explicit diagnostic exceptions only.** The user requested trying the Native-composer/Web-Send-engine concept before deciding whether to change that durable boundary. Do not interpret diagnostic Code/CI/Artifact/Runtime success as a production policy change by itself.
 
 `/backend-api/f/conversation/resume` remains a post-Send continuation/read path and does not weaken the b42 protected-Send boundary.
 
@@ -93,15 +93,11 @@ Accepted: official no-resend resume Runtime Confirmed; Native Cookie+Bearer-only
 
 Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md`.
 
-### b51 — exact new-chat title-generation continuation experiment
+### b51 — fresh-new-chat title-generation fix Runtime confirmed; separate leading gap remains
 
-Historical exact b40/b41 evidence established that a new-chat first Send emits a `title_generation` structural event. b50 cleared active assistant-text continuation on every structural frame that was not explicit assistant append or contextual value-only text. This exactly matches the one case that still failed: the first turn of a new conversation.
+Historical exact b40/b41 evidence established that a new-chat first Send emits a `title_generation` structural event. b50 cleared active assistant-text continuation on every structural frame that was not explicit assistant append or contextual value-only text.
 
-b51 makes only the narrow diagnostic change:
-
-- when assistant-text continuation is active and an exact top-level event has `type == "title_generation"` with no `o`/`p`, forward it unchanged to Web **without** clearing the continuation;
-- record `titleGenerationWhileContinuationCount`;
-- keep all other b50 reset/filter rules unchanged.
+b51 changed only this narrow diagnostic rule: when assistant-text continuation is active and an exact top-level event has `type == "title_generation"` with no `o`/`p`, forward it unchanged to Web without clearing continuation and record `titleGenerationWhileContinuationCount`.
 
 Exact b51 identity:
 
@@ -109,29 +105,60 @@ Exact b51 identity:
 - Exact product/config source `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`.
 - Push Run / Job `33271794573` / `99151433241` — success.
 - PR Run / Job `33271796259` / `99151437702` — success.
-- Artifact `9720327648`.
-- Artifact ZIP digest `sha256:247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`.
+- Artifact `9720327648`; ZIP digest `sha256:247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`.
 - IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
 - Package identity independently verified: `0.1.0 (51)`, Candidate b51, source marker `bd8f056cc4d1`, Release, minimum iOS14.0, UIDeviceFamily `[1,2]`, arm64.
+
+Exact b51 Runtime on iPhone/iOS17.0:
+
+- Fresh new-chat long turn: `frameCount=307`, `explicitTextPatchCount=2`, `contextualValueStringCount=282`, `contextualValueStringCharacters=11592`, `nativeDeltaCount=284`, `nativeCharacters=11618`, `titleGenerationWhileContinuationCount=1`, `webAssistantTextCharacters=0`, terminal true. User visually judged the reply complete.
+- Second long turn: `nativeCharacters=1363`, `nativeDeltaCount=42`, terminal true; user visually judged it complete.
+- Third GitHub/project-progress request: `frameCount=40`, `explicitTextPatchCount=8`, `contextualValueStringCount=8`, `nativeCharacters=554`, title-generation count `0`, terminal true. User observed a small **leading truncation**.
+
+Accepted b51 conclusion: the b50 fresh-first-turn missing-middle defect is Runtime corrected by the title-generation continuation preservation on exact b51. Complete parser coverage is still rejected because a distinct tool/GitHub-style leading gap remains. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
+
+### b52 — diagnostic-only structural gap classifier
+
+Current b51 source activates contextual value-only continuation only after an exact top-level assistant append whose key set is exactly `o/p/v`. Other assistant text appends may be found recursively and delivered to Native without activating continuation. The b51 metrics cannot prove whether this explains the third-turn missing prefix.
+
+Exact b52 therefore keeps b51 filtering/output behavior unchanged and only adds aggregate structural classification:
+
+- `exactTopLevelTextPatchCount`;
+- `rootNonExactTextPatchCount`;
+- `nestedTextPatchCount`;
+- `inactiveValueStringCount` / `inactiveValueStringCharacters`;
+- `continuationResetWhileActiveCount`;
+- bounded `firstInactiveValueContext`.
+
+It does not forward inactive value-only strings to Native, preserve a new structural frame class, or change b51 title-generation handling.
+
+Exact b52 identity:
+
+- Candidate `DEV-send-stream-0.1.0-b52`, version/build `0.1.0 (52)`.
+- Exact product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
+- Push Run / Job `33276080936` / `99162937523` — success.
+- PR Run / Job `33276082767` / `99162942750` — success.
+- Artifact `9721532867`; ZIP digest `sha256:2ffd7e46e80019d3c4e8d6cbfa5c91dffa2a5f88222a30d5c4d5fb1e4fd752fc`.
+- IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
+- Independent package inspection: `0.1.0 (52)`, Candidate b52, source marker `5c0690ce062e`, minimum iOS14.0, UIDeviceFamily `[1,2]`, arm64.
 - Runtime/manual: **Pending**.
 
-Because Artifact `9720327648` exists, exact b51 is permanently reserved; any product-code correction requires b52+.
+Because Artifact `9721532867` exists, b52 is permanently reserved; any product-code correction requires b53+ and exact b52 Runtime evidence.
 
 ## Current Runtime gate
 
-The next human-only gate is exact-device b51 fresh-new-chat testing:
+The next human-only gate is one focused exact-device b52 GitHub/tool-style reproduction:
 
-1. clear diagnostics and open `Native 输入 / Web Send（b51诊断）`;
-2. first Native turn requests a genuinely long answer;
-3. verify first answer is incrementally complete through the middle;
-4. after terminal, send a second Native turn;
-5. export diagnostics after second terminal.
+1. clear diagnostics and open `Native 输入 / Web Send（b52诊断）`;
+2. send a GitHub/tool-style request similar to the b51 third turn that showed a missing prefix;
+3. observe whether Native again begins truncated;
+4. wait for terminal and export diagnostics.
 
-Pass signal for the first turn includes `titleGenerationWhileContinuationCount > 0` if the hypothesis is correct, long-answer-scale contextual/native character counts, terminal true, small Web assistant DOM text, and a successful second Send. If the metric is zero or truncation remains, parser grammar must not be broadened by guess; collect the smallest structural evidence needed to identify the actual reset frame.
+The decision signal is the relationship between any reproduced leading gap and the new structural counters/context. Parser grammar must not be broadened before that evidence identifies the actual gap class.
 
 ## Background ordering
 
-Background resilience remains a hard product requirement, but implementation stays response-owner dependent. b45 provides positive short-background survival/buffering evidence. b49 additionally showed a long diagnostic response reaching terminal across multiple background intervals, but b48-b51 are still Web-owned diagnostic experiments rather than production response ownership.
+Background resilience remains a hard product requirement, but implementation stays response-owner dependent. b45 provides positive short-background survival/buffering evidence. b49 additionally showed a long diagnostic response reaching terminal across multiple background intervals, but b48-b52 are still Web-owned diagnostic experiments rather than production response ownership.
 
 ## Authority / evidence boundary
 
@@ -140,7 +167,7 @@ Background resilience remains a hard product requirement, but implementation sta
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - Sync/Reload never resend/regenerate.
 - no second Send may be created merely to obtain a stream.
-- b48-b51 do not mutate production response state and do not modify TD-024/TD-025.
+- b48-b52 do not mutate production response state and do not modify TD-024/TD-025.
 - Native first/exclusive resume: Unknown / Unverified.
 - Existing-conversation history virtualization before Web React: Unknown / Unverified.
 - Native production incremental response ownership/reasoning/follow-tail/background lifecycle: Unknown / Unverified.

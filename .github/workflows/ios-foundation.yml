@@ -1,5 +1,5 @@
-# Candidate: DEV-send-stream-0.1.0-b44
-name: iOS Integrated Hybrid Send
+# Candidate: DEV-send-stream-0.1.0-b45
+name: iOS Native Realtime Handoff Probe
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b44
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b45
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

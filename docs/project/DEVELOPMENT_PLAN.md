@@ -1,12 +1,12 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-29 through exact b42 Phase 9 protocol Runtime; current native Send path is architecture-blocked._
+_Last updated: 2026-08-29 through valid b43 hybrid CI/Artifact; exact-device Runtime pending._
 
 ## Purpose
 
 Durable implementation sequence for the native iOS ChatGPT client. Current real source, exact CI/Artifact evidence, real-device evidence and the user's latest explicit requirements outrank stale plan wording.
 
-Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/iOS17, deployment target iOS14, private/internal ChatGPT behavior must be evidenced rather than guessed.
+Constraints: UIKit native shell/read client, TrollStore IPA, primary tested runtime iPhone/iOS17, deployment target iOS14, private/internal ChatGPT behavior must be evidenced rather than guessed. For ChatGPT-account Send, TD-024 explicitly permits one user-visible official-Web surface after b42 proved the pure-native account-session path is browser-challenge blocked.
 
 ## Delivery principles
 
@@ -17,13 +17,14 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 5. Distinguish Code / Static / CI / Artifact / Runtime / Stable evidence.
 6. High-frequency daily-use interactions such as Copy and attachments outrank low-value polish once dependencies exist.
 7. Optimize only evidenced bottlenecks, especially for long conversations.
+8. The current visible-Web Send exception must remain visible and explicit; it is not pure-native Send and may not be turned into hidden challenge harvesting.
 
 ## Usability milestones
 
 - **V0.1 read-use**: native shell + list/detail + manual recovery + accepted cold-start auth warm-up.
 - **V0.1 cache-use increment**: account-scoped persistent list snapshot and rapid-relaunch suppression.
-- **V0.2 chat-use**: stable multi-conversation ownership + metadata/preferences + Copy + round navigation + text Send/new conversation + stream/stop/reasoning/haptics. **Currently blocked on production Send transport architecture.**
-- **V0.2 attachment-use increment**: image/file sending + assistant-file tap-download-share. Blocked until an accepted Send architecture exists.
+- **V0.2 chat-use**: stable multi-conversation ownership + metadata/preferences + Copy + round navigation + usable ChatGPT-account Send. **Option 2 hybrid architecture is selected; b43 is the first valid visible-Web Send Candidate and is awaiting exact-device Runtime.** Native private-API response ownership/Stop/follow-tail remains a separate unimplemented boundary and must not be silently claimed by the Web surface.
+- **V0.2 attachment-use increment**: image/file sending + assistant-file tap-download-share. Architecture choice is no longer the blocker, but production attachment transfer still waits for accepted hybrid interaction behavior and evidenced native-picker→official-Web handoff semantics.
 - **V0.3 refinement**: Markdown/code/rich-content rendering, conversation previews, export, long-conversation tuning, pagination/search/download manager and remaining daily-use features.
 
 ## Completed foundations
@@ -31,7 +32,7 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 - Phase 1 `DEV-app-foundation`: merged Stable.
 - Phase 2 `DEV-auth-bootstrap`: merged Stable for tested scope; persistent `WKWebsiteDataStore` is sole persistent auth-secret authority.
 - Phase 3 `DEV-protocol-read`: merged accepted diagnostic read scope.
-- Phase 4 `DEV-native-read-path`: merged Stable b9; `ConversationRepository` is production conversation owner.
+- Phase 4 `DEV-native-read-path`: merged Stable b9; `ConversationRepository` is native conversation owner.
 - Phase 5 `DEV-conversation-recovery`: merged Stable b15; PR #10.
 - Phase 6 `DEV-multi-conversation-state`: merged Stable b21 for recorded Plus/personal iPhone/iOS17 read-state scope; PR #23; Frozen No.
 - Phase 7 `DEV-conversation-list-cache-core`: merged Stable b23 for recorded scope; PR #24; Frozen No.
@@ -39,11 +40,11 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 ### Conversation-entry scroll semantics
 
-- First visible presentation with **no valid saved reading anchor** defaults to latest/bottom of the current branch without visibly animating through history.
+- First visible native presentation with **no valid saved reading anchor** defaults to latest/bottom of the current branch without visibly animating through history.
 - Loading-placeholder offsets are not reading anchors.
 - Once A has a real semantic reading anchor, A -> B -> A restores A.
 - Sync/Reload preserve an established resolvable anchor.
-- Future active-response follow-tail belongs to Send/Stream and must not pull a user out of intentional history browsing.
+- Native active-response follow-tail remains tied to a future authoritative native response owner; do not derive it from hybrid Web DOM observation.
 
 ## Phase 8 — `DEV-conversation-round-count` — Completed
 
@@ -63,7 +64,7 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 - Round count and navigation share one derived active-branch `ConversationRoundProjection`.
 - A visible authoritative user message starts a round. Physical quick-navigation target is the **round-start user message**.
-- Tool/reasoning/system/internal-recipient nodes do not create ordinary chat rounds/rows.
+- Tool/reasoning/system/internal-recipient nodes do not create ordinary native chat rounds/rows.
 - `ConversationMessagePresentationProjection` is ephemeral presentation-only state: bounded long-message display chunks, deterministic row heights/prefix offsets and message→first-row mapping derive from authoritative messages.
 - `ConversationMessageCell` uses deterministic manual frame layout for bounded display chunks. Full-message Copy remains authoritative-message based.
 - Real user drag controls viewport intent; programmatic presentation is not user intent.
@@ -96,45 +97,77 @@ Constraints: UIKit native client, TrollStore IPA, primary tested runtime iPhone/
 
 ### Rendering scope boundary
 
-Current message body remains plain-string presentation. Markdown/table/code/list/link/citation rendering is **not** Phase 8 and belongs future `DEV-message-rendering`. Do not strip raw rich-content markers speculatively.
+Current native message body remains plain-string presentation. Markdown/table/code/list/link/citation rendering is **not** Phase 8 and belongs future `DEV-message-rendering`. Do not strip raw rich-content markers speculatively.
 
-## Phase 9 — `DEV-send-stream` — Active / architecture-blocked
+## Phase 9 — `DEV-send-stream` — Active / b43 Runtime gate
 
-The phase was activated on its own branch/checkpoint/PR and used unique b39-b42 evidence Candidates. It **did not implement production native Send** because exact protocol Runtime established a security/transport blocker before an evidence-backed native precursor existed.
+Phase 9 used b39-b42 evidence Candidates to establish current account-session Send behavior and then hit a security/transport boundary. Exact b42 Runtime proved successful default ChatGPT Send requires browser-generated anti-abuse challenge output, so the pure-native/transient-auth route is not being implemented.
 
-### Accepted protocol evidence
+### Accepted protocol/security evidence
 
-- Existing and new conversation Send use `POST /backend-api/f/conversation`; existing includes `conversation_id`, new omits it.
+- Existing and new conversation Web Send use `POST /backend-api/f/conversation`; existing includes `conversation_id`, new omits it.
 - Normal response is HTTP 200 `text/event-stream` using `v1`, early authoritative conversation identity, input/message events, assistant patches, `message_stream_complete`, trailing conversation metadata and `[DONE]`; new chat emits `title_generation`.
-- Official server Stop is `POST /backend-api/stop_conversation` with `{ conversation_id, exclude_async_types: [] }`, and a successful Stop may terminate the Send stream without normal `message_stream_complete` / `[DONE]` tail.
+- Official server Stop is `POST /backend-api/stop_conversation` with `{ conversation_id, exclude_async_types: [] }`, and successful Stop may terminate the Send stream without normal `message_stream_complete` / `[DONE]` tail.
 - Exact b42 default-primary-assistant new-chat Runtime shows Sentinel `proofOfWork.required=true`, `turnstile.required=true`, `so.required=true`, followed by non-empty PoW and Turnstile finalize submissions before successful Send.
 
-### Current decision
+### Architecture decision — Option 2 selected
 
-- Current pure-native/transient-WebKit-auth ChatGPT-account Send is **blocked under the current architecture**.
-- Do not implement PoW/Turnstile/Sentinel challenge solvers or bypasses, browser-fingerprint replay/emulation, captured proof/token replay, hidden production WebView transport, or guessed alternate/fallback endpoints.
-- b42 is accepted protocol/security-boundary Runtime evidence only. Native production Send/Stream, response ownership, follow-tail, reasoning UI and haptics remain unimplemented/unaccepted.
-- No b43 is justified merely to repeat the same challenge decision.
+- Pure-native/transient-WebKit-auth ChatGPT-account Send remains blocked under TD-023.
+- The user explicitly selected TD-024: **native shell/read/navigation + user-visible official-Web Send surface**.
+- This is not pure-native Send. The official Web page owns its own normal browser Send/challenge execution while visible.
+- Hidden production WebView transport, challenge harvesting, PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay/emulation, captured proof/token replay, DOM mirroring/scraping and guessed fallback endpoints remain prohibited.
 
-### Architecture gate
+### First hybrid Candidate — b43
 
-Further Phase 9 code requires one explicit product/architecture choice:
+- Candidate `DEV-send-stream-0.1.0-b43`, version/build `0.1.0 (43)`.
+- Exact product/config source `f602d68ae95dc6a0f1b32fd996c21f9868c4ec2c`.
+- Implementation: one shared process-resident visible `AuthWebViewController.hybridChat` using default persistent WebKit storage, entered explicitly from Settings. It loads official `https://chatgpt.com/` on first visible presentation and ordinarily reuses the resident page after Back -> re-entry without automatic reload.
+- No Root or `ConversationFeature.swift` product change; Stable native read/navigation/geometry remains intact in source.
+- Push Run/Job `33241032864` / `99070294478`, success.
+- PR Run/Job `33241035013` / `99070299776`, success.
+- Artifact `9711364573`; ZIP `sha256:1a9516221ec5ece59741f9f2af2483815f09fa47f051ff6a97a67a12d40d4c23`.
+- IPA `ChatGPTClient-0.1.0-b43-dev-send-stream.ipa`; SHA `f2de8d02f3da7d9a8a8f58cd3028480a40849095b2b4b21e418e9c2e758d8108`.
+- Independent package identity: b43, `0.1.0 (43)`, source `f602d68ae95d`, Release, iOS14 minimum, `[1,2]`, arm64.
+- **Evidence status**: Code written / CI passed / Artifact produced / identity verified. Runtime/manual/real-device pending. Stable/Frozen No.
 
-1. **Defer account-session Send** and keep the current native read/recovery client until an officially supported/non-challenge ChatGPT-account transport exists.
-2. **Adopt a user-visible official-Web send surface** while retaining native read/navigation where useful; this is not pure native Send and must be treated as a deliberate architecture change.
-3. **Use a separately authenticated officially supported API/product path** if the user explicitly accepts the separate credential/billing/product model; do not silently treat it as the existing ChatGPT-account session.
+### Identity incident
 
-The agent must not choose among these without the user's product decision.
+- Product commit `8be4da4e6af3dad146bc43888ddeb3f4cd2037b8` initially auto-built under stale b42 metadata: Run `33238065644`, Artifact `9710515489`, ZIP `sha256:d76747ea3c524f31e9a6e512119ab3a85172c5c7fc3492d4264a57f93bd86f7f`.
+- This Artifact is permanently rejected and must never be installed or cited as Runtime. Legitimate b42 remains Artifact `9709824510`.
+
+### b43 Runtime acceptance gate
+
+On the exact primary iPhone/iOS17 device, b43 must prove:
+
+- first visible hybrid entry is prompt and does not stall the native shell;
+- native Back -> re-entry reuses the resident controller/WebView with no avoidable full-page reload (`residentReuse=true` diagnostics expected);
+- keyboard show/hide and typing are acceptably responsive;
+- one normal visible-Web Send works and streamed response scrolling feels acceptably smooth;
+- rapid scrolling does not exhibit material WebView-specific jank relative to the accepted native reading surface;
+- official Web `+` / attachment entry responds promptly enough to satisfy the user's high-frequency UX requirement;
+- returning to native list/detail/round navigation shows no regression;
+- diagnostics contain no prompt/answer body, raw IDs, Cookie/Auth or challenge/proof/token values.
+
+Do not merge PR #29 or call the hybrid Send scope Stable until this exact Runtime gate is accepted.
 
 ## Phase 10 — `DEV-attachments`
 
-Originally planned immediately after accepted Send/Stream. It is now **dependency-blocked** until a production Send architecture is chosen and accepted. When unblocked, use `ATTACHMENT_TRANSFER_PLAN.md`: Photos/document picker, per-conversation pending attachments, evidenced upload protocol, assistant file cards, explicit tap-download-share; explicit retry only. Full download manager does not block this phase.
+The architecture-choice blocker is resolved by TD-024, but production attachment work remains **dependency-gated by hybrid Runtime and protocol/UI evidence**.
+
+After b43 or a successor hybrid Candidate establishes acceptable text interaction:
+
+- follow `ATTACHMENT_TRANSFER_PLAN.md`;
+- native Photos/document picker entry must begin immediately from local UI and must not wait on Web/network/challenge work;
+- current native-picker -> official-Web file handoff behavior must be inspected/evidenced before implementation;
+- do not assume programmatic Web file-input population is supported;
+- assistant file tap-download-share remains part of the dedicated attachment Work and uses evidenced download semantics;
+- no automatic retry/watchdog/timer chains.
 
 ## Phase 11 — `DEV-message-rendering`
 
 Implement native rich message presentation for Markdown paragraphs/headings/lists/links, emphasis, inline/fenced code, code-block Copy and tables as needed. Also investigate current user-visible rich annotation/citation markers such as `filecite` from real protocol content. Preserve authoritative visible text and do not expose hidden reasoning/tool/system content. Avoid full-conversation reparse/reload on every stream token.
 
-This phase does not intrinsically depend on production Send and may be reconsidered as an independent roadmap item if the user explicitly reprioritizes while Phase 9 remains blocked.
+This phase does not intrinsically depend on hybrid Send acceptance and may be reprioritized independently if the user requests it.
 
 ## Phase 12 — `DEV-conversation-list-preview`
 
@@ -142,17 +175,17 @@ Reuse accepted cache owner/store. Prefer list-response preview only when evidenc
 
 ## Phase 13 — `DEV-markdown-export`
 
-Export authoritative current user-visible branch; never scrape mounted cells or expose hidden internal content.
+Export authoritative current user-visible native branch; never scrape mounted cells or hybrid Web DOM.
 
 ## Phase 14 — `DEV-long-conversation`
 
-Measure network / parse-model / first-visible-render / rich-layout timing and optimize only evidenced bottlenecks. Preserve the Stable Phase 8 deterministic geometry unless new evidence justifies a change.
+Measure native network / parse-model / first-visible-render / rich-layout timing and optimize only evidenced bottlenecks. Preserve the Stable Phase 8 deterministic geometry unless new evidence justifies a change.
 
 ## Phase 15 — remaining daily-use features
 
 Isolated Work IDs for download manager, pagination, background completion, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat and settings/diagnostics refinement.
 
-Background completion remains dependent on a real production response lifecycle and must not be opened while Phase 9 lacks an accepted transport.
+Background completion remains dependent on an accepted authoritative response lifecycle; merely having visible-Web Send does not establish native background response ownership.
 
 ## Phase 16 — advanced capabilities
 
@@ -160,4 +193,4 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-`DEV-send-stream` is blocked at an explicit architecture-choice human gate after exact b42 Runtime. Do not allocate another Send Candidate or write production Send code until the user chooses a permitted architecture direction. Preserve b39-b42 evidence and the Stable b38 merged baseline.
+Install and test exact `DEV-send-stream-0.1.0-b43` / Artifact `9711364573` on the primary iPhone/iOS17 device. The next human gate is b43 Runtime acceptance/rejection of visible hybrid interaction and smoothness. Preserve b39-b43 identities, the rejected accidental Artifact `9710515489`, and the Stable b38 native baseline.

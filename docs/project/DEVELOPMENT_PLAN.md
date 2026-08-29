@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-29 through exact b44 integrated-hybrid Runtime rejection and TD-025 architecture gate._
+_Last updated: 2026-08-29 through exact b44 integrated-hybrid Runtime rejection, API-product rejection, and hybrid-Web background-resilience gate._
 
 ## Purpose
 
@@ -15,9 +15,10 @@ Core constraints: UIKit native shell/read client, TrollStore IPA, primary tested
 3. Prefer official ChatGPT iOS interaction patterns where architecture permits.
 4. Do not add speculative retry/fallback/timer/watchdog/duplicate-state machinery.
 5. Distinguish Code / Static / CI / Artifact / Runtime / Stable evidence.
-6. High-frequency daily-use interactions such as Copy and attachments outrank low-value polish once dependencies exist.
+6. High-frequency daily-use interactions such as Copy, attachments and reliable background reasoning/stream continuation outrank low-value polish once dependencies exist.
 7. Optimize only evidenced bottlenecks, especially for long conversations.
 8. ChatGPT-account browser Send, when used, must remain explicitly user-visible; never convert Web into hidden challenge/Send transport controlled by Native DOM automation.
+9. For the TrollStore product, background resilience is measured on the exact device/runtime; main-app process survival alone is not proof that WebKit response streaming survives.
 
 ## Accepted merged foundation
 
@@ -50,7 +51,7 @@ Retain:
 
 Do not replace this baseline merely to accommodate Web Send.
 
-## Phase 9 — `DEV-send-stream` — Blocked at architecture gate
+## Phase 9 — `DEV-send-stream` — Blocked at existing-account background gate
 
 ### Accepted protocol/security evidence
 
@@ -74,7 +75,7 @@ Exact-device result:
 - Web Photos path filtered video assets;
 - standalone Settings Web-chat form was not accepted as final product UX.
 
-b43 therefore validates **visible-Web feasibility/smoothness**, not the final interaction.
+b43 validates **visible-Web feasibility/smoothness**, not final interaction.
 
 ### b44 — integrated full-page hybrid trial
 
@@ -87,15 +88,11 @@ Exact b44:
 - Artifact `9712583513`; ZIP `sha256:33ba4a99fe933241ce8023e811f15d55dfa0d95cac2693f039bb6138d813face`.
 - IPA SHA `70471f76c90974eae34bb99335ad4f4c5132ba9f5d143444c306f11e81542970`.
 
-Trial flow:
-
-`native detail -> 发送消息… -> visible Web /c/<conversation-id> -> Send -> 返回并同步 -> native detail`
-
 Runtime conclusions:
 
-- tested Native A/B IDs mapped to the corresponding Web conversations;
+- tested Native A/B IDs mapped to corresponding Web conversations;
 - immediate `返回并同步` could expose the newly sent user message while assistant output already visible in Web remained absent from Native;
-- repeating immediate Web-return Sync and Native manual Sync still could miss the assistant output; a later Sync after waiting could expose it;
+- repeated immediate Web-return Sync and Native manual Sync still could miss the assistant output; a later Sync after waiting could expose it;
 - no stable readiness signal/delay was evidenced;
 - Native has already loaded the conversation, then Web loads/renders it again to become the Send surface;
 - A -> B repeats Web-side conversation navigation/loading;
@@ -105,42 +102,75 @@ Runtime conclusions:
 
 Detailed Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b44-runtime.md`.
 
-### TD-025 architecture gate
+### Product route after b44
 
-No b45 is allocated until one direction is explicitly chosen.
+The user explicitly rejects the separately billed/supported API-product architecture. It is not an active Phase-9 option unless the user later reverses that decision.
 
-#### A — keep existing ChatGPT-account continuity
+The only active Send direction under evaluation is:
 
-Native list/history/read/navigation remain primary. The next allowed experiment is an **explicitly visible embedded official-Web composer/live-response panel** inside the native detail rather than a separate full-page Web chat.
+**Native list/history/read/navigation + an explicitly visible official-Web composer/live-response surface for the existing ChatGPT account/history.**
 
-Requirements:
+A hidden/covered WebView driven by a Native composer remains prohibited.
 
-- actual official Web composer/live-response area remains visibly exposed and directly user-operated;
-- no Native text field secretly driving a hidden Web DOM/contenteditable;
-- no hidden synthetic Send click;
-- no DOM answer/reasoning scraping to manufacture Native response authority;
-- Web live response remains the immediate truth while active; Native reconciliation happens only when real read availability supports it;
-- no automatic poll/retry loop absent a real readiness signal.
+### New P0 product gate — background reasoning/stream resilience
 
-This preserves current ChatGPT-account/session/history continuity as far as current evidence permits, but **Send/stream remains Web-owned while active**.
+The user reports an unacceptable recurring behavior in Web-style clients: during long reasoning/streaming, backgrounding or locking the app for a while can lead to timeout/disconnect and force manual refresh on return.
 
-#### B — truly Native Send/stream
+This is now a **P0 architecture gate before any polished embedded-Web b45 UI**.
 
-Use an officially supported API product with separate API authentication/billing, then implement Native composer, incremental response lifecycle, attachments and follow-tail natively.
+Public iOS facts:
 
-Before implementation, re-verify current official API auth/model/stream/files documentation. ChatGPT subscription and API billing are separate; do not claim API conversations are automatically the same existing ChatGPT-account history/session.
+- ordinary apps may be suspended shortly after entering background;
+- `beginBackgroundTask` gives finite extra runtime only;
+- therefore public UIKit background time is a short-duration baseline, not a long-reasoning guarantee.
 
-#### C — defer ChatGPT-account Send
+Because this product is TrollStore-installed, the next useful feasibility step is to prove whether a narrowly scoped true-background mechanism can preserve the relevant WebKit page/process/network execution or support deterministic one-shot foreground recovery after a known lifecycle interruption.
 
-Keep the Stable native read client and wait for a supported ChatGPT-account transport that does not require browser-owned challenge output.
+Durable plan: `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`.
 
-### Explicitly rejected fourth route
+Important evidence split:
 
-A fully covered/hidden official WebView plus a Native composer that forwards text into Web is not an accepted compromise. Under current evidence that requires DOM/JS/input automation of a hidden protected browser Send flow and violates TD-023/TD-024/TD-025.
+- main app process alive;
+- WebContent process alive;
+- WebKit network/process alive;
+- official Web response stream alive;
+- foreground return resumed without reload;
+- known interruption auto-recovered without resend/manual refresh.
 
-## Phase 10 — `DEV-attachments` — high priority but transport-dependent
+These are separate claims.
 
-Attachment daily-use priority remains high, but Send architecture must be resolved first.
+### Background go/no-go before UI work
+
+Minimum exact-device matrix on iPhone 15 Pro Max / iOS17.0 / TrollStore:
+
+- long visible-Web reasoning/stream -> short background -> return;
+- same with device lock;
+- repeat around 5 minutes and 15 minutes when workload permits;
+- extend longer only when a controlled test can meaningfully remain active;
+- verify whether the same live official-Web response resumes without manual refresh;
+- exercise public background-task expiration;
+- exercise observed WebContent/process failure and one-shot foreground recovery;
+- verify no prompt resend/duplicate response;
+- stable Wi-Fi first, then network transition only after baseline works;
+- observe battery/thermal cost sufficiently to reject harmful always-on behavior.
+
+**Go:** normal user background habit keeps the visible Web response alive, or a known lifecycle interruption recovers automatically on foreground without resend/manual refresh.
+
+**No-go:** Web generation routinely disconnects/stalls and needs manual refresh, WebKit execution cannot be preserved reliably, recovery would require hidden DOM automation, or battery/thermal behavior is unacceptable.
+
+With API explicitly rejected, a No-go means **defer ChatGPT-account Send** rather than ship a fragile Web facade.
+
+### Candidate sequencing
+
+- b39-b44 remain permanently reserved.
+- No b45 currently exists.
+- Do **not** allocate a polished embedded-Web composer b45 first.
+- If the user explicitly authorizes the background feasibility experiment, create the appropriately isolated/stacked background Work per `BACKGROUND_EXECUTION_PLAN.md` and `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md`, then allocate the next unique Candidate only after branch/state-owner/conflict preflight.
+- Only after background Go evidence should a later Candidate implement the polished embedded visible composer/live-response UI.
+
+## Phase 10 — `DEV-attachments` — high priority but Send/background-dependent
+
+Attachment daily-use priority remains high, but the existing-account Send architecture and background gate must pass first.
 
 Known requirements/evidence:
 
@@ -151,8 +181,6 @@ Known requirements/evidence:
 - for iOS17, proper photo+video selection requires an evidenced native upload/handoff path;
 - generic file sending and assistant file tap-download-share remain in `ATTACHMENT_TRANSFER_PLAN.md`;
 - no automatic transfer retry/watchdog/timer loops.
-
-If Phase 9 chooses API path B, attachment architecture can be native against supported API file semantics after current official documentation is verified. If Phase 9 stays on account-compatible path A, native attachment handoff must still be separately evidenced.
 
 ## Phase 11 — `DEV-message-rendering`
 
@@ -174,9 +202,9 @@ Measure native network / parse-model / first-visible-render / rich-layout timing
 
 ## Phase 15 — remaining daily-use features
 
-Isolated Work IDs for download manager, pagination, background completion, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat and settings/diagnostics refinement.
+Isolated Work IDs for download manager, pagination, background completion/notification, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat and settings/diagnostics refinement.
 
-Background completion remains dependent on an accepted authoritative response lifecycle; visible Web Send alone does not establish native background response ownership.
+The generic background plan remains response-owner-based. For the current hybrid account path, `HYBRID_WEB_BACKGROUND_RESILIENCE_PLAN.md` is the prerequisite feasibility gate before later notification/polish work.
 
 ## Phase 16 — advanced capabilities
 
@@ -184,10 +212,9 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-**Human architecture gate:** explicitly choose TD-025 A, B or C before any new Send product code or Candidate allocation.
+**Human gate:** decide whether to run the existing-account Web background-resilience feasibility experiment.
 
-- Choose **A** if retaining current ChatGPT account/history is the priority and an explicitly visible embedded Web composer/live-response panel is acceptable.
-- Choose **B** if truly Native composer/stream/attachment UX is more important than using the existing ChatGPT subscription/history path.
-- Choose **C** if neither compromise is acceptable and ChatGPT-account Send should wait.
+- If yes: create the isolated/stacked experiment Work, re-run branch/PR/base/state-owner/candidate conflict preflight, and build the smallest Candidate that measures public-background + TrollStore/WebKit survival/recovery. Do not start with UI polish.
+- If no: leave ChatGPT-account Send deferred.
 
-Preserve b39-b44 identities, rejected Artifact `9710515489`, exact b44 Runtime evidence and Stable b38 native baseline. **No b45 currently exists.**
+The API product route is not active. Preserve b39-b44 identities, rejected Artifact `9710515489`, exact b44 Runtime evidence and Stable b38 native baseline.

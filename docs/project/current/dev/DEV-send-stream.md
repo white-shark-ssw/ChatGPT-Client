@@ -65,11 +65,10 @@ The corresponding PR-triggered run `33238066937` also succeeded at the same wron
 
 `DEV-send-stream-0.1.0-b43` is allocated.
 
-The b43 identity update is represented by one atomic Git-data commit so workflow and Xcode metadata move together:
+The final b43 identity publication commit is `aac437ae616156dfe3657caeecc8e1e90ad86434`, built atomically on branch head `e72cc226b79d09e351819619efb2a2b4c7a4d89a` with tree `f834c3570376be12341c72c6a8c22ff9f6a72e27`:
 
 - Xcode metadata blob `f26636045934e94873b05fa21664a9a1e90735a8`: `CURRENT_PROJECT_VERSION=43`, `DIAGNOSTICS_CANDIDATE=DEV-send-stream-0.1.0-b43` for Debug/Release;
-- workflow blob `ddf5ee61aae265b41cc06a34924be18cbaf7f647`: workflow `iOS Hybrid Web Send`, Artifact container b43;
-- exact atomic b43 publication commit: `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`, parent `4a2fb525923dec80e79b6b0dd2c8119642b4cf3a`, tree `68b5976413b3bce764b822a19ed4ad9c9c8fa171`.
+- workflow blob `ddf5ee61aae265b41cc06a34924be18cbaf7f647`: workflow `iOS Hybrid Web Send`, Artifact container b43.
 
 Earlier unpublished preparation commits based on older checkpoint parents are superseded tooling state only; none may be force-pushed or cited as Candidate source.
 
@@ -93,20 +92,20 @@ Earlier unpublished preparation commits based on older checkpoint parents are su
 
 ## Non-atomic batch recovery point — hybrid implementation
 
-Known state:
+Known state before actual ref move:
 
 - base `main@34811877896ca88c6656be6676f5466a19931ce6`;
 - PR #29 open + mergeable;
 - exact legitimate b42 source/Artifact remain `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`;
 - accidental Artifact `9710515489` is permanently rejected as identity-invalid;
 - no peer Active dev task;
-- exact b43 atomic publication commit is `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`.
+- exact final b43 atomic publication commit is `aac437ae616156dfe3657caeecc8e1e90ad86434`.
 
 Batches:
 
 - **Batch A complete**: Option 2 selection + hard UX requirements recorded.
 - **Batch B complete**: minimal user-visible resident/reusable Web surface + Settings entry written; exact net diff audited to two files.
-- **Batch C ready for publication**: move branch exactly once to `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`, then verify resulting b43 push/PR CI and package identity.
+- **Batch C final ref move pending**: move branch exactly once to `aac437ae616156dfe3657caeecc8e1e90ad86434`, then verify resulting b43 push/PR CI and package identity.
 - **Batch D pending**: verify exact valid b43 Artifact/IPA identity and hand IPA to user for real-device hybrid smoothness/attachment-entry test.
 - **Batch E pending**: record actual CI/Artifact/Runtime evidence and update durable docs/PR body.
 
@@ -122,4 +121,4 @@ Recovery rules:
 
 ## Next exact action
 
-Move `dev/send-stream-20260829` to `57b8b06f635c3fe355ac3073b8cf8fdbe6685e75`, verify b43 push/PR CI and Artifact identity, then continue autonomously to the real-device gate.
+Move `dev/send-stream-20260829` to `aac437ae616156dfe3657caeecc8e1e90ad86434`, verify b43 push/PR CI and Artifact identity, then continue autonomously to the real-device gate.

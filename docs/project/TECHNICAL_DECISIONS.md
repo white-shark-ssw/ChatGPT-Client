@@ -1,26 +1,25 @@
 # Technical Decisions
 
-This file records durable, evidence-backed technical decisions and rejected routes.
+This file records durable, evidence-backed technical decisions and rejected routes. Detailed historical evidence remains available in Git history and `BUILD_TEST_INDEX.md`; current decisions below are the active durable contracts.
 
 ## Current decisions
 
 ### TD-001 — Product direction is an iOS native ChatGPT client
 - **Status**: Confirmed
 - **Decision**: Develop a native Swift/UIKit ChatGPT client; historical WebView chat architecture is not the product source baseline.
-- **Validation level**: User-confirmed + runtime-tested foundation.
 
 ### TD-002 — Previous-project history is reference-only evidence
 - **Status**: Confirmed
 - **Decision**: Historical endpoint names/shapes/workarounds require current revalidation before becoming contracts.
 
-### TD-003 — TrollStore IPA distribution with iOS17 ceiling and low practical minimum
+### TD-003 — TrollStore IPA distribution with iOS17 primary tested ceiling and iOS14 build minimum
 - **Status**: Confirmed
-- **Decision**: TrollStore IPA; intended runtime ceiling iOS17.0; keep build minimum iOS14.0 until a real requirement changes it.
+- **Decision**: TrollStore IPA; primary real-device evidence is iPhone/iOS17. Keep build minimum iOS14.0 until concrete need changes it.
 
 ### TD-004 — Diagnostics/logging is application foundation
 - **Status**: Confirmed
 - **Decision**: Important async/auth/network/protocol/state operations use the accepted structured local diagnostics authority with bounded/redacted export.
-- **Rejected**: passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full chat bodies or attachment contents.
+- **Rejected**: passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles/chat bodies or attachment contents.
 
 ### TD-005 — WebKit is persistent login authority; native consumption is transient
 - **Status**: Confirmed
@@ -32,22 +31,20 @@ This file records durable, evidence-backed technical decisions and rejected rout
 
 ### TD-007 — Probe actual account/session path after usable WebKit context
 - **Status**: Confirmed
-- **Decision**: Account verification is not gated by native browser-oriented `/auth/login`. Current accepted sequencing is WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
+- **Decision**: Account verification is not gated by native browser-oriented `/auth/login`. Accepted sequencing is WebKit context -> `/api/auth/session` -> transient bearer -> accounts-check.
 - **Rejected**: speculative automatic retry, UA spoof, Cloudflare bypass, duplicate gates/fallback endpoint.
 
 ### TD-008 — Parse accounts-check by ordered account identity
 - **Status**: Confirmed
 - **Decision**: Parse `account_ordering` + keyed `accounts`; choose first ordered entry not explicitly denied and use nested `account.account_id`.
-- **Rejected**: obsolete `accounts.default.account.id` assumption.
 
 ### TD-009 — Auth bootstrap gate is satisfied for tested Plus/personal scope
 - **Status**: Confirmed
-- **Decision**: Authentication/account-context gate is satisfied; this does not prove conversation protocol/send/streaming.
+- **Decision**: Authentication/account-context gate is satisfied for the recorded scope; this does not prove later private protocol surfaces.
 
 ### TD-010 — Current personal-account conversation list/detail read path is accepted
 - **Status**: Confirmed
-- **Decision**: For tested Plus/personal iPhone/iOS17 scope, accepted read path is transient WebKit-derived native auth, `GET /backend-api/conversations?offset=0&limit=28&order=updated`, then `GET /backend-api/conversation/{conversation_id}`. No extra `chatgpt-account-id`/browser headers were needed in accepted evidence.
-- **Validation**: b7 diagnostic + b9 production real-device evidence.
+- **Decision**: For tested Plus/personal iPhone/iOS17 scope, accepted read path is transient WebKit-derived native auth, `GET /backend-api/conversations?offset=0&limit=28&order=updated`, then `GET /backend-api/conversation/{conversation_id}`. No extra account/browser headers were needed in accepted evidence.
 
 ### TD-011 — Official ChatGPT iOS interaction is default UI baseline
 - **Status**: Confirmed
@@ -55,73 +52,57 @@ This file records durable, evidence-backed technical decisions and rejected rout
 
 ### TD-012 — Ship small usable candidates before roadmap completeness
 - **Status**: Confirmed
-- **Decision**: Produce unique TrollStore candidates whenever a coherent milestone becomes testable; CI/artifact never substitutes for runtime proof.
+- **Decision**: Produce unique TrollStore candidates whenever a coherent milestone becomes testable; CI/Artifact never substitutes for Runtime proof.
 
 ### TD-013 — Manual sync/reload are explicit recovery actions, not automatic retry machinery
 - **Status**: Confirmed / Runtime accepted for recorded recovery scope
-- **Decision**: `同步最新消息`, `重载当前会话` and terminal `重新加载` operate through authoritative `ConversationRepository` and never resend/regenerate or form retry/watchdog chains.
-- **Recovery-during-load**: actions remain available during ordinary selected-detail loading because a stuck load is itself a valid explicit recovery case.
-- **Freshness**: a newer manual recovery supersedes the older selected-detail operation; operation generation rejects obsolete completions.
-- **Request lifecycle**: if the older selected-detail network request is still active, the authoritative repository cancels/replaces that older task after the new generation takes ownership and before issuing the replacement detail request.
-- **Runtime evidence**: b13 proved freshness rejection alone prevented stale mutation but concurrent replacement requests could HTTP429. Exact b15 then proved deterministic cancellation-before-replacement with no HTTP429. PR #10 merged.
+- **Decision**: `同步最新消息`, `重载当前会话` and terminal `重新加载` operate through authoritative `ConversationRepository` and never resend/regenerate or form retry/watchdog chains. Newer same-target recovery cancels/replaces the older active request before replacement ownership proceeds; generation/freshness rejects obsolete completions.
+- **Evidence**: b15/b21 recorded cancellation/rejoin behavior; PR #10 merged.
 
 ### TD-014 — Reasoning UI includes expandable user-visible detail and two-pulse transition haptic
-- **Status**: Confirmed
-- **Decision**: When server provides user-visible reasoning detail/status, use subdued active reasoning/shimmer, expand/collapse explicit visible detail, static completed summary where supported, and two short haptic pulses on real-time reasoning->final transition. Never expose hidden chain-of-thought.
+- **Status**: Confirmed requirement; implementation belongs later send/stream work
+- **Decision**: When server provides user-visible reasoning detail/status, use subdued active reasoning/shimmer, explicit expand/collapse visible detail and two short haptic pulses on real-time reasoning→final transition. Never expose hidden chain-of-thought.
 
 ### TD-015 — Production detail diagnostics use privacy-safe hashed identity + list position
 - **Status**: Confirmed
 - **Decision**: Use short irreversible SHA-256-derived conversation marker + 1-based list position for correlation; never raw ID/title/body.
 
 ### TD-016 — Background completion uses public baseline then isolated TrollStore experiment
-- **Status**: Confirmed
-- **Decision**: After send/stream exists, first use normal iOS background-task time + local completion notification; a later isolated TrollStore true-background experiment may test minimal privileged lifetime control. No automatic resend or broad privilege grant to main authenticated app without evidence.
+- **Status**: Confirmed plan
+- **Decision**: After send/stream exists, first use normal iOS background-task time + local completion notification; any TrollStore true-background experiment remains isolated. No automatic resend or broad privilege grant without evidence.
 
-### TD-017 — Public default-WebKit data-store warm-up is accepted for the tested cold-start auth hydration step
-- **Status**: Confirmed for tested scope
-- **Date**: 2026-08-27
-- **Decision**: Before first native conversation-list/account probe, initialize existing default persistent `WKWebsiteDataStore` with public APIs. Do not add hidden/shadow WebView or second persistent auth store merely to hydrate cookies.
-- **Evidence**: Exact b12 iPhone/iOS17 export began at 0/0 total/matched cookies; warm-up completed with usable persisted auth and later account/list success without opening visible Login.
-- **Boundary**: This proves hydration for tested persisted sessions only. It does not prove every install/update/session state and does not remove visible Login as explicit fallback after genuine failure evidence.
-- **Rejected**: no hidden WebView, persisted copied secrets, automatic retry/watchdog loop, speculative auth endpoint/header fallback.
+### TD-017 — Public default-WebKit data-store warm-up is accepted for tested cold-start auth hydration
+- **Status**: Confirmed for recorded scope
+- **Decision**: Before first native list/account probe, initialize the existing default persistent `WKWebsiteDataStore` using public APIs. Do not add hidden/shadow WebView or second persistent auth store merely to hydrate cookies.
 
 ### TD-018 — Compact read-mode startup uses native primary/list root and one navigation owner
-- **Status**: Confirmed for tested b14+ iPhone/iOS17 scope
-- **Date**: 2026-08-27
-- **Decision**: With no selected conversation, compact startup uses `.primary` conversation list as the useful root. UISplitViewController/native navigation is the sole compact list/detail navigation owner; do not layer a duplicate custom sidebar button on top.
-- **Evidence**: b14 user Runtime accepted the compact startup/navigation gate; b15 preserved it.
+- **Status**: Confirmed for tested iPhone/iOS17 scope
+- **Decision**: With no selected conversation, compact startup uses `.primary` conversation list as the useful root. `UISplitViewController`/native navigation is the sole compact list/detail navigation owner.
 
 ### TD-019 — Multi-conversation data remains one account-scoped repository authority
-- **Status**: Confirmed / merged Stable for the tested Plus/personal iPhone/iOS17 read-state scope; Frozen No
-- **Date**: 2026-08-27
-- **Decision**: Production conversation state is owned by one `ConversationRepository` scoped by the currently verified account context and keyed per authoritative conversation identity. Foreground selection is presentation state only. Selecting B must not delete A, cancel A merely because A becomes hidden, or make navigation itself a reload trigger.
-- **Account boundary**: `AuthSessionStore` remains the sole auth/account-context owner. Repository operation contexts may be checked against current verified account scope but must never become authority that can restore an older scope after a newer account transition. Persistent auth secrets remain solely in default WebKit storage.
-- **Resident model boundary**: retain only current evidence-backed conversation data/metadata; do not retain raw multi-megabyte payloads, use UIKit hierarchy as cache, or create one repository per screen/conversation.
-- **Memory boundary**: b19 real-device evidence through 8 residents does not justify an arbitrary normal LRU capacity; memory-warning trimming remains the current evidence-backed policy.
-- **Runtime/merge evidence**: b17-b21 established resident/coalescing/scroll/title/replacement behavior; PR #23 merged at `2057a6241839afabeaf9b81c9daea24d3a0978f6`.
-- **Conditional boundaries**: natural failed-resident navigation, supported account switch, non-personal workspace identity and missing-anchor-message discard remain Unknown / Unverified where applicable.
-- **Rejected**: stale operation context re-adopting account scope; selection-driven cancellation; separate screen repositories; retained VC/cell cache; navigation-triggered reload; speculative retry/timer/watchdog/global rate limiter; arbitrary LRU capacity.
+- **Status**: Confirmed / merged Stable for recorded read-state scope; Frozen No
+- **Decision**: One `ConversationRepository` owns production conversation state scoped by verified account context and keyed per authoritative conversation identity. Foreground selection is presentation only; selecting B does not delete A or cancel valid hidden A work. Do not retain raw graph payloads or UIKit hierarchies as cache. No arbitrary normal LRU capacity; memory-warning trimming remains evidence-backed policy.
 
 ### TD-020 — Per-conversation scroll presentation is semantic anchor or follow-tail, not one raw offset
-- **Status**: Historical-reading anchor Runtime accepted on exact b18 for tested iPhone/iOS17 matrix; active-response follow-tail pending Send/Stream
-- **Date**: 2026-08-27
-- **Decision**: Each conversation owns lightweight scroll presentation semantics independently of conversation data. Historical reading preserves a semantic message anchor plus relative visual offset where practical. Future active-response follow-tail must consume the authoritative per-conversation Send/Stream response owner rather than invent UI streaming authority.
-- **Boundary**: anchored-message disappearance remains Runtime-unexercised; future hidden-response follow-tail has separate Send/Stream acceptance gates.
+- **Status**: Historical-reading anchor Runtime accepted; active-response follow-tail pending Send/Stream
+- **Decision**: Each conversation owns lightweight scroll presentation semantics independently of conversation data. Historical reading preserves an authoritative message anchor plus display position/relative offset where practical. Future follow-tail must consume the authoritative per-conversation response owner.
 
-### TD-021 — Conversation-list cache may provisionally present the last verified scope's titles before current verification, but never authorize account-bound operations
-- **Status**: Confirmed / merged Stable for the recorded Plus/personal iPhone/iOS17 cache-core scope; Frozen No
-- **Date**: 2026-08-28
-- **Problem evidence**: Exact b22 persisted/loaded list snapshots correctly, but visible cache publication waited until account verification completed (~4.4–5.0 s). With network disabled, auth transport failed first (`NSURLErrorDomain -1005/-1004`), so cache was never presented and UI incorrectly fell back to Login/account verification. Manual refresh also lacked visible terminal feedback.
-- **Decision**: Keep `ConversationRepository` as the sole authoritative list/conversation owner and `AuthSessionStore` as the sole verified account owner. A storage-only `ConversationListCacheStore` may persist a protected 64-hex SHA-256 last-successfully-verified scope namespace hint and, on **automatic cold start only**, use it to provisionally publish that scope's cached **list titles** before current network account verification completes.
-- **Authority boundary**: The namespace hint is cache bookkeeping only. It cannot establish a verified account, transport, Detail authority or send authority. Provisional/offline rows must not start Detail until current scope is verified. A newly verified different scope or confirmed unauthenticated/unavailable result rejects the provisional presentation. Temporary auth transport failure may retain it as offline list presentation without automatic retry.
-- **Freshness / refresh**: Exact b23 accepts the current 60-second rapid-relaunch window for this use case. Recent cache may skip that launch's automatic list request; stale cache performs one normal refresh; manual refresh always bypasses suppression and emits exactly one requested list refresh. UI feedback uses `正在刷新会话列表…`, `已刷新 · N 条`, or retained-cache failure `刷新失败 · 当前显示缓存`.
-- **First-page rule**: Page-1 absence is not deletion evidence. Exact b23 Runtime proves a real server response of 28 with `total=29` preserves one off-page cached row (`preservedOffPageCount=1`, `resultCount=29`) across reconciliation.
-- **Runtime evidence**: b23 rapid relaunch loads 29 provisional rows in ~4 ms before ~4.5 s matching account verification and then chooses `recent_skip`; offline relaunch loads 29 rows in ~4 ms, natural `-1005` auth failure chooses `offline_cache`, and list load succeeds from cache. Screenshot directly confirms the retained list plus centered `刷新失败 · 当前显示缓存` after offline manual refresh. User reports no new issue in the tested matrix.
-- **Merge evidence**: Exact Runtime Candidate source is `d2af0fc157f6e2d037636c55f963c18071a332d5`, Run `33101116431`, Artifact `9658508764`. PR #24 merge-view Run `33103769517` / Job `98628067286` checked out and passed GitHub merge view `26297ff0683966c2c82fd7a8a95f53f1ad51d3d6`; PR #24 merged at `3f36e2bddb0c2907e21647c7424d745d2242ef93`. Merge-view Artifact is CI evidence only and does not replace the exact real-device Runtime Artifact.
-- **Privacy/storage**: No raw account/user IDs, cookies, tokens, bearer values, Detail mappings or message bodies are persisted. Storage remains app-private Application Support with Data Protection, schema versioning and atomic writes.
-- **Conditional boundaries**: supported real account-switch mismatch, provisional-row Detail-block tap, corrupt/schema rejection, iPad, runtime below iOS17 and non-personal workspace identity remain Unknown / Unverified.
-- **Rejected**: persisted copied auth secrets; raw account identity scope hint; second list/account repository; per-row Detail prefetch; timer/polling/retry/watchdog; alternate list/auth endpoints; treating temporary transport failure as confirmed logout; allowing provisional cache to authorize Detail.
+### TD-021 — Conversation-list cache may provisionally present last verified titles before current verification, but never authorize account-bound operations
+- **Status**: Confirmed / merged Stable for recorded cache-core scope; Frozen No
+- **Decision**: `ConversationListCacheStore` is storage only behind `ConversationRepository`. Automatic cold start may provisionally publish cached titles using a privacy-safe last-verified scope namespace hint, but this never establishes verified account/transport/Detail/send authority. Current 60-second rapid-relaunch window, offline retained list behavior, manual refresh bypass and first-page `28 + 1 -> 29` preservation are accepted.
+- **Phase 8 extension**: authoritative `total=29` caps stale excess cached rows (`30 -> 29`, repeated `29/29`) without creating a second list owner; right-top refresh must not create persistent blank top inset.
+
+### TD-022 — Long-conversation presentation uses deterministic derived geometry; round navigation consumes it
+- **Status**: Confirmed / Runtime accepted on exact b37+b38 iPhone/iOS17 scope; Frozen No
+- **Date**: 2026-08-29
+- **Problem evidence**: Exact b36 retained severe long-conversation stutter in quick navigation and ordinary right-side scroll-indicator dragging. 47 direct-position samples had median ~187ms, P90 ~780ms and max ~3952ms. One 161-visible-message table initially reported ~13.8k points of bottom geometry and later ~154.6k points as giant estimated/self-sized message rows became realized.
+- **Decision**: Keep authoritative messages solely in `ConversationRepository`; derive an ephemeral `ConversationMessagePresentationProjection` that splits very long plain-text messages into bounded display chunks, computes deterministic row heights/prefix offsets for the current layout width, maps authoritative messages to first display rows, and drives `ConversationMessageCell` with deterministic manual frame layout. This projection is presentation-only and is rebuilt when authoritative messages/layout width require it; it is not a persistent second message/row-height store.
+- **Copy/semantics boundary**: Copy reads the complete authoritative message; round count/semantic targets still come from one `ConversationRoundProjection`; each visible authoritative user message starts a round. Display chunking never creates semantic turns.
+- **Navigation decision**: Accepted b38 uses the already-derived O(1) target offset and one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)` from the current viewport to the target. Short/long distances use one method. Rapid taps retarget from current visual position; real drag immediately retakes ownership. No pre-jump teleport, `scrollToRow` geometry discovery or end correction snap is part of the accepted path.
+- **Runtime evidence**: Exact b37 user feedback **“这次确实不卡了”** accepted the deterministic geometry/performance direction. Exact b38 then restored genuine continuous full-distance animation while preserving that geometry; user feedback **“没问题了”** accepts the combined result.
+- **Exact accepted identity**: b38 product source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`, Runtime Artifact `9708425762`, IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
+- **Rejected without new evidence**: reverting to one giant whole-message self-sizing UILabel with unstable estimated geometry; persistent cross-detail row-height cache; pre-jump direct teleport; `scrollToRow` as target-geometry discovery; final correction snap; debounce/timer/watchdog/retry; alternate semantic index or second repository.
 
 ## Rule
 
-Do not write speculation here as fact. Historical plans, CI and Artifacts are not runtime proof.
+Do not write speculation here as fact. Historical plans, CI and Artifacts are not Runtime proof. Stable does not mean Frozen.

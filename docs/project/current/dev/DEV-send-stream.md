@@ -6,7 +6,7 @@
 
 - **Work ID**: `DEV-send-stream`
 - **Branch**: `dev/send-stream-20260829`
-- **PR**: #29 — open / mergeable / not merged; evidence branch only.
+- **PR**: #29 — open / mergeable / not merged; evidence branch only; title/body synchronized to the b51 Runtime gate.
 - **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
 - **Stable native predecessor**: b38.
 - **Exact b50**: `DEV-send-stream-0.1.0-b50`, source `837d5feeff05d198785f884ccf9cc4c1f71412ec`, Artifact `9719942650`, IPA SHA `26431faabe0b2c836fd6c1d7aa84d31cf8811ea09d57a8ad692e127ecb42613c`.
@@ -53,8 +53,10 @@ If the count is zero or truncation remains, do not broaden parser grammar by gue
 
 ## Recovery state
 
-Batches A-D complete. Batch E durable docs are synchronized; PR #29 metadata is the final pending metadata write.
+Batches A-E are complete. PR #29 title/body already match the b51 fresh-new-chat Runtime gate. New-session Full Resume Guard revalidated `main@1ac202c972f2dee6945fe8d0688df8e10f5d462c`, feature head `c9260bf0dcf26a077b8ebf47ca472c1215712b8f` before this docs-only checkpoint, PR #29 open/not merged, and exactly one Active development checkpoint on the feature branch.
+
+The exact Push run `33271794573` was independently re-read and confirms `head_sha=bd8f056cc4d13ea2f1ab178353d926d8e4d21992`, success. Artifact `9720327648` was re-downloaded and independently inspected: ZIP digest `247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`; IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`; built Info.plist `0.1.0 (51)`, Candidate `DEV-send-stream-0.1.0-b51`, source marker `bd8f056cc4d1`, Release, iOS14.0, UIDeviceFamily `[1,2]`; executable arm64. No product rebuild is permitted under b51.
 
 ## Next exact action
 
-Update PR #29 title/body to b51 fresh-new-chat Runtime gate, mark Batch E complete, then hand exact Artifact `9720327648` IPA to the user. Do not rebuild b51; product correction requires b52+.
+User installs the exact b51 IPA and performs the fresh-new-chat Runtime gate above. After the user returns with direct observation and exported diagnostics, classify b51 Runtime, persist exact Runtime evidence, and allocate b52 only if the b51 evidence justifies a specific smallest correction.

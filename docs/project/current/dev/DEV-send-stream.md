@@ -2,106 +2,96 @@
 
 ## Status
 
-**Blocked — architecture decision required**
+**Active — Option 2 hybrid user-visible Web Send selected**
 
 - **Work ID**: `DEV-send-stream`
-- **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / 新对话 / Stop / reasoning / follow-tail`
-- **Task**: Implement the first evidence-backed production text Send/new-conversation/streaming-response path, including exact response ownership, Stop integration, user-visible reasoning compatibility, follow-tail and new-chat identity handoff.
-- **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; predecessor `DEV-conversation-round-count` Stable b38 merged by PR #27.
-- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Exact b42 product/config source remains `e8946e48a0b5ad86b402faf5eabba627e3393adf`. Verified docs-only head before this final requirement checkpoint write is `d04db771a4b4de433f408bb33b72a421f8a18ec3`; this checkpoint write may advance branch/PR head but does not redefine b42 product source. PR base remains recorded `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **State-owner boundary remains fixed**: `ConversationRepository` = sole conversation/list/detail/recovery/response authority; `AuthSessionStore` = auth/account authority; default persistent `WKWebsiteDataStore` = sole persistent auth-secret authority. No second repository/global `isStreaming`, hidden production WebView transport, copied persistent credentials, retry/watchdog/fallback endpoints, anti-abuse solver/bypass, browser-fingerprint replay, captured proof/token replay, or hidden-CoT presentation.
+- **Routing aliases / keywords**: `Send/Stream / 发送 / 流式回复 / 新对话 / Stop / reasoning / follow-tail / 官方 Web / hybrid`
+- **Task**: deliver a usable ChatGPT-account Send path without circumventing browser anti-abuse protections. Native read/navigation remains the product shell; Send is now explicitly allowed to use a **user-visible official ChatGPT Web surface**.
+- **Baseline**: `main@34811877896ca88c6656be6676f5466a19931ce6`; Stable predecessor b38 remains the merged native read/metadata/round-navigation baseline.
+- **Working branch / PR**: `dev/send-stream-20260829`; PR #29 open + mergeable. Resume guard on 2026-08-29 verified branch/PR head `582cc67f3628cdf9cb33c7b5ea0a6b52b9a43ea3`, base `main@34811877896ca88c6656be6676f5466a19931ce6`, and no peer Active development checkpoint.
+- **Candidate identity**: b39-b42 are permanently reserved. `DEV-send-stream-0.1.0-b43` is not present in the repository/build index at this selection point and is the next available identity if this implementation reaches a testable Artifact milestone.
 
-## Exact Candidate history
+## Exact b42 decision evidence retained
 
-- **b39** `DEV-send-stream-0.1.0-b39`: source `3a957b0a7839b28491a9166b454aec852ab70e76`; Run `33233467811`; Job `99050223061`; Artifact `9709203437`; IPA SHA `8768b9bb8e7c9170773cbe8a03214435f05991758e9d7428ae6b59a280668593`. CI/package valid, no Runtime; superseded before Runtime; never reuse.
-- **b40** `DEV-send-stream-0.1.0-b40`: source `f4a7abbad52f00e10f4c0e0fc14bcb7686187f2b`; Run `33233754433`; Job `99051001206`; Artifact `9709286294`; IPA SHA `bfbcf5789bca42463da08486ffe69b2e2dc5ff36235bc87954f49cda44b4d4f7`. Exact protocol-probe Runtime accepted; not native production Send acceptance.
-- **b41** `DEV-send-stream-0.1.0-b41`: source `a2899e8bfdacd9b642c026c14f484735c1ac60fa`; Run `33234523162`; Job `99053041864`; Artifact `9709515645`; IPA SHA `0941b73ccbaf7552870adc85aa03e631dcb4181ab13df14da6b5041b860acc83`. Exact protocol-probe Runtime accepted; established primary-assistant Send semantics, precursor structure and real server Stop; not native production Send acceptance.
-- **b42** `DEV-send-stream-0.1.0-b42`: exact product/config source `e8946e48a0b5ad86b402faf5eabba627e3393adf`; push Run `33235622532`; Job `99055977981`; Artifact `9709824510`; ZIP `sha256:28b588f91904cf4a3c79e81d4bfcb8ad2336642729dcd092a4cdfffd38fffcdb`; IPA `ChatGPTClient-0.1.0-b42-dev-send-stream.ipa`; IPA SHA `c6d1d421ab05a2294784223400291f0dc1683b638b2647ae85b2d9d4f3fcb85b`; PR merge-view Run `33235623896`; Job `99055982148`, success.
-- **b42 package identity**: `0.1.0 (42)`, Candidate b42, source marker `e8946e48a0b5`, Release, arm64, minimum iOS14.0, device family `[1,2]`.
-- **Validation ladder**: b42 diagnostic code written; exact push CI passed; identity-valid Artifact produced; PR merge-view CI passed; exact real-device protocol/security Runtime accepted. **Native production Send/Stream remains not implemented / not accepted. Stable/Frozen: No.**
+Exact `DEV-send-stream-0.1.0-b42`, source `e8946e48a0b5ad86b402faf5eabba627e3393adf`, Artifact `9709824510`, exact iPhone/iOS17 default `primary_assistant` new-chat Runtime established:
 
-## Exact b42 Runtime — Path B established
+- `proofOfWorkRequired=true`;
+- `turnstileRequired=true`;
+- `soRequired=true`;
+- Sentinel finalize submitted non-empty PoW and Turnstile before successful `POST /backend-api/f/conversation` SSE Send.
 
-User exported exact b42 diagnostics on iPhone / iOS 17.0 at `2026-08-29T05:26:32Z`. Export metadata matches `0.1.0 (42)`, Candidate `DEV-send-stream-0.1.0-b42`, source `e8946e48a0b5`, Release.
+Therefore pure native/transient-auth Send remains blocked. This Work must not implement PoW/Turnstile/Sentinel solver/bypass, browser-fingerprint replay, captured proof/token replay, guessed fallback endpoints, or a hidden WebView used only to harvest challenge output.
 
-Default-new-chat evidence is authoritative for the tested Plus/personal scope:
+## User architecture decision — Option 2
 
-- conversation prepare is `conversationKind=new`, `conversationModeKind=primary_assistant`, model `gpt-5-6-thinking`, encoding `v1`;
-- successful `conversation/prepare` returns `status=ok` and a non-empty conduit token;
-- Sentinel prepare returned `proofOfWorkRequired=true`, `turnstileRequired=true`, `soRequired=true`, with non-empty prepare token;
-- Sentinel finalize request carried **non-empty** `prepare_token`, **non-empty** `proofofwork`, and **non-empty** `turnstile`;
-- Sentinel finalize returned HTTP 200 and a non-empty token;
-- successful new Send then used `POST /backend-api/f/conversation` -> HTTP 200 `text/event-stream` with the previously accepted `v1`/resume-token/message-patch/title-generation/`message_stream_complete`/metadata/`[DONE]` lifecycle.
+The user explicitly chose to proceed with the **Native shell + user-visible official-Web Send** direction after b42 Path B.
 
-### Decision
+Hard product requirements:
 
-This exact successful default-primary-assistant Send depends on browser-generated anti-abuse challenge output. Therefore **Path B is selected**: production native Send under the current pure-native/transient-auth architecture is blocked. Do not implement or copy PoW/Turnstile/Sentinel challenge solvers, challenge bypasses, browser fingerprint replay, or captured token/proof replay. Do not add guessed fallback endpoints.
+1. The Web portion must feel as close as practical to native iOS controls on the primary exact device (iPhone 15 Pro Max / iOS 17.0). Functional Send alone is insufficient.
+2. Ordinary return/re-entry must avoid unnecessary page reconstruction/reload. Keep the visible official-Web session resident/warm where lifecycle and memory evidence permit.
+3. Native UIKit remains navigation/container owner around the Web surface.
+4. No continuous DOM-observation/JS bridge chatter solely to mirror Web state into native UI.
+5. Attachment entry is a hard UX gate: tapping `+` must not wait on Web/network/Sentinel/upload work before local selection UI begins presenting. Exact native-to-Web file handoff remains Unknown / Unverified until separately evidenced.
 
-No b43 is justified merely to repeat the same protection decision.
+## First hybrid implementation milestone — planned b43
 
-## Accepted protocol facts retained
+The first testable implementation is deliberately narrow and evidence-backed. It validates the hybrid surface before deeper integration:
 
-- Existing/new Send route: `POST /backend-api/f/conversation`; existing includes `conversation_id`, new omits it.
-- Normal stream: marker `"v1"`, early authoritative conversation identity, input/message events, assistant message + text/status/end-turn patches, `message_stream_complete`, trailing `conversation_detail_metadata`, `[DONE]`; new chat emits `title_generation`.
-- Official server Stop: `POST /backend-api/stop_conversation`, body `{ conversation_id, exclude_async_types: [] }`, HTTP 200 JSON. Stop can end the Send stream without normal `message_stream_complete` / `[DONE]`; production lifecycle would need an exact-owner `user-stopped` terminal path if a future permitted transport exists.
-- Internal/system/tool/model-context records remain non-user-visible unless separately evidenced. Never expose hidden chain-of-thought.
+- add one **user-visible official ChatGPT Web chat surface** using `WKWebView` + the existing default persistent `WKWebsiteDataStore`;
+- the surface loads the already evidenced official root `https://chatgpt.com/` only while being presented; no hidden preload/challenge harvesting;
+- Root owns one persistent controller/WebView instance so pop -> re-enter can reuse the same loaded session rather than reconstructing the page;
+- expose native entry from the conversation list and selected-conversation overflow menu;
+- do **not** guess a `/c/<conversation-id>` deep-link or DOM automation in this milestone; current-conversation Web targeting remains separately Unverified;
+- no protocol-probe injection, prompt/answer scraping, token capture, or browser proof extraction;
+- safe diagnostics may record surface presentation/reuse, navigation class/host, first-load/reload duration and failure class only;
+- existing native list/detail/recovery/round navigation remains unchanged except for the explicit Web entry affordance.
 
-## Current human-only architecture gate
+### b43 exact-device Runtime focus
 
-The original production-native implementation cannot continue safely under the current architecture. A new product/architecture decision is required before code work can resume. Evidence-compatible options that do not circumvent browser anti-abuse protections are:
+- first entry: native transition appears promptly and official page becomes usable without app-level UI stall;
+- resident re-entry: pop -> re-enter does not perform avoidable full-page reconstruction/reload;
+- keyboard show/hide, typing, Send, streamed response scrolling and rapid scrolling feel acceptably close to native;
+- official Web `+` / attachment entry is exercised for responsiveness observation; if it materially lags, do not call hybrid UX accepted and investigate a safe native-picker path separately;
+- native Back/return is smooth and native read UI remains intact;
+- no hidden challenge/proof/token data appears in diagnostics.
 
-1. keep the current native read/recovery client and defer ChatGPT-account Send until an officially supported/non-challenge transport becomes available;
-2. explicitly change product architecture to a **user-visible official-Web send surface** while keeping native read/navigation elsewhere, accepting that this is no longer pure native Send;
-3. introduce a **separately authenticated officially supported API/product path** if the user explicitly wants that different credential/billing/product model; it must not be silently treated as the existing ChatGPT-account session.
+## State-owner boundary
 
-Do not choose among these without the user's product decision.
+- `ConversationRepository` remains sole native conversation/list/detail/recovery authority.
+- `AuthSessionStore` remains auth/account authority.
+- default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
+- `RootViewController` remains single native compact navigation owner.
+- The user-visible official-Web surface owns its own browser-side Web Send/challenge execution while visible; it is **not** a second native conversation repository and does not become native message authority.
+- Native Sync/Reload continue to never resend/regenerate.
 
-## Conditional UX requirement if option 2 is chosen
+## Non-atomic batch recovery point — hybrid implementation
 
-The user added a hard acceptance requirement for the user-visible official-Web send direction: the Web portion must feel **as close as practical to native iOS controls in responsiveness and smoothness** on the recorded primary device/runtime (iPhone 15 Pro Max / iOS 17.0). Merely making Send functional is not sufficient.
+Known start state:
 
-If option 2 is selected, implementation and Runtime acceptance must prioritize:
+- branch/PR head: `582cc67f3628cdf9cb33c7b5ea0a6b52b9a43ea3`;
+- base: `main@34811877896ca88c6656be6676f5466a19931ce6`;
+- PR #29 open + mergeable;
+- exact b42 product source/Artifact remain `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`;
+- no peer Active dev task;
+- b43 identity available but not yet emitted.
 
-- no avoidable full-page reload on ordinary send/return flows;
-- keep the visible official-Web session warm/resident where lifecycle and memory evidence permit instead of reconstructing it for every tap;
-- use native UIKit navigation/container transitions around the Web surface;
-- preserve immediate keyboard/input/tap response and smooth touch scrolling;
-- avoid JS/native bridge chatter or DOM observation that continuously drives presentation/state and causes frame drops;
-- do not hide the WebView solely to harvest challenge output for native transport; the official-Web send surface remains user-visible and owns its own browser-side challenge execution;
-- evaluate smoothness by exact real-device Runtime, including repeated enter/return, keyboard show/hide, typing, send, streamed response scrolling, rapid scrolling and ordinary navigation. CI/Artifact or simulator smoothness is not acceptance evidence.
+Planned batches:
 
-This requirement does not prove that a WKWebView can be pixel-for-pixel or frame-for-frame identical to UIKit. If exact-device testing still exposes material WebView jank or web-specific interaction latency after minimal evidence-backed optimization, option 2 is not accepted merely because it works functionally.
+- **Batch A — complete by this write**: record user selection of Option 2, hard smoothness/attachment requirements, first hybrid milestone and recovery state.
+- **Batch B — pending**: minimal product code for persistent user-visible official-Web chat surface + native entry affordances; inspect diff for Stable b38 regressions.
+- **Batch C — pending**: if code is testable, allocate unique b43 in Xcode/workflow metadata, then run CI/package path. Once emitted, b43 becomes permanently reserved.
+- **Batch D — pending**: verify exact Artifact/IPA identity and hand exact IPA to user for real-device hybrid smoothness/attachment-entry test.
+- **Batch E — pending**: record CI/Artifact/Runtime evidence and update durable docs/PR body according to actual results.
 
-### Attachment-entry responsiveness requirement
+Recovery rules:
 
-The user also requires attachment sending to preserve the same native-grade responsiveness. In particular, tapping the composer `+` must not wait noticeably for a Web page load, network request, Sentinel/Turnstile work, upload preparation, or other remote activity before presenting the next local selection UI.
+- never replay or rewrite b39-b42 identities/Artifacts;
+- do not redefine exact b42 product source;
+- do not weaken Stable b38 geometry/round/navigation contracts;
+- do not merge PR #29 as production Send acceptance before exact hybrid Runtime evidence supports the claimed scope;
+- do not implement unverified deep-link/file-input/DOM automation merely to accelerate the milestone.
 
-If option 2 is selected and later attachment support is added:
+## Next exact action
 
-- the `+` interaction must provide immediate local visual response and begin presenting a native iOS attachment action surface / picker in the same user interaction;
-- photo/image choice should use the accepted native Photos/PHPicker path and general files should use the accepted native document picker path where current platform semantics allow;
-- picker presentation is a local UI action and must not be blocked on ChatGPT network/challenge/upload work;
-- privacy-safe diagnostics should measure tap-to-picker/action-surface presentation duration so exact-device Runtime can identify regressions; do not invent a synthetic spinner to mask latency;
-- the exact mechanism for handing a user-selected native file into the user-visible official-Web send surface is **Unknown / Unverified** until current WebKit/official-Web behavior is inspected and tested. Do not assume the app can programmatically populate or drive the Web file-input path;
-- if official-Web/WebKit constraints force a materially delayed attachment chooser or require an unsafe hidden-browser/challenge workaround, that implementation is not accepted merely because file sending eventually works.
-
-## Durable evidence / docs synchronized
-
-- `docs/project/runtime-evidence/DEV-send-stream-b42-protocol.md` records exact b42 Runtime and Path B.
-- `BUILD_TEST_INDEX.md` records b42 Runtime protocol/security evidence and current native architecture block; unrelated historical drift discovered during the long-table write was corrected and verified.
-- `MODULE_STATUS.md` marks Streaming/Send blocked under current architecture and Attachments dependency-blocked.
-- `TECHNICAL_DECISIONS.md` adds TD-023 for the b42 anti-abuse challenge boundary.
-- `PROJECT_STATE.md` records Phase 9 Active but architecture-blocked while preserving Stable b38.
-- `DEVELOPMENT_PLAN.md` records Phase 9 block and architecture gate; no b43 is planned by default.
-- `ATTACHMENT_TRANSFER_PLAN.md` now owns the explicit immediate `+` / native-picker responsiveness contract, diagnostics expectation and exact-device Runtime matrix. `UI_INTERACTION_BASELINE.md` is intentionally not duplicated with the same rule; it already points attachment behavior to the attachment plan, avoiding two durable authorities for the same interaction.
-- PR #29 body remains synchronized to b42 Path B and explicitly states native production Send is not implemented/accepted.
-
-## Batch recovery point — attachment UX requirement docs complete
-
-- **Exact product source / Artifact**: `e8946e48a0b5ad86b402faf5eabba627e3393adf` / `9709824510`; these remain the b42 Runtime authority regardless of later docs-only head movement.
-- **Verified docs-only head before this final checkpoint write**: `d04db771a4b4de433f408bb33b72a421f8a18ec3`; PR #29 remained open + mergeable; base `main@34811877896ca88c6656be6676f5466a19931ce6`.
-- **Requirement docs batch complete**: checkpoint + `ATTACHMENT_TRANSFER_PLAN.md` record immediate local picker presentation, no network/challenge gating, privacy-safe latency diagnostics and exact-device acceptance. The attachment-plan commit was audited and changed only that plan.
-- **Intentional scope decision**: `UI_INTERACTION_BASELINE.md` was left unchanged to avoid duplicating the attachment-specific contract; the durable attachment plan remains the owner.
-- **No product change / no Candidate**: no source/config/CI/Artifact change was justified by this requirement alone; b39-b42 remain reserved.
-- **Recovery must not touch/reuse**: b39-b42 identities/Artifacts; exact b42 product source; Stable b38 product/state-owner contracts; other task checkpoints; main branch.
-- **Next exact action**: the architecture choice among options 1/2/3 remains the human gate. If option 2 is explicitly selected later, both native-grade Web smoothness and immediate local attachment-picker presentation become required Runtime acceptance gates before broader hybrid-send/attachment integration.
+Implement Batch B from the real branch source: add the persistent visible official-Web chat controller under Root ownership and native entry actions with privacy-safe diagnostics. Then inspect the exact diff before allocating b43.

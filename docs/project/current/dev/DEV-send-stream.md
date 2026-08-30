@@ -2,143 +2,144 @@
 
 ## Status
 
-**Active — exact b65 passed the focused iPhone/iOS17 Send/reasoning/final/exact-parent GitHub tool-detail Runtime gate. User explicitly selected production architecture Option B. TD-029 now authorizes the b48-b65 proven Native-composer -> covered official-Web page-owned protected-Send executor for production, while `ConversationRepository` remains the sole production conversation/response authority. Core Web adapter documentation and Web Rule Lab maintenance contract are established. Product batch B is now the next exact action. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
+**Active — exact b65 passed focused iPhone/iOS17 probe Runtime. TD-029 is current production Send architecture. The later rules-session plan `DEV-composer-parity` now explicitly owns the final Native Composer UI (auto-growth/full-screen editor/draft/attachment staging/mode-effort controls). Current `DEV-send-stream` therefore owns only the reusable protected-Send/response/Stop lifecycle APIs, Repository response authority, minimal validation trigger, new-chat identity handoff, follow-tail/multi-conversation semantics, Web Rule Lab and final Send/Stream acceptance. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged
-- Other Active development checkpoints: none at latest guard
-- Current actual `main`: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`
-- Formal branch head after docs authority batch A: `74ecf41944294e6871827c548a487f159e00f4d3`
-- Formal branch tree after docs authority batch A: `e1673e3fb4f988d1ee55749e2c8dc631523f9040`
+- Formal branch head before this checkpoint update: `4c94956b6be8eb87ad01563598ee3294eab74370`
+- Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
+- `main` advanced materially in docs/rules since the old `1ac202c...` base. New product-source overlap has not been observed; final Candidate/merge must re-check/synchronize target state.
+- Current `main` `docs/project/current/dev/` has no Active Composer checkpoint. `DEV-composer-parity` is a planned **future serialized Work**, not a parallel implementation branch/candidate.
 - Stable native predecessor: b38
-- Exact latest Runtime-tested Candidate: `DEV-send-stream-0.1.0-b65`
+- Latest Runtime-tested Candidate: `DEV-send-stream-0.1.0-b65`
 - Exact b65 product/config source: `44138db766d00e62cfda7f20182f6d20f1ec3352`
-- b65 Push Run / Job: `33328232044 / 99302071335` — success
-- b65 PR Run / Job: `33328233842 / 99302076369` — success
 - b65 Push Artifact: `9736876465`
-- b65 IPA SHA-256: `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`
-- b39-b65 emitted identities: permanently reserved
-- b66: **not emitted yet; reserved only when the detached first coherent TD-029 production/Web-Lab slice is complete and product+build+workflow identity can move together**
+- b65 IPA SHA: `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`
+- b39-b65 emitted identities are permanently reserved.
+- b66 is **not emitted yet**. Allocate only after one coherent TD-029 existing-chat production/Web-Lab slice exists and product/build/workflow identity can move atomically.
 
-## Exact b65 Runtime — focused pass
+## Exact b65 Runtime — accepted probe boundary
 
-User export `ChatGPTClient-Diagnostics-20260830-191806.json` matched exact Release b65 / build65 / source `44138db766d0` on iPhone/iOS17.0.
+Export `ChatGPTClient-Diagnostics-20260830-191806.json` matched Release build65/source `44138db766d0` on iPhone/iOS17.0.
 
 Observed path:
 
 `ready=false/none -> ready=true/prompt_textarea -> nativeSubmit -> submitted -> sendObserved(existing_conversation) -> HTTP200 text/event-stream -> thinking/reasoning/tool/final -> terminal`.
 
-Terminal metrics included frameCount `132`, exact reasoning-end `1`, reasoning `14/295`, final `71/2827`, total `85/3122`, thinking preambles `2/13`, invocation/result `10/10`, parent present/matched/unmatched/missing `10/10/0/0`, tool presentations/completions `10/10`, detail-capable rows `9`.
+Terminal: frameCount `132`, reasoning-end `1`, reasoning `14/295`, final `71/2827`, total `85/3122`, invocation/result `10/10`, parent present/matched/unmatched/missing `10/10/0/0`, tool presentation/completion `10/10`, detail-capable rows `9`. User observed no truncation; nested input/output disclosures worked. Minor spacing/slash-escape polish is non-blocking and belongs later presentation polish/Composer work rather than another probe Candidate.
 
-User directly reported no apparent reasoning/final truncation. Completed tool rows expanded/collapsed; `工具输入` and `工具输出` were independent second-level disclosures; decoded output no longer showed b64's second-layer escape wall. Remaining child spacing and legal slash escaping are non-blocking polish and do not justify another diagnostic Candidate.
+## Current production authority — TD-029
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b65-runtime.md`.
+Production conceptual path:
 
-Classification: **b65 focused Runtime pass. Probe-level transport/parser/reasoning/tool lifecycle evidence accepted for the tested scope. Stable/Frozen No.**
+`Native send action -> ConversationRepository response operation -> covered official Web verified composer/page-owned protected Send -> same-response SSE -> Repository incremental response state -> Native consumers`.
 
-## Production architecture — TD-029 current authority
+Hard rules:
 
-The production bridge is now:
+1. official page owns browser challenge + exactly one protected Send;
+2. Native never solves/replays/persists challenge material;
+3. covered Web owns no conversation/message/response/draft state;
+4. `ConversationRepository` is sole production conversation/response owner;
+5. one user Send -> exactly one protected Send; Sync/Reload never resend;
+6. full Web conversation UI remains rejected;
+7. current selectors/SSE semantics live in `WEB_SEND_ADAPTER.md`;
+8. future Web changes are probed through the Web Rule Lab before changing production rules.
 
-`Native composer -> Repository response operation -> covered official Web verified composer/page-owned protected Send -> same-response SSE -> ConversationRepository incremental response state -> Native presentation`.
+## Composer parity scope carve-out — new main authority
 
-Rules:
+`main@d323b9ee...` contains `docs/project/COMPOSER_PARITY_PLAN.md`, target future Work ID `DEV-composer-parity`.
 
-1. Native composer/history/reasoning/tool/final UI is the user-facing product surface.
-2. One process-resident official Web execution surface may be covered/not user-visible and uses `WKWebsiteDataStore.default()`.
-3. Official page owns Sentinel/PoW/Turnstile/conduit/challenge execution and the one protected browser Send.
-4. Native code never solves/replays/persists challenge material.
-5. Covered Web owns no conversation/message/response state; `ConversationRepository` is the sole production response owner.
-6. One user Send -> exactly one protected Send; no second Send for stream/recovery.
-7. Full Web conversation UI and b44 return+Sync product flow remain rejected.
-8. Sync/Reload never resend/regenerate.
-9. Web-specific current selectors/event rules live in `WEB_SEND_ADAPTER.md`.
+It explicitly serializes:
 
-## Web Rule Lab maintenance contract
+`DEV-send-stream -> DEV-composer-parity -> DEV-attachments -> ...`
 
-A development Web Rule Lab is part of the current Work:
+Ownership split now frozen for current development:
+
+### `DEV-send-stream` owns
+
+- covered official-Web protected Send executor;
+- Repository response operation/lifecycle;
+- reasoning/final/tool event semantics;
+- exact-parent tool association;
+- existing-chat Send API and acceptance;
+- pending->authoritative new-chat identity handoff;
+- Stop protocol evidence + accepted Stop API/semantics;
+- hidden A response / B selected isolation;
+- follow-tail lifecycle contract and Sync/Reload safety;
+- Web Rule Lab and Web adapter maintenance workflow;
+- **minimal validation-only text trigger** needed to test these APIs before the final Composer exists.
+
+### future `DEV-composer-parity` owns
+
+- final bottom Composer hierarchy;
+- dynamic multiline auto-growth;
+- bounded inline max/full-screen editor;
+- keyboard/layout animation;
+- per-conversation draft UI;
+- file/photo/video staging strip + previews;
+- mode/reasoning-effort controls;
+- final Send/Stop button presentation consuming the already-accepted Send/Stop APIs.
+
+Current Work must not create a second durable draft/composer owner or implement those future UI behaviors.
+
+## Web Rule Lab contract
+
+Current Work still adds a development-only Lab:
 
 - Settings entry;
-- visible `WKWebView` using the same default persistent data store;
-- temporary editable JS area + explicit `执行`;
-- temporary result display + copy/share;
+- visible `WKWebView` using `WKWebsiteDataStore.default()`;
+- temporary editable JS + explicit Execute;
+- temporary result + copy/share;
 - no auto-run;
-- no persisted script/result bodies in diagnostics, defaults, files or database;
-- diagnostics only safe execution lifecycle/type/length;
-- never a production Send/response owner.
+- script/result bodies never persisted/logged;
+- diagnostics only safe lifecycle/type/length;
+- never production Send/response owner.
 
-Future service changes use:
+## Current source gap
 
-`reproduce -> AI supplies one small JS probe -> user runs it in Web Rule Lab -> structural evidence -> update WEB_SEND_ADAPTER -> one minimal production patch -> one coherent Candidate/Artifact -> exact Runtime`.
+- `RootViewController` still uses transitional `发送消息… -> AuthWebViewController.hybridChat -> return+Sync`.
+- `ConversationRepository` has read/list/detail resident ownership but no response operation/lifecycle.
+- `ConversationDetailViewController` is stable b38 history/geometry presentation and has no live response consumer.
+- `NativeWebSendEngineProbe.swift` contains b65-proven Web rules but is diagnostic state owner only.
+- `SettingsViewController` is the natural Lab entry.
 
-## Docs authority batch A — complete
+## Product batch B — revised by Composer ownership
 
-Confirmed durable writes on the formal branch:
+Smallest coherent b66 slice is **existing-conversation Send/stream production ownership + Lab**, without final Composer UI:
 
-- `docs/project/WEB_SEND_ADAPTER.md` created;
-- `docs/project/START_HERE.md` routes Send maintenance through both preflight + adapter playbook;
-- `docs/project/SEND_STREAM_PREFLIGHT.md` rewritten for TD-029 Repository response ownership;
-- `docs/project/TECHNICAL_DECISIONS.md` now contains TD-029 and explicit supersession boundaries;
-- `docs/project/PROJECT_STATE.md` updated through b65 Runtime + TD-029;
-- `docs/project/MODULE_STATUS.md` updated through b65 Runtime + production integration status;
-- `docs/project/PROJECT_SPECIFIC_RULES.md` consolidated so stale “b48-b65 diagnostic only” language is no longer authoritative.
+1. add `CoveredWebSendExecutor` (process-resident, default persistent WebKit store) using only b65-evidenced composer/protected-Send/SSE rules;
+2. executor exact-targets `/c/<conversationID>` before Send and emits typed events only; it owns no response state;
+3. add Repository-owned per-conversation response operation/state: preparing/thinking/reasoning/final/completed/failed plus response-local tool presentation bookkeeping;
+4. active response protects that conversation resident from normal memory-warning eviction;
+5. detail UI may consume/display Repository live response state but must preserve b38 history geometry; no final Composer implementation;
+6. replace the old full-page hybrid Send toolbar with a clearly temporary **validation trigger** (e.g. simple prompt/alert) that invokes the Repository/executor API; this trigger is deleted/replaced by future `DEV-composer-parity` and must not become a durable draft owner;
+7. navigating A->B does not cancel A;
+8. unsafe Sync/Reload while a response is active may be explicitly disabled until semantics are accepted;
+9. add Web Rule Lab in the same Candidate;
+10. first slice does not guess new-chat or Stop behavior beyond already evidenced rules.
 
-The formal branch head is exact `74ecf41944294e6871827c548a487f159e00f4d3`. These changes are docs-only; b65 product/config authority remains exact `44138db766d00e62cfda7f20182f6d20f1ec3352`.
+## Batch recovery point — b66 existing-chat production slice
 
-## Current source implementation gap
+Baseline for the next non-atomic product chain is this checkpoint commit after it lands.
 
-- `RootViewController` still uses transitional `发送消息… -> AuthWebViewController.hybridChat -> return + explicit Sync`.
-- `ConversationRepository` has per-conversation resident/detail ownership but no production response operation/lifecycle yet.
-- `ConversationDetailViewController` has stable b38 table/geometry/navigation but no production composer/live response presentation.
-- `NativeWebSendEngineProbe.swift` already contains the b65 Runtime-proven covered-Web composer/Send/interceptor/parser path and should be reused/extracted, not reinvented.
-- `SettingsViewController` is the natural Web Rule Lab entry and already links diagnostics/probes.
+Before product mutation, re-fetch the new branch head/tree. Expected product files may include:
 
-## First production slice design boundary
+- `ChatGPTClient/Protocol/CoveredWebSendExecutor.swift` — new reusable executor;
+- `ChatGPTClient/Conversation/ConversationFeature.swift` — Repository response owner + live response consumer hooks;
+- `ChatGPTClient/RootViewController.swift` — executor orchestration + validation trigger; remove full-page Web as normal Send path;
+- `ChatGPTClient/SettingsViewController.swift` and/or `ChatGPTClient/Protocol/WebRuleLabViewController.swift` — Lab;
+- Xcode project source list only if new Swift files are added;
+- workflow/build identity only after the coherent slice is complete and b66 is actually allocated.
 
-The smallest safe b66 target is **existing conversation only** plus Web Rule Lab:
+Do not touch/reimplement:
 
-1. add one process-resident `CoveredWebSendExecutor` reusing the b65 exact verified composer/submit/fetch/SSE script;
-2. executor requires exact `/c/<conversationID>` target match before Native Send and emits typed native events only;
-3. add Repository-owned per-conversation live response state/generation with preparing/thinking/reasoning/final/completed/failed phases and response-local tool presentations;
-4. active response keys protect resident state from memory-warning eviction;
-5. add Native composer + live response panel to `ConversationDetailViewController` without replacing b38 historical table/geometry;
-6. Root orchestrates composer -> Repository begin -> executor one Send; executor events -> Repository mutation; Root/VC never become response authority;
-7. navigating A -> B does not cancel A; selected/hidden presentation consumes Repository state;
-8. first slice does not invent new-chat identity or Stop before their own evidence gates;
-9. add Settings Web Rule Lab in the same Candidate so future Web updates do not require repeated speculative IPA builds.
-
-## Batch recovery point — product batch B / candidate batch C
-
-Baseline:
-
-- formal branch head `74ecf41944294e6871827c548a487f159e00f4d3`;
-- base tree `e1673e3fb4f988d1ee55749e2c8dc631523f9040`;
-- b65 product authority `44138db766d00e62cfda7f20182f6d20f1ec3352`;
-- PR #29 open/mergeable/unmerged;
-- main `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
-
-Product files expected for detached batch B:
-
-- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift` — add reusable covered-Web executor around the same proven script; Probe remains diagnostic consumer;
-- `ChatGPTClient/Conversation/ConversationFeature.swift` — Repository live response owner + existing-chat Native composer/live response presentation integration;
-- `ChatGPTClient/RootViewController.swift` — own/attach executor and bridge Repository/Detail orchestration; stop using full-page hybrid as normal Send path;
-- `ChatGPTClient/SettingsViewController.swift` — Web Rule Lab entry + implementation, preferably in-file to avoid unnecessary project-file source-list churn.
-
-Candidate batch C, only after these files form one coherent slice:
-
-- allocate b66;
-- align Xcode CURRENT_PROJECT_VERSION/DiagnosticsCandidate and workflow Artifact identity in the same detached tree;
-- compare audit against this docs head;
-- formal branch fast-forward once only after exact diff approval.
-
-Do not touch/reuse:
-
-- b39-b65 Candidate identities;
-- b38 geometry/round-navigation contracts beyond integration callbacks/layout insets required for composer/live response UI;
-- auth/account/persistent WebKit ownership;
-- full-Web conversation product UI.
+- final Composer UI owned by future `DEV-composer-parity`;
+- attachment staging/upload;
+- b38 message geometry/round-navigation semantics except minimal live-response integration;
+- auth owner/default WebKit persistent-store contract;
+- b39-b65 identities.
 
 ## Next exact action
 
-Build detached product batch B from `74ecf419...`, starting with the reusable covered-Web executor + Web Rule Lab, then Repository-owned existing-chat response state/UI/orchestration. Once coherent, atomically add b66 identity, compare-audit, move formal branch once, continue through CI/Artifact/package verification, and stop only at the real-device Runtime gate.
+Re-fetch this checkpoint's new commit/tree. Implement Web Rule Lab + reusable covered-Web executor + Repository-owned existing-chat Send/stream with a minimal validation trigger. Compare-audit product scope. Only when coherent, allocate b66 atomically with build/workflow identity, re-check `main@d323b9ee...` overlap before CI/Artifact, then continue autonomously through CI/package verification and stop at exact-device Runtime.

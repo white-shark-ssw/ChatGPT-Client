@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-31 through exact b64 Runtime and exact b65 Code/CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active. Stable/Frozen Send remains No._
+_Last updated: 2026-08-31 through exact b65 Runtime pass and TD-029 production Send architecture selection. Phase 9 `DEV-send-stream` remains Active. Stable/Frozen Send remains No._
 
 ## Current accepted merged baseline
 
@@ -8,9 +8,9 @@ Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-co
 
 ## Current Work / target
 
-`DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged and evidence-only. Current actual `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; final target-main synchronization is required before any future merge.
+`DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged. Current actual `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; final target-main synchronization is required before any future merge.
 
-Current exact Artifact Candidate is **`DEV-send-stream-0.1.0-b65` / `0.1.0 (65)`**:
+Latest emitted/tested Candidate is **`DEV-send-stream-0.1.0-b65` / `0.1.0 (65)`**:
 
 - exact product/config source `44138db766d00e62cfda7f20182f6d20f1ec3352`;
 - product tree `fb02dfa7512e9c8428c4b0e9b7184a56d602f688`;
@@ -22,16 +22,33 @@ Current exact Artifact Candidate is **`DEV-send-stream-0.1.0-b65` / `0.1.0 (65)`
 - IPA `sha256:e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`;
 - package Release / source marker `44138db766d0` / minimum iOS14 / UIDeviceFamily `[1,2]` / arm64.
 
-Evidence ladder: **Code written / detached diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending; Stable/Frozen No.**
+Exact b65 Runtime on the primary iPhone/iOS17 passed the focused probe lifecycle: real protected Send -> HTTP200 SSE -> terminal, complete-looking reasoning/final, exact parent tool association `10/10`, and independent nested `工具输入` / `工具输出` disclosures with readable decoded output. Remaining spacing and legal slash escaping are non-blocking polish.
+
+Evidence ladder for b65: **Code / diff audit / Push+PR CI / Artifact / package identity / focused Runtime passed; production Repository-owned Send still pending; Stable/Frozen No.**
 
 ## Durable Phase 9 architecture/security boundary
 
 - Exact b42 proves successful ChatGPT-account protected Send requires browser anti-abuse challenge output. Pure-native/transient-auth account Send remains blocked.
-- The separately billed API-product route remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by the account-safety gate.
-- TD-024/TD-025/TD-028 remain unchanged. Full existing-conversation mobile-Web rendering is not an accepted daily-chat dependency after the b47 long-answer composer failure.
-- b48-b65 are **diagnostic exceptions only**. Their success does not approve hidden/shadow Web as production architecture and does not transfer production response ownership away from `ConversationRepository`.
-- `ConversationRepository` remains sole native production conversation/list/detail/recovery/future accepted response authority; `AuthSessionStore` remains auth/account authority; default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- Sync/Reload never resend/regenerate; no second Send may be created merely to obtain a stream.
+- Separately billed API-product route remains rejected; primary-account Sub2API/Codex-subscription route remains blocked by the existing account-safety decision.
+- **TD-029 is now the current production Send decision.** The user explicitly authorized the b48-b65 proven Native-composer -> covered official-Web page-owned protected-Send executor as the production transport mechanism.
+- Native history/composer/reasoning/tool/final UI remains the product surface. Full existing-conversation mobile-Web rendering remains rejected by TD-025/TD-028.
+- Covered official Web uses the existing default persistent `WKWebsiteDataStore`, owns only browser challenge/protected request execution, and is not a conversation/message/response authority.
+- `ConversationRepository` remains sole native production conversation/list/detail/recovery/**response lifecycle** authority.
+- `AuthSessionStore` remains auth/account authority; default persistent WebKit store remains sole persistent auth-secret authority.
+- No challenge solving/replay, no second persistent credential store, no duplicate Send merely to obtain streaming data.
+- Sync/Reload never resend/regenerate.
+
+## Web Send maintenance capability
+
+`docs/project/WEB_SEND_ADAPTER.md` is now the durable authority for:
+
+- current evidenced official composer/protected-Send/SSE/reasoning/tool rules;
+- exact boundaries that remain prohibited;
+- future ChatGPT Web-rule change classification;
+- the in-app development **Web Rule Lab** contract;
+- the maintenance loop `reproduce -> user runs small JS probe in Lab -> evidence -> one minimal adapter update -> one coherent product build`.
+
+The Web Rule Lab uses the same default persistent WebKit data store, is visibly presented while probing, accepts only user-triggered temporary JS, displays/copies/shares temporary results, and does not persist probe/result bodies into diagnostics or app storage.
 
 ## Current Send/stream evidence progression
 
@@ -39,24 +56,34 @@ Evidence ladder: **Code written / detached diff audited / Push CI passed / PR CI
 - b48-b51 established Native composer -> official protected Send and compact incremental text grammar, including fresh-new-chat continuation across `title_generation`.
 - b52-b56 isolated reasoning/tool grammar and exact `reasoning_ended`, while keeping raw `assistant:thoughts` non-presentational.
 - b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion.
-- b60 preserved later reasoning paragraph boundaries, presented event-driven `正在思考`, and proved exact invocation→result `parent_id` association for tested traffic.
-- b61 passed the successful parent-paired tool-row lifecycle but also exposed generic-`textarea` false readiness; b62 removed only that exact authority and passed the focused verified-composer path.
-- b63 captured the minimum safe structural evidence; same-run Runtime + official-Web evidence authorized the GitHub connector payload / exact-parent result-content mapping.
-- b64 implemented that mapping and exact iPhone/iOS17 Runtime confirmed real protected Send, complete-looking reasoning/final, 30/30 Native tool completion updates, 26 detail-capable rows and multiple successful detail expand/collapse interactions. Runtime rejected only formatting/density: nested result strings remained JSON-escaped and both detail sections dumped at once.
-- b65 is the presentation-only correction: second-level independent `工具输入` / `工具输出` disclosures and decoded hierarchical result formatting. It does not change Send, stream parsing, reasoning state, exact-parent association, GitHub-only authorization, diagnostics privacy or production ownership.
+- b60 preserved later reasoning paragraph boundaries, presented event-driven `正在思考`, and proved exact invocation->result `parent_id` association.
+- b61 exposed generic-textarea false readiness; b62 removed that selector and passed the verified-composer cold-launch path.
+- b63 + same-run official-Web evidence authorized the bounded GitHub connector input/output mapping.
+- b64 proved exact-parent GitHub detail lifecycle; Runtime rejected only escaped/dense detail rendering.
+- b65 corrected only presentation and passed the focused structured-detail Runtime gate.
 
-## Exact b64 Runtime retained
+## Current implementation gap
 
-User export `ChatGPTClient-Diagnostics-20260830-174329.json` matched exact Release b64 / source `6ce1fbd242c9` / iPhone / iOS17.0.
+Production source still uses the old transitional path in `RootViewController`: Native detail `发送消息…` pushes full-page `AuthWebViewController.hybridChat`, then returns and explicitly Syncs. `ConversationRepository` has no production Send/response lifecycle yet.
 
-Observed path reached `prompt_textarea -> submitted -> sendObserved -> HTTP200 text/event-stream -> terminal`; terminal metrics included reasoning `27/440`, final `215/6716`, exact reasoning-end `1`, parent matches `30`, unmatched `5`, missing `0`, Native tool presentations/completion updates `30/30`, and detail-capable rows `26`. The user reported no apparent truncation. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b64-runtime.md`.
+The next implementation must replace that normal path with:
 
-## Exact b65 Runtime gate
+`Native composer -> Repository response operation -> covered official Web one protected Send -> same-response SSE -> Repository-owned incremental response -> Native detail`.
 
-Install exact b65 on the primary iPhone/iOS17 device and run one GitHub/repository request that naturally creates multiple tool rows. Verify the accepted Send/reasoning/final/tool lifecycle still passes, then confirm one completed GitHub row initially exposes only collapsed second-level `工具输入` / `工具输出`, each expands independently, and decoded output no longer shows b64's second-layer escape wall. Export diagnostics after terminal.
+Do not copy the Probe VC as a state owner; extract/reuse only the evidenced Web execution/interception logic.
 
-Do not allocate b66 by guess. If b65 passes this focused presentation gate, close the formatting defect without another Candidate. Any product-code correction after this emitted b65 Artifact must use b66+.
+## Shortest remaining Phase 9 sequence
+
+1. Complete core docs + Web Rule Lab foundation.
+2. Existing-conversation production Repository-owned Send/stream Candidate.
+3. New-chat first Send and pending->authoritative handoff only if timing requires it.
+4. Exact server Stop evidence and one response-scoped Stop implementation.
+5. A/B hidden-response ownership + follow-tail/history intent.
+6. Sync/Reload active-response safety + b38 geometry/round/time/Copy regression.
+7. Final daily-chat Runtime matrix, target-main synchronization, Stable/merge decision.
+
+Background notification/true-background and attachments remain subsequent Works after accepted text Send/Stream ownership.
 
 ## Remaining Unknown / Unverified
 
-Accepted production incremental-response ownership, cross-tool expandable-detail schema beyond the currently evidenced GitHub mapping, Native first/exclusive resume, existing-conversation pre-React history virtualization, full 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified where not explicitly tested. CI/Artifact success is never Runtime proof.
+Production Repository-owned incremental-response Runtime, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, cross-tool expandable-detail schema beyond the evidenced GitHub mapping, Native first/exclusive resume, full 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified where not explicitly tested. CI/Artifact success is never Runtime proof.

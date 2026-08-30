@@ -55,7 +55,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b52 诊断：保留 b51 已验证的 title_generation continuation 行为，仅新增结构计数，用于定位 GitHub/工具类回答开头少量截断究竟发生在 exact 顶层 patch、非 exact 顶层 patch、嵌套 patch 还是 continuation reset 之后。不会把提示词/回答写入诊断日志，也不会放宽 parser。仍属诊断例外，不代表生产架构已接受。"
+        explanationLabel.text = "b53 诊断：b52 已确认最终回答完整、仅可见思考开头略有缺失。本版不改变 b52 文本过滤/输出，只记录有限个唯一 SSE 结构签名（事件类型、patch 路径、消息角色/内容类型、结构键和嵌套 patch 路径），用于识别 reasoning/tool 的真实协议结构。不会记录提示词、回答、思考文本或原始 ID。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -118,7 +118,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b52_native_composer_structural_gap_classify", "surface": "native_over_fullsize_web", "scope": "tool_style_gap_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b53_reasoning_tool_structure_classify", "surface": "native_over_fullsize_web", "scope": "reasoning_tool_structure_diagnostic"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -218,6 +218,22 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             nativeDeltaCount += 1
             nativeCharacterCount += text.count
             appendNativeText(text)
+        case "stream_structure":
+            let fields = [
+                "eventIndex": Self.safeNumberString(body["eventIndex"]),
+                "signature": Self.safeToken(body["signature"] as? String),
+                "eventType": Self.safeToken(body["eventType"] as? String),
+                "operation": Self.safeToken(body["operation"] as? String),
+                "patchPath": Self.safeToken(body["patchPath"] as? String),
+                "messageRole": Self.safeToken(body["messageRole"] as? String),
+                "messageContentType": Self.safeToken(body["messageContentType"] as? String),
+                "messageStatus": Self.safeToken(body["messageStatus"] as? String),
+                "endTurn": Self.safeBoolString(body["endTurn"]),
+                "payloadKeys": Self.safeTokenArray(body["payloadKeys"]),
+                "valueKeys": Self.safeTokenArray(body["valueKeys"]),
+                "nestedPatches": Self.safeTokenArray(body["nestedPatches"])
+            ]
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamStructure", fields: fields)
         case "stream_metrics":
             let terminal = (body["terminal"] as? NSNumber)?.boolValue ?? false
             let fields = [
@@ -235,6 +251,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "continuationResetWhileActiveCount": Self.safeNumberString(body["continuationResetWhileActiveCount"]),
                 "firstInactiveValueContext": Self.safeToken(body["firstInactiveValueContext"] as? String),
                 "titleGenerationWhileContinuationCount": Self.safeNumberString(body["titleGenerationWhileContinuationCount"]),
+                "structureSignatureCount": Self.safeNumberString(body["structureSignatureCount"]),
+                "structureSignatureOverflowCount": Self.safeNumberString(body["structureSignatureOverflowCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
@@ -288,6 +306,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         return value
     }
 
+    private static func safeTokenArray(_ value: Any?) -> String {
+        guard let values = value as? [Any] else { return "none" }
+        let tokens = values.prefix(24).map { safeToken($0 as? String) }
+        return tokens.isEmpty ? "none" : tokens.joined(separator: ",")
+    }
+
     private static func safeNumberString(_ value: Any?) -> String {
         guard let number = value as? NSNumber else { return "none" }
         return number.stringValue
@@ -313,6 +337,19 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
       const pageKind = () => location.pathname.startsWith('/c/') ? 'existing_conversation' : (location.pathname.startsWith('/auth') ? 'authentication' : 'new_or_other');
       const isChatGPTHost = host => host === 'chatgpt.com' || host.endsWith('.chatgpt.com');
+      const safeStructuralKey = value => {
+        const s = String(value || '');
+        return /^[A-Za-z_][A-Za-z0-9_.:-]{0,63}$/.test(s) ? s : '{key}';
+      };
+      const safeProtocolValue = value => {
+        if (typeof value !== 'string') return 'none';
+        const s = value.trim();
+        return /^[A-Za-z][A-Za-z0-9_.:+-]{0,63}$/.test(s) ? s : 'other_or_redacted';
+      };
+      const safePatchPath = value => {
+        if (typeof value !== 'string' || !value) return 'none';
+        return /^\/[A-Za-z0-9_./:{}+-]{1,159}$/.test(value) ? value : 'other_or_redacted';
+      };
 
       const installRenderSuppression = () => {
         if (document.getElementById('__native_web_send_engine_render_suppression')) return;
@@ -405,6 +442,64 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         return { webMessageNodes: nodes.length, webAssistantTextCharacters: assistantTextCharacters, webElementCount: document.getElementsByTagName('*').length };
       };
 
+      const findMessage = (node, depth = 0) => {
+        if (!node || typeof node !== 'object' || depth > 5) return null;
+        if (!Array.isArray(node) && node.message && typeof node.message === 'object') return node.message;
+        if (!Array.isArray(node) && node.author && node.content && typeof node.author === 'object' && typeof node.content === 'object') return node;
+        const children = Array.isArray(node) ? node : Object.values(node);
+        for (const child of children) {
+          const message = findMessage(child, depth + 1);
+          if (message) return message;
+        }
+        return null;
+      };
+
+      const collectNestedPatches = (node, output = [], depth = 0) => {
+        if (!node || typeof node !== 'object' || depth > 5 || output.length >= 16) return output;
+        if (depth > 0 && !Array.isArray(node) && typeof node.o === 'string' && typeof node.p === 'string') output.push(safeProtocolValue(node.o) + ':' + safePatchPath(node.p));
+        const children = Array.isArray(node) ? node : Object.values(node);
+        for (const child of children) {
+          collectNestedPatches(child, output, depth + 1);
+          if (output.length >= 16) break;
+        }
+        return output;
+      };
+
+      const summarizeStructure = payload => {
+        const payloadObject = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : null;
+        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [] };
+        const valueObject = payloadObject.v && typeof payloadObject.v === 'object' && !Array.isArray(payloadObject.v) ? payloadObject.v : null;
+        const eventType = safeProtocolValue(payloadObject.type);
+        const operation = safeProtocolValue(payloadObject.o);
+        const patchPath = safePatchPath(payloadObject.p);
+        const message = findMessage(payloadObject);
+        const messageRole = safeProtocolValue(message && message.author && message.author.role);
+        const messageContentType = safeProtocolValue(message && message.content && message.content.content_type);
+        const messageStatus = safeProtocolValue(message && message.status);
+        const endTurn = !!(message && message.end_turn === true);
+        const payloadKeys = Object.keys(payloadObject).slice(0, 32).map(safeStructuralKey).sort();
+        const valueKeys = valueObject ? Object.keys(valueObject).slice(0, 32).map(safeStructuralKey).sort() : [];
+        const nestedPatches = collectNestedPatches(payloadObject).slice(0, 16);
+        let signature = 'keys:' + payloadKeys.join('+');
+        if (typeof payloadObject.type === 'string') signature = 'type:' + eventType;
+        else if (typeof payloadObject.o === 'string') signature = 'patch:' + operation + ':' + patchPath;
+        else if (message) signature = 'message:' + messageRole + ':' + messageContentType + ':' + messageStatus;
+        else if (typeof payloadObject.v === 'string') signature = 'value_string_patch';
+        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches };
+      };
+
+      const observeStructure = (payload, aggregate) => {
+        const summary = summarizeStructure(payload);
+        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches]);
+        if (aggregate.structureSeen.has(evidenceKey)) return;
+        if (aggregate.structureSeen.size >= 32) {
+          aggregate.structureSignatureOverflowCount += 1;
+          return;
+        }
+        aggregate.structureSeen.add(evidenceKey);
+        post({ kind: 'stream_structure', eventIndex: aggregate.frameCount, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches });
+      };
+
       const scrubTextPatches = node => {
         if (Array.isArray(node)) {
           const output = [];
@@ -451,7 +546,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         inactiveValueStringCharacters: aggregate.inactiveValueStringCharacters,
         continuationResetWhileActiveCount: aggregate.continuationResetWhileActiveCount,
         firstInactiveValueContext: aggregate.firstInactiveValueContext,
-        titleGenerationWhileContinuationCount: aggregate.titleGenerationWhileContinuationCount
+        titleGenerationWhileContinuationCount: aggregate.titleGenerationWhileContinuationCount,
+        structureSignatureCount: aggregate.structureSeen.size,
+        structureSignatureOverflowCount: aggregate.structureSignatureOverflowCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -482,6 +579,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           return frame + '\n\n';
         }
 
+        observeStructure(payload, aggregate);
         const payloadKeys = payload && typeof payload === 'object' && !Array.isArray(payload) ? Object.keys(payload) : [];
         const rootTextAppend = payload && typeof payload === 'object' && !Array.isArray(payload) && payload.o === 'append' && payload.p === '/message/content/parts/0' && typeof payload.v === 'string';
         const exactTopLevelTextAppend = payloadKeys.length === 3 && payloadKeys.includes('o') && payloadKeys.includes('p') && payloadKeys.includes('v') && rootTextAppend;
@@ -564,6 +662,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           inactiveContext: 'no_prior_text',
           titleGenerationWhileContinuationCount: 0,
           textContinuationActive: false,
+          structureSeen: new Set(),
+          structureSignatureOverflowCount: 0,
           terminal: false
         };
         let buffer = '';

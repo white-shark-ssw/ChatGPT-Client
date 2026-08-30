@@ -66,7 +66,7 @@ This file contains durable repository/product rules backed by explicit requireme
 - Generic unique structure capacity remains 32; special reasoning/tool structure capacity remains 24 with independent count/overflow.
 - b57+ ordinary assistant-text phase structure capacity remains separately bounded to 12 unique shapes with count/overflow and must not record text values or unbounded arrays.
 - b58+ may record aggregate invocation/result/title/presentation counts. b59 may additionally record thinking-preamble count/characters. It must not log service title text or message IDs.
-- A next diagnostic may record aggregate reasoning-active signal counts, Native-only segment-break counts and tool parent/reference match/missing counts after transient in-memory comparison. It must not export the compared raw identities or bodies.
+- Exact b60 may record aggregate reasoning-active signal counts, Native-only segment-break counts and tool parent/reference match/missing counts after transient in-memory comparison. It must not export the compared raw identities or bodies.
 - Background diagnostics may record lifecycle/public background-task/Web process/navigation failure classes without adding heartbeat timers merely to manufacture activity.
 - Scroll/round diagnostics may record non-secret indices, offsets, geometry durations, travel distance and landing error, never message identity/body.
 
@@ -77,8 +77,8 @@ This file contains durable repository/product rules backed by explicit requireme
 - Actual built `Info.plist` version/build/Candidate/source marker plus IPA filename/SHA are package identity authority; workflow Artifact container naming alone is not proof.
 - `scripts/build_ipa.sh` must fail on Candidate/version/build mismatch.
 - Exact b24-b59 identities and emitted Artifacts are permanently reserved. Previously rejected identity-invalid transition/stale Artifacts remain rejected.
-- Exact current Phase 9 diagnostic product/config authority is b59 source `138c09a5d11121945bc45f1d866c449aa0f7611e`; later docs-only commits do not redefine it.
-- Any product-code change after b59 requires b60+ and exact b59 Runtime evidence. Confirm identity availability before allocation; never reuse an emitted build.
+- Exact current Phase 9 tested diagnostic product/config authority is b59 source `138c09a5d11121945bc45f1d866c449aa0f7611e`; later docs-only commits do not redefine it.
+- Pre-allocation guard found no b60 repository/build-index reference and no other Active development task, so build60 is available for the bounded next Candidate. Once its exact product source is created or Artifact emitted, follow normal uniqueness rules and never reuse it.
 
 ## Native UI / conversation presentation contracts
 
@@ -150,12 +150,12 @@ This file contains durable repository/product rules backed by explicit requireme
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source. Final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint recovery point and never blindly replay already-confirmed Candidate writes.
-- Tooling-only assembly commits are never Work/Candidate authority. Stable Phase 8 authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; current Phase 9 diagnostic authority is b59 source `138c09a5d11121945bc45f1d866c449aa0f7611e`.
+- Tooling-only assembly commits are never Work/Candidate authority. Stable Phase 8 authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; current tested Phase 9 diagnostic authority is b59 source `138c09a5d11121945bc45f1d866c449aa0f7611e` until exact b60 source is allocated.
 
 ## Critical invariants / prohibited routes
 
 - Historical hidden WebView chat code is not the native product baseline.
-- TD-024/TD-025/TD-028 remain in force while b48-b59 operate only as diagnostic exceptions.
+- TD-024/TD-025/TD-028 remain in force while b48-b59 operate only as diagnostic exceptions; b60 remains the same diagnostic class when allocated.
 - Full existing-conversation Web rendering is not a performance fix merely because it is hidden or display-trimmed.
 - CI/Artifact success is never Runtime proof.
 - Main-app background survival is never WebKit-stream survival proof.

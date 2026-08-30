@@ -9,13 +9,13 @@ This file contains durable repository/product rules backed by explicit requireme
 - Exact Stable Phase 8 tested source remains `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; Runtime Artifact `9708425762`; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`.
 - Pure-native/transient-auth ChatGPT-account protected Send remains blocked by exact b42 browser-challenge evidence.
 - The separately billed API-product route remains rejected unless that explicit product decision changes. Primary-account Sub2API/Codex-subscription route remains blocked by the account-safety decision.
-- **TD-029 is the current production Send architecture.** Native composer/history/reasoning/tool/final UI is the product surface. One process-resident covered official ChatGPT Web execution surface may use the existing default persistent `WKWebsiteDataStore` to let the official page perform browser challenge + exactly one protected Send for each Native Send action.
+- **TD-029 is current production Send architecture.** Native composer/history/reasoning/tool/final UI is the product surface. One process-resident covered official ChatGPT Web execution surface may use the existing default persistent `WKWebsiteDataStore` to let the official page perform browser challenge + exactly one protected Send for each Native Send action.
 - Covered Web is transport/challenge execution only. It is not a conversation, message, response, list, draft or scroll-state authority.
-- `ConversationRepository` remains the sole native production conversation/list/detail/recovery/**response lifecycle** authority.
-- `AuthSessionStore` remains the sole native auth/account-context authority.
-- `WKWebsiteDataStore.default()` remains the sole persistent auth-secret authority; no second Cookie/token/challenge store.
+- `ConversationRepository` is the sole native production conversation/list/detail/recovery/**response lifecycle** authority.
+- `AuthSessionStore` remains sole native auth/account-context authority.
+- `WKWebsiteDataStore.default()` remains sole persistent auth-secret authority; no second Cookie/token/challenge store.
 - TD-025/TD-028 still reject the b44 full-page Native->Web->Native product form and full mobile-Web conversation rendering as the daily-chat dependency.
-- TD-029 supersedes only the old requirement that the official Send surface remain visible and the old blanket rejection of a covered official-page Send executor.
+- Final Composer hierarchy/drafts/attachment staging belong future serialized `DEV-composer-parity`; `DEV-send-stream` may retain only a minimal validation trigger until Send/Stop/response semantics are accepted.
 
 ## Web Send adapter contract
 
@@ -23,17 +23,31 @@ This file contains durable repository/product rules backed by explicit requireme
 
 Core production invariants:
 
-- Native Send must trigger exactly one official page-owned protected Send; no second Send merely to obtain a stream.
+- Native Send must trigger exactly **one** official page-owned protected Send; no second Send merely to obtain a stream.
 - The official page owns Sentinel/PoW/Turnstile/conduit/challenge generation. Native code must never solve, synthesize, copy for replay, persist or expose those values.
-- Accepted composer authority is currently `#prompt-textarea` or explicit `[contenteditable="true"][role="textbox"]`; generic textarea remains rejected.
+- Accepted composer authority is `#prompt-textarea` or explicit `[contenteditable="true"][role="textbox"]`; generic textarea remains rejected.
 - A JavaScript `submitted` return is not success proof. Real `sendObserved` + HTTP/SSE lifecycle is required.
 - Current tested protected route is official page-owned `POST /backend-api/f/conversation` -> HTTP200 `text/event-stream`.
 - Unknown/new Web/SSE shapes stay observable and must not trigger guessed state transitions.
 - Do not accumulate speculative selector fallbacks, retry loops, timers, polling or watchdogs. When Web changes, probe the current page and replace/update the rule from evidence.
+- A local production orchestration bug is **not** a Web-rule change merely because the page request fails. b66 proves this distinction: the service accepted the Send while duplicate Swift->JS submit orchestration caused the production wrapper to lose its Response before `sendResponse`.
+
+## Covered executor operation gate
+
+Exact b66 Runtime established a durable one-Send orchestration rule in addition to the Web adapter rule:
+
+- one Repository response operation owns one `activeEvents` executor lifetime from accepted local request until terminal/failure;
+- `pendingSend` is only the not-yet-issued JS submission payload, not the whole response lifetime;
+- once the one JS `submit(...)` evaluation is issued, consume/clear that `pendingSend` immediately;
+- repeated composer-ready callbacks after issuance must not schedule the same prompt again;
+- executor busy state must remain true through the existing active response operation, not reopen merely because the pending payload was consumed;
+- do not solve duplicate-submit races with debounce, timer, retry, resend, delayed submit, polling or a second state flag when the existing operation owner can enforce the invariant.
+
+Exact b67 implements this by using existing `activeEvents != nil` for `isBusy` and clearing `pendingSend` immediately before the one JS submit evaluation. Runtime acceptance of the correction remains pending.
 
 ## Web Rule Lab contract
 
-The app must retain a development-only **Web Rule Lab** for future ChatGPT Web changes.
+The app retains a development-only **Web Rule Lab** for future ChatGPT Web changes.
 
 - reachable from Settings;
 - uses the same `WKWebsiteDataStore.default()` login/session state as production Web execution;
@@ -41,26 +55,26 @@ The app must retain a development-only **Web Rule Lab** for future ChatGPT Web c
 - user explicitly pastes/edits JavaScript and taps `执行`;
 - no script auto-runs on page load or app launch;
 - script text and returned body are temporary UI state only;
-- allow copy/share of the temporary result;
+- allow copy/share of temporary result;
 - do not persist Lab script/result bodies into `DiagnosticsLogger`, `UserDefaults`, files or another database;
 - diagnostics may record only safe execution lifecycle/result type/length;
 - the Lab is never a production Send/response owner.
 
-Future Web update process is:
+Future Web update process:
 
 `reproduce exact failure -> AI provides one small JS probe -> user runs it in Web Rule Lab -> collect structural evidence -> update WEB_SEND_ADAPTER rule -> one minimal product change -> one coherent Candidate/Artifact -> exact Runtime validation`.
 
-Do not return to repeated speculative IPA builds for selector/event discovery when the Lab can answer the structural question directly.
+Do not return to speculative IPA builds for selector/event discovery when the Lab can answer the structural question directly.
 
 ## Send / stream parser and presentation rules
 
-Current accepted b48-b65 rules are summarized here; exact history stays in `WEB_SEND_ADAPTER.md` and runtime evidence.
+Current accepted b48-b65 parser/presentation rules remain unchanged by b66/b67:
 
-- compact assistant text continuation includes the evidenced `o/p/v` + contextual continuation grammar and b51 continuation across exact `title_generation`;
+- compact assistant text continuation includes evidenced `o/p/v` + contextual continuation grammar and b51 continuation across exact `title_generation`;
 - do not generalize arbitrary `v:string`, arbitrary nested values or arbitrary initial assistant parts into visible text;
 - exact service-marked thinking preamble (`metadata.is_thinking_preamble_message=true`) is user-visible reasoning text;
 - exact `reasoning_status=is_reasoning` may drive state only and never authorizes `assistant:thoughts` body;
-- exact `reasoning_ended` is the current reasoning->final phase authority;
+- exact `reasoning_ended` is current reasoning->final phase authority;
 - accepted visible text before that marker belongs to `思考过程`; accepted text after it belongs to final answer;
 - `assistant:thoughts` is always non-presentational;
 - initial/repeated `正在思考` must be event/response-state driven, never timer driven;
@@ -103,6 +117,8 @@ Rules:
 - active response residents are protected from normal memory-warning eviction;
 - response state must survive A hidden while B is selected.
 
+b66 memory-warning evidence occurred only after its response had already failed; `resident.evictionSkipped` confirmed the tested protected resident was not evicted, but this is not full background/memory-warning acceptance.
+
 ## New-chat identity handoff
 
 Use a local pending target only if actual server timing requires identity before authoritative conversation ID arrives.
@@ -125,7 +141,7 @@ If used:
 Do not claim server Stop until exact current evidence establishes route/mechanism, target identity, acknowledgement and terminal semantics.
 
 - local Web/URL task cancellation is not proof server generation stopped;
-- do not ship a fake Stop that only hides the UI while presenting it as server Stop;
+- do not ship a fake Stop that only hides UI while presenting it as server Stop;
 - no automatic resend/regenerate after Stop/interruption;
 - partial-content authority and whether later explicit Sync is needed must come from Runtime evidence.
 
@@ -133,7 +149,7 @@ Do not claim server Stop until exact current evidence establishes route/mechanis
 
 - `ConversationRepository` owns response activity; `ConversationDetailViewController` owns viewport intent.
 - if A is at/near latest and owns an active response, A may follow its tail;
-- deliberate user upward scrolling exits follow-tail and establishes historical-reading intent;
+- deliberate upward user scrolling exits follow-tail and establishes historical-reading intent;
 - hidden A growth never mutates B viewport;
 - return to eligible A shows current latest bottom;
 - return after history intent restores A's semantic anchor;
@@ -145,17 +161,16 @@ Exact near-bottom threshold is Runtime tuning, not a preflight constant to guess
 ## Native UI / message geometry contracts
 
 - Official ChatGPT iOS interaction is the default baseline where acceptable; implement natively where architecture permits.
-- `UISplitViewController`/native navigation remains the compact navigation owner.
+- `UISplitViewController`/native navigation remains compact navigation owner.
 - UI text/title is a consumer, never identity authority.
 - `ConversationRoundProjection` remains the single semantic round projection.
 - each authoritative visible user message starts a round; hidden/internal nodes do not.
 - `AppPreferences` remains the single persisted native settings owner.
 - timestamps use authoritative historical time when available; omit rather than fabricate.
 - Copy uses full authoritative visible message text and never issues network requests.
-- Stable b37/b38 bounded display chunks + deterministic row geometry/manual layout remain the message-presentation baseline.
-- Copy still uses the full authoritative message even when display chunks are bounded.
+- Stable b37/b38 bounded display chunks + deterministic row geometry/manual layout remain message-presentation baseline.
 - Stable b38 quick navigation uses derived O(1) geometry and one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`; no pre-jump teleport, `scrollToRow` geometry discovery, correction snap or debounce.
-- rapid retargeting starts from the current visual position; real finger drag immediately retakes ownership.
+- rapid retargeting starts from current visual position; real finger drag immediately retakes ownership.
 - per-conversation scroll state is semantic presentation state, not Repository message state.
 
 ## Manual recovery contract
@@ -164,7 +179,8 @@ Exact near-bottom threshold is Runtime tuning, not a preflight constant to guess
 - preserve an already loaded detail on Sync failure where applicable.
 - newer explicit same-target Sync/Reload may cancel/replace only older same-target detail/recovery ownership; freshness rejects obsolete callbacks.
 - no automatic retry/watchdog/timer/resend/regenerate chain.
-- while response-active Sync/Reload semantics are not yet accepted, an unsafe action may be explicitly disabled rather than guessed.
+- while response-active reconciliation semantics are not accepted, unsafe Sync/Reload may be explicitly disabled rather than guessed.
+- terminal authoritative reconciliation may invoke one existing Sync after a true response terminal; it must not become a readiness polling loop or resend path.
 
 ## Cold-start auth / list-cache contracts
 
@@ -200,15 +216,16 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - once an Artifact identity is emitted, corrected product code never reuses it;
 - built `Info.plist` version/build/Candidate/source marker + IPA SHA are package identity authority;
 - `scripts/build_ipa.sh` must fail on identity mismatch;
-- b24-b65 emitted identities are permanently reserved;
-- exact b65 package authority remains `0.1.0 (65)`, source `44138db766d00e62cfda7f20182f6d20f1ec3352`, Push Artifact `9736876465`, IPA SHA `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`;
-- b65 focused Runtime passed the tested probe lifecycle/tool-detail scope;
-- b66 may be allocated only for a coherent TD-029 production/Web-Lab slice and must align product code + build + workflow identity atomically before the formal branch moves.
+- b24-b67 emitted identities are permanently reserved;
+- exact b66 package authority remains `0.1.0 (66)`, source `9ce228ad880eaf81fc23ba26fe14f4d2bf524acb`, Artifact `9739572172`, IPA `7f62e875bbd75d54e2d7bf76340f277d02f03e695d464d818fa5cab664c630e9`; Runtime rejected its first production bridge but does not invalidate package identity;
+- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; Runtime pending;
+- do not allocate b68 before exact b67 Runtime supplies a concrete need.
 
 ## Message rendering / attachment boundary
 
 - ordinary native message body remains plain string until future `DEV-message-rendering`; Markdown/code/table/link/citation rendering remains a separate Work.
 - reasoning/tool-card lifecycle semantics remain `DEV-send-stream`.
+- final Composer/drafts/attachment staging remain future `DEV-composer-parity` and must consume accepted Send/Stop APIs rather than own them.
 - attachments remain high priority but Send-boundary dependent.
 - no private WebKit/DOM/file-input injection for iOS17 attachment support without separately evidenced public/engine-compatible path.
 
@@ -217,7 +234,7 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - background continuation follows `BACKGROUND_EXECUTION_PLAN.md`; no automatic prompt resend and no second response store/stream.
 - public `beginBackgroundTask` is a finite baseline only, never a long-duration guarantee.
 - main-app process survival is not WebKit-stream survival proof.
-- b45 positive short-background evidence remains valid; full background acceptance waits for production Repository response ownership and its own Runtime matrix.
+- b45 positive short-background evidence remains valid; full background acceptance waits for successful production Repository response ownership and its own Runtime matrix.
 - Native iOS/TrollStore primary runtime remains iOS17; build minimum remains iOS14 unless concrete evidence changes it.
 
 ## Repository governance contract
@@ -225,14 +242,14 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - Repository AI Governance Rules are dynamic authority.
 - Every work session reads root `AGENTS.md`, then `docs/project/START_HERE.md`.
 - Material source/CI/Artifact/Runtime/architecture/status changes update checkpoint + durable docs in the same cycle.
-- final merge must reconcile actual target branch state without overwriting parallel work.
+- final merge reconciles actual target branch state without overwriting parallel work.
 - non-atomic GitHub write chains use the selected checkpoint recovery point and never blindly replay confirmed writes.
 - tooling-only assembly commits/refs are never Work/Candidate authority.
 
 ## Critical invariants / prohibited routes
 
 - full existing-conversation Web rendering is not accepted merely because it is hidden/display-trimmed;
-- covered official Web under TD-029 is only the evidenced Send/challenge executor, never a second state owner;
+- covered official Web under TD-029 is only evidenced Send/challenge executor, never a second state owner;
 - no challenge bypass/replay;
 - no duplicate Send to obtain stream/recovery;
 - no speculative timer/watchdog/retry/polling/compatibility-shim chain;

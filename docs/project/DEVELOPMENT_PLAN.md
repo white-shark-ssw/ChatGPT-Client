@@ -1,12 +1,12 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-31 through exact b64 Runtime and exact b65 Code/CI/Artifact/package verification._
+_Last updated: 2026-08-31 through exact b66 Runtime failure and exact b67 Code/CI/Artifact/package verification._
 
 ## Purpose / delivery principles
 
-Build a genuinely usable native Swift/UIKit ChatGPT client without replacing accepted native ownership merely to accommodate private Web behavior. Current real source, exact CI/Artifact evidence, real-device evidence and latest explicit requirements outrank stale plan wording.
+Build a genuinely usable native Swift/UIKit ChatGPT client while preserving one authority per state domain. Current real source, exact CI/Artifact evidence, exact-device Runtime evidence and latest explicit requirements outrank stale plans.
 
-Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b65 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
+Core rules: no speculative retry/fallback/timer/watchdog/polling/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; private Web behavior must be measured rather than guessed; full Web conversation rendering remains rejected as the daily-chat dependency.
 
 ## Accepted merged foundation
 
@@ -21,94 +21,140 @@ Core rules: one authority per state domain; no speculative retry/fallback/timer/
 
 Retain b38 bounded long-message chunks, deterministic geometry/manual layout and continuous O(1)-target round navigation.
 
-## Phase 9 — `DEV-send-stream` — Active diagnostic architecture experiment
+## Phase 9 — `DEV-send-stream` — Active production integration
 
 ### Durable Send boundary
 
-- b42 proves ChatGPT-account protected Send requires browser anti-abuse challenge output; pure-native/transient-auth account Send remains blocked.
-- Separately billed API-product route remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by account-safety policy.
-- TD-024 is a visible-Web security permission only; TD-025 rejects b44 full-page hybrid form; TD-028 records the b47 long-answer Web-composer ceiling.
-- Full existing-conversation Web rendering is not an accepted daily-chat production dependency.
-- `ConversationRepository` remains future accepted production response owner; diagnostic Web transport must not become a second production repository.
+- b42 proves ChatGPT-account protected Send requires browser anti-abuse challenge output; pure-native/transient-auth protected Send remains blocked.
+- Separately billed API-product route remains rejected; primary-account Sub2API/Codex-subscription route remains blocked by account-safety policy.
+- TD-025/TD-028 continue to reject the full-page hybrid product form and full existing-conversation Web rendering.
+- **TD-029 is the current production architecture:** Native send action -> `ConversationRepository` response operation -> covered official page performs exactly one protected Send -> same-response SSE -> Repository incremental response state -> Native consumers.
+- Covered Web is transport/challenge execution only and uses the existing `WKWebsiteDataStore.default()`; it never becomes a second conversation/message/response/draft/auth-secret authority.
+- Final Composer UI belongs future serialized `DEV-composer-parity`. Current Work keeps only a validation text trigger needed to accept Send/Stop/response semantics first.
 
-### Evidence progression
+### Accepted diagnostic/protocol progression
 
 - b45 Runtime Confirmed official no-resend resume; b46/b47 duplicated Native Cookie+Bearer-only resume rejected.
-- b48-b51 established Native composer -> official protected Send and complete compact response text, including fresh-new-chat title-generation continuation.
-- b52-b56 identified reasoning/tool message grammar, separated raw internal `assistant:thoughts`, and established exact `reasoning_ended` semantics.
-- b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion.
-- b60 passed the tested thinking/segmentation gate and exact result-parent association.
-- b61 exposed generic-textarea false readiness; b62 removed only that exact fallback and passed the focused verified-composer normal path.
-- b63 captured bounded expandable-detail structure evidence. Same-run Runtime plus official-Web expanded-detail evidence authorized one minimal GitHub mapping: invocation connector payload -> visible tool input; exact parent-paired GitHub result `message.content` -> visible tool output.
-- b64 implemented that mapping. Exact iPhone/iOS17 Runtime passed real protected Send, reasoning/final completeness, exact-parent row completion and detail expand/collapse; only output formatting/density was rejected.
-- b65 is the presentation-only correction: tool row opens to independently collapsed `工具输入` / `工具输出`; output outer JSON is decoded and displayed hierarchically so nested strings are shown as actual text rather than a second-layer escape wall.
+- b48-b51 established Native composer -> official protected Send and complete compact response text, including exact `title_generation` continuation.
+- b52-b56 identified reasoning/tool grammar and exact `reasoning_ended`; `assistant:thoughts` remains non-presentational.
+- b57-b59 established Native reasoning/final split and service-marked thinking-preamble inclusion.
+- b60 passed thinking/segmentation/text-completeness and exact result-parent association.
+- b61 exposed generic-textarea false readiness; b62 removed that authority and passed the verified-composer path.
+- b63 same-run Runtime plus official-Web expanded detail authorized the minimal GitHub input/output mapping only.
+- b64 passed protected Send/reasoning/final/exact-parent detail lifecycle; formatting/density only rejected.
+- b65 fixed only nested disclosure/readable output and passed focused iPhone/iOS17 Runtime. It is the accepted diagnostic predecessor for the production bridge.
 
-### Exact b64 Runtime — lifecycle/detail mapping passed, formatting partial
+### Web Rule Lab / maintenance foundation
 
-User export `ChatGPTClient-Diagnostics-20260830-174329.json` matched exact build64/source on iPhone/iOS17.0.
+`WEB_SEND_ADAPTER.md` owns current Web composer/protected-Send/SSE/reasoning/tool rules and future update procedure.
 
-Observed Send path:
+The current branch implements the development-only Web Rule Lab:
 
-`ready=false/none -> ready=true/prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 SSE -> terminal`.
+- Settings-reachable visible `WKWebView` using `.default()` store;
+- explicit user-pasted/edited JS + explicit execute;
+- temporary result + copy/share;
+- no auto-run;
+- no persistence/logging of script/result bodies;
+- never production response owner.
 
-Terminal evidence included reasoning `27/440`, final `215/6716`, exact reasoning end `1`, parent matches `30`, unmatched `5`, missing `0`, Native tool presentations/completion updates `30/30`, detail-capable rows `26`, and multiple successful expand/collapse events. The user reported no apparent truncation.
+b66 diagnostics already observed Lab open and page load. Future official-Web changes should use `reproduce -> Lab probe -> evidence -> one minimal adapter update -> one Candidate`, not speculative selector/fallback IPA loops.
 
-Classification: **Runtime partial-pass — verified composer / protected Send / reasoning-final / exact-parent GitHub detail lifecycle passed; current detail formatting/density rejected only.**
-
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b64-runtime.md`.
-
-### Exact b65 — structured detail presentation Candidate
+### Exact b66 — first production existing-conversation bridge
 
 Identity:
 
-- Candidate `DEV-send-stream-0.1.0-b65`, `0.1.0 (65)`.
-- Exact product/config source `44138db766d00e62cfda7f20182f6d20f1ec3352`; tree `fb02dfa7512e9c8428c4b0e9b7184a56d602f688`.
-- Push `33328232044 / 99302071335` — success.
-- PR `33328233842 / 99302076369` — success.
-- Push Artifact `9736876465`; PR Artifact `9736874445`.
-- Push ZIP `sha256:d9a52ecb0cd7d5131e22fc399bc5db0d573a9de3e5d80838f3a8d2b3164ceb7a`.
-- IPA SHA `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`.
-- Package Release / `0.1.0 (65)` / source marker `44138db766d0` / iOS14 / `[1,2]` / arm64.
-- b65 permanently reserved; Runtime pending.
+- Candidate `DEV-send-stream-0.1.0-b66`, `0.1.0 (66)`;
+- source `9ce228ad880eaf81fc23ba26fe14f4d2bf524acb`; tree `31ef29457273a44dd202a63a96560563154e8823`;
+- Push `33337771534 / 99327694040` — success;
+- PR `33337774136 / 99327701256` — success;
+- Push Artifact `9739572172`;
+- ZIP `sha256:6c6d8e165ed070e88a27abafc57973dc847937826e40c552bf9f0d29bb91bb45`;
+- IPA `sha256:7f62e875bbd75d54e2d7bf76340f277d02f03e695d464d818fa5cab664c630e9`.
 
-b65 implementation boundary:
+Product scope:
 
-1. preserve b64 verified composer, protected Send, SSE text grammar, reasoning/final split, exact `reasoning_ended`, transient invocation map, exact result `parent_id` pairing and GitHub-only detail authorization;
-2. preserve diagnostics privacy: no raw prompt/answer/reasoning/tool input/output/IDs/auth/proof in exported logs;
-3. keep the tool row as the first disclosure;
-4. after row expansion, show `工具输入` and `工具输出` as independent collapsed second-level disclosures;
-5. input remains readable pretty JSON;
-6. output decodes b64's outer `message.content` JSON and recursively presents dictionaries/arrays; actual string values are shown as actual text, and complete JSON object/array strings may be decoded one structural layer;
-7. no arbitrary character truncation, retry, polling, timer, watchdog, fallback, compatibility shim, second response owner or production repository mutation.
+- process-resident covered executor exact-targets existing `/c/<conversationID>`;
+- accepted composer selectors only;
+- same-response SSE filter/parser preserves b65 grammar;
+- Repository owns response generation/snapshot/phase/tool lifecycle;
+- terminal requests existing authoritative Sync;
+- active selected response disables unsafe Sync/Reload;
+- validation-only Send trigger; b38 message geometry unchanged.
 
-Evidence ladder: **Code written / detached diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
+Exact iPhone/iOS17 Runtime **failed this first production bridge**. Two generations reproduced:
+
+`composer_ready x2 -> submit_result=submitted x2 -> one send_observed -> send_transport_error`
+
+No `coveredExecutor.sendResponse` occurred and Native response text stayed empty. The user verified the official ChatGPT app already contained the assistant reply, proving protected Send reached the service while Native lost the same-response request before receiving the HTTP Response object.
+
+Source correlation established a local Swift->JS duplicate-submit race: `pendingSend` remained available until later `send_observed`, allowing repeated composer-ready callbacks to schedule the same asynchronous JS submit twice. This is not evidence of a new Web selector/SSE rule. Detailed Runtime record: `docs/project/runtime-evidence/DEV-send-stream-b66-runtime.md`.
+
+### Exact b67 — current correction Candidate
+
+b67 changes only the operation gate:
+
+1. `CoveredWebSendExecutor.isBusy` now follows existing `activeEvents != nil` lifetime.
+2. `pendingSend` is consumed immediately before issuing the one JS submit evaluation.
+3. Duplicate composer-ready callbacks can no longer schedule the same pending operation again.
+4. `activeEvents` keeps executor busy through terminal/failure, so consuming `pendingSend` does not open a second user-Send window.
+5. Web selectors, protected route, parser/filter grammar, Repository owner, Web Rule Lab and diagnostics privacy are unchanged.
+6. No retry, resend, timer, polling, watchdog, fallback or compatibility shim was added.
+
+Exact Root change is `+2/-1`; assembly audit showed only Root + b67 Xcode/workflow identity files changed relative to the b66 Runtime checkpoint.
+
+Identity:
+
+- Candidate `DEV-send-stream-0.1.0-b67`, `0.1.0 (67)`;
+- exact product/config source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`; tree `dcd492d142bf0035208b8466ff02b6ae7209193c`;
+- Push `33338865423 / 99330666394` — success;
+- PR `33338868896 / 99330678769` — success;
+- Push Artifact `9739891865`;
+- ZIP `sha256:7e41508c76556466ab180009a30f36b5c12cbc731197d4213387698ed54d78c2`;
+- IPA `sha256:3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`;
+- Release / source marker `52ab38f16fe9` / iOS14 / `[1,2]` / arm64.
+
+Evidence ladder: **Code / diff audit / Push CI / PR CI / Artifact / package identity passed; Runtime pending; Stable-Frozen No.**
 
 ### Current Phase 9 human Runtime gate
 
-Install exact b65 on the primary iPhone/iOS17 device, clear diagnostics, and run one GitHub/repository request that naturally creates multiple tool rows. Verify:
+Install exact b67 on the primary iPhone/iOS17 device, clear diagnostics and run **one clean existing-conversation validation Send**.
 
-- verified composer becomes ready and `submitted` is followed by real `sendObserved`;
-- HTTP200 SSE reaches terminal;
-- reasoning/final still appear complete;
-- exact-parent completed GitHub tool rows still expand/collapse;
-- opening one row initially shows only collapsed second-level `工具输入` and `工具输出`;
-- each child expands/collapses independently;
-- output is readable hierarchy/text without b64's escaped `\"` / `\\` wall;
-- no expected paired tool/result content is silently truncated.
+Required first-pass evidence:
 
-Export diagnostics after terminal. **Do not allocate b66 before this exact b65 Runtime evidence.** If b65 passes, close the formatting defect without another Candidate. If it fails, b66 may address only the smallest evidenced product defect.
+- only one `submit_result=submitted` for the response generation;
+- only one real `sendObserved`;
+- `coveredExecutor.sendResponse` appears with HTTP200 `text/event-stream`;
+- Native moves beyond preparing into actual response updates with nonzero reasoning/final where service emits them;
+- no immediate `send_transport_error`;
+- real terminal occurs;
+- terminal authoritative Sync reconciles without an automatic resend/poll loop.
+
+Export diagnostics after terminal. One clean run is sufficient initially. Do not add A/B/background/new-chat complexity to this first retry gate.
+
+**Do not allocate b68 before exact b67 Runtime yields a concrete next need.** If b67 still fails with only one submit, discard the duplicate-submit diagnosis as sufficient explanation and investigate the new exact evidence rather than adding retries.
+
+### Shortest remaining Phase 9 sequence after b67 gate
+
+1. accept/fix existing-conversation production Repository-owned Send/stream;
+2. new-chat first Send and pending->authoritative handoff only if actual timing requires it;
+3. exact server Stop evidence + response-scoped Stop implementation;
+4. A/B hidden-response ownership + follow-tail/history intent;
+5. Sync/Reload active-response safety + b38 geometry/round/time/Copy regression;
+6. final daily-chat Runtime matrix, target-main sync, Stable/merge decision.
 
 ### Official-like response lifecycle target
 
-The eventual Native interaction remains:
+`发送 -> 正在思考 -> 思考流 -> 可选工具调用 -> 再次正在思考/思考流 -> reasoning_ended -> 自动折叠思考 -> 完整最终回答`.
 
-`发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考过程 -> 只突出完整最终回答`.
-
-Tool phases remain optional and must follow actual service events. No-tool answers must never fabricate a tool stage. This reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; general Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
+Tool phases remain optional and must follow actual service events. General Markdown/code/table/link/citation rendering remains future `DEV-message-rendering`.
 
 ### Background ordering
 
-Background resilience remains P0 but production implementation follows eventual response ownership. b45/b49 are positive short-background evidence only; 5/15-minute, process termination, network transitions and battery/thermal remain separate Runtime gates.
+Background resilience remains P0 but follows accepted production response ownership. b45 positive short-background evidence remains valid; b66's post-failure memory warning is not a background-completion acceptance test. 5/15-minute, WebContent termination, network transitions and battery/thermal remain later Runtime gates.
+
+## Future serialized `DEV-composer-parity`
+
+After current Send/Stream lifecycle acceptance, implement final official-like Composer hierarchy: bounded multiline auto-growth/full-screen editor, keyboard/layout behavior, per-conversation drafts, photo/video/file staging/preview, mode/reasoning controls, final Send/Stop button presentation. Do not move Send/response authority out of `ConversationRepository`.
 
 ## Phase 10 — `DEV-attachments`
 
@@ -116,24 +162,12 @@ High priority but Send-boundary dependent. Preserve iOS17 requirements; do not u
 
 ## Phase 11 — `DEV-message-rendering`
 
-Implement native Markdown/code/table/link/citation presentation only from authoritative user-visible content; never expose hidden reasoning/tool/system content. This phase does not own reasoning/tool lifecycle semantics already scoped to `DEV-send-stream`.
-
-## Phase 12 — `DEV-conversation-list-preview`
-
-Reuse accepted list-cache ownership; do not issue one Detail per row to manufacture previews.
-
-## Phase 13 — `DEV-markdown-export`
-
-Export authoritative current native visible branch; never scrape hybrid Web DOM.
-
-## Phase 14 — `DEV-long-conversation`
-
-Measure network / parse-model / first-visible-render / rich-layout timing and optimize only evidenced bottlenecks. Preserve Stable b38 deterministic geometry unless new Runtime evidence justifies change.
+Implement native Markdown/code/table/link/citation presentation only from authoritative user-visible content; never expose hidden reasoning/tool/system content.
 
 ## Later phases
 
-Isolated Work IDs for download manager, pagination, production background completion/notification, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat, settings/diagnostics refinement, and later advanced capabilities.
+Conversation-list preview, Markdown export, long-conversation profiling beyond accepted b38 geometry, download manager, pagination, production background completion/notification, search, rename/archive/delete, edit/regenerate/branch switching, model selection/temporary chat, settings/diagnostics refinement and later advanced capabilities remain isolated Works.
 
 ## Current next action
 
-Hand exact b65 Artifact `9736876465` / IPA SHA `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16` to the user for the focused iPhone/iOS17 structured-detail Runtime gate. Keep PR #29 open/unmerged and do not allocate b66 unless b65 Runtime supplies a concrete need.
+Hand exact b67 Artifact `9739891865` / IPA SHA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497` to the user for the focused one-submit existing-conversation Runtime gate. Keep PR #29 open/unmerged and do not allocate b68 before that evidence.

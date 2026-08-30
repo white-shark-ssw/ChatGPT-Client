@@ -30,8 +30,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private var sendCount = 0
     private var nativeDeltaCount = 0
     private var nativeCharacterCount = 0
+    private var reasoningDeltaCount = 0
+    private var reasoningCharacterCount = 0
+    private var answerDeltaCount = 0
+    private var answerCharacterCount = 0
+    private var reasoningEndMarkerCount = 0
     private var reasoningExpanded = false
-    private var reasoningRecapCharacterCount = 0
+    private var reasoningFallbackPromoted = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -60,16 +65,16 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b56 诊断：b55 已确认 assistant reasoning_recap 的用户可见容器为 content.content，且 metadata 明确 reasoning_status=reasoning_ended、reasoning_recap_type=collapse。本版只提取这一 exact recap 到 Native 独立折叠区域；不展示 thoughts，不改 b55 正文流，也不展示 raw tool 参数/结果。"
+        explanationLabel.text = "b57 诊断：b56 真机确认 reasoning_recap 只是短状态描述，不是真实可见思考正文；但它的 reasoning_status=reasoning_ended 可作为明确阶段结束标记。本版只把现有已捕获文本按该标记分成 Native 思考过程与最终回答，并为普通 assistant:text 起始消息增加不含正文的结构形状证据，用于定位仍缺失的开头。绝不展示 assistant:thoughts 或 raw tool 参数/结果。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
         statusLabel.numberOfLines = 0
 
-        reasoningButton.setTitle("思考摘要 ▸", for: .normal)
+        reasoningButton.setTitle("思考过程 ▸", for: .normal)
         reasoningButton.titleLabel?.font = .preferredFont(forTextStyle: .subheadline)
         reasoningButton.contentHorizontalAlignment = .leading
-        reasoningButton.addTarget(self, action: #selector(toggleReasoningRecap), for: .touchUpInside)
+        reasoningButton.addTarget(self, action: #selector(toggleReasoningProcess), for: .touchUpInside)
 
         reasoningTextView.isEditable = false
         reasoningTextView.isSelectable = true
@@ -80,7 +85,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         reasoningTextView.layer.cornerRadius = 10
         reasoningTextView.textContainerInset = UIEdgeInsets(top: 9, left: 8, bottom: 9, right: 8)
         reasoningTextView.isHidden = true
-        let reasoningHeight = reasoningTextView.heightAnchor.constraint(equalToConstant: 110)
+        let reasoningHeight = reasoningTextView.heightAnchor.constraint(equalToConstant: 150)
         reasoningHeight.priority = .defaultHigh
         reasoningHeight.isActive = true
 
@@ -147,7 +152,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b56_reasoning_recap_presentation", "surface": "native_over_fullsize_web", "scope": "reasoning_recap_exact_presentation"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b57_reasoning_phase_split", "surface": "native_over_fullsize_web", "scope": "reasoning_end_split_plus_text_start_shape"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -188,11 +193,11 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.surface", fields: ["visible": nativeSurfaceVisible ? "native" : "official_web"])
     }
 
-    @objc private func toggleReasoningRecap() {
-        guard !reasoningStack.isHidden, reasoningRecapCharacterCount > 0 else { return }
+    @objc private func toggleReasoningProcess() {
+        guard !reasoningStack.isHidden, reasoningCharacterCount > 0 else { return }
         reasoningExpanded.toggle()
         updateReasoningPresentation()
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningRecapPresentation", fields: ["state": reasoningExpanded ? "expanded" : "collapsed", "characters": String(reasoningRecapCharacterCount)])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningPresentation", fields: ["state": reasoningExpanded ? "expanded" : "collapsed", "characters": String(reasoningCharacterCount)])
     }
 
     @objc private func sendNativeText() {
@@ -208,7 +213,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         sendCount += 1
         nativeDeltaCount = 0
         nativeCharacterCount = 0
-        resetReasoningRecap()
+        reasoningDeltaCount = 0
+        reasoningCharacterCount = 0
+        answerDeltaCount = 0
+        answerCharacterCount = 0
+        reasoningEndMarkerCount = 0
+        reasoningFallbackPromoted = false
+        resetReasoningPresentation()
         updateSendButtonState()
         if sendCount == 1 { outputTextView.text = "" }
         appendNativeText(sendCount == 1 ? "你：\(text)\n\nChatGPT：" : "\n\n────────\n你：\(text)\n\nChatGPT：")
@@ -250,20 +261,29 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             updateStatusLabel(detail: "官方 protected Send 已发出")
         case "send_response":
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.sendResponse", fields: ["httpStatus": Self.safeNumberString(body["status"]), "contentType": Self.safeToken(body["contentType"] as? String), "filtered": Self.safeBoolString(body["filtered"])])
-        case "native_delta":
+        case "native_reasoning_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
             nativeDeltaCount += 1
             nativeCharacterCount += text.count
+            reasoningDeltaCount += 1
+            reasoningCharacterCount += text.count
+            appendReasoningText(text)
+        case "native_answer_delta":
+            guard let text = body["text"] as? String, !text.isEmpty else { return }
+            nativeDeltaCount += 1
+            nativeCharacterCount += text.count
+            answerDeltaCount += 1
+            answerCharacterCount += text.count
             appendNativeText(text)
-        case "native_reasoning_recap":
-            guard let text = body["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-            reasoningRecapCharacterCount = text.count
-            reasoningTextView.text = text
-            reasoningExpanded = false
-            reasoningStack.isHidden = false
-            updateReasoningPresentation()
-            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningRecap", fields: ["state": "received", "characters": String(text.count), "presentation": "collapsed"])
-            updateStatusLabel(detail: "官方 reasoning recap 已就绪；正文流仍按 b55 规则")
+        case "native_reasoning_phase":
+            guard Self.safeToken(body["state"] as? String) == "ended" else { return }
+            reasoningEndMarkerCount += 1
+            if !reasoningStack.isHidden {
+                reasoningExpanded = false
+                updateReasoningPresentation()
+            }
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningPhase", fields: ["state": "ended", "recapCharacters": Self.safeNumberString(body["recapCharacters"]), "reasoningCharacters": String(reasoningCharacterCount)])
+            updateStatusLabel(detail: "官方 reasoning_ended；后续文本进入最终回答")
         case "stream_structure":
             let fields = [
                 "eventIndex": Self.safeNumberString(body["eventIndex"]),
@@ -287,11 +307,14 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "contentStringFields": Self.safeTokenArray(body["contentStringFields"]),
                 "contentArrayFields": Self.safeTokenArray(body["contentArrayFields"]),
                 "metadataBooleanFields": Self.safeTokenArray(body["metadataBooleanFields"]),
-                "metadataEnumFields": Self.safeTokenArray(body["metadataEnumFields"])
+                "metadataEnumFields": Self.safeTokenArray(body["metadataEnumFields"]),
+                "textPhase": Self.safeToken(body["textPhase"] as? String)
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamStructure", fields: fields)
         case "stream_metrics":
             let terminal = (body["terminal"] as? NSNumber)?.boolValue ?? false
+            let markerCount = (body["reasoningEndMarkerCount"] as? NSNumber)?.intValue ?? 0
+            if terminal && markerCount == 0 && reasoningCharacterCount > 0 { promotePendingReasoningToAnswer() }
             let fields = [
                 "frameCount": Self.safeNumberString(body["frameCount"]),
                 "removedTextPatchCount": Self.safeNumberString(body["removedTextPatchCount"]),
@@ -311,13 +334,23 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "structureSignatureOverflowCount": Self.safeNumberString(body["structureSignatureOverflowCount"]),
                 "specialStructureSignatureCount": Self.safeNumberString(body["specialStructureSignatureCount"]),
                 "specialStructureSignatureOverflowCount": Self.safeNumberString(body["specialStructureSignatureOverflowCount"]),
+                "phaseTextStructureSignatureCount": Self.safeNumberString(body["phaseTextStructureSignatureCount"]),
+                "phaseTextStructureSignatureOverflowCount": Self.safeNumberString(body["phaseTextStructureSignatureOverflowCount"]),
+                "assistantTextMessageCount": Self.safeNumberString(body["assistantTextMessageCount"]),
+                "assistantTextBeforeReasoningEndCount": Self.safeNumberString(body["assistantTextBeforeReasoningEndCount"]),
+                "assistantTextAfterReasoningEndCount": Self.safeNumberString(body["assistantTextAfterReasoningEndCount"]),
+                "reasoningEndMarkerCount": Self.safeNumberString(body["reasoningEndMarkerCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
                 "terminal": terminal ? "true" : "false",
                 "nativeDeltaCount": String(nativeDeltaCount),
                 "nativeCharacters": String(nativeCharacterCount),
-                "reasoningRecapCharacters": String(reasoningRecapCharacterCount)
+                "nativeReasoningDeltaCount": String(reasoningDeltaCount),
+                "nativeReasoningCharacters": String(reasoningCharacterCount),
+                "nativeAnswerDeltaCount": String(answerDeltaCount),
+                "nativeAnswerCharacters": String(answerCharacterCount),
+                "reasoningFallbackPromoted": reasoningFallbackPromoted ? "true" : "false"
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamMetrics", fields: fields)
             responseActive = false
@@ -335,18 +368,41 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
     }
 
-    private func resetReasoningRecap() {
+    private func resetReasoningPresentation() {
         reasoningExpanded = false
-        reasoningRecapCharacterCount = 0
         reasoningTextView.text = ""
         reasoningTextView.isHidden = true
         reasoningStack.isHidden = true
-        reasoningButton.setTitle("思考摘要 ▸", for: .normal)
+        reasoningButton.setTitle("思考过程 ▸", for: .normal)
     }
 
     private func updateReasoningPresentation() {
         reasoningTextView.isHidden = !reasoningExpanded
-        reasoningButton.setTitle(reasoningExpanded ? "思考摘要 ▾" : "思考摘要 ▸", for: .normal)
+        reasoningButton.setTitle(reasoningExpanded ? "思考过程 ▾" : "思考过程 ▸", for: .normal)
+    }
+
+    private func appendReasoningText(_ text: String) {
+        if reasoningStack.isHidden {
+            reasoningStack.isHidden = false
+            reasoningExpanded = true
+            updateReasoningPresentation()
+        }
+        let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.preferredFont(forTextStyle: .subheadline), .foregroundColor: UIColor.secondaryLabel]
+        reasoningTextView.textStorage.append(NSAttributedString(string: text, attributes: attributes))
+        let location = max(0, reasoningTextView.textStorage.length - 1)
+        reasoningTextView.scrollRangeToVisible(NSRange(location: location, length: 1))
+    }
+
+    private func promotePendingReasoningToAnswer() {
+        let text = reasoningTextView.text ?? ""
+        guard !text.isEmpty else { return }
+        appendNativeText(text)
+        answerDeltaCount += reasoningDeltaCount
+        answerCharacterCount += reasoningCharacterCount
+        reasoningFallbackPromoted = true
+        reasoningStack.isHidden = true
+        reasoningExpanded = false
+        updateReasoningPresentation()
     }
 
     private func appendNativeText(_ text: String) {
@@ -577,9 +633,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         return output;
       };
 
-      const summarizeStructure = payload => {
+      const summarizeStructure = (payload, aggregate) => {
         const payloadObject = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : null;
-        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [] };
+        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [], textPhase: 'none' };
         const valueObject = payloadObject.v && typeof payloadObject.v === 'object' && !Array.isArray(payloadObject.v) ? payloadObject.v : null;
         const eventType = safeProtocolValue(payloadObject.type);
         const operation = safeProtocolValue(payloadObject.o);
@@ -593,33 +649,38 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         const valueKeys = valueObject ? Object.keys(valueObject).slice(0, 32).map(safeStructuralKey).sort() : [];
         const nestedPatches = collectNestedPatches(payloadObject).slice(0, 16);
         const specialMessage = !!message && ((messageRole === 'assistant' && (messageContentType === 'reasoning_recap' || messageContentType === 'thoughts' || messageContentType === 'code')) || messageRole === 'tool');
-        const author = specialMessage && message.author && typeof message.author === 'object' && !Array.isArray(message.author) ? message.author : null;
-        const content = specialMessage && message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
-        const metadata = specialMessage && message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
+        const phaseTextMessage = !!message && messageRole === 'assistant' && messageContentType === 'text';
+        const detailedMessage = specialMessage || phaseTextMessage;
+        const author = detailedMessage && message.author && typeof message.author === 'object' && !Array.isArray(message.author) ? message.author : null;
+        const content = detailedMessage && message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
+        const metadata = detailedMessage && message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
         const contentFields = summarizeContentFields(content);
         const metadataFields = summarizeMetadataFields(metadata);
-        const messageKeys = specialMessage ? directKeys(message) : [];
+        const messageKeys = detailedMessage ? directKeys(message) : [];
         const authorKeys = directKeys(author);
         const contentKeys = directKeys(content);
         const metadataKeys = directKeys(metadata);
-        const recipient = specialMessage ? safeProtocolValue(message.recipient) : 'none';
-        const authorName = specialMessage ? safeProtocolValue(author && author.name) : 'none';
+        const recipient = detailedMessage ? safeProtocolValue(message.recipient) : 'none';
+        const authorName = detailedMessage ? safeProtocolValue(author && author.name) : 'none';
+        const textPhase = phaseTextMessage ? (aggregate.reasoningEnded ? 'after_reasoning_end' : 'before_reasoning_end') : 'none';
         let signature = 'keys:' + payloadKeys.join('+');
         if (typeof payloadObject.type === 'string') signature = 'type:' + eventType;
         else if (typeof payloadObject.o === 'string') signature = 'patch:' + operation + ':' + patchPath;
         else if (message) signature = 'message:' + messageRole + ':' + messageContentType + ':' + messageStatus;
         else if (typeof payloadObject.v === 'string') signature = 'value_string_patch';
-        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields };
+        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields, textPhase };
       };
 
-      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields });
+      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields, textPhase: summary.textPhase });
 
       const observeStructure = (payload, aggregate) => {
-        const summary = summarizeStructure(payload);
+        const summary = summarizeStructure(payload, aggregate);
         summary.eventIndex = aggregate.frameCount;
-        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields]);
+        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields, summary.textPhase]);
         const specialMessage = (summary.messageRole === 'assistant' && (summary.messageContentType === 'reasoning_recap' || summary.messageContentType === 'thoughts' || summary.messageContentType === 'code')) || summary.messageRole === 'tool';
+        const phaseTextMessage = summary.messageRole === 'assistant' && summary.messageContentType === 'text';
         let specialPosted = false;
+        let phasePosted = false;
         if (specialMessage) {
           const specialEvidenceKey = JSON.stringify([summary.messageRole, summary.messageContentType, summary.messageStatus, summary.recipient, summary.authorName, summary.contentKeys, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields]);
           if (!aggregate.specialStructureSeen.has(specialEvidenceKey)) {
@@ -631,32 +692,54 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             }
           }
         }
+        if (phaseTextMessage) {
+          aggregate.assistantTextMessageCount += 1;
+          if (aggregate.reasoningEnded) aggregate.assistantTextAfterReasoningEndCount += 1;
+          else aggregate.assistantTextBeforeReasoningEndCount += 1;
+          const phaseEvidenceKey = JSON.stringify([summary.messageStatus, summary.recipient, summary.contentKeys, summary.contentStringFields, summary.contentArrayFields, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields, summary.textPhase]);
+          if (!aggregate.phaseTextStructureSeen.has(phaseEvidenceKey)) {
+            if (aggregate.phaseTextStructureSeen.size >= 12) aggregate.phaseTextStructureSignatureOverflowCount += 1;
+            else {
+              aggregate.phaseTextStructureSeen.add(phaseEvidenceKey);
+              postStructure(summary);
+              phasePosted = true;
+            }
+          }
+        }
         if (aggregate.structureSeen.has(evidenceKey)) return;
         if (aggregate.structureSeen.size >= 32) {
           aggregate.structureSignatureOverflowCount += 1;
           return;
         }
         aggregate.structureSeen.add(evidenceKey);
-        if (!specialPosted) postStructure(summary);
+        if (!specialPosted && !phasePosted) postStructure(summary);
       };
 
-      const postReasoningRecap = payload => {
+      const observeReasoningEnd = (payload, aggregate) => {
         const message = findMessage(payload);
         if (!message || !message.author || message.author.role !== 'assistant' || message.status !== 'finished_successfully' || message.recipient !== 'all') return;
         const content = message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
         const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
         if (!content || content.content_type !== 'reasoning_recap' || typeof content.content !== 'string' || !content.content.trim()) return;
         if (!metadata || metadata.reasoning_status !== 'reasoning_ended' || metadata.reasoning_recap_type !== 'collapse') return;
-        post({ kind: 'native_reasoning_recap', text: content.content });
+        if (aggregate.reasoningEnded) return;
+        aggregate.reasoningEnded = true;
+        aggregate.reasoningEndMarkerCount += 1;
+        post({ kind: 'native_reasoning_phase', state: 'ended', recapCharacters: content.content.length });
       };
 
-      const scrubTextPatches = node => {
+      const postTextDelta = (text, aggregate) => {
+        if (!text) return;
+        post({ kind: aggregate.reasoningEnded ? 'native_answer_delta' : 'native_reasoning_delta', text });
+      };
+
+      const scrubTextPatches = (node, aggregate) => {
         if (Array.isArray(node)) {
           const output = [];
           let removedTextPatchCount = 0;
           let removedTextCharacters = 0;
           for (const item of node) {
-            const result = scrubTextPatches(item);
+            const result = scrubTextPatches(item, aggregate);
             removedTextPatchCount += result.removedTextPatchCount;
             removedTextCharacters += result.removedTextCharacters;
             if (!result.skip) output.push(result.value);
@@ -665,14 +748,14 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
         if (node && typeof node === 'object') {
           if (node.o === 'append' && node.p === '/message/content/parts/0' && typeof node.v === 'string') {
-            if (node.v) post({ kind: 'native_delta', text: node.v });
+            postTextDelta(node.v, aggregate);
             return { value: null, skip: true, removedTextPatchCount: 1, removedTextCharacters: node.v.length };
           }
           const output = {};
           let removedTextPatchCount = 0;
           let removedTextCharacters = 0;
           for (const [key, child] of Object.entries(node)) {
-            const result = scrubTextPatches(child);
+            const result = scrubTextPatches(child, aggregate);
             removedTextPatchCount += result.removedTextPatchCount;
             removedTextCharacters += result.removedTextCharacters;
             if (!result.skip) output[key] = result.value;
@@ -700,7 +783,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         structureSignatureCount: aggregate.structureSeen.size,
         structureSignatureOverflowCount: aggregate.structureSignatureOverflowCount,
         specialStructureSignatureCount: aggregate.specialStructureSeen.size,
-        specialStructureSignatureOverflowCount: aggregate.specialStructureSignatureOverflowCount
+        specialStructureSignatureOverflowCount: aggregate.specialStructureSignatureOverflowCount,
+        phaseTextStructureSignatureCount: aggregate.phaseTextStructureSeen.size,
+        phaseTextStructureSignatureOverflowCount: aggregate.phaseTextStructureSignatureOverflowCount,
+        assistantTextMessageCount: aggregate.assistantTextMessageCount,
+        assistantTextBeforeReasoningEndCount: aggregate.assistantTextBeforeReasoningEndCount,
+        assistantTextAfterReasoningEndCount: aggregate.assistantTextAfterReasoningEndCount,
+        reasoningEndMarkerCount: aggregate.reasoningEndMarkerCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -732,7 +821,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
 
         observeStructure(payload, aggregate);
-        postReasoningRecap(payload);
+        observeReasoningEnd(payload, aggregate);
         const payloadKeys = payload && typeof payload === 'object' && !Array.isArray(payload) ? Object.keys(payload) : [];
         const rootTextAppend = payload && typeof payload === 'object' && !Array.isArray(payload) && payload.o === 'append' && payload.p === '/message/content/parts/0' && typeof payload.v === 'string';
         const exactTopLevelTextAppend = payloadKeys.length === 3 && payloadKeys.includes('o') && payloadKeys.includes('p') && payloadKeys.includes('v') && rootTextAppend;
@@ -743,7 +832,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           aggregate.removedTextCharacters += payload.v.length;
           aggregate.explicitTextPatchCount += 1;
           aggregate.exactTopLevelTextPatchCount += 1;
-          if (payload.v) post({ kind: 'native_delta', text: payload.v });
+          postTextDelta(payload.v, aggregate);
           return '';
         }
 
@@ -753,7 +842,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           aggregate.removedTextCharacters += payload.v.length;
           aggregate.contextualValueStringCount += 1;
           aggregate.contextualValueStringCharacters += payload.v.length;
-          if (payload.v) post({ kind: 'native_delta', text: payload.v });
+          postTextDelta(payload.v, aggregate);
           return '';
         }
 
@@ -777,7 +866,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           aggregate.inactiveContext = 'after_reset';
         }
         aggregate.textContinuationActive = false;
-        const result = scrubTextPatches(payload);
+        const result = scrubTextPatches(payload, aggregate);
         aggregate.removedTextPatchCount += result.removedTextPatchCount;
         aggregate.removedTextCharacters += result.removedTextCharacters;
         aggregate.explicitTextPatchCount += result.removedTextPatchCount;
@@ -819,6 +908,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           structureSignatureOverflowCount: 0,
           specialStructureSeen: new Set(),
           specialStructureSignatureOverflowCount: 0,
+          phaseTextStructureSeen: new Set(),
+          phaseTextStructureSignatureOverflowCount: 0,
+          assistantTextMessageCount: 0,
+          assistantTextBeforeReasoningEndCount: 0,
+          assistantTextAfterReasoningEndCount: 0,
+          reasoningEnded: false,
+          reasoningEndMarkerCount: 0,
           terminal: false
         };
         let buffer = '';

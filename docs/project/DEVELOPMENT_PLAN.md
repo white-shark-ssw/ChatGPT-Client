@@ -1,12 +1,12 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-30 through exact b59 Runtime and b60 pre-allocation guard._
+_Last updated: 2026-08-30 through exact b60 Runtime and b61 Code / CI / Artifact / package verification._
 
 ## Purpose / delivery principles
 
 Build a genuinely usable native Swift/UIKit ChatGPT client without replacing accepted native ownership merely to accommodate private Web behavior. Current real source, exact CI/Artifact evidence, real-device evidence and latest explicit requirements outrank stale plan wording.
 
-Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b59 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
+Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b61 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
 
 ## Accepted merged foundation
 
@@ -36,61 +36,61 @@ Retain b38 bounded long-message chunks, deterministic geometry/manual layout and
 - b45 Runtime Confirmed official no-resend resume; b46/b47 duplicated Native Cookie+Bearer-only resume rejected.
 - b48-b51 established Native composer -> official protected Send and complete compact response text, including fresh-new-chat title-generation continuation.
 - b52-b56 identified reasoning/tool message grammar, separated internal `assistant:thoughts`, and established exact `reasoning_ended` semantics.
-- b57 split already-accepted visible text into Native reasoning/final around exact reasoning end.
-- b58 passed bounded compact tool-activity display but side-by-side Web evidence proved the remaining leading gap exactly matched a service-marked thinking-preamble string.
+- b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion without the earlier leading gap.
+- b60 Runtime passed the tested ordered presentation gate and established the exact parent association for tool results.
 
-### b59 — thinking preamble completeness Runtime passed
+### b60 — thinking / segmentation / parent association Runtime passed
 
-Exact b59:
+Exact b60:
 
-- Candidate `DEV-send-stream-0.1.0-b59`, `0.1.0 (59)`.
-- Exact source `138c09a5d11121945bc45f1d866c449aa0f7611e`; tree `c28eb92616e494a15aa2e370e2fd5150986b2452`.
-- Push `33305680998 / 99241706079` — success.
-- PR `33305683021 / 99241711695` — success.
-- Artifact `9730376958`; ZIP `sha256:4c13fc5941786b6db1797d72b8938f763cdaec2b76b8d15998fd4d6f235763ef`.
-- IPA SHA `5758cf40b287c7d9c5cef2f13163d5c8239834ee617468692c56b4bdb0349252`.
-- Package Release / `0.1.0 (59)` / source marker `138c09a5d111` / iOS14 / `[1,2]` / arm64.
+- Candidate `DEV-send-stream-0.1.0-b60`, source `8ca445f3c17233ac36832f46417a8e53a138499e`.
+- Artifact `9731477362`; IPA SHA `7cae323231b6b9d1aa837b03506450daa99f457fd8b4025deedb368dc008cd42`.
+- Exact iPhone/iOS17 export: `ChatGPTClient-Diagnostics-20260830-122917.json`.
 
-Exact iPhone/iOS17 Runtime `ChatGPTClient-Diagnostics-20260830-103539.json`:
+Two consecutive tool-active turns both returned HTTP200 SSE and terminal true. Each showed initial event-driven `正在思考`, visible reasoning streaming, one preserved Native paragraph break at the later thinking preamble, exact reasoning end, final answer and no obvious user-observed truncation.
 
-- HTTP200 SSE / terminal true / frameCount 83;
-- Native reasoning `12 deltas / 207 chars`;
-- final answer `18 / 357 chars`;
-- exact reasoning-end marker 1 / fallback false;
-- thinking preambles `2 / 13 chars`;
-- tool invocations/results `12/13`; Native compact tool presentations 12.
+Tool association evidence:
 
-User confirmed reasoning, tool activity and final answer were complete; the b58 leading truncation did not reproduce. b59 therefore passes the exact preamble/text-completeness correction.
+- Turn 1: 15 result `parent_id` values present; all 15 matched observed invocation IDs; 0 unmatched / 0 missing. Completed invocation presentations were only 13 while invocation identities/results were 15, proving presentation/count adjacency is insufficient.
+- Turn 2: 5/5 parent matches; 0 unmatched / 0 missing.
+- Author-name==invocation-recipient was 14/15 then 3/5, so it is not association authority.
 
-The same run also supplies the next evidence:
+Accepted tested rule: result metadata `parent_id` identifies the invocation service message ID inside the same response stream. Raw IDs remain transient/unlogged; adjacency/count/tool-name association is rejected.
 
-- two separate service-marked thinking preambles occur before the one reasoning-end marker, proving reasoning can resume after tools within the same turn;
-- a safe explicit `metadata.reasoning_status=is_reasoning` appears after tool activity and before the second preamble; its `assistant:thoughts` body remains non-presentational;
-- Native currently flattens separate reasoning segments into one `UITextView`, so official paragraph/segment boundaries are visually lost;
-- 12 accepted invocation messages vs 13 tool results proves adjacency/count-only result pairing is unsafe;
-- official Web exposes expandable tool request/result cards; b59 intentionally exposes only bounded activity titles/fallbacks.
-
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b59-runtime.md`.
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b60-runtime.md`.
 
 ### Official-like response lifecycle target
 
-The user explicitly requires this eventual Native interaction, as close to official behavior as verified service data permits:
+The eventual Native interaction remains:
 
-`发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开用户可见的调用详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考过程 -> 只突出完整最终回答`.
+`发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考过程 -> 只突出完整最终回答`.
 
 This entire reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; it is not a separate feature Work. General Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
 
-### b60 — next bounded candidate
+### b61 — exact current Runtime gate
 
-Pre-allocation guard found no b60 repository/build-index reference and no other Active development task; build60 is available. b60 is the next bounded candidate and must:
+Exact b61 identity:
 
-1. preserve b59 text grammar and correct Native-only paragraph separation at later exact thinking-preamble segment starts without changing service character metrics;
-2. show initial response-active/no-visible-text state as deterministic `正在思考`, never timer-based;
-3. observe explicit later service `reasoning_status=is_reasoning` and distinguish it from lifecycle-derived initial waiting;
-4. compare invocation/result service identities only in memory and export match/missing counts, never raw IDs, to establish the exact association rule;
-5. collect bounded structural shape/character-count evidence for the official user-visible tool card fields, without logging raw tool bodies or connector payloads.
+- Candidate `DEV-send-stream-0.1.0-b61`, `0.1.0 (61)`.
+- Exact product/config source `2386872af03e0684eee8deca87f636dc265114ec`; tree `a687500c88cffabf3a8496652fd5e0b633264836`.
+- Push `33312809061 / 99260781131` — success.
+- PR `33312811455 / 99260788483` — success.
+- Artifact `9732514781`; ZIP `sha256:66976ecb53ac8fc2b116dcbce753fdf05499cea88dd29f0ae4223ab8baa5bf28`.
+- IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
+- Package Release / `0.1.0 (61)` / source marker `2386872af03e` / iOS14 / `[1,2]` / arm64.
 
-Only after exact association/user-visible-field evidence may a later Candidate implement expandable tool request/result detail. Do not guess pairing from chronology.
+b61 must remain bounded:
+
+1. preserve b60 protected Send, text grammar, thinking preambles, event-driven `正在思考`, reasoning/final split, exact `reasoning_ended`, terminal fallback and final answer behavior;
+2. assign transient local slots to observed invocation identities and use only exact matched result `parent_id` to update the correct Native row to `已完成`;
+3. never send/log raw service IDs to Native or diagnostics;
+4. allow a matched result's already-authorized bounded `reasoning_title` to refine a generic tool label, but do not expose request/result body;
+5. inspect only bounded **shape/type/count/direct-key/string-length** evidence for candidate fields such as `connector_tool_payload`, `inline_cot_expandable_content`, `reasoning_titles`, `tool_icons`, `invoked_plugin`, and `invoked_resource`;
+6. keep candidate values/bodies, raw connector/tool payloads and `assistant:thoughts` non-presentational.
+
+Evidence ladder: **Code / Push CI / PR CI / Artifact / package Passed; Runtime/manual pending; Stable/Frozen No.**
+
+Only after exact b61 Runtime proves correct row lifecycle and identifies a bounded service field that is demonstrably user-visible may a later Candidate implement expandable tool details. Do not guess from field names alone.
 
 ### Background ordering
 
@@ -122,4 +122,4 @@ Isolated Work IDs for download manager, pagination, production background comple
 
 ## Current next action
 
-Allocate exact b60 and build the smallest reasoning-segment/thinking-state/tool-association evidence candidate. Do not expose detailed tool bodies until b60 Runtime proves exact pairing and user-visible fields.
+Install exact b61 on the primary iPhone/iOS17 target and run one naturally tool-active repository/GitHub turn. Observe every visible tool row for `调用中 -> 已完成`, duplicate/missing rows, thinking/reasoning/final completeness, then export diagnostics after terminal. Do not allocate b62 until that exact Runtime evidence is classified.

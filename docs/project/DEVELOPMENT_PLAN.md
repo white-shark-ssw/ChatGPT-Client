@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-30 through exact b54 Runtime and exact b55 Code/CI/Artifact/package verification._
+_Last updated: 2026-08-30 through exact b55 Runtime and exact b56 Code/CI/Artifact/package verification._
 
 ## Purpose
 
@@ -17,7 +17,7 @@ Core constraints: UIKit native shell/read client, TrollStore IPA, primary tested
 5. Distinguish Code / Static / CI / Artifact / Runtime / Stable evidence.
 6. High-frequency daily-use interactions such as Copy, attachments and reliable background reasoning/stream continuation outrank low-value polish once dependencies exist.
 7. Optimize only evidenced bottlenecks, especially for long conversations.
-8. Durable production policy still requires protected browser Send to remain explicitly user-visible; b48-b55 are isolated diagnostic exceptions and do not silently change that policy.
+8. Durable production policy still requires protected browser Send to remain explicitly user-visible; b48-b56 are isolated diagnostic exceptions and do not silently change that policy.
 9. A token/event/header name is not an implementation contract by itself.
 10. A protocol path that works but depends on an unusable product surface is not an accepted production architecture.
 
@@ -46,7 +46,7 @@ Retain native list/detail/recovery ownership, per-conversation resident state, C
 - Exact b42 proved PoW, Turnstile and `so` are required before successful ChatGPT-account protected Send. Pure-native/transient-auth account Send remains blocked.
 - The separately authenticated/billed API-product architecture remains rejected. Primary-account Sub2API/Codex-subscription Runtime remains blocked by the account-safety gate.
 - Hidden/shadow Web Send, challenge replay/bypass and Native DOM/input automation remain rejected as **production** architecture under current TD-024/TD-025.
-- b48-b55 are explicit diagnostic exceptions only and do not themselves change those production decisions.
+- b48-b56 are explicit diagnostic exceptions only and do not themselves change those production decisions.
 
 ### Full-Web product ceiling
 
@@ -63,7 +63,7 @@ Therefore full existing-conversation Web rendering before every protected Send r
 - b46/b47 Native duplicated-after-official-success Cookie+Bearer-only resume returned HTTP404 JSON while later official resume remained healthy.
 - Native first/exclusive resume and required additional browser context remain Unknown / Unverified.
 
-### b48-b55 Native composer / Web Send-engine diagnostic exception
+### b48-b56 Native composer / Web Send-engine diagnostic exception
 
 Target diagnostic dataflow remains:
 
@@ -96,22 +96,11 @@ Exact b53 Runtime:
 - Native showed no tool-call presentation;
 - service stream explicitly exposed `assistant:reasoning_recap`, separate `assistant:thoughts`, `assistant:code`, and `tool:text` / `tool:code` / `tool:multimodal_text` classes.
 
-Accepted:
-
-- tool execution is structurally real;
-- `reasoning_recap` is the direct candidate for explicitly user-visible reasoning;
-- raw `thoughts` is non-presentational and must not be exposed;
-- role/content type alone is insufficient for safe tool presentation.
+Accepted: tool execution is structurally real; `reasoning_recap` is the direct candidate for explicitly user-visible reasoning; raw `thoughts` is non-presentational; role/content type alone is insufficient for safe tool presentation.
 
 #### b54 — tool call/result shape identified; recap evidence blocked by observer saturation
 
-Exact b54:
-
-- Candidate `DEV-send-stream-0.1.0-b54`, source `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`.
-- Push `33296672444 / 99217423647`; PR `33296674388 / 99217428590` — success.
-- Artifact `9727636043`; IPA SHA `d4b85cffe4db499252d0bc9a2c7c8ea582acf2b88f3d28eeb60e366ee471153b`.
-
-Exact Runtime matched b54 / Release / iPhone iOS17.0, HTTP200 SSE, terminal true. Generic structure signatures reached **32 with overflow 13**.
+Exact b54 Runtime matched Release / iPhone iOS17.0, HTTP200 SSE, terminal true. Generic structure signatures reached **32 with overflow 13**.
 
 Material evidence:
 
@@ -120,63 +109,93 @@ Material evidence:
 - tool results expose `api_tool` / `api_tool.call_tool` author names, `recipient=all`, text/code/multimodal result containers, and `invoked_plugin` / `invoked_resource` where present;
 - `assistant:thoughts` contains a `thoughts` object with `chunks,content,finished,summary`, plus `can_save:false`, `reasoning_status:is_reasoning`, `tool_summary_type:github`, `inline_cot_expandable_content` and `tool_icons` structure.
 
-Accepted: assistant invocation→tool-result pairing is structurally evidenced. Raw tool arguments/results and raw thoughts remain non-presentational. Because the generic observer saturated, absent b54 `reasoning_recap` cannot be treated as protocol absence. b54 is a partial Runtime pass.
+Accepted: assistant invocation→tool-result pairing is structurally evidenced. Raw tool arguments/results and raw thoughts remain non-presentational. Because the generic observer saturated, absent b54 `reasoning_recap` could not be treated as protocol absence. b54 is a partial Runtime pass.
 
-#### b55 — current Runtime Candidate; special-structure capacity only
+#### b55 — recap display-container/presentation boundary Runtime confirmed
 
-Exact b55 identity:
+Exact identity:
 
 - Candidate `DEV-send-stream-0.1.0-b55`, version/build `0.1.0 (55)`.
-- Exact product/config source `aae856069b461e12dc11ee7d2d450a40ca621d21`.
-- Push Run / Job `33299965737 / 99226125826` — success.
-- PR Run / Job `33299967033 / 99226129092` — success.
-- Artifact `9728606514`.
-- ZIP `sha256:fda8dfb16e3d734b9e0f0d55c4e49c0f6cd656e4ec228b13dab3cae108c0a7e3`.
-- IPA SHA `f5106949814b44c6c97e2f519ff181498f6a75ff7b9bf9edf0dc0bb0bd299ad1`.
-- Package independently verified: `0.1.0 (55)` / Candidate b55 / source `aae856069b46` / Release / iOS14 / `[1,2]` / arm64.
+- Exact source `aae856069b461e12dc11ee7d2d450a40ca621d21`.
+- Push `33299965737 / 99226125826`; PR `33299967033 / 99226129092` — success.
+- Artifact `9728606514`; IPA SHA `f5106949814b44c6c97e2f519ff181498f6a75ff7b9bf9edf0dc0bb0bd299ad1`.
 
-b55 changes **diagnostic capacity only**:
+Exact b55 Runtime:
 
-- all b54 protected-Send, SSE filtering, text extraction and Native output behavior remains unchanged;
-- generic unique-structure set remains capped at 32;
-- `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code`, and `tool:*` additionally use a separate 24-entry special set;
-- special structures can be emitted even after generic saturation;
-- terminal metrics add special count/overflow;
-- no new raw prompt, answer, reasoning, tool result/payload, ID, auth/proof/header data is logged.
+- HTTP200 SSE / terminal true;
+- `frameCount=69`;
+- Native 24 deltas / 481 chars;
+- generic structures `32 / overflow14`;
+- special structures `7 / overflow0`;
+- inactive value strings 0.
 
-b55 Code/CI/Artifact/package is passed; Runtime pending. b55 is permanently reserved.
+The independent special channel therefore passes the exact saturation condition that blocked b54. It retained completed `assistant:reasoning_recap` with:
+
+- status `finished_successfully`;
+- recipient `all`;
+- content keys `content,content_type`;
+- `can_save:false`;
+- `reasoning_status=reasoning_ended`;
+- `reasoning_recap_type=collapse`.
+
+Accepted: the concrete service recap text container is `message.content.content`; the service explicitly supplies reasoning-end and default-collapse semantics. The immediately preceding `assistant:thoughts` remains separate and non-presentational. Tool invocation/result structure remains real, but exact user-visible tool-node boundaries remain unproven.
+
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b55-runtime.md`.
+
+#### b56 — current Runtime Candidate; exact recap presentation only
+
+Exact identity:
+
+- Candidate `DEV-send-stream-0.1.0-b56`, version/build `0.1.0 (56)`.
+- Exact product/config source `cec921030fd1af9f3853f35af52b661586b3a8ab`.
+- Push Run / Job `33301008807 / 99229039032` — success.
+- PR Run / Job `33301010617 / 99229043710` — success.
+- Artifact `9728937100`; ZIP `sha256:2f4b5a216298e9c79ccbec2a7f4420719c8406120815f568c0ddd8b89d46d430`.
+- IPA SHA `da62776200ce94fef95326abaea3b980f65a5698df5dfe481bd34046e0f8dbe6`.
+- Package `0.1.0 (56)` / Candidate b56 / source `cec921030fd1` / Release / iOS14 / `[1,2]` / arm64.
+
+b56 preserves every b55 protected-Send and text-interception rule. It adds only the exact evidence-backed recap presentation:
+
+- require assistant role + `reasoning_recap` + `finished_successfully` + `recipient=all` + `reasoning_status=reasoning_ended` + `reasoning_recap_type=collapse`;
+- bridge only non-empty `message.content.content`;
+- expose a distinct `思考摘要 ▸` Native region only after a matching recap;
+- default collapsed and explicit user expand/collapse;
+- reset recap presentation on each new Native submission;
+- log only recap character count/presentation state, never recap text;
+- do not expose `assistant:thoughts`, raw tool args/results, connector payloads or hidden reasoning.
+
+The existing b55 mixed/final text path is intentionally unchanged because the exact reasoning→final `/message/content/parts/0` patch-phase split remains Unknown / Unverified.
+
+b56 Code/CI/Artifact/package is passed; Runtime pending. b56 is permanently reserved.
 
 ### Reasoning / tool presentation plan
 
 This remains part of `DEV-send-stream`, not a separate Work.
 
-After explicit display-boundary evidence:
+Current evidence-backed presentation boundary:
 
-- explicitly user-visible reasoning summary becomes a distinct Native response phase/presentation from final answer;
-- reasoning summary is collapsible/expandable;
-- service-visible tool activity may be shown with a compact status/card and tap-driven native sheet/popover for approved user-facing details;
-- reasoning→final transition belongs to one authoritative response lifecycle and occurs exactly once;
-- raw `assistant:thoughts`, hidden chain-of-thought, internal tool/system nodes, raw tool arguments and raw tool results are never exposed merely because diagnostic structures exist.
+- exact completed service `reasoning_recap` may be shown as a distinct Native summary and collapsed by default;
+- raw `assistant:thoughts`, hidden chain-of-thought, internal system/tool nodes, raw tool arguments/results remain prohibited;
+- tool invocation/result pairing is structurally real, but exact user-visible tool-node rules still need evidence before a tool card/sheet is implemented;
+- reasoning→final transition must ultimately belong to one authoritative response lifecycle, but b56 deliberately does not infer the patch-phase split.
 
-### Current b55 human Runtime gate
+### Current b56 human Runtime gate
 
 One focused reproduction is sufficient:
 
-1. install exact b55 and clear diagnostics;
-2. open `Native 输入 / Web Send（b55诊断）`;
+1. install exact b56 and clear diagnostics;
+2. open `Native 输入 / Web Send（b56诊断）`;
 3. send one request that naturally produces visible reasoning plus tool activity;
-4. wait for terminal;
-5. export diagnostics.
+4. confirm `思考摘要 ▸` appears only after the service recap arrives;
+5. expand once, confirm coherent user-visible recap content, then collapse again;
+6. confirm no raw `thoughts` or raw tool payloads are shown;
+7. wait for terminal and export diagnostics.
 
-Visual behavior is intentionally expected to remain similar to b54 because b55 is evidence-only.
+Decision signals: nonzero `nativeWebSendEngineProbe.reasoningRecap` character count, expand/collapse events if tapped, terminal `reasoningRecapCharacters`, and direct user visual confirmation.
 
-Decision signals:
+Only after b56 Runtime should a later Candidate decide the next smallest evidence-backed change—most likely reasoning→final text-phase diagnostics/separation if the recap UI itself passes, or a narrower recap correction if it does not.
 
-- `specialStructureSignatureCount` / overflow must prove the special channel itself did not saturate;
-- if `assistant:reasoning_recap` is emitted, its text-free content-container and presentation metadata become the evidence for the explicitly user-visible reasoning surface;
-- assistant-code/tool-result special structures must remain available even after generic count reaches 32.
-
-Do not implement reasoning/tool UI or allocate b56 until exact b55 Runtime supports a concrete smallest next change.
+Do not allocate b57 before exact b56 Runtime.
 
 ### Background ordering
 
@@ -184,14 +203,14 @@ Background resilience remains P0, but production implementation follows eventual
 
 - b45 proves positive short-background/original-stream survival and official recovery after forced interruption.
 - b49 also showed a long diagnostic response reaching terminal across multiple background intervals.
-- b48-b55 remain Web-owned diagnostic transport rather than accepted production response ownership.
+- b48-b56 remain Web-owned diagnostic transport rather than accepted production response ownership.
 - 5/15-minute, WebContent/process termination, network transitions and battery/thermal remain separate Runtime gates.
 
 ### Candidate sequencing
 
-- b39-b55 identities are permanently reserved once emitted.
-- Exact b55 product/config source is immutable after Artifact emission.
-- Any product-code correction requires b56+ and must be justified by exact b55 Runtime; do not pre-allocate b56.
+- b39-b56 identities are permanently reserved once emitted.
+- Exact b56 product/config source is immutable after Artifact emission.
+- Any product-code correction requires b57+ and must be justified by exact b56 Runtime; do not pre-allocate b57.
 
 Detailed current Runtime records include:
 
@@ -204,6 +223,7 @@ Detailed current Runtime records include:
 - `DEV-send-stream-b52-runtime.md`
 - `DEV-send-stream-b53-runtime.md`
 - `DEV-send-stream-b54-runtime.md`
+- `DEV-send-stream-b55-runtime.md`
 
 ## Phase 10 — `DEV-attachments` — high priority but Send-boundary dependent
 
@@ -246,4 +266,4 @@ Projects, web search, image/multimodal generation, Voice, Memory, Deep Research,
 
 ## Current next action
 
-**Human Runtime Gate on exact b55.** Run one reasoning/tool-active turn and export diagnostics. Do not merge PR #29, promote the diagnostic Web Send-engine architecture to production, implement reasoning/tool presentation, or allocate b56 before the exact b55 special-structure evidence is classified.
+**Human Runtime Gate on exact b56.** Validate one reasoning/tool-active turn, the default-collapsed `思考摘要` appearance, explicit expand/collapse, absence of raw thoughts/tool payloads, and export diagnostics. Do not merge PR #29, promote the diagnostic Web Send-engine architecture to production, add tool UI, change the b55 mixed/final text parser, or allocate b57 before exact b56 Runtime is classified.

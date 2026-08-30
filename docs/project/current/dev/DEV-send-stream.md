@@ -2,12 +2,12 @@
 
 ## Status
 
-**Active — exact b53 Runtime identifies distinct `assistant:reasoning_recap`, non-presentational `assistant:thoughts`, and real `assistant:code` / `tool:*` structures. Final answer is complete; visible reasoning beginning remains truncated; Native shows no tool-call presentation. Exact b54 product/config source is now written atomically as a behavior-neutral visibility/content-shape refinement. CI/Artifact/Runtime remain pending. TD-024/TD-025 remain unchanged; PR #29 remains evidence-only.**
+**Active — exact b53 Runtime identifies distinct `assistant:reasoning_recap`, non-presentational `assistant:thoughts`, and real `assistant:code` / `tool:*` structures. Final answer is complete; visible reasoning beginning remains truncated; Native shows no tool-call presentation. Exact b54 is now Code/CI/Artifact/package verified as a behavior-neutral visibility/content-shape refinement. The next gate is one focused exact-device b54 reasoning/tool reproduction. TD-024/TD-025 remain unchanged; PR #29 remains evidence-only.**
 
 - **Work ID**: `DEV-send-stream`
 - **Routing aliases / keywords**: Send, Stream, reasoning, 思考, 工具调用, tool call
 - **Branch**: `dev/send-stream-20260829`
-- **PR**: #29 — open / mergeable / not merged at Batch H Resume Guard.
+- **PR**: #29 — open / mergeable / not merged; title/body synchronized to the b54 Runtime gate.
 - **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; unchanged.
 - **Other Active development checkpoints**: none.
 - **Stable native predecessor**: b38.
@@ -80,26 +80,27 @@ Accepted interpretation:
 
 Verified before product edits:
 
-- feature branch existed and head was `52fc1e2a6c0297ee285f94230018356c62256de7` before b53 Runtime docs;
-- PR #29 open / mergeable / head matched feature branch;
-- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-- only this Work is Active;
-- b39-b53 are already reserved;
+- feature branch existed and matched PR #29 head;
+- PR #29 was open / mergeable / not merged;
+- `main` remained `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
+- only this Work was Active;
+- b39-b53 were already reserved;
 - repository search found no `DEV-send-stream-0.1.0-b54` identity.
 
-### Exact b54 product/config source
+### Exact b54 identity / validation
 
 - Candidate: `DEV-send-stream-0.1.0-b54`
 - Version/build: `0.1.0 (54)`
 - Exact product/config source: `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`
-- Product/config commit changes only:
-  - `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`;
-  - `ChatGPTClient.xcodeproj/project.pbxproj`;
-  - `.github/workflows/ios-foundation.yml`.
-- Atomic assembly: a tooling-only `[skip ci]` branch assembled the three files from checkpoint head; its final tree was attached to the feature checkpoint parent in one commit and the feature ref moved once. Tooling assembly commits are not Candidate authority.
-- Push/PR CI: pending.
-- Artifact/package: pending.
-- Runtime: pending.
+- Push Run / Job: `33296672444 / 99217423647` — success
+- PR Run / Job: `33296674388 / 99217428590` — success
+- Artifact: `9727636043`
+- Artifact ZIP digest: `sha256:28d07c99634a1b4f917561e95cf04a4e95666106985cb03bca09798b0dc7065c`
+- IPA: `ChatGPTClient-0.1.0-b54-dev-send-stream.ipa`
+- IPA SHA-256: `d4b85cffe4db499252d0bc9a2c7c8ea582acf2b88f3d28eeb60e366ee471153b`
+- Independent package inspection: `0.1.0 (54)`, Candidate b54, source marker `6a6903c7ad56`, `DiagnosticsBuildConfiguration=Release`, minimum iOS14.0, UIDeviceFamily `[1,2]`, Mach-O arm64.
+- Runtime/manual: Pending.
+- b54 is permanently reserved after Artifact emission. Any product-code correction requires b55+ and exact b54 Runtime evidence.
 
 ### b54 implementation
 
@@ -127,18 +128,28 @@ Purpose:
 2. identify evidence-backed visibility/presentation markers on tool/code messages;
 3. determine whether the next Candidate can safely implement reasoning extraction/collapse and user-visible tool-call presentation.
 
+### Atomic identity assembly
+
+A tooling-only `[skip ci]` branch assembled the exact three-file product/config tree from the checkpoint parent. Comparison confirmed only:
+
+- `.github/workflows/ios-foundation.yml`;
+- `ChatGPTClient.xcodeproj/project.pbxproj`;
+- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`.
+
+The final tree was attached to the feature checkpoint parent in one commit `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`, then the feature ref moved once. Tooling assembly commits are not Candidate authority and did not redefine b54 identity.
+
 ## Durable boundary
 
 `ConversationRepository` remains sole native production conversation/response authority; `AuthSessionStore` remains auth owner; default persistent `WKWebsiteDataStore` remains persistent auth-secret authority. b48-b54 are diagnostic exceptions only. TD-024/TD-025 remain unchanged. No diagnostic result alone promotes hidden/shadow Web to production.
 
-Reasoning and final answer remain separate presentation domains. Only explicitly user-visible service reasoning/status/tool information may be shown. Hidden chain-of-thought/internal tool/system nodes remain prohibited.
+Reasoning and final answer remain separate presentation domains. Only explicitly user-visible service reasoning/status/tool information may be shown. Hidden chain-of-thought/internal tool/system nodes remain prohibited. `assistant:thoughts` is explicitly non-presentational under the current evidence boundary.
 
 ## Evidence ladder
 
 - b51 Code/CI/Artifact/package: Passed; Runtime confirmed fresh-new-chat title-generation correction.
 - b52 Code/CI/Artifact/package: Passed; Runtime final answer complete / reasoning beginning incomplete.
 - b53 Code/CI/Artifact/package: Passed; Runtime **reasoning still incomplete, final complete; `reasoning_recap` + tool grammar materially identified**.
-- b54 Code/config: written atomically at `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`; CI/Artifact/Runtime pending.
+- b54 Code/CI/Artifact/package: Passed; Runtime pending.
 - Phase 9 Stable/Frozen: No.
 
 ## Batch H recovery point
@@ -146,17 +157,20 @@ Reasoning and final answer remain separate presentation domains. Only explicitly
 Confirmed writes:
 
 1. exact b53 Runtime evidence persisted at commit `d023d9b7945c87ccf8a7fb9468978425307966d5`;
-2. Batch H checkpoint created at `4ba1726763de95472acfe6846ad13603ad15abdd`;
-3. atomic b54 product/config source `6a6903c7ad56e534303bfca6a486b83b2d6fe35f` emitted on the feature branch.
+2. Batch H checkpoint created;
+3. atomic b54 product/config source `6a6903c7ad56e534303bfca6a486b83b2d6fe35f` emitted;
+4. exact b54 Push/PR CI succeeded;
+5. Artifact `9727636043` and package identity independently verified;
+6. PR #29 synchronized to the b54 Runtime gate;
+7. `PROJECT_STATE.md` and `MODULE_STATUS.md` synchronized to b53 Runtime / b54 Artifact truth.
 
-Pending:
+Still pending only where not yet written in the current branch:
 
-4. verify exact b54 Push/PR CI and Artifact/package identity;
-5. synchronize PR and durable project docs;
-6. hand exact b54 IPA to user for one focused reasoning/tool reproduction and diagnostics export.
+- any remaining secondary durable-index wording cleanup that does not change product state;
+- exact-device b54 Runtime.
 
-Recovery rule: if interrupted, re-read this checkpoint and actual GitHub branch/PR state. Perform only missing deterministic writes. Never alter/rebuild b53. Once any b54 Artifact is emitted, b54 becomes permanently reserved. Later docs-only commits do not redefine exact b54 product/config source `6a6903c7...`.
+Recovery rule: re-read this checkpoint and actual GitHub branch/PR state. Never alter/rebuild b53 or b54. Later docs-only commits do not redefine exact b54 product/config source `6a6903c7...`. Do not allocate b55 before exact b54 Runtime identifies a concrete presentation/parser change.
 
 ## Next exact action
 
-Verify exact b54 CI for source `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`. If CI/Artifact/package identity are valid, synchronize PR/durable docs and hand exact b54 IPA to the user. Runtime gate: repeat one prompt that produces reasoning/tool activity and export diagnostics after terminal. The next presentation/parser decision must come from b54 structure evidence, not guesses.
+Hand exact b54 IPA to the user. Runtime gate: install b54, clear diagnostics, open the b54 diagnostic surface, repeat one prompt that naturally produces visible reasoning plus tool activity, wait for terminal, and export diagnostics. Visual behavior is intentionally expected to remain similar to b53 because b54 is evidence-only. The next parser/UI decision must come from the new special-message `streamStructure` fields. If they prove the recap content container and a service-visible tool boundary, b55 may implement reasoning extraction/collapse and user-visible tool-call presentation without exposing `thoughts` or internal-only nodes.

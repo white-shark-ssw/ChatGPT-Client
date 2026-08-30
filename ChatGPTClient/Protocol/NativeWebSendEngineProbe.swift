@@ -17,6 +17,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private let scriptHandler = WeakNativeWebSendEngineHandler()
     private let nativeSurface = UIView()
     private let statusLabel = UILabel()
+    private let reasoningStack = UIStackView()
+    private let reasoningButton = UIButton(type: .system)
+    private let reasoningTextView = UITextView()
     private let outputTextView = UITextView()
     private let composerTextView = UITextView()
     private let sendButton = UIButton(type: .system)
@@ -27,6 +30,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private var sendCount = 0
     private var nativeDeltaCount = 0
     private var nativeCharacterCount = 0
+    private var reasoningExpanded = false
+    private var reasoningRecapCharacterCount = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -55,11 +60,35 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b55 诊断：b54 已确认真实 assistant code / tool 调用结果结构，但普通 32 条结构签名在 reasoning_recap 之前耗尽。本版不改变文本过滤/输出，只让 reasoning_recap、thoughts、assistant code 与 tool 消息使用独立的有限去重通道，避免被普通结构挤掉。仍不会展示 thoughts，也不会记录提示词、回答、思考正文、工具输出或原始 ID。"
+        explanationLabel.text = "b56 诊断：b55 已确认 assistant reasoning_recap 的用户可见容器为 content.content，且 metadata 明确 reasoning_status=reasoning_ended、reasoning_recap_type=collapse。本版只提取这一 exact recap 到 Native 独立折叠区域；不展示 thoughts，不改 b55 正文流，也不展示 raw tool 参数/结果。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
         statusLabel.numberOfLines = 0
+
+        reasoningButton.setTitle("思考摘要 ▸", for: .normal)
+        reasoningButton.titleLabel?.font = .preferredFont(forTextStyle: .subheadline)
+        reasoningButton.contentHorizontalAlignment = .leading
+        reasoningButton.addTarget(self, action: #selector(toggleReasoningRecap), for: .touchUpInside)
+
+        reasoningTextView.isEditable = false
+        reasoningTextView.isSelectable = true
+        reasoningTextView.alwaysBounceVertical = true
+        reasoningTextView.font = .preferredFont(forTextStyle: .subheadline)
+        reasoningTextView.textColor = .secondaryLabel
+        reasoningTextView.backgroundColor = .secondarySystemBackground
+        reasoningTextView.layer.cornerRadius = 10
+        reasoningTextView.textContainerInset = UIEdgeInsets(top: 9, left: 8, bottom: 9, right: 8)
+        reasoningTextView.isHidden = true
+        let reasoningHeight = reasoningTextView.heightAnchor.constraint(equalToConstant: 110)
+        reasoningHeight.priority = .defaultHigh
+        reasoningHeight.isActive = true
+
+        reasoningStack.axis = .vertical
+        reasoningStack.spacing = 4
+        reasoningStack.addArrangedSubview(reasoningButton)
+        reasoningStack.addArrangedSubview(reasoningTextView)
+        reasoningStack.isHidden = true
 
         outputTextView.isEditable = false
         outputTextView.isSelectable = true
@@ -92,7 +121,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         composerRow.alignment = .bottom
         composerRow.spacing = 10
 
-        let stack = UIStackView(arrangedSubviews: [explanationLabel, statusLabel, outputTextView, composerRow])
+        let stack = UIStackView(arrangedSubviews: [explanationLabel, statusLabel, reasoningStack, outputTextView, composerRow])
         stack.axis = .vertical
         stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -118,7 +147,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b55_special_structure_capacity", "surface": "native_over_fullsize_web", "scope": "reasoning_tool_special_structure_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b56_reasoning_recap_presentation", "surface": "native_over_fullsize_web", "scope": "reasoning_recap_exact_presentation"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -159,6 +188,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.surface", fields: ["visible": nativeSurfaceVisible ? "native" : "official_web"])
     }
 
+    @objc private func toggleReasoningRecap() {
+        guard !reasoningStack.isHidden, reasoningRecapCharacterCount > 0 else { return }
+        reasoningExpanded.toggle()
+        updateReasoningPresentation()
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningRecapPresentation", fields: ["state": reasoningExpanded ? "expanded" : "collapsed", "characters": String(reasoningRecapCharacterCount)])
+    }
+
     @objc private func sendNativeText() {
         let text = composerTextView.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard webComposerReady, !responseActive, !text.isEmpty else { return }
@@ -172,6 +208,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         sendCount += 1
         nativeDeltaCount = 0
         nativeCharacterCount = 0
+        resetReasoningRecap()
         updateSendButtonState()
         if sendCount == 1 { outputTextView.text = "" }
         appendNativeText(sendCount == 1 ? "你：\(text)\n\nChatGPT：" : "\n\n────────\n你：\(text)\n\nChatGPT：")
@@ -218,6 +255,15 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             nativeDeltaCount += 1
             nativeCharacterCount += text.count
             appendNativeText(text)
+        case "native_reasoning_recap":
+            guard let text = body["text"] as? String, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+            reasoningRecapCharacterCount = text.count
+            reasoningTextView.text = text
+            reasoningExpanded = false
+            reasoningStack.isHidden = false
+            updateReasoningPresentation()
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningRecap", fields: ["state": "received", "characters": String(text.count), "presentation": "collapsed"])
+            updateStatusLabel(detail: "官方 reasoning recap 已就绪；正文流仍按 b55 规则")
         case "stream_structure":
             let fields = [
                 "eventIndex": Self.safeNumberString(body["eventIndex"]),
@@ -270,7 +316,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
                 "terminal": terminal ? "true" : "false",
                 "nativeDeltaCount": String(nativeDeltaCount),
-                "nativeCharacters": String(nativeCharacterCount)
+                "nativeCharacters": String(nativeCharacterCount),
+                "reasoningRecapCharacters": String(reasoningRecapCharacterCount)
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamMetrics", fields: fields)
             responseActive = false
@@ -286,6 +333,20 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         default:
             break
         }
+    }
+
+    private func resetReasoningRecap() {
+        reasoningExpanded = false
+        reasoningRecapCharacterCount = 0
+        reasoningTextView.text = ""
+        reasoningTextView.isHidden = true
+        reasoningStack.isHidden = true
+        reasoningButton.setTitle("思考摘要 ▸", for: .normal)
+    }
+
+    private func updateReasoningPresentation() {
+        reasoningTextView.isHidden = !reasoningExpanded
+        reasoningButton.setTitle(reasoningExpanded ? "思考摘要 ▾" : "思考摘要 ▸", for: .normal)
     }
 
     private func appendNativeText(_ text: String) {
@@ -579,6 +640,16 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         if (!specialPosted) postStructure(summary);
       };
 
+      const postReasoningRecap = payload => {
+        const message = findMessage(payload);
+        if (!message || !message.author || message.author.role !== 'assistant' || message.status !== 'finished_successfully' || message.recipient !== 'all') return;
+        const content = message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
+        const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
+        if (!content || content.content_type !== 'reasoning_recap' || typeof content.content !== 'string' || !content.content.trim()) return;
+        if (!metadata || metadata.reasoning_status !== 'reasoning_ended' || metadata.reasoning_recap_type !== 'collapse') return;
+        post({ kind: 'native_reasoning_recap', text: content.content });
+      };
+
       const scrubTextPatches = node => {
         if (Array.isArray(node)) {
           const output = [];
@@ -661,6 +732,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
 
         observeStructure(payload, aggregate);
+        postReasoningRecap(payload);
         const payloadKeys = payload && typeof payload === 'object' && !Array.isArray(payload) ? Object.keys(payload) : [];
         const rootTextAppend = payload && typeof payload === 'object' && !Array.isArray(payload) && payload.o === 'append' && payload.p === '/message/content/parts/0' && typeof payload.v === 'string';
         const exactTopLevelTextAppend = payloadKeys.length === 3 && payloadKeys.includes('o') && payloadKeys.includes('p') && payloadKeys.includes('v') && rootTextAppend;

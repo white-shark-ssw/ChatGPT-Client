@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b57 Runtime and exact b58 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b59 Runtime.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -34,7 +34,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Native conversation presentation: `ConversationDetailViewController`.
 - Stable long-message geometry: `ConversationMessagePresentationProjection` + `ConversationMessageCell`, exact b38.
 - Protocol diagnostics: `DiagnosticsLogger` + diagnostic controllers. Diagnostics may record privacy-safe structure/counts, never prompt/body/raw IDs/auth/proof/token values.
-- `NativeWebSendEngineProbeViewController` is diagnostic-only and does not mutate production `ConversationRepository`.
+- `NativeWebSendEngineProbeViewController` remains diagnostic-only and does not mutate production `ConversationRepository`.
 
 ## Durable Send/security/product boundary
 
@@ -42,7 +42,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Separately billed API-product architecture remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by account-safety policy.
 - TD-024 permits an explicitly visible official-Web Send surface as a security permission only; TD-025 rejects b44 full-page hybrid product form; TD-028 records the b47 long-answer mobile-Web composer viability ceiling.
 - Full existing-conversation mobile-Web rendering is not an accepted daily-chat production dependency.
-- b48-b58 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
+- b48-b59 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
 
 ## Stable accepted baselines
 
@@ -59,39 +59,41 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 
 - b45 official no-resend resume is Runtime Confirmed; b46/b47 duplicated Native Cookie+Bearer-only resume rejected with HTTP404 JSON; first/exclusive Native resume Unknown.
 - b48-b51 established Native composer -> official protected Send and complete compact text continuation, including fresh-new-chat title-generation correction.
-- b52 kept final answer complete while visible reasoning beginning was incomplete.
-- b53-b55 identified explicit reasoning/tool classes and exact `reasoning_ended` marker while keeping raw `assistant:thoughts` non-presentational.
-- b56 showed recap text itself is not the real reasoning body in the tested turn; the recap event remains a valid reasoning-end marker.
+- b52-b56 identified reasoning/tool grammar and exact `reasoning_ended` while keeping raw `assistant:thoughts` non-presentational.
+- b57 split already-accepted visible text into Native reasoning/final around exact reasoning end.
+- b58 Runtime passed compact tool activity but proved an omitted reasoning prefix exactly matched a service-marked thinking-preamble part.
 
-### b57 Runtime
+### Exact current b59 Candidate / Runtime
 
-Exact b57: Candidate `DEV-send-stream-0.1.0-b57`, source `7074b1f85a0f239a5fd615f52196e1e28145523c`, Artifact `9729360247`, IPA SHA `c8662a065f0dc1ec627f7eba86387d190e80e593a6972cc13934f80c4efe0a06`.
+- Candidate `DEV-send-stream-0.1.0-b59`, `0.1.0 (59)`.
+- Exact product/config source `138c09a5d11121945bc45f1d866c449aa0f7611e`; tree `c28eb92616e494a15aa2e370e2fd5150986b2452`.
+- Push Run / Job `33305680998 / 99241706079` — success.
+- PR Run / Job `33305683021 / 99241711695` — success.
+- Artifact `9730376958`; ZIP `sha256:4c13fc5941786b6db1797d72b8938f763cdaec2b76b8d15998fd4d6f235763ef`.
+- IPA SHA `5758cf40b287c7d9c5cef2f13163d5c8239834ee617468692c56b4bdb0349252`.
+- Package: Release / `0.1.0 (59)` / Candidate b59 / source `138c09a5d111` / iOS14 / `[1,2]` / arm64.
+- Exact iPhone/iOS17 Runtime: HTTP200 SSE / terminal; Native reasoning `12 deltas / 207 chars`, final `18 / 357`; thinking preambles `2 / 13 chars`; tool invocations/results `12/13`; Native compact tool presentations 12.
+- User confirmed reasoning, compact tool activity and final answer were complete; prior leading truncation did not reproduce.
+- Remaining reasoning presentation defect: separate reasoning segments are flattened without official-style paragraph breaks.
+- Current tool-detail boundary: official Web exposes expandable request/result detail; Native does not yet. Exact pairing must be proven because 12 invocations vs 13 results makes adjacency unsafe.
+- Explicit safe `metadata.reasoning_status=is_reasoning` was observed after tool activity and before the second thinking preamble, proving a return-to-reasoning state signal while `assistant:thoughts` body remains non-presentational.
+- Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b59-runtime.md`.
 
-Exact iPhone/iOS17 Runtime passed the reasoning/final phase gate: reasoning `4 deltas / 61 chars` streamed only in `思考过程`, final answer `12 / 287 chars` stayed separate, exact reasoning-end marker count was 1, and the prior leading truncation did not reproduce. A six-character `is_thinking_preamble_message` existed but was not consumed, so no prefix parser change is justified.
+## Current product interaction target
 
-The same turn contained multiple assistant-code -> tool-result structures while Native showed no tool activity. Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b57-runtime.md`.
+For `DEV-send-stream`, the user explicitly wants eventual Native behavior to follow the official response lifecycle as closely as verified service data permits:
 
-### Exact current b58 Candidate
+`发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考 -> 突出完整最终回答`.
 
-- Candidate `DEV-send-stream-0.1.0-b58`, `0.1.0 (58)`.
-- Exact product/config source `d9dbf208625e46b8eb4e7ec69209c9d519d0e5eb`; tree `ddb396aa942c48222e69671eaf3610127d9797e9`.
-- Push Run / Job `33303998650 / 99237187408` — success.
-- PR Run / Job `33304001877 / 99237195550` — success.
-- Artifact `9729864129`; ZIP `sha256:3a907e6bb5f1cbd7f57d54b01e64805196247e612e2de961dac99d92df2060ac`.
-- IPA SHA `0d5988caf21300bfb29e81b3f1f8bbf6eaa69a84f09efeda601e6d6f9b7b8875`.
-- Package: Release / `0.1.0 (58)` / Candidate b58 / source `d9dbf208625e` / iOS14 / `[1,2]` / arm64.
-- b58 preserves b57 text/reasoning behavior and adds only a separate compact diagnostic `工具调用` region for exact completed assistant-code invocations. Service `reasoning_title` is transient UI only if present; generic local fallback otherwise. Tool result body, raw args/results, connector payloads and `assistant:thoughts` remain excluded.
-- Runtime/manual: Pending. b58 permanently reserved.
+Current evidence supports most state boundaries. Exact initial service-side reasoning-start signal, cross-tool user-visible card schema/pairing and accepted production response ownership remain Unknown / Unverified.
 
 ## Current next Candidate boundary
 
-b39-b58 are permanently reserved. Do not allocate b59 until exact b58 Runtime supplies a concrete smallest next change.
-
-Current b58 human gate: one tool-active reasoning turn confirming b57 phase split remains correct, the compact tool region appears, titles/fallback are understandable, raw tool payloads remain absent, and terminal diagnostics are exported.
+b39-b59 are permanently reserved. A b60 candidate may be allocated only after confirming the identity/artifact name is unused. Its bounded evidence scope is reasoning segment presentation, lifecycle/explicit reasoning-active status, and privacy-safe tool invocation/result association diagnostics. It must not expose raw tool bodies or restructure production `ConversationRepository`.
 
 ## Remaining Unknown / Unverified
 
-Accepted production Native response ownership/tool-card semantics, Native first/exclusive resume, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Accepted production Native response ownership/tool-card semantics, Native first/exclusive resume, exact initial service reasoning-start event, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 

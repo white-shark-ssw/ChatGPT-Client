@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-30 through exact b59 Runtime._
+_Last updated: 2026-08-30 through exact b59 Runtime and b60 pre-allocation guard._
 
 ## Purpose / delivery principles
 
@@ -80,9 +80,9 @@ The user explicitly requires this eventual Native interaction, as close to offic
 
 This entire reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; it is not a separate feature Work. General Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
 
-### Next bounded candidate gate
+### b60 — next bounded candidate
 
-Before exposing tool request/result detail, one candidate should first:
+Pre-allocation guard found no b60 repository/build-index reference and no other Active development task; build60 is available. b60 is the next bounded candidate and must:
 
 1. preserve b59 text grammar and correct Native-only paragraph separation at later exact thinking-preamble segment starts without changing service character metrics;
 2. show initial response-active/no-visible-text state as deterministic `正在思考`, never timer-based;
@@ -122,4 +122,4 @@ Isolated Work IDs for download manager, pagination, production background comple
 
 ## Current next action
 
-Synchronize durable evidence through b59, then use the smallest next Candidate for reasoning segment breaks, deterministic thinking-state presentation and privacy-safe tool invocation/result association diagnostics. Do not expose detailed tool bodies until that Runtime gate proves exact pairing and user-visible fields.
+Allocate exact b60 and build the smallest reasoning-segment/thinking-state/tool-association evidence candidate. Do not expose detailed tool bodies until b60 Runtime proves exact pairing and user-visible fields.

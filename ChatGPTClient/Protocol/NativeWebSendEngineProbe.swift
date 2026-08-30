@@ -10,6 +10,14 @@ private final class WeakNativeWebSendEngineHandler: NSObject, WKScriptMessageHan
 }
 
 final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHandler, UITextViewDelegate {
+    private struct ToolPresentation {
+        var title: String
+        var completed: Bool
+        var inputJSON: String
+        var outputJSON: String
+        var hasDetail: Bool { !inputJSON.isEmpty || !outputJSON.isEmpty }
+    }
+
     private static let handlerName = "nativeWebSendEngineProbe"
     private static let chatURL = URL(string: "https://chatgpt.com/")!
 
@@ -43,7 +51,10 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private var reasoningFallbackPromoted = false
     private var toolPresentationCount = 0
     private var toolCompletionUpdateCount = 0
-    private var toolPresentationBySlot: [Int: (title: String, completed: Bool)] = [:]
+    private var toolDetailAvailableCount = 0
+    private var toolDetailExpansionCount = 0
+    private var toolPresentationBySlot: [Int: ToolPresentation] = [:]
+    private var selectedToolSlot: Int?
     private var thinkingPresentationCount = 0
     private var reasoningSegmentBreakCount = 0
     private var thinkingVisible = false
@@ -75,7 +86,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b63 诊断：b62 真机已通过 verified composer、protected Send、思考/最终回答及 parent_id 工具条目 20/20 完成 gate。本版不改任何 Send/文本/思考/工具展示行为，只对 connector_tool_payload 字符串记录隐私安全的 JSON 顶层 key/type/长度指纹，并用现有单轮 transient invocation Map 统计 inline_cot_expandable_content.source_message_ids 的工具引用匹配数；不记录 ID、字段值、raw JSON、工具请求/回复正文或 assistant:thoughts。"
+        explanationLabel.text = "b64 诊断 UI：b63 真机已确认无明显截断、parent_id 可见工具条目 24/24 完成，并用同轮官方 Web 截图证明 GitHub 工具输入来自 connector_tool_payload、工具输出来自精确配对 result 的 message.content。本版保持 b63 Send/文本/思考/工具生命周期不变，只让已完成且精确 parent 配对、result 明确属于 GitHub 的工具行可点按展开“工具输入/工具输出”；不展示 assistant:thoughts，不猜工具描述，不把工具输入/输出或 ID 写入诊断。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -115,6 +126,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         toolHeaderLabel.font = .preferredFont(forTextStyle: .subheadline)
         toolHeaderLabel.textColor = .secondaryLabel
 
+        toolTextView.delegate = self
         toolTextView.isEditable = false
         toolTextView.isSelectable = true
         toolTextView.alwaysBounceVertical = true
@@ -124,7 +136,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         toolTextView.layer.cornerRadius = 10
         toolTextView.textContainerInset = UIEdgeInsets(top: 7, left: 8, bottom: 7, right: 8)
         toolTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-        let toolHeight = toolTextView.heightAnchor.constraint(lessThanOrEqualToConstant: 90)
+        let toolHeight = toolTextView.heightAnchor.constraint(lessThanOrEqualToConstant: 160)
         toolHeight.priority = .defaultHigh
         toolHeight.isActive = true
 
@@ -191,7 +203,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b63_expandable_detail_structure_gate", "surface": "native_over_fullsize_web", "scope": "b62_behavior_plus_safe_expandable_reference_fingerprint"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b64_github_tool_detail_runtime_gate", "surface": "native_over_fullsize_web", "scope": "b63_behavior_plus_parent_paired_github_input_output"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -200,6 +212,15 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     }
 
     func textViewDidChange(_ textView: UITextView) { updateSendButtonState() }
+
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+        guard textView === toolTextView, URL.scheme == "native-tool", let slot = Int(URL.lastPathComponent), let entry = toolPresentationBySlot[slot], entry.hasDetail else { return true }
+        selectedToolSlot = selectedToolSlot == slot ? nil : slot
+        if selectedToolSlot == slot { toolDetailExpansionCount += 1 }
+        renderToolActivity()
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolDetailPresentation", fields: ["state": selectedToolSlot == slot ? "expanded" : "collapsed", "slot": String(slot), "inputCharacters": String(entry.inputJSON.count), "outputCharacters": String(entry.outputJSON.count)])
+        return false
+    }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.page", fields: ["state": "loaded", "pageKind": Self.pageKind(for: webView.url)])
@@ -261,6 +282,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         reasoningFallbackPromoted = false
         toolPresentationCount = 0
         toolCompletionUpdateCount = 0
+        toolDetailAvailableCount = 0
+        toolDetailExpansionCount = 0
         thinkingPresentationCount = 0
         reasoningSegmentBreakCount = 0
         thinkingVisible = false
@@ -356,8 +379,10 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             let slot = (body["slot"] as? NSNumber)?.intValue ?? -1
             let title = (body["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let titleCharacters = Self.safeNumberString(body["titleCharacters"])
-            if slot >= 0 && (state == "invoked" || state == "result") { updateToolActivity(slot: slot, title: title, completed: state == "result") }
-            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolActivity", fields: ["state": state, "slot": slot >= 0 ? String(slot) : "none", "titleCharacters": titleCharacters, "presented": slot >= 0 ? "true" : "false"])
+            let inputJSON = body["detailInput"] as? String ?? ""
+            let outputJSON = body["detailOutput"] as? String ?? ""
+            if slot >= 0 && (state == "invoked" || state == "result") { updateToolActivity(slot: slot, title: title, completed: state == "result", inputJSON: inputJSON, outputJSON: outputJSON) }
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolActivity", fields: ["state": state, "slot": slot >= 0 ? String(slot) : "none", "titleCharacters": titleCharacters, "presented": slot >= 0 ? "true" : "false", "detailAvailable": (!inputJSON.isEmpty || !outputJSON.isEmpty) ? "true" : "false", "detailInputCharacters": String(inputJSON.count), "detailOutputCharacters": String(outputJSON.count)])
         case "stream_structure":
             let fields = [
                 "eventIndex": Self.safeNumberString(body["eventIndex"]),
@@ -453,6 +478,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "nativeAnswerCharacters": String(answerCharacterCount),
                 "nativeToolPresentationCount": String(toolPresentationCount),
                 "nativeToolCompletionUpdateCount": String(toolCompletionUpdateCount),
+                "nativeToolDetailAvailableCount": String(toolDetailAvailableCount),
+                "nativeToolDetailExpansionCount": String(toolDetailExpansionCount),
                 "nativeThinkingPresentationCount": String(thinkingPresentationCount),
                 "nativeReasoningSegmentBreakCount": String(reasoningSegmentBreakCount),
                 "reasoningFallbackPromoted": reasoningFallbackPromoted ? "true" : "false"
@@ -545,29 +572,55 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     }
 
     private func resetToolActivity() {
+        selectedToolSlot = nil
         toolPresentationBySlot.removeAll()
-        toolTextView.text = ""
+        toolTextView.attributedText = nil
         toolStack.isHidden = true
     }
 
-    private func updateToolActivity(slot: Int, title: String, completed: Bool) {
+    private func updateToolActivity(slot: Int, title: String, completed: Bool, inputJSON: String, outputJSON: String) {
         guard slot >= 0 else { return }
         let existing = toolPresentationBySlot[slot]
-        let resolvedTitle = title.isEmpty ? (existing?.title ?? "工具调用") : title
+        var entry = existing ?? ToolPresentation(title: title.isEmpty ? "工具调用" : title, completed: false, inputJSON: "", outputJSON: "")
+        let hadDetail = entry.hasDetail
+        if !title.isEmpty { entry.title = title }
+        entry.completed = completed || entry.completed
+        if !inputJSON.isEmpty { entry.inputJSON = inputJSON }
+        if !outputJSON.isEmpty { entry.outputJSON = outputJSON }
         if existing == nil { toolPresentationCount += 1 }
         if completed { toolCompletionUpdateCount += 1 }
-        toolPresentationBySlot[slot] = (resolvedTitle, completed || (existing?.completed ?? false))
+        if !hadDetail && entry.hasDetail { toolDetailAvailableCount += 1 }
+        toolPresentationBySlot[slot] = entry
         renderToolActivity()
     }
 
     private func renderToolActivity() {
-        let entries = toolPresentationBySlot.keys.sorted().compactMap { slot -> String? in
-            guard let entry = toolPresentationBySlot[slot] else { return nil }
-            return "• \(entry.title) · \(entry.completed ? "已完成" : "调用中")"
+        let output = NSMutableAttributedString()
+        let rowAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.preferredFont(forTextStyle: .footnote), .foregroundColor: UIColor.secondaryLabel]
+        let detailHeadingAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .semibold), .foregroundColor: UIColor.label]
+        let detailAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.monospacedSystemFont(ofSize: max(11, UIFont.preferredFont(forTextStyle: .footnote).pointSize - 1), weight: .regular), .foregroundColor: UIColor.label]
+        let slots = toolPresentationBySlot.keys.sorted()
+        for (index, slot) in slots.enumerated() {
+            guard let entry = toolPresentationBySlot[slot] else { continue }
+            let marker = entry.hasDetail ? (selectedToolSlot == slot ? "▾" : "▸") : "•"
+            var attributes = rowAttributes
+            if entry.hasDetail, let url = URL(string: "native-tool://slot/\(slot)") { attributes[.link] = url }
+            output.append(NSAttributedString(string: "\(marker) \(entry.title) · \(entry.completed ? "已完成" : "调用中")", attributes: attributes))
+            if selectedToolSlot == slot && entry.hasDetail {
+                if !entry.inputJSON.isEmpty {
+                    output.append(NSAttributedString(string: "\n\n工具输入\n", attributes: detailHeadingAttributes))
+                    output.append(NSAttributedString(string: Self.prettyJSONString(entry.inputJSON), attributes: detailAttributes))
+                }
+                if !entry.outputJSON.isEmpty {
+                    output.append(NSAttributedString(string: "\n\n工具输出\n", attributes: detailHeadingAttributes))
+                    output.append(NSAttributedString(string: Self.prettyJSONString(entry.outputJSON), attributes: detailAttributes))
+                }
+            }
+            if index < slots.count - 1 { output.append(NSAttributedString(string: "\n", attributes: rowAttributes)) }
         }
-        toolTextView.text = entries.joined(separator: "\n")
-        toolStack.isHidden = entries.isEmpty
-        if !entries.isEmpty {
+        toolTextView.attributedText = output
+        toolStack.isHidden = slots.isEmpty
+        if !slots.isEmpty && selectedToolSlot == nil {
             let location = max(0, toolTextView.textStorage.length - 1)
             toolTextView.scrollRangeToVisible(NSRange(location: location, length: 1))
         }
@@ -587,6 +640,11 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
     private func updateStatusLabel(detail: String) {
         statusLabel.text = "Send \(sendCount) · Web composer \(webComposerReady ? "ready" : "not-ready") · response \(responseActive ? "active" : "idle")\n\(detail)"
+    }
+
+    private static func prettyJSONString(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data), JSONSerialization.isValidJSONObject(object), let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]), let text = String(data: pretty, encoding: .utf8) else { return raw }
+        return text
     }
 
     private static func pageKind(for url: URL?) -> String {
@@ -987,15 +1045,16 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         if (role === 'assistant' && contentType === 'code' && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
           if (!aggregate.toolInvocationIdentityByID.has(message.id)) {
-            aggregate.toolInvocationIdentityByID.set(message.id, { recipient: message.recipient, slot: aggregate.nextToolSlot });
+            aggregate.toolInvocationIdentityByID.set(message.id, { recipient: message.recipient, slot: aggregate.nextToolSlot, connectorPayload: '' });
             aggregate.nextToolSlot += 1;
           }
           const identity = aggregate.toolInvocationIdentityByID.get(message.id);
+          if (metadata && typeof metadata.connector_tool_payload === 'string' && metadata.connector_tool_payload) identity.connectorPayload = metadata.connector_tool_payload;
           if (message.status !== 'finished_successfully' || !metadata || metadata.is_complete !== true || aggregate.toolActivitySeen.has(message.id)) return;
           aggregate.toolActivitySeen.add(message.id);
           aggregate.toolInvocationCount += 1;
           if (rawTitle) aggregate.toolInvocationWithTitleCount += 1;
-          post({ kind: 'native_tool_activity', state: 'invoked', slot: identity.slot, title, titleCharacters: rawTitle.length });
+          post({ kind: 'native_tool_activity', state: 'invoked', slot: identity.slot, title, titleCharacters: rawTitle.length, detailInput: '', detailOutput: '' });
           return;
         }
 
@@ -1015,7 +1074,13 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             if (message.author && message.author.name === identity.recipient) aggregate.toolResultAuthorRecipientMatchCount += 1;
           } else aggregate.toolResultParentUnmatchedCount += 1;
         }
-        post({ kind: 'native_tool_activity', state: 'result', slot: identity ? identity.slot : -1, title, titleCharacters: rawTitle.length });
+        const invokedResource = metadata && metadata.invoked_resource && typeof metadata.invoked_resource === 'object' && !Array.isArray(metadata.invoked_resource) ? metadata.invoked_resource : null;
+        const githubDetail = !!identity && identity.recipient === 'api_tool.call_tool' && invokedResource && invokedResource.app_name === 'GitHub' && typeof identity.connectorPayload === 'string' && !!identity.connectorPayload && !!content;
+        let detailOutput = '';
+        if (githubDetail) {
+          try { detailOutput = JSON.stringify(content); } catch (_) {}
+        }
+        post({ kind: 'native_tool_activity', state: 'result', slot: identity ? identity.slot : -1, title, titleCharacters: rawTitle.length, detailInput: githubDetail ? identity.connectorPayload : '', detailOutput });
       };
 
       const observeExpandableReferences = (payload, aggregate) => {

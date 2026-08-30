@@ -4,8 +4,8 @@
 |---|---|---|---|
 | Repository AI governance | Active | `main@1ac202c...` `AGENTS.md` + `docs/project/START_HERE.md` | Autonomous continuation, checkpoint, evidence ladder and conflict rules active; final target sync required before merge. |
 | Native application shell | **Stable b38 baseline** | `AppDelegate.swift`, `RootViewController.swift` | Phase 9 diagnostics do not redefine ordinary native read/navigation ownership. Frozen No. |
-| Build/runtime metadata | **b59 exact diagnostic identity; Runtime tested** | Xcode settings / built `Info.plist` | `0.1.0 (59)`, Candidate b59, exact source `138c09a5d111...`, Artifact `9730376958`; b39-b59 permanently reserved. |
-| Diagnostics / logging | **b59 Runtime evidence active** | `DiagnosticsLogger` + `NativeWebSendEngineProbe` | b59 adds preamble counts only; current next evidence may add reasoning-active and privacy-safe tool-association counts, never raw IDs/bodies/auth/proof values. |
+| Build/runtime metadata | **b59 exact diagnostic identity; Runtime tested** | Xcode settings / built `Info.plist` | `0.1.0 (59)`, Candidate b59, exact source `138c09a5d111...`, Artifact `9730376958`; b39-b59 permanently reserved; b60 available for bounded next candidate. |
+| Diagnostics / logging | **b59 Runtime evidence active** | `DiagnosticsLogger` + `NativeWebSendEngineProbe` | b59 adds preamble counts only; b60 may add reasoning-active and privacy-safe tool-association counts, never raw IDs/bodies/auth/proof values. |
 | IPA build / CI packaging | **Stable capability; b59 exact Artifact valid** | `scripts/build_ipa.sh`, workflow | Push `33305680998/99241706079`, PR `33305683021/99241711695`, Artifact `9730376958`, ZIP `sha256:4c13fc59...763ef`, IPA `5758cf40...49252`; Release / iOS14 / `[1,2]` / arm64. |
 | Embedded Web login | Stable explicit fallback | `AuthWebViewController.swift` | Default persistent WebKit store remains persistent auth-secret authority. |
 | Authentication/account context | Stable | `AuthSessionStore.swift` | Sole native auth/account owner. |
@@ -13,7 +13,7 @@
 | Official same-response resume | **Runtime Confirmed b45/b47** | official Web `/backend-api/f/conversation/resume` | HTTP200 SSE no-resend continuation; exact offset semantics still Unverified. |
 | Native resume parity | **Rejected for tested duplicated path** | `NativeResumeParityProbeViewController` | b46/b47 Cookie+Bearer-only duplicate returned HTTP404 JSON; first/exclusive Native resume Unknown. |
 | User-visible official-Web protected Send | **Security-permitted, daily full-Web product blocked** | TD-023/024/025/028 | b47 long-answer composer freeze blocks full conversation Web as production dependency. b48-b59 remain diagnostic exceptions only. |
-| Native Web Send-engine diagnostic | **b59 Runtime text-completeness pass; presentation partial** | `NativeWebSendEngineProbeViewController` | Two service-marked thinking preambles were captured; reasoning/final complete. Remaining defects: reasoning segment breaks, explicit thinking-state UX, exact tool-detail semantics/pairing. |
+| Native Web Send-engine diagnostic | **b59 Runtime text-completeness pass; presentation partial** | `NativeWebSendEngineProbeViewController` | Two service-marked thinking preambles were captured; reasoning/final complete. b60 gate: reasoning segment breaks, thinking-state UX, exact tool-detail association evidence. |
 | Native conversation read/recovery | **Stable merged baseline** | `ConversationRepository` | Sole native production conversation/list/read/recovery/future accepted response authority. b48-b59 do not mutate it. |
 | Conversation-list cache | Stable merged | `ConversationRepository` + `ConversationListCacheStore` | Accepted b23 contracts retained. |
 | Native message geometry / round navigation | **Stable merged b38** | presentation projection + message cell | Deterministic bounded geometry and accepted continuous quick-navigation retained. |

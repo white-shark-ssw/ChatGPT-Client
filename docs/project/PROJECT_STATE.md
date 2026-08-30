@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-30 through exact b52 Runtime and exact b53 Code/CI/Artifact/package verification; b53 Runtime remains pending._
+_Last updated: 2026-08-30 through exact b53 Runtime and exact b54 Code/CI/Artifact/package verification; b54 Runtime remains pending._
 
 ## Current accepted merged baseline
 
@@ -25,7 +25,7 @@ The user rejects the separately billed API-product route and has also blocked pr
 
 The durable production boundary still prohibits challenge solver/bypass/replay, copied proof/token values, guessed Send/continuation endpoints, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Web Send clicks, DOM answer/reasoning scraping and hidden file-input injection.
 
-**b48-b53 are explicit diagnostic exceptions only.** The user requested trying the Native-composer/Web-Send-engine concept before deciding whether to change that durable boundary. Do not interpret diagnostic Code/CI/Artifact/Runtime success as a production policy change by itself.
+**b48-b54 are explicit diagnostic exceptions only.** The user requested trying the Native-composer/Web-Send-engine concept before deciding whether to change that durable boundary. Do not interpret diagnostic Code/CI/Artifact/Runtime success as a production policy change by itself.
 
 `/backend-api/f/conversation/resume` remains a post-Send continuation/read path and does not weaken the b42 protected-Send boundary.
 
@@ -94,82 +94,92 @@ Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md
 
 b51 preserved an already-active assistant-text continuation across exact top-level `title_generation` and recorded `titleGenerationWhileContinuationCount` while keeping other b50 rules unchanged.
 
-Exact b51 identity:
-
 - Candidate `DEV-send-stream-0.1.0-b51`, version/build `0.1.0 (51)`.
 - Exact product/config source `bd8f056cc4d13ea2f1ab178353d926d8e4d21992`.
-- Push Run / Job `33271794573` / `99151433241` — success.
-- PR Run / Job `33271796259` / `99151437702` — success.
-- Artifact `9720327648`; ZIP digest `sha256:247d22d0b8fa2d023f651c9c00461e90096e8fd21544b2147435e2d238a91ab2`.
-- IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
+- Artifact `9720327648`; IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
+- Fresh new-chat long turn delivered `11618` Native chars / `284` deltas / `titleGenerationWhileContinuationCount=1`, terminal true and visually complete.
 
-Exact b51 Runtime on iPhone/iOS17.0:
-
-- Fresh new-chat long turn: `nativeDeltaCount=284`, `nativeCharacters=11618`, `titleGenerationWhileContinuationCount=1`, terminal true, Web assistant text 0; user visually judged the reply complete.
-- Second long turn was also visually complete.
-- A later GitHub/project-progress request appeared to have a small leading gap; b52 later refined that remaining gap as reasoning-specific rather than final-answer truncation.
-
-Accepted b51 conclusion: the b50 fresh-first-turn missing-middle defect is Runtime corrected by the title-generation continuation preservation. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
+Accepted b51 conclusion: the b50 fresh-first-turn missing-middle defect is Runtime corrected by title-generation continuation preservation. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
 
 ### b52 — final answer complete; reasoning beginning incomplete
 
-Exact b52 identity:
-
 - Candidate `DEV-send-stream-0.1.0-b52`, version/build `0.1.0 (52)`.
 - Exact product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
-- Push Run / Job `33276080936` / `99162937523` — success.
-- PR Run / Job `33276082767` / `99162942750` — success.
-- Artifact `9721532867`; ZIP digest `sha256:2ffd7e46e80019d3c4e8d6cbfa5c91dffa2a5f88222a30d5c4d5fb1e4fd752fc`.
-- IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
+- Artifact `9721532867`; IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
 
 Exact b52 Runtime on iPhone/iOS17.0:
 
-- official Send HTTP200 SSE / terminal true;
 - `frameCount=74`, `nativeCharacters=614`, `nativeDeltaCount=26`;
 - `exactTopLevelTextPatchCount=5`, `rootNonExactTextPatchCount=0`, `nestedTextPatchCount=6`;
 - `contextualValueStringCount=15`, `inactiveValueStringCount=0`;
 - `continuationResetWhileActiveCount=5`, `firstInactiveValueContext=none`, title-generation count 0;
 - user observed **visible reasoning/thinking beginning slightly truncated but final answer complete**.
 
-Accepted b52 conclusion: final-answer capture passes this exact reproduction. The prior root-nonexact→inactive-value hypothesis is rejected for this reproduction. User-visible reasoning capture remains partial; nested parent event/content type must be identified before reasoning/tool parser/UI work. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b52-runtime.md`.
+Accepted b52 conclusion: final-answer capture passes this exact reproduction. The prior root-nonexact→inactive-value hypothesis is rejected for this reproduction. User-visible reasoning capture remains partial. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b52-runtime.md`.
 
-### b53 — behavior-neutral reasoning/tool structure classifier
-
-b53 preserves every b52 text filtering/output rule and only adds bounded unique structural evidence before the existing parser runs. It records at most 32 unique signatures containing safe event type, operation/path, structurally discoverable message role/content type/status/end-turn, key names and nested patch operation/path summaries. It records no prompt, answer, reasoning text, raw payload, raw IDs, auth/proof/header values or DOM reasoning state.
+### b53 — reasoning/tool grammar materially identified
 
 Exact b53 identity:
 
-- Candidate `DEV-send-stream-0.1.0-b53`, version/build `0.1.0 (53)`.
+- Candidate `DEV-send-stream-0.1.0-b53`, `0.1.0 (53)`.
 - Exact product/config source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`.
-- Push Run / Job `33294541342` / `99211838094` — success.
-- PR Run / Job `33294542985` / `99211842336` — success.
-- Artifact `9726996570`; ZIP digest `sha256:8831bbae1c5cad9c9cd7f0ad9fbcf4846d709b27ae950b0391d436e20749b38c`.
+- Push Run / Job `33294541342 / 99211838094`; PR Run / Job `33294542985 / 99211842336` — success.
+- Artifact `9726996570`; ZIP `sha256:8831bbae1c5cad9c9cd7f0ad9fbcf4846d709b27ae950b0391d436e20749b38c`.
 - IPA SHA `d5eee722ea01dc2c1b419a803574aec8ad2199299a3d0bbb51de4bae574f25dc`.
-- Independent package inspection: `0.1.0 (53)`, Candidate b53, source marker `3204b183ca4f`, Release, minimum iOS14.0, UIDeviceFamily `[1,2]`, arm64.
-- Runtime/manual: **Pending**.
 
-Because Artifact `9726996570` exists, b53 is permanently reserved. Any product-code correction requires b54+ and exact b53 Runtime evidence.
+Exact b53 Runtime on iPhone/iOS17.0:
+
+- user: visible reasoning beginning still truncated; final answer complete; no Native tool-call UI;
+- HTTP200 SSE / terminal true; `frameCount=71`, `nativeCharacters=476`, `nativeDeltaCount=21`, `inactiveValueStringCount=0`;
+- service stream explicitly emitted `assistant:code`, `tool:text`, `tool:code`, `tool:multimodal_text`, `assistant:thoughts`, and distinct `assistant:reasoning_recap` message classes.
+
+Accepted b53 conclusion:
+
+1. Tool activity is structurally real even though Native shows no tool UI.
+2. `assistant:reasoning_recap` is the first directly evidenced reasoning-named assistant content type and is a candidate for explicitly user-visible reasoning presentation.
+3. `assistant:thoughts` remains non-presentational and must never be exposed as chain-of-thought.
+4. Role/content type alone does not prove which tool/code nodes are user-visible versus internal-only.
+5. b53 does not yet identify the concrete recap content container or visibility/presentation metadata needed for safe UI.
+
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b53-runtime.md`.
+
+### b54 — current behavior-neutral visibility/content-shape classifier
+
+Exact b54 identity:
+
+- Candidate `DEV-send-stream-0.1.0-b54`, `0.1.0 (54)`.
+- Exact product/config source `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`.
+- Push Run / Job `33296672444 / 99217423647` — success.
+- PR Run / Job `33296674388 / 99217428590` — success.
+- Artifact `9727636043`; ZIP digest `sha256:28d07c99634a1b4f917561e95cf04a4e95666106985cb03bca09798b0dc7065c`.
+- IPA SHA `d4b85cffe4db499252d0bc9a2c7c8ea582acf2b88f3d28eeb60e366ee471153b`.
+- Package independently verified: Release / `0.1.0 (54)` / Candidate b54 / source marker `6a6903c7ad56` / iOS14 / UIDeviceFamily `[1,2]` / arm64.
+- Runtime/manual: Pending.
+
+b54 preserves every b53 text filtering/output rule. For only `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code` and `tool:*`, it records bounded text-free message/author/content/metadata key names, safe recipient/author-name tokens, content field names/counts/character counts, direct metadata booleans and safe visibility/presentation/status/type/kind/category/mode/phase/result-like enums. It records no prompt, answer, reasoning text or tool output.
+
+Because Artifact `9727636043` exists, b54 is permanently reserved. Any later product-code correction requires b55+ and exact b54 Runtime evidence.
 
 ## Reasoning/tool presentation boundary
 
-`SEND_STREAM_PREFLIGHT.md` already places explicitly user-visible reasoning, reasoning→final transition and follow-tail inside `DEV-send-stream`. The requested reasoning collapse/expand and tap-driven tool-call detail sheet/popover are therefore part of the current Work, but are not yet implemented.
+`SEND_STREAM_PREFLIGHT.md` places explicitly user-visible reasoning, reasoning→final transition and follow-tail inside `DEV-send-stream`. Requested reasoning collapse/expand and tap-driven tool-call detail sheet/popover remain part of this Work, but are not yet implemented.
 
-Only explicitly user-visible service reasoning/status/tool information may be shown. Hidden chain-of-thought or internal tool/system nodes must never be exposed or inferred. Exact b53 Runtime must first identify the service-visible reasoning/tool grammar.
+Only explicitly user-visible service reasoning/status/tool information may be shown. Hidden chain-of-thought or internal tool/system nodes must never be exposed or inferred. `assistant:thoughts` is explicitly non-presentational under the current evidence boundary. b54 must identify the actual `reasoning_recap` content container and a visibility boundary for tool/code messages before Native presentation is implemented.
 
 ## Current Runtime gate
 
-The next human-only gate is one focused exact-device b53 reasoning/tool reproduction:
+The next human-only gate is one focused exact-device b54 reasoning/tool reproduction:
 
-1. clear diagnostics and open `Native 输入 / Web Send（b53诊断）`;
-2. send one prompt that naturally produces visible reasoning plus tool activity, preferably the same GitHub/project-progress style request;
-3. observe whether reasoning starts complete or truncated, whether the final answer is complete, and whether visible tool activity occurs;
+1. clear diagnostics and open `Native 输入 / Web Send（b54诊断）`;
+2. send the same style of prompt that naturally produces visible reasoning plus tool activity;
+3. behavior is intentionally expected to remain similar to b53 because b54 is evidence-only;
 4. wait for terminal and export diagnostics.
 
-The next parser/UI change must come from the emitted `streamStructure` signatures. Do not broaden parser grammar or implement reasoning/tool presentation by guess.
+The decision signal is the new special-message `streamStructure` fields. If b54 proves a concrete recap content container and official visibility/presentation markers for tool/code nodes, the following Candidate may implement reasoning extraction/collapse and user-visible tool-call presentation. Do not expose `thoughts` or arbitrary internal tool nodes.
 
 ## Background ordering
 
-Background resilience remains a hard product requirement, but implementation stays response-owner dependent. b45 provides positive short-background survival/buffering evidence. b49 additionally showed a long diagnostic response reaching terminal across multiple background intervals, but b48-b53 are still Web-owned diagnostic experiments rather than production response ownership.
+Background resilience remains a hard product requirement, but implementation stays response-owner dependent. b45 provides positive short-background survival/buffering evidence. b49 additionally showed a long diagnostic response reaching terminal across multiple background intervals, but b48-b54 are still Web-owned diagnostic experiments rather than production response ownership.
 
 ## Authority / evidence boundary
 
@@ -178,7 +188,7 @@ Background resilience remains a hard product requirement, but implementation sta
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - Sync/Reload never resend/regenerate.
 - no second Send may be created merely to obtain a stream.
-- b48-b53 do not mutate production response state and do not modify TD-024/TD-025.
+- b48-b54 do not mutate production response state and do not modify TD-024/TD-025.
 - Native first/exclusive resume: Unknown / Unverified.
 - Existing-conversation history virtualization before Web React: Unknown / Unverified.
 - Native production incremental response ownership/reasoning/follow-tail/background lifecycle: Unknown / Unverified.

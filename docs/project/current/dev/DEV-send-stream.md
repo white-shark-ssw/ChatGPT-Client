@@ -2,27 +2,23 @@
 
 ## Status
 
-**Active — exact b65 passed the focused iPhone/iOS17 structured GitHub tool-detail Runtime gate. The b64 formatting defect is closed for the tested shapes; remaining input/output spacing and legal escaped-slash display are non-blocking polish and do not justify b66. The next Phase 9 blocker is no longer Web/SSE/tool parsing: it is the production Send architecture boundary. Current TD-024/TD-025/TD-028 explicitly prohibit promoting the b48-b65 covered/hidden Web composer automation into production. `ConversationRepository` must remain the production response owner. Stable/Frozen Send remains No. PR #29 remains evidence-only / open / mergeable / unmerged.**
+**Active — user explicitly selected production architecture Option B. Exact b65 passed the focused iPhone/iOS17 Send/reasoning/final/exact-parent GitHub tool-detail Runtime gate; the b64 detail-formatting defect is closed for the tested shapes. The covered official-Web Send engine proven by b48-b65 is now explicitly authorized as the production protected-Send transport/challenge executor, while `ConversationRepository` remains the sole native production conversation/response authority. A reusable Web Rule Lab is now part of this Work so future ChatGPT Web-rule changes can be probed from one installed IPA before product code is rebuilt. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / not merged; evidence-only
+- PR: #29 — open / mergeable / not merged
 - Other Active development checkpoints: none at latest guard
 - Current actual `main`: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`
-- Current branch head before this checkpoint update: b65 Runtime evidence commit `8af400f859b12406310596eba87daac215c34c94`
+- Current branch head before this checkpoint update: `8e740f407350ee27f2094a8cbcd64e618d1e3ef1`
 - Stable native predecessor: b38
 - Exact latest Runtime-tested Candidate: `DEV-send-stream-0.1.0-b65`
 - Exact b65 product/config source: `44138db766d00e62cfda7f20182f6d20f1ec3352`
-- Exact b65 product tree: `fb02dfa7512e9c8428c4b0e9b7184a56d602f688`
 - b65 Push Run / Job: `33328232044 / 99302071335` — success
 - b65 PR Run / Job: `33328233842 / 99302076369` — success
 - b65 Push Artifact: `9736876465`
-- b65 PR Artifact: `9736874445`
-- b65 Push Artifact ZIP SHA-256: `d9a52ecb0cd7d5131e22fc399bc5db0d573a9de3e5d80838f3a8d2b3164ceb7a`
 - b65 IPA SHA-256: `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`
-- b65 package: Release / `0.1.0 (65)` / Candidate `DEV-send-stream-0.1.0-b65` / source marker `44138db766d0` / iOS14 / `[1,2]` / arm64
 - b39-b65 emitted identities: permanently reserved
-- b66: **not allocated**
+- b66: **not yet emitted; may be allocated only as the first coherent production/Web-Lab slice, with code+build+workflow identity aligned atomically before the formal branch moves**
 
 ## Exact b65 Runtime — focused pass
 
@@ -49,69 +45,111 @@ Terminal metrics:
 - Native tool presentations/completion updates `10/10`;
 - Native detail-available rows `9`.
 
-User directly reported no apparent reasoning/final truncation. Completed tool rows expanded/collapsed; `工具输入` and `工具输出` appeared as independent second-level disclosures; decoded output no longer showed b64's second-layer JSON escape wall.
-
-Observed remaining polish only: child-section vertical spacing is looser than desired and pretty JSON may display legal `\/` slash escaping. These do not indicate data loss or protocol/ownership failure and do not justify another Candidate by themselves.
+User directly reported no apparent reasoning/final truncation. Completed tool rows expanded/collapsed; `工具输入` and `工具输出` appeared as independent second-level disclosures; decoded output no longer showed b64's second-layer JSON escape wall. Remaining child spacing and legal JSON slash escaping are non-blocking polish and do not justify another diagnostic Candidate.
 
 Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b65-runtime.md`.
 
-Classification: **b65 focused Runtime pass. Formatting defect closed for tested GitHub shapes. Stable/Frozen No.**
+Classification: **b65 focused Runtime pass. Probe-level Send/reasoning/final/tool lifecycle evidence accepted for the tested primary account/device scope. Stable/Frozen No.**
 
-## Diagnostic evidence now accepted for production design
+## Production architecture decision — Option B accepted
 
-The b48-b65 diagnostic series has established, for the tested primary account/device scope:
+The user explicitly selected Option B after reviewing the prior TD-024/TD-025 prohibition. The production contract is now:
 
-- page-owned official protected `/backend-api/f/conversation` Send can be triggered and observed;
-- accepted compact SSE text grammar including `title_generation` continuation;
-- explicit thinking-preamble inclusion and exact `reasoning_ended` transition;
-- event-driven `正在思考` / reasoning / final presentation ordering;
-- exact invocation -> result association only by response-local `parent_id`;
-- bounded GitHub connector input/output mapping and readable nested tool detail;
-- verified-composer authority is `#prompt-textarea` or explicit contenteditable role=textbox; generic textarea is rejected;
-- no retry/timer/watchdog/polling is required for the accepted diagnostic path.
+1. Native composer and Native conversation UI are the user-facing product surface.
+2. One process-resident official ChatGPT Web execution surface uses the existing default persistent `WKWebsiteDataStore` and is allowed to be covered/not user-visible while it performs the official browser challenge and protected Send flow.
+3. Native code may drive only the already-evidenced official composer/Send path; it must not synthesize/replay Sentinel/PoW/Turnstile/challenge values.
+4. The covered Web execution surface is a **transport/challenge executor only**. It is not a conversation/message/response repository and must not become a second production state owner.
+5. `ConversationRepository` remains the sole production owner for authoritative conversation/resident/response lifecycle state.
+6. SSE events consumed from the one protected Send are committed through the Repository-owned response lifecycle; no second Send may be created merely to obtain a stream.
+7. Sync/Reload remain explicit reconciliation/recovery operations and never resend/regenerate.
+8. Account/auth authority remains `AuthSessionStore`; persistent auth-secret authority remains the default persistent `WKWebsiteDataStore`.
+9. When official Web rules change, update the adapter from fresh evidence rather than adding speculative fallback/retry/alternate selectors.
 
-These are protocol/presentation evidence, not automatic production-architecture approval.
+This decision supersedes only the prior production prohibition on a covered/hidden official-Web Send executor. It does **not** revive full-Web conversation rendering, b44 Native->full-Web->Native UX, challenge replay, or Web ownership of conversation state.
 
-## Production architecture gate — requires explicit product decision
+## Reusable Web Rule Lab — required maintenance capability
 
-Current source truth:
+A development-only Web Rule Lab is now part of this Work and should live inside the normal app, reachable from Settings.
 
-- `RootViewController` production detail still exposes a `发送消息…` toolbar that pushes the visible full-page `AuthWebViewController.hybridChat`, then performs explicit Native Sync.
-- `ConversationRepository` has accepted per-conversation resident/detail ownership but no production response/send lifecycle yet.
-- `NativeWebSendEngineProbeViewController` drives a page-owned composer from Native while the official Web content is covered by a Native surface. That is a diagnostic exception only.
+Requirements:
 
-Current durable TD boundary:
+- use the same default persistent `WKWebsiteDataStore` as login/production Web execution;
+- visibly present a normal `WKWebView` so the user can navigate/login/inspect the current ChatGPT page;
+- provide a temporary editable JavaScript input area plus explicit `执行` action;
+- execute only code the user deliberately pastes/runs in the Lab;
+- show the returned value in a temporary result area and allow copying/sharing it;
+- do not persist probe JS or result bodies in `DiagnosticsLogger`, `UserDefaults`, files or another database;
+- diagnostics may log only safe lifecycle facts such as page-load category, script executed/succeeded/failed and result type/length;
+- do not log Cookie/Authorization/challenge values, raw prompt/answer/tool bodies or raw service IDs;
+- the Lab is not a production Send owner and does not auto-run scripts on launch;
+- future AI-assisted rule updates may use a short one-off JS probe supplied in chat, run by the user in this Lab, then use the returned evidence to update the versioned production adapter.
 
-- TD-023: pure-native/transient-auth protected Send is blocked by browser anti-abuse challenge output.
-- TD-024: a **user-visible official-Web Send surface** is security-permitted; hidden/shadow Send automation is rejected.
-- TD-025: the b44 full-page Native -> Web -> Native product form is rejected; Native input forwarding into a covered/hidden official Web composer is explicitly not accepted.
-- TD-028: full existing-conversation mobile-Web rendering is not viable as the daily-chat dependency after long-conversation composer failure.
+Durable adapter rules and update procedure will be centralized in `docs/project/WEB_SEND_ADAPTER.md` and linked from `START_HERE.md`, `SEND_STREAM_PREFLIGHT.md`, `PROJECT_SPECIFIC_RULES.md` and technical decisions.
 
-Therefore the production response-owner integration cannot safely start by silently copying the b65 covered-Web engine into `ConversationRepository`. One explicit product architecture choice is required before product code proceeds:
+## Accepted Web/protocol evidence to preserve
 
-### Option A — retain current TD security/product boundary
+The b42-b65 evidence establishes, for the tested primary account/iPhone/iOS17 scope:
 
-Use a genuinely user-visible official Web composer/Send region for protected Send, while Native owns conversation history, streamed response state, reasoning/tool/final presentation and per-conversation lifecycle. Avoid rendering the full Web conversation. This keeps the browser challenge flow user-visible and avoids promoting hidden Web automation.
+- browser challenge output is required for successful ChatGPT-account protected Send; pure-native/transient-auth Send remains blocked;
+- the official page can perform the protected `/backend-api/f/conversation` Send and expose HTTP200 SSE;
+- accepted diagnostic composer authority is `#prompt-textarea` or explicit `[contenteditable="true"][role="textbox"]`; generic textarea is rejected;
+- compact SSE assistant-text behavior includes exact top-level `o/p/v`, contextual value continuation and the b51 `title_generation` continuation rule;
+- exact service-marked thinking preambles are user-visible reasoning; `assistant:thoughts` remains non-presentational;
+- exact `reasoning_ended` is the accepted reasoning->final phase marker;
+- event-driven `正在思考` / reasoning / final ordering is accepted;
+- exact invocation->result association is response-local exact `parent_id` only; no count/order/adjacency pairing;
+- GitHub connector visible input/output mapping is authorized only for the evidenced exact-parent GitHub shape;
+- unknown/new structural events stay observable and never trigger guessed state transitions;
+- no retry/timer/watchdog/polling/fallback was required for the accepted path.
 
-### Option B — explicitly revise TD-024/TD-025
+## Shortest production completion order
 
-Authorize the currently tested Native-composer -> covered official-Web composer/page-owned Send engine as the production transport mechanism, while `ConversationRepository` becomes the sole response/conversation state owner and Web remains transport/challenge execution only. This is the shortest engineering path from b65 to a native-looking daily-chat loop, but it is a deliberate reversal of the current hidden/shadow-Web prohibition and must be user-approved before implementation.
+1. **Core docs + Web Rule Lab foundation** — record the superseding architecture decision and add the reusable Lab without emitting an identity-invalid intermediate Artifact.
+2. **Existing-conversation production Send/stream slice** — add Repository-owned response lifecycle and Native composer; covered official Web executes exactly one protected Send; Native detail receives incremental Repository-owned updates.
+3. **New-chat first Send** — use pending->authoritative handoff only if current server identity timing requires it; never fabricate server IDs.
+4. **Stop** — acquire/verify exact server Stop evidence, then implement one response-scoped Stop; local Web/URL task cancellation alone is not proof of server Stop.
+5. **A/B active-response + follow-tail** — hidden A remains owned/active while B visible; deliberate upward reading exits follow-tail; hidden growth never mutates B viewport.
+6. **Sync/Reload/b38 regression** — no resend/regenerate; round count/time/Copy/deterministic geometry/quick navigation remain intact.
+7. **Final daily-chat Runtime matrix + target-main sync** — only then decide Stable/merge. Background notification/true-background remain subsequent Works.
 
-No third evidence-backed ChatGPT-account Send route currently exists. Pure-native and separately billed/subscription bridge routes remain rejected by existing decisions.
+## Batch recovery point — architecture/docs/Web-Lab -> first production Candidate
 
-## After architecture choice — shortest completion order
+Baseline before this batch:
 
-1. Existing-conversation production Send/stream slice: add Repository-owned response lifecycle and drive one selected existing conversation through the chosen protected-Send surface; update Native detail incrementally without a second message owner.
-2. New-chat first Send: establish pending -> authoritative conversation identity only if current observed identity timing requires it; no fake server IDs.
-3. Stop evidence + exact response-scoped Stop implementation; local task cancel alone is not server Stop.
-4. Active-response navigation/follow-tail: A may continue while B visible; intentional upward scroll exits follow-tail; hidden growth never mutates B viewport.
-5. Sync/Reload active-response safety and b38 geometry/round/timestamp/Copy regression.
-6. Final exact daily-chat Runtime matrix, target-main synchronization, then decide Stable/merge. Background-notify remains next Work after accepted production response ownership and does not block this Phase 9 closure.
+- formal branch head: docs-only b65 handoff/architecture-gate lineage ending at `8e740f407350ee27f2094a8cbcd64e618d1e3ef1` before this checkpoint write;
+- exact product/config authority remains b65 source `44138db766d00e62cfda7f20182f6d20f1ec3352` until a new coherent Candidate is emitted;
+- PR #29 remains open / mergeable / unmerged;
+- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`.
 
-## Recovery point
+Planned non-atomic batches:
 
-b65 is permanently reserved and accepted for the focused diagnostic Runtime scope. Do not allocate b66 for spacing or escaped-slash polish. Do not modify production Send code until Option A vs Option B is explicitly resolved. Once resolved, update the relevant TD before or in the same product-code cycle and allocate the next unique Candidate only when a coherent testable production slice exists.
+A. **Docs authority batch** — create `WEB_SEND_ADAPTER.md`; update technical decisions / project-specific rules / preflight / START_HERE and current state docs to make Option B the current authority. Docs-only commits may move the formal branch safely.
+
+B. **Detached product batch** — implement Web Rule Lab and the smallest existing-chat production Send/stream slice using Git blobs/tree/commit off the formal branch. Do not place new product behavior under b65 identity on the formal branch.
+
+C. **Candidate identity batch** — when the product slice is coherent, allocate b66 (or the next still-free identity), align Swift/Xcode/workflow identity in the same detached tree, compare-audit the exact delta, then fast-forward the formal branch once.
+
+D. **Validation batch** — Push/PR CI -> Artifact -> independent package identity -> Runtime handoff -> durable docs/PR synchronization.
+
+Writes already confirmed complete:
+
+- b65 Runtime evidence file exists;
+- checkpoint now records Option B and this recovery plan.
+
+Writes still pending:
+
+- authoritative adapter/TD/preflight/startup docs;
+- Web Rule Lab product code;
+- production existing-chat response-owner slice;
+- next Candidate identity/CI/Artifact.
+
+Do not touch/reuse:
+
+- b39-b65 emitted Candidate identities;
+- b38 Stable message geometry/round navigation contracts except where explicitly integrated and regression-tested;
+- `AuthSessionStore` or persistent auth storage ownership without new evidence;
+- full-Web conversation rendering as daily-chat UI.
 
 ## Next exact action
 
-Ask the user to choose Option A or Option B. This is a genuine product/security architecture gate under repository governance, not a routine progress approval. After the choice, continue autonomously through the smallest existing-chat production Send/stream Candidate, CI/Artifact/package verification, then hand the exact IPA for Runtime testing.
+Complete docs authority batch A, then inspect/reuse the current Web probe engine and production Repository/UI call sites to implement Web Rule Lab plus the smallest existing-chat production Send/stream slice in detached product state. Do not stop for routine intermediate milestones; stop only at a real Runtime/human gate or evidence/architecture conflict.

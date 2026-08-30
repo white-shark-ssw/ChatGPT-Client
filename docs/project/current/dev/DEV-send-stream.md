@@ -7,8 +7,8 @@
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged
-- Current formal branch head before this checkpoint update: `a75df694604c41f8ad308d42a7ba19e50d952aa1`
-- Current formal branch tree before this checkpoint update: `f8755ec49a0d3f4d406848e406d2d25ce5752ff5`
+- Current formal branch head before this checkpoint update: `a10b6829a29c0613d02d01def61e443b37f27ee1`
+- Current formal branch tree before this checkpoint update: `bdd4db94198bb55ba99601d75b3af0c3f5fd7cdc`
 - Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
 - `main` advanced materially in docs/rules since the old `1ac202c...` base. New product-source overlap has not been observed; final Candidate/merge must re-check/synchronize target state.
 - Current `main` `docs/project/current/dev/` has no Active Composer checkpoint. `DEV-composer-parity` is a planned **future serialized Work**, not a parallel implementation branch/candidate.
@@ -22,21 +22,22 @@
 
 ## Tooling-only recovery note — no product/Candidate effect
 
-Two connector action-selection mistakes created temporary **empty** root files during detached preparation; each was immediately removed before any product tree/Candidate assembly:
+Three connector action-selection mistakes created temporary **empty** root files during detached preparation; every file was immediately removed before any product tree/Candidate assembly:
 
-1. `tmp_should_not_create`: created at `53fc4245c87944362db0aaa07c863fd7d0e31d42`, removed at `37175cb7b45a0e02821ff54a439709af08181755`.
-2. `THIS_CALL_MUST_NOT_HAPPEN`: created at `ef95ae3416694025aa9e9f07734051c6b6914803`, removed at `a75df694604c41f8ad308d42a7ba19e50d952aa1`.
+1. `tmp_should_not_create`: created `53fc4245c87944362db0aaa07c863fd7d0e31d42`, removed `37175cb7b45a0e02821ff54a439709af08181755`.
+2. `THIS_CALL_MUST_NOT_HAPPEN`: created `ef95ae3416694025aa9e9f07734051c6b6914803`, removed `a75df694604c41f8ad308d42a7ba19e50d952aa1` after the checkpoint-only tree existed.
+3. `SHOULD_NEVER_BE_CREATED_AGAIN`: created `ebef531c08272b1920408e1e040dfb03181726fe`, removed `a10b6829a29c0613d02d01def61e443b37f27ee1`.
 
 Verified recovery facts:
 
-- after the first removal the tree returned exactly to the pre-accident tree;
-- after the second removal the tree returned exactly to `f8755ec49a0d3f4d406848e406d2d25ce5752ff5`, the checkpoint-only tree that existed before the second mistake;
-- neither temporary file ever contained product/config/workflow content;
+- after each removal, the tree returned exactly to the immediately preceding intended tree;
+- after the third removal the exact tree is `bdd4db94198bb55ba99601d75b3af0c3f5fd7cdc`;
+- no temporary file contained product/config/workflow content;
 - no Candidate/build/Artifact identity was allocated or emitted;
-- all four commits are tooling-only history and must never be treated as product authority;
-- recovery must never replay either create/delete chain.
+- these commits are tooling-only history and must never be treated as product authority;
+- recovery must never replay any create/delete chain.
 
-From this checkpoint onward detached assembly must use Git data `create_blob -> create_tree -> create_commit` only; do not use contents `create_file` for detached product preparation.
+From this checkpoint onward detached assembly is **Git-data-only**: `GitHub.create_blob -> GitHub.create_tree -> GitHub.create_commit`. Do not use contents `create_file` for detached product preparation.
 
 ## Exact b65 Runtime — accepted probe boundary
 
@@ -127,37 +128,37 @@ Current Work adds a development-only Lab:
 
 Smallest coherent b66 slice is **existing-conversation Send/stream production ownership + Lab**, without final Composer UI:
 
-1. add one process-resident covered official-Web executor using only b65-evidenced composer/protected-Send/SSE rules;
+1. one process-resident covered official-Web executor uses only b65-evidenced composer/protected-Send/SSE rules;
 2. executor exact-targets `/c/<conversationID>` before Send and emits typed events only; it owns no response state;
-3. add Repository-owned per-conversation response operation/state: preparing/thinking/reasoning/final/completed/failed plus response-local tool presentation bookkeeping;
-4. detail/native validation UI consumes Repository live response state but preserves b38 history geometry; no final Composer implementation;
-5. replace old full-page hybrid Send toolbar with a clearly temporary **validation trigger** (simple prompt/alert) that invokes Repository/executor APIs; it is deleted/replaced by future `DEV-composer-parity` and must not become a durable draft owner;
+3. Repository owns per-conversation response operation/state: preparing/thinking/reasoning/final/completed/failed plus response-local tool presentation bookkeeping;
+4. validation UI consumes Repository live response state but preserves b38 history geometry; no final Composer implementation;
+5. replace old full-page hybrid Send toolbar with a clearly temporary simple prompt/alert trigger invoking Repository/executor APIs; it is replaced by future `DEV-composer-parity` and must not become a durable draft owner;
 6. navigating A->B must not cancel A's covered-Web stream; b66 does not yet claim hidden-active memory-warning resident protection until the owner-internal resident-key patch is separately completed and validated;
 7. unsafe Sync/Reload for the currently active response is disabled in validation presentation rather than guessed;
-8. add Web Rule Lab in the same Candidate;
+8. Web Rule Lab ships in the same Candidate;
 9. first slice does not guess new-chat or Stop behavior beyond already evidenced rules.
 
 ## Detached product preparation already completed
 
-The following Git blobs were created but **have never been attached to the formal branch or any Candidate**:
+Git blobs created but **never attached to the formal branch or a Candidate**:
 
-- old prototype executor `14a8f114f08fe976ad247ff94707db826deeade7` — rejected before assembly because it observed the original SSE without reusing b65's filtered-response text-patch removal; do not use it;
-- Web Rule Lab prototype `167fe806988a499ac8cdae6f57656085b40be0a3` — usable content, intended to be folded into an already-targeted source file to avoid unnecessary Xcode source-list churn;
-- Repository response runtime prototype `414979dc527a0a4223bf79df84cf7b51b205e2a7` — usable design, intended to be folded into existing target source;
+- old prototype executor `14a8f114f08fe976ad247ff94707db826deeade7` — rejected because it did not reuse b65 filtered-response text-patch removal; do not use;
+- Web Rule Lab prototype `167fe806988a499ac8cdae6f57656085b40be0a3` — reusable content;
+- Repository response runtime prototype `414979dc527a0a4223bf79df84cf7b51b205e2a7` — reusable design;
 - live-response overlay prototype `de70050d2240e530e2076723f43c80f38f2cbf57` — validation-only presentation;
 - Settings-with-Lab-entry prototype `931b5d4c945f2ae0a958b8db1cde3ac3881d31b4`.
 
-Current assembly strategy is smaller: fold executor/runtime/overlay into existing `RootViewController.swift` and Lab into existing `SettingsViewController.swift`, avoiding new target source entries. The production executor must reuse the exact accepted b65 compact text grammar: exact `o/p/v`, contextual `v`, exact `title_generation` continuation, nested `/message/content/parts/0` scrubbing, reasoning preamble/active/end semantics and exact-parent tool association.
+Current assembly strategy: fold corrected executor/runtime/overlay into existing `RootViewController.swift` and Lab into existing `SettingsViewController.swift`, avoiding new target source entries. The production executor must reuse accepted b65 compact grammar: exact `o/p/v`, contextual `v`, exact `title_generation` continuation, nested `/message/content/parts/0` scrubbing, reasoning preamble/active/end semantics and exact-parent tool association.
 
 ## Batch recovery point — b66 existing-chat production slice
 
 Current baseline after this checkpoint update must be re-fetched before tree assembly.
 
-Expected product/config files for the coherent detached tree:
+Expected product/config files for coherent detached tree:
 
-- `ChatGPTClient/RootViewController.swift` — covered executor + Repository response runtime extension + validation overlay/orchestration; remove full-page Web as normal Send path;
+- `ChatGPTClient/RootViewController.swift` — corrected covered executor + Repository response runtime extension + validation overlay/orchestration; remove full-page Web as normal Send path;
 - `ChatGPTClient/SettingsViewController.swift` — Web Rule Lab implementation + entry;
-- Xcode project build/Candidate identity only after the product slice is coherent;
+- Xcode project build/Candidate identity only after product slice is coherent;
 - workflow Artifact identity only when b66 is actually allocated.
 
 Do not touch/reimplement:
@@ -170,4 +171,4 @@ Do not touch/reimplement:
 
 ## Next exact action
 
-Re-fetch this checkpoint's new head/tree. Create corrected combined Root/Settings detached blobs, statically audit against b65 grammar and state-owner invariants, then assemble a coherent detached product tree. Only then allocate b66 atomically with project/workflow identity, compare-audit, move formal branch once, continue through CI/Artifact/package verification, and stop at exact-device Runtime.
+Re-fetch this checkpoint's new head/tree. Generate corrected combined Root/Settings blobs using `GitHub.create_blob` only, statically audit against b65 grammar and state-owner invariants, assemble coherent detached product tree, then allocate b66 atomically with project/workflow identity, compare-audit, move formal branch once, continue through CI/Artifact/package verification, and stop at exact-device Runtime.

@@ -1,12 +1,12 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-30 through exact b60 Runtime and b61 Code / CI / Artifact / package verification._
+_Last updated: 2026-08-30 through exact b61 Runtime classification and b62 Code / CI / Artifact / package verification._
 
 ## Purpose / delivery principles
 
 Build a genuinely usable native Swift/UIKit ChatGPT client without replacing accepted native ownership merely to accommodate private Web behavior. Current real source, exact CI/Artifact evidence, real-device evidence and latest explicit requirements outrank stale plan wording.
 
-Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b61 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
+Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b62 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
 
 ## Accepted merged foundation
 
@@ -37,27 +37,57 @@ Retain b38 bounded long-message chunks, deterministic geometry/manual layout and
 - b48-b51 established Native composer -> official protected Send and complete compact response text, including fresh-new-chat title-generation continuation.
 - b52-b56 identified reasoning/tool message grammar, separated internal `assistant:thoughts`, and established exact `reasoning_ended` semantics.
 - b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion without the earlier leading gap.
-- b60 Runtime passed the tested ordered presentation gate and established the exact parent association for tool results.
+- b60 passed the tested thinking/segmentation gate and exact result-parent association.
+- b61 successful tool-active Runtime passed transient parent-paired row completion, but a separate cold/new-page run exposed generic-textarea false readiness before protected Send.
+- b62 is the bounded Send-entry correction for that exact defect only.
 
-### b60 — thinking / segmentation / parent association Runtime passed
+### b61 — Runtime Partial
 
-Exact b60:
+Exact b61:
 
-- Candidate `DEV-send-stream-0.1.0-b60`, source `8ca445f3c17233ac36832f46417a8e53a138499e`.
-- Artifact `9731477362`; IPA SHA `7cae323231b6b9d1aa837b03506450daa99f457fd8b4025deedb368dc008cd42`.
-- Exact iPhone/iOS17 export: `ChatGPTClient-Diagnostics-20260830-122917.json`.
+- Candidate `DEV-send-stream-0.1.0-b61`, source `2386872af03e0684eee8deca87f636dc265114ec`.
+- Artifact `9732514781`; IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
 
-Two consecutive tool-active turns both returned HTTP200 SSE and terminal true. Each showed initial event-driven `正在思考`, visible reasoning streaming, one preserved Native paragraph break at the later thinking preamble, exact reasoning end, final answer and no obvious user-observed truncation.
+Two runs must remain separately represented:
 
-Tool association evidence:
+1. **False-ready Send-entry defect** — `ChatGPTClient-Diagnostics-20260830-134827.json`: `new_or_other`, composer strategy `textarea`, `nativeSubmit`, `submitResult=submitted`, then no `sendObserved`, `sendResponse`, thinking or stream metrics. User observed no answer activity.
+2. **Successful tool-active lifecycle** — `ChatGPTClient-Diagnostics-20260830-135112.json`: HTTP200 SSE / terminal; reasoning `10/251`, final `68/2363`; segment break `1/1`; exact reasoning-end 1; invocation identities/results `14/14`; result parent matches `14/14`, 0 unmatched/missing; Native tool presentations/completion updates `14/14`. User observed complete reasoning opening and rows moving `调用中 -> 已完成`.
 
-- Turn 1: 15 result `parent_id` values present; all 15 matched observed invocation IDs; 0 unmatched / 0 missing. Completed invocation presentations were only 13 while invocation identities/results were 15, proving presentation/count adjacency is insufficient.
-- Turn 2: 5/5 parent matches; 0 unmatched / 0 missing.
-- Author-name==invocation-recipient was 14/15 then 3/5, so it is not association authority.
+Therefore b61 is **Runtime Partial**, not failed wholesale and not fully passed. Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b61-runtime.md`.
 
-Accepted tested rule: result metadata `parent_id` identifies the invocation service message ID inside the same response stream. Raw IDs remain transient/unlogged; adjacency/count/tool-name association is rejected.
+### b62 — verified-composer Send gate
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b60-runtime.md`.
+Exact b62 identity:
+
+- Candidate `DEV-send-stream-0.1.0-b62`, `0.1.0 (62)`.
+- Exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`; tree `d3432dfe2e32cddcfac7a5a56d7880772dc6989d`.
+- Push `33316398081 / 99270535435` — success.
+- PR `33316399402 / 99270539763` — success.
+- Artifact `9733577825`; ZIP `sha256:d53ddb88c5d2092294592416e10e5a0a752cb7afb0bbe0a39c2c137d021082d0`.
+- IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
+- Package Release / `0.1.0 (62)` / source marker `e1b44f7ab6c4` / iOS14 / `[1,2]` / arm64.
+
+b62 remains bounded:
+
+1. remove only unqualified `textarea:not([disabled])` from composer authority;
+2. accept only `#prompt-textarea` or explicit `[contenteditable="true"][role="textbox"]` as evidenced composer identities;
+3. add no retry, wait timer, watchdog, polling or speculative fallback;
+4. preserve b61 protected Send, text grammar, thinking preambles, event-driven `正在思考`, reasoning/final split, exact `reasoning_ended`, terminal fallback, parent-paired tool lifecycle and safe detail-shape diagnostics;
+5. keep raw service IDs, tool request/result bodies, connector payload values and `assistant:thoughts` non-presentational.
+
+Evidence ladder: **Code / Push CI / PR CI / Artifact / package Passed; Runtime/manual pending; Stable/Frozen No.**
+
+### b62 Runtime standard
+
+The exact b61 false-ready race is intermittent. **Do not require it to reproduce.** The focused Runtime gate is:
+
+- after force-quit/cold launch, while no evidenced official composer exists, Native Send must stay not-ready/disabled; an unrelated generic textarea must not authorize Send;
+- once Send becomes enabled and a prompt is submitted, a successful turn must reach the real protected-Send lifecycle (`sendObserved`, then HTTP200 SSE when service success occurs) rather than stopping at `submitResult=submitted`;
+- the successful response must retain b61's accepted thinking/reasoning/final presentation and tool lifecycle, with no obvious opening/middle truncation and no obvious duplicate/missing tool rows;
+- tool-active rows should visibly progress `调用中 -> 已完成` when matched results arrive;
+- if a run ever again reports submitted but never `sendObserved`, export immediately; that is a concrete b62 rejection signal.
+
+One focused cold-launch tool-active turn is sufficient for the primary gate. One additional cold launch is a useful confidence check but optional. Do not burn time indefinitely trying to reproduce a low-frequency page race.
 
 ### Official-like response lifecycle target
 
@@ -67,30 +97,7 @@ The eventual Native interaction remains:
 
 This entire reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; it is not a separate feature Work. General Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
 
-### b61 — exact current Runtime gate
-
-Exact b61 identity:
-
-- Candidate `DEV-send-stream-0.1.0-b61`, `0.1.0 (61)`.
-- Exact product/config source `2386872af03e0684eee8deca87f636dc265114ec`; tree `a687500c88cffabf3a8496652fd5e0b633264836`.
-- Push `33312809061 / 99260781131` — success.
-- PR `33312811455 / 99260788483` — success.
-- Artifact `9732514781`; ZIP `sha256:66976ecb53ac8fc2b116dcbce753fdf05499cea88dd29f0ae4223ab8baa5bf28`.
-- IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
-- Package Release / `0.1.0 (61)` / source marker `2386872af03e` / iOS14 / `[1,2]` / arm64.
-
-b61 must remain bounded:
-
-1. preserve b60 protected Send, text grammar, thinking preambles, event-driven `正在思考`, reasoning/final split, exact `reasoning_ended`, terminal fallback and final answer behavior;
-2. assign transient local slots to observed invocation identities and use only exact matched result `parent_id` to update the correct Native row to `已完成`;
-3. never send/log raw service IDs to Native or diagnostics;
-4. allow a matched result's already-authorized bounded `reasoning_title` to refine a generic tool label, but do not expose request/result body;
-5. inspect only bounded **shape/type/count/direct-key/string-length** evidence for candidate fields such as `connector_tool_payload`, `inline_cot_expandable_content`, `reasoning_titles`, `tool_icons`, `invoked_plugin`, and `invoked_resource`;
-6. keep candidate values/bodies, raw connector/tool payloads and `assistant:thoughts` non-presentational.
-
-Evidence ladder: **Code / Push CI / PR CI / Artifact / package Passed; Runtime/manual pending; Stable/Frozen No.**
-
-Only after exact b61 Runtime proves correct row lifecycle and identifies a bounded service field that is demonstrably user-visible may a later Candidate implement expandable tool details. Do not guess from field names alone.
+Expandable tool detail still requires exact evidence that a bounded field is intended for user-visible presentation. b61's shape diagnostics do not authorize raw connector/tool payloads.
 
 ### Background ordering
 
@@ -122,4 +129,4 @@ Isolated Work IDs for download manager, pagination, production background comple
 
 ## Current next action
 
-Install exact b61 on the primary iPhone/iOS17 target and run one naturally tool-active repository/GitHub turn. Observe every visible tool row for `调用中 -> 已完成`, duplicate/missing rows, thinking/reasoning/final completeness, then export diagnostics after terminal. Do not allocate b62 until that exact Runtime evidence is classified.
+Install exact b62 on the primary iPhone/iOS17 target. Force-quit, reopen `Native 输入 / Web Send`, observe that Send does not become usable merely because an unrelated page textarea exists, then run one naturally tool-active repository/GitHub turn after Send becomes enabled. Wait for terminal and export diagnostics. Optional: repeat one additional cold launch. Do not require reproduction of b61's rare false-ready race and do not allocate b63 until b62 Runtime is classified.

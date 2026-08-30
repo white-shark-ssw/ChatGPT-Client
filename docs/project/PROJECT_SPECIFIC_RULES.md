@@ -10,7 +10,7 @@ This file contains durable repository/product rules backed by explicit requireme
 - Exact b42 Runtime proves successful ChatGPT-account protected Send depends on browser challenge output. Pure-native/transient-auth protected Send remains blocked.
 - The separately billed API-product route remains rejected unless that explicit product decision changes. Primary-account Sub2API/Codex-subscription Runtime remains blocked by the account-safety gate.
 - TD-024 permits only the recorded user-visible official-Web protected-Send surface; TD-025 rejects b44's full-page Native→Web→Native product form; TD-028 records that full existing-conversation Web rendering is not an accepted daily-chat dependency after the long-answer composer failure.
-- b48-b57 are isolated diagnostic exceptions only. Their success does not approve the diagnostic Web Send-engine architecture as production architecture and does not transfer production response ownership.
+- b48-b58 are isolated diagnostic exceptions only. Their success does not approve the diagnostic Web Send-engine architecture as production architecture and does not transfer production response ownership.
 - `ConversationRepository` remains sole native production conversation/list/detail/recovery/future accepted response authority.
 - `AuthSessionStore` remains native auth/account authority.
 - Default persistent `WKWebsiteDataStore` remains the only persistent auth-secret authority. Diagnostic Web uses that same store and does not create another persistent credential/challenge store.
@@ -28,38 +28,40 @@ This file contains durable repository/product rules backed by explicit requireme
 - b52 Runtime confirms the tested final answer remained complete while visible reasoning beginning was slightly truncated; the root-nonexact/inactive-value hypothesis is rejected for that reproduction.
 - b53 identifies separate `assistant:reasoning_recap`, `assistant:thoughts`, assistant code and tool result classes. Internal `assistant:thoughts` is not presentation data.
 - b54 materially identifies assistant invocation→tool-result structure; generic structure observation can saturate and missing late structures must not be treated as protocol absence.
-- b55 preserves Send/filter/output and adds an independent bounded special-structure observer. Exact Runtime passed the intended saturation gate and captured completed `assistant:reasoning_recap` with `reasoning_status=reasoning_ended` and `reasoning_recap_type=collapse` while `assistant:thoughts` remained separate.
-- b56 Runtime corrects the recap interpretation: the exact recap text was only a 7-character status/description in the tested turn, while the real visible reasoning remained in the ordinary assistant text stream and stayed mixed with final answer. Therefore recap text is **not established as the real reasoning body**.
-- The exact completed recap event remains an accepted explicit **reasoning-phase end marker** because it carries `reasoning_status=reasoning_ended`.
-- b56 event ordering shows ordinary `assistant:text:in_progress` immediately before the first accepted `/message/content/parts/0` append. This is a concrete missing-prefix hypothesis, but b56 did not prove the ordinary message's direct content field. Do not guess the initial field.
-- b57 may route only the already-accepted assistant text stream before the exact reasoning-end marker into a distinct Native reasoning region and accepted text after the marker into final answer.
-- b57 must use the recap message as phase state only; recap text itself is not the reasoning body.
-- If a b57 turn reaches terminal with no exact reasoning-end marker, provisional pre-marker accepted text may be promoted into ordinary final-answer presentation so non-reasoning turns are not permanently misclassified. This is deterministic terminal classification, not retry/timer/watchdog behavior.
-- b57 may record a separate bounded 12-entry ordinary `assistant:text` structural channel containing direct field names, string lengths, array shape/string-character counts, safe booleans/enums and before/after-marker phase only. It must not persist the actual assistant text or raw message identity.
-- b57 must **not** extract an unproven initial ordinary-assistant text field. Any such change requires exact b57 Runtime evidence and a later Candidate.
+- b55 captures completed `assistant:reasoning_recap` with `reasoning_status=reasoning_ended` and `reasoning_recap_type=collapse` while `assistant:thoughts` remains separate.
+- b56 Runtime corrects the recap interpretation: recap text itself was only a short status/description in the tested turn and is **not established as the real visible reasoning body**. The exact completed recap event remains an accepted explicit reasoning-phase end marker.
+- b57 Runtime confirms the already-accepted assistant text stream can be split at exact `reasoning_ended`: before-marker text streamed only in Native `思考过程`, after-marker text remained final answer, and the previous leading truncation did not reproduce.
+- The first b57 before-marker ordinary `assistant:text:in_progress` contained one six-character string part and `is_thinking_preamble_message=true`; b57 did not consume that message body and the user saw complete reasoning. Do not broaden the parser to consume this preamble without new Runtime evidence.
+- If a turn reaches terminal with no exact reasoning-end marker, provisional pre-marker accepted text may be promoted into ordinary final-answer presentation so non-reasoning turns are not permanently misclassified. This is deterministic terminal classification, not retry/timer/watchdog behavior.
 - Do not generalize arbitrary `v:string` or arbitrary structural frames into assistant text. Parser changes require exact structural/runtime evidence.
 
 ## User-visible reasoning and tool contract
 
-- User-visible reasoning, reasoning→final transition and follow-tail remain part of `DEV-send-stream`; do not create a separate Work merely for these presentation details.
+- User-visible reasoning, reasoning→final transition and tool activity remain part of `DEV-send-stream`; do not create a separate Work merely for these presentation details.
 - Only service data explicitly intended for the user may enter Native presentation. Internal reasoning structures, system/internal nodes and raw connector/tool payloads must not be exposed.
 - `assistant:thoughts` remains explicitly non-presentational under current evidence.
 - Exact b55/b56 authorizes `reasoning_ended` as the current phase marker; it does **not** authorize recap text as the reasoning body.
-- Exact b57 may present the already-accepted visible assistant text before that marker as `思考过程` and accepted text after it as final answer. No additional hidden content becomes authorized by this split.
+- Exact b57 Runtime authorizes presenting the already-accepted visible assistant text before that marker as `思考过程` and accepted text after it as final answer. No additional hidden content becomes authorized by this split.
 - `思考过程` may be visible/expanded while active and collapse on exact reasoning end; explicit user expand/collapse after completion is permitted.
 - Reasoning→final transition must occur exactly once from protocol/state evidence, not elapsed time, DOM text, cell redraw or UI title.
-- b54/b55 prove a structural assistant-invocation→tool-result relationship, but do not yet prove exact user-visible tool fields. Do not build a raw tool-result UI from that structural evidence.
-- Exact b57 Runtime is the current gate for phase separation and the still-truncated reasoning prefix. Do not implement missing-prefix extraction, tool-detail presentation or broader parser acceptance until that evidence is classified.
+- b54-b57 prove completed assistant-code invocations with non-`all` recipients can be followed by completed tool results; raw tool arguments/results remain non-presentational.
+- Exact b58 may show one compact diagnostic Native tool-activity line only for exact completed assistant-code invocations with role `assistant`, `content_type=code`, `status=finished_successfully`, non-empty recipient other than `all`, and `metadata.is_complete=true`.
+- b58 may deduplicate an invocation in memory by service message ID, but must never log/export that ID.
+- If exact b58 sees a non-empty service `metadata.reasoning_title`, that string may be used only for transient tool-activity display. Diagnostics may record only title character count/presence, never title text.
+- If no service title exists, b58 may show only local generic `工具调用`; do not invent a tool name from raw arguments/results.
+- Completed tool result messages are aggregate evidence only in b58. Their body is not presentation data and b58 must not guess invocation/result pairing beyond observed ordering/counts.
+- Exact b58 Runtime is the current gate for whether this bounded activity presentation is useful/correct. Do not implement raw tool detail/result presentation or allocate b59 until that evidence is classified.
 
 ## Diagnostics contract
 
 - Use existing `DiagnosticsLogger` authority.
 - Exported diagnostics remain privacy-safe structural/aggregate evidence, not message-content archives.
-- Do not persist prompt text, assistant answer text, reasoning text, raw tool output, raw conversation/message identity, or browser challenge/auth values.
+- Do not persist prompt text, assistant answer text, reasoning text, tool title text, raw tool output, raw conversation/message identity, or browser challenge/auth values.
 - Existing aggregate frame/patch/character/DOM counts remain permitted.
 - b54+ may record bounded direct structural key names, safe recipient/author protocol tokens, content field names/counts/string lengths, direct metadata booleans and safe status/type-like enums where needed for exact evidence.
 - Generic unique structure capacity remains 32; special reasoning/tool structure capacity remains 24 with independent count/overflow.
-- b57 ordinary assistant-text phase structure capacity is separately bounded to 12 unique shapes with count/overflow. It must not record text values or unbounded arrays.
+- b57 ordinary assistant-text phase structure capacity remains separately bounded to 12 unique shapes with count/overflow and must not record text values or unbounded arrays.
+- b58 may record aggregate `toolInvocationCount`, `toolInvocationWithTitleCount`, `toolResultCount`, `toolResultWithTitleCount`, `nativeToolPresentationCount`, and per-event state/title-character-count only. It must not log the service title or message ID.
 - Background diagnostics may record lifecycle/public background-task/Web process/navigation failure classes without adding heartbeat timers merely to manufacture activity.
 - Scroll/round diagnostics may record non-secret indices, offsets, geometry durations, travel distance and landing error, never message identity/body.
 
@@ -69,9 +71,9 @@ This file contains durable repository/product rules backed by explicit requireme
 - Once an Artifact identity is emitted, corrected product code must not reuse that identity.
 - Actual built `Info.plist` version/build/Candidate/source marker plus IPA filename/SHA are package identity authority; workflow container naming alone is not proof.
 - `scripts/build_ipa.sh` must fail on Candidate/version/build mismatch.
-- Exact b24-b57 identities and emitted Artifacts are permanently reserved. Previously rejected identity-invalid transition/stale Artifacts remain rejected.
-- Exact current Phase 9 diagnostic product/config authority is b57 source `7074b1f85a0f239a5fd615f52196e1e28145523c`; later docs-only commits do not redefine it.
-- Any product-code change after b57 requires b58+ and exact b57 Runtime evidence. Do not pre-allocate b58 by guess.
+- Exact b24-b58 identities and emitted Artifacts are permanently reserved. Previously rejected identity-invalid transition/stale Artifacts remain rejected.
+- Exact current Phase 9 diagnostic product/config authority is b58 source `d9dbf208625e46b8eb4e7ec69209c9d519d0e5eb`; later docs-only commits do not redefine it.
+- Any product-code change after b58 requires b59+ and exact b58 Runtime evidence. Do not pre-allocate b59 by guess.
 
 ## Native UI / conversation presentation contracts
 
@@ -142,12 +144,12 @@ This file contains durable repository/product rules backed by explicit requireme
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source. Final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint recovery point and never blindly replay already-confirmed Candidate writes.
-- Tooling-only assembly commits are never Work/Candidate authority. Stable Phase 8 authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; current Phase 9 diagnostic authority is b57 source `7074b1f85a0f239a5fd615f52196e1e28145523c`.
+- Tooling-only assembly commits are never Work/Candidate authority. Stable Phase 8 authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; current Phase 9 diagnostic authority is b58 source `d9dbf208625e46b8eb4e7ec69209c9d519d0e5eb`.
 
 ## Critical invariants / prohibited routes
 
 - Historical hidden WebView chat code is not the native product baseline.
-- TD-024/TD-025/TD-028 remain in force while b48-b57 operate only as diagnostic exceptions.
+- TD-024/TD-025/TD-028 remain in force while b48-b58 operate only as diagnostic exceptions.
 - Full existing-conversation Web rendering is not a performance fix merely because it is hidden or display-trimmed.
 - CI/Artifact success is never Runtime proof.
 - Main-app background survival is never WebKit-stream survival proof.

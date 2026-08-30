@@ -55,7 +55,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b53 诊断：b52 已确认最终回答完整、仅可见思考开头略有缺失。本版不改变 b52 文本过滤/输出，只记录有限个唯一 SSE 结构签名（事件类型、patch 路径、消息角色/内容类型、结构键和嵌套 patch 路径），用于识别 reasoning/tool 的真实协议结构。不会记录提示词、回答、思考文本或原始 ID。"
+        explanationLabel.text = "b54 诊断：b53 已确认 SSE 中存在独立 reasoning_recap、thoughts、assistant code 与 tool 消息。本版仍不改变文本过滤/输出，也不会展示 thoughts；只为这些特定消息记录内容容器、recipient/author 结构以及可见性/展示相关 metadata 的键、布尔值和安全枚举，用于区分用户可见 reasoning/tool 与内部节点。不会记录提示词、回答、思考正文、工具输出或原始 ID。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -118,7 +118,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b53_reasoning_tool_structure_classify", "surface": "native_over_fullsize_web", "scope": "reasoning_tool_structure_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b54_reasoning_tool_visibility_shape", "surface": "native_over_fullsize_web", "scope": "reasoning_tool_visibility_shape_diagnostic"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -231,7 +231,17 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "endTurn": Self.safeBoolString(body["endTurn"]),
                 "payloadKeys": Self.safeTokenArray(body["payloadKeys"]),
                 "valueKeys": Self.safeTokenArray(body["valueKeys"]),
-                "nestedPatches": Self.safeTokenArray(body["nestedPatches"])
+                "nestedPatches": Self.safeTokenArray(body["nestedPatches"]),
+                "messageKeys": Self.safeTokenArray(body["messageKeys"]),
+                "authorKeys": Self.safeTokenArray(body["authorKeys"]),
+                "contentKeys": Self.safeTokenArray(body["contentKeys"]),
+                "metadataKeys": Self.safeTokenArray(body["metadataKeys"]),
+                "recipient": Self.safeToken(body["recipient"] as? String),
+                "authorName": Self.safeToken(body["authorName"] as? String),
+                "contentStringFields": Self.safeTokenArray(body["contentStringFields"]),
+                "contentArrayFields": Self.safeTokenArray(body["contentArrayFields"]),
+                "metadataBooleanFields": Self.safeTokenArray(body["metadataBooleanFields"]),
+                "metadataEnumFields": Self.safeTokenArray(body["metadataEnumFields"])
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamStructure", fields: fields)
         case "stream_metrics":
@@ -350,6 +360,45 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         if (typeof value !== 'string' || !value) return 'none';
         return /^\/[A-Za-z0-9_./:{}+-]{1,159}$/.test(value) ? value : 'other_or_redacted';
       };
+      const directKeys = value => value && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value).slice(0, 32).map(safeStructuralKey).sort() : [];
+      const primitiveType = value => value === null ? 'null' : (Array.isArray(value) ? 'array' : typeof value);
+      const summarizeContentFields = content => {
+        const stringFields = [];
+        const arrayFields = [];
+        if (!content || typeof content !== 'object' || Array.isArray(content)) return { stringFields, arrayFields };
+        for (const [rawKey, value] of Object.entries(content).slice(0, 24)) {
+          const key = safeStructuralKey(rawKey);
+          if (typeof value === 'string') {
+            stringFields.push(key + ':' + value.length);
+            continue;
+          }
+          if (!Array.isArray(value)) continue;
+          const types = Array.from(new Set(value.slice(0, 8).map(primitiveType))).slice(0, 6);
+          const stringCharacters = value.reduce((sum, item) => sum + (typeof item === 'string' ? item.length : 0), 0);
+          const firstObject = value.find(item => item && typeof item === 'object' && !Array.isArray(item));
+          const itemKeys = firstObject ? Object.keys(firstObject).slice(0, 12).map(safeStructuralKey).sort() : [];
+          let summary = key + ':' + value.length + ':' + (types.length ? types.join('+') : 'empty') + ':chars' + stringCharacters;
+          if (itemKeys.length) summary += ':keys' + itemKeys.join('+');
+          arrayFields.push(summary.slice(0, 180));
+        }
+        return { stringFields: stringFields.slice(0, 24), arrayFields: arrayFields.slice(0, 24) };
+      };
+      const summarizeMetadataFields = metadata => {
+        const booleanFields = [];
+        const enumFields = [];
+        if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return { booleanFields, enumFields };
+        for (const [rawKey, value] of Object.entries(metadata).slice(0, 32)) {
+          const key = safeStructuralKey(rawKey);
+          if (typeof value === 'boolean') {
+            booleanFields.push(key + ':' + (value ? 'true' : 'false'));
+            continue;
+          }
+          if (typeof value !== 'string' || !/(visible|visibility|hidden|display|presentation|status|type|kind|category|mode|phase|result)/i.test(rawKey)) continue;
+          const token = safeProtocolValue(value);
+          if (token !== 'none' && token !== 'other_or_redacted') enumFields.push((key + ':' + token).slice(0, 180));
+        }
+        return { booleanFields: booleanFields.slice(0, 24), enumFields: enumFields.slice(0, 24) };
+      };
 
       const installRenderSuppression = () => {
         if (document.getElementById('__native_web_send_engine_render_suppression')) return;
@@ -467,7 +516,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
       const summarizeStructure = payload => {
         const payloadObject = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : null;
-        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [] };
+        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [] };
         const valueObject = payloadObject.v && typeof payloadObject.v === 'object' && !Array.isArray(payloadObject.v) ? payloadObject.v : null;
         const eventType = safeProtocolValue(payloadObject.type);
         const operation = safeProtocolValue(payloadObject.o);
@@ -480,24 +529,36 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         const payloadKeys = Object.keys(payloadObject).slice(0, 32).map(safeStructuralKey).sort();
         const valueKeys = valueObject ? Object.keys(valueObject).slice(0, 32).map(safeStructuralKey).sort() : [];
         const nestedPatches = collectNestedPatches(payloadObject).slice(0, 16);
+        const specialMessage = !!message && ((messageRole === 'assistant' && (messageContentType === 'reasoning_recap' || messageContentType === 'thoughts' || messageContentType === 'code')) || messageRole === 'tool');
+        const author = specialMessage && message.author && typeof message.author === 'object' && !Array.isArray(message.author) ? message.author : null;
+        const content = specialMessage && message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
+        const metadata = specialMessage && message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
+        const contentFields = summarizeContentFields(content);
+        const metadataFields = summarizeMetadataFields(metadata);
+        const messageKeys = specialMessage ? directKeys(message) : [];
+        const authorKeys = directKeys(author);
+        const contentKeys = directKeys(content);
+        const metadataKeys = directKeys(metadata);
+        const recipient = specialMessage ? safeProtocolValue(message.recipient) : 'none';
+        const authorName = specialMessage ? safeProtocolValue(author && author.name) : 'none';
         let signature = 'keys:' + payloadKeys.join('+');
         if (typeof payloadObject.type === 'string') signature = 'type:' + eventType;
         else if (typeof payloadObject.o === 'string') signature = 'patch:' + operation + ':' + patchPath;
         else if (message) signature = 'message:' + messageRole + ':' + messageContentType + ':' + messageStatus;
         else if (typeof payloadObject.v === 'string') signature = 'value_string_patch';
-        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches };
+        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields };
       };
 
       const observeStructure = (payload, aggregate) => {
         const summary = summarizeStructure(payload);
-        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches]);
+        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields]);
         if (aggregate.structureSeen.has(evidenceKey)) return;
         if (aggregate.structureSeen.size >= 32) {
           aggregate.structureSignatureOverflowCount += 1;
           return;
         }
         aggregate.structureSeen.add(evidenceKey);
-        post({ kind: 'stream_structure', eventIndex: aggregate.frameCount, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches });
+        post({ kind: 'stream_structure', eventIndex: aggregate.frameCount, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields });
       };
 
       const scrubTextPatches = node => {

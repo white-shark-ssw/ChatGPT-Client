@@ -115,7 +115,9 @@ Completed this cycle:
 5. exact product/config source `e1b44f7a...` differs from b61 only in Candidate metadata plus removal of generic textarea fallback / diagnostic wording;
 6. Push + PR CI succeeded;
 7. Artifact `9733577825` downloaded; ZIP digest, IPA sidecar, built Info.plist and Mach-O independently verified;
-8. later docs-only commits do not redefine exact b62 product/config source.
+8. `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md`, `BUILD_TEST_INDEX.md` and b61 Runtime evidence synchronized through b62 Artifact;
+9. PR #29 title/body synchronized to `b62 verified-composer Send-entry Runtime gate`; PR remains open / mergeable / unmerged;
+10. later docs-only commits do not redefine exact b62 product/config source.
 
 ## Next exact action
 

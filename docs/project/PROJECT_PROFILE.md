@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b61 Runtime classification and b62 Code / CI / Artifact / package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b62 focused Runtime classification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -63,17 +63,9 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b57-b59 established reasoning/final split and exact service-marked thinking-preamble inclusion.
 - b60 passed tested thinking-state / reasoning-segmentation / text-completeness and exact result-parent association.
 - b61 successful tool-active Runtime passed transient parent-paired row lifecycle; a separate cold/new-page run captured generic-textarea false-ready / false-submitted behavior before protected Send.
-- b62 removes only that false-ready generic-textarea authority and otherwise preserves b61 behavior.
+- b62 removed only that false-ready generic-textarea authority and now passes the tested focused verified-composer Runtime gate.
 
-### Exact b61 Runtime
-
-- Candidate `DEV-send-stream-0.1.0-b61`, source `2386872af03e0684eee8deca87f636dc265114ec`, Artifact `9732514781`, IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
-- Failed run `ChatGPTClient-Diagnostics-20260830-134827.json`: page `new_or_other`; composer `strategy=textarea`; `nativeSubmit` + `submitResult=submitted`; no `sendObserved`, `sendResponse`, thinking or stream metrics. User observed no answer activity. Classified as a Send-entry false-ready defect.
-- Successful run `ChatGPTClient-Diagnostics-20260830-135112.json`: HTTP200 SSE / terminal; reasoning `10/251`, final `68/2363`, reasoning segment breaks `1/1`, reasoning-end 1, fallback false; identities/results `14/14`, parent matches `14/14`, unmatched/missing `0/0`, Native presentations/completion updates `14/14`. User observed complete reasoning opening and tool rows progressing `调用中 -> 已完成`.
-- Overall b61: **Runtime Partial** because successful response/tool lifecycle passed but the independent Send-entry defect remained.
-- Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b61-runtime.md`.
-
-### Exact current b62 Candidate
+### Exact b62 current tested Candidate
 
 - Candidate `DEV-send-stream-0.1.0-b62`, `0.1.0 (62)`.
 - Exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`; tree `d3432dfe2e32cddcfac7a5a56d7880772dc6989d`.
@@ -82,8 +74,24 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Artifact `9733577825`; ZIP `sha256:d53ddb88c5d2092294592416e10e5a0a752cb7afb0bbe0a39c2c137d021082d0`.
 - IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
 - Package: Release / `0.1.0 (62)` / Candidate b62 / source marker `e1b44f7ab6c4` / iOS14 / `[1,2]` / arm64.
-- b62 is permanently reserved. Code / Push CI / PR CI / Artifact / package identity passed; Runtime/manual pending.
-- Behavior change: remove unqualified `textarea:not([disabled])` from composer authority; retain `#prompt-textarea` and explicit `[contenteditable="true"][role="textbox"]`; add no retry/timer/watchdog/polling/fallback.
+- b62 is permanently reserved.
+
+Exact user Runtime export `ChatGPTClient-Diagnostics-20260830-151146.json` matched the package identity and showed:
+
+- startup composer `ready=false / none` until official `prompt_textarea` appeared;
+- submit-time strategy `prompt_textarea`;
+- `submitted` followed immediately by real `sendObserved`;
+- HTTP200 SSE, terminal true;
+- reasoning `34 deltas / 497 chars`, preambles `3/20`, reasoning segment breaks `2`, exact reasoning end `1`, fallback false;
+- final answer `93 deltas / 2878 chars`;
+- result parent present/matched/unmatched/missing `20/20/0/0`;
+- Native tool presentations/completion updates `20/20`.
+
+User reported the tested round looked normal and the screenshot showed complete-looking reasoning, tool completion state and final answer.
+
+Classification: **b62 focused Runtime pass for the tested verified-composer Send-entry + preserved reasoning/final + exact-parent tool lifecycle scope.** One positive run is not a universal proof that the intermittent b61 official-page race can never recur.
+
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md`.
 
 ## Current product interaction target
 
@@ -91,17 +99,17 @@ For `DEV-send-stream`, eventual Native behavior should follow the official respo
 
 `发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考 -> 突出完整最终回答`.
 
-Current evidence supports the tested state ordering and parent pairing. Exact cross-tool **user-visible detail field schema** and accepted production response ownership remain Unknown / Unverified.
+The tested state ordering, reasoning/final split and parent-paired tool lifecycle now have positive evidence. Exact cross-tool **user-visible expandable-detail schema** and accepted production response ownership remain Unknown / Unverified.
 
 ## Current next Candidate boundary
 
-b39-b62 are permanently reserved. **Do not allocate b63 until exact b62 Runtime** classifies the verified-composer Send-entry gate and either accepts it for the tested scope or produces a concrete next defect/evidence need.
+b39-b62 are permanently reserved. **Do not allocate b63 by field-name guess.** b62 safe shape evidence includes `connector_tool_payload`, `reasoning_titles`, `tool_icons`, `invoked_resource` and `inline_cot_expandable_content`, but current evidence does not authorize their raw values/bodies as user-visible tool detail.
 
-The b61 false-ready race is intermittent. b62 acceptance does not require reproducing it; one focused cold-launch run must instead prove that Native does not accept an unverified generic textarea and that any enabled Send which succeeds proceeds into the real protected-Send/SSE lifecycle. A second cold launch is useful but optional.
+A b63 Candidate requires a concrete current evidence need plus a fresh uniqueness/conflict guard. If existing official-Web screenshots and b62 shape evidence cannot prove the user-visible detail mapping, the next candidate should be bounded diagnostic-only rather than a speculative detail implementation.
 
 ## Remaining Unknown / Unverified
 
-Accepted production Native response ownership/tool-card detail semantics, Native first/exclusive resume, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Accepted production Native response ownership/tool-card expandable detail semantics, Native first/exclusive resume, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 

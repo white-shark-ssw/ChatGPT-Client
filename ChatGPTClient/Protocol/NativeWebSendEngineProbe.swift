@@ -42,6 +42,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private var reasoningExpanded = false
     private var reasoningFallbackPromoted = false
     private var toolPresentationCount = 0
+    private var toolCompletionUpdateCount = 0
+    private var toolPresentationBySlot: [Int: (title: String, completed: Bool)] = [:]
     private var thinkingPresentationCount = 0
     private var reasoningSegmentBreakCount = 0
     private var thinkingVisible = false
@@ -73,7 +75,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b60 诊断：b59 已确认 thinking preamble、思考流、工具活动和最终回答完整。本版保持 b59 文本解析不变，只保留后续 thinking preamble 的段落边界，按 response lifecycle / exact reasoning_status=is_reasoning 显示“正在思考”，并增加不含 raw ID/正文的工具 parent 关联计数；工具阶段完全按真实事件可选，不展示 raw 参数/结果或 assistant:thoughts。"
+        explanationLabel.text = "b61 诊断：b60 两轮真机已确认正在思考、思考分段与完整文本，并以 result parent_id 20/20 命中 invocation。 本版保持 b60 Send/文本/思考行为不变，只用该 parent 关联更新正确的 Native 工具条目，并仅记录候选详情字段的类型、直接 key、数量或字符串长度；不展示 raw 工具请求/结果、connector payload 或 assistant:thoughts。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -189,7 +191,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b60_ordered_reasoning_tool_lifecycle", "surface": "native_over_fullsize_web", "scope": "segment_thinking_tool_parent"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b61_parent_paired_tool_shape", "surface": "native_over_fullsize_web", "scope": "paired_tool_presentation_plus_detail_shapes"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -258,6 +260,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         reasoningEndMarkerCount = 0
         reasoningFallbackPromoted = false
         toolPresentationCount = 0
+        toolCompletionUpdateCount = 0
         thinkingPresentationCount = 0
         reasoningSegmentBreakCount = 0
         thinkingVisible = false
@@ -350,13 +353,11 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             updateStatusLabel(detail: "官方 reasoning_ended；后续文本进入最终回答")
         case "native_tool_activity":
             let state = Self.safeToken(body["state"] as? String)
+            let slot = (body["slot"] as? NSNumber)?.intValue ?? -1
+            let title = (body["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let titleCharacters = Self.safeNumberString(body["titleCharacters"])
-            if state == "invoked" {
-                let title = (body["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                appendToolActivity(title.isEmpty ? "工具调用" : title)
-                toolPresentationCount += 1
-            }
-            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolActivity", fields: ["state": state, "titleCharacters": titleCharacters, "presented": state == "invoked" ? "true" : "false"])
+            if slot >= 0 && (state == "invoked" || state == "result") { updateToolActivity(slot: slot, title: title, completed: state == "result") }
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolActivity", fields: ["state": state, "slot": slot >= 0 ? String(slot) : "none", "titleCharacters": titleCharacters, "presented": slot >= 0 ? "true" : "false"])
         case "stream_structure":
             let fields = [
                 "eventIndex": Self.safeNumberString(body["eventIndex"]),
@@ -381,6 +382,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "contentArrayFields": Self.safeTokenArray(body["contentArrayFields"]),
                 "metadataBooleanFields": Self.safeTokenArray(body["metadataBooleanFields"]),
                 "metadataEnumFields": Self.safeTokenArray(body["metadataEnumFields"]),
+                "connectorToolPayloadShape": Self.safeToken(body["connectorToolPayloadShape"] as? String),
+                "inlineExpandableShape": Self.safeToken(body["inlineExpandableShape"] as? String),
+                "reasoningTitlesShape": Self.safeToken(body["reasoningTitlesShape"] as? String),
+                "toolIconsShape": Self.safeToken(body["toolIconsShape"] as? String),
+                "invokedPluginShape": Self.safeToken(body["invokedPluginShape"] as? String),
+                "invokedResourceShape": Self.safeToken(body["invokedResourceShape"] as? String),
                 "textPhase": Self.safeToken(body["textPhase"] as? String)
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamStructure", fields: fields)
@@ -427,6 +434,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "toolResultParentUnmatchedCount": Self.safeNumberString(body["toolResultParentUnmatchedCount"]),
                 "toolResultParentMissingCount": Self.safeNumberString(body["toolResultParentMissingCount"]),
                 "toolResultAuthorRecipientMatchCount": Self.safeNumberString(body["toolResultAuthorRecipientMatchCount"]),
+                "toolResultPairedPresentationCount": Self.safeNumberString(body["toolResultPairedPresentationCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
@@ -438,6 +446,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "nativeAnswerDeltaCount": String(answerDeltaCount),
                 "nativeAnswerCharacters": String(answerCharacterCount),
                 "nativeToolPresentationCount": String(toolPresentationCount),
+                "nativeToolCompletionUpdateCount": String(toolCompletionUpdateCount),
                 "nativeThinkingPresentationCount": String(thinkingPresentationCount),
                 "nativeReasoningSegmentBreakCount": String(reasoningSegmentBreakCount),
                 "reasoningFallbackPromoted": reasoningFallbackPromoted ? "true" : "false"
@@ -530,17 +539,32 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     }
 
     private func resetToolActivity() {
+        toolPresentationBySlot.removeAll()
         toolTextView.text = ""
         toolStack.isHidden = true
     }
 
-    private func appendToolActivity(_ title: String) {
-        if toolStack.isHidden { toolStack.isHidden = false }
-        let line = toolTextView.textStorage.length == 0 ? "• \(title)" : "\n• \(title)"
-        let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.preferredFont(forTextStyle: .footnote), .foregroundColor: UIColor.secondaryLabel]
-        toolTextView.textStorage.append(NSAttributedString(string: line, attributes: attributes))
-        let location = max(0, toolTextView.textStorage.length - 1)
-        toolTextView.scrollRangeToVisible(NSRange(location: location, length: 1))
+    private func updateToolActivity(slot: Int, title: String, completed: Bool) {
+        guard slot >= 0 else { return }
+        let existing = toolPresentationBySlot[slot]
+        let resolvedTitle = title.isEmpty ? (existing?.title ?? "工具调用") : title
+        if existing == nil { toolPresentationCount += 1 }
+        if completed { toolCompletionUpdateCount += 1 }
+        toolPresentationBySlot[slot] = (resolvedTitle, completed || (existing?.completed ?? false))
+        renderToolActivity()
+    }
+
+    private func renderToolActivity() {
+        let entries = toolPresentationBySlot.keys.sorted().compactMap { slot -> String? in
+            guard let entry = toolPresentationBySlot[slot] else { return nil }
+            return "• \(entry.title) · \(entry.completed ? "已完成" : "调用中")"
+        }
+        toolTextView.text = entries.joined(separator: "\n")
+        toolStack.isHidden = entries.isEmpty
+        if !entries.isEmpty {
+            let location = max(0, toolTextView.textStorage.length - 1)
+            toolTextView.scrollRangeToVisible(NSRange(location: location, length: 1))
+        }
     }
 
     private func appendNativeText(_ text: String) {
@@ -655,6 +679,25 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           if (token !== 'none' && token !== 'other_or_redacted') enumFields.push((key + ':' + token).slice(0, 180));
         }
         return { booleanFields: booleanFields.slice(0, 24), enumFields: enumFields.slice(0, 24) };
+      };
+      const summarizeOpaqueShape = value => {
+        if (typeof value === 'string') return ('string:' + value.length).slice(0, 160);
+        if (Array.isArray(value)) {
+          const types = Array.from(new Set(value.slice(0, 8).map(primitiveType))).slice(0, 6);
+          const firstObject = value.find(item => item && typeof item === 'object' && !Array.isArray(item));
+          const itemKeys = firstObject ? Object.keys(firstObject).slice(0, 12).map(safeStructuralKey).sort() : [];
+          return ('array:' + value.length + ':' + (types.length ? types.join('+') : 'empty') + (itemKeys.length ? ':keys' + itemKeys.join('+') : '')).slice(0, 160);
+        }
+        if (value && typeof value === 'object') {
+          const fields = Object.entries(value).slice(0, 12).map(([rawKey, child]) => {
+            const key = safeStructuralKey(rawKey);
+            const type = primitiveType(child);
+            const size = typeof child === 'string' || Array.isArray(child) ? String(child.length) : '';
+            return key + ':' + type + size;
+          });
+          return ('object:' + (fields.length ? fields.join('+') : 'empty')).slice(0, 160);
+        }
+        return primitiveType(value);
       };
 
       const installRenderSuppression = () => {
@@ -773,7 +816,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
       const summarizeStructure = (payload, aggregate) => {
         const payloadObject = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : null;
-        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [], textPhase: 'none' };
+        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [], connectorToolPayloadShape: 'undefined', inlineExpandableShape: 'undefined', reasoningTitlesShape: 'undefined', toolIconsShape: 'undefined', invokedPluginShape: 'undefined', invokedResourceShape: 'undefined', textPhase: 'none' };
         const valueObject = payloadObject.v && typeof payloadObject.v === 'object' && !Array.isArray(payloadObject.v) ? payloadObject.v : null;
         const eventType = safeProtocolValue(payloadObject.type);
         const operation = safeProtocolValue(payloadObject.o);
@@ -800,27 +843,33 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         const metadataKeys = directKeys(metadata);
         const recipient = detailedMessage ? safeProtocolValue(message.recipient) : 'none';
         const authorName = detailedMessage ? safeProtocolValue(author && author.name) : 'none';
+        const connectorToolPayloadShape = summarizeOpaqueShape(metadata && metadata.connector_tool_payload);
+        const inlineExpandableShape = summarizeOpaqueShape(metadata && metadata.inline_cot_expandable_content);
+        const reasoningTitlesShape = summarizeOpaqueShape(metadata && metadata.reasoning_titles);
+        const toolIconsShape = summarizeOpaqueShape(metadata && metadata.tool_icons);
+        const invokedPluginShape = summarizeOpaqueShape(metadata && metadata.invoked_plugin);
+        const invokedResourceShape = summarizeOpaqueShape(metadata && metadata.invoked_resource);
         const textPhase = phaseTextMessage ? (aggregate.reasoningEnded ? 'after_reasoning_end' : 'before_reasoning_end') : 'none';
         let signature = 'keys:' + payloadKeys.join('+');
         if (typeof payloadObject.type === 'string') signature = 'type:' + eventType;
         else if (typeof payloadObject.o === 'string') signature = 'patch:' + operation + ':' + patchPath;
         else if (message) signature = 'message:' + messageRole + ':' + messageContentType + ':' + messageStatus;
         else if (typeof payloadObject.v === 'string') signature = 'value_string_patch';
-        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields, textPhase };
+        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields, connectorToolPayloadShape, inlineExpandableShape, reasoningTitlesShape, toolIconsShape, invokedPluginShape, invokedResourceShape, textPhase };
       };
 
-      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields, textPhase: summary.textPhase });
+      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields, connectorToolPayloadShape: summary.connectorToolPayloadShape, inlineExpandableShape: summary.inlineExpandableShape, reasoningTitlesShape: summary.reasoningTitlesShape, toolIconsShape: summary.toolIconsShape, invokedPluginShape: summary.invokedPluginShape, invokedResourceShape: summary.invokedResourceShape, textPhase: summary.textPhase });
 
       const observeStructure = (payload, aggregate) => {
         const summary = summarizeStructure(payload, aggregate);
         summary.eventIndex = aggregate.frameCount;
-        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields, summary.textPhase]);
+        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields, summary.connectorToolPayloadShape, summary.inlineExpandableShape, summary.reasoningTitlesShape, summary.toolIconsShape, summary.invokedPluginShape, summary.invokedResourceShape, summary.textPhase]);
         const specialMessage = (summary.messageRole === 'assistant' && (summary.messageContentType === 'reasoning_recap' || summary.messageContentType === 'thoughts' || summary.messageContentType === 'code')) || summary.messageRole === 'tool';
         const phaseTextMessage = summary.messageRole === 'assistant' && summary.messageContentType === 'text';
         let specialPosted = false;
         let phasePosted = false;
         if (specialMessage) {
-          const specialEvidenceKey = JSON.stringify([summary.messageRole, summary.messageContentType, summary.messageStatus, summary.recipient, summary.authorName, summary.contentKeys, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields]);
+          const specialEvidenceKey = JSON.stringify([summary.messageRole, summary.messageContentType, summary.messageStatus, summary.recipient, summary.authorName, summary.contentKeys, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields, summary.connectorToolPayloadShape, summary.inlineExpandableShape, summary.reasoningTitlesShape, summary.toolIconsShape, summary.invokedPluginShape, summary.invokedResourceShape]);
           if (!aggregate.specialStructureSeen.has(specialEvidenceKey)) {
             if (aggregate.specialStructureSeen.size >= 24) aggregate.specialStructureSignatureOverflowCount += 1;
             else {
@@ -912,12 +961,16 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         const title = rawTitle.slice(0, 160);
 
         if (role === 'assistant' && contentType === 'code' && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
-          if (!aggregate.toolInvocationIdentityByID.has(message.id)) aggregate.toolInvocationIdentityByID.set(message.id, message.recipient);
+          if (!aggregate.toolInvocationIdentityByID.has(message.id)) {
+            aggregate.toolInvocationIdentityByID.set(message.id, { recipient: message.recipient, slot: aggregate.nextToolSlot });
+            aggregate.nextToolSlot += 1;
+          }
+          const identity = aggregate.toolInvocationIdentityByID.get(message.id);
           if (message.status !== 'finished_successfully' || !metadata || metadata.is_complete !== true || aggregate.toolActivitySeen.has(message.id)) return;
           aggregate.toolActivitySeen.add(message.id);
           aggregate.toolInvocationCount += 1;
           if (rawTitle) aggregate.toolInvocationWithTitleCount += 1;
-          post({ kind: 'native_tool_activity', state: 'invoked', title, titleCharacters: rawTitle.length });
+          post({ kind: 'native_tool_activity', state: 'invoked', slot: identity.slot, title, titleCharacters: rawTitle.length });
           return;
         }
 
@@ -926,16 +979,18 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         aggregate.toolResultCount += 1;
         if (rawTitle) aggregate.toolResultWithTitleCount += 1;
         const parentID = metadata && typeof metadata.parent_id === 'string' && metadata.parent_id ? metadata.parent_id : '';
+        let identity = null;
         if (!parentID) aggregate.toolResultParentMissingCount += 1;
         else {
           aggregate.toolResultParentPresentCount += 1;
-          const invocationRecipient = aggregate.toolInvocationIdentityByID.get(parentID);
-          if (invocationRecipient) {
+          identity = aggregate.toolInvocationIdentityByID.get(parentID) || null;
+          if (identity) {
             aggregate.toolResultParentMatchCount += 1;
-            if (message.author && message.author.name === invocationRecipient) aggregate.toolResultAuthorRecipientMatchCount += 1;
+            aggregate.toolResultPairedPresentationCount += 1;
+            if (message.author && message.author.name === identity.recipient) aggregate.toolResultAuthorRecipientMatchCount += 1;
           } else aggregate.toolResultParentUnmatchedCount += 1;
         }
-        post({ kind: 'native_tool_activity', state: 'result', titleCharacters: rawTitle.length });
+        post({ kind: 'native_tool_activity', state: 'result', slot: identity ? identity.slot : -1, title, titleCharacters: rawTitle.length });
       };
 
       const scrubTextPatches = (node, aggregate) => {
@@ -1008,7 +1063,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         toolResultParentMatchCount: aggregate.toolResultParentMatchCount,
         toolResultParentUnmatchedCount: aggregate.toolResultParentUnmatchedCount,
         toolResultParentMissingCount: aggregate.toolResultParentMissingCount,
-        toolResultAuthorRecipientMatchCount: aggregate.toolResultAuthorRecipientMatchCount
+        toolResultAuthorRecipientMatchCount: aggregate.toolResultAuthorRecipientMatchCount,
+        toolResultPairedPresentationCount: aggregate.toolResultPairedPresentationCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -1145,6 +1201,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           reasoningSegmentBreakCount: 0,
           toolActivitySeen: new Set(),
           toolInvocationIdentityByID: new Map(),
+          nextToolSlot: 0,
           toolInvocationCount: 0,
           toolInvocationWithTitleCount: 0,
           toolResultCount: 0,
@@ -1154,6 +1211,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           toolResultParentUnmatchedCount: 0,
           toolResultParentMissingCount: 0,
           toolResultAuthorRecipientMatchCount: 0,
+          toolResultPairedPresentationCount: 0,
           terminal: false
         };
         let buffer = '';

@@ -1,12 +1,12 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-30 through exact b63 Code/CI/Artifact/package verification._
+_Last updated: 2026-08-31 through exact b64 Runtime and exact b65 Code/CI/Artifact/package verification._
 
 ## Purpose / delivery principles
 
 Build a genuinely usable native Swift/UIKit ChatGPT client without replacing accepted native ownership merely to accommodate private Web behavior. Current real source, exact CI/Artifact evidence, real-device evidence and latest explicit requirements outrank stale plan wording.
 
-Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b63 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
+Core rules: one authority per state domain; no speculative retry/fallback/timer/watchdog/duplicate state; distinguish Code / CI / Artifact / Runtime / Stable; optimize only evidenced bottlenecks; private protocol behavior must be measured rather than guessed. b48-b65 remain isolated diagnostic exceptions and do not silently alter production hidden/shadow-Web restrictions.
 
 ## Accepted merged foundation
 
@@ -36,52 +36,67 @@ Retain b38 bounded long-message chunks, deterministic geometry/manual layout and
 - b45 Runtime Confirmed official no-resend resume; b46/b47 duplicated Native Cookie+Bearer-only resume rejected.
 - b48-b51 established Native composer -> official protected Send and complete compact response text, including fresh-new-chat title-generation continuation.
 - b52-b56 identified reasoning/tool message grammar, separated raw internal `assistant:thoughts`, and established exact `reasoning_ended` semantics.
-- b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion without the earlier leading gap.
+- b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion.
 - b60 passed the tested thinking/segmentation gate and exact result-parent association.
-- b61 successful tool-active Runtime passed transient parent-paired row completion, but a separate cold/new-page run exposed generic-textarea false readiness before protected Send.
-- b62 removed only that exact generic-textarea fallback and passed the tested verified-composer normal path while retaining reasoning/final and exact-parent tool lifecycle.
-- b63 preserves b62 behavior and adds only bounded structure evidence for the unresolved expandable-detail schema.
+- b61 exposed generic-textarea false readiness; b62 removed only that exact fallback and passed the focused verified-composer normal path.
+- b63 captured bounded expandable-detail structure evidence. Same-run Runtime plus official-Web expanded-detail evidence authorized one minimal GitHub mapping: invocation connector payload -> visible tool input; exact parent-paired GitHub result `message.content` -> visible tool output.
+- b64 implemented that mapping. Exact iPhone/iOS17 Runtime passed real protected Send, reasoning/final completeness, exact-parent row completion and detail expand/collapse; only output formatting/density was rejected.
+- b65 is the presentation-only correction: tool row opens to independently collapsed `工具输入` / `工具输出`; output outer JSON is decoded and displayed hierarchically so nested strings are shown as actual text rather than a second-layer escape wall.
 
-### b62 — focused Runtime passed
+### Exact b64 Runtime — lifecycle/detail mapping passed, formatting partial
 
-Exact b62 user Runtime export matched Candidate/source and showed:
+User export `ChatGPTClient-Diagnostics-20260830-174329.json` matched exact build64/source on iPhone/iOS17.0.
 
-`ready=false / none -> ready=true / prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 SSE -> thinking/reasoning/tools/final -> terminal`.
+Observed Send path:
 
-Response evidence included reasoning `34/497`, exact reasoning end `1`, final `93/2878`, tool result parent matches `20/20`, Native tool presentations/completion updates `20/20`; user reported the tested round looked normal.
+`ready=false/none -> ready=true/prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 SSE -> terminal`.
 
-Classification: **focused Runtime pass for the tested verified-composer Send-entry + reasoning/final + exact-parent tool lifecycle scope.** It does not prove every future official-page state is race-free.
+Terminal evidence included reasoning `27/440`, final `215/6716`, exact reasoning end `1`, parent matches `30`, unmatched `5`, missing `0`, Native tool presentations/completion updates `30/30`, detail-capable rows `26`, and multiple successful expand/collapse events. The user reported no apparent truncation.
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md`.
+Classification: **Runtime partial-pass — verified composer / protected Send / reasoning-final / exact-parent GitHub detail lifecycle passed; current detail formatting/density rejected only.**
 
-### b63 — bounded expandable-detail structure diagnostic
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b64-runtime.md`.
 
-Exact b63 identity:
+### Exact b65 — structured detail presentation Candidate
 
-- Candidate `DEV-send-stream-0.1.0-b63`, `0.1.0 (63)`.
-- Exact product/config source `0c2e2b870e51c363c7734182d49618c438839cc2`; tree `cae7f27e2800fe48f8d492bfd364c91755935c67`.
-- Push `33321982009 / 99285436158` — success.
-- PR `33321983658 / 99285440962` — success.
-- Artifact `9735145598`; ZIP `sha256:645cba67a91387f79d386931b5d0f4ead2502408b15c7f339013505e3f0ec7da`.
-- IPA SHA `b347d1e41ca5a4e1355a9cc713574ea96247e11918ccfb1f5ff621a0f9f6ff36`.
-- Package Release / `0.1.0 (63)` / source marker `0c2e2b870e51` / iOS14 / `[1,2]` / arm64.
-- b63 permanently reserved; Runtime pending.
+Identity:
 
-b63 is justified by exact b62 shape evidence rather than a guessed presentation mapping:
+- Candidate `DEV-send-stream-0.1.0-b65`, `0.1.0 (65)`.
+- Exact product/config source `44138db766d00e62cfda7f20182f6d20f1ec3352`; tree `fb02dfa7512e9c8428c4b0e9b7184a56d602f688`.
+- Push `33328232044 / 99302071335` — success.
+- PR `33328233842 / 99302076369` — success.
+- Push Artifact `9736876465`; PR Artifact `9736874445`.
+- Push ZIP `sha256:d9a52ecb0cd7d5131e22fc399bc5db0d573a9de3e5d80838f3a8d2b3164ceb7a`.
+- IPA SHA `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`.
+- Package Release / `0.1.0 (65)` / source marker `44138db766d0` / iOS14 / `[1,2]` / arm64.
+- b65 permanently reserved; Runtime pending.
 
-- string-shaped `metadata.connector_tool_payload` repeatedly appears on completed assistant tool-invocation messages;
-- object-shaped `metadata.inline_cot_expandable_content` can appear on completed assistant `thoughts` structures and expose `source_message_ids` references;
-- existing exact parent association already owns one response-local transient invocation-ID Map.
+b65 implementation boundary:
 
-b63 records only:
+1. preserve b64 verified composer, protected Send, SSE text grammar, reasoning/final split, exact `reasoning_ended`, transient invocation map, exact result `parent_id` pairing and GitHub-only detail authorization;
+2. preserve diagnostics privacy: no raw prompt/answer/reasoning/tool input/output/IDs/auth/proof in exported logs;
+3. keep the tool row as the first disclosure;
+4. after row expansion, show `工具输入` and `工具输出` as independent collapsed second-level disclosures;
+5. input remains readable pretty JSON;
+6. output decodes b64's outer `message.content` JSON and recursively presents dictionaries/arrays; actual string values are shown as actual text, and complete JSON object/array strings may be decoded one structural layer;
+7. no arbitrary character truncation, retry, polling, timer, watchdog, fallback, compatibility shim, second response owner or production repository mutation.
 
-1. `connectorToolPayloadJSONShape`: capped JSON parse/top-level key/type/direct string-or-array length fingerprint; no values or nested bodies;
-2. aggregate inline-expandable message/source-reference counts and matches against existing response-local invocation/tool-activity identities;
-3. existing b62 exact-parent, reasoning/final, composer and terminal metrics unchanged.
+Evidence ladder: **Code written / detached diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
 
-b63 does **not** display expandable Native request/result bodies. Raw connector/tool payload values, service IDs, nested bodies and raw `assistant:thoughts` remain non-presentational.
+### Current Phase 9 human Runtime gate
 
-Evidence ladder: **Code written / diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
+Install exact b65 on the primary iPhone/iOS17 device, clear diagnostics, and run one GitHub/repository request that naturally creates multiple tool rows. Verify:
+
+- verified composer becomes ready and `submitted` is followed by real `sendObserved`;
+- HTTP200 SSE reaches terminal;
+- reasoning/final still appear complete;
+- exact-parent completed GitHub tool rows still expand/collapse;
+- opening one row initially shows only collapsed second-level `工具输入` and `工具输出`;
+- each child expands/collapses independently;
+- output is readable hierarchy/text without b64's escaped `\"` / `\\` wall;
+- no expected paired tool/result content is silently truncated.
+
+Export diagnostics after terminal. **Do not allocate b66 before this exact b65 Runtime evidence.** If b65 passes, close the formatting defect without another Candidate. If it fails, b66 may address only the smallest evidenced product defect.
 
 ### Official-like response lifecycle target
 
@@ -89,24 +104,7 @@ The eventual Native interaction remains:
 
 `发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考过程 -> 只突出完整最终回答`.
 
-Tool phases remain optional and must follow actual service events. No-tool answers must never fabricate a tool stage.
-
-This entire reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; it is not a separate feature Work. General Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
-
-### Current Phase 9 human Runtime gate
-
-Install exact b63 on the primary iPhone/iOS17 device and run one focused tool-active response. The test must:
-
-- verify exact build63/Candidate/source marker;
-- clear diagnostics before the run;
-- use Native composer and wait for real protected Send + terminal;
-- verify reasoning/final still appear complete and Native tool rows complete;
-- open the same response in the visible official Web surface and, if the official UI offers tool-detail expansion, capture at least one expanded representative row;
-- export diagnostics after terminal.
-
-Interpret `connectorToolPayloadJSONShape`, inline-expandable aggregate source-reference metrics, existing exact-parent counts and the same-run official-Web screenshot together. A Web screenshot is the higher-priority presentation reference. Do not infer a user-visible body from field names alone.
-
-**Do not allocate b64 before exact b63 Runtime evidence.** If the same-run evidence proves one safe minimal user-visible mapping, b64 may implement only that mapping. If it rejects or fails to resolve the mapping, use the smallest next evidence action instead of broadening payload capture.
+Tool phases remain optional and must follow actual service events. No-tool answers must never fabricate a tool stage. This reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; general Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
 
 ### Background ordering
 
@@ -138,4 +136,4 @@ Isolated Work IDs for download manager, pagination, production background comple
 
 ## Current next action
 
-Hand exact b63 Artifact `9735145598` to the user for the focused iPhone/iOS17 expandable-detail structure Runtime gate. Keep PR #29 open/unmerged. Do not allocate b64 or implement Native expandable bodies until same-run b63 evidence justifies the exact minimum mapping.
+Hand exact b65 Artifact `9736876465` / IPA SHA `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16` to the user for the focused iPhone/iOS17 structured-detail Runtime gate. Keep PR #29 open/unmerged and do not allocate b66 unless b65 Runtime supplies a concrete need.

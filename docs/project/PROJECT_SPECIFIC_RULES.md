@@ -42,6 +42,7 @@ This file contains durable repository/product rules backed by explicit requireme
 - Exact b62 therefore removes generic `textarea:not([disabled])` from composer authority. The only currently accepted diagnostic composer identities are `#prompt-textarea` and explicit `[contenteditable="true"][role="textbox"]`.
 - Do not add retry, timer, watchdog, polling, delayed auto-submit or alternative composer fallback merely to mask composer readiness. If the official composer is not evidenced yet, Native Send must remain not-ready.
 - A successful submitted diagnostic turn must be grounded by the actual protected-Send lifecycle (`sendObserved` and the observed response), not by `submitResult=submitted` alone.
+- Exact b62 Runtime passes that focused gate for the tested cold-launch path: composer remained `ready=false / strategy=none` until `prompt_textarea` appeared, submit used `prompt_textarea`, `submitted` was followed immediately by real `sendObserved`, HTTP200 SSE and a terminal response. This positive run is scoped evidence and does not prove the intermittent official-page race is impossible under every future state.
 - If a turn reaches terminal with no exact reasoning-end marker, provisional pre-marker accepted text may be promoted into ordinary final-answer presentation so non-reasoning turns are not permanently misclassified. This is deterministic terminal classification, not retry/timer/watchdog behavior.
 - Do not generalize arbitrary `v:string`, arbitrary initial assistant `parts` or arbitrary structural frames into assistant text. Parser changes require exact structural/runtime evidence.
 
@@ -60,9 +61,11 @@ This file contains durable repository/product rules backed by explicit requireme
 - Exact b60 authorizes using transient result `parent_id` matching to update the corresponding invocation presentation, provided raw service IDs never cross into Native/logged state.
 - b61 may assign local transient presentation slots to invocation identities and use an exact matched result only to update the correct row from an invocation state to a completed state. The local slot is presentation bookkeeping, not a second message/repository authority.
 - Exact b61 Runtime accepts that row lifecycle for the tested successful turn; it does not prove every tool subtype or every future service shape.
+- Exact b62 Runtime preserves and extends that tested evidence: 20 completed results all had parent references, all `20/20` matched observed invocation identities, zero were unmatched/missing, and Native produced `20` tool presentations with `20` completion updates. An extra observed invocation identity is not force-paired by count/order.
 - A matched result may refine a generic tool label only with the already-authorized bounded `reasoning_title`; b61/b62 do **not** authorize raw tool request/result bodies.
 - Expandable tool request/result detail remains a current `DEV-send-stream` target, but implementation must wait for evidence that a bounded field is actually intended for user-visible presentation. Field names alone are not authorization.
-- `connector_tool_payload`, `inline_cot_expandable_content`, `reasoning_titles`, `tool_icons`, `invoked_plugin`, `invoked_resource` and arbitrary tool content remain non-presentational until exact Runtime evidence establishes a user-visible boundary.
+- b62 safe shape evidence includes string-shaped `connector_tool_payload`, bounded `reasoning_titles` / `tool_icons`, object-shaped `invoked_resource`, and `inline_cot_expandable_content` on an `assistant:thoughts` structure. These shapes remain non-presentational until exact evidence maps a field to official user-visible detail.
+- `assistant:thoughts`, arbitrary raw tool bodies, connector payload values and unverified invoked-resource values remain prohibited from Native presentation.
 - The official-like target sequence is: `发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考 -> 突出完整最终回答`.
 - Matching the evidenced interaction/state ordering is a product target. Exact pixel identity or support for every unverified tool-card subtype must not be claimed before Runtime evidence.
 
@@ -92,8 +95,8 @@ This file contains durable repository/product rules backed by explicit requireme
 - Exact b24-b62 identities and emitted Artifacts are permanently reserved. Previously rejected identity-invalid transition/stale Artifacts remain rejected.
 - Exact current Phase 9 diagnostic product/config authority is b62 source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`; later docs-only commits do not redefine it.
 - b62 package authority: Release `0.1.0 (62)`, Candidate `DEV-send-stream-0.1.0-b62`, Artifact `9733577825`, ZIP `sha256:d53ddb88c5d2092294592416e10e5a0a752cb7afb0bbe0a39c2c137d021082d0`, IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`, source marker `e1b44f7ab6c4`, minimum iOS14, device family `[1,2]`, arm64.
-- Build63 must not be allocated merely because b62 Artifact exists. Allocate b63 only after exact b62 Runtime yields a concrete next change/evidence need and a fresh uniqueness/conflict guard passes.
-- The b61 false-ready race is intermittent; b62 Runtime does not require indefinite attempts to reproduce it. One focused cold-launch run must instead prove the current verified-composer gate and real protected-Send lifecycle; one additional cold launch is optional confidence evidence.
+- Exact b62 now has a focused Runtime pass for the tested verified-composer Send-entry / reasoning-final / parent-paired tool lifecycle gate. This does not promote it to Stable/Frozen or production ownership.
+- Build63 must not be allocated merely because b62 passed. Allocate b63 only for one concrete unresolved evidence or implementation need after a fresh uniqueness/conflict guard. Current expandable-tool-detail field mapping is still Unknown / Unverified, so field names alone are not sufficient allocation grounds.
 
 ## Native UI / conversation presentation contracts
 

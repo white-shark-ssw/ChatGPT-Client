@@ -72,7 +72,9 @@ Confirmed complete:
 4. exact product/config source `2386872a...` created from one tree and feature branch moved once;
 5. Push + PR CI succeeded;
 6. Push Artifact `9732514781` downloaded and independently verified against GitHub digest, IPA sidecar, Info.plist and Mach-O identity;
-7. later checkpoint/docs commits do not redefine exact b61 product/config source.
+7. `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md` and `BUILD_TEST_INDEX.md` synchronized through b60 Runtime / b61 Artifact;
+8. PR #29 title/body synchronized to the exact b61 Runtime gate;
+9. later checkpoint/docs commits do not redefine exact b61 product/config source.
 
 ## Next exact action
 

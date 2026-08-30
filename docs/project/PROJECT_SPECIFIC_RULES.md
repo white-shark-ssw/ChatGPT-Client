@@ -10,7 +10,7 @@ This file contains durable repository/product rules backed by explicit requireme
 - Exact b42 Runtime proves successful ChatGPT-account protected Send depends on browser challenge output. Pure-native/transient-auth protected Send remains blocked.
 - The separately billed API-product route remains rejected unless that explicit product decision changes. Primary-account Sub2API/Codex-subscription Runtime remains blocked by the account-safety gate.
 - TD-024 permits only the recorded user-visible official-Web protected-Send surface; TD-025 rejects b44's full-page Native→Web→Native product form; TD-028 records that full existing-conversation Web rendering is not an accepted daily-chat dependency after the long-answer composer failure.
-- b48-b59 are isolated diagnostic exceptions only. Their success does not approve the diagnostic Web Send-engine architecture as production architecture and does not transfer production response ownership.
+- b48-b61 are isolated diagnostic exceptions only. Their success does not approve the diagnostic Web Send-engine architecture as production architecture and does not transfer production response ownership.
 - `ConversationRepository` remains sole native production conversation/list/detail/recovery/future accepted response authority.
 - `AuthSessionStore` remains native auth/account authority.
 - Default persistent `WKWebsiteDataStore` remains the only persistent auth-secret authority. Diagnostic Web uses that same store and does not create another persistent credential/challenge store.
@@ -34,6 +34,9 @@ This file contains durable repository/product rules backed by explicit requireme
 - b58 Runtime supersedes the earlier b57 no-prefix concern: side-by-side Native/Web evidence proves the omitted Native opening length exactly matched one service-marked `assistant:text:in_progress` string part with `metadata.is_thinking_preamble_message=true`.
 - b59 Runtime authorizes consuming **only** that exact service-marked thinking-preamble shape into the same Native reasoning stream. The tested turn contained two such preambles (`2 / 13 chars`) before one reasoning-end marker and no leading truncation.
 - b59 also proves a safe explicit `metadata.reasoning_status=is_reasoning` token can occur after tool activity before a later thinking preamble. This token may drive reasoning-active presentation; the associated `assistant:thoughts` body remains non-presentational.
+- b60 Runtime confirms the bounded event-driven presentation: initial accepted-response state may present `正在思考`; later exact `reasoning_status=is_reasoning` may re-enter that state; a later service-marked thinking preamble may start a Native-only paragraph break; both tested turns completed with exact `reasoning_ended`, no fallback and no obvious user-observed truncation.
+- b60 Runtime also confirms the tested tool association rule: when a completed result metadata `parent_id` exactly equals an invocation service message ID observed in the same response stream, that invocation/result pair is associated. Across two turns the match was `15/15` and `5/5`, with zero unmatched/missing. Raw IDs remain transient and unlogged.
+- Adjacency, completed-count alignment, author/tool-name equality, recipient equality or presentation order are **not** accepted invocation→result pairing rules. In b60, author-name==invocation-recipient was only 14/15 and 3/5.
 - If a turn reaches terminal with no exact reasoning-end marker, provisional pre-marker accepted text may be promoted into ordinary final-answer presentation so non-reasoning turns are not permanently misclassified. This is deterministic terminal classification, not retry/timer/watchdog behavior.
 - Do not generalize arbitrary `v:string`, arbitrary initial assistant `parts` or arbitrary structural frames into assistant text. Parser changes require exact structural/runtime evidence.
 
@@ -43,16 +46,17 @@ This file contains durable repository/product rules backed by explicit requireme
 - Only service data explicitly intended for the user may enter Native presentation. Internal reasoning structures, system/internal nodes and unverified raw connector/tool payloads must not be exposed.
 - `assistant:thoughts` remains explicitly non-presentational. A safe enum such as `reasoning_status=is_reasoning` may be consumed as state only when its meaning is evidenced; it does not authorize the thoughts body.
 - Exact b55/b56 authorizes `reasoning_ended` as the current phase marker; it does **not** authorize recap text as the reasoning body.
-- Exact b57-b59 authorize presenting the accepted visible assistant text before that marker as `思考过程`, including exact service-marked thinking preambles; accepted text after it is final answer. No additional hidden content becomes authorized by this split.
-- A later exact service-marked thinking preamble starts a distinct visible reasoning segment. Native presentation may insert a local paragraph separator before such a later segment when prior reasoning text exists; that UI separator is not service text and must not alter source character metrics.
+- Exact b57-b60 authorize presenting the accepted visible assistant text before that marker as `思考过程`, including exact service-marked thinking preambles; accepted text after it is final answer. No additional hidden content becomes authorized by this split.
+- A later exact service-marked thinking preamble starts a distinct visible reasoning segment. Native presentation may insert a local paragraph separator before such a later segment when prior reasoning text exists; that UI separator is not service text and must not alter source character metrics. b60 Runtime passed this tested presentation.
 - `思考过程` may be visible/expanded while active and collapse on exact reasoning end; explicit user expand/collapse after completion is permitted.
 - Reasoning→final transition must occur exactly once from protocol/state evidence, not elapsed time, DOM text, cell redraw or UI title.
 - Initial `正在思考` may be shown as a deterministic response-lifecycle state only after the protected response is accepted/active and before visible reasoning arrives. It must not be timer-based or misrepresented as a literal service reasoning-status event unless that exact initial event is later proved.
 - An explicit service `reasoning_status=is_reasoning` may return presentation to `正在思考` after tool activity in the evidenced scope.
-- b54-b59 prove completed assistant-code invocations with non-`all` recipients can be followed by completed tool results. b59 compact invocation presentation is Runtime positive for its tested scope.
-- b59 observed 12 accepted completed invocations but 13 completed tool results. Therefore chronology/count adjacency is **not** an accepted invocation→result pairing rule.
-- Expandable tool request/result detail remains a current `DEV-send-stream` target, but implementation must wait for exact service association plus evidence of which request/result fields are intended for user-visible presentation.
-- Before that evidence, diagnostics may compare raw service identities only transiently in memory and export match/missing counts; raw IDs must never be logged. Do not expose `connector_tool_payload` or arbitrary tool bodies by guess.
+- Exact b60 authorizes using transient result `parent_id` matching to update the corresponding invocation presentation, provided raw service IDs never cross into Native/logged state.
+- b61 may assign local transient presentation slots to invocation identities and use an exact matched result only to update the correct row from an invocation state to a completed state. The local slot is presentation bookkeeping, not a second message/repository authority.
+- A matched result may refine a generic tool label only with the already-authorized bounded `reasoning_title`; b61 does **not** authorize raw tool request/result bodies.
+- Expandable tool request/result detail remains a current `DEV-send-stream` target, but implementation must wait for evidence that a bounded field is actually intended for user-visible presentation. Field names alone are not authorization.
+- `connector_tool_payload`, `inline_cot_expandable_content`, `reasoning_titles`, `tool_icons`, `invoked_plugin`, `invoked_resource` and arbitrary tool content remain non-presentational until exact Runtime evidence establishes a user-visible boundary.
 - The official-like target sequence is: `发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考 -> 突出完整最终回答`.
 - Matching the evidenced interaction/state ordering is a product target. Exact pixel identity or support for every unverified tool-card subtype must not be claimed before Runtime evidence.
 
@@ -67,6 +71,8 @@ This file contains durable repository/product rules backed by explicit requireme
 - b57+ ordinary assistant-text phase structure capacity remains separately bounded to 12 unique shapes with count/overflow and must not record text values or unbounded arrays.
 - b58+ may record aggregate invocation/result/title/presentation counts. b59 may additionally record thinking-preamble count/characters. It must not log service title text or message IDs.
 - Exact b60 may record aggregate reasoning-active signal counts, Native-only segment-break counts and tool parent/reference match/missing counts after transient in-memory comparison. It must not export the compared raw identities or bodies.
+- Exact b61 may additionally record bounded shape descriptors for candidate detail metadata: primitive type, direct object key/type list, array count/item direct keys/types, or string length. It must never log/display candidate values, nested payload bodies or raw IDs.
+- b61 may log local non-secret tool presentation slot numbers and aggregate paired-completion counts; local slots are ephemeral and reset per response.
 - Background diagnostics may record lifecycle/public background-task/Web process/navigation failure classes without adding heartbeat timers merely to manufacture activity.
 - Scroll/round diagnostics may record non-secret indices, offsets, geometry durations, travel distance and landing error, never message identity/body.
 
@@ -76,9 +82,10 @@ This file contains durable repository/product rules backed by explicit requireme
 - Once an Artifact identity is emitted, corrected product code must not reuse that identity.
 - Actual built `Info.plist` version/build/Candidate/source marker plus IPA filename/SHA are package identity authority; workflow Artifact container naming alone is not proof.
 - `scripts/build_ipa.sh` must fail on Candidate/version/build mismatch.
-- Exact b24-b59 identities and emitted Artifacts are permanently reserved. Previously rejected identity-invalid transition/stale Artifacts remain rejected.
-- Exact current Phase 9 tested diagnostic product/config authority is b59 source `138c09a5d11121945bc45f1d866c449aa0f7611e`; later docs-only commits do not redefine it.
-- Pre-allocation guard found no b60 repository/build-index reference and no other Active development task, so build60 is available for the bounded next Candidate. Once its exact product source is created or Artifact emitted, follow normal uniqueness rules and never reuse it.
+- Exact b24-b61 identities and emitted Artifacts are permanently reserved. Previously rejected identity-invalid transition/stale Artifacts remain rejected.
+- Exact current Phase 9 diagnostic product/config authority is b61 source `2386872af03e0684eee8deca87f636dc265114ec`; later docs-only commits do not redefine it.
+- b61 package authority: Release `0.1.0 (61)`, Candidate `DEV-send-stream-0.1.0-b61`, Artifact `9732514781`, IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`, source marker `2386872af03e`, minimum iOS14, device family `[1,2]`, arm64.
+- Build62 must not be allocated merely because b61 Artifact exists. Allocate b62 only after exact b61 Runtime yields a concrete next change/evidence need and a fresh uniqueness/conflict guard passes.
 
 ## Native UI / conversation presentation contracts
 
@@ -150,12 +157,12 @@ This file contains durable repository/product rules backed by explicit requireme
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source. Final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint recovery point and never blindly replay already-confirmed Candidate writes.
-- Tooling-only assembly commits are never Work/Candidate authority. Stable Phase 8 authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; current tested Phase 9 diagnostic authority is b59 source `138c09a5d11121945bc45f1d866c449aa0f7611e` until exact b60 source is allocated.
+- Tooling-only assembly commits are never Work/Candidate authority. Stable Phase 8 authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; current Phase 9 diagnostic product/config authority is exact b61 source `2386872af03e0684eee8deca87f636dc265114ec`.
 
 ## Critical invariants / prohibited routes
 
 - Historical hidden WebView chat code is not the native product baseline.
-- TD-024/TD-025/TD-028 remain in force while b48-b59 operate only as diagnostic exceptions; b60 remains the same diagnostic class when allocated.
+- TD-024/TD-025/TD-028 remain in force while b48-b61 operate only as diagnostic exceptions.
 - Full existing-conversation Web rendering is not a performance fix merely because it is hidden or display-trimmed.
 - CI/Artifact success is never Runtime proof.
 - Main-app background survival is never WebKit-stream survival proof.

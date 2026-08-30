@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b54 Runtime and exact b55 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b55 Runtime and exact b56 Code/CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -14,8 +14,8 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Primary distribution**: TrollStore IPA.
 - **Primary tested runtime**: iPhone 15 Pro Max / iOS17.0; lower iOS compatibility preferred where practical.
 - **Current Send constraint**: pure-native ChatGPT-account protected Send is blocked by exact b42 browser-challenge evidence. The separately billed/supported API-product architecture remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by the account-safety gate.
-- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b55 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine and do not change the durable hidden/shadow-Web production boundary.
-- **Current reasoning/tool gate**: b53 directly identifies `assistant:reasoning_recap`, separate non-presentational `assistant:thoughts`, assistant code and tool messages. b54 materially identifies assistant tool invocation→tool-result shape and thoughts summary/status metadata, but its generic structure observer saturated at 32/overflow13 before deterministic recap coverage. Exact b55 is the current behavior-neutral Runtime Candidate with a separate bounded special-structure channel.
+- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b56 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine and do not change the durable hidden/shadow-Web production boundary.
+- **Current reasoning/tool gate**: exact b55 Runtime proves the explicit user-visible recap container is `assistant:reasoning_recap -> content.content` with `reasoning_status=reasoning_ended` and `reasoning_recap_type=collapse`; raw `assistant:thoughts` remains separate/non-presentational. Exact b56 is the current testable Candidate and presents only this recap in a distinct default-collapsed Native region. Tool presentation remains separately evidence-gated.
 
 ## Technology stack
 
@@ -37,7 +37,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Settings owner**: `AppPreferences`; persisted display/interaction booleans only. Protocol diagnostics are surfaced from Settings.
 - **Conversation presentation owner**: `ConversationDetailViewController`.
 - **Message presentation geometry**: `ConversationMessagePresentationProjection` + `ConversationMessageCell`; Stable b37/b38 deterministic bounded geometry.
-- **Diagnostics**: `DiagnosticsLogger`; privacy-safe structural/aggregate evidence only.
+- **Diagnostics**: `DiagnosticsLogger`; privacy-safe structural/aggregate evidence only. b56 diagnostic recap content is not persisted; only recap character count and expand/collapse state are logged.
 - **Official continuation observation owner**: `ProtocolHandoffProbeViewController`; diagnostic-only.
 - **Native continuation parity diagnostic owner**: `NativeResumeParityProbeViewController`; diagnostic-only.
 - **Background planning owner**: `BACKGROUND_EXECUTION_PLAN.md`; response-owner dependent.
@@ -118,31 +118,46 @@ Current rules include autonomous continuation, rolling checkpoints, batched non-
 - Generic structure set saturated at 32 with overflow13; absent `reasoning_recap` cannot be treated as protocol absence. b54 is a partial Runtime pass.
 - Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b54-runtime.md`.
 
-### Exact current b55 Candidate
+### b55 Runtime — recap display boundary proved
 
 - Candidate `DEV-send-stream-0.1.0-b55`, `0.1.0 (55)`.
 - Exact product/config source `aae856069b461e12dc11ee7d2d450a40ca621d21`.
-- Push Run / Job `33299965737 / 99226125826` — success.
-- PR Run / Job `33299967033 / 99226129092` — success.
-- Artifact `9728606514`; ZIP `sha256:fda8dfb16e3d734b9e0f0d55c4e49c0f6cd656e4ec228b13dab3cae108c0a7e3`.
-- IPA SHA `f5106949814b44c6c97e2f519ff181498f6a75ff7b9bf9edf0dc0bb0bd299ad1`.
-- Package: Release / `0.1.0 (55)` / Candidate b55 / source `aae856069b46` / iOS14 / `[1,2]` / arm64.
-- b55 preserves all b54 response behavior and adds only an independent bounded special-message structure channel for reasoning_recap/thoughts/assistant-code/tool messages plus count/overflow metrics.
-- Runtime/manual: Pending. b55 permanently reserved after Artifact emission.
+- Push Run / Job `33299965737 / 99226125826`; PR Run / Job `33299967033 / 99226129092` — success.
+- Artifact `9728606514`; IPA SHA `f5106949814b44c6c97e2f519ff181498f6a75ff7b9bf9edf0dc0bb0bd299ad1`.
+- Exact iPhone/iOS17 Runtime: HTTP200 SSE / terminal true; generic structures 32/overflow14, special structures 7/overflow0, Native 24 deltas / 481 chars, inactive value strings 0.
+- Exact `assistant:reasoning_recap / finished_successfully / recipient=all` was retained after generic saturation. Its content keys are `content,content_type`; metadata includes `reasoning_status:reasoning_ended`, `reasoning_recap_type:collapse`, `can_save:false`.
+- Accepted: concrete recap text container is `message.content.content`; the service itself supplies the reasoning-end and collapsed-recap presentation semantics.
+- Separate `assistant:thoughts` remained present immediately beforehand and remains explicitly non-presentational.
+- Tool invocation/result pairing remained structurally captured, but exact tool-node user visibility is still unproven.
+- Classification: b55 Runtime pass for its intended gate.
+- Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b55-runtime.md`.
+
+### Exact current b56 Candidate
+
+- Candidate `DEV-send-stream-0.1.0-b56`, `0.1.0 (56)`.
+- Exact product/config source `cec921030fd1af9f3853f35af52b661586b3a8ab`.
+- Product tree `3ef2884676132becfde01b42826a711a8b3ca893`.
+- Push Run / Job `33301008807 / 99229039032` — success.
+- PR Run / Job `33301010617 / 99229043710` — success.
+- Artifact `9728937100`; ZIP `sha256:2f4b5a216298e9c79ccbec2a7f4420719c8406120815f568c0ddd8b89d46d430`.
+- IPA SHA `da62776200ce94fef95326abaea3b980f65a5698df5dfe481bd34046e0f8dbe6`.
+- Package: Release / `0.1.0 (56)` / Candidate b56 / source `cec921030fd1` / iOS14 / `[1,2]` / arm64.
+- b56 preserves b55 response text interception. It extracts only the exact evidence-backed completed `reasoning_recap` `content.content` and shows it in a distinct `思考摘要 ▸` region, hidden until recap arrival and default collapsed. User can expand/collapse. Raw `assistant:thoughts`, raw tool data and tool UI remain excluded.
+- Runtime/manual: Pending. b56 permanently reserved after Artifact emission.
 
 ## Current next Candidate boundary
 
-b39-b55 emitted identities are permanently reserved. Any product-code correction after b55 requires b56+.
+b39-b56 emitted identities are permanently reserved. Any product-code correction after b56 requires b57+.
 
-Do not allocate b56 unless exact b55 Runtime identifies a concrete display boundary or another specific smallest defect. The next gate is one focused b55 reasoning/tool reproduction with diagnostics export; b55 itself is behavior-neutral.
+Do not allocate b57 unless exact b56 Runtime identifies a concrete smallest next change. The next gate is one focused b56 reasoning/tool reproduction validating recap appearance, content coherence and expand/collapse behavior.
 
 ## Reasoning/tool presentation boundary
 
-`DEV-send-stream` owns explicitly user-visible reasoning, reasoning→final transition and follow-tail per `SEND_STREAM_PREFLIGHT.md`. Requested reasoning collapse/expand and tap-driven tool-call detail presentation remain in current scope.
+`DEV-send-stream` owns explicitly user-visible reasoning, reasoning→final transition and follow-tail per `SEND_STREAM_PREFLIGHT.md`.
 
-Only explicitly user-visible service reasoning/status/tool data may be shown. Hidden chain-of-thought/internal tool/system nodes, raw `assistant:thoughts`, raw tool arguments and raw tool output must never be exposed merely because structural diagnostics exist.
+Only explicitly user-visible service reasoning/status/tool data may be shown. Exact b55 now authorizes only the `reasoning_recap` string under the captured completed/recipient-all/reasoning-ended/collapse shape for the diagnostic Native surface. Hidden chain-of-thought/internal tool/system nodes, raw `assistant:thoughts`, raw tool arguments and raw tool output remain prohibited.
 
-b55 Runtime is the current evidence gate before implementing these presentations.
+The exact reasoning→final text-patch phase boundary is still Unknown / Unverified; b56 deliberately does not change the existing b55 mixed/final text parser. Tool presentation also remains evidence-gated.
 
 ## Attachment boundary
 
@@ -161,9 +176,10 @@ b55 Runtime is the current evidence gate before implementing these presentations
 - b52 Runtime confirms final-answer capture for the tested tool-style response while visible reasoning begins incompletely.
 - b53 Runtime identifies explicit reasoning/tool message classes.
 - b54 Runtime materially identifies tool call/result grammar but leaves recap display-container gate inconclusive due diagnostic saturation.
-- b55 Code/CI/Artifact/package is verified and Runtime pending.
+- b55 Runtime passes the special-observer/recap-container gate.
+- b56 is Code/CI/Artifact/package verified and Runtime pending.
 - Full-Web long-conversation composer viability failed on the primary device/workload reported at b47.
-- Native production response ownership/reasoning/follow-tail/background lifecycle, existing-conversation pre-React history virtualization, 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified where not explicitly tested.
+- Native production response ownership/reasoning/follow-tail/background lifecycle, exact reasoning→final text-patch phase split, exact tool-node user visibility, existing-conversation pre-React history virtualization, 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified where not explicitly tested.
 - CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule

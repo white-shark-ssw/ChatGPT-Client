@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b51 Runtime and exact b52 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b52 Runtime and exact b53 Code/CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -14,7 +14,8 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - **Primary distribution**: TrollStore IPA.
 - **Primary tested runtime**: iPhone 15 Pro Max / iOS17.0; lower iOS compatibility preferred where practical.
 - **Current Send constraint**: pure-native ChatGPT-account protected Send is blocked by exact b42 browser-challenge evidence. The user rejects the separately billed/supported API-product architecture and does not want primary-account Sub2API/Codex-subscription Runtime because of account-safety risk.
-- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b52 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine; their existence does not change the durable hidden/shadow-Web production boundary.
+- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b53 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine; their existence does not change the durable hidden/shadow-Web production boundary.
+- **Current reasoning/tool gate**: exact b52 final-answer capture passed while the beginning of explicitly visible reasoning/thinking was slightly truncated. b53 is a behavior-neutral structure classifier; reasoning collapse/expand and tool-call detail presentation stay in current Work but await exact service-visible grammar evidence.
 
 ## Technology stack
 
@@ -109,7 +110,7 @@ Current rules include autonomous continuation, rolling checkpoints, batched non-
 
 - b48 exact source `6ccba03cefaa32a1186f1f468c3e696ed9457699`, Artifact `9718885751`: Native composer successfully drove official protected Send for two sequential turns. Parser used wrong long-form patch field names and captured zero assistant text to Native; Runtime completed/superseded.
 - b49 exact source `20fb8f3f400200965acb868aeb8a7504b9bfb91f`, Artifact `9719418761`: real incremental Native delivery confirmed, but only two short explicit compact `o/p/v` text fragments per turn were captured; complete-response interception rejected.
-- b50 exact source `837d5feeff05d198785f884ccf9cc4c1f71412ec`, Artifact `9719942650`: three sequential Native submissions all reached official protected Send and terminal. Turn 2 captured 191 Native characters across 10 deltas; turn 3 captured 671 characters across 31 deltas; user reported both complete and visibly incremental/effectively character-by-character. Web assistant text remained 45 characters in terminal metrics. Fresh new-chat turn 1 captured only 35 Native characters and lost a middle section, so b50 is a partial Runtime pass rather than complete parser acceptance.
+- b50 exact source `837d5feeff05d198785f884ccf9cc4c1f71412ec`, Artifact `9719942650`: three sequential Native submissions all reached official protected Send and terminal. Turns 2/3 were complete and visibly incremental/effectively character-by-character; fresh new-chat turn 1 captured only 35 Native characters and lost a middle section.
 
 Detailed b50 evidence: `docs/project/runtime-evidence/DEV-send-stream-b50-runtime.md`.
 
@@ -120,28 +121,43 @@ Detailed b50 evidence: `docs/project/runtime-evidence/DEV-send-stream-b50-runtim
 - Push Run / Job `33271794573` / `99151433241`; PR Run / Job `33271796259` / `99151437702` — success.
 - Artifact `9720327648`; IPA SHA `0aaa6317918314cc4cd89961dca534e932cc4c42de8bd1648279056818c45e51`.
 - Fresh first long response: 11,618 Native chars / 284 deltas / `titleGenerationWhileContinuationCount=1`, terminal true, Web assistant text 0; user visually judged it complete.
-- Second long response was also visually complete.
-- Third GitHub/project-progress response reached terminal but user observed a small **leading truncation**; title-generation count was 0.
-- Accepted: b51 Runtime confirms the narrow `title_generation` continuation-preserve rule fixes the b50 fresh-new-chat missing-middle defect. Complete parser coverage remains unaccepted because the separate tool-style leading gap remains.
+- Accepted: the narrow `title_generation` continuation-preserve rule fixes the b50 fresh-new-chat missing-middle defect.
 - Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b51-runtime.md`.
 
-### b52 current exact Candidate
+### b52 exact Runtime result
 
 - Candidate `DEV-send-stream-0.1.0-b52`, `0.1.0 (52)`.
 - Exact product/config source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`.
-- Push Run / Job `33276080936` / `99162937523` — success.
-- PR Run / Job `33276082767` / `99162942750` — success.
-- Artifact `9721532867`; ZIP digest `sha256:2ffd7e46e80019d3c4e8d6cbfa5c91dffa2a5f88222a30d5c4d5fb1e4fd752fc`.
-- IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
-- Package: Release / `0.1.0 (52)` / Candidate b52 / source `5c0690ce062e` / iOS14 / `[1,2]` / arm64.
-- b52 keeps b51 parser/output semantics and adds only structural aggregate counters for exact/non-exact/nested assistant text patches, inactive value-only strings, continuation resets and first inactive-gap context.
-- Runtime/manual: Pending. b52 is permanently reserved after Artifact emission.
+- Push Run / Job `33276080936` / `99162937523`; PR Run / Job `33276082767` / `99162942750` — success.
+- Artifact `9721532867`; IPA SHA `a3de5c6eb4f7b790764fcd0adc4c98108fb550e7cedb3d6b02b931d266946b23`.
+- Exact iPhone/iOS17 Runtime: `frameCount=74`, `nativeCharacters=614`, `rootNonExactTextPatchCount=0`, `nestedTextPatchCount=6`, `inactiveValueStringCount=0`, `continuationResetWhileActiveCount=5`, terminal true.
+- User observation: **visible reasoning/thinking beginning slightly truncated; real/final answer complete**.
+- Accepted: final-answer capture passes this reproduction; reasoning capture remains partial. The root-nonexact/inactive-value hypothesis is rejected for this reproduction.
+- Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b52-runtime.md`.
+
+### b53 current exact Candidate
+
+- Candidate `DEV-send-stream-0.1.0-b53`, `0.1.0 (53)`.
+- Exact product/config source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`.
+- Push Run / Job `33294541342` / `99211838094` — success.
+- PR Run / Job `33294542985` / `99211842336` — success.
+- Artifact `9726996570`; ZIP digest `sha256:8831bbae1c5cad9c9cd7f0ad9fbcf4846d709b27ae950b0391d436e20749b38c`.
+- IPA SHA `d5eee722ea01dc2c1b419a803574aec8ad2199299a3d0bbb51de4bae574f25dc`.
+- Package: Release / `0.1.0 (53)` / Candidate b53 / source `3204b183ca4f` / iOS14 / `[1,2]` / arm64.
+- b53 preserves b52 parser/output semantics and adds only bounded unique privacy-safe structure signatures for event type, operation/path, message role/content type/status/end-turn, key names and nested patch paths.
+- Runtime/manual: Pending. b53 is permanently reserved after Artifact emission.
 
 ## Current next Candidate boundary
 
-b39-b52 emitted identities are permanently reserved. Any product-code correction after b52 requires `DEV-send-stream-0.1.0-b53`, `0.1.0 (53)` or later.
+b39-b53 emitted identities are permanently reserved. Any product-code correction after b53 requires `DEV-send-stream-0.1.0-b54`, `0.1.0 (54)` or later.
 
-Do not allocate b53 unless exact b52 Runtime identifies a concrete structural gap class. The next gate is one focused GitHub/tool-style b52 reproduction with diagnostics export; b52 itself must remain behavior-neutral.
+Do not allocate b54 unless exact b53 Runtime identifies a concrete reasoning/tool grammar and justifies the next correction or UI model. The next gate is one focused b53 reasoning/tool reproduction with diagnostics export; b53 itself must remain behavior-neutral.
+
+## Reasoning/tool presentation boundary
+
+`DEV-send-stream` owns explicitly user-visible reasoning, reasoning→final transition and follow-tail per `SEND_STREAM_PREFLIGHT.md`. The user's requested reasoning collapse/expand and tap-driven tool-call detail sheet/popover remain in current scope.
+
+Only explicitly user-visible service reasoning/status/tool data may be shown. Hidden chain-of-thought/internal tool/system nodes must never be exposed or inferred. b53 Runtime is the current evidence gate before implementing these presentations.
 
 ## Attachment boundary
 
@@ -157,8 +173,9 @@ Do not allocate b53 unless exact b52 Runtime identifies a concrete structural ga
 - b45 official no-resend resume is Runtime Confirmed.
 - b46/b47 Native duplicated Cookie+Bearer-only resume are Runtime Rejected for their exact attempts.
 - b50 materially confirms the diagnostic Native composer -> official Web Send -> pre-React SSE interception -> Native incremental text path on established turns.
-- b51 Runtime confirms the fresh-new-chat title-generation fix but exposes a separate tool/GitHub-style leading truncation, so complete parser coverage is not accepted.
-- b52 is Code/CI/Artifact/package verified, behavior-neutral, and Runtime pending.
+- b51 Runtime confirms the fresh-new-chat title-generation fix.
+- b52 Runtime confirms final-answer capture for the tested tool-style response while visible reasoning begins incompletely.
+- b53 is Code/CI/Artifact/package verified, behavior-neutral, and Runtime pending.
 - Full-Web long-conversation composer viability failed on the primary device/workload reported at b47.
 - Native production response ownership/reasoning/follow-tail/background lifecycle, existing-conversation pre-React history virtualization, 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified where not explicitly tested.
 - CI/Artifact success is never Runtime proof.

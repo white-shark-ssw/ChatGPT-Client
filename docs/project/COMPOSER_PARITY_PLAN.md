@@ -1,6 +1,6 @@
 # Official Composer Parity Plan
 
-_Last planned: 2026-08-31 from the user-supplied official ChatGPT iOS screen recording._
+_Last planned: 2026-08-31 from the user-supplied official ChatGPT iOS screen recording; refined by the user's explicit picker/preview requirements._
 
 ## Purpose
 
@@ -18,7 +18,7 @@ User-facing name:
 
 ## Development ordering
 
-Current `DEV-send-stream` PR #29 is an Active evidence branch. Its exact b65 Candidate is already Code/CI/Artifact/package verified and waiting on focused Runtime evidence. Do **not** broaden that Candidate/Runtime gate with unrelated Composer polish.
+Current `DEV-send-stream` PR #29 is an Active evidence branch. Its current Candidate/Runtime gate must not be broadened with unrelated Composer polish.
 
 Default serialized order after the current Send/Stream acceptance boundary is:
 
@@ -32,7 +32,16 @@ Reason for the dedicated stage:
 
 This avoids destabilizing an active transport/evidence task while also ensuring native attachment transfer is built on the final official-style Composer instead of a temporary input box.
 
-The active Send/Stream branch currently changes shared roadmap files. Until that Work closes/synchronizes, this document records the intended insertion point without editing its checkpoint, branch, Candidate, `DEVELOPMENT_PLAN.md`, `START_HERE.md` or attachment plan.
+The active Send/Stream branch changes shared roadmap files. Until that Work closes/synchronizes, this document records the intended insertion point without editing its checkpoint, branch, Candidate, `DEVELOPMENT_PLAN.md`, `START_HERE.md` or attachment plan.
+
+## Product-parity rule and explicit user deviations
+
+The official ChatGPT iOS Composer remains the default interaction baseline. However, the user's latest explicit product requirement intentionally simplifies one official path:
+
+- **File entry is simpler than the recording**: `+ -> 文件` opens the system Files Picker directly. Do not reproduce the official intermediate Add File/recent-files sheet unless the user later asks for it.
+- **Media selection is broader than the recorded image flow**: the system media picker must expose both **images and videos**. Do not apply an image-only filter that hides videos.
+
+These are intentional product deviations and therefore outrank the earlier recording hierarchy.
 
 ## Recording evidence
 
@@ -155,72 +164,96 @@ Product rule:
 
 `深入思考` in this recording is visual evidence for an official reasoning-related mode entry. It is **not** sufficient evidence for the exact later composer-side reasoning-effort level set or request mapping.
 
-## Official file-selection interaction
+## File-selection interaction — user-simplified path
 
-### 9. File entry is not just a raw system picker
+### 9. `文件` opens the system Files Picker directly
 
-After selecting `文件` (~33s), the official app first presents an **Add File** sheet containing:
+The recording showed an official Add File sheet before the system document picker. The user explicitly rejects that extra layer for this client.
 
-- `上传文件` action;
-- recent/local file cards/items;
-- native sheet dismissal affordance.
+Required target:
 
-Selecting `上传文件` then enters the system document picker. Returning with a selected file inserts a local file card into the Composer.
+`+ -> 文件 -> UIDocumentPickerViewController / system Files Picker -> local Composer file card`
 
-1:1 target:
+Rules:
 
-`+ -> 文件 -> official-style Add File sheet -> 上传文件 / recent items -> system document picker -> local Composer file card`
+- no custom Add File/recent-files intermediate sheet;
+- no custom filesystem browser;
+- picker presentation begins immediately from the `文件` action;
+- cancelling the picker leaves the draft unchanged;
+- selecting a file stages it locally in the owning Composer draft and does not automatically Send;
+- local staging still does not prove or perform server upload. Upload/asset identity remains `DEV-attachments` work.
 
-The first native implementation does not need to invent cloud/recent sources that are not available to the app, but it should preserve the same hierarchy rather than jumping straight from `+` to a filesystem browser if the official interaction can be reproduced with supported sources.
+### File card visual contract
 
-### File card
+Use the compact rectangular card style visible in the recording:
 
-Observed Composer file-card behavior:
-
-- card sits above the draft text;
-- bounded filename/type presentation;
+- rectangular/rounded card, not a generic filename-only text row;
+- prominent **file type / extension** indicator in the card;
+- filename displayed beneath/alongside the type with bounded wrapping/truncation appropriate to the card width;
 - compact remove `×` affordance;
-- remains part of the same pending draft;
-- file selection does not automatically Send the message.
+- card sits in the Composer attachment strip above the text;
+- card remains part of the same pending draft;
+- selecting/removing/previewing the file does not Send the message.
 
-The card is local staged presentation until `DEV-attachments` supplies authoritative upload/asset identity.
+Do not use raw path text or expose sandbox paths in the card.
 
-## Official photo-selection interaction
+### Text-like file preview
 
-### 10. Single photo
+The user explicitly requires selected text-type files to be previewable before Send.
 
-Selecting `照片` opens the native photo picker. Choosing one photo and finishing returns to the Composer with a thumbnail above the text, adjacent to other staged attachments when present.
+For a staged local file whose type is safely previewable as text/document content:
 
-Requirements:
+- tapping the file card opens a read-only preview using an appropriate native/system preview path, preferably `QLPreviewController` when the local type is supported;
+- preview uses the already-selected local file URL and does not upload the file merely to display it;
+- dismissal returns to the exact same Composer draft and attachment ordering;
+- preview is presentation only and must not mutate the file or message;
+- unsafe/unsupported file types must not be executed merely to satisfy preview.
 
-- local picker opens promptly;
+PDF and other system-previewable document types may use the same system preview path when supported. Exact supported local preview categories should follow system capability, not a guessed custom renderer list.
+
+## Media-selection interaction — images and videos
+
+### 10. Photos/media picker must include videos
+
+Selecting `照片` opens the native system media picker, but **must not use an image-only filter**.
+
+Target behavior:
+
+- allow both images and videos from the user's photo library;
+- use a PHPicker configuration that includes at least `.images` and `.videos` rather than `.images` alone;
 - picker cancel does not mutate the draft;
-- selected image is represented by a compact thumbnail with remove `×`;
+- selected image is represented by a thumbnail with remove `×`;
+- selected video is represented by a thumbnail/poster-style card with a clear video/play affordance;
 - adding media does not automatically Send.
 
-### 11. Multiple photos
+Local video selection is a Composer capability. It is **not proof** that the current ChatGPT service accepts/processes video. Server-side video support remains an explicit evidence gate in `DEV-attachments`.
 
-The recording reopens Photos and selects multiple images (~42–46s). On return:
+### 11. Multiple media items
 
-- multiple thumbnails appear in one horizontal staged-attachment strip;
-- existing file card remains in the same strip/draft;
-- each image is independently removable;
-- the attachment row can exceed the visible Composer width without forcing the whole Composer wider.
+The recording reopens Photos and selects multiple images (~42–46s). The client must preserve that multiple-selection interaction while extending it to videos.
 
-Use a horizontal scroll/container strategy. Do not wrap dozens of thumbnails into an unbounded vertical wall above the text.
+On return:
+
+- images and videos appear in one horizontal staged-attachment strip;
+- existing file cards may coexist in the same draft/strip;
+- each media item is independently removable;
+- the attachment row can exceed the visible Composer width without forcing the whole Composer wider;
+- media ordering follows picker/draft order deterministically.
+
+Use a horizontal scroll/container strategy. Do not wrap many thumbnails into an unbounded vertical wall above the text.
 
 ### 12. Attachment preview
 
-Around ~49–54s, tapping an image thumbnail opens a full-screen image preview and closing it returns to the same Composer/draft.
+The recording shows tapping an image thumbnail opening a full-screen preview and returning to the same Composer/draft.
 
 Preview contract:
 
-- tap staged image -> full-screen preview with native black/background presentation appropriate to media;
-- dismissal restores Composer text, attachment ordering, keyboard/focus state where possible;
+- staged image -> full-screen native image preview;
+- staged video -> native/system video preview/playback appropriate to a local asset, without uploading merely to preview;
+- staged text/document file -> safe read-only system preview as described above;
+- dismissal restores Composer text, attachment ordering and keyboard/focus state where practical;
 - preview is presentation only; it does not duplicate attachment identity or upload;
 - opening/closing preview never Sends.
-
-A future document preview may use the appropriate system preview only when file type/local availability supports it; do not invent execution/rendering for unsafe files.
 
 ## Draft and state ownership
 
@@ -234,7 +267,7 @@ Draft presentation may include:
 
 - text;
 - text selection/cursor presentation;
-- staged local attachments;
+- staged local files/images/videos;
 - inline/full-screen presentation mode;
 - current send configuration selections that are not yet server authority.
 
@@ -292,9 +325,9 @@ Do not make `AppPreferences` the authority for server-side model/reasoning state
 ### Step 1 — official reference measurement
 
 - Re-run side-by-side review on the target iPhone/iOS17 device.
-- Measure compact composer margins, corner radius, minimum/maximum inline height, attachment card size, row spacing, expansion transition and full-screen editor geometry.
+- Measure compact Composer margins, corner radius, minimum/maximum inline height, attachment card size, row spacing, expansion transition and full-screen editor geometry.
 - Capture the current Chat-mode and Work-mode reasoning-effort controls before freezing exact labels/options.
-- Treat current official behavior as evidence; do not reproduce stale screenshots if the App changed.
+- Preserve the user's intentional direct-Files/video-capable deviations even if the official App still uses a different picker hierarchy.
 
 ### Step 2 — one Composer presentation owner
 
@@ -308,7 +341,7 @@ Implement one native Composer hierarchy/state machine that supports:
 - keyboard show/hide;
 - current sendability/action state.
 
-No alternate temporary composer for new chat vs existing chat unless actual ownership requires a pending target. Share presentation components while keeping each conversation's draft isolated.
+No alternate temporary Composer for new chat vs existing chat unless actual ownership requires a pending target. Share presentation components while keeping each conversation's draft isolated.
 
 ### Step 3 — official text editing transitions
 
@@ -327,12 +360,15 @@ Implement the **local interaction layer only**:
 
 - `+` menu;
 - Camera / Photos / Files entries that are currently supported;
-- official-style Add File sheet + system document picker;
-- native photo/media picker;
-- one/multiple staged attachment strip;
+- `文件` -> direct system `UIDocumentPickerViewController`;
+- `照片` -> PHPicker/system media picker that exposes both images and videos;
+- rectangular file card with file type + filename + remove `×`;
+- one/multiple image/video staged attachment strip;
 - remove;
 - horizontal scrolling;
 - staged image full-screen preview;
+- staged video native preview/playback;
+- staged text/document safe system preview;
 - per-conversation draft isolation.
 
 This step does not guess/upload private attachment protocol.
@@ -363,6 +399,7 @@ Integrate with the accepted `DEV-send-stream` lifecycle:
 
 - upload/create asset;
 - bind authoritative asset identity to the exact outgoing message;
+- establish actual current image/file/video server capability separately;
 - progress/failure where real transport supports it;
 - assistant file cards;
 - tap -> file-backed download -> system share sheet.
@@ -383,26 +420,34 @@ Exact target-device Candidate should verify at minimum:
 8. Clearing text restores empty action correctly.
 9. Dismiss keyboard with a long draft -> draft remains correctly sized; no accidental one-line collapse.
 10. `+` menu opens/closes without losing draft state.
-11. File -> Add File sheet -> system document picker -> local file card.
-12. Cancel document picker -> no draft mutation.
-13. One photo -> thumbnail inserted without sending.
-14. Multiple photos -> horizontal strip; each attachment independently removable.
-15. Existing file + multiple photos coexist in stable ordering.
-16. Tap image -> full-screen preview -> close -> same draft/ordering/focus state.
-17. A -> B -> A preserves each conversation's independent text/attachments/presentation state during the live process.
-18. New-chat pending draft never becomes a fake persisted server conversation before Send.
-19. Ordinary Chat reasoning-effort selector matches current official labels/order/placement and affects the exact evidenced Send configuration.
-20. Work-mode effort selector matches current official mode-specific behavior; Chat/Work choices do not leak incorrectly.
-21. One tap on Send creates exactly one owned Send; no duplicate request from UI transitions.
-22. Active response exposes Stop from the authoritative response lifecycle.
-23. Dynamic Type / VoiceOver / light-dark basic sanity without breaking the official geometry intent.
-24. No prompt/draft/attachment content or private selector/request values leak into diagnostics.
+11. `文件` opens the system Files Picker directly with no Add File intermediate page.
+12. Cancel Files Picker -> no draft mutation.
+13. Select a text-like file -> rectangular card shows file type + filename + `×`.
+14. Tap that staged text-like file -> safe read-only preview -> dismiss -> same draft/order.
+15. `照片` opens a media picker where both images and videos are visible/selectable; videos are not filtered out.
+16. One image -> thumbnail inserted without sending.
+17. One video -> staged video thumbnail/card inserted without sending and can be locally previewed.
+18. Multiple mixed media -> horizontal strip; each attachment independently removable.
+19. Existing file + images/videos coexist in stable ordering.
+20. A -> B -> A preserves each conversation's independent text/attachments/presentation state during the live process.
+21. New-chat pending draft never becomes a fake persisted server conversation before Send.
+22. Ordinary Chat reasoning-effort selector matches current official labels/order/placement and affects the exact evidenced Send configuration.
+23. Work-mode effort selector matches current official mode-specific behavior; Chat/Work choices do not leak incorrectly.
+24. One tap on Send creates exactly one owned Send; no duplicate request from UI transitions.
+25. Active response exposes Stop from the authoritative response lifecycle.
+26. Dynamic Type / VoiceOver / light-dark basic sanity without breaking the official geometry intent.
+27. No prompt/draft/attachment content or private selector/request values leak into diagnostics.
+
+`DEV-attachments` later owns the separate server-side acceptance gate for actually uploading/processing selected videos. A locally selectable/previewable video must not be falsely reported as server-supported before that evidence exists.
 
 ## Explicit non-goals / rejected routes
 
-- Do not modify current exact b65 product/Candidate merely to prototype Composer parity.
-- Do not merge Composer UI into the active b65 formatting Runtime gate.
-- Do not guess attachment upload/download endpoints from the recording.
+- Do not modify the current active Send/Stream product Candidate merely to prototype Composer parity.
+- Do not merge Composer UI into an unrelated Send/Stream Runtime gate.
+- Do not reintroduce the official Add File intermediate sheet unless the user explicitly changes this requirement.
+- Do not apply an image-only photo-picker filter that hides videos.
+- Do not guess attachment upload/download endpoints from the recording or local picker behavior.
+- Do not treat local video selection as proof that the ChatGPT service accepts/processes video.
 - Do not implement hidden Web file-input injection or private WebKit picker override.
 - Do not hard-code unverified reasoning-effort levels/request values.
 - Do not create one global draft shared by conversations.
@@ -413,4 +458,9 @@ Exact target-device Candidate should verify at minimum:
 
 ## Durable product decision
 
-The official ChatGPT iOS Composer interaction shown in the user recording is now the required baseline for the native client. The future implementation should aim for **1:1 behavioral parity first**, then tune geometry/animation on exact device by side-by-side comparison. Deviations require an explicit user requirement, platform limitation or stronger current-service evidence.
+The official ChatGPT iOS Composer interaction shown in the user recording is the required baseline for the native client, with two explicit user-owned deviations now frozen:
+
+1. `文件` goes directly to the system Files Picker;
+2. the media picker exposes both images and videos.
+
+Selected files retain the recorded rectangular card language, including file type + filename, and safely previewable text/document files are tappable before Send. The future implementation should aim for **1:1 behavioral parity everywhere else**, then tune geometry/animation on exact device by side-by-side comparison. Further deviations require an explicit user requirement, platform limitation or stronger current-service evidence.

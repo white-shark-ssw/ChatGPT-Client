@@ -87,6 +87,13 @@ Evidence ladder: **Code written / diff audited / CI passed / Artifact produced /
 
 Exact product/config authority is permanently `44138db766d00e62cfda7f20182f6d20f1ec3352`. Any later docs-only commits do not redefine that source. Because a valid b65 Artifact exists, b65 is permanently reserved; any product-code correction must use b66+ and only after exact b65 Runtime evidence.
 
+Documentation/metadata batch is complete through this handoff:
+
+- `BUILD_TEST_INDEX.md` preserves exact historical Candidate evidence and records b63 Runtime mapping, b64 Runtime partial-pass and b65 exact CI/Artifact/package identity;
+- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md` and `PROJECT_SPECIFIC_RULES.md` are synchronized through b64 Runtime / b65 Artifact;
+- PR #29 title/body is synchronized to the b65 structured tool-detail Runtime gate and remains open / mergeable / unmerged;
+- all commits after exact product source `44138db766d00e62cfda7f20182f6d20f1ec3352` are documentation-only and do not redefine b65 package authority.
+
 ## Next exact action
 
 Hand the exact b65 IPA to the user. On the primary iPhone/iOS17 device, clear diagnostics, open `Native 输入 / Web Send`, run one GitHub/repository request that naturally creates multiple tool rows, and verify:

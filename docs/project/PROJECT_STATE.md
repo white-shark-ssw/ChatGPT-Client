@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-30 through exact b54 Runtime and exact b55 Code/CI/Artifact/package verification; b55 Runtime remains pending._
+_Last updated: 2026-08-30 through exact b55 Runtime and exact b56 Code/CI/Artifact/package verification; b56 Runtime remains pending._
 
 ## Current accepted merged baseline
 
@@ -15,7 +15,7 @@ _Last updated: 2026-08-30 through exact b54 Runtime and exact b55 Code/CI/Artifa
 
 Current `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c` at the latest Resume/Runtime guard. Final synchronization is still required before any future merge.
 
-The exact current testable Candidate is **`DEV-send-stream-0.1.0-b55` / `0.1.0 (55)`**, exact product/config source `aae856069b461e12dc11ee7d2d450a40ca621d21`.
+The exact current testable Candidate is **`DEV-send-stream-0.1.0-b56` / `0.1.0 (56)`**, exact product/config source `cec921030fd1af9f3853f35af52b661586b3a8ab`.
 
 ## Durable Phase 9 security/product boundary
 
@@ -25,7 +25,7 @@ The separately billed API-product route remains rejected. Primary-account Sub2AP
 
 The durable production boundary still rejects challenge solver/bypass/replay, copied proof/token values, guessed protected-Send endpoints, hidden/shadow protected Web Send, Native injection into a covered Web composer, synthetic hidden Send clicks, DOM answer/reasoning scraping and hidden file-input injection.
 
-**b48-b55 are explicit diagnostic exceptions only.** Their success does not by itself approve hidden/shadow Web as production architecture or transfer production response ownership away from `ConversationRepository`.
+**b48-b56 are explicit diagnostic exceptions only.** Their success does not by itself approve hidden/shadow Web as production architecture or transfer production response ownership away from `ConversationRepository`.
 
 `/backend-api/f/conversation/resume` remains a post-Send continuation/read path and does not weaken the protected-Send boundary.
 
@@ -120,11 +120,9 @@ Raw thoughts/chunks/internal reasoning remain excluded from presentation. Becaus
 
 Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b54-runtime.md`.
 
-### b55 — exact special-structure-capacity Candidate
+### b55 — special channel passes; recap container/presentation semantics proved
 
-b55 is the smallest evidence-backed correction to b54's diagnostic limitation. It preserves all b54 protected-Send, SSE filtering, response-text extraction and Native output behavior.
-
-Exact identity:
+Exact b55 identity:
 
 - Candidate `DEV-send-stream-0.1.0-b55`, version/build `0.1.0 (55)`.
 - Exact product/config source `aae856069b461e12dc11ee7d2d450a40ca621d21`.
@@ -133,52 +131,84 @@ Exact identity:
 - Artifact `9728606514`.
 - ZIP digest `sha256:fda8dfb16e3d734b9e0f0d55c4e49c0f6cd656e4ec228b13dab3cae108c0a7e3`.
 - IPA SHA `f5106949814b44c6c97e2f519ff181498f6a75ff7b9bf9edf0dc0bb0bd299ad1`.
-- Independent package inspection: Release / `0.1.0 (55)` / Candidate b55 / source marker `aae856069b46` / minimum iOS14 / UIDeviceFamily `[1,2]` / arm64.
 
-Implementation-only difference from b54:
+Exact b55 Runtime matched build 55 / Candidate b55 / source `aae856069b46` on iPhone/iOS17.0 and completed one HTTP200 SSE Send to terminal.
 
-- generic unique structure set remains capped at 32;
-- only `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code`, and `tool:*` additionally use a separate 24-entry special-structure set;
-- special structures can still be logged after generic saturation;
-- terminal metrics add special count/overflow;
-- no new raw prompt/answer/reasoning/tool payload/output/ID/auth/proof data is logged.
+Key metrics: `frameCount=69`, Native 24 deltas / 481 chars, generic structures **32 / overflow14**, special structures **7 / overflow0**, inactive value strings 0.
 
-b55 is Code/CI/Artifact/package verified and permanently reserved. Runtime/manual remains Pending.
+The intended late special message was retained at event 41:
+
+- `assistant:reasoning_recap`;
+- status `finished_successfully`;
+- recipient `all`;
+- content keys `content,content_type`;
+- exact-turn content string shape `content_type:15,content:7`;
+- `can_save:false`;
+- `reasoning_status:reasoning_ended`;
+- `reasoning_recap_type:collapse`.
+
+Accepted: the concrete service recap text container is `message.content.content`, and the service provides a direct reasoning-end + collapsed-recap presentation boundary.
+
+`assistant:thoughts` remained a separate structure immediately before the recap and is still prohibited from presentation. Tool invocation/result structure remained available, but exact tool-node user visibility remains unproven.
+
+Classification: **b55 Runtime pass for its intended gate.** Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b55-runtime.md`.
+
+### b56 — exact Native reasoning-recap presentation Candidate
+
+Exact identity:
+
+- Candidate `DEV-send-stream-0.1.0-b56`, version/build `0.1.0 (56)`.
+- Exact product/config source `cec921030fd1af9f3853f35af52b661586b3a8ab`.
+- Product tree `3ef2884676132becfde01b42826a711a8b3ca893`.
+- Push Run / Job `33301008807 / 99229039032` — success.
+- PR Run / Job `33301010617 / 99229043710` — success.
+- Artifact `9728937100`.
+- ZIP digest `sha256:2f4b5a216298e9c79ccbec2a7f4420719c8406120815f568c0ddd8b89d46d430`.
+- IPA SHA `da62776200ce94fef95326abaea3b980f65a5698df5dfe481bd34046e0f8dbe6`.
+- Package independently verified: Release / `0.1.0 (56)` / Candidate b56 / source marker `cec921030fd1` / minimum iOS14 / `[1,2]` / arm64.
+
+b56 preserves b55 protected-Send and text interception behavior. It adds only an evidence-backed recap path:
+
+- exact assistant `reasoning_recap` + `finished_successfully` + `recipient=all` + `reasoning_ended` + `collapse`;
+- non-empty `message.content.content` bridged to Native;
+- distinct `思考摘要 ▸` region appears only after a matching recap;
+- default collapsed, explicit user expand/collapse;
+- diagnostics log only character count/presentation state, never recap text;
+- raw `assistant:thoughts`, raw tool payloads, tool UI and reasoning→final text-phase separation remain unchanged/unimplemented.
+
+b56 Code/CI/Artifact/package are verified and the identity is permanently reserved. Runtime/manual remains Pending.
 
 ## Reasoning / tool presentation boundary
 
-Reasoning collapse/expand and tap-driven tool detail presentation remain in-scope for `DEV-send-stream`, but implementation is evidence-gated.
+Reasoning collapse/expand and tap-driven tool detail presentation remain in-scope for `DEV-send-stream`, but implementation remains evidence-gated.
 
 Current accepted rules:
 
 - only explicitly user-visible service reasoning/status/tool information may be presented;
+- exact b55 authorizes the `reasoning_recap` string for diagnostic Native presentation;
 - raw `assistant:thoughts`, hidden chain-of-thought, internal tool/system nodes, raw tool arguments and raw tool results are not authorized presentation data;
-- b54 proves a structural assistant-invocation→tool-result pairing grammar;
-- b55 must deterministically preserve late special structures and, if `reasoning_recap` appears, expose only its text-free container/presentation metadata for the next decision.
+- b54/b55 prove a structural assistant-invocation→tool-result pairing grammar, but not exact user-visible tool-node boundaries;
+- b56 must Runtime-confirm that the exact recap extraction produces a coherent visible summary and correct collapse/expand behavior before any broader reasoning-phase parser changes.
 
 ## Current Runtime gate
 
-Human gate is exact b55 on iPhone/iOS17:
+Human gate is exact b56 on iPhone/iOS17:
 
-1. install exact b55 and clear diagnostics;
-2. open the b55 Native/Web-Send diagnostic surface;
+1. install exact b56 and clear diagnostics;
+2. open the b56 Native/Web-Send diagnostic surface;
 3. send one request that naturally produces visible reasoning plus tool activity;
-4. wait for terminal;
-5. export diagnostics.
+4. verify `思考摘要 ▸` appears only after the service recap;
+5. expand/collapse and visually confirm the recap is coherent user-visible summary content;
+6. confirm raw thoughts/tool payloads are absent;
+7. wait for terminal and export diagnostics.
 
-Expected UI behavior may remain similar to b54 because b55 is evidence-only.
+The current text area intentionally remains b55 behavior; b56 does not yet prove or implement the exact reasoning→final text-patch phase split.
 
-Primary decision signals:
-
-- `specialStructureSignatureCount` / overflow must show the special observer itself did not saturate;
-- `assistant:reasoning_recap`, if emitted, must provide a concrete display-container/presentation boundary before visible reasoning UI is implemented;
-- invocation/result special structures should remain available even if the generic 32-entry set fills.
-
-Do not allocate b56 until exact b55 Runtime justifies a concrete smallest next change.
+Do not allocate b57 until exact b56 Runtime supplies a concrete smallest next change.
 
 ## Background ordering
 
-Background resilience remains a hard requirement, but production implementation stays response-owner dependent. b45 and later diagnostic evidence provide positive short-background signals only; b48-b55 remain diagnostic Web-owned response experiments, not accepted production response ownership.
+Background resilience remains a hard requirement, but production implementation stays response-owner dependent. b45 and later diagnostic evidence provide positive short-background signals only; b48-b56 remain diagnostic Web-owned response experiments, not accepted production response ownership.
 
 ## Authority / evidence boundary
 
@@ -187,7 +217,7 @@ Background resilience remains a hard requirement, but production implementation 
 - default persistent `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - Sync/Reload never resend/regenerate.
 - no second Send may be created merely to obtain a stream.
-- b48-b55 do not mutate production response state and do not modify TD-024/TD-025.
+- b48-b56 do not mutate production response state and do not modify TD-024/TD-025.
 - Native first/exclusive resume: Unknown / Unverified.
 - Existing-conversation history virtualization before Web React: Unknown / Unverified.
 - Native production incremental response ownership/reasoning/follow-tail/background lifecycle: Unknown / Unverified.

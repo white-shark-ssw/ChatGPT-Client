@@ -2,12 +2,13 @@
 
 ## Status
 
-**Active — exact b65 passed focused iPhone/iOS17 probe Runtime. TD-029 is current production Send architecture. The later rules-session plan `DEV-composer-parity` now explicitly owns the final Native Composer UI (auto-growth/full-screen editor/draft/attachment staging/mode-effort controls). Current `DEV-send-stream` therefore owns only the reusable protected-Send/response/Stop lifecycle APIs, Repository response authority, minimal validation trigger, new-chat identity handoff, follow-tail/multi-conversation semantics, Web Rule Lab and final Send/Stream acceptance. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
+**Active — exact b65 passed focused iPhone/iOS17 probe Runtime. TD-029 is current production Send architecture. The later rules-session plan `DEV-composer-parity` explicitly owns the final Native Composer UI (auto-growth/full-screen editor/draft/attachment staging/mode-effort controls). Current `DEV-send-stream` owns the reusable protected-Send/response/Stop lifecycle APIs, Repository response authority, minimal validation trigger, new-chat identity handoff, follow-tail/multi-conversation semantics, Web Rule Lab and final Send/Stream acceptance. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged
-- Formal branch head before this checkpoint update: `4c94956b6be8eb87ad01563598ee3294eab74370`
+- Current formal branch head before this checkpoint update: `37175cb7b45a0e02821ff54a439709af08181755`
+- Current formal branch tree before this checkpoint update: `40ab7c52d35634b7896f2676cee84e5d9bbee6e2`
 - Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
 - `main` advanced materially in docs/rules since the old `1ac202c...` base. New product-source overlap has not been observed; final Candidate/merge must re-check/synchronize target state.
 - Current `main` `docs/project/current/dev/` has no Active Composer checkpoint. `DEV-composer-parity` is a planned **future serialized Work**, not a parallel implementation branch/candidate.
@@ -18,6 +19,19 @@
 - b65 IPA SHA: `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`
 - b39-b65 emitted identities are permanently reserved.
 - b66 is **not emitted yet**. Allocate only after one coherent TD-029 existing-chat production/Web-Lab slice exists and product/build/workflow identity can move atomically.
+
+## Tooling-only recovery note — no product/Candidate effect
+
+During detached product preparation an empty root file `tmp_should_not_create` was accidentally created by a connector call at commit `53fc4245c87944362db0aaa07c863fd7d0e31d42`, then immediately deleted at `37175cb7b45a0e02821ff54a439709af08181755`.
+
+Verified recovery facts:
+
+- recovered tree is exact `40ab7c52d35634b7896f2676cee84e5d9bbee6e2`, identical to the pre-accident product/docs tree;
+- no product source/config/workflow file changed in the recovered tree;
+- no Candidate/build/Artifact identity was allocated or emitted;
+- both commits are tooling-only history and must never be treated as product authority.
+
+Recovery continues from the current checkpoint commit after this file update; never replay the accidental create/delete chain.
 
 ## Exact b65 Runtime — accepted probe boundary
 
@@ -46,7 +60,7 @@ Hard rules:
 7. current selectors/SSE semantics live in `WEB_SEND_ADAPTER.md`;
 8. future Web changes are probed through the Web Rule Lab before changing production rules.
 
-## Composer parity scope carve-out — new main authority
+## Composer parity scope carve-out — current main authority
 
 `main@d323b9ee...` contains `docs/project/COMPOSER_PARITY_PLAN.md`, target future Work ID `DEV-composer-parity`.
 
@@ -54,7 +68,7 @@ It explicitly serializes:
 
 `DEV-send-stream -> DEV-composer-parity -> DEV-attachments -> ...`
 
-Ownership split now frozen for current development:
+Ownership split frozen for current development:
 
 ### `DEV-send-stream` owns
 
@@ -85,7 +99,7 @@ Current Work must not create a second durable draft/composer owner or implement 
 
 ## Web Rule Lab contract
 
-Current Work still adds a development-only Lab:
+Current Work adds a development-only Lab:
 
 - Settings entry;
 - visible `WKWebView` using `WKWebsiteDataStore.default()`;
@@ -108,38 +122,47 @@ Current Work still adds a development-only Lab:
 
 Smallest coherent b66 slice is **existing-conversation Send/stream production ownership + Lab**, without final Composer UI:
 
-1. add `CoveredWebSendExecutor` (process-resident, default persistent WebKit store) using only b65-evidenced composer/protected-Send/SSE rules;
+1. add one process-resident covered official-Web executor using only b65-evidenced composer/protected-Send/SSE rules;
 2. executor exact-targets `/c/<conversationID>` before Send and emits typed events only; it owns no response state;
 3. add Repository-owned per-conversation response operation/state: preparing/thinking/reasoning/final/completed/failed plus response-local tool presentation bookkeeping;
-4. active response protects that conversation resident from normal memory-warning eviction;
-5. detail UI may consume/display Repository live response state but must preserve b38 history geometry; no final Composer implementation;
-6. replace the old full-page hybrid Send toolbar with a clearly temporary **validation trigger** (e.g. simple prompt/alert) that invokes the Repository/executor API; this trigger is deleted/replaced by future `DEV-composer-parity` and must not become a durable draft owner;
-7. navigating A->B does not cancel A;
-8. unsafe Sync/Reload while a response is active may be explicitly disabled until semantics are accepted;
-9. add Web Rule Lab in the same Candidate;
-10. first slice does not guess new-chat or Stop behavior beyond already evidenced rules.
+4. detail/native validation UI consumes Repository live response state but preserves b38 history geometry; no final Composer implementation;
+5. replace old full-page hybrid Send toolbar with a clearly temporary **validation trigger** (simple prompt/alert) that invokes Repository/executor APIs; it is deleted/replaced by future `DEV-composer-parity` and must not become a durable draft owner;
+6. navigating A->B must not cancel A's covered-Web stream; b66 does not yet claim hidden-active memory-warning resident protection until the owner-internal resident-key patch is separately completed and validated;
+7. unsafe Sync/Reload for the currently active response is disabled in validation presentation rather than guessed;
+8. add Web Rule Lab in the same Candidate;
+9. first slice does not guess new-chat or Stop behavior beyond already evidenced rules.
+
+## Detached product preparation already completed
+
+The following Git blobs were created but **have never been attached to the formal branch or any Candidate**:
+
+- old prototype executor `14a8f114f08fe976ad247ff94707db826deeade7` — rejected before assembly because it observed the original SSE without reusing b65's filtered-response text-patch removal; do not use it;
+- Web Rule Lab prototype `167fe806988a499ac8cdae6f57656085b40be0a3` — usable content, intended to be folded into an already-targeted source file to avoid unnecessary Xcode source-list churn;
+- Repository response runtime prototype `414979dc527a0a4223bf79df84cf7b51b205e2a7` — usable design, intended to be folded into existing target source;
+- live-response overlay prototype `de70050d2240e530e2076723f43c80f38f2cbf57` — validation-only presentation;
+- Settings-with-Lab-entry prototype `931b5d4c945f2ae0a958b8db1cde3ac3881d31b4`.
+
+Current assembly strategy is smaller: fold executor/runtime/overlay into existing `RootViewController.swift` and Lab into existing `SettingsViewController.swift`, avoiding new target source entries. The production executor must reuse the exact accepted b65 compact text grammar: exact `o/p/v`, contextual `v`, exact `title_generation` continuation, nested `/message/content/parts/0` scrubbing, reasoning preamble/active/end semantics and exact-parent tool association.
 
 ## Batch recovery point — b66 existing-chat production slice
 
-Baseline for the next non-atomic product chain is this checkpoint commit after it lands.
+Current baseline after the checkpoint update must be re-fetched before tree assembly.
 
-Before product mutation, re-fetch the new branch head/tree. Expected product files may include:
+Expected product/config files for the coherent detached tree:
 
-- `ChatGPTClient/Protocol/CoveredWebSendExecutor.swift` — new reusable executor;
-- `ChatGPTClient/Conversation/ConversationFeature.swift` — Repository response owner + live response consumer hooks;
-- `ChatGPTClient/RootViewController.swift` — executor orchestration + validation trigger; remove full-page Web as normal Send path;
-- `ChatGPTClient/SettingsViewController.swift` and/or `ChatGPTClient/Protocol/WebRuleLabViewController.swift` — Lab;
-- Xcode project source list only if new Swift files are added;
-- workflow/build identity only after the coherent slice is complete and b66 is actually allocated.
+- `ChatGPTClient/RootViewController.swift` — covered executor + Repository response runtime extension + validation overlay/orchestration; remove full-page Web as normal Send path;
+- `ChatGPTClient/SettingsViewController.swift` — Web Rule Lab implementation + entry;
+- Xcode project build/Candidate identity only after the product slice is coherent;
+- workflow Artifact identity only when b66 is actually allocated.
 
 Do not touch/reimplement:
 
 - final Composer UI owned by future `DEV-composer-parity`;
 - attachment staging/upload;
-- b38 message geometry/round-navigation semantics except minimal live-response integration;
+- b38 message geometry/round-navigation semantics;
 - auth owner/default WebKit persistent-store contract;
 - b39-b65 identities.
 
 ## Next exact action
 
-Re-fetch this checkpoint's new commit/tree. Implement Web Rule Lab + reusable covered-Web executor + Repository-owned existing-chat Send/stream with a minimal validation trigger. Compare-audit product scope. Only when coherent, allocate b66 atomically with build/workflow identity, re-check `main@d323b9ee...` overlap before CI/Artifact, then continue autonomously through CI/package verification and stop at exact-device Runtime.
+Re-fetch this checkpoint's new head/tree. Create corrected combined Root/Settings detached blobs, statically audit against b65 grammar and state-owner invariants, then assemble a coherent detached product tree. Only then allocate b66 atomically with project/workflow identity, compare-audit, move formal branch once, continue through CI/Artifact/package verification, and stop at exact-device Runtime.

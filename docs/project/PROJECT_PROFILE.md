@@ -2,170 +2,97 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b56 Runtime and exact b57 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b57 Runtime and exact b58 Code/CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
-## Identity
+## Identity / purpose
 
-- **Project name**: ChatGPT-Client
-- **Repository**: `white-shark-ssw/ChatGPT-Client`
-- **Purpose**: native third-party ChatGPT client for iOS. Stable product value remains the native shell/read/navigation experience.
-- **Primary distribution**: TrollStore IPA.
-- **Primary tested runtime**: iPhone 15 Pro Max / iOS17.0; lower iOS compatibility preferred where practical.
-- **Current Send constraint**: pure-native ChatGPT-account protected Send is blocked by exact b42 browser-challenge evidence. The separately billed/supported API-product architecture remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by the account-safety gate.
-- **Current Send product gate**: full mobile-Web conversation rendering is not accepted as a daily-chat production dependency after exact-device long-conversation composer failure. b48-b57 are isolated diagnostic experiments for a Native surface over a Web protected-Send engine and do not change the durable hidden/shadow-Web production boundary.
-- **Current reasoning gate**: b56 Runtime corrected the prior recap assumption. Exact `assistant:reasoning_recap` still provides a trustworthy `reasoning_status=reasoning_ended` phase marker, but its `content.content` was only a 7-character status/description in the tested turn and is **not** established as the real visible reasoning body. Raw `assistant:thoughts` remains separate/non-presentational. Exact b57 is the current testable Candidate: it splits the already-accepted visible assistant text stream before/after the exact reasoning-end marker and adds bounded text-free `assistant:text` start-shape diagnostics for the still-truncated reasoning prefix. Tool presentation remains separately evidence-gated.
+- Project: `ChatGPT-Client` (`white-shark-ssw/ChatGPT-Client`).
+- Purpose: native third-party ChatGPT client for iOS; stable product value is native shell/read/navigation with future accepted response ownership kept in native architecture.
+- Distribution: TrollStore IPA.
+- Primary tested runtime: iPhone 15 Pro Max / iOS17.0; build minimum iOS14.0.
+- Current stable merged product baseline: Phase 8 b38; Frozen No.
+- Current Active Work: `DEV-send-stream`, branch `dev/send-stream-20260829`, PR #29 open/evidence-only.
 
-## Technology stack
+## Technology stack / build
 
-- Swift 5 + UIKit.
-- Foundation, WebKit, OSLog, CryptoKit.
-- No third-party dependencies.
-- Deployment target iOS14.0; current Artifact architecture arm64.
-- Important config: `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Info.plist`, shared Xcode scheme, `.github/workflows/ios-foundation.yml`.
-
-## State owners / major modules
-
-- **App lifecycle / native navigation owner**: `AppDelegate.swift`, `RootViewController.swift`.
-- **Persistent auth-secret authority**: default persistent `WKWebsiteDataStore` only.
-- **Auth/account authority**: `Authentication/AuthSessionStore.swift`; native copied cookies/session bearer are transient only.
-- **Visible Web owner**: `Authentication/AuthWebViewController.swift` and diagnostic Web controllers.
-- **Native Web Send-engine diagnostic owner**: `NativeWebSendEngineProbeViewController`; diagnostic-only, does not mutate production `ConversationRepository`, and remains outside durable production acceptance.
-- **Production native conversation/list/read/recovery/future accepted response authority**: one `ConversationRepository` in `Conversation/ConversationFeature.swift`.
-- **Conversation-list persistent storage**: private `ConversationListCacheStore`; storage-only.
-- **Settings owner**: `AppPreferences`; persisted display/interaction booleans only. Protocol diagnostics are surfaced from Settings.
-- **Conversation presentation owner**: `ConversationDetailViewController`.
-- **Message presentation geometry**: `ConversationMessagePresentationProjection` + `ConversationMessageCell`; Stable b37/b38 deterministic bounded geometry.
-- **Diagnostics**: `DiagnosticsLogger`; privacy-safe structural/aggregate evidence only. b57 records phase counts and direct ordinary-assistant-text field names/string lengths/array shapes/safe enums only; it does not persist the assistant text itself, prompt, raw reasoning, raw tool output, IDs, auth/proof/header values.
-- **Official continuation observation owner**: `ProtocolHandoffProbeViewController`; diagnostic-only.
-- **Native continuation parity diagnostic owner**: `NativeResumeParityProbeViewController`; diagnostic-only.
-- **Background planning owner**: `BACKGROUND_EXECUTION_PLAN.md`; response-owner dependent.
-- **Test roots**: no XCTest/UI-test target yet.
-
-## Build / CI / package identity
-
-- Packaging: `bash scripts/build_ipa.sh`.
+- Swift 5 + UIKit, Foundation, WebKit, OSLog, CryptoKit; no third-party dependencies.
 - Build: Release `xcodebuild` for iphoneos, signing disabled for TrollStore packaging.
+- Packaging: `bash scripts/build_ipa.sh`.
 - CI: GitHub Actions macOS15.
-- Artifact scheme: `build/artifacts/ChatGPTClient-<version>-b<build>-dev-<work-slug>.ipa` + SHA-256 sidecar.
-- Marketing version source: `MARKETING_VERSION`.
-- Build source: `CURRENT_PROJECT_VERSION`.
-- Candidate scheme: `DEV-<work-slug>-<marketing-version>-b<build>`.
-- Expanded built `Info.plist` is package identity authority for version/build/Candidate/source marker.
-- Once an Artifact identity is emitted it is permanently reserved; corrected product code must use a new Candidate/build.
+- Candidate identity: `DEV-<work-slug>-<marketing-version>-b<build>`; built `Info.plist` is package identity authority.
+- Once an Artifact identity is emitted it is permanently reserved; corrected code uses a new build/Candidate.
 
-## Current repository-governance source
+## State owners
 
-Latest repository-wide governance is current `main@1ac202c972f2dee6945fe8d0688df8e10f5d462c` root `AGENTS.md` plus `docs/project/START_HERE.md`. The feature branch originated before rules-only `main` commits; final synchronization remains required before merge. No current product/state-owner conflict with those target-only rule commits is established.
+- Native navigation shell: `AppDelegate.swift`, `RootViewController.swift`.
+- Persistent auth-secret authority: default persistent `WKWebsiteDataStore` only.
+- Native auth/account authority: `Authentication/AuthSessionStore.swift`.
+- Production native conversation/list/read/recovery/future accepted response authority: one `ConversationRepository` in `Conversation/ConversationFeature.swift`.
+- Conversation-list persistence: `ConversationListCacheStore`, storage-only behind repository authority.
+- Native conversation presentation: `ConversationDetailViewController`.
+- Stable long-message geometry: `ConversationMessagePresentationProjection` + `ConversationMessageCell`, exact b38.
+- Protocol diagnostics: `DiagnosticsLogger` + diagnostic controllers. Diagnostics may record privacy-safe structure/counts, never prompt/body/raw IDs/auth/proof/token values.
+- `NativeWebSendEngineProbeViewController` is diagnostic-only and does not mutate production `ConversationRepository`.
 
-Current rules include autonomous continuation, rolling checkpoints, batched non-atomic GitHub recovery, same-conversation identity reuse and Full/Light Resume Guards.
+## Durable Send/security/product boundary
 
-## Stable / accepted merged baselines
+- Exact b42 proves successful ChatGPT-account protected Send depends on browser anti-abuse challenge output. Pure-native/transient-auth account Send remains blocked.
+- Separately billed API-product architecture remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by account-safety policy.
+- TD-024 permits an explicitly visible official-Web Send surface as a security permission only; TD-025 rejects b44 full-page hybrid product form; TD-028 records the b47 long-answer mobile-Web composer viability ceiling.
+- Full existing-conversation mobile-Web rendering is not an accepted daily-chat production dependency.
+- b48-b58 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
+
+## Stable accepted baselines
 
 - Foundation b1 Stable/merged.
-- Auth/account b6 Stable/merged for recorded Plus/personal iPhone/iOS17 scope.
-- Diagnostic read b7 accepted/merged.
-- Production native read b9 Stable/merged.
+- Auth b6 Stable/merged for recorded Plus/personal scope.
+- Protocol-read b7 accepted diagnostic evidence.
+- Native read b9 Stable/merged.
 - Recovery b15 Stable/merged.
-- Multi-conversation read state b21 Stable/merged; Frozen No.
-- Conversation-list cache core b23 Stable/merged; Frozen No.
-- **Conversation metadata/settings/round navigation b38 Stable/merged; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`; Frozen No.**
+- Multi-conversation b21 Stable/merged.
+- List-cache b23 Stable/merged; Frozen No.
+- Conversation metadata/settings/round navigation b38 Stable/merged; PR #27 merged at `9110c9e893e8a8665c7a58cf27bb42c65a39cc11`; exact tested source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`, Artifact `9708425762`, IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
 
-## Stable Phase 8 identity
+## Phase 9 current evidence
 
-- Candidate `DEV-conversation-round-count-0.1.0-b38`, `0.1.0 (38)`.
-- Exact tested source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`.
-- Runtime Artifact `9708425762`; IPA SHA `6dff45ff4b4c0f7edd231fc13ae67720381ecf7c4ecf96899eaf558b59c2185e`.
-- Accepted architecture: bounded long-message chunks + deterministic row geometry/manual cell layout + continuous O(1)-target round animation.
+- b45 official no-resend resume is Runtime Confirmed; b46/b47 duplicated Native Cookie+Bearer-only resume rejected with HTTP404 JSON; first/exclusive Native resume Unknown.
+- b48-b51 established Native composer -> official protected Send and complete compact text continuation, including fresh-new-chat title-generation correction.
+- b52 kept final answer complete while visible reasoning beginning was incomplete.
+- b53-b55 identified explicit reasoning/tool classes and exact `reasoning_ended` marker while keeping raw `assistant:thoughts` non-presentational.
+- b56 showed recap text itself is not the real reasoning body in the tested turn; the recap event remains a valid reasoning-end marker.
 
-## Phase 9 security / product evidence
+### b57 Runtime
 
-### Protected Send / full-Web ceiling
+Exact b57: Candidate `DEV-send-stream-0.1.0-b57`, source `7074b1f85a0f239a5fd615f52196e1e28145523c`, Artifact `9729360247`, IPA SHA `c8662a065f0dc1ec627f7eba86387d190e80e593a6972cc13934f80c4efe0a06`.
 
-- b42: PoW, Turnstile and `so` required before successful protected Send; pure-native/transient-auth account Send remains blocked.
-- b43/b44: shorter visible-Web interaction can work, but full-page Native→Web→Native product form rejected and immediate Native reconciliation can lag Web-visible assistant output.
-- b47: long-answer existing conversation could repeatedly freeze mobile-Web composer before Send. Full existing-conversation Web rendering is therefore not a daily production dependency.
+Exact iPhone/iOS17 Runtime passed the reasoning/final phase gate: reasoning `4 deltas / 61 chars` streamed only in `思考过程`, final answer `12 / 287 chars` stayed separate, exact reasoning-end marker count was 1, and the prior leading truncation did not reproduce. A six-character `is_thinking_preamble_message` existed but was not consumed, so no prefix parser change is justified.
 
-### Official continuation / Native parity
+The same turn contained multiple assistant-code -> tool-result structures while Native showed no tool activity. Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b57-runtime.md`.
 
-- b45: official no-resend `POST /backend-api/f/conversation/resume` with `{conversation_id, offset}` returns HTTP200 SSE and can continue the same already-started response. Short background/lock survival evidence positive.
-- b46/b47: Native duplicated-after-official-success Cookie+Bearer-only resume returned HTTP404 JSON. Native first/exclusive resume remains Unknown / Unverified.
+### Exact current b58 Candidate
 
-### Native composer / Web Send-engine progression
-
-- b48: Native composer successfully drove sequential official protected Sends; parser used wrong long-form patch names.
-- b49: real incremental compact `o/p/v` delivery confirmed but incomplete.
-- b50: contextual value-only continuation made established turns complete; fresh first turn still lost a middle section.
-- b51: preserving active continuation across exact `title_generation` fixes the fresh-new-chat missing-middle failure; exact fresh long answer delivered 11,618 Native chars / 284 deltas and was visually complete.
-- b52: final answer complete while visible reasoning beginning slightly truncated; root-nonexact/inactive-value theory rejected for that reproduction.
-- b53: service stream directly identified `assistant:reasoning_recap`, separate `assistant:thoughts`, `assistant:code`, and tool text/code/multimodal classes. Raw `thoughts` remains non-presentational.
-- b54: assistant tool invocation→tool-result grammar materially identified; generic structure observer saturated at 32/overflow13 before deterministic recap coverage.
-- b55: independent special observer passed under saturation (generic 32/overflow14, special 7/overflow0) and deterministically captured exact `assistant:reasoning_recap / finished_successfully / recipient=all` with `reasoning_status=reasoning_ended`, `reasoning_recap_type=collapse`; separate `assistant:thoughts` remained non-presentational.
-
-### b56 Runtime — recap presentation assumption corrected
-
-- Candidate `DEV-send-stream-0.1.0-b56`, exact source `cec921030fd1af9f3853f35af52b661586b3a8ab`, Artifact `9728937100`, IPA SHA `da62776200ce94fef95326abaea3b980f65a5698df5dfe481bd34046e0f8dbe6`.
-- Exact iPhone/iOS17 Runtime matched build 56 / source `cec921030fd1`; HTTP200 SSE / terminal true.
-- Metrics: `frameCount=75`, Native 26 deltas / 504 chars, exact-root 4, nested 8, contextual strings 14 / 299 chars, inactive strings 0, generic 32/overflow16, special 8/overflow0, recap 7 chars.
-- User-visible result: recap control worked, but expanded recap was only `思考了 40s` in this sample; the real visible reasoning body stayed mixed with the final answer and its beginning was still truncated.
-- Accepted correction: exact recap **text is not established as the real reasoning body**. The exact recap event remains an explicit reasoning-end marker.
-- Event ordering showed `assistant:text:in_progress` immediately before the first accepted `/message/content/parts/0` append, creating a concrete missing-prefix hypothesis; b56 did not log ordinary assistant-text content shape, so the initial field remains Unknown / Unverified and must not be guessed.
-- Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b56-runtime.md`.
-
-### Exact current b57 Candidate
-
-- Candidate `DEV-send-stream-0.1.0-b57`, `0.1.0 (57)`.
-- Exact product/config source `7074b1f85a0f239a5fd615f52196e1e28145523c`.
-- Product tree `c402ce522e244cf63aa44b80a6d165b84342104c`.
-- Push Run / Job `33302357908 / 99232731468` — success.
-- PR Run / Job `33302359351 / 99232735067` — success.
-- Artifact `9729360247`; ZIP `sha256:ae5a5532e2c30624907e9a2d61966090df4b8cc9ffa57f1b5725db8b61a8d275`.
-- IPA SHA `c8662a065f0dc1ec627f7eba86387d190e80e593a6972cc13934f80c4efe0a06`.
-- Package: Release / `0.1.0 (57)` / Candidate b57 / source `7074b1f85a0f` / iOS14 / `[1,2]` / arm64.
-- b57 preserves prior accepted protected-Send and text-acceptance rules. Existing accepted text before exact reasoning-end marker is routed to a distinct Native `思考过程` region; accepted text after marker is routed to final answer. Exact recap text is not used as the reasoning body.
-- If terminal arrives with no exact reasoning-end marker, provisional pre-marker text is promoted into the ordinary answer so non-reasoning turns are not permanently misclassified.
-- b57 adds a separate bounded 12-entry ordinary `assistant:text` structure channel containing only direct field names, string lengths, array shapes/string-char counts, safe booleans/enums and before/after-marker phase. It deliberately does **not** extract an unproven initial text field.
-- Runtime/manual: Pending. b57 permanently reserved after Artifact emission.
+- Candidate `DEV-send-stream-0.1.0-b58`, `0.1.0 (58)`.
+- Exact product/config source `d9dbf208625e46b8eb4e7ec69209c9d519d0e5eb`; tree `ddb396aa942c48222e69671eaf3610127d9797e9`.
+- Push Run / Job `33303998650 / 99237187408` — success.
+- PR Run / Job `33304001877 / 99237195550` — success.
+- Artifact `9729864129`; ZIP `sha256:3a907e6bb5f1cbd7f57d54b01e64805196247e612e2de961dac99d92df2060ac`.
+- IPA SHA `0d5988caf21300bfb29e81b3f1f8bbf6eaa69a84f09efeda601e6d6f9b7b8875`.
+- Package: Release / `0.1.0 (58)` / Candidate b58 / source `d9dbf208625e` / iOS14 / `[1,2]` / arm64.
+- b58 preserves b57 text/reasoning behavior and adds only a separate compact diagnostic `工具调用` region for exact completed assistant-code invocations. Service `reasoning_title` is transient UI only if present; generic local fallback otherwise. Tool result body, raw args/results, connector payloads and `assistant:thoughts` remain excluded.
+- Runtime/manual: Pending. b58 permanently reserved.
 
 ## Current next Candidate boundary
 
-b39-b57 emitted identities are permanently reserved. Any product-code correction after b57 requires b58+.
+b39-b58 are permanently reserved. Do not allocate b59 until exact b58 Runtime supplies a concrete smallest next change.
 
-Do not allocate b58 unless exact b57 Runtime identifies a concrete smallest next change. The current gate is one focused b57 reasoning/tool reproduction validating phase separation and exposing the first ordinary `assistant:text` content shape needed to classify the remaining leading-prefix defect.
+Current b58 human gate: one tool-active reasoning turn confirming b57 phase split remains correct, the compact tool region appears, titles/fallback are understandable, raw tool payloads remain absent, and terminal diagnostics are exported.
 
-## Reasoning/tool presentation boundary
+## Remaining Unknown / Unverified
 
-`DEV-send-stream` owns explicitly user-visible reasoning, reasoning→final transition and follow-tail per `SEND_STREAM_PREFLIGHT.md`.
-
-Only explicitly user-visible service reasoning/status/tool data may be shown. Hidden chain-of-thought/internal tool/system nodes, raw `assistant:thoughts`, raw tool arguments and raw tool output remain prohibited.
-
-The b55/b56 evidence authorizes exact `reasoning_ended` as a phase marker; it does **not** authorize treating recap text as the reasoning body. b57 re-presents only the same already-accepted visible assistant text stream around that marker. Exact missing-prefix extraction and exact user-visible tool-node presentation remain Unknown / Unverified pending evidence.
-
-## Attachment boundary
-
-- b43 Web `+` latency ~100–200ms accepted for its tested scope.
-- Web photo chooser filtered videos.
-- Public WebKit upload-panel replacement is iOS18.4+, not primary iOS17.
-- Native iOS17 photo+video selection/upload requires separately evidenced native attachment upload/handoff; do not use private WebKit or DOM/file-input injection.
-
-## Runtime / evidence boundaries
-
-- b38 Runtime remains Stable/merged for recorded scope.
-- b42 remains security/transport evidence, not native Send acceptance.
-- b45 official no-resend resume is Runtime Confirmed.
-- b46/b47 Native duplicated Cookie+Bearer-only resume are Runtime Rejected for their exact attempts.
-- b51 Runtime confirms the fresh-new-chat title-generation fix.
-- b52 Runtime confirms final-answer capture for the tested tool-style response while visible reasoning begins incompletely.
-- b53 Runtime identifies explicit reasoning/tool message classes.
-- b54 Runtime materially identifies tool call/result grammar but leaves recap coverage inconclusive due generic diagnostic saturation.
-- b55 Runtime passes the special-observer / exact recap-end-structure gate.
-- b56 Runtime is a partial pass: recap UI works, recap-body assumption rejected, real reasoning/final remained mixed, leading reasoning still truncated.
-- b57 Code/CI/Artifact/package is verified and Runtime pending.
-- Full-Web long-conversation composer viability failed on the primary device/workload reported at b47.
-- Native production response ownership/reasoning/follow-tail/background lifecycle, exact missing-prefix field, exact tool-node user visibility, existing-conversation pre-React history virtualization, 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified where not explicitly tested.
-- CI/Artifact success is never Runtime proof.
+Accepted production Native response ownership/tool-card semantics, Native first/exclusive resume, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 
-Update this file proactively when purpose, stack, build/test commands, version/Candidate, deployment/runtime, state ownership, accepted baseline or validation evidence changes.
+Update this file proactively when purpose, stack, build/test commands, Candidate identity, deployment/runtime, state ownership, accepted baseline or validation evidence changes.

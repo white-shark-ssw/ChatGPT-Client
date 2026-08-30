@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b60 Runtime and b61 Code / CI / Artifact / package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b61 Runtime classification and b62 Code / CI / Artifact / package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -42,7 +42,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Separately billed API-product architecture remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by account-safety policy.
 - TD-024 permits an explicitly visible official-Web Send surface as a security permission only; TD-025 rejects b44 full-page hybrid product form; TD-028 records the b47 long-answer mobile-Web composer viability ceiling.
 - Full existing-conversation mobile-Web rendering is not an accepted daily-chat production dependency.
-- b48-b61 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
+- b48-b62 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
 
 ## Stable accepted baselines
 
@@ -61,29 +61,29 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b48-b51 established Native composer -> official protected Send and complete compact text continuation, including fresh-new-chat title-generation correction.
 - b52-b56 identified reasoning/tool grammar and exact `reasoning_ended` while keeping raw `assistant:thoughts` non-presentational.
 - b57-b59 established reasoning/final split and exact service-marked thinking-preamble inclusion.
-- b60 Runtime passed the tested official-like thinking-state / reasoning-segmentation / text-completeness gate and established exact result `parent_id` association.
+- b60 passed tested thinking-state / reasoning-segmentation / text-completeness and exact result-parent association.
+- b61 successful tool-active Runtime passed transient parent-paired row lifecycle; a separate cold/new-page run captured generic-textarea false-ready / false-submitted behavior before protected Send.
+- b62 removes only that false-ready generic-textarea authority and otherwise preserves b61 behavior.
 
-### Exact b60 Runtime
+### Exact b61 Runtime
 
-- Candidate `DEV-send-stream-0.1.0-b60`, exact source `8ca445f3c17233ac36832f46417a8e53a138499e`, Artifact `9731477362`, IPA SHA `7cae323231b6b9d1aa837b03506450daa99f457fd8b4025deedb368dc008cd42`.
-- Two consecutive iPhone/iOS17 tool-active turns: HTTP200 SSE / terminal; both showed initial `正在思考`, reasoning streaming and a Native paragraph break with no obvious truncation.
-- Turn 1 parent association `15/15` results matched, 0 unmatched/missing; Turn 2 `5/5`, 0 unmatched/missing.
-- Author-name==recipient was only 14/15 then 3/5; therefore it is not association authority.
-- Accepted tested rule: result metadata `parent_id` matches the invocation service message ID observed in the same stream. Raw IDs remain transient/unlogged; chronology/count/name pairing is rejected.
-- Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b60-runtime.md`.
+- Candidate `DEV-send-stream-0.1.0-b61`, source `2386872af03e0684eee8deca87f636dc265114ec`, Artifact `9732514781`, IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
+- Failed run `ChatGPTClient-Diagnostics-20260830-134827.json`: page `new_or_other`; composer `strategy=textarea`; `nativeSubmit` + `submitResult=submitted`; no `sendObserved`, `sendResponse`, thinking or stream metrics. User observed no answer activity. Classified as a Send-entry false-ready defect.
+- Successful run `ChatGPTClient-Diagnostics-20260830-135112.json`: HTTP200 SSE / terminal; reasoning `10/251`, final `68/2363`, reasoning segment breaks `1/1`, reasoning-end 1, fallback false; identities/results `14/14`, parent matches `14/14`, unmatched/missing `0/0`, Native presentations/completion updates `14/14`. User observed complete reasoning opening and tool rows progressing `调用中 -> 已完成`.
+- Overall b61: **Runtime Partial** because successful response/tool lifecycle passed but the independent Send-entry defect remained.
+- Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b61-runtime.md`.
 
-### Exact current b61 Candidate
+### Exact current b62 Candidate
 
-- Candidate `DEV-send-stream-0.1.0-b61`, `0.1.0 (61)`.
-- Exact product/config source `2386872af03e0684eee8deca87f636dc265114ec`; tree `a687500c88cffabf3a8496652fd5e0b633264836`.
-- Push Run / Job `33312809061 / 99260781131` — success.
-- PR Run / Job `33312811455 / 99260788483` — success.
-- Artifact `9732514781`; ZIP `sha256:66976ecb53ac8fc2b116dcbce753fdf05499cea88dd29f0ae4223ab8baa5bf28`.
-- IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
-- Package: Release / `0.1.0 (61)` / Candidate b61 / source `2386872af03e` / iOS14 / `[1,2]` / arm64.
-- b61 is permanently reserved. Code / Push CI / PR CI / Artifact / package identity passed; Runtime/manual pending.
-- b61 preserves b60 Send/text/reasoning/thinking behavior, uses the accepted `parent_id` association to update the correct transient Native tool row, and logs only bounded type/key/count/string-length shape for candidate detail metadata.
-- Raw tool request/result bodies, connector payload values and `assistant:thoughts` remain non-presentational.
+- Candidate `DEV-send-stream-0.1.0-b62`, `0.1.0 (62)`.
+- Exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`; tree `d3432dfe2e32cddcfac7a5a56d7880772dc6989d`.
+- Push Run / Job `33316398081 / 99270535435` — success.
+- PR Run / Job `33316399402 / 99270539763` — success.
+- Artifact `9733577825`; ZIP `sha256:d53ddb88c5d2092294592416e10e5a0a752cb7afb0bbe0a39c2c137d021082d0`.
+- IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
+- Package: Release / `0.1.0 (62)` / Candidate b62 / source marker `e1b44f7ab6c4` / iOS14 / `[1,2]` / arm64.
+- b62 is permanently reserved. Code / Push CI / PR CI / Artifact / package identity passed; Runtime/manual pending.
+- Behavior change: remove unqualified `textarea:not([disabled])` from composer authority; retain `#prompt-textarea` and explicit `[contenteditable="true"][role="textbox"]`; add no retry/timer/watchdog/polling/fallback.
 
 ## Current product interaction target
 
@@ -95,7 +95,9 @@ Current evidence supports the tested state ordering and parent pairing. Exact cr
 
 ## Current next Candidate boundary
 
-b39-b61 are permanently reserved. **Do not allocate b62 until exact b61 Runtime** proves correct parent-paired row completion behavior and identifies a bounded field that can be demonstrated as user-visible rather than internal connector data.
+b39-b62 are permanently reserved. **Do not allocate b63 until exact b62 Runtime** classifies the verified-composer Send-entry gate and either accepts it for the tested scope or produces a concrete next defect/evidence need.
+
+The b61 false-ready race is intermittent. b62 acceptance does not require reproducing it; one focused cold-launch run must instead prove that Native does not accept an unverified generic textarea and that any enabled Send which succeeds proceeds into the real protected-Send/SSE lifecycle. A second cold launch is useful but optional.
 
 ## Remaining Unknown / Unverified
 

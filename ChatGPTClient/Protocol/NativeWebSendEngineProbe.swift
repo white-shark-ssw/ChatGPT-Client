@@ -69,7 +69,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b58 诊断：b57 真机确认可见思考已按 reasoning_ended 与最终回答正确分流，且本轮没有开头截断。b58 保持该文本流不变，只把 exact completed assistant:code 非 all recipient 的工具调用显示到独立 Native 工具区域；优先使用服务端 reasoning_title，缺失时仅显示‘工具调用’。不展示 raw 参数/结果、assistant:thoughts 或 connector payload。"
+        explanationLabel.text = "b59 诊断：b58 真机对照确认工具调用区域正常，但 Native 思考缺失的开头长度与服务端 exact is_thinking_preamble_message 单字符串 part 完全一致。本版保持 b58 文本分流与工具展示不变，只把这个严格服务标记的 preamble 一次性送入现有 Native 思考流；不扩展普通 assistant:text，不展示 raw 参数/结果、assistant:thoughts 或 connector payload。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -179,7 +179,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b58_tool_activity_presentation", "surface": "native_over_fullsize_web", "scope": "reasoning_split_plus_tool_activity"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b59_thinking_preamble", "surface": "native_over_fullsize_web", "scope": "reasoning_preamble_plus_tool_activity"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -378,6 +378,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "assistantTextBeforeReasoningEndCount": Self.safeNumberString(body["assistantTextBeforeReasoningEndCount"]),
                 "assistantTextAfterReasoningEndCount": Self.safeNumberString(body["assistantTextAfterReasoningEndCount"]),
                 "reasoningEndMarkerCount": Self.safeNumberString(body["reasoningEndMarkerCount"]),
+                "reasoningPreambleCount": Self.safeNumberString(body["reasoningPreambleCount"]),
+                "reasoningPreambleCharacters": Self.safeNumberString(body["reasoningPreambleCharacters"]),
                 "toolInvocationCount": Self.safeNumberString(body["toolInvocationCount"]),
                 "toolInvocationWithTitleCount": Self.safeNumberString(body["toolInvocationWithTitleCount"]),
                 "toolResultCount": Self.safeNumberString(body["toolResultCount"]),
@@ -772,6 +774,26 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         if (!specialPosted && !phasePosted) postStructure(summary);
       };
 
+      const postTextDelta = (text, aggregate) => {
+        if (!text) return;
+        post({ kind: aggregate.reasoningEnded ? 'native_answer_delta' : 'native_reasoning_delta', text });
+      };
+
+      const observeReasoningPreamble = (payload, aggregate) => {
+        if (aggregate.reasoningEnded) return;
+        const message = findMessage(payload);
+        if (!message || !message.author || message.author.role !== 'assistant' || message.status !== 'in_progress' || message.recipient !== 'all' || typeof message.id !== 'string' || !message.id) return;
+        if (aggregate.reasoningPreambleSeen.has(message.id)) return;
+        const content = message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
+        const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
+        if (!content || content.content_type !== 'text' || !metadata || metadata.is_thinking_preamble_message !== true) return;
+        if (!Array.isArray(content.parts) || content.parts.length !== 1 || typeof content.parts[0] !== 'string' || !content.parts[0]) return;
+        aggregate.reasoningPreambleSeen.add(message.id);
+        aggregate.reasoningPreambleCount += 1;
+        aggregate.reasoningPreambleCharacters += content.parts[0].length;
+        postTextDelta(content.parts[0], aggregate);
+      };
+
       const observeReasoningEnd = (payload, aggregate) => {
         const message = findMessage(payload);
         if (!message || !message.author || message.author.role !== 'assistant' || message.status !== 'finished_successfully' || message.recipient !== 'all') return;
@@ -808,11 +830,6 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           if (rawTitle) aggregate.toolResultWithTitleCount += 1;
           post({ kind: 'native_tool_activity', state: 'result', titleCharacters: rawTitle.length });
         }
-      };
-
-      const postTextDelta = (text, aggregate) => {
-        if (!text) return;
-        post({ kind: aggregate.reasoningEnded ? 'native_answer_delta' : 'native_reasoning_delta', text });
       };
 
       const scrubTextPatches = (node, aggregate) => {
@@ -872,6 +889,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         assistantTextBeforeReasoningEndCount: aggregate.assistantTextBeforeReasoningEndCount,
         assistantTextAfterReasoningEndCount: aggregate.assistantTextAfterReasoningEndCount,
         reasoningEndMarkerCount: aggregate.reasoningEndMarkerCount,
+        reasoningPreambleCount: aggregate.reasoningPreambleCount,
+        reasoningPreambleCharacters: aggregate.reasoningPreambleCharacters,
         toolInvocationCount: aggregate.toolInvocationCount,
         toolInvocationWithTitleCount: aggregate.toolInvocationWithTitleCount,
         toolResultCount: aggregate.toolResultCount,
@@ -907,6 +926,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
 
         observeStructure(payload, aggregate);
+        observeReasoningPreamble(payload, aggregate);
         observeToolActivity(payload, aggregate);
         observeReasoningEnd(payload, aggregate);
         const payloadKeys = payload && typeof payload === 'object' && !Array.isArray(payload) ? Object.keys(payload) : [];
@@ -1002,6 +1022,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           assistantTextAfterReasoningEndCount: 0,
           reasoningEnded: false,
           reasoningEndMarkerCount: 0,
+          reasoningPreambleSeen: new Set(),
+          reasoningPreambleCount: 0,
+          reasoningPreambleCharacters: 0,
           toolActivitySeen: new Set(),
           toolInvocationCount: 0,
           toolInvocationWithTitleCount: 0,

@@ -115,9 +115,10 @@ Completed this cycle:
 4. reasoning/final presentation preserved through terminal;
 5. tool result parent matches and Native completion updates passed `20/20`;
 6. `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md` created;
-7. durable project docs are being synchronized to this Runtime classification;
-8. exact b62 product/config source remains `e1b44f7a...`; subsequent documentation commits do not redefine it;
-9. PR #29 remains evidence-only and must not be merged yet.
+7. `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md` and `BUILD_TEST_INDEX.md` synchronized through exact b62 Runtime;
+8. exact b62 product/config source remains `e1b44f7a...`; all later commits in this cycle are docs-only and do not redefine it;
+9. docs-only diff audit passed before feature-branch fast-forward;
+10. PR #29 title/body synchronized to `b62 focused Runtime pass; expandable tool-detail evidence gate`, and remains open / mergeable / unmerged.
 
 ## Next exact action
 

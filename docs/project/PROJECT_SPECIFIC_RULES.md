@@ -5,12 +5,12 @@ This file contains repository/product rules backed by explicit requirements, cur
 ## Product contracts
 
 - Product goal remains an **iOS native ChatGPT client shell/read experience**.
-- Exact b42 Runtime proves the pure-native/transient-auth ChatGPT-account protected Send path depends on browser anti-abuse challenge output. The separately supported/billed API-product route remains explicitly rejected by the user unless that decision changes later.
+- Exact b42 Runtime proves the pure-native/transient-auth ChatGPT-account protected Send path depends on browser anti-abuse challenge output. The separately supported/billed API-product route remains explicitly rejected unless that decision changes later.
 - TD-024 permits a **user-visible official ChatGPT Web surface** to perform protected Send, but this is a security permission only; it is not proof that full mobile-Web conversation rendering is an acceptable daily-chat product surface.
 - TD-025 rejects b44's full-page Native -> Web -> Native product form.
 - TD-027 records the continuation boundary: official `/backend-api/f/conversation/resume` is Runtime Confirmed, while b46/b47 Native duplicated Cookie+Bearer-only resume attempts returned HTTP404 JSON.
 - TD-028 records the P0 full-Web product ceiling: an exact target-device long-answer conversation (~3 rounds) made the mobile-Web composer unusable before Send. The internal freeze cause is Unknown, but **full Web conversation rendering before every protected Send is not an accepted production dependency**.
-- The user explicitly requested b48-b53 as isolated diagnostic exceptions to test a Native composer over the official Web protected-Send runtime before deciding whether to change TD-024/TD-025. These Candidates do **not** by themselves modify the durable production boundary.
+- b48-b55 are isolated diagnostic exceptions requested by the user to test a Native composer over the official Web protected-Send runtime before any later explicit decision on TD-024/TD-025. These Candidates do **not** by themselves modify the durable production boundary.
 - Previous-project history is reference-only, not current protocol authority.
 - Durable roadmap: `docs/project/DEVELOPMENT_PLAN.md`.
 - Durable UI/interaction baseline: `docs/project/UI_INTERACTION_BASELINE.md`.
@@ -32,26 +32,29 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## Hybrid Web Send / Native interception diagnostic contract
 
-- Durable production policy still allows only an explicit user-visible official-Web protected Send surface under TD-024; hidden/shadow protected Send remains prohibited unless a later explicit user architecture decision changes that policy.
-- b48-b53 are **diagnostic exceptions requested by the user**. They may keep a full-size official `WKWebView` on the existing default persistent data store behind an opaque Native diagnostic surface while testing whether Native input and pre-React SSE interception can avoid full Web conversation presentation cost. This exception is not production approval.
+- Durable production policy still allows only an explicit user-visible official-Web protected Send surface under TD-024; hidden/shadow protected Send remains prohibited unless a later explicit architecture decision changes that policy.
+- b48-b55 are **diagnostic exceptions requested by the user**. They may keep a full-size official `WKWebView` on the existing default persistent data store behind an opaque Native diagnostic surface while testing Native input and pre-React SSE interception. This exception is not production approval.
 - Use the existing default persistent `WKWebsiteDataStore`; do not add another persistent credential/challenge store.
-- `ConversationRepository` remains sole native conversation/list/detail/recovery/future accepted response authority. `AuthSessionStore` remains native auth/account authority. b48-b53 do not mutate production repository response state.
+- `ConversationRepository` remains sole native conversation/list/detail/recovery/future accepted response authority. `AuthSessionStore` remains native auth/account authority. b48-b55 do not mutate production repository response state.
 - The official page remains responsible for its own login, browser challenge handling and protected `/backend-api/f/conversation` request construction. Diagnostics must not capture or replay challenge/proof/header values.
 - b43 established only a shorter-sequence visible-Web smoothness baseline; Web `+` -> picker was roughly 100–200 ms. b43 is not long-conversation viability proof.
 - b44 established tested `/c/<conversation-id>` mapping but the full-page Native -> Web -> Native flow is product-rejected. Immediate Native Sync could lag assistant output already visible in Web. No arbitrary delay/timer/poll/repeated-Sync workaround is accepted.
 - b45 proved official no-resend post-Send continuation: `POST /backend-api/f/conversation/resume`, JSON body `{conversation_id: string, offset: number}`, HTTP200 `text/event-stream` on successful recovery.
 - b46/b47 each issued exactly one Native same-body duplicated resume only after an official successful resume; both returned HTTP404 JSON while later official resume remained healthy. Native first/exclusive resume remains Unknown / Unverified.
 - b47 successful official resume request exposed a much richer header-name set than Native. Header-name presence does **not** authorize copying browser values.
-- b47 exact-device preparation also exposed the stronger pre-Send failure: a long-answer conversation could freeze the mobile-Web composer before Send. Therefore do not return to a production architecture that requires full existing-conversation Web rendering before every Send.
-- The user's earlier wrapped-Web/userscript experiment is additional product evidence: loading the full Web conversation and hiding all but roughly two visible rounds still left `+`/overall interaction too slow. Display-layer hiding is not evidence of data/state-layer unloading.
-- b48 Runtime confirmed two sequential Native-composer submissions could drive the official page's protected Send and preserve enough Web conversation state for a second turn. Its assistant parser failed because it used long-form `op/path/value` instead of the current compact `o/p/v` fields.
+- b47 exact-device preparation exposed the stronger pre-Send failure: a long-answer conversation could freeze the mobile-Web composer before Send. Do not return to a production architecture requiring full existing-conversation Web rendering before every Send.
+- The earlier wrapped-Web/userscript experiment is additional product evidence: loading the full Web conversation and hiding all but roughly two visible rounds still left `+`/overall interaction too slow. Display-layer hiding is not evidence of data/state-layer unloading.
+- b48 Runtime confirmed two sequential Native-composer submissions could drive the official page's protected Send and preserve enough Web conversation state for a second turn. Its parser failed because it used long-form `op/path/value` instead of current compact `o/p/v` fields.
 - b49 Runtime confirmed real incremental Native assistant delivery from compact explicit `o/p/v` patches, but only short fragments were captured because contextual value-only `{v:string}` continuation was not yet handled.
-- b50 Runtime materially confirms the diagnostic path for established turns: three sequential Native submissions all reached official protected Send and terminal; turns 2/3 were complete and visibly incremental/effectively character-by-character while Web assistant terminal text stayed small. Fresh new-chat turn 1 still lost a middle section.
-- Exact b51 Runtime confirms the narrow fresh-new-chat correction: when an already-active continuation sees top-level `type == "title_generation"` with no `o`/`p`, forwarding that frame unchanged while preserving continuation fixes the previously observed fresh-first-turn missing middle on the exact iPhone/iOS17 test. The first long answer delivered 11,618 Native characters across 284 deltas with `titleGenerationWhileContinuationCount=1` and was visually complete.
-- Exact b52 Runtime refines the remaining tool-style gap: **the beginning of explicitly visible reasoning/thinking was slightly truncated while the real/final answer was complete**. `rootNonExactTextPatchCount=0`, `nestedTextPatchCount=6`, `inactiveValueStringCount=0`, `continuationResetWhileActiveCount=5`; therefore the prior root-nonexact→inactive-value hypothesis is rejected for this reproduction.
-- Exact b53 is behavior-neutral and exists only to identify the explicit user-visible reasoning/tool grammar. It may record at most 32 unique privacy-safe structural signatures using frame index, event type, root operation/path, structurally discoverable message role/content type/status/end-turn, bounded key names and bounded nested patch operation/path summaries. It must not change b52 filtering/output or log prompt/answer/reasoning text/raw payload/raw IDs/auth/proof/header values.
+- b50 Runtime materially confirms the diagnostic path for established turns: three sequential Native submissions all reached official protected Send and terminal; turns 2/3 were complete and visibly incremental/effectively character-by-character. Fresh new-chat turn 1 still lost a middle section.
+- Exact b51 Runtime confirms the narrow fresh-new-chat correction: when an already-active continuation sees top-level `type == "title_generation"` with no `o`/`p`, forwarding that frame unchanged while preserving continuation fixes the observed fresh-first-turn missing middle. The first long answer delivered 11,618 Native characters across 284 deltas with `titleGenerationWhileContinuationCount=1` and was visually complete.
+- Exact b52 Runtime refines the remaining tool-style gap: **the beginning of explicitly visible reasoning/thinking was slightly truncated while the real/final answer was complete**. `rootNonExactTextPatchCount=0`, `nestedTextPatchCount=6`, `inactiveValueStringCount=0`, `continuationResetWhileActiveCount=5`; the prior root-nonexact→inactive-value hypothesis is rejected for that reproduction.
+- Exact b53 Runtime directly identifies `assistant:reasoning_recap`, separate `assistant:thoughts`, `assistant:code`, and `tool:text` / `tool:code` / `tool:multimodal_text` message classes. User observation remained: reasoning beginning truncated, final answer complete, Native tool UI absent.
+- Exact b54 Runtime materially identifies assistant tool invocation→tool-result structure: assistant `code` targets concrete recipients such as `api_tool.list_resources` / `api_tool.call_tool`; tool results identify `api_tool` / `api_tool.call_tool` author names, `recipient=all`, content containers and `invoked_plugin` / `invoked_resource` metadata where present. b54 also captures `assistant:thoughts` content keys including a `thoughts` object with `chunks,content,finished,summary` and metadata such as `can_save:false`, `reasoning_status:is_reasoning`, `tool_summary_type:github`, `inline_cot_expandable_content` and `tool_icons`.
+- b54's generic structure observer saturated at 32 unique signatures with overflow 13. Missing `assistant:reasoning_recap` in that export therefore cannot be interpreted as protocol absence. b54 is a partial Runtime pass: tool grammar identified, recap display-container gate inconclusive.
+- Exact b55 is behavior-neutral for Send/filter/output. It preserves the generic 32-signature observer and adds only a separate 24-entry special-message dedupe channel for `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code` and `tool:*`, with independent count/overflow metrics. It must not log new prompt/answer/reasoning/tool-output/raw-ID/auth/proof/header values.
 - Do not generalize arbitrary `v:string` or arbitrary structural frames into assistant text. Future parser changes require exact structural/runtime evidence.
-- Do not continuously scrape/mirror Web prompt/answer/reasoning DOM state. b48-b53 intercept only evidenced Send SSE text patches before Web React and keep response text in diagnostic memory/UI; exported diagnostics remain structural/aggregate only.
+- Do not continuously scrape/mirror Web prompt/answer/reasoning DOM state. b48-b55 intercept only evidenced Send SSE structures before Web React and keep response text in diagnostic memory/UI; exported diagnostics remain structural/aggregate only.
 - Do not guess resume/handoff/turn-stream endpoints or required browser header values.
 - Background resilience remains a hard gate, but production background ownership is not established by these diagnostic Candidates.
 - `beginBackgroundTask` is a finite public baseline only. It must not be presented as a long-duration guarantee.
@@ -62,13 +65,16 @@ This file contains repository/product rules backed by explicit requirements, cur
 
 ## User-visible reasoning / tool presentation contract
 
-- Explicitly user-visible reasoning, reasoning→final transition and follow-tail remain part of `DEV-send-stream` per `SEND_STREAM_PREFLIGHT.md`; do not create a separate Work merely for the current reasoning collapse/expand or tool-call detail presentation.
+- Explicitly user-visible reasoning, reasoning→final transition and follow-tail remain part of `DEV-send-stream` per `SEND_STREAM_PREFLIGHT.md`; do not create a separate Work merely for reasoning collapse/expand or tool-call detail presentation.
 - Only reasoning/status/tool detail that the current service explicitly exposes to the user may enter Native presentation. Never expose hidden chain-of-thought, internal reasoning, system messages or internal-only tool nodes, and never infer them from structural timing/path names.
-- Planned Native UX after grammar evidence: a distinct collapsible/expandable reasoning region and a tap-driven native sheet/popover for service-visible tool-call status/details.
-- Reasoning and final answer must remain separate response phases/presentation domains; do not concatenate them into one undifferentiated body merely because b48-b52 text interception currently posts both assistant text-patch classes to one diagnostic text view.
+- `assistant:thoughts` is explicitly **non-presentational** under current evidence. Its raw `thoughts`, `chunks`, internal `content`, or other hidden reasoning material must not be surfaced merely because structural keys are visible.
+- b53 makes `assistant:reasoning_recap` the direct service-side candidate for explicitly user-visible reasoning; b55 is the current evidence gate for deterministically capturing its structure after generic observer saturation.
+- b54 proves an assistant invocation→tool-result structural pairing grammar, but does not authorize verbatim display of raw tool arguments, raw tool output, or every internal tool node.
+- Planned Native UX after display-boundary evidence: a distinct collapsible/expandable reasoning-summary region and a tap-driven native sheet/popover/card for service-visible tool-call status/details.
+- Reasoning and final answer must remain separate response phases/presentation domains; do not concatenate them into one undifferentiated body merely because diagnostic text interception currently posts assistant text patches to one view.
 - Reasoning→final transition must be owned by one authoritative response lifecycle and occur exactly once from protocol/state evidence, not from cell redraw, elapsed time, DOM text or UI title.
-- Exact b53 Runtime is the current grammar gate. Do not implement reasoning UI state, tool sheet data models, haptics or parser acceptance until b53 signatures identify the exact user-visible message/event/content types and transition.
-- If exact evidence never identifies explicitly user-visible reasoning/tool data, leave these features unimplemented rather than exposing private/internal model behavior.
+- Exact b55 Runtime is the current grammar/display-boundary gate. Do not implement reasoning UI state, tool sheet data models, haptics or broader parser acceptance until b55 special structures identify the exact explicitly user-visible data and transition.
+- If exact evidence never identifies explicitly user-visible reasoning/tool data, leave those features unimplemented rather than exposing private/internal model behavior.
 
 ## Conversation metadata / Preferences contract
 
@@ -128,9 +134,9 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Once a Candidate/Artifact identity has been produced, do not rebuild corrected product code under that same identity.
 - Workflow Artifact container naming is not identity proof. Verify built `CFBundleShortVersionString`, `CFBundleVersion`, `DiagnosticsCandidate`, source marker and IPA filename/SHA before Runtime.
 - `scripts/build_ipa.sh` must derive identity from built app metadata and fail on Candidate/version/build mismatch.
-- Exact b24-b53 identities and emitted Artifacts are permanently reserved. Identity-invalid b46-transition Artifacts and accidental stale-b42 Artifact `9710515489` remain rejected and must never be installed as valid Candidates.
-- Exact current product/config authority for the diagnostic branch is b53 source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`; later docs-only commits do not redefine it.
-- Any product-code correction after b53 requires b54+ and must be justified by exact b53 Runtime; do not pre-allocate b54 by guess.
+- Exact b24-b55 identities and emitted Artifacts are permanently reserved. Identity-invalid b46-transition Artifacts and accidental stale-b42 Artifact `9710515489` remain rejected and must never be installed as valid Candidates.
+- Exact current product/config authority for the diagnostic branch is b55 source `aae856069b461e12dc11ee7d2d450a40ca621d21`; later docs-only commits do not redefine it.
+- Any product-code correction after b55 requires b56+ and must be justified by exact b55 Runtime; do not pre-allocate b56 by guess.
 
 ## Manual recovery contract
 
@@ -162,7 +168,7 @@ This file contains repository/product rules backed by explicit requirements, cur
 - b12 accepted public WebKit data-store warm-up for the tested persisted cold-start path.
 - Do not add a second persistent auth store or retry loop.
 - Cache namespace hint is cache bookkeeping only and never establishes verified account/transport/Detail authority.
-- b48-b53 diagnostic Web uses the same existing default persistent data store; it does not persist copied auth/challenge material.
+- b48-b55 diagnostic Web uses the same existing default persistent data store; it does not persist copied auth/challenge material.
 
 ## Conversation-list persistent cache contract
 
@@ -185,14 +191,15 @@ This file contains repository/product rules backed by explicit requirements, cur
 - b40-b42 private Send observations remain protocol evidence and do not authorize native replay around browser protections.
 - b45 proves the official no-resend resume route/method/body/framing after real transport interruption.
 - b46/b47 prove only that a duplicated-after-official-success Native Cookie+Bearer-only resume receives HTTP404 JSON; they do not prove Native first/exclusive resume impossible.
-- b48-b53 parser/Send-engine experiments must continue to use only exact observed compact SSE structures; no speculative parser/header compatibility.
+- b48-b55 parser/Send-engine experiments must continue to use only exact observed compact SSE structures; no speculative parser/header compatibility.
 
 ## Diagnostics / logging contract
 
 - Use existing `DiagnosticsLogger` authority.
 - Never log/export passwords, OAuth codes, tokens, Cookie/Authorization values, raw conversation IDs, full titles, message bodies/parts, raw payloads, Sentinel/Turnstile/PoW values or Web prompt/answer/reasoning text.
 - Hybrid/hand-off diagnostics may record safe route/transport/status/header-name/query-name/structural identity presence/timing only; proof/challenge/header values remain redacted.
-- b48-b53 Native Web Send-engine diagnostics may record aggregate frame/patch/character/DOM counts and structural event counts only; b53 additionally permits bounded unique safe structural signatures described above. Actual prompt/answer/reasoning text remains memory/UI only and is never persisted to diagnostics.
+- b48-b55 Native Web Send-engine diagnostics may record aggregate frame/patch/character/DOM counts and bounded privacy-safe structural evidence only. b54/b55 may additionally record direct special-message key names, bounded safe recipient/author-name protocol tokens, direct content field names/counts/character counts, direct metadata booleans and safe display/status/type-like enums. Actual prompt/answer/reasoning/tool output remains memory/UI only and is never persisted.
+- b55 special-structure capacity is bounded: generic unique set remains 32; special reasoning/tool set is capped at 24 and reports independent count/overflow.
 - Current sanitizer redacts any field key containing `token`; diagnostic field names intended to carry safe enum/error-code summaries must avoid `token` in the field key if such evidence is needed later.
 - Background diagnostics may record app lifecycle, public background-task begin/end/expiration, safe Web process/navigation failure class and foreground recovery reason. No heartbeat timer merely to manufacture activity.
 - Multi-conversation correlation uses privacy-safe hashes/counts/generations.
@@ -223,12 +230,12 @@ This file contains repository/product rules backed by explicit requirements, cur
 - Material source/CI/Artifact/Runtime/architecture/status changes update the current checkpoint and corresponding durable docs in the same work cycle.
 - Current main may advance independently; exact Candidate evidence remains tied to its tested product source, and final merge must reconcile target-branch state without overwriting parallel work.
 - Non-atomic GitHub write chains use the selected checkpoint's batch recovery point and never replay already-confirmed Candidate writes blindly.
-- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; exact current Phase 9 diagnostic product authority is b53 source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`; later docs-only commits do not redefine either.
+- Tooling-only temporary assembly/unpublished commits are never Work/Candidate authority. Exact Stable Phase 8 product authority remains b38 source `0d1801137e4ee2f5889ca718cd8b2e3612bdaa67`; exact current Phase 9 diagnostic product authority is b55 source `aae856069b461e12dc11ee7d2d450a40ca621d21`; later docs-only commits do not redefine either.
 
 ## Critical invariants / prohibited routes
 
 - Historical hidden WebView chat code is not the native product baseline.
-- TD-024/TD-025/TD-028 durable production restrictions remain in force while b48-b53 run as isolated diagnostic exceptions. Do not silently promote the diagnostic architecture to production.
+- TD-024/TD-025/TD-028 durable production restrictions remain in force while b48-b55 run as isolated diagnostic exceptions. Do not silently promote the diagnostic architecture to production.
 - Full existing-conversation Web rendering is not a performance fix merely because it is hidden or CSS-trimmed.
 - UI text/titles are never identity authority.
 - CI/Artifact success is never Runtime proof.

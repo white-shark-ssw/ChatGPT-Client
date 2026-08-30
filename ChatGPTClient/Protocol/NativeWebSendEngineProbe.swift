@@ -18,6 +18,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private let nativeSurface = UIView()
     private let statusLabel = UILabel()
     private let reasoningStack = UIStackView()
+    private let thinkingLabel = UILabel()
     private let reasoningButton = UIButton(type: .system)
     private let reasoningTextView = UITextView()
     private let toolStack = UIStackView()
@@ -41,6 +42,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private var reasoningExpanded = false
     private var reasoningFallbackPromoted = false
     private var toolPresentationCount = 0
+    private var thinkingPresentationCount = 0
+    private var reasoningSegmentBreakCount = 0
+    private var thinkingVisible = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,11 +73,16 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b59 诊断：b58 真机对照确认工具调用区域正常，但 Native 思考缺失的开头长度与服务端 exact is_thinking_preamble_message 单字符串 part 完全一致。本版保持 b58 文本分流与工具展示不变，只把这个严格服务标记的 preamble 一次性送入现有 Native 思考流；不扩展普通 assistant:text，不展示 raw 参数/结果、assistant:thoughts 或 connector payload。"
+        explanationLabel.text = "b60 诊断：b59 已确认 thinking preamble、思考流、工具活动和最终回答完整。本版保持 b59 文本解析不变，只保留后续 thinking preamble 的段落边界，按 response lifecycle / exact reasoning_status=is_reasoning 显示“正在思考”，并增加不含 raw ID/正文的工具 parent 关联计数；工具阶段完全按真实事件可选，不展示 raw 参数/结果或 assistant:thoughts。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
         statusLabel.numberOfLines = 0
+
+        thinkingLabel.text = "正在思考…"
+        thinkingLabel.font = .preferredFont(forTextStyle: .subheadline)
+        thinkingLabel.textColor = .secondaryLabel
+        thinkingLabel.isHidden = true
 
         reasoningButton.setTitle("思考过程 ▸", for: .normal)
         reasoningButton.titleLabel?.font = .preferredFont(forTextStyle: .subheadline)
@@ -95,6 +104,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         reasoningStack.axis = .vertical
         reasoningStack.spacing = 4
+        reasoningStack.addArrangedSubview(thinkingLabel)
         reasoningStack.addArrangedSubview(reasoningButton)
         reasoningStack.addArrangedSubview(reasoningTextView)
         reasoningStack.isHidden = true
@@ -179,7 +189,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b59_thinking_preamble", "surface": "native_over_fullsize_web", "scope": "reasoning_preamble_plus_tool_activity"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b60_ordered_reasoning_tool_lifecycle", "surface": "native_over_fullsize_web", "scope": "segment_thinking_tool_parent"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -201,6 +211,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         diagnostics.error(category: "protocol", name: "nativeWebSendEngineProbe.webProcess", fields: ["state": "terminated"])
         updateStatusLabel(detail: "WebContent 已终止；本轮诊断失败")
+        hideThinkingPresentation()
         webComposerReady = false
         responseActive = false
         updateSendButtonState()
@@ -247,6 +258,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         reasoningEndMarkerCount = 0
         reasoningFallbackPromoted = false
         toolPresentationCount = 0
+        thinkingPresentationCount = 0
+        reasoningSegmentBreakCount = 0
+        thinkingVisible = false
         resetReasoningPresentation()
         resetToolActivity()
         updateSendButtonState()
@@ -259,6 +273,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             guard let self, let error else { return }
             let nsError = error as NSError
             self.diagnostics.warning(category: "protocol", name: "nativeWebSendEngineProbe.bridge", fields: ["state": "evaluate_failed", "errorDomain": Self.safeToken(nsError.domain), "errorCode": String(nsError.code)])
+            self.hideThinkingPresentation()
             self.responseActive = false
             self.updateSendButtonState()
             self.updateStatusLabel(detail: "Native→Web bridge 调用失败")
@@ -281,6 +296,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             let state = Self.safeToken(body["state"] as? String)
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.submitResult", fields: ["state": state])
             if state != "submitted" {
+                hideThinkingPresentation()
                 responseActive = false
                 updateSendButtonState()
                 updateStatusLabel(detail: "Web composer 提交失败：\(state)")
@@ -289,7 +305,18 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.sendObserved", fields: ["pageKind": Self.safeToken(body["pageKind"] as? String)])
             updateStatusLabel(detail: "官方 protected Send 已发出")
         case "send_response":
-            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.sendResponse", fields: ["httpStatus": Self.safeNumberString(body["status"]), "contentType": Self.safeToken(body["contentType"] as? String), "filtered": Self.safeBoolString(body["filtered"])])
+            let status = (body["status"] as? NSNumber)?.intValue ?? 0
+            let filtered = (body["filtered"] as? NSNumber)?.boolValue ?? false
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.sendResponse", fields: ["httpStatus": Self.safeNumberString(body["status"]), "contentType": Self.safeToken(body["contentType"] as? String), "filtered": filtered ? "true" : "false"])
+            if status == 200 && filtered && responseActive { showThinkingPresentation(source: "lifecycle_send_accepted") }
+        case "native_reasoning_preamble":
+            guard let text = body["text"] as? String, !text.isEmpty else { return }
+            if (body["segmentStart"] as? NSNumber)?.boolValue == true, reasoningCharacterCount > 0 { appendReasoningParagraphBreak() }
+            nativeDeltaCount += 1
+            nativeCharacterCount += text.count
+            reasoningDeltaCount += 1
+            reasoningCharacterCount += text.count
+            appendReasoningText(text)
         case "native_reasoning_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
             nativeDeltaCount += 1
@@ -299,14 +326,22 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             appendReasoningText(text)
         case "native_answer_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
+            hideThinkingPresentation()
             nativeDeltaCount += 1
             nativeCharacterCount += text.count
             answerDeltaCount += 1
             answerCharacterCount += text.count
             appendNativeText(text)
         case "native_reasoning_phase":
-            guard Self.safeToken(body["state"] as? String) == "ended" else { return }
+            let state = Self.safeToken(body["state"] as? String)
+            if state == "active" {
+                showThinkingPresentation(source: "service_reasoning_active")
+                diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.reasoningPhase", fields: ["state": "active", "reasoningCharacters": String(reasoningCharacterCount)])
+                return
+            }
+            guard state == "ended" else { return }
             reasoningEndMarkerCount += 1
+            hideThinkingPresentation()
             if !reasoningStack.isHidden {
                 reasoningExpanded = false
                 updateReasoningPresentation()
@@ -380,10 +415,18 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "reasoningEndMarkerCount": Self.safeNumberString(body["reasoningEndMarkerCount"]),
                 "reasoningPreambleCount": Self.safeNumberString(body["reasoningPreambleCount"]),
                 "reasoningPreambleCharacters": Self.safeNumberString(body["reasoningPreambleCharacters"]),
+                "reasoningActiveSignalCount": Self.safeNumberString(body["reasoningActiveSignalCount"]),
+                "reasoningSegmentBreakCount": Self.safeNumberString(body["reasoningSegmentBreakCount"]),
+                "toolInvocationIdentityCount": Self.safeNumberString(body["toolInvocationIdentityCount"]),
                 "toolInvocationCount": Self.safeNumberString(body["toolInvocationCount"]),
                 "toolInvocationWithTitleCount": Self.safeNumberString(body["toolInvocationWithTitleCount"]),
                 "toolResultCount": Self.safeNumberString(body["toolResultCount"]),
                 "toolResultWithTitleCount": Self.safeNumberString(body["toolResultWithTitleCount"]),
+                "toolResultParentPresentCount": Self.safeNumberString(body["toolResultParentPresentCount"]),
+                "toolResultParentMatchCount": Self.safeNumberString(body["toolResultParentMatchCount"]),
+                "toolResultParentUnmatchedCount": Self.safeNumberString(body["toolResultParentUnmatchedCount"]),
+                "toolResultParentMissingCount": Self.safeNumberString(body["toolResultParentMissingCount"]),
+                "toolResultAuthorRecipientMatchCount": Self.safeNumberString(body["toolResultAuthorRecipientMatchCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
@@ -395,9 +438,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "nativeAnswerDeltaCount": String(answerDeltaCount),
                 "nativeAnswerCharacters": String(answerCharacterCount),
                 "nativeToolPresentationCount": String(toolPresentationCount),
+                "nativeThinkingPresentationCount": String(thinkingPresentationCount),
+                "nativeReasoningSegmentBreakCount": String(reasoningSegmentBreakCount),
                 "reasoningFallbackPromoted": reasoningFallbackPromoted ? "true" : "false"
             ]
             diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.streamMetrics", fields: fields)
+            hideThinkingPresentation()
             responseActive = false
             if terminal { updateStatusLabel(detail: "本轮完成；Web composer 恢复后可继续第二轮") }
             else { updateStatusLabel(detail: "SSE 已结束但没有 [DONE]；本轮按失败处理") }
@@ -405,6 +451,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             webView.evaluateJavaScript("window.__nativeWebSendEngineProbe && window.__nativeWebSendEngineProbe.probeComposer(true);", completionHandler: nil)
         case "stream_error":
             diagnostics.warning(category: "protocol", name: "nativeWebSendEngineProbe.stream", fields: ["state": Self.safeToken(body["state"] as? String)])
+            hideThinkingPresentation()
             responseActive = false
             updateSendButtonState()
             updateStatusLabel(detail: "SSE interception 失败")
@@ -414,24 +461,55 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     }
 
     private func resetReasoningPresentation() {
+        thinkingVisible = false
+        thinkingLabel.isHidden = true
         reasoningExpanded = false
         reasoningTextView.text = ""
         reasoningTextView.isHidden = true
+        reasoningButton.isHidden = false
         reasoningStack.isHidden = true
         reasoningButton.setTitle("思考过程 ▸", for: .normal)
     }
 
     private func updateReasoningPresentation() {
-        reasoningTextView.isHidden = !reasoningExpanded
+        reasoningButton.isHidden = reasoningCharacterCount == 0
+        reasoningTextView.isHidden = reasoningCharacterCount == 0 || !reasoningExpanded
         reasoningButton.setTitle(reasoningExpanded ? "思考过程 ▾" : "思考过程 ▸", for: .normal)
     }
 
+    private func showThinkingPresentation(source: String) {
+        guard responseActive, reasoningEndMarkerCount == 0 else { return }
+        reasoningStack.isHidden = false
+        reasoningButton.isHidden = reasoningCharacterCount == 0
+        if !thinkingVisible {
+            thinkingVisible = true
+            thinkingPresentationCount += 1
+            thinkingLabel.isHidden = false
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.thinkingPresentation", fields: ["state": "active", "source": source, "reasoningCharacters": String(reasoningCharacterCount)])
+        }
+    }
+
+    private func hideThinkingPresentation() {
+        guard thinkingVisible else { return }
+        thinkingVisible = false
+        thinkingLabel.isHidden = true
+    }
+
+    private func appendReasoningParagraphBreak() {
+        guard reasoningTextView.textStorage.length > 0, !reasoningTextView.text.hasSuffix("\n\n") else { return }
+        let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.preferredFont(forTextStyle: .subheadline), .foregroundColor: UIColor.secondaryLabel]
+        reasoningTextView.textStorage.append(NSAttributedString(string: "\n\n", attributes: attributes))
+        reasoningSegmentBreakCount += 1
+    }
+
     private func appendReasoningText(_ text: String) {
-        if reasoningStack.isHidden {
-            reasoningStack.isHidden = false
+        hideThinkingPresentation()
+        if reasoningStack.isHidden { reasoningStack.isHidden = false }
+        if !reasoningExpanded {
             reasoningExpanded = true
             updateReasoningPresentation()
         }
+        reasoningButton.isHidden = false
         let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.preferredFont(forTextStyle: .subheadline), .foregroundColor: UIColor.secondaryLabel]
         reasoningTextView.textStorage.append(NSAttributedString(string: text, attributes: attributes))
         let location = max(0, reasoningTextView.textStorage.length - 1)
@@ -445,6 +523,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         answerDeltaCount += reasoningDeltaCount
         answerCharacterCount += reasoningCharacterCount
         reasoningFallbackPromoted = true
+        hideThinkingPresentation()
         reasoningStack.isHidden = true
         reasoningExpanded = false
         updateReasoningPresentation()
@@ -779,6 +858,19 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         post({ kind: aggregate.reasoningEnded ? 'native_answer_delta' : 'native_reasoning_delta', text });
       };
 
+      const observeReasoningActive = (payload, aggregate) => {
+        if (aggregate.reasoningEnded) return;
+        const message = findMessage(payload);
+        if (!message || !message.author || message.author.role !== 'assistant' || message.status !== 'finished_successfully' || message.recipient !== 'all' || typeof message.id !== 'string' || !message.id) return;
+        if (aggregate.reasoningActiveSeen.has(message.id)) return;
+        const content = message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
+        const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
+        if (!content || content.content_type !== 'thoughts' || !metadata || metadata.reasoning_status !== 'is_reasoning') return;
+        aggregate.reasoningActiveSeen.add(message.id);
+        aggregate.reasoningActiveSignalCount += 1;
+        post({ kind: 'native_reasoning_phase', state: 'active' });
+      };
+
       const observeReasoningPreamble = (payload, aggregate) => {
         if (aggregate.reasoningEnded) return;
         const message = findMessage(payload);
@@ -788,10 +880,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
         if (!content || content.content_type !== 'text' || !metadata || metadata.is_thinking_preamble_message !== true) return;
         if (!Array.isArray(content.parts) || content.parts.length !== 1 || typeof content.parts[0] !== 'string' || !content.parts[0]) return;
+        const segmentStart = aggregate.reasoningPreambleCount > 0;
         aggregate.reasoningPreambleSeen.add(message.id);
         aggregate.reasoningPreambleCount += 1;
         aggregate.reasoningPreambleCharacters += content.parts[0].length;
-        postTextDelta(content.parts[0], aggregate);
+        if (segmentStart) aggregate.reasoningSegmentBreakCount += 1;
+        post({ kind: 'native_reasoning_preamble', text: content.parts[0], segmentStart });
       };
 
       const observeReasoningEnd = (payload, aggregate) => {
@@ -809,27 +903,39 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
       const observeToolActivity = (payload, aggregate) => {
         const message = findMessage(payload);
-        if (!message || !message.author || message.status !== 'finished_successfully' || typeof message.id !== 'string' || !message.id) return;
-        if (aggregate.toolActivitySeen.has(message.id)) return;
+        if (!message || !message.author || typeof message.id !== 'string' || !message.id) return;
         const content = message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
         const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
         const role = message.author.role;
         const contentType = content && content.content_type;
         const rawTitle = metadata && typeof metadata.reasoning_title === 'string' ? metadata.reasoning_title.trim() : '';
         const title = rawTitle.slice(0, 160);
-        if (role === 'assistant' && contentType === 'code' && metadata && metadata.is_complete === true && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
+
+        if (role === 'assistant' && contentType === 'code' && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
+          if (!aggregate.toolInvocationIdentityByID.has(message.id)) aggregate.toolInvocationIdentityByID.set(message.id, message.recipient);
+          if (message.status !== 'finished_successfully' || !metadata || metadata.is_complete !== true || aggregate.toolActivitySeen.has(message.id)) return;
           aggregate.toolActivitySeen.add(message.id);
           aggregate.toolInvocationCount += 1;
           if (rawTitle) aggregate.toolInvocationWithTitleCount += 1;
           post({ kind: 'native_tool_activity', state: 'invoked', title, titleCharacters: rawTitle.length });
           return;
         }
-        if (role === 'tool' && message.recipient === 'all') {
-          aggregate.toolActivitySeen.add(message.id);
-          aggregate.toolResultCount += 1;
-          if (rawTitle) aggregate.toolResultWithTitleCount += 1;
-          post({ kind: 'native_tool_activity', state: 'result', titleCharacters: rawTitle.length });
+
+        if (role !== 'tool' || message.recipient !== 'all' || message.status !== 'finished_successfully' || aggregate.toolActivitySeen.has(message.id)) return;
+        aggregate.toolActivitySeen.add(message.id);
+        aggregate.toolResultCount += 1;
+        if (rawTitle) aggregate.toolResultWithTitleCount += 1;
+        const parentID = metadata && typeof metadata.parent_id === 'string' && metadata.parent_id ? metadata.parent_id : '';
+        if (!parentID) aggregate.toolResultParentMissingCount += 1;
+        else {
+          aggregate.toolResultParentPresentCount += 1;
+          const invocationRecipient = aggregate.toolInvocationIdentityByID.get(parentID);
+          if (invocationRecipient) {
+            aggregate.toolResultParentMatchCount += 1;
+            if (message.author && message.author.name === invocationRecipient) aggregate.toolResultAuthorRecipientMatchCount += 1;
+          } else aggregate.toolResultParentUnmatchedCount += 1;
         }
+        post({ kind: 'native_tool_activity', state: 'result', titleCharacters: rawTitle.length });
       };
 
       const scrubTextPatches = (node, aggregate) => {
@@ -891,10 +997,18 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         reasoningEndMarkerCount: aggregate.reasoningEndMarkerCount,
         reasoningPreambleCount: aggregate.reasoningPreambleCount,
         reasoningPreambleCharacters: aggregate.reasoningPreambleCharacters,
+        reasoningActiveSignalCount: aggregate.reasoningActiveSignalCount,
+        reasoningSegmentBreakCount: aggregate.reasoningSegmentBreakCount,
+        toolInvocationIdentityCount: aggregate.toolInvocationIdentityByID.size,
         toolInvocationCount: aggregate.toolInvocationCount,
         toolInvocationWithTitleCount: aggregate.toolInvocationWithTitleCount,
         toolResultCount: aggregate.toolResultCount,
-        toolResultWithTitleCount: aggregate.toolResultWithTitleCount
+        toolResultWithTitleCount: aggregate.toolResultWithTitleCount,
+        toolResultParentPresentCount: aggregate.toolResultParentPresentCount,
+        toolResultParentMatchCount: aggregate.toolResultParentMatchCount,
+        toolResultParentUnmatchedCount: aggregate.toolResultParentUnmatchedCount,
+        toolResultParentMissingCount: aggregate.toolResultParentMissingCount,
+        toolResultAuthorRecipientMatchCount: aggregate.toolResultAuthorRecipientMatchCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -926,6 +1040,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
 
         observeStructure(payload, aggregate);
+        observeReasoningActive(payload, aggregate);
         observeReasoningPreamble(payload, aggregate);
         observeToolActivity(payload, aggregate);
         observeReasoningEnd(payload, aggregate);
@@ -1025,11 +1140,20 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           reasoningPreambleSeen: new Set(),
           reasoningPreambleCount: 0,
           reasoningPreambleCharacters: 0,
+          reasoningActiveSeen: new Set(),
+          reasoningActiveSignalCount: 0,
+          reasoningSegmentBreakCount: 0,
           toolActivitySeen: new Set(),
+          toolInvocationIdentityByID: new Map(),
           toolInvocationCount: 0,
           toolInvocationWithTitleCount: 0,
           toolResultCount: 0,
           toolResultWithTitleCount: 0,
+          toolResultParentPresentCount: 0,
+          toolResultParentMatchCount: 0,
+          toolResultParentUnmatchedCount: 0,
+          toolResultParentMissingCount: 0,
+          toolResultAuthorRecipientMatchCount: 0,
           terminal: false
         };
         let buffer = '';

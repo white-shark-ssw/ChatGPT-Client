@@ -1,4 +1,4 @@
-# Candidate: DEV-send-stream-0.1.0-b61
+# Candidate: DEV-send-stream-0.1.0-b62
 name: iOS Native Web Send Engine Probe
 
 on:
@@ -44,7 +44,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b61
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b62
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

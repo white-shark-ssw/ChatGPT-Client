@@ -75,7 +75,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b61 诊断：b60 两轮真机已确认正在思考、思考分段与完整文本，并以 result parent_id 20/20 命中 invocation。 本版保持 b60 Send/文本/思考行为不变，只用该 parent 关联更新正确的 Native 工具条目，并仅记录候选详情字段的类型、直接 key、数量或字符串长度；不展示 raw 工具请求/结果、connector payload 或 assistant:thoughts。"
+        explanationLabel.text = "b62 诊断：b61 真机已确认 parent_id 工具条目 14/14 配对完成，但冷启动首轮出现 generic textarea 误判为 composer，脚本返回 submitted 而官方 protected Send 未发出。本版只移除该 false-ready fallback，仅接受 #prompt-textarea 或明确的 contenteditable role=textbox；保持 b61 文本/思考/工具配对与详情 shape 诊断不变，不增加重试、timer 或 raw 工具正文。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -191,7 +191,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b61_parent_paired_tool_shape", "surface": "native_over_fullsize_web", "scope": "paired_tool_presentation_plus_detail_shapes"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b62_verified_composer_send_gate", "surface": "native_over_fullsize_web", "scope": "verified_composer_plus_b61_paired_tool_shape"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -713,8 +713,6 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         if (byID) return { element: byID, strategy: 'prompt_textarea' };
         const editable = document.querySelector('[contenteditable="true"][role="textbox"]');
         if (editable) return { element: editable, strategy: 'contenteditable_role_textbox' };
-        const textarea = document.querySelector('textarea:not([disabled])');
-        if (textarea) return { element: textarea, strategy: 'textarea' };
         return null;
       };
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b63 has now passed the focused iPhone/iOS17 Runtime gate for verified composer / protected Send / complete-looking reasoning-final / exact-parent visible tool lifecycle, and the same-run official Web screenshots establish a concrete GitHub expandable-detail mapping. b64 is now the next unique Candidate and may implement only that evidenced mapping. Stable/Frozen Send remains No. PR #29 remains evidence-only / open / mergeable / unmerged. TD-024/TD-025/TD-028 and production `ConversationRepository` ownership remain unchanged.**
+**Active — exact b64 has now passed the tested verified-composer / protected-Send / complete-looking reasoning-final / exact-parent GitHub tool-detail lifecycle, including successful Native expand/collapse and visible input/output. Runtime rejected only the current detail presentation shape: b64 dumps the paired `message.content` as one outer JSON string, so nested `parts` / `text` strings stay escaped and a large output is shown all at once. b65 is justified as a presentation-only correction: nested `工具输入` / `工具输出` disclosures plus outer-content decoding/readable formatting. Stable/Frozen Send remains No. PR #29 stays evidence-only / open / mergeable / unmerged. TD-024/TD-025/TD-028 and production `ConversationRepository` ownership remain unchanged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -10,99 +10,104 @@
 - Other Active development checkpoints: none at latest guard
 - Current actual `main`: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`
 - Stable native predecessor: b38
-- Accepted Runtime Candidate: `DEV-send-stream-0.1.0-b63`
-- Exact b63 product/config source: `0c2e2b870e51c363c7734182d49618c438839cc2`
-- b63 Push Run / Job: `33321982009 / 99285436158` — success
-- b63 PR Run / Job: `33321983658 / 99285440962` — success
-- b63 Artifact: `9735145598`
-- b63 ZIP SHA-256: `645cba67a91387f79d386931b5d0f4ead2502408b15c7f339013505e3f0ec7da`
-- b63 IPA SHA-256: `b347d1e41ca5a4e1355a9cc713574ea96247e11918ccfb1f5ff621a0f9f6ff36`
-- b63 package: Release / `0.1.0 (63)` / source marker `0c2e2b870e51` / iOS14 / `[1,2]` / arm64
-- b39-b63 emitted identities: permanently reserved
-- Next unique Candidate: `DEV-send-stream-0.1.0-b64` / `0.1.0 (64)`; repository search found no existing b64 identity before allocation
+- Exact current Runtime-tested Candidate: `DEV-send-stream-0.1.0-b64`
+- Exact b64 product/config source: `6ce1fbd242c903d85930b0e8a8d2aadc29669cc1`
+- b64 Push Run / Job: `33325292890 / 99294233652` — success
+- b64 PR Run / Job: `33325295457 / 99294240336` — success
+- b64 Artifact: `9736051023`
+- b64 ZIP SHA-256: `5a4ba89298f6bdd467ed66294133b0a38bae58f30c90d3b104d1ea3954db856a`
+- b64 IPA SHA-256: `49b5e8021ca78da3e87f67721682edf306b300995be3566a391a6c35d573c6fc`
+- b64 package: Release / `0.1.0 (64)` / source marker `6ce1fbd242c9` / iOS14 / `[1,2]` / arm64
+- b39-b64 emitted identities: permanently reserved
+- Next unique Candidate after current guard: `DEV-send-stream-0.1.0-b65` / `0.1.0 (65)`; repository search found no existing b65 identity
 
-## Exact b63 Runtime — passed tested gate
+## Exact b64 Runtime — Partial / formatting defect only
 
-User export `ChatGPTClient-Diagnostics-20260830-170359.json` matched exact Release b63 / iPhone / iOS17.0 / source `0c2e2b870e51`.
+User export: `ChatGPTClient-Diagnostics-20260830-174329.json`.
 
-Observed Send-entry sequence remained the accepted verified-composer path:
+Package identity matched exact b64: Release / build64 / Candidate b64 / source `6ce1fbd242c9` / iPhone / iOS17.0.
 
-`ready=false / none -> page loaded -> ready=false / none -> ready=true / prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 text/event-stream -> terminal`.
+### Send / reasoning / final
 
-Terminal response evidence:
+Observed path:
 
-- frameCount `308`, terminal `true`;
+`ready=false/none -> ready=true/prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 text/event-stream -> terminal`.
+
+Terminal metrics:
+
+- frameCount `344`, terminal `true`;
 - exact reasoning-end `1`, fallback false;
-- Native reasoning `23 deltas / 328 chars`;
-- Native final answer `200 deltas / 6345 chars`;
-- Native total `223 deltas / 6673 chars`;
-- thinking preambles `2 / 7 chars`;
-- reasoning-active signals `5`;
+- Native reasoning `27 deltas / 440 chars`;
+- Native final answer `215 deltas / 6716 chars`;
+- Native total `242 deltas / 7156 chars`;
+- thinking preambles `3 / 33 chars`;
+- reasoning-active signals `7`;
 - Native thinking presentations `4`;
-- service/native reasoning segment breaks `1/1`;
-- title-generation while continuation active `1`.
+- service/native reasoning segment breaks `2/2`;
+- inactive value strings `0`;
+- root-nonexact text patches `0`.
 
-The user directly reported no apparent truncation. Screenshot evidence showed populated reasoning, completed tool rows and a long final answer with no obvious prefix/middle loss.
+The user reported no apparent truncation in the tested round.
 
-Tool lifecycle metrics:
+### Tool lifecycle / detail
 
-- invocation identities `24`;
-- results `25`;
-- parent present `25`;
-- exact parent matches `24`;
-- unmatched `1`;
+- invocation identities `30`;
+- results `35`;
+- parent present `35`;
+- exact parent matches `30`;
+- unmatched `5`;
 - missing `0`;
-- Native presentations/completion updates `24/24`;
-- paired presentations `24`.
+- Native tool presentations/completion updates `30/30`;
+- paired presentations `30`;
+- Native detail-available rows `26`;
+- terminal-time detail expansion metric `7`;
+- complete exported interaction contains multiple successful expand/collapse events.
 
-The unmatched result was not force-paired, confirming exact `parent_id` remains the only accepted row association rule; count/order/adjacency remain rejected.
+Unmatched results were not force-paired. Exact `parent_id` remains the row authority.
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b63-runtime.md`.
+User-visible b64 result: tool rows reached `已完成`; GitHub rows with authorized paired detail could be opened/closed; `工具输入` and `工具输出` were visible. The rejected part is only formatting/density of the output.
 
-## Same-run official Web expandable-detail mapping
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b64-runtime.md`.
 
-The user's official Web screenshots from the same b63 response establish that GitHub connector tool rows are individually expandable and that a representative expanded `fetch` row exposes:
+## Evidence-backed b65 correction
 
-- `工具描述`;
-- `工具输入`, visibly showing the request argument object, including the `url` field/value;
-- `工具输出`, visibly showing returned structured content including `content_type: "multimodal_text"` and `parts: Array(3)` plus returned part text when further expanded.
+Current b64 source proves the presentation defect mechanically:
 
-This lines up with b63 SSE evidence:
+- Web bridge uses `JSON.stringify(content)` for the exact paired result `message.content`;
+- Native `renderToolActivity()` calls `prettyJSONString()` on that outer JSON string;
+- nested strings inside `parts` / `text` therefore remain escaped (`\"`, `\\`, escaped newlines) and the whole nested body is dumped as soon as the row is opened.
 
-- completed assistant `code` invocations to `api_tool.call_tool` carry JSON-string `metadata.connector_tool_payload`; b63 observed direct shapes such as `json_object:url:string...`, `query + repository_name + topn`, and `owner + repo_name + query + page_size`;
-- exact parent-paired tool results carry `message.content` shapes including `multimodal_text`, `code`, and `text`;
-- the official Web `工具输入` matches the invocation payload, and `工具输出` matches the paired tool-result `message.content` shape.
+b65 may change only the detail presentation layer:
 
-`inline_cot_expandable_content.source_message_ids` evidence is supportive but not row authority: expandable messages/source refs were `3/3`, all three matched invocation identities, only two matched the tool-activity set, unmatched `0`; this is far fewer than the 24 visible Native rows.
+1. preserve b64 composer identity, protected Send, SSE filtering/text grammar, reasoning-final split, exact `reasoning_ended`, transient invocation map, exact result `parent_id` pairing, GitHub-only detail authorization and diagnostics privacy rules;
+2. after a tool row opens, render `工具输入` and `工具输出` as separate disclosure links, both collapsed by default;
+3. opening `工具输入` displays the already-authorized connector payload as readable pretty JSON;
+4. opening `工具输出` parses the already-authorized outer `message.content` JSON and formats known/generic structures recursively enough to remove the second JSON-string escaping layer: dictionaries/arrays show hierarchy/counts; string values display as their actual string text rather than JSON-escaped literals; if a string itself is valid JSON, it may be pretty-printed as decoded JSON;
+5. do not add an arbitrary character truncation merely to reduce density; hierarchy/collapse is the evidence-backed fix;
+6. do not expose `assistant:thoughts`, raw service IDs, unmatched results or unrelated connector families;
+7. raw tool input/output values remain response-local presentation state and never enter exported diagnostics;
+8. add no retry, timer, polling, watchdog, compatibility shim, second response owner or production repository mutation.
 
-## Accepted b64 implementation boundary
+## Batch recovery point — b65 product/config assembly
 
-b64 may make the existing Native GitHub tool rows expandable with only the same-run evidenced content:
+Known state before product mutation:
 
-1. preserve current response-local invocation identity and exact result `parent_id` pairing;
-2. retain a paired GitHub invocation's `metadata.connector_tool_payload` only in response-local transient presentation state and display its parsed JSON as `工具输入`;
-3. when the exact paired result arrives, retain that result's `message.content` only in the same transient presentation state and display it as `工具输出`;
-4. do not use or display `assistant:thoughts` body;
-5. do not log/export raw tool input/output values or service IDs;
-6. do not invent `工具描述` because its exact service source remains Unknown / Unverified;
-7. do not broaden this mapping to unrelated connector/tool families without evidence;
-8. preserve b63 composer / protected Send / SSE text / reasoning-final / reasoning-end / tool-row lifecycle behavior exactly;
-9. add no retry, polling, timer, watchdog, fallback, compatibility shim, second state owner or production repository mutation.
+- feature branch currently contains exact b64 product source plus docs-only b64 Runtime evidence/checkpoint commits;
+- exact b64 product source remains immutable `6ce1fbd242c903d85930b0e8a8d2aadc29669cc1`;
+- b64 Artifact `9736051023` is valid and b64 is permanently reserved;
+- `main` remains `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
+- PR #29 remains open / mergeable / unmerged;
+- only `DEV-send-stream` is Active;
+- b65 identity search returned no existing `DEV-send-stream-0.1.0-b65`.
 
-## Recovery point before b64 product assembly
+Pending coherent batches:
 
-Completed:
+1. **Product/config batch:** fetch the new checkpoint head/tree. Create one detached Git tree/commit containing exactly `NativeWebSendEngineProbe.swift` presentation-only b65 changes, Xcode build/Candidate `65/b65`, and workflow Artifact identity b65. Audit the diff, then move `dev/send-stream-20260829` exactly once to the complete product/config commit. No intermediate b65-code/b64-identity branch state.
+2. **Validation batch:** verify exact product diff, Push + PR CI, Artifact, ZIP/IPA SHA and package Info.plist/arm64 identity.
+3. **Documentation batch:** record b64 Runtime + exact b65 evidence in `BUILD_TEST_INDEX`, `PROJECT_STATE`, `MODULE_STATUS`, `PROJECT_PROFILE`, `DEVELOPMENT_PLAN`, `PROJECT_SPECIFIC_RULES`, checkpoint and PR #29. Later docs-only commits must not redefine the exact b65 product source.
 
-1. exact b63 Runtime identity verified;
-2. b63 Runtime classified as pass for the tested text/tool lifecycle gate;
-3. same-run official Web screenshots correlated with b63 structural diagnostics;
-4. accepted GitHub expandable input/output mapping persisted in `DEV-send-stream-b63-runtime.md`;
-5. `main` rechecked at `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-6. PR #29 rechecked open / mergeable / unmerged with head on this feature branch;
-7. repository search found no existing `DEV-send-stream-0.1.0-b64` identity.
-
-Next non-atomic product assembly must use this checkpoint as the recovery point. Assemble complete b64 product/config identity off-ref first, audit the diff, then move the formal feature branch exactly once. Do not allow new b64 code to build under b63 package identity.
+Recovery rule: after interruption, re-read this checkpoint plus actual branch/PR/head and perform only missing deterministic writes. Do not reuse b64 or any emitted b65 identity.
 
 ## Next exact action
 
-Fetch the current b63 Swift/Xcode/workflow sources from this checkpoint head, implement only the accepted GitHub expandable input/output UI in `NativeWebSendEngineProbe.swift`, update build/Candidate/workflow identity to b64 in the same detached tree, audit parent→b64 diff for only intended files, then fast-forward `dev/send-stream-20260829` once. Run Push + PR CI, verify Artifact/package identity independently, update durable docs/PR, and hand exact b64 IPA to the user for Runtime. Any correction after a valid b64 Artifact must use b65+.
+Fetch the new checkpoint head/tree and current b64 Swift/Xcode/workflow blobs, assemble exact b65 as one detached product/config commit, audit the diff, move the formal feature branch once, then continue autonomously through CI/Artifact/package verification. The next normal human gate is exact b65 iPhone/iOS17 Runtime focused on nested tool input/output disclosure and readable output formatting.

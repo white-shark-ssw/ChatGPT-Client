@@ -2,16 +2,16 @@
 
 ## Status
 
-**Active — exact b64 Runtime passed the tested verified-composer / protected-Send / complete-looking reasoning-final / exact-parent GitHub tool-detail lifecycle, but rejected b64 detail formatting/density only. Exact b65 is now Code/CI/Artifact/package verified and is the current human Runtime gate for nested `工具输入` / `工具输出` disclosures and readable decoded output. Stable/Frozen Send remains No. PR #29 remains evidence-only / open / mergeable / unmerged. TD-024/TD-025/TD-028 and production `ConversationRepository` ownership remain unchanged.**
+**Active — exact b65 passed the focused iPhone/iOS17 structured GitHub tool-detail Runtime gate. The b64 formatting defect is closed for the tested shapes; remaining input/output spacing and legal escaped-slash display are non-blocking polish and do not justify b66. The next Phase 9 blocker is no longer Web/SSE/tool parsing: it is the production Send architecture boundary. Current TD-024/TD-025/TD-028 explicitly prohibit promoting the b48-b65 covered/hidden Web composer automation into production. `ConversationRepository` must remain the production response owner. Stable/Frozen Send remains No. PR #29 remains evidence-only / open / mergeable / unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged; evidence-only
 - Other Active development checkpoints: none at latest guard
 - Current actual `main`: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`
+- Current branch head before this checkpoint update: b65 Runtime evidence commit `8af400f859b12406310596eba87daac215c34c94`
 - Stable native predecessor: b38
-- Exact latest Runtime-tested Candidate: `DEV-send-stream-0.1.0-b64`
-- Exact current Artifact Candidate: `DEV-send-stream-0.1.0-b65`
+- Exact latest Runtime-tested Candidate: `DEV-send-stream-0.1.0-b65`
 - Exact b65 product/config source: `44138db766d00e62cfda7f20182f6d20f1ec3352`
 - Exact b65 product tree: `fb02dfa7512e9c8428c4b0e9b7184a56d602f688`
 - b65 Push Run / Job: `33328232044 / 99302071335` — success
@@ -22,88 +22,96 @@
 - b65 IPA SHA-256: `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`
 - b65 package: Release / `0.1.0 (65)` / Candidate `DEV-send-stream-0.1.0-b65` / source marker `44138db766d0` / iOS14 / `[1,2]` / arm64
 - b39-b65 emitted identities: permanently reserved
-- Do not allocate b66 before exact b65 Runtime yields a concrete defect or next evidence need.
+- b66: **not allocated**
 
-## Exact b64 Runtime — Partial / formatting defect only
+## Exact b65 Runtime — focused pass
 
-User export: `ChatGPTClient-Diagnostics-20260830-174329.json`.
+User export: `ChatGPTClient-Diagnostics-20260830-191806.json`.
 
-Package identity matched exact b64: Release / build64 / Candidate b64 / source `6ce1fbd242c9` / iPhone / iOS17.0.
+Package identity matched exact b65: Release / build65 / Candidate b65 / source `44138db766d0` / iPhone / iOS17.0.
 
 Observed path:
 
-`ready=false/none -> ready=true/prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 text/event-stream -> terminal`.
+`ready=false/none -> ready=true/prompt_textarea -> nativeSubmit -> submitted -> sendObserved(existing_conversation) -> HTTP200 text/event-stream -> thinking/reasoning/tool/final -> terminal`.
 
-Terminal evidence:
+Terminal metrics:
 
-- frameCount `344`, terminal `true`;
+- frameCount `132`, terminal `true`;
 - exact reasoning-end `1`, fallback false;
-- Native reasoning `27 deltas / 440 chars`;
-- Native final answer `215 deltas / 6716 chars`;
-- Native total `242 deltas / 7156 chars`;
-- thinking preambles `3 / 33 chars`;
-- reasoning-active signals `7`;
-- service/native reasoning segment breaks `2/2`;
-- invocation identities `30`, results `35`;
-- parent present `35`, exact parent matches `30`, unmatched `5`, missing `0`;
-- Native tool presentations/completion updates `30/30`;
-- Native detail-available rows `26`;
-- terminal-time detail expansion metric `7`, with multiple successful expand/collapse events in the exported run.
+- Native reasoning `14 deltas / 295 chars`;
+- Native final answer `71 deltas / 2827 chars`;
+- Native total `85 deltas / 3122 chars`;
+- thinking preambles `2 / 13 chars`;
+- reasoning-active signals `2`;
+- service/native reasoning segment breaks `1/1`;
+- invocation identities `10`, results `10`;
+- parent present/matched/unmatched/missing `10/10/0/0`;
+- Native tool presentations/completion updates `10/10`;
+- Native detail-available rows `9`.
 
-The user reported no apparent truncation. Exact-parent tool association and input/output availability worked. Runtime rejected only b64's presentation shape: opening one tool row immediately dumped both details and `message.content` remained a pretty-printed outer JSON object whose nested strings still showed escaped quotes/backslashes/newlines.
+User directly reported no apparent reasoning/final truncation. Completed tool rows expanded/collapsed; `工具输入` and `工具输出` appeared as independent second-level disclosures; decoded output no longer showed b64's second-layer JSON escape wall.
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b64-runtime.md`.
+Observed remaining polish only: child-section vertical spacing is looser than desired and pretty JSON may display legal `\/` slash escaping. These do not indicate data loss or protocol/ownership failure and do not justify another Candidate by themselves.
 
-## Exact b65 product correction
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b65-runtime.md`.
 
-b65 changes only Native detail presentation on top of b64's already-authorized GitHub exact-parent input/output mapping:
+Classification: **b65 focused Runtime pass. Formatting defect closed for tested GitHub shapes. Stable/Frozen No.**
 
-1. tool row remains the first disclosure;
-2. after the row opens, `工具输入` and `工具输出` are independent second-level disclosure links and both start collapsed;
-3. `工具输入` continues to show the already-authorized connector payload as pretty JSON;
-4. `工具输出` decodes b64's outer `message.content` JSON and presents dictionaries/arrays hierarchically; string values are shown as actual string text instead of JSON-escaped literals; string values that themselves contain a complete JSON object/array may be decoded one additional structural layer;
-5. no arbitrary character truncation was added; collapse/hierarchy is the density control;
-6. b64 composer selection, protected Send, SSE filtering/text grammar, reasoning/final split, exact `reasoning_ended`, transient invocation identity, exact result `parent_id` pairing and GitHub-only detail authorization are unchanged;
-7. raw tool values remain response-local presentation state and are not exported to diagnostics; `assistant:thoughts`, raw IDs, unmatched results and unrelated connector families remain non-presentational;
-8. no retry, timer, polling, watchdog, fallback, compatibility shim, duplicate owner or production repository mutation was added.
+## Diagnostic evidence now accepted for production design
 
-Detached parent→b65 diff was audited before moving the formal branch: exactly three product/config files changed — `.github/workflows/ios-foundation.yml`, `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`. The formal branch then fast-forwarded once to exact source `44138db766d00e62cfda7f20182f6d20f1ec3352`.
+The b48-b65 diagnostic series has established, for the tested primary account/device scope:
 
-## b65 validation evidence
+- page-owned official protected `/backend-api/f/conversation` Send can be triggered and observed;
+- accepted compact SSE text grammar including `title_generation` continuation;
+- explicit thinking-preamble inclusion and exact `reasoning_ended` transition;
+- event-driven `正在思考` / reasoning / final presentation ordering;
+- exact invocation -> result association only by response-local `parent_id`;
+- bounded GitHub connector input/output mapping and readable nested tool detail;
+- verified-composer authority is `#prompt-textarea` or explicit contenteditable role=textbox; generic textarea is rejected;
+- no retry/timer/watchdog/polling is required for the accepted diagnostic path.
 
-- Push CI `33328232044 / 99302071335`: completed success.
-- PR CI `33328233842 / 99302076369`: completed success.
-- Push Artifact `9736876465`: name `ChatGPTClient-DEV-send-stream-0.1.0-b65`, head exact `44138db766d00e62cfda7f20182f6d20f1ec3352`, digest `sha256:d9a52ecb0cd7d5131e22fc399bc5db0d573a9de3e5d80838f3a8d2b3164ceb7a`.
-- PR Artifact `9736874445`: same Candidate/head; independent PR-container digest differs as expected.
-- Downloaded Push Artifact ZIP independently hashed to the exact GitHub digest.
-- ZIP contains `ChatGPTClient-0.1.0-b65-dev-send-stream.ipa` plus matching sidecar.
-- Sidecar and independent IPA hash both equal `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`.
-- Built `Info.plist`: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=65`, `DiagnosticsCandidate=DEV-send-stream-0.1.0-b65`, `DiagnosticsSourceCommit=44138db766d0`, `MinimumOSVersion=14.0`, `UIDeviceFamily=[1,2]`.
-- Executable: Mach-O 64-bit arm64.
+These are protocol/presentation evidence, not automatic production-architecture approval.
 
-Evidence ladder: **Code written / diff audited / CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
+## Production architecture gate — requires explicit product decision
+
+Current source truth:
+
+- `RootViewController` production detail still exposes a `发送消息…` toolbar that pushes the visible full-page `AuthWebViewController.hybridChat`, then performs explicit Native Sync.
+- `ConversationRepository` has accepted per-conversation resident/detail ownership but no production response/send lifecycle yet.
+- `NativeWebSendEngineProbeViewController` drives a page-owned composer from Native while the official Web content is covered by a Native surface. That is a diagnostic exception only.
+
+Current durable TD boundary:
+
+- TD-023: pure-native/transient-auth protected Send is blocked by browser anti-abuse challenge output.
+- TD-024: a **user-visible official-Web Send surface** is security-permitted; hidden/shadow Send automation is rejected.
+- TD-025: the b44 full-page Native -> Web -> Native product form is rejected; Native input forwarding into a covered/hidden official Web composer is explicitly not accepted.
+- TD-028: full existing-conversation mobile-Web rendering is not viable as the daily-chat dependency after long-conversation composer failure.
+
+Therefore the production response-owner integration cannot safely start by silently copying the b65 covered-Web engine into `ConversationRepository`. One explicit product architecture choice is required before product code proceeds:
+
+### Option A — retain current TD security/product boundary
+
+Use a genuinely user-visible official Web composer/Send region for protected Send, while Native owns conversation history, streamed response state, reasoning/tool/final presentation and per-conversation lifecycle. Avoid rendering the full Web conversation. This keeps the browser challenge flow user-visible and avoids promoting hidden Web automation.
+
+### Option B — explicitly revise TD-024/TD-025
+
+Authorize the currently tested Native-composer -> covered official-Web composer/page-owned Send engine as the production transport mechanism, while `ConversationRepository` becomes the sole response/conversation state owner and Web remains transport/challenge execution only. This is the shortest engineering path from b65 to a native-looking daily-chat loop, but it is a deliberate reversal of the current hidden/shadow-Web prohibition and must be user-approved before implementation.
+
+No third evidence-backed ChatGPT-account Send route currently exists. Pure-native and separately billed/subscription bridge routes remain rejected by existing decisions.
+
+## After architecture choice — shortest completion order
+
+1. Existing-conversation production Send/stream slice: add Repository-owned response lifecycle and drive one selected existing conversation through the chosen protected-Send surface; update Native detail incrementally without a second message owner.
+2. New-chat first Send: establish pending -> authoritative conversation identity only if current observed identity timing requires it; no fake server IDs.
+3. Stop evidence + exact response-scoped Stop implementation; local task cancel alone is not server Stop.
+4. Active-response navigation/follow-tail: A may continue while B visible; intentional upward scroll exits follow-tail; hidden growth never mutates B viewport.
+5. Sync/Reload active-response safety and b38 geometry/round/timestamp/Copy regression.
+6. Final exact daily-chat Runtime matrix, target-main synchronization, then decide Stable/merge. Background-notify remains next Work after accepted production response ownership and does not block this Phase 9 closure.
 
 ## Recovery point
 
-Exact product/config authority is permanently `44138db766d00e62cfda7f20182f6d20f1ec3352`. Any later docs-only commits do not redefine that source. Because a valid b65 Artifact exists, b65 is permanently reserved; any product-code correction must use b66+ and only after exact b65 Runtime evidence.
-
-Documentation/metadata batch is complete through this handoff:
-
-- `BUILD_TEST_INDEX.md` preserves exact historical Candidate evidence and records b63 Runtime mapping, b64 Runtime partial-pass and b65 exact CI/Artifact/package identity;
-- `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md` and `PROJECT_SPECIFIC_RULES.md` are synchronized through b64 Runtime / b65 Artifact;
-- PR #29 title/body is synchronized to the b65 structured tool-detail Runtime gate and remains open / mergeable / unmerged;
-- all commits after exact product source `44138db766d00e62cfda7f20182f6d20f1ec3352` are documentation-only and do not redefine b65 package authority.
+b65 is permanently reserved and accepted for the focused diagnostic Runtime scope. Do not allocate b66 for spacing or escaped-slash polish. Do not modify production Send code until Option A vs Option B is explicitly resolved. Once resolved, update the relevant TD before or in the same product-code cycle and allocate the next unique Candidate only when a coherent testable production slice exists.
 
 ## Next exact action
 
-Hand the exact b65 IPA to the user. On the primary iPhone/iOS17 device, clear diagnostics, open `Native 输入 / Web Send`, run one GitHub/repository request that naturally creates multiple tool rows, and verify:
-
-- real `sendObserved` -> HTTP200 SSE -> terminal still occurs;
-- reasoning/final still appear complete;
-- completed exact-parent GitHub tool rows can expand/collapse;
-- opening one row initially shows only collapsed `工具输入` and `工具输出` children;
-- each child can expand/collapse independently;
-- output is readable hierarchical text without b64's second-layer escaped `\"` / `\\` wall;
-- no tool/result body is unexpectedly lost or truncated.
-
-Export diagnostics after terminal. If this focused b65 Runtime passes, close this presentation defect without allocating b66. Keep PR #29 open/unmerged until the broader `DEV-send-stream` acceptance boundary is explicitly resolved.
+Ask the user to choose Option A or Option B. This is a genuine product/security architecture gate under repository governance, not a routine progress approval. After the choice, continue autonomously through the smallest existing-chat production Send/stream Candidate, CI/Artifact/package verification, then hand the exact IPA for Runtime testing.

@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b63 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-31 through exact b64 Runtime and exact b65 Code/CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -42,7 +42,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Separately billed API-product architecture remains rejected; primary-account Sub2API/Codex-subscription Runtime remains blocked by account-safety policy.
 - TD-024 permits an explicitly visible official-Web Send surface as a security permission only; TD-025 rejects b44 full-page hybrid product form; TD-028 records the b47 long-answer mobile-Web composer viability ceiling.
 - Full existing-conversation mobile-Web rendering is not an accepted daily-chat production dependency.
-- b48-b63 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
+- b48-b65 are isolated diagnostic Native-over-Web-Send exceptions and do not modify production hidden/shadow-Web restrictions or native response ownership.
 
 ## Stable accepted baselines
 
@@ -62,40 +62,32 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - b52-b56 identified reasoning/tool grammar and exact `reasoning_ended` while keeping raw `assistant:thoughts` non-presentational.
 - b57-b59 established reasoning/final split and exact service-marked thinking-preamble inclusion.
 - b60 passed tested thinking-state / reasoning-segmentation / text-completeness and exact result-parent association.
-- b61 successful tool-active Runtime passed transient parent-paired row lifecycle; a separate cold/new-page run captured generic-textarea false-ready / false-submitted behavior before protected Send.
-- b62 removed only that false-ready generic-textarea authority and passed the tested focused verified-composer Runtime gate.
-- b63 preserves exact b62 response behavior and adds only bounded expandable-detail structure diagnostics; Runtime is pending.
+- b61 captured generic-textarea false readiness; b62 removed only that authority and passed the focused verified-composer path.
+- b63 same-run Runtime plus official-Web expanded-detail evidence authorized one narrow GitHub mapping: invocation `connector_tool_payload` as user-visible tool input and exact parent-paired GitHub result `message.content` as user-visible output.
+- b64 implemented that mapping. Exact iPhone/iOS17 Runtime reached real protected Send, HTTP200 SSE/terminal, reasoning `27/440`, final `215/6716`, Native tool presentations/completion updates `30/30`, 26 detail-capable rows and multiple successful expand/collapse interactions. The only rejected part was detail formatting/density.
+- b65 preserves b64 transport/lifecycle/data authorization and changes Native detail presentation only: tool row -> independently collapsed `工具输入` / `工具输出`; output outer JSON is decoded into readable hierarchy so nested string text is no longer displayed as a second-layer escaped JSON wall.
 
-### Exact b62 tested predecessor
+### Exact b64 Runtime predecessor
 
-- Candidate `DEV-send-stream-0.1.0-b62`, `0.1.0 (62)`.
-- Exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`; Artifact `9733577825`; IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
-- Exact iPhone/iOS17 export showed `prompt_textarea -> submitted -> sendObserved -> HTTP200 SSE -> terminal`, reasoning `34/497`, final `93/2878`, result parent matches `20/20`, Native tool presentations/completion updates `20/20`.
-- User reported the tested round looked normal.
+- Candidate `DEV-send-stream-0.1.0-b64`, `0.1.0 (64)`.
+- Exact product/config source `6ce1fbd242c903d85930b0e8a8d2aadc29669cc1`; Artifact `9736051023`; IPA SHA `49b5e8021ca78da3e87f67721682edf306b300995be3566a391a6c35d573c6fc`.
+- User export matched exact build/source on iPhone/iOS17.0.
+- Exact parent association remained authoritative: 30 matches, 5 unmatched, 0 missing; unmatched results were not force-paired.
+- Classification: **Runtime partial-pass — Send/reasoning/final/exact-parent detail lifecycle passed; formatting/density defect only.**
+- Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b64-runtime.md`.
 
-Classification: **b62 focused Runtime pass for the tested verified-composer Send-entry + preserved reasoning/final + exact-parent tool lifecycle scope.** One positive run is not a universal proof that the intermittent b61 official-page race can never recur.
+### Exact b65 current Artifact Candidate
 
-Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md`.
-
-### Exact b63 current diagnostic Candidate
-
-- Candidate `DEV-send-stream-0.1.0-b63`, `0.1.0 (63)`.
-- Exact product/config source `0c2e2b870e51c363c7734182d49618c438839cc2`; tree `cae7f27e2800fe48f8d492bfd364c91755935c67`.
-- Push Run / Job `33321982009 / 99285436158` — success.
-- PR Run / Job `33321983658 / 99285440962` — success.
-- Artifact `9735145598`; ZIP `sha256:645cba67a91387f79d386931b5d0f4ead2502408b15c7f339013505e3f0ec7da`.
-- IPA SHA `b347d1e41ca5a4e1355a9cc713574ea96247e11918ccfb1f5ff621a0f9f6ff36`.
-- Package: Release / `0.1.0 (63)` / Candidate b63 / source marker `0c2e2b870e51` / iOS14 / `[1,2]` / arm64.
-- b63 is permanently reserved because an Artifact exists.
-- Evidence ladder: Code written / diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / **Runtime pending**.
-
-b63 diagnostic scope is deliberately narrow:
-
-- string-shaped `connector_tool_payload` is parsed only to produce a capped JSON parse/top-level key/type/direct length fingerprint;
-- `inline_cot_expandable_content.source_message_ids` contributes only aggregate response-local reference/match counts against existing transient tool identities;
-- no raw IDs, connector/tool payload values, nested bodies or `assistant:thoughts` are exported;
-- no Native expandable body is presented yet;
-- composer, protected Send, text parser, reasoning/final split and tool row lifecycle remain b62 behavior.
+- Candidate `DEV-send-stream-0.1.0-b65`, `0.1.0 (65)`.
+- Exact product/config source `44138db766d00e62cfda7f20182f6d20f1ec3352`; tree `fb02dfa7512e9c8428c4b0e9b7184a56d602f688`.
+- Push Run / Job `33328232044 / 99302071335` — success.
+- PR Run / Job `33328233842 / 99302076369` — success.
+- Push Artifact `9736876465`; PR Artifact `9736874445`.
+- Push ZIP `sha256:d9a52ecb0cd7d5131e22fc399bc5db0d573a9de3e5d80838f3a8d2b3164ceb7a`.
+- IPA SHA `e6a01b2eafd361b9df2567b002f9e8aa56b57dcee219c7999c65767b91138d16`.
+- Package: Release / `0.1.0 (65)` / Candidate b65 / source marker `44138db766d0` / iOS14 / `[1,2]` / arm64.
+- b65 is permanently reserved because a valid Artifact exists.
+- Evidence ladder: Code written / detached diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / **Runtime pending**.
 
 ## Current product interaction target
 
@@ -103,15 +95,15 @@ For `DEV-send-stream`, eventual Native behavior should follow the official respo
 
 `发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考 -> 突出完整最终回答`.
 
-The tested state ordering, reasoning/final split and parent-paired tool lifecycle have positive Runtime evidence. Exact cross-tool **user-visible expandable-detail schema** and accepted production response ownership remain Unknown / Unverified.
+The tested state ordering, reasoning/final split, exact-parent tool lifecycle and GitHub input/output mapping have positive Runtime evidence. Exact cross-tool expandable-detail schema and accepted production response ownership remain Unknown / Unverified.
 
 ## Current next Candidate boundary
 
-b39-b63 are permanently reserved. **Do not allocate b64 from b63 field names alone.** The next product-code Candidate requires exact b63 iPhone/iOS17 Runtime evidence. If same-run diagnostics plus official-Web expanded-detail screenshot prove one safe user-visible mapping, a b64 implementation may use only that proven minimum. If b63 evidence rejects or fails to resolve the mapping, do not broaden by guess; use the smallest next evidence action instead.
+b39-b65 are permanently reserved. **Do not allocate b66 before exact b65 iPhone/iOS17 Runtime evidence.** If b65's nested disclosure/readable-output gate passes, close the current formatting defect without another Candidate. If an exact product defect remains, b66 may implement only the smallest evidence-backed correction.
 
 ## Remaining Unknown / Unverified
 
-Accepted production Native response ownership/tool-card expandable detail semantics, Native first/exclusive resume, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Accepted production Native response ownership, expandable detail semantics for connectors/tool families beyond the currently evidenced GitHub mapping, Native first/exclusive resume, existing-conversation pre-React virtualization, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switch and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 

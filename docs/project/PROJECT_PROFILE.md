@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b59 Runtime.**
+**Initialized — 2026-08-25; refreshed 2026-08-30 through exact b59 Runtime and b60 pre-allocation guard.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -89,7 +89,7 @@ Current evidence supports most state boundaries. Exact initial service-side reas
 
 ## Current next Candidate boundary
 
-b39-b59 are permanently reserved. A b60 candidate may be allocated only after confirming the identity/artifact name is unused. Its bounded evidence scope is reasoning segment presentation, lifecycle/explicit reasoning-active status, and privacy-safe tool invocation/result association diagnostics. It must not expose raw tool bodies or restructure production `ConversationRepository`.
+b39-b59 are permanently reserved. Current build-index/repository search found no b60 identity/reference and no other Active development task exists, so build60 is available for allocation to the bounded next diagnostic/presentation candidate. Its scope is reasoning segment presentation, lifecycle/explicit reasoning-active status, and privacy-safe tool invocation/result association diagnostics. It must not expose raw tool bodies or restructure production `ConversationRepository`.
 
 ## Remaining Unknown / Unverified
 

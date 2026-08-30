@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-30 through exact b61 Runtime classification and b62 Code / CI / Artifact / package verification._
+_Last updated: 2026-08-30 through exact b62 focused Runtime classification._
 
 ## Purpose / delivery principles
 
@@ -39,23 +39,9 @@ Retain b38 bounded long-message chunks, deterministic geometry/manual layout and
 - b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion without the earlier leading gap.
 - b60 passed the tested thinking/segmentation gate and exact result-parent association.
 - b61 successful tool-active Runtime passed transient parent-paired row completion, but a separate cold/new-page run exposed generic-textarea false readiness before protected Send.
-- b62 is the bounded Send-entry correction for that exact defect only.
+- b62 removed only that exact generic-textarea fallback and now passes the tested verified-composer normal path.
 
-### b61 — Runtime Partial
-
-Exact b61:
-
-- Candidate `DEV-send-stream-0.1.0-b61`, source `2386872af03e0684eee8deca87f636dc265114ec`.
-- Artifact `9732514781`; IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
-
-Two runs must remain separately represented:
-
-1. **False-ready Send-entry defect** — `ChatGPTClient-Diagnostics-20260830-134827.json`: `new_or_other`, composer strategy `textarea`, `nativeSubmit`, `submitResult=submitted`, then no `sendObserved`, `sendResponse`, thinking or stream metrics. User observed no answer activity.
-2. **Successful tool-active lifecycle** — `ChatGPTClient-Diagnostics-20260830-135112.json`: HTTP200 SSE / terminal; reasoning `10/251`, final `68/2363`; segment break `1/1`; exact reasoning-end 1; invocation identities/results `14/14`; result parent matches `14/14`, 0 unmatched/missing; Native tool presentations/completion updates `14/14`. User observed complete reasoning opening and rows moving `调用中 -> 已完成`.
-
-Therefore b61 is **Runtime Partial**, not failed wholesale and not fully passed. Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b61-runtime.md`.
-
-### b62 — verified-composer Send gate
+### b62 — focused Runtime passed
 
 Exact b62 identity:
 
@@ -67,27 +53,27 @@ Exact b62 identity:
 - IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
 - Package Release / `0.1.0 (62)` / source marker `e1b44f7ab6c4` / iOS14 / `[1,2]` / arm64.
 
-b62 remains bounded:
+Exact Runtime export `ChatGPTClient-Diagnostics-20260830-151146.json` matched b62 and showed the required cold-launch ordering:
 
-1. remove only unqualified `textarea:not([disabled])` from composer authority;
-2. accept only `#prompt-textarea` or explicit `[contenteditable="true"][role="textbox"]` as evidenced composer identities;
-3. add no retry, wait timer, watchdog, polling or speculative fallback;
-4. preserve b61 protected Send, text grammar, thinking preambles, event-driven `正在思考`, reasoning/final split, exact `reasoning_ended`, terminal fallback, parent-paired tool lifecycle and safe detail-shape diagnostics;
-5. keep raw service IDs, tool request/result bodies, connector payload values and `assistant:thoughts` non-presentational.
+`ready=false / none -> ready=true / prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 SSE -> thinking/reasoning/tools/final -> terminal`.
 
-Evidence ladder: **Code / Push CI / PR CI / Artifact / package Passed; Runtime/manual pending; Stable/Frozen No.**
+Response evidence:
 
-### b62 Runtime standard
+- reasoning `34 deltas / 497 chars`;
+- preambles `3 / 20 chars`;
+- reasoning segment breaks `2`;
+- reasoning-active signals `3`;
+- Native thinking presentations `4`;
+- exact reasoning end `1`, fallback false;
+- final answer `93 deltas / 2878 chars`;
+- result parent present/matched/unmatched/missing `20/20/0/0`;
+- Native tool presentations/completion updates `20/20`.
 
-The exact b61 false-ready race is intermittent. **Do not require it to reproduce.** The focused Runtime gate is:
+User reported the tested round looked normal and screenshot evidence showed populated reasoning, completed tool rows and complete-looking final text.
 
-- after force-quit/cold launch, while no evidenced official composer exists, Native Send must stay not-ready/disabled; an unrelated generic textarea must not authorize Send;
-- once Send becomes enabled and a prompt is submitted, a successful turn must reach the real protected-Send lifecycle (`sendObserved`, then HTTP200 SSE when service success occurs) rather than stopping at `submitResult=submitted`;
-- the successful response must retain b61's accepted thinking/reasoning/final presentation and tool lifecycle, with no obvious opening/middle truncation and no obvious duplicate/missing tool rows;
-- tool-active rows should visibly progress `调用中 -> 已完成` when matched results arrive;
-- if a run ever again reports submitted but never `sendObserved`, export immediately; that is a concrete b62 rejection signal.
+Classification: **focused Runtime pass for the tested verified-composer Send-entry + reasoning/final + exact-parent tool lifecycle scope.** It does not prove every future official-page state is race-free.
 
-One focused cold-launch tool-active turn is sufficient for the primary gate. One additional cold launch is a useful confidence check but optional. Do not burn time indefinitely trying to reproduce a low-frequency page race.
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md`.
 
 ### Official-like response lifecycle target
 
@@ -95,9 +81,22 @@ The eventual Native interaction remains:
 
 `发送 -> 正在思考 -> 思考流式输出 -> 工具调用（可展开验证过的用户可见详情） -> 再次正在思考/思考流 -> ... -> reasoning_ended -> 自动折叠完整思考过程 -> 只突出完整最终回答`.
 
+Tool phases remain optional and must follow actual service events. No-tool answers must never fabricate a tool stage.
+
 This entire reasoning/tool/phase-transition interaction remains within `DEV-send-stream`; it is not a separate feature Work. General Markdown/code/table/link/citation rendering of ordinary message bodies remains later `DEV-message-rendering`.
 
-Expandable tool detail still requires exact evidence that a bounded field is intended for user-visible presentation. b61's shape diagnostics do not authorize raw connector/tool payloads.
+### Next Phase 9 evidence target — expandable tool detail
+
+The nearest unresolved current target is official-like expandable tool detail. b62 safe shape diagnostics observed candidates including:
+
+- string-shaped `connector_tool_payload`;
+- bounded `reasoning_titles` and `tool_icons` arrays;
+- object-shaped `invoked_resource` on tool results;
+- `inline_cot_expandable_content` on one `assistant:thoughts` structure.
+
+Current evidence authorizes **shape only**, not raw values/bodies. `assistant:thoughts`, raw connector/tool request/result bodies and arbitrary invoked-resource fields remain non-presentational.
+
+**Do not allocate b63 by guess.** First correlate existing official-Web expanded-tool screenshots with b62 structural evidence. If the mapping remains unproven, the next Candidate may be a bounded diagnostic-only b63 focused on one exact unresolved field, after a fresh uniqueness/conflict guard. It must not broaden into raw payload exposure.
 
 ### Background ordering
 
@@ -129,4 +128,4 @@ Isolated Work IDs for download manager, pagination, production background comple
 
 ## Current next action
 
-Install exact b62 on the primary iPhone/iOS17 target. Force-quit, reopen `Native 输入 / Web Send`, observe that Send does not become usable merely because an unrelated page textarea exists, then run one naturally tool-active repository/GitHub turn after Send becomes enabled. Wait for terminal and export diagnostics. Optional: repeat one additional cold launch. Do not require reproduction of b61's rare false-ready race and do not allocate b63 until b62 Runtime is classified.
+Persist b62 Runtime as the accepted tested gate, keep PR #29 open/unmerged, and inspect existing b62 safe shape evidence against previously captured official-Web expanded-tool screenshots. Do not allocate b63 unless that comparison yields one concrete evidence question or implementation boundary.

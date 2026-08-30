@@ -2,132 +2,145 @@
 
 ## Status
 
-**Active — exact b54 Runtime materially proves the tool invocation/result structure but does not complete the reasoning-recap evidence gate because the shared 32-signature observer saturated before later unique structures. b54 remains behavior-neutral; final text parser/output was not changed. The next smallest justified correction is b55: give only special reasoning/tool structures their own bounded dedupe channel so they cannot be displaced by ordinary protocol signatures. No reasoning/tool UI is authorized yet. TD-024/TD-025 remain unchanged; PR #29 remains evidence-only.**
+**Active — exact b54 Runtime materially identifies the tool invocation/result grammar but leaves the reasoning-recap display-container gate unresolved because the shared generic 32-signature observer saturated. Exact b55 is now Code/CI/Artifact/package verified and changes only structure-diagnostic capacity: special reasoning/tool messages have a separate bounded dedupe channel while every b54 Send/filter/output rule is preserved. The next gate is one focused exact-device b55 reasoning/tool reproduction. No reasoning/tool UI is authorized yet. TD-024/TD-025 remain unchanged; PR #29 remains evidence-only.**
 
 - **Work ID**: `DEV-send-stream`
 - **Branch**: `dev/send-stream-20260829`
-- **PR**: #29 — open / mergeable / not merged at the b54 Runtime light guard.
-- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; unchanged.
-- **Other Active development checkpoints**: none known for this Work guard.
+- **PR**: #29 — open / mergeable / not merged; metadata synchronization to b55 gate is pending in this docs batch.
+- **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`; unchanged at b54 Runtime guard.
 - **Stable native predecessor**: b38.
 - **Stable/Frozen Send**: No.
 
-## Exact b53
+## Exact b53 Runtime
 
 - Candidate `DEV-send-stream-0.1.0-b53`, `0.1.0 (53)`.
-- Exact product/config source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`.
-- Artifact `9726996570`; IPA SHA `d5eee722ea01dc2c1b419a803574aec8ad2199299a3d0bbb51de4bae574f25dc`.
-- Runtime: visible reasoning beginning still truncated, final answer complete, no Native tool-call presentation.
+- Exact source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`; Artifact `9726996570`; IPA SHA `d5eee722ea01dc2c1b419a803574aec8ad2199299a3d0bbb51de4bae574f25dc`.
+- User observation: visible reasoning beginning still truncated; final answer complete; no Native tool-call presentation.
 - Runtime structurally identified `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code`, and `tool:*`.
 - Durable record: `docs/project/runtime-evidence/DEV-send-stream-b53-runtime.md`.
 
-## Exact b54 identity / validation
+## Exact b54 identity / Runtime
 
-- Candidate: `DEV-send-stream-0.1.0-b54`
-- Version/build: `0.1.0 (54)`
-- Exact product/config source: `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`
-- Push Run / Job: `33296672444 / 99217423647` — success
-- PR Run / Job: `33296674388 / 99217428590` — success
-- Artifact: `9727636043`
-- ZIP digest: `sha256:28d07c99634a1b4f917561e95cf04a4e95666106985cb03bca09798b0dc7065c`
-- IPA SHA-256: `d4b85cffe4db499252d0bc9a2c7c8ea582acf2b88f3d28eeb60e366ee471153b`
-- Package: Release / `0.1.0 (54)` / source marker `6a6903c7ad56` / iOS14 / UIDeviceFamily `[1,2]` / arm64.
-- b54 is permanently reserved.
+- Candidate `DEV-send-stream-0.1.0-b54`, `0.1.0 (54)`.
+- Exact source `6a6903c7ad56e534303bfca6a486b83b2d6fe35f`.
+- Push `33296672444 / 99217423647` success; PR `33296674388 / 99217428590` success.
+- Artifact `9727636043`; ZIP `sha256:28d07c99634a1b4f917561e95cf04a4e95666106985cb03bca09798b0dc7065c`.
+- IPA SHA `d4b85cffe4db499252d0bc9a2c7c8ea582acf2b88f3d28eeb60e366ee471153b`.
+- Package Release / source marker `6a6903c7ad56` / iOS14 / `[1,2]` / arm64.
+- b54 permanently reserved.
 
-## Exact b54 Runtime — 2026-08-30
+Exact b54 Runtime diagnostics matched build 54 / Candidate b54 / source `6a6903c7ad56` / Release / iPhone iOS17.0. One Send reached HTTP200 SSE and terminal true.
 
-User supplied diagnostics `ChatGPTClient-Diagnostics-20260830-073425.json`. Metadata exactly matches b54: build 54, Candidate b54, source `6a6903c7ad56`, Release, iPhone/iOS17.0.
-
-One Native submission reached official protected Send HTTP200 `text/event-stream` and terminal true.
-
-Aggregate metrics:
+Metrics:
 
 - `frameCount=73`;
 - `nativeDeltaCount=22`, `nativeCharacters=412`;
-- `explicitTextPatchCount=7`, `exactTopLevelTextPatchCount=4`, `nestedTextPatchCount=3`, `rootNonExactTextPatchCount=0`;
-- `contextualValueStringCount=15`, `contextualValueStringCharacters=312`;
-- `inactiveValueStringCount=0`, `firstInactiveValueContext=none`;
-- `continuationResetWhileActiveCount=4`;
-- `structureSignatureCount=32`, **overflow=13**;
+- `explicitTextPatchCount=7`, exact-root 4, nested 3, root-nonexact 0;
+- contextual value strings 15 / 312 chars; inactive value strings 0;
+- continuation resets 4; first inactive context none;
+- generic structure signatures **32**, overflow **13**;
 - terminal true.
 
-### Tool structure accepted from b54
+Tool evidence accepted:
 
-b54 directly captured concrete call/result pairs:
+- assistant `code` messages target `api_tool.list_resources` / `api_tool.call_tool` recipients;
+- completed assistant code carries `is_complete:true`, `connector_tool_payload`, `tool_icons` metadata;
+- tool results have author names such as `api_tool` / `api_tool.call_tool`, `recipient=all`, content types text/code/multimodal_text and evidence-backed result containers (`parts` or `text`);
+- tool metadata includes `invoked_plugin` / `invoked_resource` where present.
 
-- assistant `code` messages target recipients such as `api_tool.list_resources` / `api_tool.call_tool`;
-- completed assistant `code` carries `is_complete:true` and metadata keys including `connector_tool_payload` and `tool_icons`;
-- tool results identify author names such as `api_tool` / `api_tool.call_tool`, `recipient=all`, and content types `text`, `code`, or `multimodal_text`;
-- tool result metadata includes `invoked_plugin` / `invoked_resource` where present;
-- tool payload content containers are now structurally known (`parts` arrays for text/multimodal results; `text` for code results).
+This proves explicit invocation/result nodes and a structural pairing boundary, not that raw arguments/results or every internal node are user-visible.
 
-This proves the service stream contains explicit tool invocation and tool-result messages that can be paired structurally. It still does **not** prove that every internal tool/result node should be shown verbatim or that raw tool payloads are user-visible.
+Reasoning evidence accepted:
 
-### Reasoning structure accepted / remaining gap
-
-b54 captured `assistant:thoughts / finished_successfully` with:
-
+- `assistant:thoughts / finished_successfully`, recipient all;
 - content keys `content_type,source_analysis_msg_id,thoughts`;
-- `thoughts` = one object item with keys `chunks,content,finished,summary`;
-- metadata `can_save:false`;
-- metadata includes `reasoning_status:is_reasoning`, `tool_summary_type:github`, plus structural keys `inline_cot_expandable_content`, `tool_icons`, `reasoning_start_time`, etc.
+- `thoughts` array item keys `chunks,content,finished,summary`;
+- metadata `can_save:false`, `reasoning_status:is_reasoning`, `tool_summary_type:github`, and structural keys including `inline_cot_expandable_content` / `tool_icons`.
 
-Do not expose raw `thoughts`, `chunks`, or internal reasoning content. These structures may contain user-visible summary metadata, but b54 does not yet prove which nested field is the authorized display surface.
+Raw thoughts/chunks/internal reasoning remain non-presentational. b54 did not prove the exact authorized display field.
 
-The intended `assistant:reasoning_recap` special structure was **not observed in the emitted diagnostics**. Because the generic observer was already at its hard 32-signature limit and reports 13 overflowed unique signatures, b54 cannot distinguish “no recap in this turn” from “recap occurred after saturation and was suppressed by the observer”. Therefore b54 does not complete the recap content-container gate.
+`assistant:reasoning_recap` was not emitted into b54 diagnostics, but the generic observer was saturated at 32 with 13 overflowed unique structures. Therefore b54 cannot distinguish recap absence from observer suppression. Durable record: `docs/project/runtime-evidence/DEV-send-stream-b54-runtime.md`.
 
-Durable record to create: `docs/project/runtime-evidence/DEV-send-stream-b54-runtime.md`.
+## Exact b55 identity / validation
 
-## b55 allocation decision
+- Candidate: `DEV-send-stream-0.1.0-b55`
+- Version/build: `0.1.0 (55)`
+- Exact product/config source: `aae856069b461e12dc11ee7d2d450a40ca621d21`
+- Push Run / Job: `33299965737 / 99226125826` — success
+- PR Run / Job: `33299967033 / 99226129092` — success
+- Artifact: `9728606514`
+- ZIP digest: `sha256:fda8dfb16e3d734b9e0f0d55c4e49c0f6cd656e4ec228b13dab3cae108c0a7e3`
+- IPA: `ChatGPTClient-0.1.0-b55-dev-send-stream.ipa`
+- IPA SHA-256: `f5106949814b44c6c97e2f519ff181498f6a75ff7b9bf9edf0dc0bb0bd299ad1`
+- Independent package inspection: `0.1.0 (55)`, Candidate b55, source marker `aae856069b46`, Release, minimum iOS14.0, UIDeviceFamily `[1,2]`, Mach-O arm64.
+- Runtime/manual: Pending.
+- b55 is permanently reserved after Artifact emission. Any later product-code correction requires b56+ and exact b55 Runtime evidence.
 
-Repository search found no existing `DEV-send-stream-0.1.0-b55`; b39-b54 are already reserved. b55 is justified only for the observer-cap defect exposed by exact b54 Runtime.
+### Exact b55 change
 
-Planned identity:
+b55 preserves every b54 protected-Send, SSE filtering, assistant text extraction and Native output rule. It changes diagnostics only:
 
-- Candidate `DEV-send-stream-0.1.0-b55`
-- Version/build `0.1.0 (55)`
+1. generic `structureSeen` remains capped at 32 exactly as b54;
+2. `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code`, and all `tool:*` also use an independent `specialStructureSeen` set capped at 24;
+3. a new special structure is emitted even when the generic set is already full;
+4. special dedupe uses role/content type/status/recipient/author plus structural content/metadata keys and safe boolean/enum metadata, not raw text or IDs;
+5. terminal metrics add `specialStructureSignatureCount` and `specialStructureSignatureOverflowCount`;
+6. no prompt, answer, reasoning text, raw tool payload, raw tool output, raw IDs, auth/proof/header values are newly logged.
 
-### Exact b55 scope
+No reasoning collapse/expand, tool card/sheet, haptics, retry, fallback, timer, watchdog or production-response ownership change exists in b55.
 
-Preserve every b54 Send/filter/output behavior and all existing generic 32-signature diagnostics.
+### Atomic b55 assembly
 
-Only change structure observation:
+Tooling branch `tooling/b55-assembly-20260830` assembled the three exact Candidate files from the b54-runtime evidence head. Compare confirmed only:
 
-1. classify a summary as special when it is `assistant:reasoning_recap`, `assistant:thoughts`, `assistant:code`, or `tool:*`;
-2. maintain a separate bounded `specialStructureSeen` set (small fixed cap) for these messages;
-3. emit a special structure signature even if the generic 32-signature set is already full;
-4. keep ordinary signatures under the existing 32 cap;
-5. add special-signature count/overflow metrics so the next Runtime can prove coverage;
-6. do not log any new raw text, IDs, tool payload values, prompts, answers, reasoning content, auth/proof values or headers.
+- `.github/workflows/ios-foundation.yml` — Candidate/Artifact name b55;
+- `ChatGPTClient.xcodeproj/project.pbxproj` — build 55 / Candidate b55;
+- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift` — special-structure observer capacity only.
 
-No reasoning collapse/expand, tool-call presentation, haptics or production ownership change in b55.
+The final assembly tree `e80eb12544f9659d00895c00523b5c1a0ed58b93` was attached directly to parent `7af5e55fda38df8709b594442901efdf923000b2` as exact feature commit `aae856069b461e12dc11ee7d2d450a40ca621d21`, then the feature ref moved once. Tooling commits are not Candidate authority.
+
+An accidental inert branch named `noop` was created from `7af5e55fda38df8709b594442901efdf923000b2` while discovering branch/ref tooling. It received no product commits and is not an Active Work/State/Candidate authority. The currently available connector exposes no branch-delete action; do not use this branch for any development or identity decision.
 
 ## Durable boundary
 
 `ConversationRepository` remains sole native production conversation/response authority; `AuthSessionStore` remains auth owner; default persistent `WKWebsiteDataStore` remains persistent auth-secret authority. b48-b55 are diagnostic exceptions only. TD-024/TD-025 remain unchanged. No diagnostic result alone promotes hidden/shadow Web to production.
 
-Only explicitly user-visible service reasoning/status/tool information may be shown. Hidden chain-of-thought/internal tool/system data remains prohibited.
+Only explicitly user-visible service reasoning/status/tool information may be shown. Hidden chain-of-thought/internal tool/system data remains prohibited. Raw `assistant:thoughts` is explicitly non-presentational under the current evidence boundary.
+
+## Evidence ladder
+
+- b51 Code/CI/Artifact/package: Passed; Runtime title-generation correction confirmed.
+- b52 Code/CI/Artifact/package: Passed; Runtime final answer complete / visible reasoning beginning incomplete.
+- b53 Code/CI/Artifact/package: Passed; Runtime recap/thoughts/tool grammar materially identified.
+- b54 Code/CI/Artifact/package: Passed; Runtime **partial pass** — tool call/result grammar identified; recap gate inconclusive because generic observer saturated at 32/overflow13.
+- b55 Code/CI/Artifact/package: **Passed**; Runtime pending.
+- Phase 9 Stable/Frozen: No.
 
 ## Batch I recovery point
 
-Verified before b55 writes:
+Confirmed:
 
-- feature head before this checkpoint: `d4a74cd8104f24f0efaa34c5e0c4d3ae3d3ca458`;
-- `main` still `1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-- PR #29 open / mergeable / not merged and head matched the feature branch;
-- exact b54 diagnostics identity matched the emitted Artifact;
-- no b55 identity found.
+1. exact b54 Runtime evidence persisted in `docs/project/runtime-evidence/DEV-send-stream-b54-runtime.md`;
+2. exact b55 source `aae856069b461e12dc11ee7d2d450a40ca621d21` emitted atomically;
+3. both exact b55 Push/PR CI jobs succeeded;
+4. Artifact `9728606514` is attached to exact b55 source;
+5. ZIP digest, IPA SHA and package identity independently verified;
+6. b55 is permanently reserved.
 
-Planned batches:
+Pending docs-only work in this batch:
 
-1. write exact b54 Runtime evidence;
-2. atomically emit b55 Swift + build/Candidate + workflow Artifact identity;
-3. verify b55 Push/PR CI and Artifact/package identity;
-4. synchronize PR and durable docs;
-5. hand exact b55 IPA for one focused reasoning/tool turn.
+- synchronize PR #29 and durable project/index wording to b54 Runtime + b55 Artifact truth.
 
-Recovery rule: if interrupted, re-read this checkpoint and actual branch/PR state; continue only missing deterministic writes. Never alter/rebuild b54. Once any b55 Artifact exists, b55 is permanently reserved.
+Recovery rule: later docs-only commits do not redefine exact b55 product/config source `aae856069b46…`. Never rebuild b54 or b55. Do not allocate b56 before exact b55 Runtime supplies a concrete smallest next change.
 
 ## Next exact action
 
-Create `DEV-send-stream-b54-runtime.md`, then implement the b55 separate special-structure observer without changing response text behavior. Continue through exact CI/Artifact/package verification before asking for another Runtime test.
+User installs exact b55 IPA, clears diagnostics, opens the b55 diagnostic surface, and sends one prompt that naturally produces visible reasoning plus tool activity. Wait for terminal and export diagnostics. Visual behavior is intentionally expected to remain similar to b54 because b55 is evidence-only.
+
+Primary decision signals:
+
+- `specialStructureSignatureCount` / overflow must prove the special channel itself did not saturate;
+- if `assistant:reasoning_recap` appears, inspect only its text-free content-container and presentation metadata to identify the authorized visible-reasoning surface;
+- tool invocation/result structures should remain captured even after generic structure count reaches 32.
+
+Only after this evidence proves an explicit display boundary may a following Candidate implement Native reasoning-summary separation/collapse and evidence-backed tool-call presentation. Raw thoughts/internal tool payloads remain excluded.

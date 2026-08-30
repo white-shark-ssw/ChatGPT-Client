@@ -2,135 +2,161 @@
 
 ## Status
 
-**Active — exact b62 has a focused iPhone/iOS17 Runtime pass for the verified-composer Send-entry / reasoning-final / exact-parent tool lifecycle gate. Current evidence still does not authorize raw expandable tool detail. Existing b62 traffic now gives one concrete diagnostic need for b63: `connector_tool_payload` repeatedly appears as a string on finished assistant tool-invocation messages, while `inline_cot_expandable_content` appears as an object containing `source_message_ids`; b62 already owns a per-response transient invocation-ID map for exact parent pairing. b63 is therefore justified as a diagnostic-only candidate that records only bounded JSON key/type fingerprints and aggregate source-reference match counts, with no raw IDs/values/bodies and no Send/parser/presentation behavior change. TD-024/TD-025/TD-028 and production `ConversationRepository` ownership remain unchanged; PR #29 stays evidence-only / unmerged. Stable/Frozen Send remains No.**
+**Active — exact b63 is now the current diagnostic Candidate and has passed code-diff audit, Push CI, PR CI, Artifact production and independent package-identity verification. Runtime/manual/real-device is still Pending. b63 is diagnostic-only: it preserves exact b62 Send/text/reasoning/tool behavior and adds only bounded `connector_tool_payload` JSON top-level structure fingerprints plus aggregate `inline_cot_expandable_content.source_message_ids` association counts. No raw IDs/values/bodies are exported and no expandable body is presented yet. TD-024/TD-025/TD-028 and production `ConversationRepository` ownership remain unchanged; PR #29 remains evidence-only / open / unmerged. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged; evidence-only
 - Other Active development checkpoints: none at latest guard
-- Current feature head before b63 product batch: `4fadbce4a92996366a16319ac23ec039dabcdb8f`
 - Current actual `main`: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`
 - Stable native predecessor: b38
-- Current exact tested diagnostic Candidate: `DEV-send-stream-0.1.0-b62`
-- Exact b62 product/config source: `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`
-- b62 Artifact: `9733577825`
-- b62 IPA SHA: `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`
-- b39-b62 emitted identities: permanently reserved
-- Proposed next identity after fresh uniqueness guard: `DEV-send-stream-0.1.0-b63` / build 63
+- Current exact diagnostic Candidate: `DEV-send-stream-0.1.0-b63`
+- Version / build: `0.1.0 (63)`
+- Exact b63 product/config source: `0c2e2b870e51c363c7734182d49618c438839cc2`
+- Exact b63 product tree: `cae7f27e2800fe48f8d492bfd364c91755935c67`
+- Push Run / Job: `33321982009 / 99285436158` — success
+- PR Run / Job: `33321983658 / 99285440962` — success
+- Artifact: `9735145598`
+- Artifact name: `ChatGPTClient-DEV-send-stream-0.1.0-b63`
+- Artifact ZIP SHA-256: `645cba67a91387f79d386931b5d0f4ead2502408b15c7f339013505e3f0ec7da`
+- IPA: `ChatGPTClient-0.1.0-b63-dev-send-stream.ipa`
+- IPA SHA-256: `b347d1e41ca5a4e1355a9cc713574ea96247e11918ccfb1f5ff621a0f9f6ff36`
+- Package identity: Release / `0.1.0 (63)` / Candidate b63 / source marker `0c2e2b870e51` / minimum iOS14 / UIDeviceFamily `[1,2]` / Mach-O 64-bit arm64
+- b39-b63 emitted identities: permanently reserved
 
-## Exact b62 Runtime — focused pass
+## Accepted predecessor evidence
 
-User export: `ChatGPTClient-Diagnostics-20260830-151146.json`.
+### Exact b62 focused Runtime pass
 
-Package identity matched exact b62: Release / build62 / Candidate b62 / source `e1b44f7ab6c4` / iPhone / iOS17.0.
+User export `ChatGPTClient-Diagnostics-20260830-151146.json` matched exact b62 / iPhone / iOS17.0.
 
-### Composer / protected-Send gate
+Observed Send-entry sequence:
 
-Observed startup sequence:
+`ready=false / none -> ready=true / prompt_textarea -> nativeSubmit -> submitted -> sendObserved -> HTTP200 text/event-stream -> terminal`
 
-1. composer `ready=false`, strategy `none`;
-2. page loaded `new_or_other`;
-3. composer remained `ready=false`, strategy `none`;
-4. only later composer became `ready=true`, strategy `prompt_textarea`;
-5. submit-time composer remained `prompt_textarea`;
-6. `submitResult=submitted` was immediately followed by real `sendObserved`;
-7. response was HTTP200 `text/event-stream` and entered `lifecycle_send_accepted` thinking state.
+Terminal response evidence included:
 
-This passes the exact b62 primary gate for the tested cold-launch path. It directly differs from the rejected b61 generic-textarea run. One positive run does not prove the official page can never present another future race.
+- Native reasoning `34 deltas / 497 chars`;
+- thinking preambles `3 / 20 chars`;
+- reasoning segment breaks `2`;
+- reasoning-active signals `3`;
+- exact reasoning-end `1`, fallback false;
+- final answer `93 deltas / 2878 chars`;
+- tool results parent present/matched/unmatched/missing `20/20/0/0`;
+- Native tool presentations/completion updates `20/20`.
 
-### Reasoning / final presentation
-
-Terminal metrics:
-
-- `frameCount=196`
-- `terminal=true`
-- Native reasoning `34 deltas / 497 chars`
-- Native reasoning segment breaks `2`
-- thinking preambles `3 / 20 chars`
-- reasoning-active signals `3`
-- Native thinking presentations `4`
-- exact reasoning-end markers `1`
-- fallback promoted `false`
-- final answer `93 deltas / 2878 chars`
-- Native total `127 deltas / 3375 chars`
-- inactive value strings `0`
-- root-nonexact text patches `0`
-
-User directly reported the one tested round looked normal; screenshot showed populated reasoning, completed tool rows and complete-looking final text with no obvious truncation.
-
-### Tool lifecycle
-
-- tool invocations presented: `20`
-- invocation identities observed: `21`
-- results: `20`
-- result parent present/matched/unmatched/missing: `20/20/0/0`
-- paired Native result presentations: `20`
-- Native tool presentations/completion updates: `20/20`
-
-The extra observed invocation identity is **not** force-paired by count/order. Every completed result in the tested set had an exact parent match and corresponding Native completion update.
+User reported the tested round looked normal. This remains a focused Runtime pass for the exact b62 verified-composer + reasoning/final + exact-parent tool lifecycle scope; it does not universally prove every official-page state.
 
 Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md`.
 
-Classification: **b62 focused Runtime pass for verified-composer Send entry + preserved tested reasoning/final + exact-parent tool lifecycle. Stable/Frozen No.**
+## Exact b63 evidence-backed diagnostic scope
 
-## Evidence-backed b63 diagnostic scope
+b62/current source evidence established:
 
-Existing exact b62 / prior tool-active diagnostics establish:
-
-- finished assistant `code` invocation messages addressed to `api_tool.call_tool` repeatedly contain `metadata.connector_tool_payload` as a short string-shaped field;
-- some of the same invocation messages also contain bounded `reasoning_titles` / `tool_icons` arrays;
+- finished assistant `code` invocation messages addressed to tool recipients repeatedly carry `metadata.connector_tool_payload` as a short string-shaped field;
 - completed tool messages remain separately parent-paired through `metadata.parent_id`;
-- `assistant:thoughts` messages can contain `metadata.inline_cot_expandable_content` shaped as an object with `source_message_ids`;
-- b62 already keeps `aggregate.toolInvocationIdentityByID` as a response-local transient Map solely for exact parent association and never exports raw IDs.
+- `assistant:thoughts` messages can carry object-shaped `metadata.inline_cot_expandable_content` with `source_message_ids`;
+- the parser already owns one response-local transient `toolInvocationIdentityByID` Map used for exact result-parent association.
 
-This supports only the following bounded b63 diagnostics:
+b63 therefore changes only diagnostic structure observation:
 
-1. For string-valued `connector_tool_payload`, attempt JSON parsing and record only a capped top-level structural fingerprint: parse class plus sanitized direct key names, primitive/direct child type and direct string/array length. Never log string values, nested bodies or raw JSON.
-2. For `inline_cot_expandable_content.source_message_ids`, count only aggregate source-reference entries and how many match the existing transient invocation map in the same response. Never export any source/invocation ID.
-3. Preserve all b62 composer, protected Send, text patch grammar, reasoning/final split, exact `reasoning_ended`, tool-row lifecycle, result parent pairing and UI behavior unchanged.
-4. Add no retry, polling, timer, watchdog, fallback, second state owner or production repository mutation.
-5. Do not display expandable request/result bodies in b63; field names/shape remain evidence, not presentation authorization.
+1. `connector_tool_payload` string is JSON-parsed only inside the diagnostic Web script. Exported evidence is capped to parse class plus sanitized top-level key names, direct child primitive/object/array type, and direct string/array length. String values, nested body contents and raw JSON are never exported.
+2. For finished assistant `thoughts` messages with `inline_cot_expandable_content.source_message_ids`, b63 exports only aggregate message/reference counts and how many source references match response-local known invocation/tool-activity identities. Raw source/invocation IDs are never exported.
+3. b62 composer detection, Native submit bridge, official protected Send, SSE text-patch grammar, reasoning/final split, exact `reasoning_ended`, tool-row invocation/result lifecycle, parent pairing and Native UI updates are unchanged.
+4. No retry, polling, timer, watchdog, fallback, compatibility shim, production repository mutation or second persistent state owner was added.
+5. b63 does **not** display raw expandable request/result bodies and does not authorize `assistant:thoughts` presentation.
 
-## b63 uniqueness / conflict guard
+## Exact b63 pre-Runtime validation
 
-Latest guard before this recovery point:
+### Product/config assembly
 
-- only Active development checkpoint is `DEV-send-stream`;
-- PR #29 remains open / mergeable / unmerged and its head matched `4fadbce4...` before this docs-only checkpoint write;
-- actual `main` remains `1ac202c...`;
-- repository search found no existing `DEV-send-stream-0.1.0-b63` identity;
-- product modification surface is limited to `NativeWebSendEngineProbe.swift`, Xcode build/Candidate metadata and the existing iOS workflow artifact identity;
-- no `ConversationRepository`, auth owner, Stable b38 module or attachment/background code is in scope.
+To prevent an invalid transient artifact with new b63 code under b62 package identity, b63 was assembled as detached Git objects first and the feature branch was moved once only after diff audit.
 
-## Batch recovery point — b63 product/config assembly
+- recovery-point parent: `e29952e1cfa3a6d87d9ea733cf72a6c1c6678fde`
+- Swift blob: `6775b9408b60cf141b211a95d05448653f950720`
+- Xcode build/Candidate blob: `6c3294704ce87b1462e5e2d1896efa5fd7e1eb2a`
+- workflow blob: `da40b75a1b94742a6f91f920d8a830d14dc4f8a1`
+- assembled tree: `cae7f27e2800fe48f8d492bfd364c91755935c67`
+- exact product/config commit: `0c2e2b870e51c363c7734182d49618c438839cc2`
 
-Known baseline before this checkpoint write: feature head `4fadbce4a92996366a16319ac23ec039dabcdb8f`, tree `fead61ccdb8bee8ce5ffe1ff96da707145a7d1dd`.
+Compare `e29952e1... -> 0c2e2b87...` showed exactly three modified files:
 
-Confirmed complete before product mutation:
+- `.github/workflows/ios-foundation.yml`: 2 additions / 2 deletions;
+- `ChatGPTClient.xcodeproj/project.pbxproj`: 4 additions / 4 deletions;
+- `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift`: 66 additions / 8 deletions.
 
-1. b62 Runtime and durable documentation cycle closed;
-2. b63 evidence need narrowed to connector-payload JSON top-level structure plus inline-expandable source-reference aggregate matching;
-3. source inspection confirmed the existing transient invocation-ID Map can perform matching without a second identity owner;
-4. initial b63 uniqueness/parallel/base guard passed.
+No unrelated product file changed.
 
-Pending coherent batches:
+### CI / Artifact
 
-1. **Product/config batch:** after this checkpoint commit, fetch its new head/tree and create one Git tree/commit containing exactly:
-   - `ChatGPTClient/Protocol/NativeWebSendEngineProbe.swift` — b63 diagnostic-only structural additions;
-   - `ChatGPTClient.xcodeproj/project.pbxproj` — build 63 / Candidate b63 in Debug + Release;
-   - `.github/workflows/ios-foundation.yml` — b63 Candidate comment / Artifact name.
-   Move `dev/send-stream-20260829` exactly once to that product/config commit. Do not create an intermediate branch state with b63 code under b62 identity.
-2. **Validation batch:** verify product commit diff, allow Push + PR CI, inspect both results, then obtain/verify exact b63 Artifact/package identity.
-3. **Documentation batch:** after real CI/Artifact facts exist, synchronize checkpoint, `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md` and PR #29. Later docs-only commits must not redefine exact b63 product/config source.
+Both workflow executions on exact source `0c2e2b87...` completed successfully:
 
-Recovery rules:
+- Push `33321982009`, job `99285436158`;
+- PR `33321983658`, job `99285440962`.
 
-- if interrupted, re-read this checkpoint and actual branch/PR/head before any write;
-- perform only missing deterministic writes; never replay the whole chain;
-- b62 source `e1b44f7a...` and Artifact `9733577825` remain immutable historical authority;
-- do not reserve/claim b63 as Artifact-produced until an actual b63 Artifact exists;
-- if an Artifact is emitted from valid b63 identity, b63 becomes permanently reserved even if Runtime later rejects it.
+Chosen Runtime Artifact authority is Push Artifact `9735145598`. GitHub reported ZIP digest `sha256:645cba67a91387f79d386931b5d0f4ead2502408b15c7f339013505e3f0ec7da`; independent local SHA-256 calculation matched exactly.
+
+ZIP contents:
+
+- `ChatGPTClient-0.1.0-b63-dev-send-stream.ipa`
+- matching `.ipa.sha256` sidecar.
+
+Independent IPA SHA-256 calculation matched the sidecar: `b347d1e41ca5a4e1355a9cc713574ea96247e11918ccfb1f5ff621a0f9f6ff36`.
+
+Built `Info.plist` and executable inspection confirmed:
+
+- `CFBundleShortVersionString=0.1.0`;
+- `CFBundleVersion=63`;
+- `DiagnosticsCandidate=DEV-send-stream-0.1.0-b63`;
+- `DiagnosticsSourceCommit=0c2e2b870e51`;
+- `MinimumOSVersion=14.0`;
+- `UIDeviceFamily=[1,2]`;
+- executable is Mach-O 64-bit arm64.
+
+Classification: **Code written / diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
+
+## Non-authoritative tooling refs
+
+During detached assembly, the connector exposed branch creation while searching for lower-level Git write functions and created the following tooling-only refs, all from the docs-only recovery head rather than the b63 product commit:
+
+- `tmp-b63-assembly-20260830`
+- `tmp-b63-assembly-20260830-unused`
+- `tmp-b63-do-not-use`
+- `tmp-b63-tooling-ignore`
+
+They have no Active checkpoint, no PR, no Candidate/Artifact authority and are **not** development branches. The available connector currently exposes create/update ref but not delete-ref, so they could not be removed in-chat. Future resume guards must ignore them as tooling-only refs unless repository state later shows they were manually deleted. Do not route work to them and do not infer candidate conflict from their existence.
+
+## Recovery point
+
+Completed in the b63 product/validation chain:
+
+1. b63 scope justified from exact b62 structural evidence;
+2. recovery checkpoint committed before non-atomic product assembly;
+3. three product/config blobs assembled into one detached tree/commit;
+4. detached diff audit confirmed only the intended three files;
+5. formal feature branch moved exactly once to the complete b63 product/config commit;
+6. PR #29 head confirmed exact b63 source;
+7. Push and PR CI both passed;
+8. Artifact `9735145598` produced and its ZIP/IPA/package identities independently verified;
+9. b63 is now permanently reserved;
+10. this checkpoint updated before the durable-doc synchronization batch.
+
+Still pending in this cycle:
+
+1. synchronize `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md` and PR #29 to exact b63 pre-Runtime truth;
+2. hand exact b63 IPA to the user for the focused iPhone/iOS17 Runtime gate.
+
+Later docs-only commits do not redefine exact b63 product/config source `0c2e2b870e51c363c7734182d49618c438839cc2`.
 
 ## Next exact action
 
-Fetch the new checkpoint commit/tree, assemble the three b63 product/config blobs from that tree, create one product/config commit, then move the feature branch once. Continue through CI/Artifact/package verification autonomously. The next normal human gate is exact b63 iPhone/iOS17 Runtime after a verified IPA exists; do not stop merely for an intermediate code/CI/checkpoint milestone.
+After durable docs/PR are synchronized, hand the exact b63 IPA from Artifact `9735145598` to the user. Focused Runtime gate on iPhone/iOS17:
+
+1. install exact `0.1.0 (63)` and verify Candidate/source marker;
+2. clear diagnostics;
+3. open `Native 输入 / Web Send` and send one GitHub/tool-active request that naturally causes multiple tool calls and a normal final answer;
+4. wait for terminal and confirm Native reasoning/final text still looks complete and tool rows reach `已完成`;
+5. switch to `显示 Web`; if official Web exposes expandable tool details for that same response, expand at least one representative tool row and capture a screenshot of what the official UI actually shows;
+6. export diagnostics and upload them.
+
+Interpret only b63 structural fields: `connectorToolPayloadJSONShape`, `inlineExpandableMessageCount`, `inlineExpandableSourceIDCount`, `inlineExpandableSourceInvocationMatchCount`, `inlineExpandableSourceToolActivityMatchCount`, `inlineExpandableSourceUnmatchedCount`, together with existing exact-parent / reasoning / final / terminal metrics. User-visible official-Web screenshot remains higher-priority presentation evidence. Do not implement expandable Native bodies until same-run evidence proves a specific safe user-visible mapping.

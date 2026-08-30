@@ -128,7 +128,7 @@ They have no Active checkpoint, no PR, no Candidate/Artifact authority and are *
 
 ## Recovery point
 
-Completed in the b63 product/validation chain:
+Completed in the b63 product / validation / documentation chain:
 
 1. b63 scope justified from exact b62 structural evidence;
 2. recovery checkpoint committed before non-atomic product assembly;
@@ -138,19 +138,16 @@ Completed in the b63 product/validation chain:
 6. PR #29 head confirmed exact b63 source;
 7. Push and PR CI both passed;
 8. Artifact `9735145598` produced and its ZIP/IPA/package identities independently verified;
-9. b63 is now permanently reserved;
-10. this checkpoint updated before the durable-doc synchronization batch.
+9. b63 is permanently reserved;
+10. `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md` and `PROJECT_SPECIFIC_RULES.md` synchronized through exact b63 pre-Runtime truth;
+11. PR #29 synchronized to `b63 expandable-detail structure Runtime gate` and remains open / mergeable / unmerged;
+12. compare `0c2e2b87... -> 8f917399...` confirmed all seven commits after the exact b63 product/config source were docs-only under `docs/project/`; no product/config/workflow/script file changed.
 
-Still pending in this cycle:
-
-1. synchronize `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md`, `PROJECT_SPECIFIC_RULES.md` and PR #29 to exact b63 pre-Runtime truth;
-2. hand exact b63 IPA to the user for the focused iPhone/iOS17 Runtime gate.
-
-Later docs-only commits do not redefine exact b63 product/config source `0c2e2b870e51c363c7734182d49618c438839cc2`.
+No autonomous product work remains before the real-device gate. Later docs-only commits do not redefine exact b63 product/config source `0c2e2b870e51c363c7734182d49618c438839cc2`.
 
 ## Next exact action
 
-After durable docs/PR are synchronized, hand the exact b63 IPA from Artifact `9735145598` to the user. Focused Runtime gate on iPhone/iOS17:
+Hand the exact b63 IPA from Artifact `9735145598` to the user. Focused Runtime gate on iPhone/iOS17:
 
 1. install exact `0.1.0 (63)` and verify Candidate/source marker;
 2. clear diagnostics;
@@ -159,4 +156,4 @@ After durable docs/PR are synchronized, hand the exact b63 IPA from Artifact `97
 5. switch to `显示 Web`; if official Web exposes expandable tool details for that same response, expand at least one representative tool row and capture a screenshot of what the official UI actually shows;
 6. export diagnostics and upload them.
 
-Interpret only b63 structural fields: `connectorToolPayloadJSONShape`, `inlineExpandableMessageCount`, `inlineExpandableSourceIDCount`, `inlineExpandableSourceInvocationMatchCount`, `inlineExpandableSourceToolActivityMatchCount`, `inlineExpandableSourceUnmatchedCount`, together with existing exact-parent / reasoning / final / terminal metrics. User-visible official-Web screenshot remains higher-priority presentation evidence. Do not implement expandable Native bodies until same-run evidence proves a specific safe user-visible mapping.
+Interpret only b63 structural fields: `connectorToolPayloadJSONShape`, `inlineExpandableMessageCount`, `inlineExpandableSourceIDCount`, `inlineExpandableSourceInvocationMatchCount`, `inlineExpandableSourceToolActivityMatchCount`, `inlineExpandableSourceUnmatchedCount`, together with existing exact-parent / reasoning / final / terminal metrics. User-visible official-Web screenshot remains higher-priority presentation evidence. Do not implement expandable Native bodies until same-run evidence proves a specific safe user-visible mapping. Do not allocate b64 before this exact b63 Runtime evidence.

@@ -7,8 +7,8 @@
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged
-- Current formal branch head before this checkpoint update: `37175cb7b45a0e02821ff54a439709af08181755`
-- Current formal branch tree before this checkpoint update: `40ab7c52d35634b7896f2676cee84e5d9bbee6e2`
+- Current formal branch head before this checkpoint update: `a75df694604c41f8ad308d42a7ba19e50d952aa1`
+- Current formal branch tree before this checkpoint update: `f8755ec49a0d3f4d406848e406d2d25ce5752ff5`
 - Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
 - `main` advanced materially in docs/rules since the old `1ac202c...` base. New product-source overlap has not been observed; final Candidate/merge must re-check/synchronize target state.
 - Current `main` `docs/project/current/dev/` has no Active Composer checkpoint. `DEV-composer-parity` is a planned **future serialized Work**, not a parallel implementation branch/candidate.
@@ -22,16 +22,21 @@
 
 ## Tooling-only recovery note — no product/Candidate effect
 
-During detached product preparation an empty root file `tmp_should_not_create` was accidentally created by a connector call at commit `53fc4245c87944362db0aaa07c863fd7d0e31d42`, then immediately deleted at `37175cb7b45a0e02821ff54a439709af08181755`.
+Two connector action-selection mistakes created temporary **empty** root files during detached preparation; each was immediately removed before any product tree/Candidate assembly:
+
+1. `tmp_should_not_create`: created at `53fc4245c87944362db0aaa07c863fd7d0e31d42`, removed at `37175cb7b45a0e02821ff54a439709af08181755`.
+2. `THIS_CALL_MUST_NOT_HAPPEN`: created at `ef95ae3416694025aa9e9f07734051c6b6914803`, removed at `a75df694604c41f8ad308d42a7ba19e50d952aa1`.
 
 Verified recovery facts:
 
-- recovered tree is exact `40ab7c52d35634b7896f2676cee84e5d9bbee6e2`, identical to the pre-accident product/docs tree;
-- no product source/config/workflow file changed in the recovered tree;
+- after the first removal the tree returned exactly to the pre-accident tree;
+- after the second removal the tree returned exactly to `f8755ec49a0d3f4d406848e406d2d25ce5752ff5`, the checkpoint-only tree that existed before the second mistake;
+- neither temporary file ever contained product/config/workflow content;
 - no Candidate/build/Artifact identity was allocated or emitted;
-- both commits are tooling-only history and must never be treated as product authority.
+- all four commits are tooling-only history and must never be treated as product authority;
+- recovery must never replay either create/delete chain.
 
-Recovery continues from the current checkpoint commit after this file update; never replay the accidental create/delete chain.
+From this checkpoint onward detached assembly must use Git data `create_blob -> create_tree -> create_commit` only; do not use contents `create_file` for detached product preparation.
 
 ## Exact b65 Runtime — accepted probe boundary
 
@@ -146,7 +151,7 @@ Current assembly strategy is smaller: fold executor/runtime/overlay into existin
 
 ## Batch recovery point — b66 existing-chat production slice
 
-Current baseline after the checkpoint update must be re-fetched before tree assembly.
+Current baseline after this checkpoint update must be re-fetched before tree assembly.
 
 Expected product/config files for the coherent detached tree:
 

@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-30 through exact b59 Runtime. b59 text/preamble completeness passed; official-equivalent ordered reasoning/tool presentation remains Active._
+_Last updated: 2026-08-30 through exact b59 Runtime and b60 pre-allocation guard. b59 text/preamble completeness passed; official-equivalent ordered reasoning/tool presentation remains Active._
 
 ## Current accepted merged baseline
 
@@ -55,9 +55,19 @@ Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b59-runtime.md`.
 
 Classification: **b59 Runtime passes the tested reasoning-preamble/text/final completeness correction. Phase 9 remains Active for ordered official-like presentation, exact tool-detail association/field semantics and eventual production response ownership.**
 
+## b60 pre-allocation guard
+
+- current durable build index ends at b59;
+- repository searches for `b60` and `DEV-send-stream-0.1.0-b60` returned no existing references;
+- no other Active development checkpoint exists;
+- branch and PR remain dedicated to `DEV-send-stream`;
+- target `main` has not advanced.
+
+Therefore build/Candidate 60 is available for the next bounded diagnostic/presentation candidate. It is **not reserved until source identity is actually allocated/emitted**.
+
 ## Next evidence gate
 
-A next Candidate may:
+b60 may:
 
 1. fix Native-only paragraph separation at later exact thinking-preamble segment boundaries without changing service character metrics;
 2. represent initial waiting as response-lifecycle `正在思考` without timers and observe explicit later service `reasoning_status=is_reasoning` transitions;

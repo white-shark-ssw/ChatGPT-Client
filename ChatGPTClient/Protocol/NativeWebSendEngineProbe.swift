@@ -55,7 +55,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b54 诊断：b53 已确认 SSE 中存在独立 reasoning_recap、thoughts、assistant code 与 tool 消息。本版仍不改变文本过滤/输出，也不会展示 thoughts；只为这些特定消息记录内容容器、recipient/author 结构以及可见性/展示相关 metadata 的键、布尔值和安全枚举，用于区分用户可见 reasoning/tool 与内部节点。不会记录提示词、回答、思考正文、工具输出或原始 ID。"
+        explanationLabel.text = "b55 诊断：b54 已确认真实 assistant code / tool 调用结果结构，但普通 32 条结构签名在 reasoning_recap 之前耗尽。本版不改变文本过滤/输出，只让 reasoning_recap、thoughts、assistant code 与 tool 消息使用独立的有限去重通道，避免被普通结构挤掉。仍不会展示 thoughts，也不会记录提示词、回答、思考正文、工具输出或原始 ID。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -118,7 +118,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b54_reasoning_tool_visibility_shape", "surface": "native_over_fullsize_web", "scope": "reasoning_tool_visibility_shape_diagnostic"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b55_special_structure_capacity", "surface": "native_over_fullsize_web", "scope": "reasoning_tool_special_structure_diagnostic"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -263,6 +263,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "titleGenerationWhileContinuationCount": Self.safeNumberString(body["titleGenerationWhileContinuationCount"]),
                 "structureSignatureCount": Self.safeNumberString(body["structureSignatureCount"]),
                 "structureSignatureOverflowCount": Self.safeNumberString(body["structureSignatureOverflowCount"]),
+                "specialStructureSignatureCount": Self.safeNumberString(body["specialStructureSignatureCount"]),
+                "specialStructureSignatureOverflowCount": Self.safeNumberString(body["specialStructureSignatureOverflowCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
@@ -549,16 +551,32 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields };
       };
 
+      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields });
+
       const observeStructure = (payload, aggregate) => {
         const summary = summarizeStructure(payload);
+        summary.eventIndex = aggregate.frameCount;
         const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields]);
+        const specialMessage = (summary.messageRole === 'assistant' && (summary.messageContentType === 'reasoning_recap' || summary.messageContentType === 'thoughts' || summary.messageContentType === 'code')) || summary.messageRole === 'tool';
+        let specialPosted = false;
+        if (specialMessage) {
+          const specialEvidenceKey = JSON.stringify([summary.messageRole, summary.messageContentType, summary.messageStatus, summary.recipient, summary.authorName, summary.contentKeys, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields]);
+          if (!aggregate.specialStructureSeen.has(specialEvidenceKey)) {
+            if (aggregate.specialStructureSeen.size >= 24) aggregate.specialStructureSignatureOverflowCount += 1;
+            else {
+              aggregate.specialStructureSeen.add(specialEvidenceKey);
+              postStructure(summary);
+              specialPosted = true;
+            }
+          }
+        }
         if (aggregate.structureSeen.has(evidenceKey)) return;
         if (aggregate.structureSeen.size >= 32) {
           aggregate.structureSignatureOverflowCount += 1;
           return;
         }
         aggregate.structureSeen.add(evidenceKey);
-        post({ kind: 'stream_structure', eventIndex: aggregate.frameCount, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields });
+        if (!specialPosted) postStructure(summary);
       };
 
       const scrubTextPatches = node => {
@@ -609,7 +627,9 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         firstInactiveValueContext: aggregate.firstInactiveValueContext,
         titleGenerationWhileContinuationCount: aggregate.titleGenerationWhileContinuationCount,
         structureSignatureCount: aggregate.structureSeen.size,
-        structureSignatureOverflowCount: aggregate.structureSignatureOverflowCount
+        structureSignatureOverflowCount: aggregate.structureSignatureOverflowCount,
+        specialStructureSignatureCount: aggregate.specialStructureSeen.size,
+        specialStructureSignatureOverflowCount: aggregate.specialStructureSignatureOverflowCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -725,6 +745,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           textContinuationActive: false,
           structureSeen: new Set(),
           structureSignatureOverflowCount: 0,
+          specialStructureSeen: new Set(),
+          specialStructureSignatureOverflowCount: 0,
           terminal: false
         };
         let buffer = '';

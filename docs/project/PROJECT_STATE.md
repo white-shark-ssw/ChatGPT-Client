@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-30 through exact b61 Runtime classification and exact b62 Code / CI / Artifact / package verification. Phase 9 remains Active; b62 Runtime/manual is pending._
+_Last updated: 2026-08-30 through exact b62 focused iPhone/iOS17 Runtime classification. Phase 9 `DEV-send-stream` remains Active. b62 passed the tested verified-composer Send-entry / reasoning-final / exact-parent tool lifecycle gate; Stable/Frozen Send remains No._
 
 ## Current accepted merged baseline
 
@@ -8,9 +8,11 @@ Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-co
 
 ## Current Work / target
 
-`DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains evidence-only / unmerged. Final target-main synchronization is still required before any future merge.
+`DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged and evidence-only. Final target-main synchronization remains required before any future merge.
 
-Current exact test Candidate is **`DEV-send-stream-0.1.0-b62` / `0.1.0 (62)`**, exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`, Artifact `9733577825`, IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`. Code / Push CI / PR CI / Artifact / package identity passed; Runtime/manual pending.
+Current exact tested diagnostic Candidate is **`DEV-send-stream-0.1.0-b62` / `0.1.0 (62)`**, exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`, Artifact `9733577825`, IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
+
+Evidence ladder: **Code written / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / focused Runtime passed; Stable/Frozen No.**
 
 ## Durable Phase 9 architecture/security boundary
 
@@ -28,46 +30,53 @@ Current exact test Candidate is **`DEV-send-stream-0.1.0-b62` / `0.1.0 (62)`**, 
 - b52-b56 isolated reasoning/tool grammar and exact `reasoning_ended`, while keeping `assistant:thoughts` non-presentational.
 - b57-b59 established Native reasoning/final split and exact service-marked thinking-preamble inclusion without the earlier leading gap.
 - b60 preserved later reasoning paragraph boundaries, presented event-driven `正在思考`, and proved exact invocation→result parent association for tested traffic.
-- b61 Runtime passed the tested parent-paired tool-row lifecycle but exposed an independent Send-entry race: generic `textarea` could be reported ready/submitted without an official protected Send.
-- b62 removes only that exact false-ready generic-textarea authority and otherwise preserves b61 behavior.
+- b61 successful Runtime passed parent-paired tool-row lifecycle but a separate cold/new-page run exposed generic-`textarea` false readiness: `submitted` occurred with no actual protected Send observation.
+- b62 removed only that exact generic-textarea authority, retaining only verified composer identities and adding no retry/timer/watchdog/fallback.
 
-## Exact b61 Runtime — Partial
+## Exact b62 focused Runtime
 
-Exact b61 identity: Candidate `DEV-send-stream-0.1.0-b61`, source `2386872af03e0684eee8deca87f636dc265114ec`, Artifact `9732514781`, IPA SHA `6fff9fa7178d0915f74a08eadeeb8ad9cb7927416ca1c09c979b69df67a18e21`.
+User export `ChatGPTClient-Diagnostics-20260830-151146.json` exactly matched Release / build62 / Candidate b62 / source `e1b44f7ab6c4` / iPhone / iOS17.0.
 
-Two user-provided runs were intentionally classified separately:
+### Composer / Send entry
 
-- First run (`ChatGPTClient-Diagnostics-20260830-134827.json`): `new_or_other`, composer strategy `textarea`, `nativeSubmit`, `submitResult=submitted`, then no `sendObserved`, no `sendResponse`, no thinking and no stream metrics. User observed no response activity. **Runtime defect: false-ready / false-submitted Send entry.**
-- Second run (`ChatGPTClient-Diagnostics-20260830-135112.json`) after force-quit/relaunch: HTTP200 SSE / terminal; reasoning `10/251`, final `68/2363`, preambles `2/11`, segment breaks `1/1`, reasoning-end 1, fallback false; invocation identities/results `14/14`; parent present/matched/unmatched/missing `14/14/0/0`; paired presentations and Native tool presentations/completion updates `14/14/14`. User observed complete reasoning opening and `调用中 -> 已完成` tool lifecycle. **Runtime pass for tested tool lifecycle/response presentation.**
+Observed cold-launch path:
 
-Overall classification: **b61 Runtime Partial**. Detailed record: `docs/project/runtime-evidence/DEV-send-stream-b61-runtime.md`.
+- composer `ready=false / strategy=none`;
+- page loaded `new_or_other`;
+- composer remained `ready=false / strategy=none`;
+- only later became `ready=true / strategy=prompt_textarea`;
+- submit-time strategy remained `prompt_textarea`;
+- `submitResult=submitted` was followed by real `sendObserved` in the same second;
+- response HTTP200 `text/event-stream`;
+- thinking presentation entered from accepted response lifecycle.
 
-## Exact b62 Candidate / validation
+Classification: **focused Runtime pass for the exact b62 verified-composer Send-entry gate.** This is scoped to the observed cold-launch path and does not claim the intermittent b61 page race is impossible forever.
 
-- Candidate `DEV-send-stream-0.1.0-b62`, `0.1.0 (62)`.
-- Exact product/config source `e1b44f7ab6c47bd41de3ed9460ec0b77b7cc9f3f`; tree `d3432dfe2e32cddcfac7a5a56d7880772dc6989d`.
-- Push Run / Job `33316398081 / 99270535435` — success.
-- PR Run / Job `33316399402 / 99270539763` — success.
-- Artifact `9733577825`; ZIP `sha256:d53ddb88c5d2092294592416e10e5a0a752cb7afb0bbe0a39c2c137d021082d0`.
-- IPA SHA `ac9f031fb43b91ac12f486b1f743f741b404faf133725bdc8abec059b68b87d8`.
-- Package: Release / `0.1.0 (62)` / Candidate b62 / source `e1b44f7ab6c4` / iOS14 / `[1,2]` / arm64.
-- b62 is permanently reserved after Artifact emission.
+### Reasoning / final / tool lifecycle
 
-b62 behavior change is intentionally narrow: `findComposer()` no longer treats an arbitrary enabled textarea as the official composer. Only `#prompt-textarea` or explicit contenteditable role=textbox remains authoritative. No retry/timer/watchdog/polling/fallback was added. b61 parsing, thinking/reasoning/final presentation, parent pairing and bounded detail-shape diagnostics are unchanged.
+Terminal metrics:
 
-Evidence ladder: **Code written / Push CI passed / PR CI passed / Artifact produced / package identity independently verified; Runtime/manual pending; Stable/Frozen No.**
+- frameCount `196`, terminal `true`;
+- Native reasoning `34 deltas / 497 chars`;
+- preambles `3 / 20 chars`;
+- reasoning segment breaks `2`, reasoning-active signals `3`, Native thinking presentations `4`;
+- exact reasoning-end `1`, fallback false;
+- final answer `93 deltas / 2878 chars`;
+- Native total `127 deltas / 3375 chars`;
+- results `20`, parent present/matched/unmatched/missing `20/20/0/0`;
+- paired Native result presentations `20`;
+- Native tool presentations/completion updates `20/20`.
 
-## Next evidence gate
+User directly reported the single tested round looked normal; screenshot showed visible reasoning, completed tool rows and complete-looking final text with no obvious truncation.
 
-Run exact b62 on the primary iPhone/iOS17 target after a force-quit/cold launch. It is **not required** to reproduce b61's intermittent false-ready race. The required gate is:
+Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b62-runtime.md`.
 
-- before an evidenced official composer exists, Send must remain unavailable/not-ready rather than accepting generic `textarea`;
-- once Send is enabled and pressed, a successful normal turn must produce a real `sendObserved` protected-Send lifecycle and HTTP200 SSE when the service succeeds;
-- thinking/reasoning/tool/final behavior must retain b61's accepted successful-path behavior, including tool rows advancing `调用中 -> 已完成` and no obvious text truncation;
-- if any run again reports submitted with no `sendObserved`, export immediately: that would reject the current narrow fix even if another run passes.
+## Current unresolved evidence boundary
 
-One focused cold-launch tool-active run is sufficient for the primary gate; one additional cold launch is useful but optional. Do not demand indefinite attempts to reproduce a rare race.
+Expandable tool details remain part of `DEV-send-stream`, but exact user-visible schema is still **Unknown / Unverified**. b62 safe structural observations include string-shaped `connector_tool_payload`, bounded `reasoning_titles` / `tool_icons`, object-shaped `invoked_resource`, and `inline_cot_expandable_content` on an `assistant:thoughts` structure. These shapes do **not** authorize raw values/bodies or `assistant:thoughts` presentation.
+
+Do not allocate b63 from field-name guesses. A future candidate requires one concrete evidence need and a fresh uniqueness/conflict guard.
 
 ## Remaining Unknown / Unverified
 
-Accepted production incremental-response ownership, exact cross-tool user-visible detail schema, Native first/exclusive resume, existing-conversation pre-React history virtualization, full 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified where not explicitly tested. CI/Artifact success is never Runtime proof.
+Accepted production incremental-response ownership, exact cross-tool user-visible expandable-detail schema, Native first/exclusive resume, existing-conversation pre-React history virtualization, full 5/15-minute background behavior, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified where not explicitly tested. CI/Artifact success is never Runtime proof.

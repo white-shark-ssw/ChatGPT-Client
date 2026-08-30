@@ -2,14 +2,14 @@
 
 ## Status
 
-**Active — exact b59 Runtime passes the tested text-completeness gate: the service-marked thinking preambles, reasoning stream, compact tool activity and final answer were all visible and complete on the primary iPhone/iOS17 run. b59 also exposes the next presentation gaps: separate reasoning messages are visually concatenated because Native does not preserve segment breaks; official-Web expandable tool request/result details are not yet represented; and the desired official lifecycle includes an explicit `正在思考` state before/among reasoning/tool phases. The same b59 traffic now proves two thinking preambles in one reasoning phase and an explicit `reasoning_status=is_reasoning` signal after tool activity, so the official-like state skeleton is evidence-backed. Tool detail bodies remain evidence-gated because the run has 12 accepted completed invocations but 13 tool results, so adjacency pairing is unsafe. TD-024/TD-025/TD-028 and production response ownership remain unchanged; PR #29 remains evidence-only.**
+**Active — exact b59 Runtime passes the tested text-completeness gate: the service-marked thinking preambles, reasoning stream, compact tool activity and final answer were all visible and complete on the primary iPhone/iOS17 run. b59 also exposes the next presentation gaps: separate reasoning messages are visually concatenated because Native does not preserve segment breaks; official-Web expandable tool request/result details are not yet represented; and the desired official lifecycle includes an explicit `正在思考` state before/among reasoning/tool phases. The same b59 traffic proves two thinking preambles in one reasoning phase and an explicit `reasoning_status=is_reasoning` signal after tool activity, so the official-like state skeleton is evidence-backed. Tool detail bodies remain evidence-gated because the run has 12 accepted completed invocations but 13 tool results, so adjacency pairing is unsafe. TD-024/TD-025/TD-028 and production response ownership remain unchanged; PR #29 remains evidence-only.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / not merged; evidence-only
 - Current target main: `1ac202c972f2dee6945fe8d0688df8e10f5d462c`
 - Exact b59 product/config source: `138c09a5d11121945bc45f1d866c449aa0f7611e`
-- Guarded branch head before this checkpoint write: `bfcd9b874ef3214cd74612c96089d6556a4b0f33` (b59 source plus docs-only Runtime evidence)
+- Current branch head before this checkpoint write: `4d9d7475c57b04a9550f5a7d738b8aa67225aa61` (b59 source plus docs-only evidence/status synchronization)
 - Other Active development checkpoints: none
 - Stable native predecessor: b38
 - Stable/Frozen Send: No
@@ -100,22 +100,23 @@ The interaction/state ordering can be made official-like from current evidence. 
 Confirmed complete:
 
 1. startup governance re-read (`AGENTS.md` then `START_HERE.md`) and Development route resolved to existing `DEV-send-stream`;
-2. resume guard: feature exact b59 head `138c09a5...` before docs, PR #29 open/mergeable/unmerged, target main unchanged `1ac202c...`, only one Active checkpoint;
+2. resume guard: feature exact b59 product source `138c09a5...`, PR #29 open/mergeable/unmerged, target main unchanged `1ac202c...`, only one Active checkpoint;
 3. exact b59 Runtime diagnostics + four user screenshots classified;
-4. b59 Runtime evidence file created at commit `bfcd9b874ef3214cd74612c96089d6556a4b0f33`;
-5. user requirement establishes official-like ordered reasoning/tool lifecycle as the `DEV-send-stream` target.
+4. b59 Runtime evidence file created;
+5. `PROJECT_STATE`, `MODULE_STATUS`, `PROJECT_PROFILE`, `DEVELOPMENT_PLAN`, `PROJECT_SPECIFIC_RULES`, `BUILD_TEST_INDEX` synchronized through b59 Runtime;
+6. user requirement establishes official-like ordered reasoning/tool lifecycle as the `DEV-send-stream` target;
+7. repository search found no b60 references; build index currently ends at b59. b60 still has no emitted Artifact at this recovery point.
 
 Pending deterministic actions:
 
-1. synchronize `BUILD_TEST_INDEX`, `PROJECT_STATE`, `MODULE_STATUS`, `PROJECT_PROFILE`, `DEVELOPMENT_PLAN`, `PROJECT_SPECIFIC_RULES` and PR #29 through b59 Runtime;
-2. confirm b60 identity/artifact name is unused;
-3. if unused, allocate b60 and implement only the bounded scope above;
-4. verify product diff, Push + PR CI, Artifact, ZIP/IPA/package identity;
-5. hand exact b60 to the user for one tool-active Runtime turn focused on segment breaks, thinking-state transitions and new safe association metrics;
-6. only after b60 pairing/field evidence may a later Candidate expose expandable tool request/result details.
+1. synchronize PR #29 through b59 Runtime / b60 gate;
+2. allocate `DEV-send-stream-0.1.0-b60` / build60 and assemble only the bounded b60 scope above;
+3. verify product diff, Push + PR CI, Artifact, ZIP/IPA/package identity;
+4. hand exact b60 to the user for one tool-active Runtime turn focused on segment breaks, thinking-state transitions and safe association metrics;
+5. only after b60 pairing/field evidence may a later Candidate expose expandable tool request/result details.
 
 Do not modify Stable b38 modules, auth ownership, attachments, resume transport or production `ConversationRepository` in Batch N. b61 must not be allocated by guess.
 
 ## Next exact action
 
-Synchronize durable docs through exact b59 Runtime, confirm build60 is unused, then assemble the bounded b60 presentation/diagnostic candidate above.
+Update PR #29, then allocate and assemble exact b60 for reasoning segment breaks, thinking-state presentation and privacy-safe tool association diagnostics.

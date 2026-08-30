@@ -84,28 +84,18 @@ Because Artifact `9726996570` exists, b53 is permanently reserved. Any later pro
 
 ## Batch G — b52 Runtime -> b53 reasoning/tool structural evidence
 
-Baseline / identity:
+**Complete through exact Artifact/package verification, PR metadata and durable documentation synchronization.**
 
-- Batch start feature head `aee7b0c0a4f8556c68ba4aeb88cf004a5e622849`;
-- exact immutable b52 product source `5c0690ce062e0fa3ff9bd253953842b99ecd2e0f`;
-- target `main@1ac202c972f2dee6945fe8d0688df8e10f5d462c`;
-- PR #29 open / mergeable;
-- b53 uniquely allocated and emitted as `DEV-send-stream-0.1.0-b53`, `0.1.0 (53)`.
+Confirmed:
 
-Confirmed writes:
-
-1. Batch G recovery checkpoint;
-2. exact b52 Runtime evidence file at commit `a95ea2bc6c463146afa94b1108717f85ab9b802d`;
-3. atomic b53 product/config commit `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`;
+1. Batch G recovery checkpoint established from feature head `aee7b0c0a4f8556c68ba4aeb88cf004a5e622849` / target `main@1ac202c...`;
+2. exact b52 Runtime evidence persisted at `docs/project/runtime-evidence/DEV-send-stream-b52-runtime.md`;
+3. atomic b53 product/config source `3204b183ca4fe6310b48f13c067fbf993ca8d0f8`;
 4. exact b53 Push/PR CI success and Artifact/package identity verified;
-5. PR #29 title/body synchronized to the b53 reasoning/tool structure Runtime gate.
+5. PR #29 title/body synchronized to the b53 reasoning/tool structure Runtime gate;
+6. `PROJECT_STATE.md`, `MODULE_STATUS.md`, `BUILD_TEST_INDEX.md`, `PROJECT_PROFILE.md`, `DEVELOPMENT_PLAN.md` and `PROJECT_SPECIFIC_RULES.md` synchronized through b52 Runtime / b53 Artifact truth.
 
-Still pending:
-
-6. durable project-doc synchronization for b52 Runtime / b53 Artifact truth;
-7. hand exact b53 IPA to user for one reasoning/tool-style reproduction and diagnostics export.
-
-Recovery rule: if interrupted, re-read this checkpoint and actual GitHub branch/PR/Artifact state; perform only missing deterministic writes. Never alter/rebuild b52 or b53. Later docs-only commits do not redefine exact b53 product/config source `3204b183...`.
+Later commits after `3204b183...` are docs-only and do not redefine exact b53 product/config identity. Never alter/rebuild b52 or b53.
 
 ## Durable boundary
 
@@ -120,4 +110,4 @@ Recovery rule: if interrupted, re-read this checkpoint and actual GitHub branch/
 
 ## Next exact action
 
-Synchronize durable project docs, then hand exact Artifact `9726996570` to the user. Runtime focus: one prompt that naturally produces visible reasoning plus tool activity, preferably the same GitHub/project-progress style request; observe reasoning beginning completeness, final-answer completeness and visible tool activity, then export diagnostics after terminal. Do not implement reasoning collapse/expand, tool sheet UI, reasoning lifecycle state or parser broadening until that evidence identifies the actual user-visible grammar. Do not allocate b54 by guess.
+Hand exact Artifact `9726996570` to the user. Runtime focus: one prompt that naturally produces visible reasoning plus tool activity, preferably the same GitHub/project-progress style request; observe reasoning beginning completeness, final-answer completeness and visible tool activity, then export diagnostics after terminal. Do not implement reasoning collapse/expand, tool sheet UI, reasoning lifecycle state or parser broadening until that evidence identifies the actual user-visible grammar. Do not allocate b54 by guess.

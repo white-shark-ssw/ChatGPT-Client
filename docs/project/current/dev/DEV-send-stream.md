@@ -8,7 +8,7 @@
 - **Branch**: `dev/send-stream-20260829`
 - **PR**: #29 — open / mergeable / not merged; evidence-only.
 - **Current target main**: `1ac202c972f2dee6945fe8d0688df8e10f5d462c` at the latest light guard.
-- **Current branch head at b57 Runtime evidence write**: `91217066f8213eec30c0ebdee76c9fb0437ca741`.
+- **Current branch head / b58 assembly parent**: `d63a149f609a7c9b1fd9ebcdde44ecf2c3797f75` before this checkpoint refresh; the two immediately preceding temporary-file commits created and then removed a tooling marker and produced no lasting tree change.
 - **Stable native predecessor**: b38.
 - **Stable/Frozen Send**: No.
 - Other Active development checkpoints: none.
@@ -78,16 +78,11 @@ b58 may be allocated because exact b57 Runtime supplied the required next eviden
 The change must remain diagnostic-only and minimal:
 
 1. Preserve b57 protected-Send construction, text acceptance, reasoning-end split, reasoning collapse/expand and terminal fallback unchanged.
-2. Detect only exact completed assistant-code messages where:
-   - role `assistant`;
-   - content type `code`;
-   - status `finished_successfully`;
-   - recipient is a non-empty string and not `all`;
-   - metadata `is_complete === true`.
-3. Deduplicate only in-memory by the service message ID; never export/log that ID.
+2. Detect only exact completed assistant-code messages where role=`assistant`, content type=`code`, status=`finished_successfully`, recipient is a non-empty string other than `all`, and metadata `is_complete === true`.
+3. Deduplicate only in-memory by service message ID; never export/log that ID.
 4. For each unique invocation, post one Native tool-activity event.
-5. If `metadata.reasoning_title` is a non-empty string, bridge it only for transient display. Diagnostics record only title presence/character count, never the title text.
-6. If no service title exists, display only the local generic label `工具调用`; do not invent a tool name from raw arguments/results.
+5. If `metadata.reasoning_title` is a non-empty string, bridge it only for transient display. Diagnostics record only title presence/character count, never title text.
+6. If no service title exists, display only local generic `工具调用`; do not invent a tool name from raw arguments/results.
 7. Add a distinct compact `工具调用` Native region; tool activity must not enter reasoning text or final-answer text.
 8. Observe completed tool result messages only for bounded aggregate counts; do not display their body and do not guess invocation/result pairing.
 9. Add terminal aggregate counts for invocation/result/title presence.
@@ -101,7 +96,8 @@ Confirmed complete:
 2. user visual result accepted for reasoning/final split and no visible prefix truncation;
 3. tool invocation/result structures classified;
 4. `docs/project/runtime-evidence/DEV-send-stream-b57-runtime.md` created at commit `91217066f8213eec30c0ebdee76c9fb0437ca741`;
-5. Resume guard confirmed only one Active task, PR #29 open/mergeable/unmerged, `main@1ac202c...`, and exact b57 product source unchanged.
+5. Resume guard confirmed only one Active task, PR #29 open/mergeable/unmerged, `main@1ac202c...`, and exact b57 product source unchanged;
+6. accidental temporary marker/copy files were both removed immediately; no temporary file remains and no product/config source changed.
 
 Pending deterministic writes:
 

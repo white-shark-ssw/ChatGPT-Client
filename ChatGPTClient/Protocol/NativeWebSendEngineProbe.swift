@@ -55,6 +55,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private var toolDetailExpansionCount = 0
     private var toolPresentationBySlot: [Int: ToolPresentation] = [:]
     private var selectedToolSlot: Int?
+    private var expandedToolInputSlot: Int?
+    private var expandedToolOutputSlot: Int?
     private var thinkingPresentationCount = 0
     private var reasoningSegmentBreakCount = 0
     private var thinkingVisible = false
@@ -86,7 +88,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b64 诊断 UI：b63 真机已确认无明显截断、parent_id 可见工具条目 24/24 完成，并用同轮官方 Web 截图证明 GitHub 工具输入来自 connector_tool_payload、工具输出来自精确配对 result 的 message.content。本版保持 b63 Send/文本/思考/工具生命周期不变，只让已完成且精确 parent 配对、result 明确属于 GitHub 的工具行可点按展开“工具输入/工具输出”；不展示 assistant:thoughts，不猜工具描述，不把工具输入/输出或 ID 写入诊断。"
+        explanationLabel.text = "b65 呈现修正：b64 真机已确认 Send/思考/最终回答与 exact parent 工具生命周期正常，GitHub 工具输入/输出也能正确展开，但输出因整段 message.content 外层 JSON 序列化而出现大量转义并一次性铺开。本版只修 Native 详情呈现：工具行展开后，工具输入/工具输出分别二级折叠；输出解析外层 content 并按对象/数组/原始字符串层级显示，不裁剪数据。不改 b64 Send/文本/思考/parent 配对，不展示 assistant:thoughts，不记录 raw 工具正文或 ID。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -203,7 +205,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b64_github_tool_detail_runtime_gate", "surface": "native_over_fullsize_web", "scope": "b63_behavior_plus_parent_paired_github_input_output"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b65_structured_tool_detail_runtime_gate", "surface": "native_over_fullsize_web", "scope": "b64_behavior_plus_nested_input_output_disclosure"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -214,12 +216,32 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     func textViewDidChange(_ textView: UITextView) { updateSendButtonState() }
 
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
-        guard textView === toolTextView, URL.scheme == "native-tool", let slot = Int(URL.lastPathComponent), let entry = toolPresentationBySlot[slot], entry.hasDetail else { return true }
-        selectedToolSlot = selectedToolSlot == slot ? nil : slot
-        if selectedToolSlot == slot { toolDetailExpansionCount += 1 }
-        renderToolActivity()
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolDetailPresentation", fields: ["state": selectedToolSlot == slot ? "expanded" : "collapsed", "slot": String(slot), "inputCharacters": String(entry.inputJSON.count), "outputCharacters": String(entry.outputJSON.count)])
-        return false
+        guard textView === toolTextView, let scheme = URL.scheme, let slot = Int(URL.lastPathComponent), let entry = toolPresentationBySlot[slot], entry.hasDetail else { return true }
+        switch scheme {
+        case "native-tool":
+            let expanded = selectedToolSlot != slot
+            selectedToolSlot = expanded ? slot : nil
+            expandedToolInputSlot = nil
+            expandedToolOutputSlot = nil
+            if expanded { toolDetailExpansionCount += 1 }
+            renderToolActivity()
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolDetailPresentation", fields: ["state": expanded ? "expanded" : "collapsed", "section": "tool", "slot": String(slot), "inputCharacters": String(entry.inputJSON.count), "outputCharacters": String(entry.outputJSON.count)])
+            return false
+        case "native-tool-input":
+            guard selectedToolSlot == slot, !entry.inputJSON.isEmpty else { return false }
+            expandedToolInputSlot = expandedToolInputSlot == slot ? nil : slot
+            renderToolActivity()
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolDetailPresentation", fields: ["state": expandedToolInputSlot == slot ? "expanded" : "collapsed", "section": "input", "slot": String(slot), "inputCharacters": String(entry.inputJSON.count), "outputCharacters": String(entry.outputJSON.count)])
+            return false
+        case "native-tool-output":
+            guard selectedToolSlot == slot, !entry.outputJSON.isEmpty else { return false }
+            expandedToolOutputSlot = expandedToolOutputSlot == slot ? nil : slot
+            renderToolActivity()
+            diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.toolDetailPresentation", fields: ["state": expandedToolOutputSlot == slot ? "expanded" : "collapsed", "section": "output", "slot": String(slot), "inputCharacters": String(entry.inputJSON.count), "outputCharacters": String(entry.outputJSON.count)])
+            return false
+        default:
+            return true
+        }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -573,6 +595,8 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
     private func resetToolActivity() {
         selectedToolSlot = nil
+        expandedToolInputSlot = nil
+        expandedToolOutputSlot = nil
         toolPresentationBySlot.removeAll()
         toolTextView.attributedText = nil
         toolStack.isHidden = true
@@ -597,7 +621,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private func renderToolActivity() {
         let output = NSMutableAttributedString()
         let rowAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.preferredFont(forTextStyle: .footnote), .foregroundColor: UIColor.secondaryLabel]
-        let detailHeadingAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .semibold), .foregroundColor: UIColor.label]
+        let disclosureAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .semibold), .foregroundColor: UIColor.label]
         let detailAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.monospacedSystemFont(ofSize: max(11, UIFont.preferredFont(forTextStyle: .footnote).pointSize - 1), weight: .regular), .foregroundColor: UIColor.label]
         let slots = toolPresentationBySlot.keys.sorted()
         for (index, slot) in slots.enumerated() {
@@ -608,12 +632,18 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
             output.append(NSAttributedString(string: "\(marker) \(entry.title) · \(entry.completed ? "已完成" : "调用中")", attributes: attributes))
             if selectedToolSlot == slot && entry.hasDetail {
                 if !entry.inputJSON.isEmpty {
-                    output.append(NSAttributedString(string: "\n\n工具输入\n", attributes: detailHeadingAttributes))
-                    output.append(NSAttributedString(string: Self.prettyJSONString(entry.inputJSON), attributes: detailAttributes))
+                    let inputExpanded = expandedToolInputSlot == slot
+                    var inputAttributes = disclosureAttributes
+                    if let url = URL(string: "native-tool-input://slot/\(slot)") { inputAttributes[.link] = url }
+                    output.append(NSAttributedString(string: "\n\n  \(inputExpanded ? "▾" : "▸") 工具输入", attributes: inputAttributes))
+                    if inputExpanded { output.append(NSAttributedString(string: "\n\(Self.prettyJSONString(entry.inputJSON))", attributes: detailAttributes)) }
                 }
                 if !entry.outputJSON.isEmpty {
-                    output.append(NSAttributedString(string: "\n\n工具输出\n", attributes: detailHeadingAttributes))
-                    output.append(NSAttributedString(string: Self.prettyJSONString(entry.outputJSON), attributes: detailAttributes))
+                    let outputExpanded = expandedToolOutputSlot == slot
+                    var outputAttributes = disclosureAttributes
+                    if let url = URL(string: "native-tool-output://slot/\(slot)") { outputAttributes[.link] = url }
+                    output.append(NSAttributedString(string: "\n\n  \(outputExpanded ? "▾" : "▸") 工具输出", attributes: outputAttributes))
+                    if outputExpanded { output.append(NSAttributedString(string: "\n\(Self.formattedToolOutput(entry.outputJSON))", attributes: detailAttributes)) }
                 }
             }
             if index < slots.count - 1 { output.append(NSAttributedString(string: "\n", attributes: rowAttributes)) }
@@ -645,6 +675,72 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
     private static func prettyJSONString(_ raw: String) -> String {
         guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data), JSONSerialization.isValidJSONObject(object), let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]), let text = String(data: pretty, encoding: .utf8) else { return raw }
         return text
+    }
+
+    private static func formattedToolOutput(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data) else { return raw }
+        return formatToolValue(object, indent: 0)
+    }
+
+    private static func formatToolValue(_ value: Any, indent: Int) -> String {
+        let prefix = String(repeating: "  ", count: indent)
+        if let dictionary = value as? [String: Any] {
+            if dictionary.isEmpty { return prefix + "{}" }
+            return orderedToolKeys(dictionary).compactMap { key -> String? in
+                guard let child = dictionary[key] else { return nil }
+                if let string = child as? String {
+                    if let nested = decodedJSONContainer(string) { return prefix + key + ":\n" + formatToolValue(nested, indent: indent + 1) }
+                    if string.contains("\n") { return prefix + key + ":\n" + indentToolString(string, indent: indent + 1) }
+                    return prefix + key + ": " + string
+                }
+                if child is [String: Any] || child is [Any] { return prefix + key + ":\n" + formatToolValue(child, indent: indent + 1) }
+                return prefix + key + ": " + formatToolScalar(child)
+            }.joined(separator: "\n")
+        }
+        if let array = value as? [Any] {
+            if array.isEmpty { return prefix + "Array(0)" }
+            var lines = [prefix + "Array(\(array.count))"]
+            for (index, child) in array.enumerated() {
+                let itemPrefix = prefix + "  \(index):"
+                if let string = child as? String {
+                    if let nested = decodedJSONContainer(string) { lines.append(itemPrefix + "\n" + formatToolValue(nested, indent: indent + 2)) }
+                    else if string.contains("\n") { lines.append(itemPrefix + "\n" + indentToolString(string, indent: indent + 2)) }
+                    else { lines.append(itemPrefix + " " + string) }
+                } else if child is [String: Any] || child is [Any] {
+                    lines.append(itemPrefix + "\n" + formatToolValue(child, indent: indent + 2))
+                } else {
+                    lines.append(itemPrefix + " " + formatToolScalar(child))
+                }
+            }
+            return lines.joined(separator: "\n")
+        }
+        if let string = value as? String { return prefix + string }
+        return prefix + formatToolScalar(value)
+    }
+
+    private static func orderedToolKeys(_ dictionary: [String: Any]) -> [String] {
+        let preferred = ["content_type", "language", "response_format_name", "text", "parts"]
+        let first = preferred.filter { dictionary[$0] != nil }
+        let remaining = dictionary.keys.filter { !preferred.contains($0) }.sorted()
+        return first + remaining
+    }
+
+    private static func decodedJSONContainer(_ string: String) -> Any? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let first = trimmed.first, first == "{" || first == "[", let data = trimmed.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data), object is [String: Any] || object is [Any] else { return nil }
+        return object
+    }
+
+    private static func indentToolString(_ string: String, indent: Int) -> String {
+        let prefix = String(repeating: "  ", count: indent)
+        return string.components(separatedBy: "\n").map { prefix + $0 }.joined(separator: "\n")
+    }
+
+    private static func formatToolScalar(_ value: Any) -> String {
+        if value is NSNull { return "null" }
+        if let boolean = value as? Bool { return boolean ? "true" : "false" }
+        if let number = value as? NSNumber { return number.stringValue }
+        return String(describing: value)
     }
 
     private static func pageKind(for url: URL?) -> String {

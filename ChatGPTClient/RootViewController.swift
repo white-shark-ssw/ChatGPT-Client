@@ -40,7 +40,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private var activeEvents: ((CoveredWebSendEvent) -> Void)?
     private var responseActive = false
 
-    var isBusy: Bool { pendingSend != nil || responseActive }
+    var isBusy: Bool { activeEvents != nil }
 
     override init() {
         let configuration = WKWebViewConfiguration()
@@ -195,6 +195,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             failCurrent("text_encoding_failed")
             return
         }
+        self.pendingSend = nil
         let script = "window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.submit(\(literal));"
         webView.evaluateJavaScript(script) { [weak self] _, error in
             guard let self, let error else { return }

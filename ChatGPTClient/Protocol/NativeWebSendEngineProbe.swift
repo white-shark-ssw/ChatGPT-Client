@@ -75,7 +75,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         explanationLabel.font = .preferredFont(forTextStyle: .footnote)
         explanationLabel.textColor = .secondaryLabel
         explanationLabel.numberOfLines = 0
-        explanationLabel.text = "b62 诊断：b61 真机已确认 parent_id 工具条目 14/14 配对完成，但冷启动首轮出现 generic textarea 误判为 composer，脚本返回 submitted 而官方 protected Send 未发出。本版只移除该 false-ready fallback，仅接受 #prompt-textarea 或明确的 contenteditable role=textbox；保持 b61 文本/思考/工具配对与详情 shape 诊断不变，不增加重试、timer 或 raw 工具正文。"
+        explanationLabel.text = "b63 诊断：b62 真机已通过 verified composer、protected Send、思考/最终回答及 parent_id 工具条目 20/20 完成 gate。本版不改任何 Send/文本/思考/工具展示行为，只对 connector_tool_payload 字符串记录隐私安全的 JSON 顶层 key/type/长度指纹，并用现有单轮 transient invocation Map 统计 inline_cot_expandable_content.source_message_ids 的工具引用匹配数；不记录 ID、字段值、raw JSON、工具请求/回复正文或 assistant:thoughts。"
 
         statusLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         statusLabel.textColor = .secondaryLabel
@@ -191,7 +191,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
         webView.isUserInteractionEnabled = false
         updateStatusLabel(detail: "正在加载官方 Web…")
-        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b62_verified_composer_send_gate", "surface": "native_over_fullsize_web", "scope": "verified_composer_plus_b61_paired_tool_shape"])
+        diagnostics.info(category: "protocol", name: "nativeWebSendEngineProbe.opened", fields: ["mode": "b63_expandable_detail_structure_gate", "surface": "native_over_fullsize_web", "scope": "b62_behavior_plus_safe_expandable_reference_fingerprint"])
         webView.load(URLRequest(url: Self.chatURL))
     }
 
@@ -383,6 +383,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "metadataBooleanFields": Self.safeTokenArray(body["metadataBooleanFields"]),
                 "metadataEnumFields": Self.safeTokenArray(body["metadataEnumFields"]),
                 "connectorToolPayloadShape": Self.safeToken(body["connectorToolPayloadShape"] as? String),
+                "connectorToolPayloadJSONShape": Self.safeToken(body["connectorToolPayloadJSONShape"] as? String),
                 "inlineExpandableShape": Self.safeToken(body["inlineExpandableShape"] as? String),
                 "reasoningTitlesShape": Self.safeToken(body["reasoningTitlesShape"] as? String),
                 "toolIconsShape": Self.safeToken(body["toolIconsShape"] as? String),
@@ -435,6 +436,11 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
                 "toolResultParentMissingCount": Self.safeNumberString(body["toolResultParentMissingCount"]),
                 "toolResultAuthorRecipientMatchCount": Self.safeNumberString(body["toolResultAuthorRecipientMatchCount"]),
                 "toolResultPairedPresentationCount": Self.safeNumberString(body["toolResultPairedPresentationCount"]),
+                "inlineExpandableMessageCount": Self.safeNumberString(body["inlineExpandableMessageCount"]),
+                "inlineExpandableSourceIDCount": Self.safeNumberString(body["inlineExpandableSourceIDCount"]),
+                "inlineExpandableSourceInvocationMatchCount": Self.safeNumberString(body["inlineExpandableSourceInvocationMatchCount"]),
+                "inlineExpandableSourceToolActivityMatchCount": Self.safeNumberString(body["inlineExpandableSourceToolActivityMatchCount"]),
+                "inlineExpandableSourceUnmatchedCount": Self.safeNumberString(body["inlineExpandableSourceUnmatchedCount"]),
                 "webMessageNodes": Self.safeNumberString(body["webMessageNodes"]),
                 "webAssistantTextCharacters": Self.safeNumberString(body["webAssistantTextCharacters"]),
                 "webElementCount": Self.safeNumberString(body["webElementCount"]),
@@ -699,6 +705,26 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         }
         return primitiveType(value);
       };
+      const summarizeJSONStringShape = value => {
+        if (typeof value !== 'string') return 'not_string';
+        if (!value) return 'empty_string';
+        let parsed;
+        try { parsed = JSON.parse(value); } catch (_) { return 'invalid_json'; }
+        if (Array.isArray(parsed)) {
+          const types = Array.from(new Set(parsed.slice(0, 8).map(primitiveType))).slice(0, 6);
+          return ('json_array:' + parsed.length + ':' + (types.length ? types.join('+') : 'empty')).slice(0, 180);
+        }
+        if (parsed && typeof parsed === 'object') {
+          const fields = Object.entries(parsed).slice(0, 12).map(([rawKey, child]) => {
+            const key = safeStructuralKey(rawKey);
+            const type = primitiveType(child);
+            const size = typeof child === 'string' || Array.isArray(child) ? String(child.length) : '';
+            return key + ':' + type + size;
+          });
+          return ('json_object:' + (fields.length ? fields.join('+') : 'empty')).slice(0, 180);
+        }
+        return ('json_' + primitiveType(parsed)).slice(0, 180);
+      };
 
       const installRenderSuppression = () => {
         if (document.getElementById('__native_web_send_engine_render_suppression')) return;
@@ -814,7 +840,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
 
       const summarizeStructure = (payload, aggregate) => {
         const payloadObject = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : null;
-        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [], connectorToolPayloadShape: 'undefined', inlineExpandableShape: 'undefined', reasoningTitlesShape: 'undefined', toolIconsShape: 'undefined', invokedPluginShape: 'undefined', invokedResourceShape: 'undefined', textPhase: 'none' };
+        if (!payloadObject) return { signature: 'non_object', eventType: 'none', operation: 'none', patchPath: 'none', messageRole: 'none', messageContentType: 'none', messageStatus: 'none', endTurn: false, payloadKeys: [], valueKeys: [], nestedPatches: [], messageKeys: [], authorKeys: [], contentKeys: [], metadataKeys: [], recipient: 'none', authorName: 'none', contentStringFields: [], contentArrayFields: [], metadataBooleanFields: [], metadataEnumFields: [], connectorToolPayloadShape: 'undefined', connectorToolPayloadJSONShape: 'not_string', inlineExpandableShape: 'undefined', reasoningTitlesShape: 'undefined', toolIconsShape: 'undefined', invokedPluginShape: 'undefined', invokedResourceShape: 'undefined', textPhase: 'none' };
         const valueObject = payloadObject.v && typeof payloadObject.v === 'object' && !Array.isArray(payloadObject.v) ? payloadObject.v : null;
         const eventType = safeProtocolValue(payloadObject.type);
         const operation = safeProtocolValue(payloadObject.o);
@@ -842,6 +868,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         const recipient = detailedMessage ? safeProtocolValue(message.recipient) : 'none';
         const authorName = detailedMessage ? safeProtocolValue(author && author.name) : 'none';
         const connectorToolPayloadShape = summarizeOpaqueShape(metadata && metadata.connector_tool_payload);
+        const connectorToolPayloadJSONShape = summarizeJSONStringShape(metadata && metadata.connector_tool_payload);
         const inlineExpandableShape = summarizeOpaqueShape(metadata && metadata.inline_cot_expandable_content);
         const reasoningTitlesShape = summarizeOpaqueShape(metadata && metadata.reasoning_titles);
         const toolIconsShape = summarizeOpaqueShape(metadata && metadata.tool_icons);
@@ -853,21 +880,21 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         else if (typeof payloadObject.o === 'string') signature = 'patch:' + operation + ':' + patchPath;
         else if (message) signature = 'message:' + messageRole + ':' + messageContentType + ':' + messageStatus;
         else if (typeof payloadObject.v === 'string') signature = 'value_string_patch';
-        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields, connectorToolPayloadShape, inlineExpandableShape, reasoningTitlesShape, toolIconsShape, invokedPluginShape, invokedResourceShape, textPhase };
+        return { signature: signature.slice(0, 180), eventType, operation, patchPath, messageRole, messageContentType, messageStatus, endTurn, payloadKeys, valueKeys, nestedPatches, messageKeys, authorKeys, contentKeys, metadataKeys, recipient, authorName, contentStringFields: contentFields.stringFields, contentArrayFields: contentFields.arrayFields, metadataBooleanFields: metadataFields.booleanFields, metadataEnumFields: metadataFields.enumFields, connectorToolPayloadShape, connectorToolPayloadJSONShape, inlineExpandableShape, reasoningTitlesShape, toolIconsShape, invokedPluginShape, invokedResourceShape, textPhase };
       };
 
-      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields, connectorToolPayloadShape: summary.connectorToolPayloadShape, inlineExpandableShape: summary.inlineExpandableShape, reasoningTitlesShape: summary.reasoningTitlesShape, toolIconsShape: summary.toolIconsShape, invokedPluginShape: summary.invokedPluginShape, invokedResourceShape: summary.invokedResourceShape, textPhase: summary.textPhase });
+      const postStructure = summary => post({ kind: 'stream_structure', eventIndex: summary.eventIndex, signature: summary.signature, eventType: summary.eventType, operation: summary.operation, patchPath: summary.patchPath, messageRole: summary.messageRole, messageContentType: summary.messageContentType, messageStatus: summary.messageStatus, endTurn: summary.endTurn, payloadKeys: summary.payloadKeys, valueKeys: summary.valueKeys, nestedPatches: summary.nestedPatches, messageKeys: summary.messageKeys, authorKeys: summary.authorKeys, contentKeys: summary.contentKeys, metadataKeys: summary.metadataKeys, recipient: summary.recipient, authorName: summary.authorName, contentStringFields: summary.contentStringFields, contentArrayFields: summary.contentArrayFields, metadataBooleanFields: summary.metadataBooleanFields, metadataEnumFields: summary.metadataEnumFields, connectorToolPayloadShape: summary.connectorToolPayloadShape, connectorToolPayloadJSONShape: summary.connectorToolPayloadJSONShape, inlineExpandableShape: summary.inlineExpandableShape, reasoningTitlesShape: summary.reasoningTitlesShape, toolIconsShape: summary.toolIconsShape, invokedPluginShape: summary.invokedPluginShape, invokedResourceShape: summary.invokedResourceShape, textPhase: summary.textPhase });
 
       const observeStructure = (payload, aggregate) => {
         const summary = summarizeStructure(payload, aggregate);
         summary.eventIndex = aggregate.frameCount;
-        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields, summary.connectorToolPayloadShape, summary.inlineExpandableShape, summary.reasoningTitlesShape, summary.toolIconsShape, summary.invokedPluginShape, summary.invokedResourceShape, summary.textPhase]);
+        const evidenceKey = JSON.stringify([summary.signature, summary.eventType, summary.operation, summary.patchPath, summary.messageRole, summary.messageContentType, summary.messageStatus, summary.endTurn, summary.payloadKeys, summary.valueKeys, summary.nestedPatches, summary.messageKeys, summary.authorKeys, summary.contentKeys, summary.metadataKeys, summary.recipient, summary.authorName, summary.contentStringFields, summary.contentArrayFields, summary.metadataBooleanFields, summary.metadataEnumFields, summary.connectorToolPayloadShape, summary.connectorToolPayloadJSONShape, summary.inlineExpandableShape, summary.reasoningTitlesShape, summary.toolIconsShape, summary.invokedPluginShape, summary.invokedResourceShape, summary.textPhase]);
         const specialMessage = (summary.messageRole === 'assistant' && (summary.messageContentType === 'reasoning_recap' || summary.messageContentType === 'thoughts' || summary.messageContentType === 'code')) || summary.messageRole === 'tool';
         const phaseTextMessage = summary.messageRole === 'assistant' && summary.messageContentType === 'text';
         let specialPosted = false;
         let phasePosted = false;
         if (specialMessage) {
-          const specialEvidenceKey = JSON.stringify([summary.messageRole, summary.messageContentType, summary.messageStatus, summary.recipient, summary.authorName, summary.contentKeys, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields, summary.connectorToolPayloadShape, summary.inlineExpandableShape, summary.reasoningTitlesShape, summary.toolIconsShape, summary.invokedPluginShape, summary.invokedResourceShape]);
+          const specialEvidenceKey = JSON.stringify([summary.messageRole, summary.messageContentType, summary.messageStatus, summary.recipient, summary.authorName, summary.contentKeys, summary.metadataKeys, summary.metadataBooleanFields, summary.metadataEnumFields, summary.connectorToolPayloadShape, summary.connectorToolPayloadJSONShape, summary.inlineExpandableShape, summary.reasoningTitlesShape, summary.toolIconsShape, summary.invokedPluginShape, summary.invokedResourceShape]);
           if (!aggregate.specialStructureSeen.has(specialEvidenceKey)) {
             if (aggregate.specialStructureSeen.size >= 24) aggregate.specialStructureSignatureOverflowCount += 1;
             else {
@@ -991,6 +1018,25 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         post({ kind: 'native_tool_activity', state: 'result', slot: identity ? identity.slot : -1, title, titleCharacters: rawTitle.length });
       };
 
+      const observeExpandableReferences = (payload, aggregate) => {
+        const message = findMessage(payload);
+        if (!message || !message.author || message.author.role !== 'assistant' || message.status !== 'finished_successfully' || typeof message.id !== 'string' || !message.id) return;
+        const content = message.content && typeof message.content === 'object' && !Array.isArray(message.content) ? message.content : null;
+        const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata) ? message.metadata : null;
+        if (!content || content.content_type !== 'thoughts' || !metadata || !metadata.inline_cot_expandable_content || typeof metadata.inline_cot_expandable_content !== 'object' || Array.isArray(metadata.inline_cot_expandable_content)) return;
+        const sourceIDs = metadata.inline_cot_expandable_content.source_message_ids;
+        if (!Array.isArray(sourceIDs) || aggregate.inlineExpandableSeen.has(message.id)) return;
+        aggregate.inlineExpandableSeen.add(message.id);
+        aggregate.inlineExpandableMessageCount += 1;
+        for (const sourceID of sourceIDs) {
+          if (typeof sourceID !== 'string' || !sourceID) continue;
+          aggregate.inlineExpandableSourceIDCount += 1;
+          if (aggregate.toolInvocationIdentityByID.has(sourceID)) aggregate.inlineExpandableSourceInvocationMatchCount += 1;
+          if (aggregate.toolActivitySeen.has(sourceID)) aggregate.inlineExpandableSourceToolActivityMatchCount += 1;
+          if (!aggregate.toolInvocationIdentityByID.has(sourceID) && !aggregate.toolActivitySeen.has(sourceID)) aggregate.inlineExpandableSourceUnmatchedCount += 1;
+        }
+      };
+
       const scrubTextPatches = (node, aggregate) => {
         if (Array.isArray(node)) {
           const output = [];
@@ -1062,7 +1108,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         toolResultParentUnmatchedCount: aggregate.toolResultParentUnmatchedCount,
         toolResultParentMissingCount: aggregate.toolResultParentMissingCount,
         toolResultAuthorRecipientMatchCount: aggregate.toolResultAuthorRecipientMatchCount,
-        toolResultPairedPresentationCount: aggregate.toolResultPairedPresentationCount
+        toolResultPairedPresentationCount: aggregate.toolResultPairedPresentationCount,
+        inlineExpandableMessageCount: aggregate.inlineExpandableMessageCount,
+        inlineExpandableSourceIDCount: aggregate.inlineExpandableSourceIDCount,
+        inlineExpandableSourceInvocationMatchCount: aggregate.inlineExpandableSourceInvocationMatchCount,
+        inlineExpandableSourceToolActivityMatchCount: aggregate.inlineExpandableSourceToolActivityMatchCount,
+        inlineExpandableSourceUnmatchedCount: aggregate.inlineExpandableSourceUnmatchedCount
       });
 
       const filterFrame = (frame, aggregate) => {
@@ -1097,6 +1148,7 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
         observeReasoningActive(payload, aggregate);
         observeReasoningPreamble(payload, aggregate);
         observeToolActivity(payload, aggregate);
+        observeExpandableReferences(payload, aggregate);
         observeReasoningEnd(payload, aggregate);
         const payloadKeys = payload && typeof payload === 'object' && !Array.isArray(payload) ? Object.keys(payload) : [];
         const rootTextAppend = payload && typeof payload === 'object' && !Array.isArray(payload) && payload.o === 'append' && payload.p === '/message/content/parts/0' && typeof payload.v === 'string';
@@ -1210,6 +1262,12 @@ final class NativeWebSendEngineProbeViewController: UIViewController, WKNavigati
           toolResultParentMissingCount: 0,
           toolResultAuthorRecipientMatchCount: 0,
           toolResultPairedPresentationCount: 0,
+          inlineExpandableSeen: new Set(),
+          inlineExpandableMessageCount: 0,
+          inlineExpandableSourceIDCount: 0,
+          inlineExpandableSourceInvocationMatchCount: 0,
+          inlineExpandableSourceToolActivityMatchCount: 0,
+          inlineExpandableSourceUnmatchedCount: 0,
           terminal: false
         };
         let buffer = '';

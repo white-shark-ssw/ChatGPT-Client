@@ -58,7 +58,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         webView.load(URLRequest(url: Self.chatURL))
     }
 
-    deinit { webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.handlerName) }
+    deinit {
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: Self.handlerName)
+        webView.removeFromSuperview()
+    }
 
     func attachCoveredWebView(to hostView: UIView) {
         precondition(Thread.isMainThread)
@@ -375,7 +378,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const rawTitle = metadata && typeof metadata.reasoning_title === 'string' ? metadata.reasoning_title.trim() : '';
         const title = rawTitle.slice(0, 160);
         if (role === 'assistant' && contentType === 'code' && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
-          if (!state.invocations.has(message.id)) state.invocations.set(message.id, { recipient: message.recipient, slot: state.nextToolSlot++, connectorPayload: '', iconKind: message.recipient === 'api_tool.call_tool' ? 'generic' : 'code' });
+          if (!state.invocations.has(message.id)) state.invocations.set(message.id, { recipient: message.recipient, slot: state.nextToolSlot++, connectorPayload: '', iconKind: message.recipient === 'api_tool.call_tool' ? 'connector' : 'code' });
           const identity = state.invocations.get(message.id);
           if (metadata && typeof metadata.connector_tool_payload === 'string' && metadata.connector_tool_payload) identity.connectorPayload = metadata.connector_tool_payload;
           if (message.status !== 'finished_successfully' || !metadata || metadata.is_complete !== true || state.toolSeen.has(message.id)) return;
@@ -746,7 +749,7 @@ extension ConversationRepository {
 final class RootViewController: UISplitViewController, UISplitViewControllerDelegate {
     private let diagnostics = DiagnosticsLogger.shared
     private let repository = ConversationRepository()
-    private let sendExecutor = CoveredWebSendExecutor()
+    private var sendExecutors: [String: CoveredWebSendExecutor] = [:]
     private let validationSendButton = UIButton(type: .system)
     private let sidebarViewController: ConversationSidebarViewController
     private let detailViewController: ConversationDetailViewController
@@ -767,7 +770,9 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         repository.onLiveResponseChanged = { [weak self] id in self?.liveResponseDidChange(id: id) }
         repository.onAccountScopeReset = { [weak self] in
             guard let self else { return }
-            self.sendExecutor.resetForAccountChange()
+            let executors = Array(self.sendExecutors.values)
+            self.sendExecutors.removeAll()
+            for executor in executors { executor.resetForAccountChange() }
             self.repository.resetAllLiveResponsesForAccountChange()
             self.sidebarViewController.resetForAccountScopeChange()
             self.detailViewController.resetForAccountScopeChange()
@@ -795,7 +800,6 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         preferredDisplayMode = .oneBesideSecondary
         preferredSplitBehavior = .tile
         presentsWithGesture = true
-        sendExecutor.attachCoveredWebView(to: view)
         detailNavigationController.setToolbarHidden(repository.selectedConversationID == nil, animated: false)
         updateLivePresentation()
         diagnostics.info(category: "ui", name: "nativeConversationShell.loaded")
@@ -822,7 +826,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     @objc private func openValidationSendPrompt() {
-        guard let conversationID = repository.selectedConversationID, !repository.isLiveResponseActive(for: conversationID), !sendExecutor.isBusy else { return }
+        guard let conversationID = repository.selectedConversationID, !repository.isLiveResponseActive(for: conversationID) else { return }
         let alert = UIAlertController(title: "Send/Stream 验证", message: "临时验证入口；最终输入框由 DEV-composer-parity 实现。", preferredStyle: .alert)
         alert.addTextField { textField in
             textField.placeholder = "输入本轮测试消息"
@@ -837,9 +841,24 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         present(alert, animated: true)
     }
 
+    private func executor(for conversationID: String) -> CoveredWebSendExecutor {
+        if let executor = sendExecutors[conversationID] { return executor }
+        let executor = CoveredWebSendExecutor()
+        executor.attachCoveredWebView(to: view)
+        sendExecutors[conversationID] = executor
+        diagnostics.info(category: "webSend", name: "coveredExecutor.created", fields: ["activeExecutorCount": String(sendExecutors.count)])
+        return executor
+    }
+
+    private func releaseExecutor(for conversationID: String, expected: CoveredWebSendExecutor) {
+        guard sendExecutors[conversationID] === expected else { return }
+        sendExecutors.removeValue(forKey: conversationID)
+        diagnostics.info(category: "webSend", name: "coveredExecutor.released", fields: ["activeExecutorCount": String(sendExecutors.count)])
+    }
+
     private func startValidationSend(text: String, conversationID: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, repository.selectedConversationID == conversationID, !sendExecutor.isBusy else { return }
+        guard !trimmed.isEmpty, repository.selectedConversationID == conversationID else { return }
         let generation: Int
         switch repository.beginLiveResponse(conversationID: conversationID, promptText: trimmed) {
         case .success(let value): generation = value
@@ -848,10 +867,18 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             return
         }
         updateLivePresentation()
-        sendExecutor.sendExistingConversation(text: trimmed, conversationID: conversationID) { [weak self] event in
-            guard let self else { return }
+        let sendExecutor = executor(for: conversationID)
+        sendExecutor.sendExistingConversation(text: trimmed, conversationID: conversationID) { [weak self, weak sendExecutor] event in
+            guard let self, let sendExecutor else { return }
             self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
-            if case .terminal = event { self.reconcileTerminalResponse(conversationID: conversationID, generation: generation) }
+            switch event {
+            case .terminal:
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)
+            case .failed:
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+            default: break
+            }
         }
     }
 
@@ -885,8 +912,8 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
         let snapshot = repository.liveResponse(for: conversationID)
         let selectedResponseActive = snapshot?.phase.isActive ?? false
-        validationSendButton.isEnabled = !selectedResponseActive && !sendExecutor.isBusy
-        validationSendButton.setTitle(selectedResponseActive ? "回答中…" : (sendExecutor.isBusy ? "其他会话回答中…" : "测试发送…"), for: .normal)
+        validationSendButton.isEnabled = !selectedResponseActive
+        validationSendButton.setTitle(selectedResponseActive ? "回答中…" : "测试发送…", for: .normal)
         detailViewController.navigationItem.rightBarButtonItem?.isEnabled = !selectedResponseActive
     }
 

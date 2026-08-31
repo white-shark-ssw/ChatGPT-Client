@@ -11,6 +11,7 @@ struct ConversationSummary {
 
 enum ConversationToolIconKind: String, Equatable {
     case generic
+    case connector
     case code
     case github
 }
@@ -1333,7 +1334,7 @@ final class ConversationRepository {
                     pendingToolIndexByServiceID[serviceID] = pendingTimeline.count
                     pendingToolRecipientByServiceID[serviceID] = normalizedRecipient
                     if normalizedRecipient == "api_tool.call_tool", let connectorPayload = metadata?["connector_tool_payload"] as? String, !connectorPayload.isEmpty { pendingToolInputByServiceID[serviceID] = connectorPayload }
-                    let iconKind: ConversationToolIconKind = normalizedRecipient == "api_tool.call_tool" ? .generic : .code
+                    let iconKind: ConversationToolIconKind = normalizedRecipient == "api_tool.call_tool" ? .connector : .code
                     pendingTimeline.append(.tool(slot: pendingTimeline.count, title: title, completed: false, iconKind: iconKind))
                 }
                 continue
@@ -1629,6 +1630,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var presentationGeneration = 0
     private var displayedConversationID: String?
     private var scrollAnchorsByConversationID: [String: ScrollAnchor] = [:]
+    private var expandedReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -1813,6 +1815,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         loadingConversationID = nil
         displayedConversationID = nil
         scrollAnchorsByConversationID.removeAll()
+        expandedReasoningMessageIDsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
         clearVisibleMessagePresentation()
@@ -1893,7 +1896,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             let showsTimestamp = row.isFirstChunk && preferences.showsMessageTimestamps && (message.createTime ?? 0) > 0
             let showsCopy = message.role == .assistant && row.isLastChunk
             let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
-            let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: false, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !row.text.isEmpty)
+            let reasoningExpanded = displayedConversationID.map { isReasoningExpanded(messageID: message.id, conversationID: $0) } ?? false
+            let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !row.text.isEmpty)
             presentationRowOffsets.append(offset)
             presentationRowMetrics.append(metrics)
             offset += metrics.rowHeight
@@ -1934,7 +1938,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let message = livePresentationMessages[row.messageIndex]
         let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
         let showsCopy = message.role == .assistant && !snapshot.phase.isActive && row.isLastChunk
-        let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: false, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: false, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty)
+        let reasoningExpanded = isReasoningExpanded(messageID: message.id, conversationID: id)
+        let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: false, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty)
         livePresentationRowMetrics.append(metrics)
         height += metrics.rowHeight
     }
@@ -1957,26 +1962,73 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
 }
 
-    private func presentReasoningDetail(message: ConversationMessage) {
-    guard !message.responseTimeline.isEmpty else { return }
-    let controller = ConversationReasoningDetailViewController(timeline: message.responseTimeline, durationSeconds: message.reasoningDurationSeconds)
-    controller.modalPresentationStyle = .pageSheet
-    if #available(iOS 15.0, *), let sheet = controller.sheetPresentationController {
-        sheet.prefersGrabberVisible = true
-        sheet.preferredCornerRadius = 28
-        sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-        if #available(iOS 16.0, *) {
-            let identifier = UISheetPresentationController.Detent.Identifier("reasoning-detail")
-            sheet.detents = [.custom(identifier: identifier) { context in min(context.maximumDetentValue, max(360, context.maximumDetentValue * 0.62)) }, .large()]
-            sheet.selectedDetentIdentifier = identifier
-        } else {
-            sheet.detents = [.medium(), .large()]
-            sheet.selectedDetentIdentifier = .medium
-        }
+    private func isReasoningExpanded(messageID: String, conversationID: String) -> Bool {
+        expandedReasoningMessageIDsByConversationID[conversationID]?.contains(messageID) == true
     }
-    present(controller, animated: true)
-    diagnostics.info(category: "interaction", name: "reasoningDetail.presented", fields: ["timelineCount": String(message.responseTimeline.count), "durationKnown": message.reasoningDurationSeconds == nil ? "false" : "true"])
-}
+
+    private func toggleReasoningDisclosure(message: ConversationMessage, indexPath: IndexPath, live: Bool) {
+        guard let conversationID = displayedConversationID, !message.responseTimeline.isEmpty else { return }
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        var expandedIDs = expandedReasoningMessageIDsByConversationID[conversationID] ?? []
+        let expanded: Bool
+        if expandedIDs.remove(message.id) != nil { expanded = false } else { expandedIDs.insert(message.id); expanded = true }
+        expandedReasoningMessageIDsByConversationID[conversationID] = expandedIDs
+        var heightDelta: CGFloat = 0
+        if live {
+            let liveRow = indexPath.row - messagePresentation.rows.count
+            guard liveMessagePresentation.rows.indices.contains(liveRow), livePresentationRowMetrics.indices.contains(liveRow), let snapshot = repository.liveResponse(for: conversationID) else { return }
+            let row = liveMessagePresentation.rows[liveRow]
+            let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+            let showsCopy = message.role == .assistant && !snapshot.phase.isActive && row.isLastChunk
+            let oldMetrics = livePresentationRowMetrics[liveRow]
+            let newMetrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: effectivePresentationWidth(), showsTimestamp: false, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: expanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty)
+            heightDelta = newMetrics.rowHeight - oldMetrics.rowHeight
+            livePresentationRowMetrics[liveRow] = newMetrics
+            livePresentationContentHeight += heightDelta
+        } else {
+            let rowIndex = indexPath.row
+            guard messagePresentation.rows.indices.contains(rowIndex), presentationRowMetrics.indices.contains(rowIndex) else { return }
+            let row = messagePresentation.rows[rowIndex]
+            let showsTimestamp = row.isFirstChunk && preferences.showsMessageTimestamps && (message.createTime ?? 0) > 0
+            let showsCopy = message.role == .assistant && row.isLastChunk
+            let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+            let oldMetrics = presentationRowMetrics[rowIndex]
+            let newMetrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: effectivePresentationWidth(), showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: expanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !row.text.isEmpty)
+            heightDelta = newMetrics.rowHeight - oldMetrics.rowHeight
+            presentationRowMetrics[rowIndex] = newMetrics
+            if rowIndex + 1 < presentationRowOffsets.count {
+                for offsetIndex in (rowIndex + 1)..<presentationRowOffsets.count { presentationRowOffsets[offsetIndex] += heightDelta }
+            }
+            presentationContentHeight += heightDelta
+        }
+        UIView.performWithoutAnimation {
+            tableView.reloadRows(at: [indexPath], with: .none)
+            tableView.layoutIfNeeded()
+        }
+        diagnostics.info(category: "interaction", name: "reasoningDisclosure.toggled", fields: ["state": expanded ? "expanded" : "collapsed", "surface": live ? "live" : "historical", "heightDeltaPoints": String(format: "%.2f", heightDelta), "durationMs": String(format: "%.2f", (ProcessInfo.processInfo.systemUptime - startedAt) * 1000)])
+    }
+
+    private func presentToolList(message: ConversationMessage) {
+        let tools = ConversationReasoningPresentation.visibleToolItems(message.responseTimeline)
+        guard !tools.isEmpty else { return }
+        let controller = ConversationReasoningDetailViewController(timeline: tools, durationSeconds: message.reasoningDurationSeconds)
+        controller.modalPresentationStyle = .pageSheet
+        if #available(iOS 15.0, *), let sheet = controller.sheetPresentationController {
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 28
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            if #available(iOS 16.0, *) {
+                let identifier = UISheetPresentationController.Detent.Identifier("tool-list")
+                sheet.detents = [.custom(identifier: identifier) { context in min(context.maximumDetentValue, max(360, context.maximumDetentValue * 0.62)) }, .large()]
+                sheet.selectedDetentIdentifier = identifier
+            } else {
+                sheet.detents = [.medium(), .large()]
+                sheet.selectedDetentIdentifier = .medium
+            }
+        }
+        present(controller, animated: true)
+        diagnostics.info(category: "interaction", name: "toolList.presented", fields: ["toolCount": String(tools.count), "durationKnown": message.reasoningDurationSeconds == nil ? "false" : "true"])
+    }
 
     private func reloadMessageTable(reason: String, restoreConversationID: String?) {
         let startedAt = ProcessInfo.processInfo.systemUptime
@@ -2440,7 +2492,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let showsTimestamp = presentationRow.isFirstChunk && preferences.showsMessageTimestamps
         let showsCopy = message.role == .assistant && presentationRow.isLastChunk
         let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
-        cell.configure(with: message, text: presentationRow.text, showTimestamp: showsTimestamp, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: false, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !presentationRow.text.isEmpty, metrics: presentationRowMetrics[indexPath.row], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.presentReasoningDetail(message: message) }, onToggleToolDetail: nil)
+        let reasoningExpanded = displayedConversationID.map { isReasoningExpanded(messageID: message.id, conversationID: $0) } ?? false
+        let hasTools = !ConversationReasoningPresentation.visibleToolItems(responseTimeline).isEmpty
+        cell.configure(with: message, text: presentationRow.text, showTimestamp: showsTimestamp, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !presentationRow.text.isEmpty, metrics: presentationRowMetrics[indexPath.row], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: false) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
         return cell
     }
     let liveRow = indexPath.row - messagePresentation.rows.count
@@ -2450,8 +2504,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     let message = livePresentationMessages[presentationRow.messageIndex]
     let showsCopy = message.role == .assistant && !snapshot.phase.isActive && presentationRow.isLastChunk
     let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
-    let canShowReasoning = !responseTimeline.isEmpty && snapshot.reasoningEnded
-    cell.configure(with: message, text: presentationRow.text, showTimestamp: false, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: false, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty, metrics: livePresentationRowMetrics[liveRow], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: canShowReasoning ? { [weak self] in self?.presentReasoningDetail(message: message) } : nil, onToggleToolDetail: nil)
+    let reasoningExpanded = isReasoningExpanded(messageID: message.id, conversationID: id)
+    let hasTools = !ConversationReasoningPresentation.visibleToolItems(responseTimeline).isEmpty
+    cell.configure(with: message, text: presentationRow.text, showTimestamp: false, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty, metrics: livePresentationRowMetrics[liveRow], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: true) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
     return cell
 }
 
@@ -2473,7 +2528,15 @@ private enum ConversationReasoningPresentation {
     static let toolFont = UIFont.systemFont(ofSize: 16, weight: .regular)
     static let toolActiveFont = UIFont.systemFont(ofSize: 13, weight: .regular)
 
-    static func summaryTitle(durationSeconds: Int?) -> String { durationSeconds.map { "思考了 \($0)s⌄" } ?? "思考过程⌄" }
+    static func durationText(seconds: Int?) -> String? {
+        guard let seconds, seconds >= 0 else { return nil }
+        if seconds < 60 { return "\(seconds)s" }
+        let minutes = seconds / 60
+        let remainder = seconds % 60
+        return remainder == 0 ? "\(minutes)m" : "\(minutes)m \(remainder)s"
+    }
+
+    static func summaryTitle(durationSeconds: Int?) -> String { durationText(seconds: durationSeconds).map { "思考了 \($0)" } ?? "思考过程" }
 
     static func visibleToolItems(_ timeline: [ConversationResponseTimelineItem]) -> [ConversationResponseTimelineItem] {
         timeline.filter { item in
@@ -2530,6 +2593,8 @@ private enum ConversationReasoningPresentation {
                 let tail = UIBezierPath()
                 tail.move(to: CGPoint(x: 5.4, y: 12.2)); tail.addCurve(to: CGPoint(x: 1.5, y: 10.7), controlPoint1: CGPoint(x: 3.8, y: 12.4), controlPoint2: CGPoint(x: 3.4, y: 10.5)); tail.lineWidth = 1.8; tail.lineCapStyle = .round; tail.stroke()
             }
+        case .connector:
+            return UIImage(systemName: "puzzlepiece.extension", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .medium))?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal)
         case .code:
             return UIImage(systemName: "chevron.left.slash.chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .medium))?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal)
         case .generic:
@@ -2665,8 +2730,23 @@ private final class ConversationReasoningToolView: UIView {
         titleLabel.numberOfLines = 0
         titleLabel.text = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
         content.addArrangedSubview(titleLabel)
-        if !item.toolInputJSON.isEmpty { content.addArrangedSubview(ConversationReasoningDisclosureView(title: "工具输入", body: ConversationReasoningPresentation.prettyJSONString(item.toolInputJSON), expanded: true)) }
-        if !item.toolOutputJSON.isEmpty { content.addArrangedSubview(ConversationReasoningDisclosureView(title: "工具输出", body: ConversationReasoningPresentation.formattedToolOutput(item.toolOutputJSON), expanded: false)) }
+        if !item.toolInputJSON.isEmpty {
+            let inputContainer = UIView()
+            inputContainer.backgroundColor = .secondarySystemBackground
+            inputContainer.layer.cornerRadius = 12
+            let inputLabel = UILabel()
+            inputLabel.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
+            inputLabel.textColor = .secondaryLabel
+            inputLabel.numberOfLines = 0
+            inputLabel.lineBreakMode = .byCharWrapping
+            inputLabel.text = ConversationReasoningPresentation.prettyJSONString(item.toolInputJSON)
+            inputLabel.translatesAutoresizingMaskIntoConstraints = false
+            inputContainer.addSubview(inputLabel)
+            content.addArrangedSubview(inputContainer)
+            NSLayoutConstraint.activate([
+                inputLabel.leadingAnchor.constraint(equalTo: inputContainer.leadingAnchor, constant: 12), inputLabel.trailingAnchor.constraint(equalTo: inputContainer.trailingAnchor, constant: -12), inputLabel.topAnchor.constraint(equalTo: inputContainer.topAnchor, constant: 12), inputLabel.bottomAnchor.constraint(equalTo: inputContainer.bottomAnchor, constant: -12)
+            ])
+        }
         NSLayoutConstraint.activate([
             rail.leadingAnchor.constraint(equalTo: leadingAnchor), rail.topAnchor.constraint(equalTo: topAnchor), rail.bottomAnchor.constraint(equalTo: bottomAnchor), rail.widthAnchor.constraint(equalToConstant: 20),
             content.leadingAnchor.constraint(equalTo: rail.trailingAnchor, constant: 10), content.trailingAnchor.constraint(equalTo: trailingAnchor), content.topAnchor.constraint(equalTo: topAnchor), content.bottomAnchor.constraint(equalTo: bottomAnchor),
@@ -2712,23 +2792,7 @@ private final class ConversationReasoningDetailViewController: UIViewController 
         title.textColor = .label
         title.text = "正在思考"
         contentStack.addArrangedSubview(title)
-        for item in timeline {
-            switch item.kind {
-            case .reasoning:
-                let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !normalized.isEmpty else { continue }
-                let label = UILabel()
-                label.font = .systemFont(ofSize: 16, weight: .regular)
-                label.textColor = .secondaryLabel
-                label.numberOfLines = 0
-                let paragraph = NSMutableParagraphStyle(); paragraph.lineSpacing = 4
-                label.attributedText = NSAttributedString(string: normalized, attributes: [.font: label.font as Any, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: paragraph])
-                contentStack.addArrangedSubview(label)
-            case .tool:
-                guard ConversationReasoningPresentation.visibleToolItems([item]).isEmpty == false else { continue }
-                contentStack.addArrangedSubview(ConversationReasoningToolView(item: item))
-            }
-        }
+        for item in ConversationReasoningPresentation.visibleToolItems(timeline) { contentStack.addArrangedSubview(ConversationReasoningToolView(item: item)) }
         let status = UIStackView()
         status.axis = .vertical
         status.spacing = 20
@@ -2737,7 +2801,7 @@ private final class ConversationReasoningDetailViewController: UIViewController 
         let duration = UILabel()
         duration.font = .systemFont(ofSize: 16, weight: .regular)
         duration.textColor = .secondaryLabel
-        duration.text = durationSeconds.map { "思考了 \($0)s" } ?? "思考过程"
+        duration.text = ConversationReasoningPresentation.durationText(seconds: durationSeconds).map { "思考了 \($0)" } ?? "思考过程"
         let done = UILabel()
         done.font = .systemFont(ofSize: 16, weight: .regular)
         done.textColor = .secondaryLabel
@@ -2824,16 +2888,16 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         reasoningButton.contentHorizontalAlignment = .left
         reasoningButton.contentEdgeInsets = .zero
         reasoningButton.addTarget(self, action: #selector(reasoningTapped), for: .touchUpInside)
+        reasoningButton.semanticContentAttribute = .forceRightToLeft
         bubbleView.addSubview(reasoningButton)
         reasoningTextView.delegate = self
         reasoningTextView.isEditable = false
-        reasoningTextView.isSelectable = false
+        reasoningTextView.isSelectable = true
         reasoningTextView.isScrollEnabled = false
         reasoningTextView.backgroundColor = .clear
         reasoningTextView.textContainerInset = .zero
         reasoningTextView.textContainer.lineFragmentPadding = 0
-        reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.label]
-        reasoningTextView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(reasoningTapped)))
+        reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.secondaryLabel]
         bubbleView.addSubview(reasoningTextView)
         reasoningDividerView.backgroundColor = .separator
         bubbleView.addSubview(reasoningDividerView)
@@ -2890,12 +2954,14 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     reasoningButton.isHidden = !showsReasoning
     reasoningButton.isUserInteractionEnabled = showsReasoning && onToggleReasoning != nil
     reasoningButton.setTitle(showsReasoning ? ConversationReasoningPresentation.summaryTitle(durationSeconds: message.reasoningDurationSeconds) : nil, for: .normal)
-    reasoningButton.setImage(nil, for: .normal)
-    let compact = showsReasoning ? ConversationReasoningPresentation.compactAttributedText(responseTimeline) : NSAttributedString()
-    reasoningTextView.attributedText = compact.length > 0 ? compact : nil
-    reasoningTextView.isHidden = compact.length == 0
+    let chevron = UIImage(systemName: reasoningExpanded ? "chevron.up" : "chevron.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 9, weight: .semibold))
+    reasoningButton.setImage(showsReasoning ? chevron : nil, for: .normal)
+    reasoningButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 6, bottom: 0, right: -6)
+    let timelineText = showsReasoning && reasoningExpanded ? Self.responseTimelineAttributedText(responseTimeline, disclosureState: toolDisclosureState) : NSAttributedString()
+    reasoningTextView.attributedText = timelineText.length > 0 ? timelineText : nil
+    reasoningTextView.isHidden = timelineText.length == 0
     reasoningTextView.isScrollEnabled = false
-    reasoningTextView.isUserInteractionEnabled = compact.length > 0 && onToggleReasoning != nil
+    reasoningTextView.isUserInteractionEnabled = timelineText.length > 0 && onToggleToolDetail != nil
     reasoningDividerView.isHidden = !(showsReasoning && showsReasoningDivider && !metrics.reasoningDividerFrame.isEmpty)
     timestampLabel.text = showTimestamp ? Self.timestampText(for: message.createTime) : nil
     timestampLabel.isHidden = timestampLabel.text == nil
@@ -2954,10 +3020,10 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     if role == .assistant, isFirstChunk, !responseTimeline.isEmpty {
         reasoningButtonFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 24)
         bubbleY = reasoningButtonFrame.maxY
-        let compactSize = ConversationReasoningPresentation.measuredCompactSize(responseTimeline, maxWidth: maxTextWidth)
-        if compactSize.height > 0 {
+        let timelineSize = reasoningExpanded ? measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth, disclosureState: toolDisclosureState) : .zero
+        if timelineSize.height > 0 {
             bubbleY += 6
-            reasoningBodyFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: compactSize.height)
+            reasoningBodyFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: timelineSize.height)
             bubbleY = reasoningBodyFrame.maxY
         }
         if showsReasoningDivider {
@@ -2985,56 +3051,39 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState) -> NSAttributedString {
         let output = NSMutableAttributedString()
         let reasoningParagraph = NSMutableParagraphStyle()
-        reasoningParagraph.paragraphSpacing = 3
+        reasoningParagraph.paragraphSpacing = 5
         let toolParagraph = NSMutableParagraphStyle()
-        toolParagraph.paragraphSpacing = 2
+        toolParagraph.paragraphSpacing = 5
         let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: reasoningParagraph]
         let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]
-        let disclosureAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: reasoningFont.pointSize - 1, weight: .semibold), .foregroundColor: UIColor.label]
-        let detailAttributes: [NSAttributedString.Key: Any] = [.font: detailFont, .foregroundColor: UIColor.secondaryLabel]
         for item in timeline {
             let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !normalized.isEmpty else { continue }
+            if item.kind == .tool, ConversationReasoningPresentation.visibleToolItems([item]).isEmpty { continue }
             if output.length > 0 { output.append(NSAttributedString(string: "\n", attributes: reasoningAttributes)) }
             switch item.kind {
             case .reasoning:
                 output.append(NSAttributedString(string: normalized, attributes: reasoningAttributes))
             case .tool:
+                let start = output.length
                 appendToolIcon(item.toolIconKind, to: output)
-                output.append(NSAttributedString(string: " \(normalized) · \(item.completed ? "已完成" : "调用中")", attributes: toolAttributes))
-                guard let slot = item.toolSlot else { continue }
-                if !item.toolInputJSON.isEmpty {
-                    let expanded = disclosureState.expandedInputSlots.contains(slot)
-                    var attributes = disclosureAttributes
-                    if let url = URL(string: "chatgpt-tool-input://slot/\(slot)") { attributes[.link] = url }
-                    output.append(NSAttributedString(string: "\n  \(expanded ? "▾" : "▸") 工具输入", attributes: attributes))
-                    if expanded { output.append(NSAttributedString(string: "\n" + prettyJSONString(item.toolInputJSON), attributes: detailAttributes)) }
-                }
-                if !item.toolOutputJSON.isEmpty {
-                    let expanded = disclosureState.expandedOutputSlots.contains(slot)
-                    var attributes = disclosureAttributes
-                    if let url = URL(string: "chatgpt-tool-output://slot/\(slot)") { attributes[.link] = url }
-                    output.append(NSAttributedString(string: "\n  \(expanded ? "▾" : "▸") 工具输出", attributes: attributes))
-                    if expanded { output.append(NSAttributedString(string: "\n" + formattedToolOutput(item.toolOutputJSON), attributes: detailAttributes)) }
-                }
+                if output.length > start { output.append(NSAttributedString(string: "  ", attributes: toolAttributes)) }
+                output.append(NSAttributedString(string: normalized, attributes: toolAttributes))
+                if !item.completed { output.append(NSAttributedString(string: "  调用中", attributes: [.font: UIFont.systemFont(ofSize: reasoningFont.pointSize - 2, weight: .regular), .foregroundColor: UIColor.tertiaryLabel, .paragraphStyle: toolParagraph])) }
+                if let slot = item.toolSlot, let url = URL(string: "chatgpt-tool-list://slot/\(slot)") { output.addAttribute(.link, value: url, range: NSRange(location: start, length: output.length - start)) }
             }
         }
         return output
     }
 
     private static func appendToolIcon(_ kind: ConversationToolIconKind, to output: NSMutableAttributedString) {
-        if kind == .github {
-            output.append(NSAttributedString(string: "GH", attributes: [.font: UIFont.monospacedSystemFont(ofSize: max(10, reasoningFont.pointSize - 2), weight: .bold), .foregroundColor: UIColor.secondaryLabel]))
-            return
-        }
-        let symbolName = kind == .code ? "chevron.left.slash.chevron.right" : "wrench"
-        guard let image = UIImage(systemName: symbolName, withConfiguration: UIImage.SymbolConfiguration(pointSize: max(10, reasoningFont.pointSize - 1), weight: .medium))?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal) else {
-            output.append(NSAttributedString(string: kind == .code ? "<>" : "•", attributes: [.font: toolFont, .foregroundColor: UIColor.secondaryLabel]))
+        guard let image = ConversationReasoningPresentation.toolIconImage(kind) else {
+            output.append(NSAttributedString(string: "•", attributes: [.font: toolFont, .foregroundColor: UIColor.secondaryLabel]))
             return
         }
         let attachment = NSTextAttachment()
         attachment.image = image
-        attachment.bounds = CGRect(x: 0, y: -2, width: image.size.width, height: image.size.height)
+        attachment.bounds = CGRect(x: 0, y: -2, width: 16, height: 16)
         output.append(NSAttributedString(attachment: attachment))
     }
 
@@ -3125,6 +3174,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
         guard let slot = Int(URL.lastPathComponent) else { return true }
         switch URL.scheme {
+        case "chatgpt-tool-list": onToggleToolDetail?(slot, .input); return false
         case "chatgpt-tool-input": onToggleToolDetail?(slot, .input); return false
         case "chatgpt-tool-output": onToggleToolDetail?(slot, .output); return false
         default: return true

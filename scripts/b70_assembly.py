@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path.cwd()
 
 
 def read(path):
@@ -223,11 +223,6 @@ r'''        switch repository.beginLiveResponse(conversationID: conversationID, 
 r'''        switch repository.beginLiveResponse(conversationID: conversationID, promptText: trimmed) {
 ''')
 
-# -----------------------------------------------------------------------------
-# ConversationFeature.swift — response-local optimistic user row, GitHub detail
-# disclosures, bounded icons, compact reasoning/divider geometry, stale transient
-# invalidation and explicit login-return refresh.
-# -----------------------------------------------------------------------------
 conv = "ChatGPTClient/Conversation/ConversationFeature.swift"
 
 replace_between(conv,
@@ -303,18 +298,6 @@ r'''    private func finishTransientSessionProbe(_ result: Result<ConversationTr
         return isUnauthorizedStatus(status)
     }
 
-''')
-
-replace_once(conv,
-r'''            guard (200..<300).contains(response.statusCode) else {
-                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "response", "httpStatus": String(response.statusCode)], result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
-                return
-            }
-''',
-r'''            guard (200..<300).contains(response.statusCode) else {
-                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "response", "httpStatus": String(response.statusCode)], result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)), completion: completion)
-                return
-            }
 ''')
 
 replace_once(conv,
@@ -472,16 +455,6 @@ r'''    private var loading = false
     private var loadPresentationGeneration = 0
     private var errorView: UIView?
     private var refreshAfterLoginReturn = false
-''')
-
-replace_once(conv,
-r'''    override func viewDidLoad() {
-        super.viewDidLoad()
-        title = "ChatGPT"
-''',
-r'''    override func viewDidLoad() {
-        super.viewDidLoad()
-        title = "ChatGPT"
 ''')
 
 replace_once(conv,
@@ -701,12 +674,6 @@ r'''    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPa
 
 ''')
 
-replace_between(conv,
-"final class ConversationMessageCell: UITableViewCell {\n",
-"__B70_EOF_SENTINEL__",
-"") if False else None
-
-# Cell is the final declaration in this file; replace from its exact marker to EOF.
 text = read(conv)
 cell_start = "final class ConversationMessageCell: UITableViewCell {\n"
 if text.count(cell_start) != 1:
@@ -1104,10 +1071,6 @@ new_cell = r'''final class ConversationMessageCell: UITableViewCell, UITextViewD
 '''
 write(conv, text[:idx] + new_cell)
 
-# -----------------------------------------------------------------------------
-# AuthSessionStore.swift — temporary 403 is not persistent logout; preserve last
-# verified account identity while yielding no fresh transport on failed probes.
-# -----------------------------------------------------------------------------
 auth = "ChatGPTClient/Authentication/AuthSessionStore.swift"
 
 replace_once(auth,
@@ -1158,9 +1121,6 @@ r'''        accountState = state
         let contextInvalidated = hadContext && accountContext == nil
 ''')
 
-# -----------------------------------------------------------------------------
-# Candidate identity.
-# -----------------------------------------------------------------------------
 pbx = "ChatGPTClient.xcodeproj/project.pbxproj"
 replace_once(pbx, "CURRENT_PROJECT_VERSION = 69;", "CURRENT_PROJECT_VERSION = 70;")
 replace_once(pbx, "CURRENT_PROJECT_VERSION = 69;", "CURRENT_PROJECT_VERSION = 70;")
@@ -1171,9 +1131,6 @@ workflow = ".github/workflows/ios-foundation.yml"
 replace_once(workflow, "# Candidate: DEV-send-stream-0.1.0-b69", "# Candidate: DEV-send-stream-0.1.0-b70")
 replace_once(workflow, "ChatGPTClient-DEV-send-stream-0.1.0-b69", "ChatGPTClient-DEV-send-stream-0.1.0-b70")
 
-# -----------------------------------------------------------------------------
-# Static source assertions: five and only five product/config files must change.
-# -----------------------------------------------------------------------------
 root_text = read(root)
 conv_text = read(conv)
 auth_text = read(auth)

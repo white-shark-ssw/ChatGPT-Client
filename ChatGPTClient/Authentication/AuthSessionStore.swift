@@ -171,7 +171,7 @@ final class AuthSessionStore {
     }
 
     func probeAccountContext(using cookieStore: WKHTTPCookieStore, createTransientSession: Bool = false, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
-        setAccountState(.probing)
+        if verifiedAccountContext() == nil { setAccountState(.probing) }
         let span = diagnostics.startSpan(category: "auth", name: "accountContextProbe")
         cookieStore.getAllCookies { [weak self] cookies in
             guard let self else { return }
@@ -278,7 +278,10 @@ final class AuthSessionStore {
     }
 
     private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], transientSession: AuthTransientSession? = nil, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
-        if state != .verified { setAccountState(state) }
+        if state != .verified {
+            if state == .failed, verifiedAccountContext() != nil { diagnostics.info(category: "auth", name: "session.accountStatePreserved", fields: ["state": AuthAccountContextState.verified.rawValue, "probeResult": AuthAccountContextState.failed.rawValue]) }
+            else { setAccountState(state) }
+        }
         span.end(status: state == .verified ? "ok" : state == .notAvailable ? "not_available" : "failed", fields: fields)
         completion(state, transientSession)
     }

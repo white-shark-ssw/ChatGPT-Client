@@ -179,6 +179,11 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let complete = (body["complete"] as? NSNumber)?.boolValue ?? false
             activeEvents?(.externalConversationSnapshot(messages: messages, complete: complete))
             diagnostics.info(category: "webSend", name: "coveredExecutor.externalSnapshot", fields: ["serviceMessageCount": String(messages.count), "complete": complete ? "true" : "false"])
+        case "external_dom_structure":
+            guard observingExternalResponse else { return }
+            let assistantNodeCount = (body["assistantNodeCount"] as? NSNumber)?.intValue ?? 0
+            let textCharacters = (body["textCharacters"] as? NSNumber)?.intValue ?? 0
+            diagnostics.info(category: "webSend", name: "coveredExecutor.externalDOMStructure", fields: ["assistantNodeCount": String(assistantNodeCount), "textCharacters": String(textCharacters)])
         case "resume_response":
             let status = (body["status"] as? NSNumber)?.intValue ?? 0
             let contentType = body["contentType"] as? String ?? ""
@@ -292,6 +297,18 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       let activeSend = false;
       let lastComposer = null;
       const externalStreamingState = { active: false, completePending: false, resumeSSE: false };
+      let lastExternalAssistantTextCharacters = -1;
+      const reportExternalAssistantDOM = () => {
+        if (!externalStreamingState.active && !externalStreamingState.completePending) return;
+        const nodes = document.querySelectorAll('[data-message-author-role="assistant"]');
+        if (!nodes.length) return;
+        const latest = nodes[nodes.length - 1];
+        const textCharacters = String(latest.textContent || '').length;
+        if (textCharacters === lastExternalAssistantTextCharacters) return;
+        lastExternalAssistantTextCharacters = textCharacters;
+        post({ kind: 'external_dom_structure', assistantNodeCount: nodes.length, textCharacters });
+      };
+      new MutationObserver(reportExternalAssistantDOM).observe(document.documentElement, { subtree: true, childList: true, characterData: true });
 
       const currentConversationID = () => {
         const match = location.pathname.match(/^\/c\/([^/?#]+)/);
@@ -649,7 +666,9 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
                 externalStreamingState.completePending = false;
                 if (!externalStreamingState.active) {
                   externalStreamingState.active = true;
+                  lastExternalAssistantTextCharacters = -1;
                   post({ kind: 'external_streaming' });
+                  reportExternalAssistantDOM();
                 }
               } else if (payload && payload.status === 'COMPLETE' && externalStreamingState.active) {
                 externalStreamingState.completePending = true;
@@ -672,6 +691,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
                 if (latestUserIndex >= 0) {
                   const serviceMessages = payload.messages.slice(latestUserIndex + 1);
                   post({ kind: 'external_snapshot', complete: externalStreamingState.completePending, messages: serviceMessages });
+                  reportExternalAssistantDOM();
                   if (externalStreamingState.completePending) {
                     externalStreamingState.active = false;
                     externalStreamingState.completePending = false;

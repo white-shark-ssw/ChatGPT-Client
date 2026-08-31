@@ -26,16 +26,13 @@ jobs:
       - name: Audit exact product scope
         run: |
           git diff --check
-          mapfile -t changed < <(git diff --name-only)
-          printf '%s\n' "${changed[@]}"
-          expected=(
-            ".github/workflows/ios-foundation.yml"
-            "ChatGPTClient.xcodeproj/project.pbxproj"
-            "ChatGPTClient/Conversation/ConversationFeature.swift"
-            "ChatGPTClient/RootViewController.swift"
-          )
-          if [[ ${#changed[@]} -ne ${#expected[@]} ]]; then echo "unexpected changed file count"; exit 1; fi
-          for file in "${expected[@]}"; do printf '%s\n' "${changed[@]}" | grep -Fx "$file" >/dev/null || { echo "missing $file"; exit 1; }; done
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          count="$(printf '%s\n' "$changed" | sed '/^$/d' | wc -l | tr -d ' ')"
+          test "$count" = 4 || { echo "unexpected changed file count: $count"; exit 1; }
+          for file in ".github/workflows/ios-foundation.yml" "ChatGPTClient.xcodeproj/project.pbxproj" "ChatGPTClient/Conversation/ConversationFeature.swift" "ChatGPTClient/RootViewController.swift"; do
+            printf '%s\n' "$changed" | grep -Fx "$file" >/dev/null || { echo "missing $file"; exit 1; }
+          done
           ! git diff -- ChatGPTClient/RootViewController.swift | grep -E '^[-+].*(backend-api/f/conversation|prompt-textarea|contenteditable|text/event-stream)' || { echo "protected Send selector/route grammar changed"; exit 1; }
           grep -F 'CURRENT_PROJECT_VERSION = 72;' ChatGPTClient.xcodeproj/project.pbxproj >/dev/null
           grep -F 'DEV-send-stream-0.1.0-b72' ChatGPTClient.xcodeproj/project.pbxproj >/dev/null

@@ -1,0 +1,33 @@
+name: b74 resume evidence docs
+on:
+  push:
+    branches: [assembly/dev-send-stream-b74-ui-20260901]
+    paths:
+      - 'scripts/b74_resume_evidence_docs.py'
+      - '.github/workflows/b74-resume-evidence-docs.yml'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve patch and reset to formal checkpoint
+        run: |
+          cp scripts/b74_resume_evidence_docs.py /tmp/b74_resume_evidence_docs.py
+          git reset --hard bc4ae061fba2b7ed07de781c0c722af9bd7cae4d
+      - name: Apply evidence docs
+        run: |
+          python3 /tmp/b74_resume_evidence_docs.py
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' 'docs/project/WEB_SEND_ADAPTER.md' 'docs/project/current/dev/DEV-send-stream.md' | sort)"
+      - name: Commit clean docs-only result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B assembly/dev-send-stream-b74-resume-evidence-docs-20260901
+          git add docs/project/WEB_SEND_ADAPTER.md docs/project/current/dev/DEV-send-stream.md
+          git commit -m 'docs: record external resume adoption evidence'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b74-resume-evidence-docs-20260901

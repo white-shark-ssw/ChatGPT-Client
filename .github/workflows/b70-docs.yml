@@ -1,0 +1,60 @@
+name: b70 Evidence Docs Assembly
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b70-20260831
+    paths:
+      - "scripts/b70_docs.py"
+      - ".github/workflows/b70-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout tooling ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore exact product parent
+        run: |
+          cp scripts/b70_docs.py /tmp/b70_docs.py
+          git checkout -B assembly-docs-product/dev-send-stream-b70-20260831 fb83be9163838f78abfa47903e67f27b6f66ec52
+          test "$(git rev-parse HEAD)" = "fb83be9163838f78abfa47903e67f27b6f66ec52"
+
+      - name: Apply exact evidence docs patch
+        run: python3 /tmp/b70_docs.py
+
+      - name: Audit docs-only scope
+        run: |
+          git diff --check
+          printf '%s\n' \
+            docs/project/BUILD_TEST_INDEX.md \
+            docs/project/DEVELOPMENT_PLAN.md \
+            docs/project/MODULE_STATUS.md \
+            docs/project/PROJECT_PROFILE.md \
+            docs/project/PROJECT_STATE.md \
+            docs/project/TECHNICAL_DECISIONS.md \
+            docs/project/current/dev/DEV-send-stream.md > /tmp/expected.txt
+          git diff --name-only | sort > /tmp/actual.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+          git diff --stat
+          test "$(git diff --name-only | grep -vc '^docs/project/' || true)" = "0"
+          ! git diff | grep -q 'Runtime accepted.*b70'
+          ! git diff | grep -q 'Stable/Frozen Send: Yes'
+
+      - name: Emit docs-only checkpoint commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "7"
+          git commit -m "docs: record exact b70 CI and artifact evidence [skip ci]"
+          git push --force origin HEAD:refs/heads/assembly-docs-product/dev-send-stream-b70-20260831
+          echo "DOCS_COMMIT=$(git rev-parse HEAD)"

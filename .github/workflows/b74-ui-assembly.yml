@@ -1,0 +1,44 @@
+name: b74 UI assembly
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b74-ui-20260901
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve tooling patch and reset to checkpoint
+        shell: bash
+        run: |
+          cp scripts/b74_ui_patch.py /tmp/b74_ui_patch.py
+          git reset --hard bc4ae061fba2b7ed07de781c0c722af9bd7cae4d
+      - name: Apply b74 evidence-backed UI patch
+        shell: bash
+        run: |
+          python3 /tmp/b74_ui_patch.py
+          git diff --check
+          test "$(git diff --name-only)" = "ChatGPTClient/Conversation/ConversationFeature.swift"
+          grep -q 'geometryReused' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'HistoricalPresentationGeometryCacheEntry' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'toolParagraph.minimumLineHeight = 34' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'toolParagraph.paragraphSpacingBefore = 5' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'toolParagraph.paragraphSpacing = 12' ChatGPTClient/Conversation/ConversationFeature.swift
+      - name: Compile iOS Simulator
+        shell: bash
+        run: |
+          xcodebuild -version
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Commit clean product patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B assembly/dev-send-stream-b74-ui-product-20260901
+          git add ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m 'fix: reuse resident geometry and loosen tool rhythm'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b74-ui-product-20260901

@@ -82,6 +82,19 @@ Pure-native/transient-auth protected Send remains blocked by b42 browser-challen
 
 Official no-resend `/backend-api/f/conversation/resume` remains a separate b45-b47 continuation/recovery evidence surface. It is not a substitute for the first protected Send and its native parity remains unverified.
 
+### Cross-device active-response continuation — 2026-09-01 Runtime evidence
+
+A current Web Rule Lab capture now confirms the official page behavior when another platform has already started a response and the user enters the same conversation in official Web:
+
+- the page opens a user-level `wss://ws.chatgpt.com/...` socket and receives short string frames; this capture does **not** establish that socket as the reasoning/final body transport;
+- on entering the target conversation, the page issues the normal conversation/detail bootstrap plus `GET /backend-api/conversation/{conversation_id}/stream_status` -> HTTP200 JSON;
+- when the response is still active, the page itself issues `POST /backend-api/f/conversation/resume`;
+- the observed request JSON shape is exactly `{ conversation_id, offset }`;
+- the resume response is HTTP200 `text/event-stream`;
+- no second `/backend-api/f/conversation` Send is required for this adoption path.
+
+**Current production rule:** external active-response adoption may observe and parse the official page's own `/backend-api/f/conversation/resume` SSE for the currently targeted conversation. Native code must not construct the resume request, choose/synthesize `offset`, replay browser/session headers, or poll `stream_status`. The page remains transport authority; `ConversationRepository` becomes/retains the sole Native response lifecycle owner once that page-owned resume is observed. Only a resume whose request `conversation_id` matches the executor's authoritative target may be adopted. The user-level WebSocket remains structural evidence only and is not authorized as a Native response-body source from this capture.
+
 ## Current accepted SSE/text grammar
 
 The adapter/parser may rely only on shapes already backed by exact Runtime evidence.

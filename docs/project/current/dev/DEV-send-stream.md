@@ -2,149 +2,157 @@
 
 ## Status
 
-**Active — b67 protected-Send transport remains Runtime accepted. Exact b71 package is valid/reserved but the user's current iPhone/iOS17 recording rejects its reasoning/tool interaction hierarchy and exposes a cross-conversation send serialization defect. b72 is now justified by exact Runtime + explicit product requirements. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b67 protected-Send transport remains Runtime accepted. Build71 remains a valid/reserved package but the user's exact iPhone/iOS17 comparison rejected its reasoning/tool interaction hierarchy and exposed cross-conversation global Send serialization. Build72 is now the exact current Runtime Candidate: product/config source, scope, Simulator compile, Push CI, PR CI, Artifact and package identity are verified. Runtime/manual/real-device remains pending. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Formal branch head before this duration-format checkpoint write: `d078b681b03063981f711c24f3422bd34f44693e`
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Exact b71 product/config source: `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`
-- Candidate: `DEV-send-stream-0.1.0-b71`
-- Version / Build: `0.1.0 (71)`
-- b71 Push CI: `33388396118 / 99476130099` — success
-- b71 PR CI: `33388399484 / 99476140778` — success
-- b71 Artifact: `9756491305`; ZIP `sha256:74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`
-- b71 IPA SHA: `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`
-- Built identity independently verified: Release `0.1.0`, Build `71`, Candidate b71, source marker `af8d4a4b291c`, minimum iOS14, arm64
-- b39-b71 permanently reserved; never rewrite/reuse b71
-- Repository search found no existing `DEV-send-stream-0.1.0-b72` before allocation
+- Recovery/docs head immediately before b72 product: `2aaee7f6fa143c1c3426ca89d2d52b42949daf86`
+- Exact b72 code commit: `451fa0cb58bbbc681a97d3156bada50357a6067e` (direct parent `2aaee7f6fa143c1c3426ca89d2d52b42949daf86`)
+- Exact b72 product/config source: `d20536db37a028556c8032e7c74912805ade785c`
+- Candidate: `DEV-send-stream-0.1.0-b72`
+- Version / Build: `0.1.0 (72)`
+- b72 Push CI: `33403473989 / 99525205970` — success
+- b72 PR CI: `33403478927 / 99525223287` — success
+- b72 Artifact: `9762189417`
+- Artifact ZIP digest: `sha256:5107cedc43b3e5a096da60db9acc2f0705c30bb81be8134f1373dba6f929c1b9`
+- IPA: `ChatGPTClient-0.1.0-b72-dev-send-stream.ipa`
+- IPA SHA: `ff9d37022a310cab3eea0bb3c298e3d3ec8b0d3057f7256da4f0543dab18b53c`
+- Independently unpacked built identity: Release `0.1.0`, Build `72`, Candidate b72, source marker `d20536db37a0`, minimum iOS14.0, bundle `com.whitesharkssw.chatgptclient`, Mach-O arm64
+- b39-b72 permanently reserved; never rewrite/reuse b72 after Artifact emission
 - Stable/Frozen Send: No
 
-## Exact b71 Runtime rejection / latest explicit requirements — 2026-08-31
-
-User evidence:
-
-- current mixed recording `RPReplay_Final1788178603.mp4`: first section is Build71 client interaction/presentation; later section is the official ChatGPT iOS app on the same answer;
-- current official screenshots extracted from that comparison;
-- user-supplied decrypted official app archive `ChatGPT_Decrypted.zip` used only as local UI/resource evidence;
-- official asset probe already confirmed real local resources including GitHub, browse/search, terminal/code/file-code/globe and connector-family icons plus official chevrons. Asset existence does not itself prove event->icon mapping.
-
-The latest user requirements supersede b71's reasoning-sheet interaction assumption.
+## Latest explicit product requirements carried into b72
 
 ### 1. Main-conversation reasoning disclosure
 
-- `思考了 <duration>` / `思考过程` is the expand/collapse control for the **entire visible reasoning/tool timeline of that assistant turn**.
-- Expanded conversation content stays inline and preserves actual chronology: `reasoning -> tool -> reasoning -> tool -> ...`.
-- Collapsing hides both reasoning text and all tool rows for that turn.
-- Tapping the thinking disclosure never opens the secondary sheet.
-- Visible reasoning text belongs only to this first-level conversation expansion. It must not be copied into the tool sheet.
+- `思考了 <duration>` / `思考过程` is the first-level expand/collapse control for the **entire visible reasoning/tool timeline of that assistant turn**.
+- Expanded content stays inline and preserves real chronology: `reasoning -> tool -> reasoning -> tool -> ...`.
+- Collapsing hides both visible reasoning prose and tool rows for that turn.
+- Tapping the thinking disclosure itself does not open the secondary sheet.
 - `assistant:thoughts` / `inline_cot_expandable_content` remain strictly non-presentational.
 
 ### 1.1 Official reasoning-duration format
 
-Latest explicit user requirement:
+Use only the exact service-backed `finished_duration_sec` / `reasoningEnded(durationSec)` value. Do not infer wall-clock duration.
 
-- keep using the exact service-backed `finished_duration_sec` / `reasoningEnded(durationSec)` value only; do not infer elapsed time from wall-clock gaps;
-- below one minute, display seconds only: e.g. `7s`, `59s`;
-- at the minute threshold and above, stop rendering one large pure-seconds value and format as accumulated minutes plus remaining seconds: e.g. `1m`, `1m 5s`, `25m 32s`;
-- when the remaining seconds are zero, omit the trailing `0s` (`60s -> 1m`);
-- the largest display unit remains **minutes**. Never switch to hours; e.g. `3632s -> 60m 32s`;
-- the same formatter must be used everywhere the reasoning duration appears, including the first-level summary and any status row in the secondary tool sheet.
+- `<60s`: seconds only, e.g. `7s`, `59s`.
+- `>=60s`: accumulated minutes + remainder, e.g. `1m`, `1m 5s`, `25m 32s`.
+- omit trailing `0s` for exact minutes.
+- largest display unit remains minutes; never switch to hours, e.g. `3632s -> 60m 32s`.
+- use one shared formatter everywhere this duration is presented.
 
 ### 2. Tool row -> secondary sheet
 
-- The sheet entry is tapping **any concrete tool operation row**.
-- Regardless of which tool row was tapped, the sheet represents the current assistant turn's **ordered tool-call list** and shows every eligible tool operation in real invocation order.
-- Do not invent auto-scroll-to-clicked behavior until the user supplies that requirement; default presentation begins from the list's natural top.
+- Tapping any concrete tool row opens the current assistant turn's **ordered tool-call list**.
+- Sheet begins at its natural top; no invented auto-scroll-to-clicked behavior.
 - Sheet title/presentation follows the supplied official reference (`正在思考`, rounded/dimmed sheet semantics).
-- The sheet contains tool operations only; no reasoning prose appears there.
-- For each eligible tool item, show icon + tool title and then the authorized **tool input content directly**.
-- Remove the `工具输入` heading and its disclosure affordance. Input is expanded by default.
-- Hide tool output completely in this product presentation: no `工具输出` heading, disclosure, body or nested output scroll container.
-- One outer sheet scroll surface owns overflow. Tool input grows intrinsically and pushes later tool items downward.
+- Sheet contains tool operations only; no reasoning prose.
+- Each eligible tool item shows icon + title, then authorized tool input directly.
+- No `工具输入` heading/disclosure.
+- Tool output is hidden completely in this product presentation.
+- One outer sheet scroll surface owns overflow.
 
-### 3. Tool icons / disclosure icon parity
+### 3. Tool icons / disclosure parity
 
-- All tool rows must not reuse the GitHub mark.
-- Use the real tool/connector identity already present in current service/event data when available. Do not guess an API or pair by title when an identity field exists.
-- User-supplied official app assets may be used as visual evidence/local resources for exact icon shape. The decrypted archive contains built-in GitHub/browse/code/terminal/globe/connector-family assets and official chevrons.
-- Before implementation, correlate currently available response metadata/recipient/tool identity with a bounded local icon enum. Unknown tool identity uses one neutral generic mark; it never masquerades as GitHub.
-- `思考了 <duration>` chevron must be brought to the official visual scale/baseline rather than the current oversized/rough presentation.
-- No remote icon loader, persistent icon cache or second state owner is authorized by this requirement.
+- Unknown tool identity must never masquerade as GitHub.
+- Use bounded local icon identity from current evidenced recipient/resource metadata only; do not pair by title guessing.
+- User-supplied decrypted official assets are visual evidence only; asset existence alone is not event->icon authority.
+- No remote icon loader, persistent icon cache or second state owner.
 
 ### 4. Cross-conversation simultaneous generation
 
-- Current Build71 behavior that changes B's send control to `其他会话回答中` while A is generating is rejected.
-- Official product behavior required by the user: A may keep generating while B independently sends/generates.
-- The send control for B is governed by **B's own active-response state**, not a global active response in A.
-- At most one active response per conversation remains the initial ownership guard; unrelated conversations must not be globally serialized.
-- This requirement is consistent with TD-019 / SEND_STREAM_PREFLIGHT: foreground selection is presentation only, hiding A never cancels A, and response ownership is per conversation.
-- The current covered-Web executor is known to have a single `activeEvents` busy gate from b67. Do not guess that one WKWebView can safely run two page-owned protected Sends simultaneously. Inspect the real executor/Repository bridge first and make the smallest evidence-backed ownership change. No retry, queue timer, polling, fallback or duplicate Send is allowed.
+- A may keep generating while B independently sends/generates.
+- B's Send availability is governed by B's own active-response state, not a global active response in A.
+- Initial invariant remains at most one active response per conversation.
+- No retry, queue timer, polling, fallback or duplicate Send.
+
+## b72 implementation actually written
+
+Exact detached compare `2aaee7f6...d20536db` changed only four authorized files:
+
+- `.github/workflows/ios-foundation.yml`
+- `ChatGPTClient.xcodeproj/project.pbxproj`
+- `ChatGPTClient/Conversation/ConversationFeature.swift`
+- `ChatGPTClient/RootViewController.swift`
+
+No tooling/assembly files are in the product/config range.
+
+Evidence-backed implementation:
+
+1. `ConversationDetailViewController` now owns first-level reasoning expansion state as presentation state; main assistant cells pass actual `reasoningExpanded` instead of hard-coded false.
+2. The main `思考了 <duration>` control expands/collapses the inline response timeline; tool rows remain chronological with reasoning segments.
+3. Tapping a concrete tool row opens the ordered tool-list sheet; the sheet excludes reasoning prose and hides tool output, while authorized tool input is shown directly.
+4. `ConversationReasoningPresentation.durationText(seconds:)` centralizes the service-backed duration display (`Ns`, `Nm`, `Nm Ns`; minutes remain maximum unit) and is used by summary/sheet status presentation.
+5. Unknown/generic tool identity stays bounded; GitHub presentation is not reused for every tool.
+6. Root now owns `sendExecutors: [String: CoveredWebSendExecutor]` keyed per conversation rather than one process-global executor gate, while Repository live-response ownership remains per conversation and the accepted per-executor b67 one-Send invariant remains intact.
+7. Account-scope reset drains/resets the existing per-conversation executors and Repository live-response state; no second conversation/response/auth authority is introduced.
+8. Protected route/composer selector/challenge/SSE grammar was guarded against change during assembly; b72 does not intentionally alter the accepted b67 Web Send transport contract.
+
+## b72 assembly / validation evidence
+
+Isolated tooling ref: `assembly/dev-send-stream-b72-20260831`.
+
+- Assembly run `33401346952 / 99518126633` failed **tooling-only** before compile because macOS Bash 3.2 lacks `mapfile`; patch application and `git diff --check` had already completed. No product branch/Artifact was emitted.
+- Assembly run `33401495902 / 99518627226` passed exact four-file scope audit and Xcode 16.4 iOS Simulator build. Final emit failed **tooling-only** because GitHub Actions token could not push a workflow-file change. No canonical Candidate/Artifact was emitted from that failed push.
+- Recovery run `33401711501 / 99519351462` repeated scope + Simulator compile and emitted the clean three-file code/project commit; workflow identity was then added through GitHub contents API on the clean product branch.
+- Clean code commit `451fa0cb58bbbc681a97d3156bada50357a6067e` has direct parent `2aaee7f6fa143c1c3426ca89d2d52b42949daf86`.
+- Exact product/config source after workflow identity: `d20536db37a028556c8032e7c74912805ade785c`.
+- Detached compare confirms exactly the four authorized files above.
+- Formal branch was non-force fast-forwarded from `2aaee7f6...` to exact source `d20536db...` after repeated branch/PR/main/current-dev guard.
+- Push CI `33403473989 / 99525205970`: success.
+- PR CI `33403478927 / 99525223287`: success.
+- Canonical Push Artifact `9762189417`: `ChatGPTClient-DEV-send-stream-0.1.0-b72`.
+- GitHub Artifact digest and independently downloaded ZIP SHA agree: `5107cedc43b3e5a096da60db9acc2f0705c30bb81be8134f1373dba6f929c1b9`.
+- ZIP contains the expected IPA + `.sha256` only.
+- IPA sidecar and independent SHA agree: `ff9d37022a310cab3eea0bb3c298e3d3ec8b0d3057f7256da4f0543dab18b53c`.
+- Independent package inspection confirms arm64, Release, `0.1.0 (72)`, Candidate b72, source marker `d20536db37a0`, minimum iOS14.0.
 
 ## Retained accepted boundaries
 
-- b67 one local Send -> one real protected official-page Send -> HTTP200 same-response SSE -> Repository updates -> terminal/reconcile remains the accepted production transport predecessor.
+- b67: one local Send -> one protected official-page Send -> HTTP200 same-response SSE -> Repository updates -> terminal/reconcile is Runtime accepted.
 - `ConversationRepository` remains sole conversation/list/detail/recovery/response lifecycle authority.
 - `AuthSessionStore` remains sole account authority; default `WKWebsiteDataStore` remains sole persistent auth-secret authority.
 - Covered official Web remains browser challenge/protected-Send executor only; full Web conversation rendering stays rejected.
-- b69 chronological response timeline and exact-parent result association remain retained.
+- b69 chronological response timeline + exact-parent result association remain retained.
 - b38 deterministic long-message geometry/quick navigation remains accepted and must not regress.
 - No retry/polling/timer/watchdog/fallback/compatibility shim/second message or response store.
 
-## b72 source-inspection / implementation scope
-
-Exact b71 source inspection now establishes:
-
-1. main-conversation `思考了 Ns` currently binds directly to `presentReasoningDetail(...)`, and main cells always pass `reasoningExpanded: false`; this is the wrong first-level owner for the latest requirement;
-2. the current secondary sheet iterates the entire reasoning+tool timeline and renders nested `工具输入` / `工具输出` disclosures; this is the wrong second-level hierarchy;
-3. `ConversationRepository` already stores live response snapshots per conversation ID and only rejects another response in the **same** conversation;
-4. current cross-conversation serialization is introduced by Root's single process-wide `CoveredWebSendExecutor.isBusy` gate and its `其他会话回答中…` send-control state;
-5. current bridge carries response-local invocation recipient, exact-parent result metadata, `invoked_resource.app_name` for evidenced connector results, and a bounded `ConversationToolIconKind`; current mapping is too coarse (`GitHub` only after exact matched result; most other connector calls generic; non-connector invocations code);
-6. current reasoning-duration presentation inserts raw seconds directly in more than one place and therefore must be centralized behind the b72 minute-level formatter above.
-
-Frozen minimum b72 product/config surface from those facts:
-
-- `ChatGPTClient/Conversation/ConversationFeature.swift` — first-level inline reasoning/tool disclosure, local row-delta geometry update, tool-row sheet entry, ordered input-only tool list, centralized duration formatting, bounded icon presentation;
-- `ChatGPTClient/RootViewController.swift` — per-conversation covered-executor ownership/send availability and any bounded icon identity pass-through required by existing event data; no protected route/selector/challenge/SSE grammar change;
-- bounded local image resources + asset catalog metadata only for official-provided icon shapes that have direct identity evidence;
-- `ChatGPTClient.xcodeproj/project.pbxproj` and `.github/workflows/ios-foundation.yml` only when allocating Build72/Candidate identity.
-
-Do not touch `AuthSessionStore.swift`, Stop/new-chat/background/attachments/Composer work unless direct source evidence proves this b72 requirement cannot be implemented without that owner.
-
-## b72 batch recovery point
-
-Known facts before product writes:
-
-- formal branch head before this duration-format checkpoint write was `d078b681b03063981f711c24f3422bd34f44693e`; its parent is exact b71 product source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3` and the `d078...` delta is checkpoint/docs only;
-- b71 Artifact/package identity is valid and permanently reserved;
-- PR #29 is open/mergeable/unmerged; its body is stale and will be synchronized only after the next actual candidate evidence milestone;
-- `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
-- `docs/project/current/dev/` contains only this Active checkpoint plus README;
-- b72 Candidate search was empty before allocation;
-- source owner inspection described above is complete; no product write has yet been claimed for b72;
-- orphan/tooling/docs assembly refs from b71 are not formal Work/Candidate authority and must not be replayed onto the formal branch.
-
-Planned non-atomic batches:
-
-1. this checkpoint now contains b71 Runtime rejection, b72 hierarchy/concurrency/icon requirements, exact minute-level duration formatting, owner inspection and recovery state;
-2. re-read resulting formal head, PR/main/current-dev/candidate state;
-3. allocate earliest unique Build72/Candidate after Guard and assemble the minimal product/config change on an isolated tooling/product ref;
-4. run exact scope audit, `git diff --check` and real Xcode Simulator compile before formal advance;
-5. emit a clean product/config commit with no tooling files, audit semantics, repeat formal Guard, then non-force fast-forward formal branch;
-6. obtain exact Push + PR CI and one canonical Build72 Artifact; independently verify ZIP/IPA/Info.plist/source marker/arm64/iOS minimum;
-7. update checkpoint + durable project docs + PR #29 from actual evidence;
-8. stop only at exact iPhone/iOS17 Runtime gate: compare inline reasoning disclosure, minute-level duration, ordered tool-list sheet/input-only details/icon mapping/chevron scale and A+B simultaneous generation behavior against the supplied official app evidence.
-
 ## Evidence ladder
 
-- b67 protected-Send transport: Runtime accepted.
+- b67 protected-Send transport: **Runtime accepted**.
 - b69 ordered timeline direction: retained.
-- b70: package valid/reserved; presentation Runtime rejected.
-- b71: Code/scope/Simulator/Push+PR CI/Artifact/package verified; current user recording **Runtime rejects interaction hierarchy and cross-conversation serialization**; package remains reserved.
-- b72: justified by exact Runtime + explicit requirement; product source/CI/Artifact/Runtime not yet claimed.
-- Stable/Frozen Send: No.
+- b70: package valid/reserved; later presentation direction superseded.
+- b71: Code/scope/Simulator/Push+PR CI/Artifact/package verified; exact user Runtime comparison rejected interaction hierarchy + global cross-conversation serialization.
+- b72: **Code written / exact scope audited / Simulator compile passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
 
-## Next exact action
+## Documentation / PR recovery point after Artifact
 
-Re-read the resulting formal branch head and run the Resume/Conflict/Candidate Guard. Then allocate Build72 and assemble the smallest product/config candidate implementing the now-frozen b72 source scope, including the shared minute-level reasoning-duration formatter. Do not modify b71 identity or accepted b67 transport grammar.
+Confirmed complete:
+
+1. exact b72 product/config source `d20536db...` exists and formal branch has been advanced to it non-force;
+2. Push + PR CI passed on that exact source;
+3. canonical Build72 Artifact/package identity is verified;
+4. this checkpoint records the exact evidence.
+
+Still pending in this documentation batch:
+
+1. refresh `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, and `BUILD_TEST_INDEX.md` with b72 evidence/status where applicable;
+2. synchronize PR #29 title/body to b72 while keeping it open/unmerged;
+3. do not alter exact b72 product/config source identity when later docs-only commits advance the formal branch.
+
+## Exact next action / human Runtime gate
+
+After durable docs/PR synchronization, hand exact Build72 IPA to the user. On primary iPhone/iOS17:
+
+1. verify Build72 / Candidate/source marker `d20536db37a0`, then clear diagnostics;
+2. run a reasoning/tool response and verify the main `思考了 <duration>` control expands/collapses the entire chronological reasoning+tool timeline inline;
+3. verify duration formatting around minute boundaries when naturally available (`<60s`, `>=60s`, accumulated minutes only; no hours);
+4. tap concrete tool rows and verify the secondary sheet is an ordered tools-only list with direct authorized input, no reasoning prose and no tool-output section;
+5. verify unknown/non-GitHub tool rows do not masquerade as GitHub;
+6. start generation in A, switch to B, send in B while A remains active, and verify both responses remain independently owned/presented without duplicate Send;
+7. verify hidden A navigation preservation, terminal reconciliation, hidden-thought exclusion, b38 geometry and b67 one-Send transport do not regress;
+8. export diagnostics after terminal(s).
+
+Do not allocate b73 unless exact b72 Runtime produces a concrete defect/evidence need.

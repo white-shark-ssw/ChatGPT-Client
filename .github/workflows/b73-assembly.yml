@@ -1,0 +1,52 @@
+name: b73 presentation assembly
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b73-20260831
+    paths:
+      - scripts/b73_assembly.py
+      - .github/workflows/b73-assembly.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch, audit, compile, and emit clean product code branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp scripts/b73_assembly.py /tmp/b73_assembly.py
+          git reset --hard 367e9588d10dcf164b2982729a663ac0cde91d9c
+          python3 /tmp/b73_assembly.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' | sort)"
+          if [ "$changed" != "$expected" ]; then
+            echo "Unexpected changed-file scope:"
+            printf '%s\n' "$changed"
+            exit 1
+          fi
+          if ! git diff --quiet -- ChatGPTClient/RootViewController.swift; then
+            echo "RootViewController.swift changed unexpectedly"
+            exit 1
+          fi
+          grep -q 'CURRENT_PROJECT_VERSION = 73;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DEV-send-stream-0.1.0-b73' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'sendExecutors:' ChatGPTClient/RootViewController.swift
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m 'feat: refine b73 reasoning presentation'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b73-product-20260831

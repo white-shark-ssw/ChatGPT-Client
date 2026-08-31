@@ -1,0 +1,96 @@
+name: b77 guarded assembly
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b77-assembly-20260901
+    paths:
+      - ".github/workflows/b77-assembly.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact b77 patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_one(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          def replace_count(path, old, new, expected):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f"{path}: expected {expected} matches, found {count}: {old!r}")
+              p.write_text(text.replace(old, new))
+
+          conversation = "ChatGPTClient/Conversation/ConversationFeature.swift"
+          replace_one(conversation, "    case authenticationTemporarilyUnavailable\n    case missingTransientSession", "    case authenticationTemporarilyUnavailable\n    case secureConnectionUnavailable\n    case missingTransientSession")
+          replace_one(conversation, "        case .authenticationTemporarilyUnavailable: return \"暂时无法验证账户，请检查网络连接。\"\n        case .missingTransientSession", "        case .authenticationTemporarilyUnavailable: return \"暂时无法验证账户，请检查网络连接。\"\n        case .secureConnectionUnavailable: return \"安全连接失败，请检查网络、VPN 或证书环境；当前登录数据未被判定失效。\"\n        case .missingTransientSession")
+          replace_one(conversation, "    static func isLifecycleTermination(_ error: Error) -> Bool {\n        guard let repositoryError = error as? ConversationRepositoryError else { return false }\n        switch repositoryError {\n        case .accountContextChanged, .operationSuperseded: return true\n        default: return false\n        }\n    }\n\n    private static func parseCurrentBranch", "    static func isLifecycleTermination(_ error: Error) -> Bool {\n        guard let repositoryError = error as? ConversationRepositoryError else { return false }\n        switch repositoryError {\n        case .accountContextChanged, .operationSuperseded: return true\n        default: return false\n        }\n    }\n\n    static func normalizedTransportError(_ error: Error) -> Error {\n        let nsError = error as NSError\n        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorSecureConnectionFailed { return ConversationRepositoryError.secureConnectionUnavailable }\n        return error\n    }\n\n    private static func parseCurrentBranch")
+          replace_one(conversation, "                self.diagnostics.error(category: \"conversation\", name: \"list.failed\", traceID: span.traceID, error: error)\n                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: [\"stage\": \"network\"], result: .failure(error), completion: completion)", "                self.diagnostics.error(category: \"conversation\", name: \"list.failed\", traceID: span.traceID, error: error)\n                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: [\"stage\": \"network\"], result: .failure(Self.normalizedTransportError(error)), completion: completion)")
+          replace_one(conversation, "                self.diagnostics.error(category: \"conversation\", name: \"detail.failed\", traceID: span.traceID, error: error, fields: callbackFields)\n                span.end(status: \"failed\", fields: [\"stage\": \"network\"])\n                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))", "                self.diagnostics.error(category: \"conversation\", name: \"detail.failed\", traceID: span.traceID, error: error, fields: callbackFields)\n                span.end(status: \"failed\", fields: [\"stage\": \"network\"])\n                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(Self.normalizedTransportError(error)))")
+          replace_one(conversation, "    private static let toolLineHeight: CGFloat = 30", "    private static let toolLineHeight: CGFloat = 36")
+          replace_one(conversation, "        toolParagraph.paragraphSpacingBefore = 5\n        toolParagraph.paragraphSpacing = 12", "        toolParagraph.paragraphSpacingBefore = 12\n        toolParagraph.paragraphSpacing = 12")
+
+          auth = "ChatGPTClient/Authentication/AuthSessionStore.swift"
+          replace_one(auth, "    func probeAccountContext(using cookieStore: WKHTTPCookieStore, createTransientSession: Bool = false, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {\n        setAccountState(.probing)", "    func probeAccountContext(using cookieStore: WKHTTPCookieStore, createTransientSession: Bool = false, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {\n        if verifiedAccountContext() == nil { setAccountState(.probing) }")
+          replace_one(auth, "    private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], transientSession: AuthTransientSession? = nil, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {\n        if state != .verified { setAccountState(state) }\n        span.end(status: state == .verified ? \"ok\" : state == .notAvailable ? \"not_available\" : \"failed\", fields: fields)\n        completion(state, transientSession)\n    }", "    private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], transientSession: AuthTransientSession? = nil, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {\n        if state != .verified {\n            if state == .failed, verifiedAccountContext() != nil { diagnostics.info(category: \"auth\", name: \"session.accountStatePreserved\", fields: [\"state\": AuthAccountContextState.verified.rawValue, \"probeResult\": AuthAccountContextState.failed.rawValue]) }\n            else { setAccountState(state) }\n        }\n        span.end(status: state == .verified ? \"ok\" : state == .notAvailable ? \"not_available\" : \"failed\", fields: fields)\n        completion(state, transientSession)\n    }")
+
+          root = "ChatGPTClient/RootViewController.swift"
+          replace_one(root, "        case \"resume_response\":\n            let status", "        case \"external_dom_structure\":\n            guard observingExternalResponse else { return }\n            let assistantNodeCount = (body[\"assistantNodeCount\"] as? NSNumber)?.intValue ?? 0\n            let textCharacters = (body[\"textCharacters\"] as? NSNumber)?.intValue ?? 0\n            diagnostics.info(category: \"webSend\", name: \"coveredExecutor.externalDOMStructure\", fields: [\"assistantNodeCount\": String(assistantNodeCount), \"textCharacters\": String(textCharacters)])\n        case \"resume_response\":\n            let status")
+          replace_one(root, "      const externalStreamingState = { active: false, completePending: false, resumeSSE: false };\n\n      const currentConversationID", "      const externalStreamingState = { active: false, completePending: false, resumeSSE: false };\n      let lastExternalAssistantTextCharacters = -1;\n      const reportExternalAssistantDOM = () => {\n        if (!externalStreamingState.active && !externalStreamingState.completePending) return;\n        const nodes = document.querySelectorAll('[data-message-author-role=\"assistant\"]');\n        if (!nodes.length) return;\n        const latest = nodes[nodes.length - 1];\n        const textCharacters = String(latest.textContent || '').length;\n        if (textCharacters === lastExternalAssistantTextCharacters) return;\n        lastExternalAssistantTextCharacters = textCharacters;\n        post({ kind: 'external_dom_structure', assistantNodeCount: nodes.length, textCharacters });\n      };\n      new MutationObserver(reportExternalAssistantDOM).observe(document.documentElement, { subtree: true, childList: true, characterData: true });\n\n      const currentConversationID")
+          replace_one(root, "                if (!externalStreamingState.active) {\n                  externalStreamingState.active = true;\n                  post({ kind: 'external_streaming' });\n                }", "                if (!externalStreamingState.active) {\n                  externalStreamingState.active = true;\n                  lastExternalAssistantTextCharacters = -1;\n                  post({ kind: 'external_streaming' });\n                  reportExternalAssistantDOM();\n                }")
+          replace_one(root, "                  post({ kind: 'external_snapshot', complete: externalStreamingState.completePending, messages: serviceMessages });", "                  post({ kind: 'external_snapshot', complete: externalStreamingState.completePending, messages: serviceMessages });\n                  reportExternalAssistantDOM();")
+
+          project = "ChatGPTClient.xcodeproj/project.pbxproj"
+          replace_count(project, "CURRENT_PROJECT_VERSION = 76;", "CURRENT_PROJECT_VERSION = 77;", 2)
+          replace_count(project, 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b76";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b77";', 2)
+          PY
+
+      - name: Exact scope and diff check
+        shell: bash
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            ChatGPTClient.xcodeproj/project.pbxproj \
+            ChatGPTClient/Authentication/AuthSessionStore.swift \
+            ChatGPTClient/Conversation/ConversationFeature.swift \
+            ChatGPTClient/RootViewController.swift | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          git diff --stat
+
+      - name: Xcode 16.4 Simulator build
+        shell: bash
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated product patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Authentication/AuthSessionStore.swift ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "dev: assemble b77 runtime corrections"
+          git push origin HEAD:${GITHUB_REF_NAME}

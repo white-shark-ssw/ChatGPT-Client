@@ -16,7 +16,7 @@ enum CoveredWebSendEvent {
     case reasoningDelta(String)
     case reasoningEnded
     case finalDelta(String)
-    case toolActivity(slot: Int, title: String, completed: Bool)
+    case toolActivity(slot: Int, title: String, completed: Bool, inputJSON: String, outputJSON: String, iconKind: ConversationToolIconKind)
     case terminal
     case failed(String)
 }
@@ -174,7 +174,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let slot = (body["slot"] as? NSNumber)?.intValue ?? -1
             guard slot >= 0 else { return }
             let title = (body["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            activeEvents?(.toolActivity(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: (body["completed"] as? NSNumber)?.boolValue ?? false))
+            let inputJSON = body["detailInput"] as? String ?? ""
+            let outputJSON = body["detailOutput"] as? String ?? ""
+            let iconKind = ConversationToolIconKind(rawValue: body["iconKind"] as? String ?? "") ?? .generic
+            activeEvents?(.toolActivity(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: (body["completed"] as? NSNumber)?.boolValue ?? false, inputJSON: inputJSON, outputJSON: outputJSON, iconKind: iconKind))
         case "terminal":
             let terminalEvents = activeEvents
             responseActive = false
@@ -198,7 +201,9 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         self.pendingSend = nil
         let script = "window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.submit(\(literal));"
         webView.evaluateJavaScript(script) { [weak self] _, error in
-            guard let self, let error else { return }
+            guard let self else { return }
+            self.webView.endEditing(true)
+            guard let error else { return }
             let nsError = error as NSError
             self.diagnostics.warning(category: "webSend", name: "coveredExecutor.bridge", fields: ["state": "evaluate_failed", "errorDomain": Self.safeToken(nsError.domain), "errorCode": String(nsError.code)])
             self.failCurrent("bridge_failed")
@@ -256,29 +261,44 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         return composer;
       };
       const setComposerText = (element, text) => {
-        element.focus();
-        if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
-          const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-          const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
-          if (!descriptor || !descriptor.set) return false;
-          descriptor.set.call(element, text);
-          element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+        const previousInputMode = element.getAttribute('inputmode');
+        element.setAttribute('inputmode', 'none');
+        let succeeded = false;
+        try {
+          try { element.focus({ preventScroll: true }); } catch (_) { element.focus(); }
+          if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
+            const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+            const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+            if (!descriptor || !descriptor.set) return false;
+            descriptor.set.call(element, text);
+            element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+            succeeded = true;
+            return true;
+          }
+          if (!element.isContentEditable) return false;
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          let inserted = false;
+          try { inserted = document.execCommand('insertText', false, text); } catch (_) {}
+          if (!inserted) {
+            element.textContent = text;
+            element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+          }
+          selection.removeAllRanges();
+          succeeded = true;
           return true;
+        } finally {
+          try { element.blur(); } catch (_) {}
+          if (previousInputMode === null) element.removeAttribute('inputmode');
+          else element.setAttribute('inputmode', previousInputMode);
+          if (!succeeded) {
+            const selection = window.getSelection();
+            if (selection) selection.removeAllRanges();
+          }
         }
-        if (!element.isContentEditable) return false;
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        let inserted = false;
-        try { inserted = document.execCommand('insertText', false, text); } catch (_) {}
-        if (!inserted) {
-          element.textContent = text;
-          element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-        }
-        selection.removeAllRanges();
-        return true;
       };
       const submit = text => {
         const composer = probeComposer(true);
@@ -353,18 +373,26 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const rawTitle = metadata && typeof metadata.reasoning_title === 'string' ? metadata.reasoning_title.trim() : '';
         const title = rawTitle.slice(0, 160);
         if (role === 'assistant' && contentType === 'code' && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
-          if (!state.invocations.has(message.id)) state.invocations.set(message.id, { recipient: message.recipient, slot: state.nextToolSlot++ });
+          if (!state.invocations.has(message.id)) state.invocations.set(message.id, { recipient: message.recipient, slot: state.nextToolSlot++, connectorPayload: '', iconKind: message.recipient === 'api_tool.call_tool' ? 'generic' : 'code' });
           const identity = state.invocations.get(message.id);
+          if (metadata && typeof metadata.connector_tool_payload === 'string' && metadata.connector_tool_payload) identity.connectorPayload = metadata.connector_tool_payload;
           if (message.status !== 'finished_successfully' || !metadata || metadata.is_complete !== true || state.toolSeen.has(message.id)) return;
           state.toolSeen.add(message.id);
-          post({ kind: 'tool_activity', slot: identity.slot, title, completed: false });
+          post({ kind: 'tool_activity', slot: identity.slot, title, completed: false, detailInput: '', detailOutput: '', iconKind: identity.iconKind });
           return;
         }
         if (role !== 'tool' || message.recipient !== 'all' || message.status !== 'finished_successfully' || state.toolSeen.has(message.id)) return;
         state.toolSeen.add(message.id);
         const parentID = metadata && typeof metadata.parent_id === 'string' && metadata.parent_id ? metadata.parent_id : '';
         const identity = parentID ? state.invocations.get(parentID) : null;
-        if (identity) post({ kind: 'tool_activity', slot: identity.slot, title, completed: true });
+        if (!identity) return;
+        const invokedResource = metadata && metadata.invoked_resource && typeof metadata.invoked_resource === 'object' && !Array.isArray(metadata.invoked_resource) ? metadata.invoked_resource : null;
+        const githubDetail = identity.recipient === 'api_tool.call_tool' && invokedResource && invokedResource.app_name === 'GitHub' && typeof identity.connectorPayload === 'string' && !!identity.connectorPayload && !!content;
+        let detailOutput = '';
+        if (githubDetail) {
+          try { detailOutput = JSON.stringify(content); } catch (_) {}
+        }
+        post({ kind: 'tool_activity', slot: identity.slot, title, completed: true, detailInput: githubDetail ? identity.connectorPayload : '', detailOutput, iconKind: githubDetail ? 'github' : identity.iconKind });
       };
       const scrubTextPatches = (node, state) => {
         if (Array.isArray(node)) {
@@ -539,6 +567,7 @@ struct ConversationLiveResponseSnapshot {
     let generation: Int
     let conversationID: String
     let baselineVisibleMessageCount: Int
+    let promptText: String
     var phase: ConversationLiveResponsePhase
     var timeline: [ConversationResponseTimelineItem]
     var finalText: String
@@ -585,17 +614,17 @@ extension ConversationRepository {
     }
 
     @discardableResult
-    func beginLiveResponse(conversationID: String, promptCharacterCount: Int) -> Result<Int, Error> {
+    func beginLiveResponse(conversationID: String, promptText: String) -> Result<Int, Error> {
         precondition(Thread.isMainThread)
         if responseRuntime.snapshots[conversationID]?.phase.isActive == true { return .failure(ConversationLiveResponseError.responseAlreadyActive) }
         let generation = (responseRuntime.generations[conversationID] ?? 0) + 1
         responseRuntime.generations[conversationID] = generation
         let baselineVisibleMessageCount = selectedConversationID == conversationID ? (selectedConversation?.messages.count ?? 0) : 0
-        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, failureReason: nil)
+        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, promptText: promptText, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, failureReason: nil)
         var fields = diagnosticsFields(for: conversationID)
         fields["responseGeneration"] = String(generation)
         fields["phase"] = ConversationLiveResponsePhase.preparing.rawValue
-        fields["promptCharacters"] = String(promptCharacterCount)
+        fields["promptCharacters"] = String(promptText.count)
         fields["baselineVisibleMessageCount"] = String(baselineVisibleMessageCount)
         DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.started", fields: fields)
         responseRuntime.onChange?(conversationID)
@@ -647,12 +676,15 @@ extension ConversationRepository {
         snapshot.finalText += text
         snapshot.phase = .final
         eventName = "final_delta"
-    case .toolActivity(let slot, let title, let completed):
+    case .toolActivity(let slot, let title, let completed, let inputJSON, let outputJSON, let iconKind):
         if let index = snapshot.timeline.firstIndex(where: { $0.kind == .tool && $0.toolSlot == slot }) {
             if !title.isEmpty { snapshot.timeline[index].text = title }
             snapshot.timeline[index].completed = snapshot.timeline[index].completed || completed
+            if !inputJSON.isEmpty { snapshot.timeline[index].toolInputJSON = inputJSON }
+            if !outputJSON.isEmpty { snapshot.timeline[index].toolOutputJSON = outputJSON }
+            if iconKind != .generic || snapshot.timeline[index].toolIconKind == .generic { snapshot.timeline[index].toolIconKind = iconKind }
         } else {
-            snapshot.timeline.append(.tool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed))
+            snapshot.timeline.append(.tool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed, inputJSON: inputJSON, outputJSON: outputJSON, iconKind: iconKind))
         }
         eventName = completed ? "tool_completed" : "tool_invoked"
     case .terminal:
@@ -805,7 +837,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, repository.selectedConversationID == conversationID, !sendExecutor.isBusy else { return }
         let generation: Int
-        switch repository.beginLiveResponse(conversationID: conversationID, promptCharacterCount: trimmed.count) {
+        switch repository.beginLiveResponse(conversationID: conversationID, promptText: trimmed) {
         case .success(let value): generation = value
         case .failure(let error):
             showValidationError(error.localizedDescription)

@@ -1,0 +1,52 @@
+name: b74 integrated assembly
+on:
+  push:
+    branches: [assembly/dev-send-stream-b74-ui-20260901]
+    paths:
+      - 'scripts/b74_integrated_patch.py'
+      - '.github/workflows/b74-integrated-assembly.yml'
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve patch and reset to current formal checkpoint
+        run: |
+          cp scripts/b74_integrated_patch.py /tmp/b74_integrated_patch.py
+          git reset --hard c10b295e28a4075c8b10ee33e928f92cebe82dd0
+      - name: Apply already-compiled UI patch
+        run: |
+          git diff bc4ae061fba2b7ed07de781c0c722af9bd7cae4d..894eea1 -- ChatGPTClient/Conversation/ConversationFeature.swift | git apply
+      - name: Apply external adoption and Build74 code identity
+        run: |
+          python3 /tmp/b74_integrated_patch.py
+          git diff --check
+      - name: Audit product scope and invariants
+        run: |
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$changed" = "$expected"
+          grep -Fq "url.pathname === '/backend-api/f/conversation'" ChatGPTClient/RootViewController.swift
+          grep -Fq "url.pathname === '/backend-api/f/conversation/resume'" ChatGPTClient/RootViewController.swift
+          grep -Fq "resumeConversationID === currentConversationID()" ChatGPTClient/RootViewController.swift
+          grep -Fq "window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.submit" ChatGPTClient/RootViewController.swift
+          grep -Fq "#prompt-textarea" ChatGPTClient/RootViewController.swift
+          ! grep -Eq 'Timer\.|scheduledTimer|asyncAfter\(deadline:.*resume|retry.*resume|poll.*stream_status' ChatGPTClient/RootViewController.swift
+          grep -Fq 'CURRENT_PROJECT_VERSION = 74;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -Fq 'DEV-send-stream-0.1.0-b74' ChatGPTClient.xcodeproj/project.pbxproj
+      - name: Build iOS Simulator
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Commit and push clean product-code branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B assembly/dev-send-stream-b74-integrated-product-20260901
+          git add ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m 'fix: adopt external resume responses and reuse resident geometry'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b74-integrated-product-20260901

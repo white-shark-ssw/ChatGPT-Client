@@ -85,27 +85,16 @@ Do not capture/export Cookie, Authorization, challenge values, raw prompt/answer
 
 b76 is **not allocated yet**. Exact b75 supplies a concrete defect, so b76 is now permitted, but do not emit/allocate it until the Web Rule Lab result resolves the continuation transport rule and the visual spacing correction is defined as one coherent product scope. Once allocated, earliest valid identity is `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` if still globally unused at final allocation guard.
 
-## Batch recovery point — b75 Runtime classification
+## Completed documentation batch — b75 Runtime classification
 
-Known state before this checkpoint write:
-
-- formal product head `b77303b8870dc25851dbffbf38ffc153a47bbcb2`;
-- PR #29 open / mergeable / unmerged at that head;
-- main `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
-- only Active development checkpoint on the formal branch is `DEV-send-stream`;
-- b75 Artifact `9772079468` is immutable/permanently reserved;
-- prior b75 durable-doc sync tooling did not advance the formal branch; this checkpoint write is the first authoritative docs-only state after exact b75 product source.
-
-Pending documentation batches after this checkpoint commit:
-
-1. record b75 exact package + Runtime result in `BUILD_TEST_INDEX.md`;
-2. update `PROJECT_STATE.md` and `MODULE_STATUS.md` to b75 partial/rejected Runtime;
-3. update `WEB_SEND_ADAPTER.md` to mark the covered-production HTTP200-resume assumption rejected for exact b75 while preserving the earlier visible Web Rule Lab evidence as historical evidence, not current production proof;
-4. update PR #29 body to b75 Runtime evidence + Web Rule Lab gate;
-5. verify these are docs/PR metadata only and do not redefine exact b75 product source.
-
-Do not modify product code, allocate b76, merge PR #29, or move `main` during this documentation recovery batch.
+- Exact b75 product source remains `b77303b8870dc25851dbffbf38ffc153a47bbcb2`; all later commits in this batch are docs-only and do not redefine the package.
+- Checkpoint Runtime classification commit: `d07cde81277d5bbb1e57d2c3f85c8772a64745c7`.
+- Durable b75 Runtime docs commit: `238b9e93b4e5f780aaf525106ec672de8ed8225b`, audited as exactly `BUILD_TEST_INDEX.md`, `MODULE_STATUS.md`, `PROJECT_STATE.md`, and `WEB_SEND_ADAPTER.md`.
+- PR #29 metadata is synchronized to title `DEV-send-stream: b75 Runtime rejection -> Web continuation re-probe gate`; it remains open / mergeable / unmerged.
+- This final docs-only batch synchronizes `PROJECT_PROFILE.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, and this checkpoint.
+- Actual `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb` at the last guard. Stable/Frozen Send remains No.
+- b76 remains unallocated.
 
 ## Exact next action
 
-Complete the pending docs/PR metadata batch above, then hand the user the smallest Web Rule Lab probe needed to distinguish `stream_status -> first resume 404 -> later page-owned transport` behavior. Product code stops at that human evidence gate. After the Lab result arrives, rerun Resume Guard, finalize the larger visual-spacing correction together with the evidenced continuation rule, allocate b76 once, then compile/CI/package one coherent Runtime candidate.
+Human-only Web Rule Lab gate: while another platform owns a still-active response, instrument only page-owned fetch structure before entering that target conversation, then report `stream_status` / matching `/resume` ordering, response status/content-type, request JSON key names, and whether another page-owned HTTP/SSE transport follows an initial 404. Do not send from the Lab and do not capture secrets or message bodies. After that evidence arrives, rerun Resume Guard, define the current continuation rule, combine it with the clearly required larger reasoning/tool/final vertical rhythm, allocate b76 once, then compile/CI/package one coherent Runtime candidate.

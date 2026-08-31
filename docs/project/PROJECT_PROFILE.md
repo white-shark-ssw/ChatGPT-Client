@@ -1,5 +1,13 @@
 # Project Profile
 
+## DEV-send-stream b75 current Runtime override — 2026-09-01
+
+- Exact current package remains `DEV-send-stream-0.1.0-b75` / `0.1.0 (75)`, product/config source `b77303b8870dc25851dbffbf38ffc153a47bbcb2`, Artifact `9772079468`, IPA SHA `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d`.
+- Exact iPhone/iOS17 Runtime is **partial/rejected**: pre-accept resume validation fixed the false Native failure, but three matching page-owned `/backend-api/f/conversation/resume` attempts returned HTTP404 JSON while the external response was still active, so no Native live reasoning/tool/final stream was adopted.
+- b75 cooperative history geometry scheduling is executing; worst-case Back responsiveness remains unclosed by the supplied run.
+- b75 tool/reasoning/final line-height values `26 / 18.2 / 18.2` are implemented but visually rejected as too tight by the latest Runtime screenshot.
+- b39-b75 are permanently reserved. b76 is permitted by concrete b75 defects but **not allocated** before the current Web Rule Lab continuation re-probe resolves the transport rule.
+
 ## Initialization
 
 **Initialized — 2026-08-25; refreshed 2026-09-01 through accepted b67 production transport Runtime, positive b72 tested cross-conversation simultaneous-generation Runtime, exact b73 Runtime defect evidence, and exact b74 Code/scope/Simulator/Push+PR CI/Artifact/package verification.**
@@ -103,7 +111,7 @@ Tool phases remain optional. `assistant:thoughts` is never presented. General Ma
 
 ## Current next Candidate boundary
 
-Build74 is the current exact real-device Runtime candidate. b39-b74 are permanently reserved. Do not allocate b75 unless exact b74 Runtime supplies a concrete defect or new evidence-backed requirement. The Runtime gate must verify long resident re-entry performance, larger tool-row rhythm, external active-response adoption through page-owned matching `/resume`, local protected-Send regression, b72 simultaneous-generation ownership, hidden-thought exclusion and b38 quick-navigation/geometry semantics.
+Build75 is the latest exact real-device Runtime package and is partial/rejected for the evidence above. b39-b75 are permanently reserved. The current human-only gate is a Web Rule Lab structural re-probe of page-owned `stream_status` / matching `/resume` ordering and statuses while another platform owns an active response. Do not allocate b76 until that transport evidence is captured and the larger reasoning/tool/final vertical-rhythm correction is one coherent scope.
 
 ## Remaining Unknown / Unverified
 

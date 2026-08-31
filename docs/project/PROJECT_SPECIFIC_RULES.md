@@ -1,5 +1,13 @@
 # Project-Specific Rules
 
+## b75 current Runtime override — 2026-09-01
+
+- Exact b75 package is permanently reserved: source `b77303b8870dc25851dbffbf38ffc153a47bbcb2`, Artifact `9772079468`, IPA SHA `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d`.
+- A page-owned matching `/resume` request is structural observation only. Exact b75 covered-production Runtime returned HTTP404 JSON for all three observed matching resume attempts while the external response was active; current external stream adoption is therefore **not Runtime accepted**.
+- Do not bypass this with Native resume/offset construction, `stream_status` polling, retry/timer/watchdog, guessed route fallback, duplicate Send or WebSocket body parsing. Use Web Rule Lab to establish the current page-owned transport first.
+- b75 `26 / 18.2 / 18.2` tool/reasoning/final line-height output is visually rejected as too tight. Those numbers are not an accepted presentation baseline.
+- b76 may be allocated only after the continuation probe defines a minimal current transport correction and the larger visual-spacing correction is coherent; until then b76 remains unallocated.
+
 This file contains durable repository/product rules backed by explicit requirements, current source, accepted tests or technical decisions. Detailed historical evidence belongs in `BUILD_TEST_INDEX.md`, runtime-evidence files and Git history. Current rules below take precedence over stale historical wording.
 
 ## Product and architecture contracts
@@ -127,7 +135,7 @@ b66 memory-warning evidence occurred only after its response had already failed;
 - The page remains continuation-transport authority; Native observes a cloned SSE response and feeds accepted events into one existing `ConversationRepository` response generation.
 - External adoption does not invent an optimistic prompt/user bubble; authoritative user history remains Repository Detail data.
 - Native never chooses/derives offset, constructs the resume request, polls `stream_status`, replays browser/session headers, resends the prompt, or treats WebSocket frames as message-body authority without separate evidence.
-- b74 is the first packaged production candidate for this boundary; Runtime remains pending.
+- b74 was the first packaged candidate for this boundary; exact b75 Runtime now rejects the covered-production adoption path because matching page-owned resume responses were HTTP404 JSON. Re-probe before another product implementation.
 
 ## New-chat identity handoff
 
@@ -226,12 +234,13 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - once an Artifact identity is emitted, corrected product code never reuses it;
 - built `Info.plist` version/build/Candidate/source marker + IPA SHA are package identity authority;
 - `scripts/build_ipa.sh` must fail on identity mismatch;
-- b24-b74 emitted identities are permanently reserved;
+- b24-b75 emitted identities are permanently reserved;
 - exact b66 package authority remains `0.1.0 (66)`, source `9ce228ad880eaf81fc23ba26fe14f4d2bf524acb`, Artifact `9739572172`, IPA `7f62e875bbd75d54e2d7bf76340f277d02f03e695d464d818fa5cab664c630e9`; Runtime rejected its first production bridge but does not invalidate package identity;
 - exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; production transport Runtime accepted for the recorded scope;
 - exact b73 package authority is `0.1.0 (73)`, source `4edda892a04a1a07f4a07e74b135b969ea82193e`, Artifact `9764247402`, IPA `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`; Runtime presentation pending;
-- exact b74 package authority is `0.1.0 (74)`, source `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d`, Artifact `9768668727`, ZIP `6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`, IPA `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`; Code/CI/Artifact/package verified, Runtime pending;
-- do not allocate b75 unless exact b74 Runtime supplies a concrete defect or new evidence-backed requirement.
+- exact b74 package authority is `0.1.0 (74)`, source `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d`, Artifact `9768668727`, ZIP `6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`, IPA `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`; permanently reserved;
+- exact b75 package authority is `0.1.0 (75)`, source `b77303b8870dc25851dbffbf38ffc153a47bbcb2`, Artifact `9772079468`, ZIP `6c4c4ec9de54264846376bdf7df4679daaaf33168481831698c884093b6209ad`, IPA `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d`; Runtime partial/rejected and permanently reserved;
+- do not allocate b76 before the current Web Rule Lab continuation re-probe resolves the covered-production 404 behavior.
 
 ## Message rendering / attachment boundary
 

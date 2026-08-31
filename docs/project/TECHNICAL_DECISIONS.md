@@ -1,5 +1,11 @@
 # Technical Decisions
 
+## b75 Runtime qualification — 2026-09-01
+
+- **TD-014 presentation qualification:** Build75 proves the numeric `26 / 18.2 / 18.2` tool/reasoning/final line-height implementation is not the accepted visual target; the latest exact screenshot rejects it as too tight. Future correction must increase the visible vertical rhythm while keeping reasoning/final measurement and rendering consistent and preserving chronological reasoning/tool semantics.
+- **TD-029 external-continuation qualification:** request observation alone remains non-authoritative. Exact b75 covered-production Runtime saw three matching official-page-owned `/backend-api/f/conversation/resume` responses return HTTP404 JSON while the external response was still active. Therefore covered-production external adoption is not Runtime accepted. Do not add Native resume/offset construction, polling, retry, guessed alternate routes or WebSocket body authority. Re-probe current official page behavior in Web Rule Lab first.
+- b67 local protected-Send transport and b72 exact tested cross-conversation simultaneous ownership remain accepted predecessors; b75 does not revoke them.
+
 This file records durable, evidence-backed technical decisions and rejected routes. Detailed historical evidence remains available in Git history and `BUILD_TEST_INDEX.md`; current decisions below are the active durable contracts.
 
 ## Current decisions

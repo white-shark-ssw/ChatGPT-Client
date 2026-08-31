@@ -1,0 +1,45 @@
+name: b69 assembly retry
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b69-20260831
+    paths:
+      - ".github/workflows/b69-assembly-retry.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: assembly/dev-send-stream-b69-20260831
+          fetch-depth: 0
+      - name: Reuse audited b69 patch with precise field guard
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/b69-assembly-tool.yml').read_text()
+          marker = "          python3 - <<'PY'\n"
+          end = "\n          PY\n"
+          block = workflow.split(marker, 1)[1].split(end, 1)[0]
+          script = "\n".join(line[10:] if line.startswith("          ") else line for line in block.splitlines())
+          old = 'if "reasoningSummary" in text: raise SystemExit("stale reasoningSummary reference remains")'
+          new = 'if ".reasoningSummary" in text or "reasoningSummary:" in text: raise SystemExit("stale reasoningSummary field remains")'
+          if script.count(old) != 1: raise SystemExit('stale-field guard marker mismatch')
+          exec(script.replace(old, new, 1), {})
+          PY
+          git diff --check
+          rm .github/workflows/b69-assembly-tool.yml .github/workflows/b69-assembly-retry.yml
+          git reset --soft 33022dc8c9fdcb17f5b462a2766ac86238417c58
+          git add -A
+          test "$(git diff --cached --name-only | sort)" = "$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat: preserve ordered reasoning tool timeline"
+          git push origin HEAD:assembly/dev-send-stream-b69-product-20260831

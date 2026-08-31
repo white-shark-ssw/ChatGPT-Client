@@ -1587,6 +1587,21 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let relativeOffset: CGFloat
     }
 
+    private struct HistoricalPresentationGeometryCacheEntry {
+        let currentNodeID: String
+        let authoritativeMessageCount: Int
+        let rowCount: Int
+        let chunkedMessageCount: Int
+        let maxChunkCharacterCount: Int
+        let roundCount: Int
+        let layoutWidth: CGFloat
+        let showsMessageTimestamps: Bool
+        let expandedReasoningMessageIDs: Set<String>
+        let rowMetrics: [ConversationMessageCell.Metrics]
+        let rowOffsets: [CGFloat]
+        let contentHeight: CGFloat
+    }
+
     private enum AnswerJumpDirection: String {
         case previous
         case next
@@ -1629,7 +1644,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var loadingConversationID: String?
     private var presentationGeneration = 0
     private var displayedConversationID: String?
+    private var displayedCurrentNodeID: String?
     private var scrollAnchorsByConversationID: [String: ScrollAnchor] = [:]
+    private var historicalPresentationGeometryCacheByConversationID: [String: HistoricalPresentationGeometryCacheEntry] = [:]
     private var expandedReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
     private var autoOpenedLiveReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
     private var autoCollapsedLiveReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
@@ -1816,7 +1833,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         hideSyncToast()
         loadingConversationID = nil
         displayedConversationID = nil
+        displayedCurrentNodeID = nil
         scrollAnchorsByConversationID.removeAll()
+        historicalPresentationGeometryCacheByConversationID.removeAll()
         expandedReasoningMessageIDsByConversationID.removeAll()
         autoOpenedLiveReasoningMessageIDsByConversationID.removeAll()
         autoCollapsedLiveReasoningMessageIDsByConversationID.removeAll()
@@ -1834,6 +1853,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private func apply(_ detail: ConversationDetail, captureCurrentAnchor: Bool = true) {
         if captureCurrentAnchor, displayedConversationID == detail.id, !messages.isEmpty { captureScrollAnchor(for: detail.id) }
         displayedConversationID = detail.id
+        displayedCurrentNodeID = detail.currentNodeID
         title = detail.title
         messages = detail.messages
         rebuildRoundProjection()
@@ -1848,6 +1868,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     private func clearVisibleMessagePresentation() {
         stopAnswerJumpAnimation(clearTarget: true)
+        displayedCurrentNodeID = nil
         messages = []
         roundProjection = ConversationRoundProjection(rounds: [])
         messagePresentation = .empty
@@ -1872,16 +1893,45 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let startedAt = ProcessInfo.processInfo.systemUptime
         roundProjection = ConversationRoundProjection.derive(from: messages)
         messagePresentation = ConversationMessagePresentationProjection.derive(from: messages)
-        let geometryDurationMs = rebuildPresentationGeometry(width: effectivePresentationWidth())
+        let geometryStartedAt = ProcessInfo.processInfo.systemUptime
+        let geometryReused = restoreHistoricalPresentationGeometryIfPossible(width: effectivePresentationWidth())
+        let geometryDurationMs = geometryReused ? (ProcessInfo.processInfo.systemUptime - geometryStartedAt) * 1000 : rebuildPresentationGeometry(width: effectivePresentationWidth())
         answerRows = roundProjection.rounds.compactMap { messagePresentation.firstRowByMessageID[$0.userMessageID] }
         let totalDurationMs = (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
-        diagnostics.info(category: "ui", name: "messagePresentation.rebuilt", fields: ["authoritativeMessageCount": String(messages.count), "presentationRowCount": String(messagePresentation.rows.count), "chunkedMessageCount": String(messagePresentation.chunkedMessageCount), "chunkCharacterLimit": String(ConversationMessagePresentationProjection.chunkCharacterLimit), "maxChunkCharacterCount": String(messagePresentation.maxChunkCharacterCount), "geometryDurationMs": String(format: "%.2f", geometryDurationMs), "durationMs": String(format: "%.2f", totalDurationMs), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
+        diagnostics.info(category: "ui", name: "messagePresentation.rebuilt", fields: ["authoritativeMessageCount": String(messages.count), "presentationRowCount": String(messagePresentation.rows.count), "chunkedMessageCount": String(messagePresentation.chunkedMessageCount), "chunkCharacterLimit": String(ConversationMessagePresentationProjection.chunkCharacterLimit), "maxChunkCharacterCount": String(messagePresentation.maxChunkCharacterCount), "geometryReused": geometryReused ? "true" : "false", "geometryDurationMs": String(format: "%.2f", geometryDurationMs), "durationMs": String(format: "%.2f", totalDurationMs), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
     }
 
     private func effectivePresentationWidth() -> CGFloat {
         if tableView.bounds.width > 1 { return tableView.bounds.width }
         if view.bounds.width > 1 { return view.bounds.width }
         return UIScreen.main.bounds.width
+    }
+
+    private func restoreHistoricalPresentationGeometryIfPossible(width: CGFloat) -> Bool {
+        guard let conversationID = displayedConversationID, let currentNodeID = displayedCurrentNodeID, let cached = historicalPresentationGeometryCacheByConversationID[conversationID] else { return false }
+        let resolvedWidth = max(1, width)
+        let expandedReasoningMessageIDs = expandedReasoningMessageIDsByConversationID[conversationID] ?? []
+        guard cached.currentNodeID == currentNodeID,
+              cached.authoritativeMessageCount == messages.count,
+              cached.rowCount == messagePresentation.rows.count,
+              cached.chunkedMessageCount == messagePresentation.chunkedMessageCount,
+              cached.maxChunkCharacterCount == messagePresentation.maxChunkCharacterCount,
+              cached.roundCount == roundProjection.rounds.count,
+              abs(cached.layoutWidth - resolvedWidth) <= 0.5,
+              cached.showsMessageTimestamps == preferences.showsMessageTimestamps,
+              cached.expandedReasoningMessageIDs == expandedReasoningMessageIDs,
+              cached.rowMetrics.count == messagePresentation.rows.count,
+              cached.rowOffsets.count == messagePresentation.rows.count else { return false }
+        presentationLayoutWidth = resolvedWidth
+        presentationRowMetrics = cached.rowMetrics
+        presentationRowOffsets = cached.rowOffsets
+        presentationContentHeight = cached.contentHeight
+        return true
+    }
+
+    private func storeHistoricalPresentationGeometryIfPossible() {
+        guard let conversationID = displayedConversationID, let currentNodeID = displayedCurrentNodeID, presentationRowMetrics.count == messagePresentation.rows.count, presentationRowOffsets.count == messagePresentation.rows.count else { return }
+        historicalPresentationGeometryCacheByConversationID[conversationID] = HistoricalPresentationGeometryCacheEntry(currentNodeID: currentNodeID, authoritativeMessageCount: messages.count, rowCount: messagePresentation.rows.count, chunkedMessageCount: messagePresentation.chunkedMessageCount, maxChunkCharacterCount: messagePresentation.maxChunkCharacterCount, roundCount: roundProjection.rounds.count, layoutWidth: presentationLayoutWidth, showsMessageTimestamps: preferences.showsMessageTimestamps, expandedReasoningMessageIDs: expandedReasoningMessageIDsByConversationID[conversationID] ?? [], rowMetrics: presentationRowMetrics, rowOffsets: presentationRowOffsets, contentHeight: presentationContentHeight)
     }
 
     @discardableResult
@@ -1907,6 +1957,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             offset += metrics.rowHeight
         }
         presentationContentHeight = offset
+        storeHistoricalPresentationGeometryIfPossible()
         return (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
     }
 
@@ -2026,6 +2077,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
                 for offsetIndex in (rowIndex + 1)..<presentationRowOffsets.count { presentationRowOffsets[offsetIndex] += heightDelta }
             }
             presentationContentHeight += heightDelta
+            storeHistoricalPresentationGeometryIfPossible()
         }
         UIView.performWithoutAnimation {
             tableView.reloadRows(at: [indexPath], with: .none)
@@ -3083,8 +3135,10 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         reasoningParagraph.lineSpacing = 2
         reasoningParagraph.paragraphSpacing = 8
         let toolParagraph = NSMutableParagraphStyle()
-        toolParagraph.minimumLineHeight = 30
-        toolParagraph.paragraphSpacing = 9
+        toolParagraph.minimumLineHeight = 34
+        toolParagraph.lineSpacing = 2
+        toolParagraph.paragraphSpacingBefore = 5
+        toolParagraph.paragraphSpacing = 12
         let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
         let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]
         for item in timeline {

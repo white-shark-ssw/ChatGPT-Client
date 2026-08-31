@@ -2,24 +2,29 @@
 
 ## Status
 
-**Active — b67 protected-Send transport remains Runtime accepted. Exact Build72 is a valid/reserved package. Exact iPhone/iOS17 b72 Runtime now positively supports the tested cross-conversation simultaneous-generation path, but rejects the current reasoning/tool presentation density and default live-disclosure behavior. Build73 is allocated for a presentation-only correction. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b67 protected-Send transport remains Runtime accepted. Exact Build72 is a valid/reserved package and exact iPhone/iOS17 b72 Runtime positively supports the tested cross-conversation simultaneous-generation path, but rejects the prior reasoning/tool presentation density/default-live-disclosure behavior. Build73 is now Code/scope/Simulator/Push+PR CI/Artifact/package verified and is the current presentation Runtime candidate. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal head before this checkpoint update: `636701968c59124842da01b8d8b6585f8055d5e5`
+- Formal product/config head before this docs-only checkpoint update: `4edda892a04a1a07f4a07e74b135b969ea82193e`
 - Exact b72 product/config source: `d20536db37a028556c8032e7c74912805ade785c`
-- b72 Candidate: `DEV-send-stream-0.1.0-b72`
-- b72 Version / Build: `0.1.0 (72)`
-- b72 Push CI: `33403473989 / 99525205970` — success
-- b72 PR CI: `33403478927 / 99525223287` — success
 - b72 Artifact: `9762189417`
-- b72 Artifact ZIP digest: `sha256:5107cedc43b3e5a096da60db9acc2f0705c30bb81be8134f1373dba6f929c1b9`
-- b72 IPA: `ChatGPTClient-0.1.0-b72-dev-send-stream.ipa`
 - b72 IPA SHA: `ff9d37022a310cab3eea0bb3c298e3d3ec8b0d3057f7256da4f0543dab18b53c`
-- b39-b72 permanently reserved; never rewrite/reuse b72 after Artifact emission.
-- Next unique Candidate allocated by the b72 Runtime defects below: `DEV-send-stream-0.1.0-b73` / Build `73`.
+- Exact b73 product/config source: `4edda892a04a1a07f4a07e74b135b969ea82193e`
+- b73 product code commit: `0e3eb6cad4cc56e8c2bcb946724d7cf1d4d55701`
+- b73 Candidate: `DEV-send-stream-0.1.0-b73`
+- b73 Version / Build: `0.1.0 (73)`
+- b73 assembly: `33408291419` — success after the earlier tooling-only assertion failure `33408115270`; Xcode Simulator compile passed.
+- b73 Push CI: `33408695143 / 99542593642` — success
+- b73 PR CI: `33408698697 / 99542605699` — success
+- b73 Artifact: `9764247402`
+- b73 Artifact ZIP digest: `sha256:718c2f4fd0fe3521f7469f5996f6944960ffdaa3b2829c0c17e340ebd41dd206`
+- b73 IPA: `ChatGPTClient-0.1.0-b73-dev-send-stream.ipa`
+- b73 IPA SHA: `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`
+- Independently unpacked b73 package identity: Release `0.1.0 (73)`, Candidate b73, source marker `4edda892a04a`, minimum iOS14.0, arm64, iPhone/iPad family.
+- b39-b73 permanently reserved; never rewrite/reuse any emitted identity.
 - Stable/Frozen Send: No.
 
 ## Retained accepted boundaries
@@ -31,12 +36,6 @@
 - b69 chronological response timeline + exact-parent result association remain retained.
 - b38 deterministic long-message geometry/quick navigation remains accepted and must not regress.
 - No retry/polling/timer/watchdog/fallback/compatibility shim/second message or response store.
-
-## Exact b72 package evidence
-
-Exact detached product/config source is `d20536db37a028556c8032e7c74912805ade785c`; assembly/Simulator compile, Push CI, PR CI, Artifact and independently unpacked package identity all passed. Built package is Release `0.1.0 (72)`, Candidate b72, source marker `d20536db37a0`, minimum iOS14.0, arm64.
-
-Evidence ladder before Runtime: **Code written / exact scope audited / Simulator compile passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified.**
 
 ## Exact b72 iPhone/iOS17 Runtime — partial acceptance / presentation reject
 
@@ -57,65 +56,86 @@ User supplied direct screenshots comparing the same response in this client vs t
 3. Current main inline rendering can still show repeated fallback `工具调用` rows, especially when a GitHub exact-parent detail exists but the invocation had no meaningful `metadata.reasoning_title`.
 4. Tool-row vertical rhythm is too tight; official tool rows have visibly larger row height/spacing.
 5. Current visible reasoning prose uses secondary/subheadline styling and appears too gray/small compared with the official reference; official visible reasoning prose reads closer to ordinary body text while tool rows and the summary remain secondary.
-6. New explicit requirement: **while a live response is in thinking/reasoning/tool activity, its first-level reasoning disclosure defaults expanded; on the exact `reasoning_ended` transition it automatically collapses once.** After that automatic collapse, later manual user expand/collapse remains user-owned and must not be repeatedly overridden by subsequent redraws/final deltas.
+6. Explicit requirement: **while a live response is in thinking/reasoning/tool activity, its first-level reasoning disclosure defaults expanded; on the exact `reasoning_ended` transition it automatically collapses once.** After that automatic collapse, later manual user expand/collapse remains user-owned and must not be repeatedly overridden by subsequent redraws/final deltas.
 7. Historical completed responses continue to default collapsed unless the user explicitly expands them.
 
-## b73 authorized product scope
+## Exact b73 implementation / evidence
 
-Build73 is a presentation-only correction. It must not modify accepted transport/concurrency/auth ownership.
-
-Authorized source/config files:
+Build73 is a presentation-only correction. Detached compare from the b73 checkpoint to exact source `4edda892...` contains exactly:
 
 - `ChatGPTClient/Conversation/ConversationFeature.swift`
 - `ChatGPTClient.xcodeproj/project.pbxproj`
 - `.github/workflows/ios-foundation.yml`
 
-`ChatGPTClient/RootViewController.swift` is **not authorized** for b73 unless new evidence proves the display-only correction cannot be implemented from the existing Repository snapshot fields. Current source already exposes `snapshot.reasoningEnded`, phase and ordered timeline to the Detail presentation layer, so no Root change is presently justified.
+`ChatGPTClient/RootViewController.swift` did not change, preserving the b72 per-conversation executor implementation and b67 transport path.
 
-### b73 exact presentation behavior
+Implemented behavior:
 
-1. Split tool selection for the two UI levels:
-   - secondary tool-list sheet keeps the current ordered eligible tool operations, including generic entries needed to inspect the actual call list;
-   - main inline reasoning timeline shows only tool rows with a meaningful service-authored title; fallback title `工具调用` is omitted from the main timeline even when authorized detail exists.
-2. Do **not** merge, synthesize or rewrite tool titles by guessing. The concise main row must come from the current service-backed title already carried by the timeline (currently `metadata.reasoning_title` when present). Generic low-level calls remain accessible in the tool-list sheet.
-3. Main reasoning prose uses body-sized primary-label typography and more official-like line spacing; tool rows remain secondary but receive larger minimum line height / paragraph spacing.
-4. `思考了 <duration>` summary remains secondary and continues using the b72 minutes-only duration formatter (`Ns`, `Nm`, `Nm Ns`, never hours).
-5. Live auto-disclosure is presentation state only:
-   - on the first visible reasoning/tool timeline content of one live generation, auto-expand once;
-   - if the user manually collapses while still thinking, later deltas must not auto-open it again;
-   - on first observation of `snapshot.reasoningEnded == true`, auto-collapse once;
-   - after that one collapse, later final deltas/rebuilds do not override manual user state.
-6. Historical reasoning remains user-controlled and default collapsed.
-7. Tool-list sheet behavior from b72 remains: clicking any visible concrete tool row opens the current assistant turn's ordered tools-only list; no reasoning prose; direct authorized input; no output UI.
-8. No changes to b72 per-conversation executor dictionary, b67 protected route/selectors/SSE grammar, Repository response ownership, auth lifecycle, quick navigation or follow-tail semantics.
+1. Secondary tool-list sheet keeps the current ordered eligible tool operations, including generic entries needed to inspect the actual call list.
+2. Main inline reasoning timeline shows only tool rows with a meaningful service-authored title; fallback title `工具调用` is omitted from the main timeline. No title merging/synthesis/guessing was added.
+3. Main reasoning prose uses body-sized primary-label typography and looser line spacing; tool rows remain secondary with larger minimum line height/paragraph spacing.
+4. `思考了 <duration>` keeps the minutes-only formatter (`Ns`, `Nm`, `Nm Ns`, never hours).
+5. Live disclosure auto-opens once when first visible reasoning/tool content arrives; a user manual collapse during reasoning is not reopened by later deltas.
+6. First observation of exact `snapshot.reasoningEnded == true` auto-collapses once; later final deltas/rebuilds do not reassert the auto state over manual user choice.
+7. Historical completed reasoning remains default-collapsed/user-controlled.
+8. Tool-list sheet semantics from b72 remain tools-only/input-only; no reasoning prose and no tool-output UI.
+9. No changes to protected route/selectors/SSE grammar, Repository response owner, auth lifecycle, per-conversation executor dictionary, b38 quick navigation, retry/poll/timer/watchdog/fallback machinery.
 
-## b73 identity / batch recovery point
+Validation:
 
-Candidate allocation is now reserved:
+- first assembly run `33408115270 / 99540666049` failed tooling-only before compile because an exact assertion missed one remaining selector call; no product branch/Artifact was emitted.
+- corrected assembly run `33408291419` succeeded, including scope audit, `git diff --check`, protected baseline checks and Xcode 16.4 iOS Simulator compile.
+- Push CI `33408695143 / 99542593642` succeeded on exact source `4edda892...` using Xcode 16.4 / iPhoneOS18.5 / Release arm64 iOS14 target.
+- PR CI `33408698697 / 99542605699` succeeded on the same exact source.
+- canonical Push Artifact `9764247402` has GitHub digest `sha256:718c2f4fd0fe3521f7469f5996f6944960ffdaa3b2829c0c17e340ebd41dd206`.
+- downloaded Artifact ZIP independently hashes to the same digest.
+- independently unpacked IPA SHA is `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`; sidecar matches.
+- built `Info.plist`: `0.1.0 (73)`, Candidate `DEV-send-stream-0.1.0-b73`, source `4edda892a04a`, Release, minimum iOS14.0; executable is Mach-O arm64.
 
-- Candidate: `DEV-send-stream-0.1.0-b73`
-- Version / Build: `0.1.0 (73)`
-- b73 Artifact identity does not exist yet.
+Evidence ladder: **Code written / exact scope audited / Simulator compile passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
 
-Non-atomic write chain:
+## b73 exact Runtime gate
 
-1. **Confirmed complete:** b72 package exists and is permanently reserved; user Runtime evidence is classified above; b73 Candidate is unique by repository search before allocation.
-2. **Current write:** this checkpoint records the b72 Runtime and exact b73 authorized behavior before product writes.
-3. **Pending batch A:** create a tooling-only assembly branch from the resulting checkpoint head; apply exact-anchor changes only to `ConversationFeature.swift` plus b73 project/workflow identity; audit changed-file scope and protected-Send invariants; run Xcode 16.4 iOS Simulator compile.
-4. **Pending batch B:** produce a clean b73 product/config source with the checkpoint head as ancestor and no tooling files; detached compare must contain exactly the three authorized files.
-5. **Pending batch C:** repeat branch/PR/main/current-dev/candidate conflict Guard, then non-force fast-forward formal Work branch to exact b73 product/config source.
-6. **Pending batch D:** obtain exact-head Push CI + PR CI, canonical Push Artifact, IPA SHA and built Info.plist identity.
-7. **Pending batch E:** synchronize this checkpoint plus `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `BUILD_TEST_INDEX.md` and PR #29 as docs-only evidence. Do not redefine the exact product source with later docs commits.
+On the primary iPhone/iOS17 device, install exact Build73 and focus on presentation only:
 
-Recovery must never touch/rewrite b72 Artifact `9762189417`, b72 source `d20536db...`, b67 transport rules, or the accepted b72 per-conversation executor implementation.
+1. start one response that visibly reasons/tools; confirm first visible reasoning/tool content auto-expands the first-level reasoning block while generation is active;
+2. while still reasoning, manually collapse once and confirm later reasoning/tool deltas do not force it open again;
+3. on a normal run left expanded, confirm exact reasoning end auto-collapses once as final answer becomes the visual focus;
+4. after that automatic collapse, manually expand/collapse and confirm later final deltas/redraws do not override the user choice;
+5. compare main inline density against official: fallback generic `工具调用` rows should not spray through the main chat; meaningful service-authored purpose rows remain chronological with visibly looser row height/spacing;
+6. reasoning prose should read at ordinary body scale/primary contrast; summary/tool rows remain secondary;
+7. click a concrete tool row and confirm the ordered tools-only/input-only sheet still exposes the actual tool-call list, including generic operations omitted from the main timeline;
+8. confirm b72 cross-conversation A-generating + B-send behavior does not regress; this is regression-only because Root did not change;
+9. confirm hidden thoughts remain absent and b38 long-message/quick-navigation behavior does not regress.
 
-## Evidence ladder
+Runtime/manual/real-device for b73 is **pending**. Do not describe the presentation defect as solved until this exact package passes.
 
-- b67 protected-Send transport: **Runtime accepted**.
-- b72 cross-conversation simultaneous generation: **Runtime positive for the supplied exact-device A/B test**.
-- b72 main reasoning/tool presentation: **Runtime rejected for official parity/density/default-live-disclosure behavior**.
-- b73: **Candidate allocated / code not yet written / CI not yet run / Artifact not yet produced / Runtime pending / Stable-Frozen No.**
+## Batch recovery point — b73 evidence sync
+
+Known state before docs-only synchronization:
+
+- exact b73 product/config source: `4edda892a04a1a07f4a07e74b135b969ea82193e`;
+- exact product source has successful Push/PR CI and canonical Artifact `9764247402` as recorded above;
+- b73 package identity is permanently reserved;
+- PR #29 is still open/unmerged; `main` is still `d323b9eed2dda75b9986fc06e14014d3e9b365fb`.
+
+Confirmed complete:
+
+1. b72 Runtime classification and b73 allocation checkpointed.
+2. b73 product code assembled/audited/Simulator-compiled.
+3. clean product/config source promoted non-force to formal branch.
+4. exact-head Push CI + PR CI succeeded.
+5. canonical Push Artifact downloaded and independently package-verified.
+
+Pending deterministic docs-only batch:
+
+1. synchronize `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `BUILD_TEST_INDEX.md` and any directly conflicting durable `PROJECT_SPECIFIC_RULES.md` wording to current b72/b73 evidence;
+2. detached-audit that the resulting range after `4edda892...` is docs-only;
+3. update PR #29 title/body to b73 current evidence while keeping it open/unmerged;
+4. verify final formal branch/PR/main state.
+
+Recovery must **not** modify product/config source after Artifact emission, must not touch b72/b67 accepted transport/concurrency code, and must not allocate b74 without concrete b73 Runtime evidence.
 
 ## Exact next action
 
-Resume from the resulting checkpoint head. Verify the branch update landed, then create the isolated b73 assembly branch and implement only the authorized presentation correction. Do not ask for another requirement decision unless source evidence contradicts the above interaction contract. Continue autonomously through compile/CI/Artifact if normal tooling remains available.
+Complete the pending docs-only/PR synchronization above, then hand exact Build73 IPA to the user for the human-only Runtime gate. Do not allocate b74 before exact b73 Runtime provides a concrete defect/next evidence need.

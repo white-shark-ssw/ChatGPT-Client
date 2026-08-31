@@ -1,0 +1,49 @@
+name: b72 durable docs sync
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b72-docs-20260831
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout tooling ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch clean checkpoint docs
+        run: |
+          cp scripts/b72_docs_sync.py /tmp/b72_docs_sync.py
+          git reset --hard 636701968c59124842da01b8d8b6585f8055d5e5
+          python3 /tmp/b72_docs_sync.py
+
+      - name: Audit docs-only scope
+        run: |
+          git diff --check
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          count="$(printf '%s\n' "$changed" | sed '/^$/d' | wc -l | tr -d ' ')"
+          test "$count" = 5 || { echo "unexpected changed file count: $count"; exit 1; }
+          for file in docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/BUILD_TEST_INDEX.md; do
+            printf '%s\n' "$changed" | grep -Fx "$file" >/dev/null || { echo "missing $file"; exit 1; }
+          done
+          test -z "$(git diff --name-only | grep -v '^docs/project/' || true)"
+          grep -F 'DEV-send-stream-0.1.0-b72' docs/project/BUILD_TEST_INDEX.md >/dev/null
+          grep -F '9762189417' docs/project/PROJECT_STATE.md >/dev/null
+          grep -F 'd20536db37a028556c8032e7c74912805ade785c' docs/project/PROJECT_PROFILE.md >/dev/null
+
+      - name: Emit clean docs branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c assembly/dev-send-stream-b72-docs-product-20260831
+          git add docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/BUILD_TEST_INDEX.md
+          git commit -m 'docs: record b72 candidate evidence'
+          test "$(git rev-parse HEAD^)" = '636701968c59124842da01b8d8b6585f8055d5e5'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b72-docs-product-20260831

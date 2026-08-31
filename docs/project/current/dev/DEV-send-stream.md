@@ -2,17 +2,18 @@
 
 ## Status
 
-**Active — exact b67 production existing-conversation Send/stream Runtime passed on the primary iPhone/iOS17 device. One local Send produced one submitted event, one real protected Send, HTTP200 SSE, Native Repository-owned tool/final updates, terminal and one authoritative reconciliation. The remaining concrete product defect is Native presentation: live response currently appears in a temporary floating validation overlay instead of the conversation timeline, and authoritative historical Detail does not expose the service-marked reasoning recap as a collapsible section. b68 is now authorized for this presentation-only integration. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
+**Active — exact b67 production existing-conversation Send/stream Runtime passed on the primary iPhone/iOS17 device. b68 presentation-only source is now written and audited: the temporary floating live-response overlay is removed, Repository-owned response state is projected inline at the end of the Native conversation, and authoritative completed `reasoning_recap` data can be shown as a collapsible historical reasoning section without exposing hidden thoughts. Exact b68 product/config source `269d9530223f2ed59dbd06c5b14dc87fce7a742f` is in Push + PR CI. CI/Artifact/Runtime are not yet accepted. Stable/Frozen Send remains No. PR #29 remains open / mergeable / unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — keep open / evidence-only / unmerged
 - Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal branch head before this checkpoint update: `face020b6ba2de0c9a9a45f7949a7d0fae3db2f7`
+- Formal branch product head before this checkpoint update: `269d9530223f2ed59dbd06c5b14dc87fce7a742f`
 - Stable merged predecessor: b38
 - Latest probe Runtime pass: b65
 - Latest production Runtime pass: b67
-- b39-b67 emitted identities are permanently reserved.
+- Current presentation candidate in CI: b68
+- b39-b68 emitted identities are permanently reserved once a valid artifact exists; b39-b67 are already reserved.
 - Future serialized `DEV-composer-parity` still owns final Composer hierarchy/drafts/attachment staging; this Work keeps only the validation send trigger while integrating response/reasoning presentation.
 
 ## Exact b67 identity
@@ -60,30 +61,56 @@ The temporary `ConversationLiveResponseOverlayView` visibly floats over the conv
 
 This is within `DEV-send-stream` because it is response/reasoning lifecycle presentation, not final Composer work or general Markdown rendering.
 
-## b68 evidence-backed presentation boundary
+## Exact b68 source — presentation-only integration
 
-Transport remains exactly b67. Do not touch the covered-Web route/selectors/SSE grammar merely to change UI.
+- Candidate: `DEV-send-stream-0.1.0-b68`
+- Version / Build: `0.1.0 (68)`
+- Exact product/config source: `269d9530223f2ed59dbd06c5b14dc87fce7a742f`
+- Product assembly parent: `745de68faf15b330c9afec0d84da855e036df91a`
+- Product-only assembly commit: `a510b31e185659b93477b2e9695fec4233176135`
+- Identity/workflow commit: `269d9530223f2ed59dbd06c5b14dc87fce7a742f`
+- Push Run / Job: `33364874077 / 99403338734` — in progress at checkpoint write
+- PR Run / Job: `33364879111 / 99403353153` — in progress at checkpoint write
+- Artifact: pending
+- Runtime: pending
+
+Audited detached range `745de68f...269d9530` changes exactly four authorized files:
+
+1. `.github/workflows/ios-foundation.yml` — b68 candidate identity only;
+2. `ChatGPTClient.xcodeproj/project.pbxproj` — Build 68 / b68 diagnostics candidate only;
+3. `ChatGPTClient/Conversation/ConversationFeature.swift` — inline live-response projection, deterministic reasoning disclosure geometry, and narrow historical recap extraction;
+4. `ChatGPTClient/RootViewController.swift` — remove floating response overlay and forward Repository live-response changes to Detail presentation.
+
+No accepted b67 covered-Web route, selector, challenge, protected Send, response SSE grammar, auth ownership, or response lifecycle ownership was intentionally changed.
+
+Evidence ladder at this checkpoint: **Code written / detached diff audited / formal source advanced / CI running / Artifact pending / Runtime pending / Stable-Frozen No.**
+
+## b68 presentation behavior encoded
 
 ### Live response
 
 - `ConversationRepository.liveResponse(for:)` remains the sole response state owner.
-- `ConversationDetailViewController` may derive inline presentation rows/cells from that snapshot; it must not own/copy a second response lifecycle.
-- remove the Root floating response overlay.
-- keep b38 deterministic message geometry/quick-navigation semantics intact.
-- live final text should incrementally grow in the conversation timeline; reasoning/tool/status are Native presentation derived from the same Repository snapshot.
-- do not invent a timer/debounce/poll loop.
+- `ConversationDetailViewController` derives presentation from that snapshot and does not own a second response lifecycle.
+- the Root floating response overlay is removed.
+- active assistant output is appended after authoritative history in the existing table and keeps the existing 1200-character presentation chunking.
+- live reasoning text and tool status derive from the same Repository snapshot under one `思考过程` disclosure.
+- reasoning is expanded while reasoning is active; after `reasoningEnded`, it is collapsed unless the user explicitly expands it.
+- final text grows inline as SSE deltas update the Repository snapshot.
+- automatic growth follows only when the table was already at the exact physical bottom (`maximumY - 0.5`); no new fuzzy threshold, timer, debounce, polling, retry, watchdog, fallback or compatibility shim was added.
+- b38 historical message geometry remains separately cached; live deltas rebuild only the live presentation geometry.
 
 ### Historical reasoning
 
-Authoritative Detail currently walks the full current branch but only projects ordinary user/assistant visible text. b68 may add one separate historical reasoning-summary field only when the branch contains the already-evidenced service-marked completed recap shape:
+A separate `reasoningSummary` field is populated only from service-marked completed recap rows matching all of:
 
 - assistant recipient `all`;
+- message status `finished_successfully`;
 - `content.content_type == reasoning_recap`;
 - non-empty `content.content`;
 - `metadata.reasoning_status == reasoning_ended`;
 - `metadata.reasoning_recap_type == collapse`.
 
-Attach that recap to the next visible assistant final message for presentation. **Never expose `assistant:thoughts` or `inline_cot_expandable_content` as historical reasoning.** The historical expandable body is the authoritative recap/status, not hidden chain-of-thought.
+The recap is attached to the next eligible visible assistant response in the same turn and is cleared if a user message is crossed. Historical reasoning is collapsed by default. `assistant:thoughts` and `inline_cot_expandable_content` remain explicitly non-presentational.
 
 ## TD-029 production authority retained
 
@@ -98,27 +125,16 @@ Attach that recap to the next visible assistant final message for presentation. 
 - `WEB_SEND_ADAPTER.md` remains the Web-rule maintenance authority;
 - `assistant:thoughts` remains non-presentational.
 
-## Batch recovery point — b68
+## Assembly / recovery evidence — b68
 
-Known baseline before product assembly:
+- Resume Guard before assembly: formal branch / PR head `745de68faf15b330c9afec0d84da855e036df91a`, actual main `d323b9eed2dda75b9986fc06e14014d3e9b365fb`, PR #29 open/mergeable/unmerged, unique Active Work.
+- tooling-only assembly attempts that failed before producing product source did not advance the formal branch.
+- clean product ref `assembly/dev-send-stream-b68-product-20260831` was emitted from exact parent `745de68f...`.
+- detached compare before formal advance proved exactly the four files listed above after candidate workflow identity was added.
+- pre-advance Guard was repeated and passed; formal `dev/send-stream-20260829` was then fast-forwarded once to `269d9530...` without force.
 
-- formal branch head: re-fetch after this checkpoint commit;
-- exact accepted product predecessor: b67 source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`;
-- actual main: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
-- PR #29 open/mergeable/unmerged;
-- only Active development checkpoint is this Work.
-
-Intended coherent write batches:
-
-1. create a tooling-only b68 assembly ref from the new formal checkpoint head;
-2. modify only the minimum Native response/history presentation surfaces justified above, plus Xcode/workflow b68 identity;
-3. audit exact diff against the checkpoint head; no transport/Web Rule Lab/auth/parser grammar changes except the narrow authoritative historical `reasoning_recap` extraction;
-4. re-check main/PR/conflicts, then move the formal branch once to the coherent b68 source;
-5. continue through Push + PR CI, Artifact/package identity verification;
-6. update runtime evidence/index/state/module/profile/plan/rules/checkpoint/PR and stop only at exact b68 iPhone/iOS17 Runtime gate.
-
-Do not touch final Composer, attachments, auth ownership/default WebKit store, b38 quick-navigation algorithm, Web selector rules, challenge logic, or b39-b67 identities.
+Do not touch final Composer, attachments, auth ownership/default WebKit store, b38 quick-navigation algorithm, Web selector rules, challenge logic, or b39-b67 identities while resolving any b68 presentation CI/runtime issue.
 
 ## Next exact action
 
-Inspect all real `ConversationMessage` construction/comparison call sites, then assemble b68 with inline Repository-owned live response presentation + safe historical reasoning-recap disclosure. No user confirmation is required before normal CI/Artifact progression.
+Read exact Push `33364874077 / 99403338734` and PR `33364879111 / 99403353153` results for source `269d9530223f2ed59dbd06c5b14dc87fce7a742f`. If either fails, fix only evidence-backed b68 presentation code. If both pass, verify the exact b68 Artifact/package identity, update project evidence/index/state/module/PR, then stop at the exact iPhone/iOS17 b68 Runtime/manual gate.

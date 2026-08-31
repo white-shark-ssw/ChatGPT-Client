@@ -1,0 +1,51 @@
+name: DEV send-stream b76 docs sync v3
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b76-docs-20260901
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve patcher
+        run: cp scripts/dev_send_stream_b76_docs_sync.py /tmp/dev_send_stream_b76_docs_sync.py
+      - name: Start exact formal docs head
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "3b253fa7ee8804b222d53df75854a0cd98811e79"
+          git checkout --detach 3b253fa7ee8804b222d53df75854a0cd98811e79
+      - name: Apply docs
+        run: python3 /tmp/dev_send_stream_b76_docs_sync.py
+      - name: Audit docs-only scope
+        run: |
+          git add -N docs/project/runtime-evidence/DEV-send-stream-b76-candidate.md
+          git diff --check
+          git diff --name-only | sort > /tmp/actual
+          printf '%s\n' \
+            docs/project/BUILD_TEST_INDEX.md \
+            docs/project/DEVELOPMENT_PLAN.md \
+            docs/project/MODULE_STATUS.md \
+            docs/project/PROJECT_SPECIFIC_RULES.md \
+            docs/project/PROJECT_STATE.md \
+            docs/project/TECHNICAL_DECISIONS.md \
+            docs/project/WEB_SEND_ADAPTER.md \
+            docs/project/current/dev/DEV-send-stream.md \
+            docs/project/runtime-evidence/DEV-send-stream-b76-candidate.md | sort > /tmp/expected
+          diff -u /tmp/expected /tmp/actual
+      - name: Commit docs
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/project
+          git commit -m 'docs: classify b76 pre-runtime candidate'
+          git push origin HEAD:refs/heads/dev/send-stream-20260829

@@ -2,105 +2,94 @@
 
 ## Status
 
-**Active — protocol discovery for the current b75 external-response defect is now complete. b67 local protected-Send Runtime and b72 tested A/B simultaneous ownership remain accepted. Exact b75 remains valid/permanently reserved but Runtime partial/rejected. Fresh visible-Web evidence proves current official Web may receive page-owned `/resume` HTTP404 JSON and then follow the still-active response through its own `stream_status` + plural `/backend-api/conversations/{conversation}` reads. The final structure probe proves that plural `messages[]` already carries the same service-message family needed for thinking preamble, tool invocation/result, reasoning recap and final-answer projection while `stream_status=IS_STREAMING`, then a finished final snapshot after `COMPLETE`. This closes the Human Web Rule Lab gate and authorizes one minimal b76 observation-only product experiment. b75 typography 26/18.2/18.2 remains visually rejected and will be increased in the same coherent candidate. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b76 is now allocated and code-written. Protocol discovery is closed. Exact b76 product/config source is `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Candidate `DEV-send-stream-0.1.0-b76`, Build 76. A guarded assembly from the exact prior checkpoint passed `git diff --check`, exact three-product-file scope audit and Xcode 16.4 Simulator build before the clean product commit was fast-forwarded into the formal PR branch; the workflow identity was then updated to b76. Formal Push/PR CI and Artifact/package identity are still pending at this checkpoint. Runtime/manual/device remains Unverified. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / unmerged at the final pre-allocation guard
+- PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal branch head before the final evidence docs: `1e41131b85a4de042d57df0c4e197cb165379810`
-- Exact b75 product/config source: `b77303b8870dc25851dbffbf38ffc153a47bbcb2`
-- Exact b75 Candidate / Build: `DEV-send-stream-0.1.0-b75` / `0.1.0 (75)`
-- Canonical b75 Artifact: `9772079468`
-- b39-b75 permanently reserved
-- Earliest next identity: `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` after one final uniqueness check
+- Exact b76 product/config source: `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`
+- Candidate / Version-Build: `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)`
+- Clean b76 product commit: `60bebc9e5b2296f6426ad264d7b57979781360b7`
+- Clean product parent/checkpoint: `dd18b5beca16af34b075295dc3fc0782c714f26b`
+- Assembly validation: `33439797547 / 99644929642` — guarded patch + `git diff --check` + exact scope + Xcode 16.4 Simulator build passed
+- Push CI: Pending
+- PR CI: Pending
+- Artifact/package identity: Pending
+- b39-b76 permanently reserved
+- Runtime/manual/real-device b76: **Unverified**
 - Stable/Frozen Send: No
 
-## Resume / identity guard
+## Identity / conflict guard
 
-The existing Work was resumed from the supplied historical transcript and repeatedly reconciled against GitHub truth. Immediately before this gate closed:
+Before allocation, PR #29 remained open, mergeable and unmerged; PR base and actual `main` both remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; no competing Active task/candidate conflict was found; b76 was unused. After allocation, PR #29 head was verified as exact `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` with the same base.
 
-- PR #29 remained open, mergeable and unmerged, base `main`, head `dev/send-stream-20260829`;
-- PR base and actual `main` were both `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
-- head matched the current checkpoint lineage;
-- no competing Active development checkpoint/candidate conflict was found;
-- b76 remained unallocated in the current task/repository evidence;
-- all takeover/probe commits remained docs-only; b75 product source was unchanged.
+The first temporary assembly run `33439592705 / 99644262927` stopped at an exact patch-match assertion before scope audit/build/commit and therefore produced no candidate. The corrected guarded assembly `33439797547 / 99644929642` passed patch application, exact scope audit and Xcode 16.4 Simulator build, then produced clean product commit `60bebc9e...` from parent `dd18b5...`. GitHub compare independently verified exactly three product files changed there. Workflow-only child `0da5a757...` gives the b76 Artifact identity, making it the exact product/config source.
 
-## Retained boundaries
+## Retained accepted boundaries
 
-- `ConversationRepository` is the sole production conversation/list/detail/recovery/response lifecycle authority.
-- `AuthSessionStore` is sole native auth/account owner; `WKWebsiteDataStore.default()` is sole persistent auth-secret authority.
-- Covered official Web is browser challenge/protected-Send/page-owned read transport only, never a second conversation/message/response store.
-- b67 local Native Send -> one protected `/backend-api/f/conversation` -> HTTP200 SSE -> Repository reasoning/tool/final -> terminal/reconcile remains accepted.
-- b72 tested A-generating + B-send/generate simultaneous-generation remains positive.
+- `ConversationRepository` remains sole production conversation/list/detail/recovery/response lifecycle authority.
+- `AuthSessionStore` remains sole native auth/account owner; `WKWebsiteDataStore.default()` remains sole persistent browser auth-secret authority.
+- Covered official Web remains browser challenge/protected-Send/page-owned read transport only, never a second conversation/message/response store.
+- b67 local Native Send -> one protected `/backend-api/f/conversation` -> HTTP200 SSE -> Repository reasoning/tool/final -> terminal/reconcile remains Runtime accepted.
+- b72 tested A-generating + B-send/generate simultaneous-generation remains Runtime positive.
 - `assistant:thoughts` and inline COT remain non-presentational.
-- No Native polling, Native resume/offset construction, WebSocket body authority, duplicate Send, retry/timer/watchdog, fallback, compatibility shim or second state owner.
+- No Native polling, Native resume/offset construction, WebSocket body authority, duplicate Send, retry/timer/watchdog, guessed fallback, compatibility shim or second state owner.
 
-## Exact b75 Runtime classification
+## Evidence that closed the protocol gate
 
-- Positive: b75 no longer creates a false Native failure merely because a matching page-owned `/resume` was observed; exact HTTP200 `text/event-stream` validation is retained.
-- Rejected: three covered-production external-adoption attempts returned page-owned `/resume` HTTP404 JSON and produced no Native live reasoning/tool/final stream.
-- Geometry: cooperative scheduling executed, but worst-case Back responsiveness remains open because the supplied run did not reproduce the former extreme case.
-- Typography: tool/reasoning/final values `26 / 18.2 / 18.2` were visibly rejected as still too tight. The next candidate must increase visible vertical rhythm while keeping reasoning/final measurement and rendering identical and retaining the established reduced-height relationship.
+Durable evidence:
 
-## Current visible-Web evidence
+- `docs/project/runtime-evidence/DEV-send-stream-b75-visible-web-reprobe.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b75-visible-web-polling-structure.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b75-plural-message-semantics.md`
 
-### Probe 1 — `/resume` 404 is current official-page behavior
+Current visible official Web itself can reproduce page-owned matching `/resume` HTTP404 JSON, then continue following the same externally active response through its own already-issued `stream_status` + plural `/backend-api/conversations/{conversation}` reads. `stream_status` moves `IS_STREAMING -> COMPLETE`; the plural response is a rolling/paged `messages[]` window, not singular Detail `mapping` and not a monotonic-count cursor.
 
-`docs/project/runtime-evidence/DEV-send-stream-b75-visible-web-reprobe.md`
+The final structure probe proves entries after the latest user service message carry the already-evidenced service-message family needed for visible thinking preambles, assistant/non-all tool invocations, exact-parent tool results, hidden thoughts/inline COT, reasoning recap/end and final assistant text. While streaming, final assistant may be `status=in_progress`; after `COMPLETE`, the final service message is `finished_successfully`, `end_turn=true`, with completed body.
 
-Visible official Web independently reproduced:
+## Exact b76 code scope
 
-`stream_status 200 -> matching page-owned {conversation_id,offset} /resume -> 404 JSON -> repeated page-owned stream_status + plural conversation GET`
+GitHub compare from `dd18b5...` to clean product commit `60bebc9e...` is exactly:
 
-No later HTTP200 SSE was observed in that capture.
+- `ChatGPTClient/RootViewController.swift`
+- `ChatGPTClient/Conversation/ConversationFeature.swift`
+- `ChatGPTClient.xcodeproj/project.pbxproj`
 
-### Probe 2 — page-owned plural snapshots advance while streaming
+Exact source `0da5a757...` adds only `.github/workflows/ios-foundation.yml` to identify the b76 Artifact.
 
-`docs/project/runtime-evidence/DEV-send-stream-b75-visible-web-polling-structure.md`
+### Covered page observation
 
-- `stream_status` is `{status}` and moves `IS_STREAMING -> COMPLETE`.
-- plural conversation responses use top-level `messages[]`, not singular `mapping`.
-- page-owned snapshots change while generation is active.
-- WebSocket remains structural-only and unused.
+- Observes only the page's already-issued matching `GET /backend-api/conversation/{id}/stream_status` and `GET /backend-api/conversations/{id}` responses; no Native request/cadence is created.
+- On page-owned `IS_STREAMING`, starts one Repository external live-response generation.
+- On matching plural response, validates conversation identity, finds the latest user entry and forwards only following service messages as the current-response segment.
+- Each received page-owned snapshot is projected atomically into the existing Repository live runtime rather than appended as duplicate deltas.
+- Existing exact-parent tool association and GitHub tool-detail rule are retained; thoughts/inline COT stay hidden.
+- Page-owned `/resume` remains strictly accepted only when HTTP200 `text/event-stream`; current external 404 is informational and lets the evidenced page-owned read path continue.
+- WebSocket bodies remain unused.
+- After page-owned `COMPLETE`, the next matching plural snapshot is projected, then terminal/reconcile occurs once.
 
-### Probe 3 — plural `messages[]` semantics are sufficient
+### Typography
 
-`docs/project/runtime-evidence/DEV-send-stream-b75-plural-message-semantics.md`
+- Tool line height changes `26 -> 30`.
+- Existing compact relationship remains `toolLineHeight * 0.70`, so reasoning/final fixed line height becomes `21.0`.
+- Reasoning/final measurement and rendering continue to use the same paragraph style.
+- This is a **candidate visual correction only**; it is not Runtime accepted until the user tests b76.
 
-The final structure-only capture proves the plural linear entries are the same service-message family already understood by the current singular parser. During `IS_STREAMING` the active-response segment exposes:
+## Evidence classification
 
-- visible thinking preamble: assistant/all/text + `is_thinking_preamble_message=true`;
-- tool invocation: assistant/non-all/code + completed invocation metadata including connector payload and parent identity;
-- exact-parent tool result with invoked-resource metadata;
-- hidden thoughts / inline COT that remain non-presentational;
-- `reasoning_recap` with `reasoning_ended` + `collapse`;
-- final assistant text with `status=in_progress` while active;
-- after `COMPLETE`, the corresponding final assistant is `finished_successfully`, `end_turn=true`, with completed final text.
-
-The plural response is a paged/rolling window: observed counts changed `125 -> 110 -> 116 -> 120 -> 124`; **message count is not a monotonic cursor or response identity**. The active segment must instead be bounded by the latest user service message and the following service messages.
-
-## b76 authorized product rule
-
-A single b76 experiment is now authorized, subject to the final uniqueness guard:
-
-1. Extend the existing covered-page fetch observer to clone only the page's **already-issued** matching `stream_status` and plural-conversation responses.
-2. Native must never initiate or schedule those requests.
-3. Validate target conversation identity and derive only the service-message segment after the latest user entry.
-4. Feed each page-owned snapshot into the existing Repository live-response runtime as an **atomic deterministic projection**, not append-only duplicate deltas and not a second message store.
-5. Reuse the already accepted service-message rules for thinking preamble, exact-parent tools, hidden thoughts, reasoning recap and final text.
-6. Keep current `/resume` HTTP200-SSE support if the page actually produces it; keep strict 200/SSE validation. A 404 during external observation is informational, not a Native response failure, because the page-owned plural read path is now current evidenced behavior.
-7. When page-owned `stream_status` becomes `COMPLETE`, consume the following plural snapshot, then terminal/reconcile once.
-8. Do not parse WebSocket body content.
-9. In the same candidate, increase the rejected tool/reasoning/final vertical rhythm while preserving the reduced reasoning/final relationship and shared measurement/rendering paragraph style.
-
-## Candidate allocation
-
-Protocol evidence is sufficient; b76 may now be allocated once after the final exact uniqueness check. Exact identity, source SHA, CI, Artifact and package hash must be written here immediately after allocation/production.
+- Code written: **Yes — exact b76 source `0da5a757...`**
+- Static/exact-scope checks: **Passed**
+- Xcode 16.4 Simulator build: **Passed in assembly run `33439797547 / 99644929642`**
+- Formal Push CI: **Pending**
+- Formal PR CI: **Pending**
+- Artifact produced: **Pending**
+- Package identity verified: **Pending**
+- Runtime/manual/real-device: **No / Unverified**
+- Stable/Frozen Send: **No**
 
 ## Exact next action
 
-**AI-owned implementation gate:** final b76 uniqueness guard -> allocate `DEV-send-stream-0.1.0-b76` / Build 76 exactly once -> implement the observation-only plural snapshot bridge + vertical-rhythm correction -> `git diff --check` + Xcode 16.4 Simulator build -> CI/Artifact/package verification -> update durable project docs/checkpoint -> hand exact IPA to the user for the real-device Runtime gate.
+AI-owned: verify formal Push + PR CI for exact `0da5a757...`, obtain canonical Push Artifact, independently verify Build76/Candidate/source marker/package hashes, update `WEB_SEND_ADAPTER.md`, `BUILD_TEST_INDEX.md`, project/module state and PR metadata, then provide the exact b76 IPA.
 
-The next Human Gate is the exact b76 device test. Do not claim external adoption, visual spacing, worst-case Back behavior or Stable/Frozen status before that Runtime evidence.
+Next Human Gate: exact b76 iPhone/iOS17 Runtime. It must test cross-platform active-response adoption, local b67 Send regression, b72-style concurrent ownership regression, visual line spacing, and—if reproduced—worst-case left-edge Back responsiveness. CI/Artifact success must not be described as Runtime success.

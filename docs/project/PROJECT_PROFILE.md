@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-31 through exact b66 Runtime and exact b67 Code/CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, b68 superseded presentation Artifact, and exact b69 Code/CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -30,7 +30,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Native navigation shell / production covered-Send orchestration: `AppDelegate.swift`, `RootViewController.swift`.
 - Persistent auth-secret authority: default persistent `WKWebsiteDataStore` only.
 - Native auth/account authority: `Authentication/AuthSessionStore.swift`.
-- Production native conversation/list/read/recovery/**response lifecycle** authority: one `ConversationRepository` in `Conversation/ConversationFeature.swift`; current b66/b67 response runtime extension is still Repository-owned even though integration code presently lives with the first production bridge.
+- Production native conversation/list/read/recovery/**response lifecycle** authority: one `ConversationRepository` in `Conversation/ConversationFeature.swift`; current b69 ordered response runtime extension is still Repository-owned even though integration code presently lives with the first production bridge.
 - Conversation-list persistence: `ConversationListCacheStore`, storage-only behind Repository authority.
 - Native conversation presentation: `ConversationDetailViewController`.
 - Stable long-message geometry: `ConversationMessagePresentationProjection` + `ConversationMessageCell`, exact b38.
@@ -82,26 +82,11 @@ b66 implemented the first existing-conversation TD-029 production bridge + Repos
 - User independently confirmed the official ChatGPT app had already received the assistant reply. Therefore the protected Send reached/completed server-side, while the Native production wrapper lost the request before obtaining HTTP Response.
 - Source correlation identified a local Swift->JS duplicate-submit race, not an official Web selector/SSE rule change. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b66-runtime.md`.
 
-## Exact b67 current Candidate
+## Exact b69 current Candidate
 
-b67 is the smallest correction for the b66 race:
+b69 implements the user-supplied official-app chronological requirement with one Repository-owned ordered response timeline. Reasoning/tool items keep event order; tool completion updates in place; reasoning after a tool becomes a new segment; exact `reasoning_ended` still transitions to separate incremental final; authoritative Detail preserves supported order; hidden thoughts remain prohibited; b38 deterministic/manual geometry is retained.
 
-- `isBusy` now uses existing `activeEvents != nil` lifecycle;
-- `pendingSend` is cleared immediately before issuing the one JS submit evaluation;
-- no Web selector/parser/route/Repository/Lab behavior changed and no retry/resend/timer/polling/watchdog/fallback was added.
-
-Exact identity:
-
-- Candidate `DEV-send-stream-0.1.0-b67`, `0.1.0 (67)`;
-- source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`; tree `dcd492d142bf0035208b8466ff02b6ae7209193c`;
-- Push `33338865423 / 99330666394` — success;
-- PR `33338868896 / 99330678769` — success;
-- Push Artifact `9739891865`;
-- ZIP `sha256:7e41508c76556466ab180009a30f36b5c12cbc731197d4213387698ed54d78c2`;
-- IPA `sha256:3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`;
-- package Release / source marker `52ab38f16fe9` / iOS14 / `[1,2]` / arm64.
-
-Evidence ladder: Code written / exact diff audited / Push CI / PR CI / Artifact / package identity verified / **Runtime pending** / Stable-Frozen No.
+Identity: Candidate `DEV-send-stream-0.1.0-b69`, `0.1.0 (69)`, source `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`, Push `33366226539/99407331552`, PR `33366229125/99407340011`, Artifact `9748400171`, ZIP `b1d91179...232f1`, IPA `0c06256d...3b0aa`, package source marker `5e9c21834830`, iOS14 minimum. Evidence: Code/diff/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
 
 ## Current product interaction target
 
@@ -113,11 +98,11 @@ Tool phases remain optional. `assistant:thoughts` is never presented. General Ma
 
 ## Current next Candidate boundary
 
-b39-b67 are permanently reserved. **Do not allocate b68 before exact b67 iPhone/iOS17 Runtime evidence.** The first b67 gate is one clean existing-conversation Send proving one submit -> one `sendObserved` -> HTTP200 SSE -> Native stream -> terminal. If that passes, continue to the next evidenced Phase 9 gate without inventing another correction Candidate.
+b39-b69 are permanently reserved. **Do not allocate b70 before exact b69 iPhone/iOS17 Runtime evidence.** The gate must naturally exercise at least `reasoning -> tool -> reasoning -> tool -> final` and verify chronological live/history presentation without modifying accepted b67 transport unless concrete Runtime evidence demands it.
 
 ## Remaining Unknown / Unverified
 
-Exact b67 production Runtime, new-chat authoritative identity timing, server Stop mechanism, simultaneous cross-conversation generation, connector detail beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b69 ordered-timeline Runtime, new-chat authoritative identity timing, server Stop mechanism, simultaneous cross-conversation generation, connector detail beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 

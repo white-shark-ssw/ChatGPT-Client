@@ -61,8 +61,8 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Phase 9 extension**: b44 proved that an immediate Sync after Web Send may expose the user message while assistant output already visible in Web is still absent from native Detail; a later Sync can expose it. This does not authorize automatic polling/timer retry because no readiness signal or stable delay was evidenced.
 
 ### TD-014 — Reasoning UI includes expandable user-visible detail and two-pulse transition haptic
-- **Status**: Confirmed requirement; diagnostic reasoning lifecycle evidenced through b65; production owner integration pending
-- **Decision**: When the production `ConversationRepository` response owner receives explicitly user-visible reasoning detail/status from the accepted same-response stream, use subdued active reasoning/shimmer, explicit expand/collapse visible detail and two short haptic pulses on real-time reasoning->final transition. Never expose hidden chain-of-thought. `assistant:thoughts` remains non-presentational.
+- **Status**: Confirmed requirement; production transport accepted b67; ordered production presentation implemented b69, Runtime pending
+- **Decision**: When `ConversationRepository` receives explicitly user-visible reasoning/tool events, preserve chronological order inside one assistant turn (`reasoning -> tool -> reasoning -> tool -> ... -> final`). Tool completion updates the existing tool segment in place; later reasoning remains below the preceding tool. Keep explicit expand/collapse and the accepted reasoning->final transition behavior. Never expose hidden chain-of-thought; `assistant:thoughts` / `inline_cot_expandable_content` remain non-presentational. This ordering is grounded by the user-supplied official ChatGPT recording and b69 implements it without a second response owner.
 
 ### TD-015 — Production detail diagnostics use privacy-safe hashed identity + list position
 - **Status**: Confirmed

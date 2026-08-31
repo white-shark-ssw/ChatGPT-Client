@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-31 through exact b66 iPhone/iOS17 Runtime failure and exact b67 Code/CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active. Stable/Frozen Send remains No._
+_Last updated: 2026-08-31 through accepted b67 production transport Runtime, b68 superseded presentation Artifact, and exact b69 Code/CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b69 human Runtime gate. Stable/Frozen Send remains No._
 
 ## Current accepted merged baseline
 
@@ -10,20 +10,15 @@ Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-co
 
 `DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged and evidence-only. Current actual `main` last verified this cycle is `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; final target-main synchronization is still required before merge.
 
-Latest exact product Candidate is **`DEV-send-stream-0.1.0-b67` / `0.1.0 (67)`**:
+Latest exact product Candidate is **`DEV-send-stream-0.1.0-b69` / `0.1.0 (69)`**:
 
-- exact product/config source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`;
-- product tree `dcd492d142bf0035208b8466ff02b6ae7209193c`;
-- Push Run / Job `33338865423 / 99330666394` — success;
-- PR Run / Job `33338868896 / 99330678769` — success;
-- Push Artifact `9739891865`;
-- Artifact ZIP `sha256:7e41508c76556466ab180009a30f36b5c12cbc731197d4213387698ed54d78c2`;
-- IPA `sha256:3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`;
-- package Release / `0.1.0 (67)` / Candidate b67 / source marker `52ab38f16fe9` / minimum iOS14 / UIDeviceFamily `[1,2]` / arm64.
+- source `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`;
+- Push `33366226539 / 99407331552` and PR `33366229125 / 99407340011` — success;
+- Artifact `9748400171`; ZIP `sha256:b1d91179c47822a7a42bf5405ef4bbd7240b97ddff58743a8a12e5f16fb232f1`;
+- IPA `sha256:0c06256dc90aed86c706f8c72950528f61afa7f7fcdb504b2604d40befe3b0aa`;
+- package `0.1.0 (69)` / Candidate b69 / source `5e9c21834830` / minimum iOS14.
 
-Evidence ladder for b67: **Code written / exact diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
-
-b39-b67 emitted identities are permanently reserved. Do not allocate b68 before exact b67 Runtime produces a concrete next implementation/evidence need.
+b69 replaces b68's flattened live reasoning/tool representation with one Repository-owned ordered timeline matching `reasoning -> tool -> reasoning -> tool -> final`. Covered-Web transport remains the accepted b67 path. Evidence ladder: **Code / detached diff / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b69 are reserved; do not allocate b70 before concrete b69 Runtime evidence.
 
 ## b65 accepted probe predecessor
 
@@ -93,8 +88,8 @@ Final Composer hierarchy/dynamic input/attachment staging belongs future seriali
 
 ## Current exact Runtime gate
 
-Install exact b67 on the primary iPhone/iOS17 device and run one clean existing-conversation validation Send. Expected evidence is **one** `submit_result=submitted`, **one** `send_observed`, then `coveredExecutor.sendResponse` HTTP200 `text/event-stream`, nonzero Native response updates and terminal. Export diagnostics after terminal. One clean run is sufficient initially.
+Install exact b69 on the primary iPhone/iOS17 device and run one request naturally yielding at least `reasoning A -> tool 1 -> reasoning B -> tool 2 -> final`. Verify chronological live ordering, in-place tool completion, later reasoning below the preceding tool, exact reasoning-end/final transition, authoritative historical preservation, hidden-thought prohibition and no floating overlay. Export diagnostics after terminal.
 
 ## Remaining Unknown / Unverified
 
-Exact b67 production Runtime, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b69 ordered-timeline Runtime, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.

@@ -2,20 +2,17 @@
 
 ## Status
 
-**Active — exact b67 production existing-conversation Send/stream Runtime passed on the primary iPhone/iOS17 device. Exact b68 inline-presentation source passed Push + PR CI and produced a valid reserved Artifact, but before its Runtime gate the user supplied a current official ChatGPT recording that establishes a more precise required interaction: one assistant turn must preserve the event timeline `思考 -> 工具 -> 再思考 -> 再工具 ... -> final`, not flatten all reasoning first and all tools afterward. Current b68 source demonstrably flattens `reasoningText + tools[]`, so b68 is superseded for presentation without invalidating its package identity. b69 is authorized for the smallest Repository-owned ordered response-timeline correction. Stable/Frozen Send remains No. PR #29 stays open / mergeable / unmerged.**
+**Active — exact b69 ordered reasoning/tool timeline Candidate is Code/CI/Artifact/package verified and is now at the human iPhone/iOS17 Runtime gate. b67 remains the accepted production existing-conversation transport Runtime predecessor. b68 is a valid reserved Artifact whose flattened presentation was superseded before Runtime by the user-supplied official-app recording. b69 preserves one assistant-turn chronology `思考 -> 工具 -> 再思考 -> 再工具 ... -> final` in one Repository-owned ordered timeline while keeping covered-Web transport/SSE/auth boundaries unchanged. Stable/Frozen Send remains No. PR #29 stays open / mergeable / unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — keep open / evidence-only / unmerged
-- Current formal branch head before this checkpoint write: `b47242cc7d856eefda9a6fdfaf1584efca380fb5`
+- Exact b69 product/config source: `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`
 - Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
 - Stable merged predecessor: b38
-- Latest probe Runtime pass: b65
-- Latest production Runtime pass: b67
-- Latest emitted Candidate: b68 — CI/Artifact valid, Runtime not accepted
-- Next authorized Candidate: b69 — ordered reasoning/tool timeline
-- b39-b68 identities are permanently reserved.
-- Future serialized `DEV-composer-parity` still owns final Composer hierarchy/drafts/attachment staging; this Work retains only the validation send trigger while response/reasoning/tool semantics are accepted.
+- Latest accepted production Runtime pass: b67
+- Latest emitted Candidate: b69 — CI/Artifact/package verified; Runtime pending
+- b39-b69 identities are permanently reserved.
 
 ## Exact b67 accepted production transport identity
 
@@ -162,13 +159,30 @@ Intended coherent write batches:
 
 Recovery must not touch or rewrite b68 source/artifact identity, accepted b67 transport logic, final Composer/attachments, auth/default WebKit ownership, b38 quick-navigation algorithm, or Web selector/challenge/SSE grammar.
 
+## Exact b69 identity — ordered reasoning/tool timeline Runtime candidate
+
+- Candidate: `DEV-send-stream-0.1.0-b69`; Version / Build: `0.1.0 (69)`.
+- Exact product/config source: `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`; product commit `905ac2633a408cf571d25ccfe427bdd1a9a27f34`; checkpoint base `33022dc8c9fdcb17f5b462a2766ac86238417c58`.
+- Push Run / Job: `33366226539 / 99407331552` — success; PR Run / Job: `33366229125 / 99407340011` — success.
+- Push Artifact: `9748400171`; ZIP `sha256:b1d91179c47822a7a42bf5405ef4bbd7240b97ddff58743a8a12e5f16fb232f1`.
+- IPA: `ChatGPTClient-0.1.0-b69-dev-send-stream.ipa`; IPA SHA `0c06256dc90aed86c706f8c72950528f61afa7f7fcdb504b2604d40befe3b0aa`.
+- Independently inspected built `Info.plist`: Release `0.1.0`, Build `69`, Candidate b69, `DiagnosticsSourceCommit=5e9c21834830`, minimum iOS14.
+- Compile note: one non-blocking unused local `index` warning; valid Artifact exists, so b69 is permanently reserved and is not rewritten merely for that warning.
+- Runtime: pending on primary iPhone/iOS17 device.
+
+b69 keeps one Repository-owned ordered response timeline. First tool activity appends at its event position; completion updates that item in place by slot; reasoning after a tool creates a new reasoning segment; exact `reasoning_ended` still owns reasoning->final; final text stays separate/incremental. Authoritative Detail reconstructs supported visible thinking/tool order while `assistant:thoughts` / `inline_cot_expandable_content` remain hidden. Covered-Web route/selectors/challenge/protected-Send/SSE grammar were not intentionally modified.
+
+### Exact b69 Runtime gate
+
+Install exact b69 and run one real request that naturally yields at least `reasoning A -> tool 1 -> reasoning B -> tool 2 -> final`. Accept only if live ordering is chronological, tool completion updates in place, later reasoning stays below the preceding tool, reasoning-end collapses into incremental final, authoritative reconciliation preserves the supported historical order, hidden thoughts stay absent, and the old floating overlay does not return. Export diagnostics after terminal.
+
 ## Evidence ladder now
 
-- b67: Runtime passed for existing-conversation production Send/stream/terminal/reconcile scope.
-- b68: Code written / diff audited / Push CI passed / PR CI passed / Artifact produced / package identity verified / Runtime not accepted / presentation superseded by newer explicit official-flow requirement.
-- b69: authorized, not yet written.
+- b67: production existing-conversation Send/stream/terminal/reconcile Runtime passed.
+- b68: Code/diff/Push+PR CI/Artifact/package verified; Runtime not accepted; flattened presentation superseded by explicit official-flow evidence.
+- b69: Code written / detached diff audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending.
 - Stable/Frozen Send: No.
 
 ## Next exact action
 
-Create the b69 tooling assembly ref from this checkpoint head, implement one Repository-owned ordered reasoning/tool timeline using only already-emitted event ordering, preserve b38 deterministic geometry and hidden-thought prohibition, audit the detached diff, then proceed autonomously through b69 CI/Artifact/package verification before asking for the human real-device Runtime gate.
+Human-only Runtime gate: install exact `DEV-send-stream-0.1.0-b69` / Build69 / source marker `5e9c21834830` on the primary iPhone/iOS17 device, clear diagnostics, execute one real request that naturally yields at least `reasoning -> tool -> reasoning -> tool -> final`, verify chronological interleaving plus in-place tool completion and post-terminal historical preservation, then export diagnostics. Do not allocate b70 unless that exact Runtime produces a concrete defect/evidence need.

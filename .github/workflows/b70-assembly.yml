@@ -25,6 +25,15 @@ jobs:
       - name: Preserve tooling patcher and restore clean parent
         run: |
           cp scripts/b70_assembly.py /tmp/b70_assembly.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/b70_assembly.py')
+          text = path.read_text()
+          old = '''pbx = "ChatGPTClient.xcodeproj/project.pbxproj"\nreplace_once(pbx, "CURRENT_PROJECT_VERSION = 69;", "CURRENT_PROJECT_VERSION = 70;")\nreplace_once(pbx, "CURRENT_PROJECT_VERSION = 69;", "CURRENT_PROJECT_VERSION = 70;")\nreplace_once(pbx, 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b69";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b70";')\nreplace_once(pbx, 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b69";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b70";')\n'''
+          new = '''pbx = "ChatGPTClient.xcodeproj/project.pbxproj"\npbx_text = read(pbx)\nif pbx_text.count("CURRENT_PROJECT_VERSION = 69;") != 2: raise SystemExit("pbx build anchor count mismatch")\nif pbx_text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b69";') != 2: raise SystemExit("pbx candidate anchor count mismatch")\npbx_text = pbx_text.replace("CURRENT_PROJECT_VERSION = 69;", "CURRENT_PROJECT_VERSION = 70;")\npbx_text = pbx_text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b69";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b70";')\nwrite(pbx, pbx_text)\n'''
+          if text.count(old) != 1: raise SystemExit('temporary pbx patcher anchor mismatch')
+          path.write_text(text.replace(old, new, 1))
+          PY
           git checkout -B assembly-product/dev-send-stream-b70-20260831 5c379b3d994b28cb0ba5a3c793e4efa193a003a1
           test "$(git rev-parse HEAD)" = "5c379b3d994b28cb0ba5a3c793e4efa193a003a1"
 

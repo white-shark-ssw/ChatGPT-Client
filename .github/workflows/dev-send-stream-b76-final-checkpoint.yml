@@ -1,0 +1,44 @@
+name: DEV send-stream b76 final checkpoint
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b76-final-checkpoint-20260901
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Start exact docs head and patch checkpoint
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "406ad21637b2fe1feb19ff850d4d54d3a1d4a10c"
+          git checkout --detach 406ad21637b2fe1feb19ff850d4d54d3a1d4a10c
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/project/current/dev/DEV-send-stream.md')
+          s = p.read_text()
+          old = "**Active — b76 is now allocated and code-written. Protocol discovery is closed. Exact b76 product/config source is `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Candidate `DEV-send-stream-0.1.0-b76`, Build 76. A guarded assembly from the exact prior checkpoint passed `git diff --check`, exact three-product-file scope audit and Xcode 16.4 Simulator build before the clean product commit was fast-forwarded into the formal PR branch; the workflow identity was then updated to b76. Formal Push/PR CI and Artifact/package identity are still pending at this checkpoint. Runtime/manual/device remains Unverified. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**"
+          new = "**Active — exact b76 is fully assembled through Code/static/Simulator/Push+PR CI/Artifact/package verification and is now at the Human real-device Runtime gate. Exact product/config source is `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Candidate `DEV-send-stream-0.1.0-b76`, Build 76. Canonical Artifact `9775920927` and IPA identity are independently verified. Current formal branch head after docs-only synchronization is `406ad21637b2fe1feb19ff850d4d54d3a1d4a10c`; this does not redefine the tested product source. Runtime/manual/device remains Unverified, so external adoption, 30/21/21 visual spacing, worst-case Back behavior and Stable/Frozen status are not accepted yet. PR #29 stays open/unmerged and is titled `DEV-send-stream: b76 page-owned live snapshot Runtime gate`.**"
+          if s.count(old) != 1: raise SystemExit('status paragraph mismatch')
+          s = s.replace(old, new, 1)
+          old2 = "Before allocation, PR #29 remained open, mergeable and unmerged; PR base and actual `main` both remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; no competing Active task/candidate conflict was found; b76 was unused. After allocation, PR #29 head was verified as exact `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` with the same base."
+          new2 = "Before allocation, PR #29 remained open, mergeable and unmerged; PR base and actual `main` both remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; no competing Active task/candidate conflict was found; b76 was unused. The formal product/config event head was exact `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` with that same base; all later formal descendants through current `406ad21637b2fe1feb19ff850d4d54d3a1d4a10c` are docs-only and do not redefine b76. PR #29 remains open/mergeable/unmerged and its metadata is synchronized to the b76 Runtime gate."
+          if s.count(old2) != 1: raise SystemExit('identity paragraph mismatch')
+          p.write_text(s.replace(old2, new2, 1))
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = "docs/project/current/dev/DEV-send-stream.md"
+      - name: Commit checkpoint
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/project/current/dev/DEV-send-stream.md
+          git commit -m 'docs: finalize b76 runtime handoff'
+          git push origin HEAD:refs/heads/dev/send-stream-20260829

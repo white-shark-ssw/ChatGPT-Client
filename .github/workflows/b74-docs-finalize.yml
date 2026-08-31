@@ -22,6 +22,14 @@ jobs:
       - name: Preserve sync script and reset to exact checkpoint head
         run: |
           cp scripts/b74_docs_finalize.py /tmp/b74_docs_finalize.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('/tmp/b74_docs_finalize.py')
+          s = p.read_text()
+          s = s.replace("'- Native application shell / production covered-Send orchestration:'", "'- Native navigation shell / production covered-Send orchestration:'", 1)
+          s = s.replace("'- Native application shell / production covered-Send/continuation orchestration: `AppDelegate.swift`, `RootViewController.swift`.'", "'- Native navigation shell / production covered-Send/continuation orchestration: `AppDelegate.swift`, `RootViewController.swift`.'", 1)
+          p.write_text(s)
+          PY
           git reset --hard a6671af8a6168be88ebe15e69dc37c2ed31a5f72
 
       - name: Apply b74 durable docs sync

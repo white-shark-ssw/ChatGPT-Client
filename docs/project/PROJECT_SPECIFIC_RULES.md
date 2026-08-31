@@ -28,6 +28,7 @@ Core production invariants:
 - Accepted composer authority is `#prompt-textarea` or explicit `[contenteditable="true"][role="textbox"]`; generic textarea remains rejected.
 - A JavaScript `submitted` return is not success proof. Real `sendObserved` + HTTP/SSE lifecycle is required.
 - Current tested protected route is official page-owned `POST /backend-api/f/conversation` -> HTTP200 `text/event-stream`.
+- Current cross-device continuation evidence additionally authorizes **observation only** of the official page's own matching `POST /backend-api/f/conversation/resume` `{conversation_id, offset}` -> HTTP200 SSE. Native must not construct resume/offset, poll `stream_status`, replay browser headers, use the user WebSocket as response-body authority, or issue a second Send.
 - Unknown/new Web/SSE shapes stay observable and must not trigger guessed state transitions.
 - Do not accumulate speculative selector fallbacks, retry loops, timers, polling or watchdogs. When Web changes, probe the current page and replace/update the rule from evidence.
 - A local production orchestration bug is **not** a Web-rule change merely because the page request fails. b66 proves this distinction: the service accepted the Send while duplicate Swift->JS submit orchestration caused the production wrapper to lose its Response before `sendResponse`.
@@ -119,6 +120,14 @@ Rules:
 - response state must survive A hidden while B is selected.
 
 b66 memory-warning evidence occurred only after its response had already failed; `resident.evictionSkipped` confirmed the tested protected resident was not evicted, but this is not full background/memory-warning acceptance.
+
+## External active-response adoption
+
+- Entering a conversation may expose an active response started by another platform only when the covered official page itself issues a `/backend-api/f/conversation/resume` whose request `conversation_id` exactly matches the executor's authoritative target.
+- The page remains continuation-transport authority; Native observes a cloned SSE response and feeds accepted events into one existing `ConversationRepository` response generation.
+- External adoption does not invent an optimistic prompt/user bubble; authoritative user history remains Repository Detail data.
+- Native never chooses/derives offset, constructs the resume request, polls `stream_status`, replays browser/session headers, resends the prompt, or treats WebSocket frames as message-body authority without separate evidence.
+- b74 is the first packaged production candidate for this boundary; Runtime remains pending.
 
 ## New-chat identity handoff
 
@@ -217,11 +226,12 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - once an Artifact identity is emitted, corrected product code never reuses it;
 - built `Info.plist` version/build/Candidate/source marker + IPA SHA are package identity authority;
 - `scripts/build_ipa.sh` must fail on identity mismatch;
-- b24-b73 emitted identities are permanently reserved;
+- b24-b74 emitted identities are permanently reserved;
 - exact b66 package authority remains `0.1.0 (66)`, source `9ce228ad880eaf81fc23ba26fe14f4d2bf524acb`, Artifact `9739572172`, IPA `7f62e875bbd75d54e2d7bf76340f277d02f03e695d464d818fa5cab664c630e9`; Runtime rejected its first production bridge but does not invalidate package identity;
 - exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; production transport Runtime accepted for the recorded scope;
 - exact b73 package authority is `0.1.0 (73)`, source `4edda892a04a1a07f4a07e74b135b969ea82193e`, Artifact `9764247402`, IPA `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`; Runtime presentation pending;
-- do not allocate b74 before exact b73 Runtime supplies a concrete need.
+- exact b74 package authority is `0.1.0 (74)`, source `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d`, Artifact `9768668727`, ZIP `6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`, IPA `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`; Code/CI/Artifact/package verified, Runtime pending;
+- do not allocate b75 unless exact b74 Runtime supplies a concrete defect or new evidence-backed requirement.
 
 ## Message rendering / attachment boundary
 

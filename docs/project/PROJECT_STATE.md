@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-31 through accepted b67 production transport Runtime, positive b72 tested cross-conversation simultaneous-generation Runtime, b72 presentation rejection, and exact b73 Code/scope/Simulator/Push+PR CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b73 human Runtime gate. Stable/Frozen Send remains No._
+_Last updated: 2026-09-01 through accepted b67 production transport Runtime, positive b72 tested cross-conversation simultaneous-generation Runtime, exact b73 real-device defect evidence, and exact b74 Code/scope/Simulator/Push+PR CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b74 human Runtime gate. Stable/Frozen Send remains No._
 
 ## Current accepted merged baseline
 
@@ -10,16 +10,16 @@ Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-co
 
 `DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged and evidence-only. Current actual `main` last verified this cycle is `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; final target-main synchronization is still required before merge.
 
-Latest exact product Candidate is **`DEV-send-stream-0.1.0-b73` / `0.1.0 (73)`**:
+Latest exact product Candidate is **`DEV-send-stream-0.1.0-b74` / `0.1.0 (74)`**:
 
-- exact product/config source `4edda892a04a1a07f4a07e74b135b969ea82193e`; product code commit `0e3eb6cad4cc56e8c2bcb946724d7cf1d4d55701`;
-- assembly `33408291419` — exact presentation/config scope audit, `git diff --check` and Xcode 16.4 iOS Simulator compile passed after the earlier tooling-only assertion failure `33408115270`;
-- Push `33408695143 / 99542593642` and PR `33408698697 / 99542605699` — success;
-- Artifact `9764247402`; ZIP `sha256:718c2f4fd0fe3521f7469f5996f6944960ffdaa3b2829c0c17e340ebd41dd206`;
-- IPA `sha256:8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`;
-- independently unpacked package `0.1.0 (73)` / Candidate b73 / source `4edda892a04a` / Release / minimum iOS14 / arm64.
+- exact product/config source `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d`;
+- final clean-reassembly `33420128454 / 99580192017` passed exact four-file replay/content equality, scope/invariant audit, `git diff --check` and Xcode 16.4 iOS Simulator compile;
+- Push `33420408779 / 99581104920` and PR `33420412792 / 99581117817` — success on exact source;
+- canonical Push Artifact `9768668727`; ZIP `sha256:6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`;
+- IPA `sha256:07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`;
+- independently unpacked package `0.1.0 (74)` / Candidate b74 / source `50dd61b8b31c` / Release / minimum iOS14 / arm64 / iPhone+iPad family.
 
-b72 exact iPhone/iOS17 Runtime positively supports the tested A-generating + B-send/generate path and single-digit-ms incremental reasoning-disclosure toggles, but rejects the prior dense main reasoning/tool rendering and default-collapsed live reasoning. b73 changes only `ConversationFeature.swift` plus build/workflow identity: meaningful service-authored tool titles remain in the main timeline, generic `工具调用` rows stay out of the main surface but remain available in the tools-only sheet, reasoning prose uses body-scale primary typography with looser tool rhythm, live reasoning auto-opens once and exact `reasoning_ended` auto-collapses once without repeatedly overriding later manual user state. `RootViewController.swift` is unchanged from b72. Evidence ladder: **Code / exact scope / Simulator compile / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b73 are permanently reserved.
+b73 real-device evidence localized long resident re-entry delay to repeated historical geometry rebuild, retained the need for more main tool-row spacing, and exposed the missing external active-response lifecycle. A current Web Rule Lab capture proved official Web uses page-owned matching `POST /backend-api/f/conversation/resume` `{conversation_id, offset}` -> HTTP200 SSE after `stream_status` when entering an externally active conversation. b74 observes only that page-owned matching resume stream, never constructs the request/offset or polls, and feeds it into the existing Repository response runtime. b74 also reuses derived b38 geometry only for unchanged resident presentation identity and increases main tool rhythm. Evidence ladder: **Code / exact scope / Simulator compile / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b74 are permanently reserved.
 
 ## b65 accepted probe predecessor
 
@@ -89,8 +89,8 @@ Final Composer hierarchy/dynamic input/attachment staging belongs future seriali
 
 ## Current exact Runtime gate
 
-Install exact b73 Artifact `9764247402` / IPA SHA `8285ba9d...84113` on the primary iPhone/iOS17 device. Verify Candidate/source marker, then confirm: first visible live reasoning/tool content defaults expanded; a manual collapse while still reasoning is not reopened by later deltas; an untouched expanded run auto-collapses once on exact reasoning end; later manual disclosure state is not overridden by final deltas; main inline tools are concise meaningful service-authored actions with looser row rhythm and body-scale reasoning prose; generic calls remain accessible in the ordered tools-only/input-only sheet; b72 A/B simultaneous-generation behavior, hidden-thought exclusion and b38 geometry/quick navigation do not regress.
+Install exact b74 Artifact `9768668727` / IPA SHA `07c999fd...285da` on the primary iPhone/iOS17 device. Confirm Candidate/source marker, then verify: repeated re-entry into the previously slow long resident materially removes the ~1.4s geometry rebuild stall without breaking geometry/quick navigation; meaningful main tool rows have larger vertical rhythm; an externally initiated still-active response is adopted when entering the conversation via the official page-owned matching `/resume` SSE without duplicate Send or synthetic user bubble; terminal history reconciles once; one normal local Native Send still follows the b67 protected-Send HTTP200 SSE route; b72 A/B simultaneous-generation ownership remains correct; hidden thoughts stay absent. Export diagnostics for the Runtime run.
 
 ## Remaining Unknown / Unverified
 
-Exact b73 presentation Runtime, new-chat authoritative identity timing, exact server Stop mechanism, broader cross-conversation/service concurrency beyond the exact b72 A/B test, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b74 resident-geometry/tool-spacing/external-adoption Runtime, new-chat authoritative identity timing, exact server Stop mechanism, broader cross-conversation/service concurrency beyond the exact b72 A/B test, connector-detail schemas beyond the evidenced GitHub mapping, Native-constructed first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.

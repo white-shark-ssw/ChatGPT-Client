@@ -1,6 +1,6 @@
 # Web Send Adapter / Rule Update Playbook
 
-_Last established: 2026-08-31 from DEV-send-stream b42-b65 evidence and the user's explicit Option B production decision._
+_Last established: 2026-09-01 through DEV-send-stream b67 accepted local transport, b72 tested concurrent ownership, and current cross-device page-owned `/resume` evidence used by exact b74._
 
 ## Purpose
 
@@ -293,15 +293,15 @@ Option B does **not** authorize:
 
 ## Current next integration boundary
 
-The first production slice after this document must prove:
+Exact b74 is the first packaged product candidate for cross-device active-response adoption under this rule. Its human Runtime gate must prove:
 
-1. Native composer requests one existing-conversation Send;
-2. the covered official page executes one real protected Send;
-3. `ConversationRepository` creates/owns the response lifecycle;
-4. accepted SSE updates mutate only that Repository-owned response projection;
-5. Native detail renders incremental reasoning/final/tool state without a second message owner;
-6. navigation does not terminate a hidden valid response;
-7. terminal is deterministic and does not require a duplicate Send;
+1. another platform starts a still-active response in an existing conversation;
+2. entering that conversation in b74 lets official Web perform its own continuation behavior;
+3. only a matching page-owned `/backend-api/f/conversation/resume` is adopted;
+4. `ConversationRepository` owns one Native live-response generation and chronological reasoning/tool/final state;
+5. no duplicate Send, Native resume request, offset synthesis, stream-status polling, synthetic user bubble or WebSocket-body assumption occurs;
+6. terminal authoritative history reconciles once;
+7. the b67 local Send path and b72 tested A/B simultaneous-generation path remain intact;
 8. diagnostics remain privacy-safe.
 
-New-chat handoff, Stop, follow-tail and active Sync/Reload are subsequent gates in the same `DEV-send-stream` Work.
+CI/Artifact/package verification does not prove this Runtime gate. Any code correction after the emitted b74 Artifact requires a new Candidate identity.

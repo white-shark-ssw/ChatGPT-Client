@@ -8,13 +8,14 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal evidence head before b74 product promotion: `c10b295e28a4075c8b10ee33e928f92cebe82dd0`.
+- Formal evidence head before the earlier b74 product assembly: `c10b295e28a4075c8b10ee33e928f92cebe82dd0`.
+- Formal head at 2026-09-01 session resume before this checkpoint write: `d3398ccae6b3764ef3ae7f9ab4daec960a2fe0e6` — docs-only direct child of `c10b295e...`.
 - Exact b73 product/config source: `4edda892a04a1a07f4a07e74b135b969ea82193e`
 - b73 Artifact: `9764247402`
 - b73 IPA SHA: `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`
 - b39-b73 permanently reserved.
 - **Allocated next Candidate: `DEV-send-stream-0.1.0-b74` / `0.1.0 (74)`.**
-- **Assembled exact b74 product/config source ready for promotion: `17bc52281e38fe3eca76777fd280256d1e5acc2b`; no Artifact yet at this checkpoint.**
+- **Previously assembled/compiled b74 product/config tree source: `17bc52281e38fe3eca76777fd280256d1e5acc2b`; no Artifact exists. Because it descends from `c10b295e...` while formal now descends through docs-only `d3398cca...`, it is compile/diff evidence and must be cleanly reassembled onto the latest formal docs head before promotion.**
 - Stable/Frozen Send: No.
 
 ## Retained accepted boundaries
@@ -80,13 +81,13 @@ Integrated external-adoption assembly:
 - first integrated run `33417148467 / 99570443019` failed tooling-only before scope/compile because the patcher expected obsolete synthetic user ID `live-user-*`; no product branch/Artifact emitted;
 - corrected integrated run `33417444152 / 99571391754` succeeded completely: patch application, exact scope/invariant audit, `git diff --check`, Xcode 16.4 Simulator build, clean product-code branch output;
 - clean product-code commit `07c3c81231745361a629225c39a21729c887a6c3`, direct parent `c10b295e28a4075c8b10ee33e928f92cebe82dd0`;
-- final workflow identity commit produces exact b74 product/config source `17bc52281e38fe3eca76777fd280256d1e5acc2b`;
+- final workflow identity commit produced assembled source `17bc52281e38fe3eca76777fd280256d1e5acc2b`;
 - detached compare `c10b295e...17bc5228` changes exactly:
   - `.github/workflows/ios-foundation.yml`
   - `ChatGPTClient.xcodeproj/project.pbxproj`
   - `ChatGPTClient/Conversation/ConversationFeature.swift`
   - `ChatGPTClient/RootViewController.swift`
-- no tooling/docs files are in the product range.
+- no tooling/docs files are in that product range.
 
 Implemented behavior:
 
@@ -101,36 +102,42 @@ Implemented behavior:
 9. Local Send `/backend-api/f/conversation`, accepted composer selectors and b72 per-conversation busy-response executors remain present.
 10. User-level WebSocket is not parsed as response content.
 
-Evidence ladder at this checkpoint: **Code written / exact scope audited / Simulator compile passed / Push CI pending / PR CI pending / Artifact not yet produced / Runtime pending / Stable-Frozen No.**
+Evidence ladder at this checkpoint: **Code written / exact scope audited / Simulator compile passed on the previously assembled product tree / Push CI pending / PR CI pending / Artifact not yet produced / Runtime pending / Stable-Frozen No.**
 
-## Batch recovery point — b74
+## Batch recovery point — b74 clean reassembly
 
-Known baseline/identity:
+Known baseline/identity at session resume:
 
-- formal evidence head before product promotion: `c10b295e28a4075c8b10ee33e928f92cebe82dd0`;
-- exact assembled b74 source: `17bc52281e38fe3eca76777fd280256d1e5acc2b`;
+- formal branch head before this checkpoint write: `d3398ccae6b3764ef3ae7f9ab4daec960a2fe0e6` — docs-only direct child of `c10b295e...`;
+- previously assembled product source `17bc52281e38fe3eca76777fd280256d1e5acc2b` is a sibling descendant of `c10b295e...`, not a fast-forward of `d3398cca...`;
 - PR #29 open / mergeable / unmerged;
 - actual main `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
+- current `docs/project/current/dev/` contains only `DEV-send-stream.md` plus README;
 - Candidate `DEV-send-stream-0.1.0-b74`; Version/Build `0.1.0 (74)`;
-- no b74 Artifact emitted yet at this checkpoint.
+- no b74 Artifact emitted; b74 remains allocated but not permanently artifact-reserved.
 
 Completed batches:
 
 1. b73 Runtime classification + b74 allocation.
 2. current Web Rule Lab cross-device `/resume` evidence + `WEB_SEND_ADAPTER.md` rule update.
 3. UI geometry reuse/tool-spacing compile proof.
-4. integrated external-adoption assembly + exact four-file product source `17bc5228...` compile proof.
+4. integrated external-adoption assembly + exact four-file product tree `17bc5228...` compile proof.
+5. docs-only checkpoint commit `d3398cca...` landed after that assembly, creating the current topology mismatch before product promotion.
 
-Next exact batch:
+Remaining deterministic batches:
 
-1. non-force fast-forward formal branch from `c10b295e...` to `17bc5228...` only if branch/PR/main/current-work Guard is unchanged;
-2. lock exact-head Push + PR CI without inserting docs commits;
-3. if both succeed, use Push Artifact as canonical b74 package, independently verify ZIP/IPA identity and permanently reserve b74;
-4. then sync checkpoint/durable docs/PR as docs-only commits;
-5. human iPhone/iOS17 Runtime: repeated long resident re-entry, tool spacing, external active response adoption, local Send regression, simultaneous A/B regression, hidden-thought exclusion, b38 quick-navigation.
+1. verify the exact formal head produced by **this checkpoint write** and use that commit as the sole clean reassembly base;
+2. create an isolated tooling/assembly branch from that exact formal docs head;
+3. replay exactly the four-file detached product diff represented by `c10b295e...17bc5228`, run `git diff --check`, assert exact four-file scope and retained local-Send/composer/resume/no-retry invariants, then run Xcode 16.4 iOS Simulator build;
+4. emit one clean b74 product/config commit/branch whose direct parent is the latest formal docs head; audit parent + exact four-file diff before promotion;
+5. final Guard branch/PR/main/current checkpoint; non-force fast-forward formal branch to that exact source only if unchanged;
+6. lock exact-head Push + PR CI without inserting docs commits;
+7. if both succeed, use Push Artifact as canonical b74 package, independently verify ZIP/IPA identity and permanently reserve b74;
+8. then sync checkpoint/durable docs/PR as docs-only commits;
+9. human iPhone/iOS17 Runtime: repeated long resident re-entry, tool spacing, external active response adoption, local Send regression, simultaneous A/B regression, hidden-thought exclusion and b38 quick-navigation.
 
-Recovery must not rewrite b73/b74 emitted identity, must not construct a Native resume request/offset, and must not create a second response/message authority.
+Recovery must not rewrite b73 identity; must not change the already-audited b74 product semantics while repairing topology; must not construct Native resume/offset/polling; must not create a second response/message authority; and must not produce a b74 Artifact until the clean direct-parent source passes the exact compile/scope checks above.
 
 ## Exact next action
 
-Promote exact source `17bc52281e38fe3eca76777fd280256d1e5acc2b` by non-force fast-forward after final Guard, then run exact-head Push/PR CI and package verification. Runtime remains pending until the exact Build74 IPA is installed and tested.
+After this checkpoint write, re-read the formal branch to obtain its exact new docs-only head. Reassemble the already-audited `c10b295e...17bc5228` four-file product delta directly on that head, compile/audit it, and only then promote by non-force fast-forward for exact-head Push/PR CI. Runtime remains pending until the exact Build74 IPA is installed and tested.

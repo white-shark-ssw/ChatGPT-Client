@@ -157,6 +157,7 @@ struct ConversationDetail {
 enum ConversationRepositoryError: LocalizedError, Equatable {
     case authenticationNotAvailable
     case authenticationTemporarilyUnavailable
+    case secureConnectionUnavailable
     case missingTransientSession
     case invalidResponse
     case httpStatus(Int)
@@ -170,6 +171,7 @@ enum ConversationRepositoryError: LocalizedError, Equatable {
         switch self {
         case .authenticationNotAvailable: return "当前登录会话不可用，请先完成登录或账户验证。"
         case .authenticationTemporarilyUnavailable: return "暂时无法验证账户，请检查网络连接。"
+        case .secureConnectionUnavailable: return "安全连接失败，请检查网络、VPN 或证书环境；当前登录数据未被判定失效。"
         case .missingTransientSession: return "未建立可用的原生读取会话。"
         case .invalidResponse: return "服务器返回了无法识别的响应。"
         case .httpStatus(let status): return "服务器请求失败（HTTP \(status)）。"
@@ -872,7 +874,7 @@ final class ConversationRepository {
             guard let self else { return }
             if let error {
                 self.diagnostics.error(category: "conversation", name: "list.failed", traceID: span.traceID, error: error)
-                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "network"], result: .failure(error), completion: completion)
+                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "network"], result: .failure(Self.normalizedTransportError(error)), completion: completion)
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
@@ -1034,7 +1036,7 @@ final class ConversationRepository {
                 }
                 self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: callbackFields)
                 span.end(status: "failed", fields: ["stage": "network"])
-                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(Self.normalizedTransportError(error)))
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
@@ -1289,6 +1291,12 @@ final class ConversationRepository {
         case .accountContextChanged, .operationSuperseded: return true
         default: return false
         }
+    }
+
+    static func normalizedTransportError(_ error: Error) -> Error {
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorSecureConnectionFailed { return ConversationRepositoryError.secureConnectionUnavailable }
+        return error
     }
 
     private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {
@@ -3003,7 +3011,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private static let bodyFont = UIFont.preferredFont(forTextStyle: .body)
     private static let reasoningFont = bodyFont
     private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .regular)
-    private static let toolLineHeight: CGFloat = 30
+    private static let toolLineHeight: CGFloat = 36
     private static let compactAssistantLineHeight: CGFloat = toolLineHeight * 0.70
     private static let detailFont = UIFont.monospacedSystemFont(ofSize: max(11, reasoningFont.pointSize - 1), weight: .regular)
     private static let timestampFont = UIFont.preferredFont(forTextStyle: .caption2)
@@ -3226,7 +3234,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         let toolParagraph = NSMutableParagraphStyle()
         toolParagraph.minimumLineHeight = toolLineHeight
         toolParagraph.maximumLineHeight = toolLineHeight
-        toolParagraph.paragraphSpacingBefore = 5
+        toolParagraph.paragraphSpacingBefore = 12
         toolParagraph.paragraphSpacing = 12
         let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
         let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]

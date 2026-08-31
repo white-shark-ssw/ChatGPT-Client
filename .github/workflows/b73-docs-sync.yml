@@ -1,0 +1,47 @@
+name: b73 durable docs sync
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b73-docs-20260831
+    paths:
+      - "scripts/b73_docs_sync.py"
+      - ".github/workflows/b73-docs-sync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch and emit clean docs-only branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp scripts/b73_docs_sync.py /tmp/b73_docs_sync.py
+          git reset --hard 8a2437194f837e7002460829c15e4d2428832902
+          python3 /tmp/b73_docs_sync.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            'docs/project/BUILD_TEST_INDEX.md' \
+            'docs/project/MODULE_STATUS.md' \
+            'docs/project/PROJECT_PROFILE.md' \
+            'docs/project/PROJECT_SPECIFIC_RULES.md' \
+            'docs/project/PROJECT_STATE.md' \
+            'docs/project/TECHNICAL_DECISIONS.md' | sort)"
+          if [ "$changed" != "$expected" ]; then
+            echo "Unexpected docs scope:"
+            printf '%s\n' "$changed"
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/project
+          git commit -m 'docs: sync b73 package and runtime gate'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b73-docs-product-20260831

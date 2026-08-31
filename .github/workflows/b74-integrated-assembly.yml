@@ -17,6 +17,13 @@ jobs:
       - name: Preserve patch and reset to current formal checkpoint
         run: |
           cp scripts/b74_integrated_patch.py /tmp/b74_integrated_patch.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/b74_integrated_patch.py')
+          text = path.read_text()
+          text = text.replace('"live-user-\\\\(snapshot.generation)"', '"local-live-user-\\\\(snapshot.generation)"')
+          path.write_text(text)
+          PY
           git reset --hard c10b295e28a4075c8b10ee33e928f92cebe82dd0
       - name: Apply already-compiled UI patch
         run: |

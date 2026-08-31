@@ -1,0 +1,75 @@
+name: b71 docs sync v2
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b71-20260831
+    paths:
+      - ".github/workflows/b71-docs-sync-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_SHA: af8d4a4b291c05fb63a50cee0261c06d7ce474d3
+      DOCS_BRANCH: assembly/docs/dev-send-stream-b71-20260831
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract docs patch from tooling source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, textwrap
+          raw = Path('.github/workflows/b71-docs-sync.yml').read_text()
+          m = re.search(r"(?ms)^\s+python3 - <<'PY'\n(?P<code>.*?)(?=^\s+PY\s*$)", raw)
+          if not m:
+              raise SystemExit('docs patch block not found')
+          Path('/tmp/b71-docs-sync.py').write_text(textwrap.dedent(m.group('code')))
+          PY
+
+      - name: Checkout exact b71 product source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$BASE_SHA"
+          test "$(git rev-parse HEAD)" = "$BASE_SHA"
+          if git ls-remote --exit-code --heads origin "refs/heads/${DOCS_BRANCH}" >/dev/null 2>&1; then
+            echo "Docs branch already exists; refusing to overwrite"
+            exit 1
+          fi
+
+      - name: Patch b71 durable evidence
+        shell: bash
+        run: python3 /tmp/b71-docs-sync.py
+
+      - name: Audit docs-only delta and emit branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          test -n "$changed"
+          if printf '%s\n' "$changed" | grep -v '^docs/project/' >/dev/null; then
+            echo 'non-doc change detected'
+            exit 1
+          fi
+          grep -q 'DEV-send-stream-0.1.0-b71' docs/project/current/dev/DEV-send-stream.md
+          grep -q '9756491305' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'TD-031' docs/project/TECHNICAL_DECISIONS.md
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/project
+          git diff --cached --check
+          git commit -m 'docs: record b70 Runtime rejection and b71 artifact gate [skip ci]'
+          git push origin HEAD:"refs/heads/${DOCS_BRANCH}"

@@ -2,14 +2,14 @@
 
 ## Status
 
-**Active — b67 local protected-Send transport remains Runtime accepted; b72 tested A-generating + B-send simultaneous ownership remains Runtime positive. Exact b75 is a valid/permanently-reserved package and is now Runtime partial/rejected on iPhone/iOS17: pre-accept external resume 404 no longer creates a false Native `回答失败`, cooperative history geometry is active, but cross-platform active reasoning still is not adopted because every observed page-owned matching `/resume` returned HTTP404 JSON; the exact b75 26/18.2/18.2 typography also rendered too tight and is rejected by the user's latest screenshot/feedback. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b67 local protected-Send transport remains Runtime accepted; b72 tested A-generating + B-send simultaneous ownership remains Runtime positive. Exact b75 is a valid/permanently-reserved package and is Runtime partial/rejected on iPhone/iOS17: pre-accept external resume 404 no longer creates a false Native `回答失败`, cooperative history geometry is active, but cross-platform active reasoning still is not adopted because every observed page-owned matching `/resume` returned HTTP404 JSON; the exact b75 26/18.2/18.2 typography also rendered too tight and is rejected by the user's latest screenshot/feedback. Stable/Frozen Send remains No; PR #29 stays open/unmerged. Current next step is the Human-only Web Rule Lab continuation re-probe; no b76 product code is authorized before that evidence.**
 
 - Work ID: `DEV-send-stream`
 - Routing aliases / keywords: Send, stream, reasoning, tool, external resume, cross-platform response, continuation, 行高
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal head before this checkpoint write: `b77303b8870dc25851dbffbf38ffc153a47bbcb2`
+- Formal head before this checkpoint write: `105583cc6e367815397a95361d17dc08004a0f54` (`docs: align send-stream plan with b75 runtime gate`)
 - Exact b75 product/config source: `b77303b8870dc25851dbffbf38ffc153a47bbcb2`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b75` / `0.1.0 (75)`
 - Assembly validation: `33429163152` — exact scope + `git diff --check` + Xcode 16.4 Simulator build passed
@@ -20,12 +20,25 @@
 - IPA SHA: `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d`
 - Package independently verified: `0.1.0 (75)`, Candidate b75, source marker `b77303b8870d`, Release, MinimumOSVersion 14.0, arm64
 - b39-b75 permanently reserved
+- b76: not allocated; current GitHub search/guard found no `DEV-send-stream-0.1.0-b76` identity
 - Stable/Frozen Send: No
+
+## Resume takeover guard — 2026-09-01
+
+This conversation resumed the existing Work from the supplied historical transcript and then revalidated GitHub/source truth before any product edit.
+
+- formal branch exists and was at `73e7f758c95f89bffaa61caa702f3160b84eed33` before the documentation synchronization in this takeover;
+- PR #29 was verified open, mergeable and unmerged, with head matching that branch and base `main`;
+- `main` remains exactly `d323b9eed2dda75b9986fc06e14014d3e9b365fb`, so the recorded target baseline has not materially advanced;
+- the formal branch contains only this Active development checkpoint plus the checkpoint template under `docs/project/current/dev/`; no competing Active development checkpoint/candidate conflict was found on the branch;
+- b76 remains globally unallocated by the current repository search guard;
+- `DEVELOPMENT_PLAN.md` was found stale at b70 and was docs-only synchronized to the current b75 Runtime/Web Rule Lab gate in commit `105583cc6e367815397a95361d17dc08004a0f54`;
+- no product/config source changed during this takeover; exact b75 tested product source remains `b77303b8870dc25851dbffbf38ffc153a47bbcb2`.
 
 ## Retained accepted boundaries
 
 - `ConversationRepository` is the sole production conversation/list/detail/recovery/response lifecycle authority.
-- `AuthSessionStore` is sole native account authority; `WKWebsiteDataStore.default()` is sole persistent auth-secret authority.
+- `AuthSessionStore` is sole verified auth/account owner; default persistent `WKWebsiteDataStore` is sole persistent auth-secret authority.
 - Covered official Web is browser challenge/protected-Send/page-owned continuation transport only, never message/conversation/response authority.
 - b67 local Native Send -> one protected `/backend-api/f/conversation` -> HTTP200 SSE -> Repository reasoning/tool/final -> terminal/reconcile remains accepted.
 - b72 tested A-generating + B-send/generate simultaneous-generation remains positive.
@@ -79,22 +92,23 @@ Use the existing Settings -> Web Rule Lab on the same logged-in `.default()` Web
 4. whether a later page-owned HTTP/SSE transport appears after an initial resume 404;
 5. WebSocket remains structural-only unless exact evidence proves reasoning/final body authority.
 
-Do not capture/export Cookie, Authorization, challenge values, raw prompt/answer/reasoning bodies or raw conversation IDs.
+Do not capture/export Cookie, Authorization, challenge values, raw prompt/answer/reasoning bodies, tool bodies, or raw account/conversation/message/response IDs.
 
 ## b76 allocation rule
 
-b76 is **not allocated yet**. Exact b75 supplies a concrete defect, so b76 is now permitted, but do not emit/allocate it until the Web Rule Lab result resolves the continuation transport rule and the visual spacing correction is defined as one coherent product scope. Once allocated, earliest valid identity is `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` if still globally unused at final allocation guard.
+b76 is **not allocated yet**. Exact b75 supplies a concrete defect, so b76 is permitted, but do not emit/allocate it until the Web Rule Lab result resolves the continuation transport rule and the visual spacing correction is defined as one coherent product scope. Once allocated, earliest valid identity is `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` if still globally unused at final allocation guard.
 
 ## Completed documentation batch — b75 Runtime classification
 
 - Exact b75 product source remains `b77303b8870dc25851dbffbf38ffc153a47bbcb2`; all later commits in this batch are docs-only and do not redefine the package.
 - Checkpoint Runtime classification commit: `d07cde81277d5bbb1e57d2c3f85c8772a64745c7`.
 - Durable b75 Runtime docs commit: `238b9e93b4e5f780aaf525106ec672de8ed8225b`, audited as exactly `BUILD_TEST_INDEX.md`, `MODULE_STATUS.md`, `PROJECT_STATE.md`, and `WEB_SEND_ADAPTER.md`.
-- PR #29 metadata is synchronized to title `DEV-send-stream: b75 Runtime rejection -> Web continuation re-probe gate`; it remains open / mergeable / unmerged.
-- This final docs-only batch synchronizes `PROJECT_PROFILE.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, and this checkpoint.
-- Actual `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb` at the last guard. Stable/Frozen Send remains No.
+- Prior final docs-only handoff head: `73e7f758c95f89bffaa61caa702f3160b84eed33`.
+- Current takeover docs-only plan synchronization: `105583cc6e367815397a95361d17dc08004a0f54`.
+- PR #29 metadata remains synchronized to title `DEV-send-stream: b75 Runtime rejection -> Web continuation re-probe gate`; it remains open / mergeable / unmerged.
+- Actual `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb` at the current guard. Stable/Frozen Send remains No.
 - b76 remains unallocated.
 
 ## Exact next action
 
-Human-only Web Rule Lab gate: while another platform owns a still-active response, instrument only page-owned fetch structure before entering that target conversation, then report `stream_status` / matching `/resume` ordering, response status/content-type, request JSON key names, and whether another page-owned HTTP/SSE transport follows an initial 404. Do not send from the Lab and do not capture secrets or message bodies. After that evidence arrives, rerun Resume Guard, define the current continuation rule, combine it with the clearly required larger reasoning/tool/final vertical rhythm, allocate b76 once, then compile/CI/package one coherent Runtime candidate.
+Human-only Web Rule Lab gate: while another platform owns a still-active response, instrument only page-owned network structure before entering that target conversation, then report `stream_status` / matching `/resume` ordering, response status/content-type, request JSON key names, and whether another page-owned HTTP/SSE transport follows an initial 404. Do not send from the Lab and do not capture secrets or message bodies. After that evidence arrives, rerun the required identity light/full guard as appropriate, define the current continuation rule, combine it with the clearly required larger reasoning/tool/final vertical rhythm, allocate b76 once, then compile/CI/package one coherent Runtime candidate.

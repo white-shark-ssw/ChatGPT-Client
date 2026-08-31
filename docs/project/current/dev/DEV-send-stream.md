@@ -102,11 +102,12 @@ Baseline/guards already verified before this checkpoint:
 Completed write batches:
 
 1. b69 Runtime/initial b70 checkpoint at `55f4f44...`;
-2. this source-inspection qualification checkpoint.
+2. source-inspection qualification checkpoint `fa81b4d...`;
+3. tooling write incident recovery: accidental formal-branch commits `2ada44a...`, `3ba4404...`, and `e6213f6...` contained only tooling/recovery placeholders, no product source. After verifying no foreign commit intervened, the formal Work ref was force-restored exactly to `fa81b4d...`; those accidental commits are not part of the formal branch lineage and must not be replayed.
 
 Remaining deterministic batches:
 
-1. create a tooling-only b70 assembly ref from the new formal checkpoint head;
+1. create a tooling-only b70 assembly ref from the clean formal checkpoint head produced by this recovery record;
 2. apply exact-anchor patches only to the five authorized files above;
 3. static assertions + `git diff --check`; emit one clean detached b70 product/config commit;
 4. audit checkpoint->candidate changed files and semantic boundaries;
@@ -127,4 +128,4 @@ Recovery must not blindly replay prior writes and must not rewrite b69 identity/
 
 ## Next exact action
 
-Assemble and audit the smallest b70 candidate on the five authorized files. The human Runtime gate must verify: no covered-Web keyboard pop, immediate single optimistic user row, chronological reasoning/tools with restored GitHub nested details + leading icons + compact spacing/divider, preserved active response across navigation, and recovery from transient Native 403 via stale-session invalidation/current Web credentials without automatic retry.
+Create a tooling-only b70 assembly ref from this clean checkpoint head, then assemble and audit the smallest b70 candidate on the five authorized files. The human Runtime gate must verify: no covered-Web keyboard pop, immediate single optimistic user row, chronological reasoning/tools with restored GitHub nested details + leading icons + compact spacing/divider, preserved active response across navigation, and recovery from transient Native 403 via stale-session invalidation/current Web credentials without automatic retry.

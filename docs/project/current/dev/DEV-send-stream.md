@@ -2,136 +2,129 @@
 
 ## Status
 
-**Active — exact b69 Runtime is now Partial/Rejected for daily-chat parity. The accepted b67 protected-Send transport still works, and b69's ordered Repository timeline is directionally correct, but the user's two exact iPhone/iOS17 recordings + screenshot + `ChatGPTClient-Diagnostics-20260831-072737.json` establish concrete production defects requiring b70: covered-Web keyboard activation, delayed user-message presentation, reasoning/tool spacing/separator/detail/icon regressions, and unstable Native read auth caused by HTTP403 around copied transient credentials. Stable/Frozen Send remains No. PR #29 stays open / evidence-only / unmerged.**
+**Active — b69 exact iPhone/iOS17 Runtime is Partial/Rejected for daily-chat parity. b67 remains the accepted existing-conversation protected-Send transport predecessor. b69 proves the ordered response timeline direction but exposes concrete b70 defects in keyboard focus, immediate user-message presentation, reasoning/tool detail+spacing+separator+icons, and Native read credential lifecycle. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29
-- Current formal branch head before this checkpoint update: `b221d9bbad25007efb9d149568dc493ea3d3afa6`
+- Formal branch head before b70 product assembly: `55f4f44c244fe2b188632e5a45192f729582c560` after the b69 Runtime checkpoint update
 - Exact b69 product/config source: `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`
-- Current actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Stable merged predecessor: b38
-- Accepted production transport Runtime predecessor: b67
-- Latest emitted Candidate: b69 — Artifact valid; Runtime Partial/Rejected for current product UX
-- Next identity: b70 is now justified by concrete b69 Runtime evidence; repository search found no existing `DEV-send-stream-0.1.0-b70` identity.
-- b39-b69 are permanently reserved.
-
-## Exact b69 package identity
-
-- Candidate: `DEV-send-stream-0.1.0-b69`, `0.1.0 (69)`
-- Product/config source: `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`
-- Push `33366226539 / 99407331552` — success
-- PR `33366229125 / 99407340011` — success
-- Artifact `9748400171`
-- ZIP `sha256:b1d91179c47822a7a42bf5405ef4bbd7240b97ddff58743a8a12e5f16fb232f1`
-- IPA `sha256:0c06256dc90aed86c706f8c72950528f61afa7f7fcdb504b2604d40befe3b0aa`
-- Package marker `5e9c21834830`, minimum iOS14
-
-b69 remains permanently reserved. Product corrections use b70.
-
-## Accepted predecessor retained
-
-Exact b67 remains accepted for the tested existing-conversation transport path:
-
-`one Native Send -> one page-owned protected Send -> HTTP200 text/event-stream -> Repository response events -> terminal -> one authoritative reconciliation`.
-
-The b69 diagnostics again show real `sendObserved`, HTTP200 SSE and terminal on multiple turns. Therefore the current b70 work must not rewrite the covered route/challenge/SSE architecture merely because the UI/auth consumers are defective.
+- Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
+- b69 Artifact `9748400171`; IPA SHA `0c06256dc90aed86c706f8c72950528f61afa7f7fcdb504b2604d40befe3b0aa`
+- b39-b69 permanently reserved
+- Repository search found no existing `DEV-send-stream-0.1.0-b70`; b70 is now justified by concrete Runtime defects.
 
 ## Exact b69 Runtime evidence — 2026-08-31
 
 User evidence:
 
-- `RPReplay_Final1788160522.mp4` — simple Send/answer recording.
-- `RPReplay_Final1788160538.mp4` — reasoning disclosure recording.
-- screenshot supplied with the same report — official ChatGPT conversation/tool-row visual reference.
-- `ChatGPTClient-Diagnostics-20260831-072737.json` — exact b69 diagnostics export.
+- `RPReplay_Final1788160522.mp4` — simple Send/answer recording;
+- `RPReplay_Final1788160538.mp4` — reasoning disclosure recording;
+- supplied screenshot — official ChatGPT tool-row/icon reference;
+- `ChatGPTClient-Diagnostics-20260831-072737.json` — exact b69 export.
 
-### A. Send interaction defects
+Accepted from b69/b67:
 
-1. After the validation Send alert dismisses, the keyboard can rise again while the response is already active. Source correlation shows the covered official-Web bridge's `setComposerText` unconditionally calls `element.focus()` before programmatic text assignment. On iOS a covered/noninteractive Web composer focus is still capable of becoming the keyboard first responder. This is a product defect; the covered executor must not steal visible keyboard focus.
-2. The user's submitted text does not appear in Native conversation immediately. Current `startValidationSend` gives `ConversationRepository.beginLiveResponse` only the prompt character count; the live response snapshot contains assistant state only. The user message arrives in Native only after terminal `syncLatestMessages` adds the authoritative user+assistant pair. This violates normal chat interaction. b70 must show one Repository-owned optimistic user presentation immediately and reconcile it away when the authoritative user message arrives; no second persistent message store.
+- multiple real Sends still reach one `sendObserved` -> HTTP200 `text/event-stream` -> terminal/reconcile;
+- Repository-owned ordered timeline remains the correct state direction;
+- hidden `assistant:thoughts` / `inline_cot_expandable_content` remain excluded.
 
-### B. Reasoning/tool presentation defects
+Rejected/current defects:
 
-1. b69's chronology work is retained, but expanded `思考过程` spacing/density is visibly unlike the official app.
-2. Production b69 tool timeline items contain only `slot/title/completed`; the b65 Runtime-accepted GitHub `工具输入` / `工具输出` nested disclosures were dropped during production timeline integration. This is a regression and must be restored from the already-authorized exact-parent GitHub mapping, not re-invented.
-3. Expanded reasoning needs a visual separator between the reasoning/tool area and formal final answer, matching the user's official recording.
-4. Official tool rows have leading tool-specific icons. Existing service/probe evidence already exposes safe tool classification/icon metadata such as `metadata.tool_summary_type` and `metadata.tool_icons` shape. b70 may carry a bounded presentation icon kind through the existing response timeline; it must not persist arbitrary remote icon payloads or create another state owner.
-5. `assistant:thoughts` and `inline_cot_expandable_content` remain prohibited from presentation.
+1. covered Web programmatic composer injection can raise the iOS keyboard after the Native validation alert dismisses;
+2. the user's prompt is absent from live Native rows and only appears after terminal authoritative Sync;
+3. expanded `思考过程` spacing is unlike official UI; no reasoning/final divider;
+4. production b69 dropped b65 Runtime-accepted GitHub nested `工具输入` / `工具输出` disclosures;
+5. tool rows lack corresponding leading icons;
+6. Native read auth can become sticky/blank: verified session/accounts may be followed by list/detail 403; Web login can be visibly authenticated while Native account probe is temporarily 403; later the same account succeeds again.
 
-### C. Native read/auth stability defect
+## Source-backed b70 roots and minimum corrections
 
-The diagnostics establish a credential-lifecycle problem, not simply “user was logged out”:
+### Covered Web keyboard
 
-- `/api/auth/session` and accounts-check can return HTTP200 / verified, followed immediately by Native list/detail HTTP403.
-- repeated list/detail requests can keep returning HTTP403.
-- the Web login surface can finish on `chatgpt.com` and be marked authenticated while immediate Native account-context probes still transiently return HTTP403.
-- later a newly materialized account context can succeed again and list/detail return HTTP200.
-- later in the same export another account probe reaches HTTP403 at accounts stage.
+`CoveredWebSendExecutor.bridgeScript.setComposerText` unconditionally calls `element.focus()`. Keep the already-verified input/submit mechanism but suppress the covered Web virtual keyboard during the temporary programmatic focus and blur immediately after injection. Do not replace the verified composer selector/route/send grammar.
 
-Current source explains the sticky failure: `ConversationRepository` caches one copied `AuthTransientSession` (ephemeral cookies + copied access token) and reuses it indefinitely while account identity/scope stays equal. List/detail 401/403 does not invalidate that copied transport. A browser session/credential refresh for the same user/account identity therefore does not necessarily replace the stale native transient session.
+### Immediate user row
 
-b70 correction boundary:
+Current `beginLiveResponse` receives only `promptCharacterCount`; the Repository snapshot has assistant state only. b70 passes the actual trimmed prompt into the existing response operation and stores it only inside that response snapshot. Native derives one optimistic user row immediately before the live assistant row; terminal authoritative Detail replaces both by clearing the live snapshot after successful reconcile. This remains one Repository owner, not a second persistent message store.
 
-- `AuthSessionStore` remains sole auth/account owner and default WebKit store remains sole persistent auth-secret authority.
-- On a Native conversation list/detail HTTP401 or HTTP403 from the **current** transient transport, invalidate/discard that cached transient transport so the next explicit/normal read obtains fresh cookies/token through the existing account-context probe.
-- Do not automatically repeat the failed request inside a retry loop; current operation fails observably. A subsequent user/normal load is a new operation and may materialize current Web credentials.
-- Do not treat a transport 403 alone as proof that persistent Web login is gone.
-- Preserve existing account-scope isolation and stale-callback rejection.
+### Tool detail/icon/separator presentation
 
-## b70 minimum product scope
+Reuse b65's already Runtime-accepted exact GitHub detail authorization:
 
-Only evidence-backed changes are authorized:
+- invocation `metadata.connector_tool_payload` is held transiently;
+- only an exact-parent completed result with `recipient == api_tool.call_tool` and `metadata.invoked_resource.app_name == GitHub` authorizes presentation of that input plus result `message.content`;
+- input/output are independent nested disclosures and collapsed by default;
+- output uses the accepted hierarchical nested-JSON decoder;
+- no raw tool body enters diagnostics.
 
-1. `ChatGPTClient/RootViewController.swift`
-   - stop covered Web programmatic text injection from taking visible keyboard focus while preserving the existing verified composer/one-Send path;
-   - pass actual prompt text into the existing Repository response operation for immediate optimistic user presentation;
-   - extend tool activity event data only with already-authorized GitHub detail and bounded icon classification needed by Native presentation.
-2. `ChatGPTClient/Conversation/ConversationFeature.swift`
-   - add Repository-owned optimistic user presentation to the existing live response snapshot, then remove it on authoritative terminal reconciliation;
-   - restore b65-authorized GitHub input/output nested disclosure state inside the ordered tool timeline and carry bounded icon kind;
-   - tighten reasoning/tool spacing and add the reasoning/final separator using the existing deterministic/manual b38 geometry path;
-   - invalidate current cached transient Native read session on list/detail HTTP401/403, with no automatic retry.
-3. Xcode/workflow identity files only for unique b70 Candidate.
+Extend the ordered timeline item only with response-local input/output strings plus a bounded local icon kind. Derive icon kind from current service metadata/known GitHub result classification and render a small leading symbol; do not persist arbitrary remote icon payloads. Replace blank-line tool spacing with controlled paragraph spacing and add a deterministic separator between expanded reasoning/tool content and an actual final answer.
 
-Do not add a second message/response/auth store, retry/poll/timer/watchdog, speculative selector fallback, compatibility shim, Web DOM conversation mirroring, arbitrary connector raw detail, or unrelated refactor.
+### Native read/auth owner correction
+
+Exact source inspection confirms two separate b69 issues:
+
+1. `ConversationRepository` caches one copied `AuthTransientSession` indefinitely for an unchanged account scope, and list/detail HTTP401/403 does not invalidate it.
+2. `AuthSessionStore.probeAccountContext` currently maps HTTP403 at session/accounts stages to `.notAvailable`, and `setAccountState(.failed/.notAvailable)` clears the last verified account context. The supplied export proves HTTP403 can be temporary for the same browser-authenticated account and later return 200; therefore a 403 must not by itself be treated as persistent logout/account replacement.
+
+b70 auth correction is intentionally non-retrying:
+
+- add `ChatGPTClient/Authentication/AuthSessionStore.swift` to this Work's authorized scope;
+- classify exact HTTP403 from session/accounts probes as temporary probe failure, not account absence; preserve the last verified identity across `.failed` while still returning no fresh transport from that failed probe;
+- exact 401 remains unavailable/not-authenticated behavior;
+- on Native list/detail 401/403 from the current copied transient transport, invalidate/discard that transient transport once; the current operation still fails visibly;
+- the next explicit/normal read uses the existing account-context probe to materialize current WebKit cookies/token; no automatic replay/retry/poll/timer/watchdog;
+- returning from the user-opened login screen may trigger one explicit list refresh so a successful re-auth is reflected without requiring force-quit; this is a new user/navigation operation, not hidden retry;
+- `AuthSessionStore` remains sole account authority and `WKWebsiteDataStore.default()` remains sole persistent auth-secret authority.
+
+## Authorized b70 files
+
+Product/config changes may touch only:
+
+- `ChatGPTClient/RootViewController.swift`;
+- `ChatGPTClient/Conversation/ConversationFeature.swift`;
+- `ChatGPTClient/Authentication/AuthSessionStore.swift`;
+- `ChatGPTClient.xcodeproj/project.pbxproj` for Build70 identity;
+- `.github/workflows/ios-foundation.yml` for b70 candidate/artifact identity.
+
+Do not modify b38 quick-navigation algorithm, accepted b67 protected-Send route/challenge/SSE grammar beyond the narrow keyboard/detail metadata payload, persistent auth-secret storage, unrelated diagnostics, final Composer/attachments, or other Works.
 
 ## Batch recovery point — b70
 
-Verified baseline before the b70 non-atomic write chain:
+Baseline/guards already verified before this checkpoint:
 
-- formal branch head entering this checkpoint write: `b221d9bbad25007efb9d149568dc493ea3d3afa6`;
-- exact b69 product source: `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`;
-- b69 Artifact/IPA above are valid and permanently reserved;
-- PR #29 open / mergeable / unmerged at `b221d9bb...`;
-- actual `main` `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
+- formal branch/PR head lineage is b69 plus docs only; PR #29 open/mergeable/unmerged;
+- actual `main` unchanged at `d323b9ee...`;
 - only Active development checkpoint is this Work;
-- b70 identity is unused before assembly.
+- b70 identity unused;
+- b69 remains valid/reserved.
 
-Intended batches:
+Completed write batches:
 
-1. finish exact source inspection of current live snapshot/cell layout, b65 GitHub detail decoder/disclosure, Auth Web return/list lifecycle, and b69 tool bridge metadata;
-2. create tooling-only b70 assembly ref from the new checkpoint head;
-3. patch only the authorized b70 source/config surfaces above with exact-anchor assertions;
-4. run static source assertions + `git diff --check`, then emit one clean detached b70 product/config commit;
-5. audit checkpoint->candidate changed files and semantic boundaries; re-check formal branch/PR/main/other Active checkpoints before fast-forward;
-6. move formal Work branch only after that audit;
-7. wait for real Push + PR Xcode CI; if successful, independently verify the unique IPA/Info.plist/source marker and hashes;
-8. update this checkpoint plus BUILD_TEST_INDEX / PROJECT_STATE / MODULE_STATUS / PROJECT_PROFILE / TECHNICAL_DECISIONS / relevant project rules and PR #29 with actual evidence;
-9. stop at the exact b70 iPhone/iOS17 Runtime gate.
+1. b69 Runtime/initial b70 checkpoint at `55f4f44...`;
+2. this source-inspection qualification checkpoint.
 
-Confirmed completed writes at this recovery point: this checkpoint update only. Remaining writes: all b70 product/config, CI/Artifact, durable-doc and PR updates.
+Remaining deterministic batches:
 
-Recovery must not rewrite b69 identity, b67 accepted transport semantics, b38 quick-navigation geometry, default WebKit persistent auth authority, or hidden-thought prohibition.
+1. create a tooling-only b70 assembly ref from the new formal checkpoint head;
+2. apply exact-anchor patches only to the five authorized files above;
+3. static assertions + `git diff --check`; emit one clean detached b70 product/config commit;
+4. audit checkpoint->candidate changed files and semantic boundaries;
+5. re-check formal branch/PR/main/Active checkpoint and fast-forward only if unchanged except this checkpoint;
+6. wait for actual Push + PR Xcode CI; then independently verify Artifact ZIP/IPA/Info.plist/source marker;
+7. update checkpoint + BUILD_TEST_INDEX / PROJECT_STATE / MODULE_STATUS / PROJECT_PROFILE / TECHNICAL_DECISIONS and PR #29 with actual evidence;
+8. stop at the exact b70 real-device gate.
 
-## Evidence ladder now
+Recovery must not blindly replay prior writes and must not rewrite b69 identity/artifact.
+
+## Evidence ladder
 
 - b67: production existing-conversation transport Runtime passed.
-- b68: valid reserved Artifact; flattened presentation superseded before Runtime.
-- b69: Code/diff/Push+PR CI/Artifact/package passed; exact real-device Runtime is **Partial/Rejected for daily-chat parity** with concrete b70 defects above. Transport success remains accepted evidence; UI/auth stability does not.
-- b70: identity justified but no product source/Artifact exists yet.
+- b68: valid reserved Artifact; flattened UI superseded.
+- b69: Code/diff/Push+PR CI/Artifact/package passed; Runtime Partial/Rejected for current daily-chat parity and auth stability; transport success retained.
+- b70: justified; no product source/Artifact yet.
 - Stable/Frozen Send: No.
 
 ## Next exact action
 
-Resume from this checkpoint and inspect the exact b69 cell/live-response/auth/login-return source plus the already Runtime-accepted b65 GitHub detail implementation. Then assemble the smallest b70 correction covering keyboard focus, immediate optimistic user presentation, ordered tool detail/icon/separator spacing, and stale transient-read invalidation on 401/403. Audit before moving the formal branch; do not create an Artifact until the detached scope is clean.
+Assemble and audit the smallest b70 candidate on the five authorized files. The human Runtime gate must verify: no covered-Web keyboard pop, immediate single optimistic user row, chronological reasoning/tools with restored GitHub nested details + leading icons + compact spacing/divider, preserved active response across navigation, and recovery from transient Native 403 via stale-session invalidation/current Web credentials without automatic retry.

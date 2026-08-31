@@ -710,90 +710,10 @@ extension ConversationRepository {
     }
 }
 
-final class ConversationLiveResponseOverlayView: UIView {
-    private let phaseLabel = UILabel()
-    private let textView = UITextView()
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        backgroundColor = .secondarySystemBackground
-        layer.cornerRadius = 14
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.08
-        layer.shadowRadius = 8
-        layer.shadowOffset = CGSize(width: 0, height: 2)
-
-        phaseLabel.font = .preferredFont(forTextStyle: .caption1)
-        phaseLabel.textColor = .secondaryLabel
-        phaseLabel.numberOfLines = 1
-
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.alwaysBounceVertical = true
-        textView.backgroundColor = .clear
-        textView.font = .preferredFont(forTextStyle: .body)
-        textView.textContainerInset = .zero
-        textView.textContainer.lineFragmentPadding = 0
-
-        let stack = UIStackView(arrangedSubviews: [phaseLabel, textView])
-        stack.axis = .vertical
-        stack.spacing = 6
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
-        ])
-        isHidden = true
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    func apply(_ snapshot: ConversationLiveResponseSnapshot?) {
-        guard let snapshot else {
-            isHidden = true
-            phaseLabel.text = nil
-            textView.text = nil
-            return
-        }
-        isHidden = false
-        phaseLabel.text = Self.phaseText(snapshot.phase)
-        var sections: [String] = []
-        if !snapshot.reasoningText.isEmpty { sections.append("思考过程\n\(snapshot.reasoningText)") }
-        if !snapshot.tools.isEmpty {
-            let rows = snapshot.tools.map { "• \($0.title) · \($0.completed ? "已完成" : "调用中")" }.joined(separator: "\n")
-            sections.append("工具调用\n\(rows)")
-        }
-        if !snapshot.finalText.isEmpty { sections.append("回答\n\(snapshot.finalText)") }
-        if let failureReason = snapshot.failureReason { sections.append("失败\n\(failureReason)") }
-        if sections.isEmpty { sections.append(snapshot.phase == .preparing ? "正在准备官方 Send…" : "正在思考…") }
-        textView.text = sections.joined(separator: "\n\n")
-        if snapshot.phase.isActive, textView.contentSize.height > textView.bounds.height {
-            let location = max(0, textView.textStorage.length - 1)
-            textView.scrollRangeToVisible(NSRange(location: location, length: 1))
-        }
-    }
-
-    private static func phaseText(_ phase: ConversationLiveResponsePhase) -> String {
-        switch phase {
-        case .preparing: return "发送准备中 · 验证界面"
-        case .thinking: return "正在思考 · 验证界面"
-        case .reasoning: return "思考中 · 验证界面"
-        case .final: return "回答中 · 验证界面"
-        case .completed: return "本轮完成 · 等待权威同步"
-        case .failed: return "本轮失败"
-        }
-    }
-}
-
 final class RootViewController: UISplitViewController, UISplitViewControllerDelegate {
     private let diagnostics = DiagnosticsLogger.shared
     private let repository = ConversationRepository()
     private let sendExecutor = CoveredWebSendExecutor()
-    private let liveResponseOverlay = ConversationLiveResponseOverlayView()
     private let validationSendButton = UIButton(type: .system)
     private let sidebarViewController: ConversationSidebarViewController
     private let detailViewController: ConversationDetailViewController
@@ -819,7 +739,6 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             self.sidebarViewController.resetForAccountScopeChange()
             self.detailViewController.resetForAccountScopeChange()
             self.detailNavigationController.setToolbarHidden(true, animated: false)
-            self.liveResponseOverlay.apply(nil)
             self.show(.primary)
         }
         sidebarViewController.onSelectConversation = { [weak self] id in
@@ -844,7 +763,6 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         preferredSplitBehavior = .tile
         presentsWithGesture = true
         sendExecutor.attachCoveredWebView(to: view)
-        configureLiveResponseOverlay()
         detailNavigationController.setToolbarHidden(repository.selectedConversationID == nil, animated: false)
         updateLivePresentation()
         diagnostics.info(category: "ui", name: "nativeConversationShell.loaded")
@@ -868,17 +786,6 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         validationSendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 220).isActive = true
         let flexible = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         detailViewController.toolbarItems = [flexible, UIBarButtonItem(customView: validationSendButton), UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)]
-    }
-
-    private func configureLiveResponseOverlay() {
-        liveResponseOverlay.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(liveResponseOverlay)
-        NSLayoutConstraint.activate([
-            liveResponseOverlay.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 14),
-            liveResponseOverlay.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -14),
-            liveResponseOverlay.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -72),
-            liveResponseOverlay.heightAnchor.constraint(equalToConstant: 250)
-        ])
     }
 
     @objc private func openValidationSendPrompt() {
@@ -932,18 +839,18 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     private func liveResponseDidChange(id: String) {
-        if repository.selectedConversationID == id { updateLivePresentation() }
+        guard repository.selectedConversationID == id else { return }
+        detailViewController.liveResponseDidChange(id: id)
+        updateLivePresentation()
     }
 
     private func updateLivePresentation() {
         guard let conversationID = repository.selectedConversationID else {
-            liveResponseOverlay.apply(nil)
             validationSendButton.isEnabled = false
             detailViewController.navigationItem.rightBarButtonItem?.isEnabled = false
             return
         }
         let snapshot = repository.liveResponse(for: conversationID)
-        liveResponseOverlay.apply(snapshot)
         let selectedResponseActive = snapshot?.phase.isActive ?? false
         validationSendButton.isEnabled = !selectedResponseActive && !sendExecutor.isBusy
         validationSendButton.setTitle(selectedResponseActive ? "回答中…" : (sendExecutor.isBusy ? "其他会话回答中…" : "测试发送…"), for: .normal)

@@ -1,0 +1,54 @@
+name: b68 product extract
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b68-20260831
+    paths:
+      - ".github/workflows/b68-product-extract.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: assembly/dev-send-stream-b68-20260831
+          fetch-depth: 0
+      - name: Reuse audited patch and emit product-only commit
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          source = Path('.github/workflows/b68-assembly-tool.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(source) if line.strip() == 'run: |')
+          script = textwrap.dedent('\n'.join(source[start + 1:])) + '\n'
+          replacements = [
+              (
+                  'rm .github/workflows/b68-assembly-tool.yml\n',
+                  'rm .github/workflows/b68-assembly-tool.yml .github/workflows/b68-assembly-repair.yml .github/workflows/b68-product-extract.yml\ngit checkout 745de68faf15b330c9afec0d84da855e036df91a -- .github/workflows/ios-foundation.yml\n'
+              ),
+              (
+                  "test \"$(git diff --name-only 745de68faf15b330c9afec0d84da855e036df91a | sort)\" = \"$(printf '%s\\n' '.github/workflows/b68-assembly-tool.yml' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)\"",
+                  "test \"$(git diff --name-only 745de68faf15b330c9afec0d84da855e036df91a | sort)\" = \"$(printf '%s\\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)\""
+              ),
+              (
+                  "test \"$(git diff --cached --name-only | sort)\" = \"$(printf '%s\\n' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)\"",
+                  "test \"$(git diff --cached --name-only | sort)\" = \"$(printf '%s\\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)\""
+              ),
+              (
+                  'git push --force-with-lease origin HEAD:assembly/dev-send-stream-b68-20260831',
+                  'git push origin HEAD:assembly/dev-send-stream-b68-product-20260831'
+              )
+          ]
+          for old, new in replacements:
+              if script.count(old) != 1: raise SystemExit('extract replacement marker mismatch')
+              script = script.replace(old, new, 1)
+          Path('/tmp/b68-product.sh').write_text(script)
+          PY
+          bash /tmp/b68-product.sh

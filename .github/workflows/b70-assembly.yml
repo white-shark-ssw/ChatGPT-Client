@@ -1,0 +1,73 @@
+name: b70 Tooling Assembly
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b70-20260831
+    paths:
+      - "scripts/b70_assembly.py"
+      - ".github/workflows/b70-assembly.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble-and-compile:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout tooling ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preserve tooling patcher and restore clean parent
+        run: |
+          cp scripts/b70_assembly.py /tmp/b70_assembly.py
+          git checkout -B assembly-product/dev-send-stream-b70-20260831 5c379b3d994b28cb0ba5a3c793e4efa193a003a1
+          test "$(git rev-parse HEAD)" = "5c379b3d994b28cb0ba5a3c793e4efa193a003a1"
+
+      - name: Apply exact b70 patch
+        run: python3 /tmp/b70_assembly.py
+
+      - name: Audit authorized scope
+        run: |
+          git diff --check
+          printf '%s\n' \
+            .github/workflows/ios-foundation.yml \
+            ChatGPTClient.xcodeproj/project.pbxproj \
+            ChatGPTClient/Authentication/AuthSessionStore.swift \
+            ChatGPTClient/Conversation/ConversationFeature.swift \
+            ChatGPTClient/RootViewController.swift > /tmp/expected.txt
+          git diff --name-only | sort > /tmp/actual.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+          git diff --stat
+          ! git diff | grep -q 'promptText.*DiagnosticsLogger'
+          ! git diff | grep -q 'assistant:thoughts'
+
+      - name: Compile iOS project
+        run: |
+          xcodebuild \
+            -project ChatGPTClient.xcodeproj \
+            -scheme ChatGPTClient \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath /tmp/b70-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Emit clean product commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/ios-foundation.yml \
+            ChatGPTClient.xcodeproj/project.pbxproj \
+            ChatGPTClient/Authentication/AuthSessionStore.swift \
+            ChatGPTClient/Conversation/ConversationFeature.swift \
+            ChatGPTClient/RootViewController.swift
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "5"
+          git commit -m "feat: assemble b70 daily chat parity fixes"
+          git push --force origin HEAD:refs/heads/assembly-product/dev-send-stream-b70-20260831
+          echo "PRODUCT_COMMIT=$(git rev-parse HEAD)"

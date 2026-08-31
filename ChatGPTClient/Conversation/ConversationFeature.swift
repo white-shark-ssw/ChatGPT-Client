@@ -3003,7 +3003,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private static let bodyFont = UIFont.preferredFont(forTextStyle: .body)
     private static let reasoningFont = bodyFont
     private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .regular)
-    private static let toolLineHeight: CGFloat = 26
+    private static let toolLineHeight: CGFloat = 30
     private static let compactAssistantLineHeight: CGFloat = toolLineHeight * 0.70
     private static let detailFont = UIFont.monospacedSystemFont(ofSize: max(11, reasoningFont.pointSize - 1), weight: .regular)
     private static let timestampFont = UIFont.preferredFont(forTextStyle: .caption2)

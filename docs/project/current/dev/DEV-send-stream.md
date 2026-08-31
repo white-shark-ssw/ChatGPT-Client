@@ -2,23 +2,19 @@
 
 ## Status
 
-**Active — b67 protected-Send transport remains Runtime accepted. Exact b72 Runtime positively supports the tested A-generating + B-send simultaneous-generation path. Exact b73 is a valid/reserved package and current iPhone/iOS17 Runtime is partial: the semantic reasoning/tool direction is retained, but three concrete next gates now exist — long-conversation entry stalls on full historical geometry rebuild, main tool-row vertical spacing is still too tight, and externally initiated generation is not adopted into the Native Repository live-response lifecycle. b74 is allocated for the evidence-backed corrections/investigation below. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b67 protected-Send transport remains Runtime accepted. Exact b72 Runtime positively supports the tested A-generating + B-send simultaneous-generation path. Exact b73 is a valid/reserved package and current iPhone/iOS17 Runtime is partial: the semantic reasoning/tool direction is retained, but three concrete next gates now exist — long-conversation entry stalls on full historical geometry rebuild, main tool-row vertical spacing is still too tight, and externally initiated generation is not adopted into the Native Repository live-response lifecycle. b74 is allocated for the evidence-backed corrections below. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal head before this checkpoint write: `993e3afc54bc8096ef123f0a3c8b330665074816` — docs-only after b73.
+- Formal evidence head before b74 product promotion: `c10b295e28a4075c8b10ee33e928f92cebe82dd0`.
 - Exact b73 product/config source: `4edda892a04a1a07f4a07e74b135b969ea82193e`
-- b73 Candidate: `DEV-send-stream-0.1.0-b73`
-- b73 Version / Build: `0.1.0 (73)`
-- b73 Push CI: `33408695143 / 99542593642` — success
-- b73 PR CI: `33408698697 / 99542605699` — success
 - b73 Artifact: `9764247402`
-- b73 Artifact ZIP digest: `sha256:718c2f4fd0fe3521f7469f5996f6944960ffdaa3b2829c0c17e340ebd41dd206`
 - b73 IPA SHA: `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`
 - b39-b73 permanently reserved.
-- **Allocated next Candidate: `DEV-send-stream-0.1.0-b74` / `0.1.0 (74)`; no product source / CI / Artifact exists yet.**
+- **Allocated next Candidate: `DEV-send-stream-0.1.0-b74` / `0.1.0 (74)`.**
+- **Assembled exact b74 product/config source ready for promotion: `17bc52281e38fe3eca76777fd280256d1e5acc2b`; no Artifact yet at this checkpoint.**
 - Stable/Frozen Send: No.
 
 ## Retained accepted boundaries
@@ -41,76 +37,100 @@ User supplied `RPReplay_Final1788192013.mp4` and `ChatGPTClient-Diagnostics-2026
 
 The recording visibly shows repeated taps into a long resident conversation where the list selection/highlight changes immediately but the detail transition waits roughly 1–1.5 seconds.
 
-The diagnostics localize the delay to historical presentation geometry, not a network load:
+Diagnostics localize the delay to historical presentation geometry, not network:
 
-- long resident conversation, 32 authoritative messages / 68 presentation rows: repeated `messagePresentation.rebuilt` durations approximately `1373–1427ms`, of which `geometryDurationMs` is approximately `1348–1393ms`; `resident.firstVisible` is approximately `1375–1429ms`;
-- the same run's short resident conversation is approximately `120–140ms` first-visible;
+- long resident conversation, 32 authoritative messages / 68 presentation rows: repeated `messagePresentation.rebuilt` durations approximately `1373–1427ms`, of which `geometryDurationMs` is approximately `1348–1393ms`; `resident.firstVisible` approximately `1375–1429ms`;
+- same run short resident approximately `120–140ms` first-visible;
 - resident-hit reproductions do not issue a new Detail request before the stall.
 
-Current source confirms `apply(_:) -> rebuildRoundProjection() -> rebuildPresentationGeometry(...)` clears/recomputes every historical row metric/offset on every resident re-entry. The expensive path calls `ConversationMessageCell.metrics(...)` / `boundingRect` across all display chunks even when the same resident content, layout width and relevant presentation state are unchanged.
-
-Exact b38 used the same deterministic full-rebuild design; therefore this is not evidence to revert b38 geometry. It is new Runtime evidence justifying a minimal **in-process derived-geometry reuse** for unchanged resident presentation state. It must cache only derived presentation metrics/offsets/content-height, never authoritative message bodies or a second message store, and invalidate deterministically on content/projection change, layout width, timestamp preference or historical reasoning-expansion state that changes row heights.
+Current source confirms `apply(_:) -> rebuildRoundProjection() -> rebuildPresentationGeometry(...)` clears/recomputes every historical row metric/offset on resident re-entry. Exact b38 used deterministic full rebuild, so b74 does not replace b38 geometry; it adds bounded in-process **derived geometry reuse** for unchanged resident presentation. Cache contains only projection/metrics/offsets/content-height/answer rows and is keyed/invalidation-bound by authoritative current node, width, timestamp preference and historical reasoning expansion state. No message body or second conversation store is cached.
 
 ### 2. Tool-row rhythm remains too tight
 
-User explicitly requests more vertical spacing above and below every visible tool call. Current b73 main timeline uses `toolParagraph.minimumLineHeight = 30` and `paragraphSpacing = 9`; this remains visually insufficient in the supplied recording. b74 may increase only the tool-line vertical rhythm; do not change tool ordering, semantic filtering, titles, inputs, parser or response ownership for this adjustment.
+User explicitly requests more vertical spacing above and below each visible tool call. b74 raises only the main tool-line vertical rhythm; it does not change tool ordering, semantic filtering, titles, inputs, parser or response ownership.
 
-### 3. External-platform active generation is a real lifecycle gap and is the priority gate
+### 3. External-platform active generation lifecycle gap
 
-User reports: send a question from another platform, then enter that conversation in this client. Official iOS/Web can show the active thinking state, but this Native client shows neither `正在思考` nor the ongoing reasoning process.
+User reports: send on another platform, then enter that conversation in this client. Official iOS/Web shows active thinking, but this Native client previously showed neither `正在思考` nor ongoing reasoning.
 
-Current source explains the gap:
+Current source explained the gap: local Repository live response was created only for local Native Send, and the covered fetch wrapper parsed `/backend-api/f/conversation` only while page-local `activeSend == true`.
 
-- Repository `beginLiveResponse(conversationID:promptText:)` is entered only for a local Native Send;
-- `CoveredWebSendExecutor` installs the browser parser, but its fetch wrapper currently parses `/backend-api/f/conversation` only while page-local `activeSend == true` for this client's own submit: `if (!isSend || !activeSend) return originalFetch(...)`;
-- without a local Send there is no `activeEvents` callback and no Repository live snapshot to own external response events.
+The 2026-09-01 Web Rule Lab capture closes the current transport-shape gap. After another platform started the response and official Web entered the same conversation, the page:
 
-This is not a missing-label bug. The missing feature is **adopting an already-active externally initiated response into the existing Repository response lifecycle when the user enters that conversation**.
+- opened its normal user-level WebSocket (short string frames observed, not proven as reasoning/final body transport);
+- loaded conversation/bootstrap state;
+- requested `GET /backend-api/conversation/{id}/stream_status` -> HTTP200 JSON;
+- issued **page-owned** `POST /backend-api/f/conversation/resume` with JSON keys exactly `conversation_id` + `offset`;
+- received HTTP200 `text/event-stream`.
 
-The 2026-09-01 Web Rule Lab capture now closes that transport-shape gap for the tested cross-device case. After another platform started the response and official Web entered the same conversation, the page opened its normal user-level WebSocket, loaded conversation/bootstrap state, requested `GET /backend-api/conversation/{id}/stream_status` (HTTP200 JSON), then issued **page-owned** `POST /backend-api/f/conversation/resume` with request JSON keys exactly `conversation_id` + `offset`; that request returned HTTP200 `text/event-stream`. The capture did not expose response bodies or secret header values. Short WebSocket frames were observed but are not proven to carry the reasoning/final body.
+Current production rule: external adoption may observe and parse only the official page's own matching `/resume` SSE. Native must not construct the request, derive/guess `offset`, poll `stream_status`, replay browser headers, or issue a second Send. WebSocket remains structural evidence only.
 
-Therefore b74 is now authorized to observe the official page's own `/resume` SSE for external active-response adoption. Native must **not** construct the resume request, derive/guess `offset`, poll `stream_status`, or issue a second Send. The bridge must verify the page-owned resume targets the executor's current authoritative conversation before adopting it. Intended ownership remains:
+## Exact b74 assembled implementation / compile evidence
 
-`page-owned external active-response transport observed -> Repository creates/adopts one external live response operation for the authoritative conversation -> existing reasoning/tool/final parser -> Native presentation -> deterministic terminal authoritative reconciliation`.
+UI-only patch precursor:
 
-No optimistic prompt is invented for an external response; the authoritative user message remains Detail/Repository data. No second Send is issued.
+- tooling run `33414597158 / 99562115400` succeeded;
+- scope `ConversationFeature.swift` only;
+- `git diff --check` passed;
+- Xcode 16.4 iOS Simulator build succeeded;
+- temporary clean code commit `894eea1` is compile evidence only, not product identity.
 
-## b74 planned minimal scope
+Integrated external-adoption assembly:
 
-Evidence-backed product changes allowed before/alongside the external-transport probe:
+- first integrated run `33417148467 / 99570443019` failed tooling-only before scope/compile because the patcher expected obsolete synthetic user ID `live-user-*`; no product branch/Artifact emitted;
+- corrected integrated run `33417444152 / 99571391754` succeeded completely: patch application, exact scope/invariant audit, `git diff --check`, Xcode 16.4 Simulator build, clean product-code branch output;
+- clean product-code commit `07c3c81231745361a629225c39a21729c887a6c3`, direct parent `c10b295e28a4075c8b10ee33e928f92cebe82dd0`;
+- final workflow identity commit produces exact b74 product/config source `17bc52281e38fe3eca76777fd280256d1e5acc2b`;
+- detached compare `c10b295e...17bc5228` changes exactly:
+  - `.github/workflows/ios-foundation.yml`
+  - `ChatGPTClient.xcodeproj/project.pbxproj`
+  - `ChatGPTClient/Conversation/ConversationFeature.swift`
+  - `ChatGPTClient/RootViewController.swift`
+- no tooling/docs files are in the product range.
 
-1. `ConversationFeature.swift`: add bounded in-process historical presentation-geometry reuse for unchanged resident conversation presentation, with deterministic invalidation and no second message authority.
-2. `ConversationFeature.swift`: increase main tool-row top/bottom rhythm only.
-3. External active-response adoption: current Runtime now authorizes observing the page-owned `/backend-api/f/conversation/resume` SSE for the executor's current authoritative conversation. Integration surfaces are `RootViewController.swift` covered executor + existing Repository response runtime. Native request construction/offset synthesis/polling remain prohibited.
-4. Xcode/workflow identity only after the complete coherent b74 product candidate is ready for CI/Artifact.
+Implemented behavior:
+
+1. Historical resident geometry reuse preserves b38-derived row geometry and reuses it only for unchanged resident presentation identity; deterministic invalidation remains.
+2. Main tool-line vertical rhythm is enlarged above/below.
+3. `CoveredWebSendExecutor` can observe a selected existing conversation without sending.
+4. Its bridge watches **page-owned** `/backend-api/f/conversation/resume`, verifies body `conversation_id` equals the page/current authoritative target, performs the original fetch unchanged, returns the original response to official Web, and reads a `response.clone()` through the already accepted parser grammar.
+5. No Native `/resume` request/offset/header construction and no stream-status polling is added.
+6. On first matching page-owned resume observation, the existing `ConversationRepository` response runtime creates one external live generation with empty optimistic prompt and phase thinking; no second response store exists.
+7. Subsequent reasoning/tool/final/terminal events use the existing `consumeLiveResponseEvent` path; terminal uses existing authoritative reconciliation.
+8. External live presentation omits a synthetic user bubble because the authoritative external prompt is already Detail/Repository state.
+9. Local Send `/backend-api/f/conversation`, accepted composer selectors and b72 per-conversation busy-response executors remain present.
+10. User-level WebSocket is not parsed as response content.
+
+Evidence ladder at this checkpoint: **Code written / exact scope audited / Simulator compile passed / Push CI pending / PR CI pending / Artifact not yet produced / Runtime pending / Stable-Frozen No.**
 
 ## Batch recovery point — b74
 
-Known baseline:
+Known baseline/identity:
 
-- formal branch head entering b74 work: `993e3afc54bc8096ef123f0a3c8b330665074816`;
+- formal evidence head before product promotion: `c10b295e28a4075c8b10ee33e928f92cebe82dd0`;
+- exact assembled b74 source: `17bc52281e38fe3eca76777fd280256d1e5acc2b`;
 - PR #29 open / mergeable / unmerged;
 - actual main `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
-- exact b73 product source/Artifact remain fixed as recorded above;
-- no other Active development checkpoint exists;
-- repository search found no existing `DEV-send-stream-0.1.0-b74` identity before allocation.
+- Candidate `DEV-send-stream-0.1.0-b74`; Version/Build `0.1.0 (74)`;
+- no b74 Artifact emitted yet at this checkpoint.
 
-Allocated identity:
+Completed batches:
 
-- Candidate `DEV-send-stream-0.1.0-b74`;
-- Version / Build `0.1.0 (74)`;
-- Artifact/product source: not yet emitted.
+1. b73 Runtime classification + b74 allocation.
+2. current Web Rule Lab cross-device `/resume` evidence + `WEB_SEND_ADAPTER.md` rule update.
+3. UI geometry reuse/tool-spacing compile proof.
+4. integrated external-adoption assembly + exact four-file product source `17bc5228...` compile proof.
 
-Write batches:
+Next exact batch:
 
-1. **Confirmed complete:** current b73 Runtime classification and b74 allocation in this checkpoint.
-2. **Confirmed complete:** geometry reuse + tool-spacing patch assembled on tooling branch; run `33414597158 / 99562115400` passed scope, `git diff --check` and Xcode 16.4 Simulator build, producing code commit `894eea1` on `assembly/dev-send-stream-b74-ui-product-20260901`. This is compile evidence only, not the final b74 product source.
-3. **Confirmed complete:** current Web Rule Lab cross-device capture proves page-owned `POST /backend-api/f/conversation/resume` `{conversation_id, offset}` -> HTTP200 SSE after `stream_status`; WebSocket remains non-authoritative structural evidence.
-4. **Next:** reassemble the UI patch plus the smallest page-owned-resume observation / Repository external-adoption bridge from the updated checkpoint, run scope/diff/compile checks, then promote one clean b74 product/config source, Push+PR CI, Artifact/package verification.
-5. **Then:** iPhone/iOS17 Runtime gate covering repeated long-conversation switching, tool spacing, local Send regression, external-platform active generation adoption, hidden-thought exclusion and b72 simultaneous-generation regression.
+1. non-force fast-forward formal branch from `c10b295e...` to `17bc5228...` only if branch/PR/main/current-work Guard is unchanged;
+2. lock exact-head Push + PR CI without inserting docs commits;
+3. if both succeed, use Push Artifact as canonical b74 package, independently verify ZIP/IPA identity and permanently reserve b74;
+4. then sync checkpoint/durable docs/PR as docs-only commits;
+5. human iPhone/iOS17 Runtime: repeated long resident re-entry, tool spacing, external active response adoption, local Send regression, simultaneous A/B regression, hidden-thought exclusion, b38 quick-navigation.
 
-Recovery must not touch b73 product identity, must not regress b67/b72 transport/concurrency, must not invent `/resume` semantics, and must not produce a b74 Artifact before the external-adoption mechanism is evidenced and the coherent candidate is complete.
+Recovery must not rewrite b73/b74 emitted identity, must not construct a Native resume request/offset, and must not create a second response/message authority.
 
 ## Exact next action
 
-Reassemble the already-compiled geometry-reuse/tool-spacing patch together with the newly authorized page-owned `/backend-api/f/conversation/resume` observation path. External adoption must create one Repository live-response generation only after a matching page-owned resume is observed, consume the existing parser events, reconcile once at terminal, and add no native resume request, offset synthesis, polling, retry, timer, second Send or second response store.
+Promote exact source `17bc52281e38fe3eca76777fd280256d1e5acc2b` by non-force fast-forward after final Guard, then run exact-head Push/PR CI and package verification. Runtime remains pending until the exact Build74 IPA is installed and tested.

@@ -196,8 +196,12 @@ final class AuthSessionStore {
                 }
                 guard let response = response as? HTTPURLResponse, let data, (200..<300).contains(response.statusCode) else {
                     session.finishTasksAndInvalidate()
-                    let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "none"
-                    self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "session", "httpStatus": status], completion: completion)
+                    let statusCode = (response as? HTTPURLResponse)?.statusCode
+                    let status = statusCode.map(String.init) ?? "none"
+                    let state: AuthAccountContextState = statusCode == 403 ? .failed : .notAvailable
+                    var fields = ["stage": "session", "httpStatus": status]
+                    if statusCode == 403 { fields["reason"] = "temporary_forbidden" }
+                    self.finishAccountProbe(state, span: span, fields: fields, completion: completion)
                     return
                 }
                 guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let user = payload["user"] as? [String: Any], let userID = user["id"] as? String, !userID.isEmpty, let accessToken = payload["accessToken"] as? String, !accessToken.isEmpty else {
@@ -224,8 +228,12 @@ final class AuthSessionStore {
                         return
                     }
                     guard let response = response as? HTTPURLResponse, let data, (200..<300).contains(response.statusCode) else {
-                        let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "none"
-                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": status], completion: completion)
+                        let statusCode = (response as? HTTPURLResponse)?.statusCode
+                        let status = statusCode.map(String.init) ?? "none"
+                        let state: AuthAccountContextState = statusCode == 403 ? .failed : .notAvailable
+                        var fields = ["stage": "accounts", "httpStatus": status]
+                        if statusCode == 403 { fields["reason"] = "temporary_forbidden" }
+                        self.finishAccountProbe(state, span: span, fields: fields, completion: completion)
                         return
                     }
                     guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let accounts = payload["accounts"] as? [String: Any], let accountOrdering = payload["account_ordering"] as? [String], !accountOrdering.isEmpty else {
@@ -298,7 +306,7 @@ final class AuthSessionStore {
         let previousState = accountState
         let hadContext = accountContext != nil
         accountState = state
-        if state == .notAvailable || state == .failed || state == .unknown { accountContext = nil }
+        if state == .notAvailable || state == .unknown { accountContext = nil }
         let contextInvalidated = hadContext && accountContext == nil
         lock.unlock()
         if previousState != state { diagnostics.info(category: "auth", name: "session.accountState", fields: ["state": state.rawValue]) }

@@ -95,6 +95,12 @@ A current Web Rule Lab capture now confirms the official page behavior when anot
 
 **Current production rule:** external active-response adoption may observe and parse the official page's own `/backend-api/f/conversation/resume` SSE for the currently targeted conversation. Native code must not construct the resume request, choose/synthesize `offset`, replay browser/session headers, or poll `stream_status`. The page remains transport authority; `ConversationRepository` becomes/retains the sole Native response lifecycle owner once that page-owned resume is observed. Only a resume whose request `conversation_id` matches the executor's authoritative target may be adopted. The user-level WebSocket remains structural evidence only and is not authorized as a Native response-body source from this capture.
 
+### b75 covered-production qualification — 2026-09-01
+
+The visible Web Rule Lab HTTP200-SSE capture above remains historical evidence for that exact visible-Web run, but exact Build75 production Runtime rejects treating it as proof that the covered executor will currently receive the same stream. In three separate covered-production attempts while the external response was still active, the page itself issued a matching `/backend-api/f/conversation/resume`, but the response was HTTP404 `application/json`; Native therefore had no validated SSE to adopt and correctly created no external live-response generation.
+
+Current rule until re-probed: keep the b75 validation gate (request observation alone is never response authority), but **do not claim covered-production external adoption is working** and do not add Native-constructed resume/offset, polling, retry, delayed resend, WebSocket-body parsing or guessed alternate routes. Use Web Rule Lab to capture current page-owned `stream_status` status/order, all matching resume attempts/statuses, and whether a later page-owned HTTP/SSE transport follows an initial 404. Only that fresh evidence may define the next production continuation rule.
+
 ## Current accepted SSE/text grammar
 
 The adapter/parser may rely only on shapes already backed by exact Runtime evidence.

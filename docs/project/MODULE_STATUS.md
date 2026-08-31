@@ -1,5 +1,13 @@
 # Module Status
 
+## DEV-send-stream b75 Runtime override — 2026-09-01
+
+- Build/runtime metadata: exact b75 package verified; Runtime partial/rejected; b39-b75 reserved; Stable/Frozen Send No.
+- Covered external continuation: b75 pre-accept validation works, but covered production page-owned matching `/resume` returned HTTP404 JSON in three observed active-response attempts. HTTP200 SSE adoption is therefore not a current production-proven path; Web Rule Lab re-probe is required before product changes.
+- User-visible reasoning/tool/final: no external live rows were created in the supplied b75 run. Local b67 transport and b72 tested simultaneous A/B ownership remain accepted predecessors.
+- Typography: b75 26/18.2/18.2 is visually rejected as too tight; next correction must increase visible vertical rhythm rather than merely assert those numeric values.
+- Geometry: cooperative cache-miss path and resident reuse observed; worst-case Back responsiveness remains Runtime-unverified in this export.
+
 | Module | Status | Owner / baseline | Current evidence / boundary |
 |---|---|---|---|
 | Repository AI governance | Active | `AGENTS.md` + `docs/project/START_HERE.md` | Checkpoint/evidence/conflict rules active; final target sync required before merge. |

@@ -1,0 +1,633 @@
+name: b69 assembly tool
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b69-20260831
+    paths:
+      - ".github/workflows/b69-assembly-tool.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: assembly/dev-send-stream-b69-20260831
+          fetch-depth: 0
+      - name: Assemble ordered response timeline
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          BASE = "33022dc8c9fdcb17f5b462a2766ac86238417c58"
+
+          def read(path): return Path(path).read_text()
+          def write(path, text): Path(path).write_text(text)
+          def once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected 1 match, got {count}")
+              return text.replace(old, new, 1)
+          def region(text, start, end, replacement, label):
+              a = text.find(start)
+              b = text.find(end, a + len(start)) if a >= 0 else -1
+              if a < 0 or b < 0:
+                  raise SystemExit(f"{label}: markers not found")
+              if text.find(start, a + 1) >= 0:
+                  raise SystemExit(f"{label}: start marker not unique")
+              return text[:a] + replacement + text[b:]
+
+          feature = "ChatGPTClient/Conversation/ConversationFeature.swift"
+          text = read(feature)
+
+          old_message = '''struct ConversationMessage {
+              enum Role: String {
+                  case user
+                  case assistant
+              }
+
+              let id: String
+              let role: Role
+              let text: String
+              let reasoningSummary: String?
+              let createTime: TimeInterval?
+          }
+          '''
+          new_message = '''struct ConversationResponseTimelineItem: Equatable {
+              enum Kind: String {
+                  case reasoning
+                  case tool
+              }
+
+              let kind: Kind
+              var text: String
+              let toolSlot: Int?
+              var completed: Bool
+
+              static func reasoning(_ text: String) -> ConversationResponseTimelineItem { ConversationResponseTimelineItem(kind: .reasoning, text: text, toolSlot: nil, completed: false) }
+              static func tool(slot: Int, title: String, completed: Bool) -> ConversationResponseTimelineItem { ConversationResponseTimelineItem(kind: .tool, text: title, toolSlot: slot, completed: completed) }
+          }
+
+          struct ConversationMessage {
+              enum Role: String {
+                  case user
+                  case assistant
+              }
+
+              let id: String
+              let role: Role
+              let text: String
+              let responseTimeline: [ConversationResponseTimelineItem]
+              let createTime: TimeInterval?
+          }
+          '''
+          text = once(text, old_message, new_message, "message timeline model")
+          text = once(text, "            return count + ((old.role != message.role || old.text != message.text || old.reasoningSummary != message.reasoningSummary || old.createTime != message.createTime) ? 1 : 0)", "            return count + ((old.role != message.role || old.text != message.text || old.responseTimeline != message.responseTimeline || old.createTime != message.createTime) ? 1 : 0)", "recovery diff timeline")
+          text = once(text, "    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int { detail.messages.reduce(0) { $0 + $1.text.utf8.count + ($1.reasoningSummary?.utf8.count ?? 0) } }", "    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int { detail.messages.reduce(0) { $0 + $1.text.utf8.count + $1.responseTimeline.reduce(0) { $0 + $1.text.utf8.count } } }", "memory timeline")
+
+          parser_start = "    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {\n"
+          parser_end = "    private static func visibleText(from content: [String: Any]) -> String {\n"
+          parser = '''    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {
+              var nodeIDs: [String] = []
+              var visited = Set<String>()
+              var nodeID: String? = currentNode
+              while let currentID = nodeID, !currentID.isEmpty, visited.insert(currentID).inserted {
+                  nodeIDs.append(currentID)
+                  guard let node = mapping[currentID] as? [String: Any] else { break }
+                  nodeID = node["parent"] as? String
+              }
+
+              var messages: [ConversationMessage] = []
+              var filteredRecipientMessageCount = 0
+              var pendingTimeline: [ConversationResponseTimelineItem] = []
+              var pendingToolIndexByServiceID: [String: Int] = [:]
+              for id in nodeIDs.reversed() {
+                  guard let node = mapping[id] as? [String: Any], let message = node["message"] as? [String: Any], let author = message["author"] as? [String: Any], let rawRole = author["role"] as? String else { continue }
+                  let metadata = message["metadata"] as? [String: Any]
+                  if rawRole == "tool" {
+                      if message["status"] as? String == "finished_successfully", message["recipient"] as? String == "all", let parentID = metadata?["parent_id"] as? String, let index = pendingToolIndexByServiceID[parentID], pendingTimeline.indices.contains(index), pendingTimeline[index].kind == .tool {
+                          pendingTimeline[index].completed = true
+                      }
+                      continue
+                  }
+                  guard let role = ConversationMessage.Role(rawValue: rawRole), let content = message["content"] as? [String: Any] else { continue }
+                  if role == .assistant, let recipient = message["recipient"] as? String {
+                      let normalizedRecipient = recipient.trimmingCharacters(in: .whitespacesAndNewlines)
+                      if !normalizedRecipient.isEmpty, normalizedRecipient != "all" {
+                          filteredRecipientMessageCount += 1
+                          if message["status"] as? String == "finished_successfully", content["content_type"] as? String == "code", (metadata?["is_complete"] as? Bool) == true {
+                              let rawTitle = (metadata?["reasoning_title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                              let title = rawTitle.isEmpty ? "工具调用" : String(rawTitle.prefix(160))
+                              let serviceID = (message["id"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? id
+                              pendingToolIndexByServiceID[serviceID] = pendingTimeline.count
+                              pendingTimeline.append(.tool(slot: pendingTimeline.count, title: title, completed: false))
+                          }
+                          continue
+                      }
+                  }
+                  if role == .assistant, let summary = collapsedReasoningSummary(from: message, content: content) {
+                      if !pendingTimeline.contains(where: { $0.kind == .reasoning }) { pendingTimeline.append(.reasoning(summary)) }
+                      continue
+                  }
+                  let isThinkingPreamble = role == .assistant && (metadata?["is_thinking_preamble_message"] as? Bool) == true
+                  if isThinkingPreamble {
+                      let reasoning = visibleText(from: content)
+                      if !reasoning.isEmpty { pendingTimeline.append(.reasoning(reasoning)) }
+                      continue
+                  }
+                  if role == .assistant, let contentType = content["content_type"] as? String, contentType == "thoughts" || contentType == "inline_cot_expandable_content" { continue }
+                  let visible = visibleText(from: content)
+                  guard !visible.isEmpty else { continue }
+                  if role == .user {
+                      pendingTimeline.removeAll()
+                      pendingToolIndexByServiceID.removeAll()
+                  }
+                  let timeline = role == .assistant ? pendingTimeline : []
+                  let messageID = (message["id"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? id
+                  messages.append(ConversationMessage(id: messageID, role: role, text: visible, responseTimeline: timeline, createTime: (message["create_time"] as? NSNumber)?.doubleValue))
+                  if role == .assistant {
+                      pendingTimeline.removeAll()
+                      pendingToolIndexByServiceID.removeAll()
+                  }
+              }
+              return (messages, filteredRecipientMessageCount)
+          }
+
+              private static func collapsedReasoningSummary(from message: [String: Any], content: [String: Any]) -> String? {
+              guard message["status"] as? String == "finished_successfully", message["recipient"] as? String == "all", content["content_type"] as? String == "reasoning_recap", let rawSummary = content["content"] as? String else { return nil }
+              let summary = rawSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+              guard !summary.isEmpty, let metadata = message["metadata"] as? [String: Any], metadata["reasoning_status"] as? String == "reasoning_ended", metadata["reasoning_recap_type"] as? String == "collapse" else { return nil }
+              return summary
+          }
+
+          '''
+          text = region(text, parser_start, parser_end, parser, "history ordered parser")
+
+          text = once(text, "            let reasoningSummary = row.isFirstChunk && message.role == .assistant ? message.reasoningSummary : nil\n            let reasoningExpanded = reasoningSummary != nil && isReasoningExpanded(messageID: message.id)\n            let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, reasoningSummary: reasoningSummary, reasoningExpanded: reasoningExpanded)", "            let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []\n            let reasoningExpanded = !responseTimeline.isEmpty && isReasoningExpanded(messageID: message.id)\n            let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded)", "historical ordered metrics")
+
+          live_start = "    private func rebuildLiveResponsePresentation(width: CGFloat) {\n"
+          live_end = "    func liveResponseDidChange(id: String) {\n"
+          live = '''    private func rebuildLiveResponsePresentation(width: CGFloat) {
+              let resolvedWidth = max(1, width)
+              guard let id = displayedConversationID, let snapshot = repository.liveResponse(for: id) else {
+                  livePresentationMessage = nil
+                  liveMessagePresentation = .empty
+                  livePresentationRowMetrics = []
+                  livePresentationContentHeight = 0
+                  return
+              }
+              let bodyText: String
+              if !snapshot.finalText.isEmpty { bodyText = snapshot.finalText }
+              else {
+                  switch snapshot.phase {
+                  case .preparing: bodyText = "正在发送…"
+                  case .thinking, .reasoning: bodyText = "正在思考…"
+                  case .final: bodyText = "正在生成回答…"
+                  case .completed: bodyText = "正在同步最新消息…"
+                  case .failed: bodyText = "回答失败"
+                  }
+              }
+              let message = ConversationMessage(id: "local-live-response-\\(snapshot.generation)", role: .assistant, text: bodyText, responseTimeline: snapshot.timeline, createTime: nil)
+              livePresentationMessage = message
+              liveMessagePresentation = ConversationMessagePresentationProjection.derive(from: [message])
+              livePresentationRowMetrics.removeAll(keepingCapacity: true)
+              livePresentationRowMetrics.reserveCapacity(liveMessagePresentation.rows.count)
+              var height: CGFloat = 0
+              let reasoningExpanded = !snapshot.timeline.isEmpty && (!snapshot.reasoningEnded || isReasoningExpanded(messageID: message.id))
+              for row in liveMessagePresentation.rows {
+                  let showsCopy = !snapshot.phase.isActive && row.isLastChunk
+                  let metrics = ConversationMessageCell.metrics(for: row.text, role: .assistant, tableWidth: resolvedWidth, showsTimestamp: false, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: row.isFirstChunk ? snapshot.timeline : [], reasoningExpanded: reasoningExpanded)
+                  livePresentationRowMetrics.append(metrics)
+                  height += metrics.rowHeight
+              }
+              livePresentationContentHeight = height
+          }
+
+          '''
+          text = region(text, live_start, live_end, live, "live ordered presentation")
+
+          text = once(text, "        return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.reasoningSummary != new.reasoningSummary || old.createTime != new.createTime }", "        return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.responseTimeline != new.responseTimeline || old.createTime != new.createTime }", "visible diff timeline")
+
+          table_start = "    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messagePresentation.rows.count + liveMessagePresentation.rows.count }\n"
+          cell_start = "final class ConversationMessageCell: UITableViewCell {\n"
+          table = '''    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messagePresentation.rows.count + liveMessagePresentation.rows.count }
+
+              func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+              if indexPath.row < messagePresentation.rows.count {
+                  guard presentationRowMetrics.indices.contains(indexPath.row) else { return 44 }
+                  return presentationRowMetrics[indexPath.row].rowHeight
+              }
+              let liveRow = indexPath.row - messagePresentation.rows.count
+              guard livePresentationRowMetrics.indices.contains(liveRow) else { return 44 }
+              return livePresentationRowMetrics[liveRow].rowHeight
+          }
+
+              func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat { self.tableView(tableView, heightForRowAt: indexPath) }
+
+              func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+              let cell = tableView.dequeueReusableCell(withIdentifier: ConversationMessageCell.reuseIdentifier, for: indexPath) as! ConversationMessageCell
+              if indexPath.row < messagePresentation.rows.count {
+                  guard messagePresentation.rows.indices.contains(indexPath.row), presentationRowMetrics.indices.contains(indexPath.row) else { return cell }
+                  let presentationRow = messagePresentation.rows[indexPath.row]
+                  guard messages.indices.contains(presentationRow.messageIndex) else { return cell }
+                  let message = messages[presentationRow.messageIndex]
+                  let showsTimestamp = presentationRow.isFirstChunk && preferences.showsMessageTimestamps
+                  let showsCopy = message.role == .assistant && presentationRow.isLastChunk
+                  let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+                  let reasoningExpanded = !responseTimeline.isEmpty && isReasoningExpanded(messageID: message.id)
+                  cell.configure(with: message, text: presentationRow.text, showTimestamp: showsTimestamp, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, metrics: presentationRowMetrics[indexPath.row], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoning(messageID: message.id) })
+                  return cell
+              }
+              let liveRow = indexPath.row - messagePresentation.rows.count
+              guard let message = livePresentationMessage, liveMessagePresentation.rows.indices.contains(liveRow), livePresentationRowMetrics.indices.contains(liveRow), let id = displayedConversationID, let snapshot = repository.liveResponse(for: id) else { return cell }
+              let presentationRow = liveMessagePresentation.rows[liveRow]
+              let showsCopy = !snapshot.phase.isActive && presentationRow.isLastChunk
+              let responseTimeline = presentationRow.isFirstChunk ? message.responseTimeline : []
+              let reasoningExpanded = !responseTimeline.isEmpty && (!snapshot.reasoningEnded || isReasoningExpanded(messageID: message.id))
+              let canToggleReasoning = !responseTimeline.isEmpty && snapshot.reasoningEnded
+              cell.configure(with: message, text: presentationRow.text, showTimestamp: false, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, metrics: livePresentationRowMetrics[liveRow], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: canToggleReasoning ? { [weak self] in self?.toggleReasoning(messageID: message.id) } : nil)
+              return cell
+          }
+
+              func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+              guard indexPath.row < messagePresentation.rows.count, messagePresentation.rows.indices.contains(indexPath.row) else { return nil }
+              let presentationRow = messagePresentation.rows[indexPath.row]
+              guard messages.indices.contains(presentationRow.messageIndex) else { return nil }
+              let message = messages[presentationRow.messageIndex]
+              guard message.role == .user else { return nil }
+              return UIContextMenuConfiguration(identifier: message.id as NSString, previewProvider: nil) { [weak self] _ in
+                  let copy = UIAction(title: "复制", image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in self?.copyVisibleMessage(message) }
+                  return UIMenu(children: [copy])
+              }
+          }
+          }
+
+          '''
+          text = region(text, table_start, cell_start, table, "table ordered timeline")
+
+          cell_pos = text.find(cell_start)
+          if cell_pos < 0: raise SystemExit("cell marker missing")
+          cell = '''final class ConversationMessageCell: UITableViewCell {
+              struct Metrics {
+                  let rowHeight: CGFloat
+                  let timestampFrame: CGRect
+                  let bubbleFrame: CGRect
+                  let reasoningButtonFrame: CGRect
+                  let reasoningBodyFrame: CGRect
+                  let messageFrame: CGRect
+                  let copyFrame: CGRect
+              }
+
+              static let reuseIdentifier = "ConversationMessageCell"
+
+              private static let horizontalMargin: CGFloat = 16
+              private static let userLeadingGap: CGFloat = 44
+              private static let userMaxWidthRatio: CGFloat = 0.82
+              private static let bubbleHorizontalPadding: CGFloat = 12
+              private static let bubbleVerticalPadding: CGFloat = 9
+              private static let outerVerticalPadding: CGFloat = 7
+              private static let timestampGap: CGFloat = 3
+              private static let reasoningButtonHeight: CGFloat = 30
+              private static let reasoningBodyGap: CGFloat = 4
+              private static let reasoningMessageGap: CGFloat = 7
+              private static let copyGap: CGFloat = 4
+              private static let copySize: CGFloat = 28
+              private static let bodyFont = UIFont.preferredFont(forTextStyle: .body)
+              private static let reasoningFont = UIFont.preferredFont(forTextStyle: .subheadline)
+              private static let toolFont = UIFont.systemFont(ofSize: reasoningFont.pointSize, weight: .medium)
+              private static let timestampFont = UIFont.preferredFont(forTextStyle: .caption2)
+              private static let timeFormatter: DateFormatter = {
+                  let formatter = DateFormatter()
+                  formatter.locale = Locale.autoupdatingCurrent
+                  formatter.timeZone = TimeZone.autoupdatingCurrent
+                  formatter.dateStyle = .none
+                  formatter.timeStyle = .short
+                  return formatter
+              }()
+              private static let dateTimeFormatter: DateFormatter = {
+                  let formatter = DateFormatter()
+                  formatter.locale = Locale.autoupdatingCurrent
+                  formatter.timeZone = TimeZone.autoupdatingCurrent
+                  formatter.dateStyle = .medium
+                  formatter.timeStyle = .short
+                  return formatter
+              }()
+
+              private let bubbleView = UIView()
+              private let messageLabel = UILabel()
+              private let reasoningButton = UIButton(type: .system)
+              private let reasoningLabel = UILabel()
+              private let timestampLabel = UILabel()
+              private let copyButton = UIButton(type: .system)
+              private var onCopy: (() -> Void)?
+              private var onToggleReasoning: (() -> Void)?
+              private var layoutMetrics = Metrics(rowHeight: 44, timestampFrame: .zero, bubbleFrame: .zero, reasoningButtonFrame: .zero, reasoningBodyFrame: .zero, messageFrame: .zero, copyFrame: .zero)
+
+              override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+                  super.init(style: style, reuseIdentifier: reuseIdentifier)
+                  selectionStyle = .none
+                  backgroundColor = .systemBackground
+                  contentView.backgroundColor = .systemBackground
+                  timestampLabel.font = Self.timestampFont
+                  timestampLabel.textColor = .tertiaryLabel
+                  contentView.addSubview(timestampLabel)
+                  contentView.addSubview(bubbleView)
+                  reasoningButton.tintColor = .secondaryLabel
+                  reasoningButton.setTitleColor(.secondaryLabel, for: .normal)
+                  reasoningButton.titleLabel?.font = .preferredFont(forTextStyle: .subheadline)
+                  reasoningButton.contentHorizontalAlignment = .left
+                  reasoningButton.addTarget(self, action: #selector(reasoningTapped), for: .touchUpInside)
+                  bubbleView.addSubview(reasoningButton)
+                  reasoningLabel.numberOfLines = 0
+                  bubbleView.addSubview(reasoningLabel)
+                  messageLabel.font = Self.bodyFont
+                  messageLabel.numberOfLines = 0
+                  bubbleView.addSubview(messageLabel)
+                  let copyImage = UIImage(systemName: "square.on.square", withConfiguration: UIImage.SymbolConfiguration(pointSize: 10, weight: .regular))
+                  copyButton.setImage(copyImage, for: .normal)
+                  copyButton.tintColor = .secondaryLabel
+                  copyButton.backgroundColor = .clear
+                  copyButton.contentHorizontalAlignment = .left
+                  copyButton.accessibilityLabel = "复制"
+                  copyButton.addTarget(self, action: #selector(copyTapped), for: .touchUpInside)
+                  contentView.addSubview(copyButton)
+              }
+
+              @available(*, unavailable)
+              required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+              override func prepareForReuse() {
+                  super.prepareForReuse()
+                  onCopy = nil
+                  onToggleReasoning = nil
+                  messageLabel.text = nil
+                  reasoningLabel.attributedText = nil
+                  reasoningButton.setTitle(nil, for: .normal)
+                  reasoningButton.setImage(nil, for: .normal)
+                  timestampLabel.text = nil
+                  reasoningButton.isHidden = true
+                  reasoningLabel.isHidden = true
+                  copyButton.isHidden = true
+              }
+
+              override func layoutSubviews() {
+                  super.layoutSubviews()
+                  timestampLabel.frame = layoutMetrics.timestampFrame
+                  bubbleView.frame = layoutMetrics.bubbleFrame
+                  reasoningButton.frame = layoutMetrics.reasoningButtonFrame
+                  reasoningLabel.frame = layoutMetrics.reasoningBodyFrame
+                  messageLabel.frame = layoutMetrics.messageFrame
+                  copyButton.frame = layoutMetrics.copyFrame
+              }
+
+              func configure(with message: ConversationMessage, text: String, showTimestamp: Bool, showCopy: Bool, isFirstChunk: Bool, isLastChunk: Bool, isChunked: Bool, responseTimeline: [ConversationResponseTimelineItem], reasoningExpanded: Bool, metrics: Metrics, onCopy: (() -> Void)?, onToggleReasoning: (() -> Void)?) {
+                  self.onCopy = onCopy
+                  self.onToggleReasoning = onToggleReasoning
+                  layoutMetrics = metrics
+                  messageLabel.text = text
+                  let showsReasoning = message.role == .assistant && isFirstChunk && !responseTimeline.isEmpty
+                  reasoningButton.isHidden = !showsReasoning
+                  reasoningButton.isUserInteractionEnabled = onToggleReasoning != nil
+                  reasoningButton.setTitle(showsReasoning ? "思考过程" : nil, for: .normal)
+                  reasoningButton.setImage(showsReasoning ? UIImage(systemName: reasoningExpanded ? "chevron.down" : "chevron.right") : nil, for: .normal)
+                  reasoningLabel.attributedText = showsReasoning && reasoningExpanded ? Self.responseTimelineAttributedText(responseTimeline) : nil
+                  reasoningLabel.isHidden = reasoningLabel.attributedText == nil
+                  timestampLabel.text = showTimestamp ? Self.timestampText(for: message.createTime) : nil
+                  timestampLabel.isHidden = timestampLabel.text == nil
+                  copyButton.isHidden = !showCopy
+                  switch message.role {
+                  case .user:
+                      bubbleView.backgroundColor = .secondarySystemBackground
+                      bubbleView.layer.cornerRadius = 18
+                      if isFirstChunk && isLastChunk { bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner] }
+                      else if isFirstChunk { bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner] }
+                      else if isLastChunk { bubbleView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner] }
+                      else { bubbleView.layer.maskedCorners = [] }
+                      timestampLabel.textAlignment = .right
+                  case .assistant:
+                      bubbleView.backgroundColor = .clear
+                      bubbleView.layer.cornerRadius = 0
+                      bubbleView.layer.maskedCorners = []
+                      timestampLabel.textAlignment = .left
+                  }
+                  setNeedsLayout()
+              }
+
+              static func metrics(for text: String, role: ConversationMessage.Role, tableWidth: CGFloat, showsTimestamp: Bool, showsCopy: Bool, isFirstChunk: Bool, isLastChunk: Bool, isChunked: Bool, responseTimeline: [ConversationResponseTimelineItem], reasoningExpanded: Bool) -> Metrics {
+                  let width = max(1, tableWidth)
+                  var y = isFirstChunk ? outerVerticalPadding : 0
+                  var timestampFrame = CGRect.zero
+                  if showsTimestamp {
+                      let timestampHeight = ceil(timestampFont.lineHeight)
+                      timestampFrame = CGRect(x: horizontalMargin, y: y, width: max(1, width - horizontalMargin * 2), height: timestampHeight)
+                      y += timestampHeight + timestampGap
+                  }
+                  let maxBubbleWidth: CGFloat
+                  let maxTextWidth: CGFloat
+                  switch role {
+                  case .user:
+                      maxBubbleWidth = max(36, min(width * userMaxWidthRatio, width - horizontalMargin * 2 - userLeadingGap))
+                      maxTextWidth = max(1, maxBubbleWidth - bubbleHorizontalPadding * 2)
+                  case .assistant:
+                      maxBubbleWidth = max(1, width - horizontalMargin * 2)
+                      maxTextWidth = max(1, maxBubbleWidth - bubbleHorizontalPadding * 2)
+                  }
+                  let textSize = measuredTextSize(text, maxWidth: maxTextWidth)
+                  let bubbleWidth: CGFloat
+                  switch role {
+                  case .user: bubbleWidth = isChunked ? maxBubbleWidth : min(maxBubbleWidth, max(36, ceil(textSize.width) + bubbleHorizontalPadding * 2))
+                  case .assistant: bubbleWidth = maxBubbleWidth
+                  }
+                  let bubbleX = role == .user ? width - horizontalMargin - bubbleWidth : horizontalMargin
+                  var bubbleY: CGFloat = isFirstChunk ? bubbleVerticalPadding : 0
+                  var reasoningButtonFrame = CGRect.zero
+                  var reasoningBodyFrame = CGRect.zero
+                  if role == .assistant, isFirstChunk, !responseTimeline.isEmpty {
+                      reasoningButtonFrame = CGRect(x: bubbleHorizontalPadding, y: bubbleY, width: maxTextWidth, height: reasoningButtonHeight)
+                      bubbleY = reasoningButtonFrame.maxY
+                      if reasoningExpanded {
+                          bubbleY += reasoningBodyGap
+                          let reasoningSize = measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth)
+                          reasoningBodyFrame = CGRect(x: bubbleHorizontalPadding, y: bubbleY, width: maxTextWidth, height: reasoningSize.height)
+                          bubbleY = reasoningBodyFrame.maxY
+                      }
+                      bubbleY += reasoningMessageGap
+                  }
+                  let messageFrame = CGRect(x: bubbleHorizontalPadding, y: bubbleY, width: maxTextWidth, height: textSize.height)
+                  let bubbleHeight = messageFrame.maxY + (isLastChunk ? bubbleVerticalPadding : 0)
+                  let bubbleFrame = CGRect(x: bubbleX, y: y, width: bubbleWidth, height: bubbleHeight)
+                  y = bubbleFrame.maxY
+                  var copyFrame = CGRect.zero
+                  if showsCopy {
+                      y += copyGap
+                      copyFrame = CGRect(x: horizontalMargin, y: y, width: copySize, height: copySize)
+                      y = copyFrame.maxY
+                  }
+                  if isLastChunk { y += outerVerticalPadding }
+                  return Metrics(rowHeight: max(1, ceil(y)), timestampFrame: timestampFrame, bubbleFrame: bubbleFrame, reasoningButtonFrame: reasoningButtonFrame, reasoningBodyFrame: reasoningBodyFrame, messageFrame: messageFrame, copyFrame: copyFrame)
+              }
+
+              private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem]) -> NSAttributedString {
+                  let output = NSMutableAttributedString()
+                  for (index, item) in timeline.enumerated() {
+                      let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                      guard !normalized.isEmpty else { continue }
+                      if output.length > 0 { output.append(NSAttributedString(string: "\\n\\n")) }
+                      switch item.kind {
+                      case .reasoning:
+                          output.append(NSAttributedString(string: normalized, attributes: [.font: reasoningFont, .foregroundColor: UIColor.secondaryLabel]))
+                      case .tool:
+                          let text = "\\(item.completed ? "✓" : "•") \\(normalized) · \\(item.completed ? "已完成" : "调用中")"
+                          output.append(NSAttributedString(string: text, attributes: [.font: toolFont, .foregroundColor: UIColor.secondaryLabel]))
+                      }
+                  }
+                  return output
+              }
+
+              private static func measuredTextSize(_ text: String, maxWidth: CGFloat) -> CGSize {
+                  guard !text.isEmpty else { return CGSize(width: 0, height: ceil(bodyFont.lineHeight)) }
+                  let rect = (text as NSString).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: bodyFont], context: nil)
+                  return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(bodyFont.lineHeight), ceil(rect.height) + 1))
+              }
+
+              private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat) -> CGSize {
+                  let attributed = responseTimelineAttributedText(timeline)
+                  guard attributed.length > 0 else { return .zero }
+                  let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+                  return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(reasoningFont.lineHeight), ceil(rect.height) + 1))
+              }
+
+              @objc private func copyTapped() { onCopy?() }
+              @objc private func reasoningTapped() { onToggleReasoning?() }
+
+              private static func timestampText(for createTime: TimeInterval?) -> String? {
+                  guard let createTime, createTime > 0 else { return nil }
+                  let date = Date(timeIntervalSince1970: createTime)
+                  return Calendar.autoupdatingCurrent.isDate(date, inSameDayAs: Date()) ? timeFormatter.string(from: date) : dateTimeFormatter.string(from: date)
+              }
+          }
+          '''
+          text = text[:cell_pos] + cell
+          if "reasoningSummary" in text: raise SystemExit("stale reasoningSummary reference remains")
+          write(feature, text)
+
+          root = "ChatGPTClient/RootViewController.swift"
+          text = read(root)
+          model_start = "struct ConversationLiveTool: Equatable {\n"
+          model_end = "enum ConversationLiveResponseError: LocalizedError {\n"
+          model = '''enum ConversationLiveResponsePhase: String {
+              case preparing
+              case thinking
+              case reasoning
+              case final
+              case completed
+              case failed
+
+              var isActive: Bool {
+                  switch self {
+                  case .preparing, .thinking, .reasoning, .final: return true
+                  case .completed, .failed: return false
+                  }
+              }
+          }
+
+          struct ConversationLiveResponseSnapshot {
+              let generation: Int
+              let conversationID: String
+              let baselineVisibleMessageCount: Int
+              var phase: ConversationLiveResponsePhase
+              var timeline: [ConversationResponseTimelineItem]
+              var finalText: String
+              var reasoningEnded: Bool
+              var failureReason: String?
+          }
+
+          '''
+          text = region(text, model_start, model_end, model, "root timeline model")
+          text = once(text, "        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, phase: .preparing, reasoningText: \"\", finalText: \"\", tools: [], reasoningEnded: false, failureReason: nil)", "        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, phase: .preparing, timeline: [], finalText: \"\", reasoningEnded: false, failureReason: nil)", "begin live timeline")
+
+          switch_start = "        var eventName = \"unknown\"\n        switch event {\n"
+          switch_end = "\n        responseRuntime.snapshots[conversationID] = snapshot\n"
+          switch_block = '''        var eventName = "unknown"
+              switch event {
+              case .composerReady: eventName = "composer_ready"
+              case .sendObserved: eventName = "send_observed"
+              case .responseAccepted:
+                  snapshot.phase = .thinking
+                  eventName = "response_accepted"
+              case .thinkingActive:
+                  if snapshot.phase != .final { snapshot.phase = .thinking }
+                  eventName = "thinking_active"
+              case .reasoningPreamble(let text, let segmentStart):
+                  if segmentStart || snapshot.timeline.last?.kind != .reasoning { snapshot.timeline.append(.reasoning(text)) }
+                  else { snapshot.timeline[snapshot.timeline.count - 1].text += text }
+                  snapshot.phase = .reasoning
+                  eventName = "reasoning_preamble"
+              case .reasoningDelta(let text):
+                  if snapshot.timeline.last?.kind == .reasoning { snapshot.timeline[snapshot.timeline.count - 1].text += text }
+                  else { snapshot.timeline.append(.reasoning(text)) }
+                  snapshot.phase = .reasoning
+                  eventName = "reasoning_delta"
+              case .reasoningEnded:
+                  snapshot.reasoningEnded = true
+                  snapshot.phase = .final
+                  eventName = "reasoning_ended"
+              case .finalDelta(let text):
+                  snapshot.finalText += text
+                  snapshot.phase = .final
+                  eventName = "final_delta"
+              case .toolActivity(let slot, let title, let completed):
+                  if let index = snapshot.timeline.firstIndex(where: { $0.kind == .tool && $0.toolSlot == slot }) {
+                      if !title.isEmpty { snapshot.timeline[index].text = title }
+                      snapshot.timeline[index].completed = snapshot.timeline[index].completed || completed
+                  } else {
+                      snapshot.timeline.append(.tool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed))
+                  }
+                  eventName = completed ? "tool_completed" : "tool_invoked"
+              case .terminal:
+                  if !snapshot.reasoningEnded, snapshot.finalText.isEmpty {
+                      let provisionalFinal = snapshot.timeline.filter { $0.kind == .reasoning }.map(\\.text).joined(separator: "\\n\\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                      if !provisionalFinal.isEmpty {
+                          snapshot.finalText = provisionalFinal
+                          snapshot.timeline.removeAll { $0.kind == .reasoning }
+                      }
+                  }
+                  snapshot.phase = .completed
+                  eventName = "terminal"
+              case .failed(let reason):
+                  snapshot.phase = .failed
+                  snapshot.failureReason = reason
+                  eventName = "failed"
+              }
+          '''
+          a = text.find(switch_start)
+          b = text.find(switch_end, a + len(switch_start)) if a >= 0 else -1
+          if a < 0 or b < 0: raise SystemExit("consume switch markers missing")
+          text = text[:a] + switch_block + text[b:]
+          text = once(text, "        fields[\"reasoningCharacters\"] = String(snapshot.reasoningText.count)\n        fields[\"finalCharacters\"] = String(snapshot.finalText.count)\n        fields[\"toolCount\"] = String(snapshot.tools.count)", "        fields[\"reasoningCharacters\"] = String(snapshot.timeline.filter { $0.kind == .reasoning }.reduce(0) { $0 + $1.text.count })\n        fields[\"finalCharacters\"] = String(snapshot.finalText.count)\n        fields[\"toolCount\"] = String(snapshot.timeline.filter { $0.kind == .tool }.count)\n        fields[\"timelineItemCount\"] = String(snapshot.timeline.count)", "timeline diagnostics")
+          if "ConversationLiveTool" in text or "reasoningText" in text or "snapshot.tools" in text: raise SystemExit("stale flattened live model remains")
+          write(root, text)
+
+          project = "ChatGPTClient.xcodeproj/project.pbxproj"
+          text = read(project)
+          if text.count("CURRENT_PROJECT_VERSION = 68;") != 2 or text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b68";') != 2: raise SystemExit("b68 project identity mismatch")
+          text = text.replace("CURRENT_PROJECT_VERSION = 68;", "CURRENT_PROJECT_VERSION = 69;")
+          text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b68";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b69";')
+          write(project, text)
+          PY
+          git diff --check
+          test "$(git diff --name-only 33022dc8c9fdcb17f5b462a2766ac86238417c58 | sort)" = "$(printf '%s\n' '.github/workflows/b69-assembly-tool.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          rm .github/workflows/b69-assembly-tool.yml
+          git reset --soft 33022dc8c9fdcb17f5b462a2766ac86238417c58
+          git add -A
+          test "$(git diff --cached --name-only | sort)" = "$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat: preserve ordered reasoning tool timeline"
+          git push origin HEAD:assembly/dev-send-stream-b69-product-20260831

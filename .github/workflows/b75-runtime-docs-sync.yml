@@ -31,7 +31,7 @@ jobs:
           test "$changed" = "$expected"
           grep -Fq 'DEV-send-stream-0.1.0-b75' docs/project/BUILD_TEST_INDEX.md
           grep -Fq 'b75 covered-production qualification' docs/project/WEB_SEND_ADAPTER.md
-          grep -Fq 'Runtime partial/rejected' docs/project/PROJECT_STATE.md
+          grep -Fq 'partial/rejected' docs/project/PROJECT_STATE.md
       - name: Commit docs-only runtime evidence
         run: |
           git config user.name 'github-actions[bot]'

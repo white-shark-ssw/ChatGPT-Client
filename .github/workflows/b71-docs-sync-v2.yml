@@ -29,12 +29,14 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re, textwrap
+          import re
           raw = Path('.github/workflows/b71-docs-sync.yml').read_text()
           m = re.search(r"(?ms)^\s+python3 - <<'PY'\n(?P<code>.*?)(?=^\s+PY\s*$)", raw)
           if not m:
               raise SystemExit('docs patch block not found')
-          Path('/tmp/b71-docs-sync.py').write_text(textwrap.dedent(m.group('code')))
+          lines = m.group('code').splitlines(keepends=True)
+          code = ''.join(line[10:] if line.startswith('          ') else line for line in lines)
+          Path('/tmp/b71-docs-sync.py').write_text(code)
           PY
 
       - name: Checkout exact b71 product source

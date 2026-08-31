@@ -1,0 +1,56 @@
+name: b72 isolated assembly
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b72-20260831
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout assembly ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare clean checkpoint worktree
+        run: |
+          cp scripts/b72_assembly_patch.py /tmp/b72_assembly_patch.py
+          git reset --hard 2aaee7f6fa143c1c3426ca89d2d52b42949daf86
+          python3 /tmp/b72_assembly_patch.py
+
+      - name: Audit exact product scope
+        run: |
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          printf '%s\n' "${changed[@]}"
+          expected=(
+            ".github/workflows/ios-foundation.yml"
+            "ChatGPTClient.xcodeproj/project.pbxproj"
+            "ChatGPTClient/Conversation/ConversationFeature.swift"
+            "ChatGPTClient/RootViewController.swift"
+          )
+          if [[ ${#changed[@]} -ne ${#expected[@]} ]]; then echo "unexpected changed file count"; exit 1; fi
+          for file in "${expected[@]}"; do printf '%s\n' "${changed[@]}" | grep -Fx "$file" >/dev/null || { echo "missing $file"; exit 1; }; done
+          ! git diff -- ChatGPTClient/RootViewController.swift | grep -E '^[-+].*(backend-api/f/conversation|prompt-textarea|contenteditable|text/event-stream)' || { echo "protected Send selector/route grammar changed"; exit 1; }
+          grep -F 'CURRENT_PROJECT_VERSION = 72;' ChatGPTClient.xcodeproj/project.pbxproj >/dev/null
+          grep -F 'DEV-send-stream-0.1.0-b72' ChatGPTClient.xcodeproj/project.pbxproj >/dev/null
+          grep -F 'ChatGPTClient-DEV-send-stream-0.1.0-b72' .github/workflows/ios-foundation.yml >/dev/null
+
+      - name: Compile iOS Simulator
+        run: |
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Emit clean product branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c assembly/dev-send-stream-b72-product-20260831
+          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m 'feat: correct b72 reasoning tools and concurrent sends'
+          test "$(git rev-parse HEAD^)" = '2aaee7f6fa143c1c3426ca89d2d52b42949daf86'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b72-product-20260831

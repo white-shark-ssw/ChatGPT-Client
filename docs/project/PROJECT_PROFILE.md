@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, b69 daily-chat defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, exact b71 Runtime rejection evidence, and exact b72 Code/scope/Simulator/Push+PR CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -91,6 +91,14 @@ b70 retains accepted b67 protected-Send/SSE ownership and b69 chronological time
 
 Identity: Candidate `DEV-send-stream-0.1.0-b70`, `0.1.0 (70)`, exact source `fb83be9163838f78abfa47903e67f27b6f66ec52`, assembly `33373254877/99428895016`, Push `33377045570/99440767755`, PR `33377049590/99440781050`, Artifact `9752289536`, ZIP `bdf09b24...afde0`, IPA `8084e2ac...a44a`, package source marker `fb83be916383`, iOS14 minimum. Evidence: Code/scope/static+sim compile/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
 
+## Exact b72 current Candidate
+
+Build72 is the current real-device Candidate after the user's exact b71 comparison rejected the previous reasoning/tool interaction hierarchy and process-global cross-conversation Send serialization. b72 keeps the accepted b67 protected-Send route/selector/challenge/SSE grammar while changing only the evidenced Native presentation/concurrency owners.
+
+Identity: Candidate `DEV-send-stream-0.1.0-b72`, `0.1.0 (72)`, exact product/config source `d20536db37a028556c8032e7c74912805ade785c`, code commit `451fa0cb58bbbc681a97d3156bada50357a6067e`, Push `33403473989/99525205970`, PR `33403478927/99525223287`, Artifact `9762189417`, ZIP `sha256:5107cedc43b3e5a096da60db9acc2f0705c30bb81be8134f1373dba6f929c1b9`, IPA `ff9d37022a310cab3eea0bb3c298e3d3ec8b0d3057f7256da4f0543dab18b53c`, source marker `d20536db37a0`, minimum iOS14, arm64. Evidence ladder: Code/exact scope/Simulator compile/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable/Frozen No.
+
+Implementation boundary: first-level `思考了 <duration>` expands/collapses the entire inline chronological reasoning+tool timeline; concrete tool rows open an ordered tools-only/input-only sheet; one shared service-backed duration formatter renders seconds below 60 and accumulated minutes thereafter (minutes remain the maximum unit); covered Web executor ownership is keyed per conversation so unrelated conversations are not process-globally serialized, while Repository response ownership remains per conversation and each executor retains the b67 one-Send gate.
+
 ## Current product interaction target
 
 Native response behavior should follow verified service events:
@@ -101,7 +109,7 @@ Tool phases remain optional. `assistant:thoughts` is never presented. General Ma
 
 ## Current next Candidate boundary
 
-b39-b70 are permanently reserved. Exact b70 real-device evidence is the only current Candidate gate. Do not allocate b71 before b70 Runtime yields a concrete defect/next evidence need. The gate must verify no covered-Web keyboard pop, one immediate nonduplicated optimistic user row, chronological reasoning/tools with restored GitHub details/icons/compact divider presentation, active-response navigation preservation, and transient Native 403 recovery on the next explicit/normal read without automatic retry.
+Build72 is permanently reserved because Artifact `9762189417` exists. Exact b72 real-device evidence is now the only current Candidate gate. Do not allocate b73 unless b72 Runtime yields a concrete defect or next evidence need. The gate must verify first-level inline reasoning/tool expansion, minute-level duration display, tools-only/input-only secondary sheet behavior, bounded tool icons, and A+B simultaneous generation with independent per-conversation ownership while preserving b67 one-Send transport and b38 geometry.
 
 ## Remaining Unknown / Unverified
 

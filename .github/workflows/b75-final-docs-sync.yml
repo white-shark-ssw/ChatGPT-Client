@@ -1,0 +1,42 @@
+name: b75 final docs sync
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b75-final-docs-20260901
+    paths:
+      - '.github/workflows/b75-final-docs-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve patcher and checkout exact formal docs head
+        run: |
+          cp scripts/b75_final_docs_sync.py /tmp/b75_final_docs_sync.py
+          git checkout -B dev/send-stream-20260829 origin/dev/send-stream-20260829
+          test "$(git rev-parse HEAD)" = '238b9e93b4e5f780aaf525106ec672de8ed8225b'
+      - name: Patch and audit final durable docs
+        run: |
+          python3 /tmp/b75_final_docs_sync.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream.md | sort)"
+          test "$changed" = "$expected"
+          grep -Fq 'b75 current Runtime override' docs/project/PROJECT_PROFILE.md
+          grep -Fq 'b75 Runtime qualification' docs/project/TECHNICAL_DECISIONS.md
+          grep -Fq 'b24-b75 emitted identities are permanently reserved' docs/project/PROJECT_SPECIFIC_RULES.md
+          grep -Fq 'Human-only Web Rule Lab gate' docs/project/current/dev/DEV-send-stream.md
+      - name: Commit docs-only final synchronization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream.md
+          git commit -m 'docs: finalize b75 runtime handoff'
+          git push origin HEAD:dev/send-stream-20260829

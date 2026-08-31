@@ -8,6 +8,7 @@ private final class WeakCoveredWebSendMessageHandler: NSObject, WKScriptMessageH
 }
 
 enum CoveredWebSendEvent {
+    case externalResumeObserved
     case composerReady
     case sendObserved
     case responseAccepted
@@ -37,6 +38,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private var currentConversationID: String?
     private var composerReadyConversationID: String?
     private var pendingSend: PendingSend?
+    private var observationEvents: ((CoveredWebSendEvent) -> Void)?
     private var activeEvents: ((CoveredWebSendEvent) -> Void)?
     private var responseActive = false
 
@@ -78,6 +80,21 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         diagnostics.info(category: "webSend", name: "coveredExecutor.attached", fields: ["store": "default", "visibility": "covered"])
     }
 
+    func observeExistingConversation(conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {
+        precondition(Thread.isMainThread)
+        guard !conversationID.isEmpty else { return }
+        observationEvents = events
+        if currentConversationID == conversationID {
+            webView.evaluateJavaScript("window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.probeComposer(true);", completionHandler: nil)
+            return
+        }
+        composerReadyConversationID = nil
+        currentConversationID = conversationID
+        guard let encoded = conversationID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed), let url = URL(string: "https://chatgpt.com/c/\(encoded)") else { return }
+        webView.load(URLRequest(url: url))
+        diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation"])
+    }
+
     func sendExistingConversation(text: String, conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {
         precondition(Thread.isMainThread)
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -109,6 +126,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         precondition(Thread.isMainThread)
         let events = activeEvents ?? pendingSend?.events
         pendingSend = nil
+        observationEvents = nil
         activeEvents = nil
         responseActive = false
         currentConversationID = nil
@@ -140,6 +158,19 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == Self.handlerName, let body = message.body as? [String: Any], let kind = body["kind"] as? String else { return }
         switch kind {
+        case "external_resume_observed":
+            if activeEvents == nil, let observationEvents {
+                activeEvents = observationEvents
+                responseActive = true
+                activeEvents?(.externalResumeObserved)
+                diagnostics.info(category: "webSend", name: "coveredExecutor.externalResumeObserved", fields: ["target": "existing_conversation"])
+            }
+        case "resume_response":
+            let status = (body["status"] as? NSNumber)?.intValue ?? 0
+            let contentType = body["contentType"] as? String ?? ""
+            diagnostics.info(category: "webSend", name: "coveredExecutor.resumeResponse", fields: ["httpStatus": String(status), "contentType": Self.safeToken(contentType)])
+            if status == 200 && contentType == "text/event-stream" { activeEvents?(.responseAccepted) }
+            else if activeEvents != nil { failCurrent("resume_not_sse") }
         case "composer_state":
             let ready = (body["ready"] as? NSNumber)?.boolValue ?? false
             let pageConversationID = body["conversationID"] as? String
@@ -465,6 +496,36 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const nonDataLines = lines.filter(line => !line.startsWith('data:'));
         return nonDataLines.concat(['data: ' + JSON.stringify(result.value)]).join('\n') + '\n\n';
       };
+      const observedResponse = response => {
+        let cloned;
+        try { cloned = response.clone(); } catch (_) { return; }
+        if (!cloned.body || typeof cloned.body.getReader !== 'function') return;
+        const reader = cloned.body.getReader();
+        const state = { reasoningEnded: false, textContinuationActive: false, reasoningPreambleSeen: new Set(), reasoningPreambleCount: 0, reasoningActiveSeen: new Set(), invocations: new Map(), toolSeen: new Set(), nextToolSlot: 0, terminal: false };
+        let buffer = '';
+        (async () => {
+          try {
+            while (true) {
+              const result = await reader.read();
+              if (result.done) {
+                buffer = (buffer + decoder.decode()).replace(/\r\n/g, '\n');
+                if (buffer.trim()) filterFrame(buffer, state);
+                if (!state.terminal) post({ kind: 'stream_error', state: 'stream_ended_without_done' });
+                return;
+              }
+              buffer = (buffer + decoder.decode(result.value || new Uint8Array(), { stream: true })).replace(/\r\n/g, '\n');
+              let boundary;
+              while ((boundary = buffer.indexOf('\n\n')) >= 0) {
+                const frame = buffer.slice(0, boundary);
+                buffer = buffer.slice(boundary + 2);
+                filterFrame(frame, state);
+              }
+            }
+          } catch (_) {
+            post({ kind: 'stream_error', state: 'reader_failed' });
+          }
+        })();
+      };
       const filteredResponse = response => {
         if (!response.body || typeof response.body.getReader !== 'function' || typeof ReadableStream !== 'function') return response;
         const reader = response.body.getReader();
@@ -518,7 +579,31 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       window.fetch = async function(input, init) {
         let url = null;
         try { url = new URL(typeof input === 'string' ? input : input && input.url || '', location.href); } catch (_) {}
-        const isSend = !!url && isChatGPTHost(url.hostname.toLowerCase()) && url.pathname === '/backend-api/f/conversation';
+        const chatHost = !!url && isChatGPTHost(url.hostname.toLowerCase());
+        const isSend = chatHost && url.pathname === '/backend-api/f/conversation';
+        const isResume = chatHost && url.pathname === '/backend-api/f/conversation/resume';
+        if (isResume) {
+          let resumeConversationID = null;
+          if (init && typeof init.body === 'string') {
+            try {
+              const resumeBody = JSON.parse(init.body);
+              if (resumeBody && typeof resumeBody === 'object' && !Array.isArray(resumeBody) && typeof resumeBody.conversation_id === 'string') resumeConversationID = resumeBody.conversation_id;
+            } catch (_) {}
+          }
+          if (resumeConversationID && resumeConversationID === currentConversationID()) {
+            post({ kind: 'external_resume_observed' });
+            try {
+              const response = await originalFetch(input, init);
+              const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+              post({ kind: 'resume_response', status: response.status, contentType });
+              if (response.status === 200 && contentType === 'text/event-stream') observedResponse(response);
+              return response;
+            } catch (error) {
+              post({ kind: 'stream_error', state: 'resume_transport_error' });
+              throw error;
+            }
+          }
+        }
         if (!isSend || !activeSend) return originalFetch(input, init);
         post({ kind: 'send_observed' });
         probeComposer(true);
@@ -620,6 +705,24 @@ extension ConversationRepository {
     }
 
     @discardableResult
+    func beginExternalLiveResponse(conversationID: String) -> Result<Int, Error> {
+        precondition(Thread.isMainThread)
+        if responseRuntime.snapshots[conversationID]?.phase.isActive == true { return .failure(ConversationLiveResponseError.responseAlreadyActive) }
+        let generation = (responseRuntime.generations[conversationID] ?? 0) + 1
+        responseRuntime.generations[conversationID] = generation
+        let baselineVisibleMessageCount = selectedConversationID == conversationID ? (selectedConversation?.messages.count ?? 0) : 0
+        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, promptText: "", phase: .thinking, timeline: [], finalText: "", reasoningEnded: false, reasoningDurationSeconds: nil, failureReason: nil)
+        var fields = diagnosticsFields(for: conversationID)
+        fields["responseGeneration"] = String(generation)
+        fields["phase"] = ConversationLiveResponsePhase.thinking.rawValue
+        fields["source"] = "external_resume"
+        fields["baselineVisibleMessageCount"] = String(baselineVisibleMessageCount)
+        DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.started", fields: fields)
+        responseRuntime.onChange?(conversationID)
+        return .success(generation)
+    }
+
+    @discardableResult
     func beginLiveResponse(conversationID: String, promptText: String) -> Result<Int, Error> {
         precondition(Thread.isMainThread)
         if responseRuntime.snapshots[conversationID]?.phase.isActive == true { return .failure(ConversationLiveResponseError.responseAlreadyActive) }
@@ -656,6 +759,7 @@ extension ConversationRepository {
 
         var eventName = "unknown"
     switch event {
+    case .externalResumeObserved: eventName = "external_resume_observed"
     case .composerReady: eventName = "composer_ready"
     case .sendObserved: eventName = "send_observed"
     case .responseAccepted:
@@ -781,6 +885,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
         sidebarViewController.onSelectConversation = { [weak self] id in
             guard let self else { return }
+            self.releaseIdleExecutors(except: id)
             self.repository.selectConversation(id: id)
             self.detailViewController.loadViewIfNeeded()
             self.detailViewController.title = self.repository.conversations.first(where: { $0.id == id })?.title ?? "新对话"
@@ -788,6 +893,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             self.detailNavigationController.setToolbarHidden(false, animated: false)
             self.updateLivePresentation()
             self.show(.secondary)
+            self.observeExternalResponseIfNeeded(conversationID: id)
         }
     }
 
@@ -856,6 +962,41 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         diagnostics.info(category: "webSend", name: "coveredExecutor.released", fields: ["activeExecutorCount": String(sendExecutors.count)])
     }
 
+    private func releaseIdleExecutors(except conversationID: String) {
+        let idle = sendExecutors.filter { $0.key != conversationID && !$0.value.isBusy }
+        for (id, executor) in idle { releaseExecutor(for: id, expected: executor) }
+    }
+
+    private func observeExternalResponseIfNeeded(conversationID: String) {
+        guard repository.selectedConversationID == conversationID, !repository.isLiveResponseActive(for: conversationID) else { return }
+        let sendExecutor = executor(for: conversationID)
+        var externalGeneration: Int?
+        sendExecutor.observeExistingConversation(conversationID: conversationID) { [weak self, weak sendExecutor] event in
+            guard let self, let sendExecutor else { return }
+            if case .externalResumeObserved = event {
+                guard externalGeneration == nil, !self.repository.isLiveResponseActive(for: conversationID) else { return }
+                switch self.repository.beginExternalLiveResponse(conversationID: conversationID) {
+                case .success(let generation):
+                    externalGeneration = generation
+                    self.updateLivePresentation()
+                case .failure:
+                    return
+                }
+                return
+            }
+            guard let generation = externalGeneration else { return }
+            self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
+            switch event {
+            case .terminal:
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)
+            case .failed:
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+            default: break
+            }
+        }
+    }
+
     private func startValidationSend(text: String, conversationID: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, repository.selectedConversationID == conversationID else { return }
@@ -895,6 +1036,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 self.diagnostics.error(category: "webSend", name: "authoritativeReconcile.failed", error: error)
             }
             self.updateLivePresentation()
+            if self.repository.selectedConversationID == conversationID, !self.repository.isLiveResponseActive(for: conversationID) { self.observeExternalResponseIfNeeded(conversationID: conversationID) }
         }
     }
 

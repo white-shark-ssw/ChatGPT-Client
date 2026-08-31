@@ -16,7 +16,7 @@ enum CoveredWebSendEvent {
     case reasoningDelta(String)
     case reasoningEnded
     case finalDelta(String)
-    case toolActivity(slot: Int, title: String, completed: Bool)
+    case toolActivity(slot: Int, title: String, completed: Bool, inputJSON: String, outputJSON: String, iconKind: ConversationResponseTimelineItem.ToolIconKind)
     case terminal
     case failed(String)
 }
@@ -174,7 +174,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let slot = (body["slot"] as? NSNumber)?.intValue ?? -1
             guard slot >= 0 else { return }
             let title = (body["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            activeEvents?(.toolActivity(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: (body["completed"] as? NSNumber)?.boolValue ?? false))
+            let inputJSON = body["detailInput"] as? String ?? ""
+            let outputJSON = body["detailOutput"] as? String ?? ""
+            let iconKind = ConversationResponseTimelineItem.ToolIconKind(rawValue: body["iconKind"] as? String ?? "") ?? .generic
+            activeEvents?(.toolActivity(slot: slot, title: title, completed: (body["completed"] as? NSNumber)?.boolValue ?? false, inputJSON: inputJSON, outputJSON: outputJSON, iconKind: iconKind))
         case "terminal":
             let terminalEvents = activeEvents
             responseActive = false
@@ -256,29 +259,44 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         return composer;
       };
       const setComposerText = (element, text) => {
-        element.focus();
-        if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
-          const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-          const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
-          if (!descriptor || !descriptor.set) return false;
-          descriptor.set.call(element, text);
-          element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+        const previousInputMode = element.getAttribute('inputmode');
+        let success = false;
+        try {
+          element.setAttribute('inputmode', 'none');
+          try { element.focus({ preventScroll: true }); } catch (_) { element.focus(); }
+          if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
+            const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+            const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+            if (!descriptor || !descriptor.set) return false;
+            descriptor.set.call(element, text);
+            element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+            success = true;
+            return true;
+          }
+          if (!element.isContentEditable) return false;
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          let inserted = false;
+          try { inserted = document.execCommand('insertText', false, text); } catch (_) {}
+          if (!inserted) {
+            element.textContent = text;
+            element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
+          }
+          selection.removeAllRanges();
+          success = true;
           return true;
+        } finally {
+          try { element.blur(); } catch (_) {}
+          if (previousInputMode === null) element.removeAttribute('inputmode');
+          else element.setAttribute('inputmode', previousInputMode);
+          if (!success) {
+            const selection = window.getSelection();
+            if (selection) selection.removeAllRanges();
+          }
         }
-        if (!element.isContentEditable) return false;
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        let inserted = false;
-        try { inserted = document.execCommand('insertText', false, text); } catch (_) {}
-        if (!inserted) {
-          element.textContent = text;
-          element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }));
-        }
-        selection.removeAllRanges();
-        return true;
       };
       const submit = text => {
         const composer = probeComposer(true);
@@ -306,6 +324,13 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const children = Array.isArray(node) ? node : Object.values(node);
         for (const child of children) { const message = findMessage(child, depth + 1); if (message) return message; }
         return null;
+      };
+      const iconKindForRecipient = recipient => {
+        const value = String(recipient || '').toLowerCase();
+        if (value.includes('python') || value.includes('container') || value.includes('terminal') || value.includes('code')) return 'code';
+        if (value.includes('web') || value.includes('browser') || value.includes('search')) return 'web';
+        if (value === 'api_tool.call_tool') return 'connector';
+        return 'generic';
       };
       const postTextDelta = (text, state) => {
         if (!text) return;
@@ -353,18 +378,26 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const rawTitle = metadata && typeof metadata.reasoning_title === 'string' ? metadata.reasoning_title.trim() : '';
         const title = rawTitle.slice(0, 160);
         if (role === 'assistant' && contentType === 'code' && typeof message.recipient === 'string' && message.recipient && message.recipient !== 'all') {
-          if (!state.invocations.has(message.id)) state.invocations.set(message.id, { recipient: message.recipient, slot: state.nextToolSlot++ });
+          if (!state.invocations.has(message.id)) state.invocations.set(message.id, { recipient: message.recipient, slot: state.nextToolSlot++, connectorPayload: '', iconKind: iconKindForRecipient(message.recipient) });
           const identity = state.invocations.get(message.id);
+          if (metadata && typeof metadata.connector_tool_payload === 'string' && metadata.connector_tool_payload) identity.connectorPayload = metadata.connector_tool_payload;
           if (message.status !== 'finished_successfully' || !metadata || metadata.is_complete !== true || state.toolSeen.has(message.id)) return;
           state.toolSeen.add(message.id);
-          post({ kind: 'tool_activity', slot: identity.slot, title, completed: false });
+          post({ kind: 'tool_activity', slot: identity.slot, title, completed: false, detailInput: '', detailOutput: '', iconKind: identity.iconKind });
           return;
         }
         if (role !== 'tool' || message.recipient !== 'all' || message.status !== 'finished_successfully' || state.toolSeen.has(message.id)) return;
         state.toolSeen.add(message.id);
         const parentID = metadata && typeof metadata.parent_id === 'string' && metadata.parent_id ? metadata.parent_id : '';
         const identity = parentID ? state.invocations.get(parentID) : null;
-        if (identity) post({ kind: 'tool_activity', slot: identity.slot, title, completed: true });
+        if (!identity) return;
+        const invokedResource = metadata && metadata.invoked_resource && typeof metadata.invoked_resource === 'object' && !Array.isArray(metadata.invoked_resource) ? metadata.invoked_resource : null;
+        const githubDetail = identity.recipient === 'api_tool.call_tool' && invokedResource && invokedResource.app_name === 'GitHub' && typeof identity.connectorPayload === 'string' && !!identity.connectorPayload && !!content;
+        let detailOutput = '';
+        if (githubDetail) {
+          try { detailOutput = JSON.stringify(content); } catch (_) {}
+        }
+        post({ kind: 'tool_activity', slot: identity.slot, title, completed: true, detailInput: githubDetail ? identity.connectorPayload : '', detailOutput, iconKind: githubDetail ? 'github' : identity.iconKind });
       };
       const scrubTextPatches = (node, state) => {
         if (Array.isArray(node)) {
@@ -539,6 +572,7 @@ struct ConversationLiveResponseSnapshot {
     let generation: Int
     let conversationID: String
     let baselineVisibleMessageCount: Int
+    let promptText: String
     var phase: ConversationLiveResponsePhase
     var timeline: [ConversationResponseTimelineItem]
     var finalText: String
@@ -585,17 +619,17 @@ extension ConversationRepository {
     }
 
     @discardableResult
-    func beginLiveResponse(conversationID: String, promptCharacterCount: Int) -> Result<Int, Error> {
+    func beginLiveResponse(conversationID: String, promptText: String) -> Result<Int, Error> {
         precondition(Thread.isMainThread)
         if responseRuntime.snapshots[conversationID]?.phase.isActive == true { return .failure(ConversationLiveResponseError.responseAlreadyActive) }
         let generation = (responseRuntime.generations[conversationID] ?? 0) + 1
         responseRuntime.generations[conversationID] = generation
         let baselineVisibleMessageCount = selectedConversationID == conversationID ? (selectedConversation?.messages.count ?? 0) : 0
-        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, failureReason: nil)
+        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, promptText: promptText, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, failureReason: nil)
         var fields = diagnosticsFields(for: conversationID)
         fields["responseGeneration"] = String(generation)
         fields["phase"] = ConversationLiveResponsePhase.preparing.rawValue
-        fields["promptCharacters"] = String(promptCharacterCount)
+        fields["promptCharacters"] = String(promptText.count)
         fields["baselineVisibleMessageCount"] = String(baselineVisibleMessageCount)
         DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.started", fields: fields)
         responseRuntime.onChange?(conversationID)
@@ -620,56 +654,59 @@ extension ConversationRepository {
         }
 
         var eventName = "unknown"
-    switch event {
-    case .composerReady: eventName = "composer_ready"
-    case .sendObserved: eventName = "send_observed"
-    case .responseAccepted:
-        snapshot.phase = .thinking
-        eventName = "response_accepted"
-    case .thinkingActive:
-        if snapshot.phase != .final { snapshot.phase = .thinking }
-        eventName = "thinking_active"
-    case .reasoningPreamble(let text, let segmentStart):
-        if segmentStart || snapshot.timeline.last?.kind != .reasoning { snapshot.timeline.append(.reasoning(text)) }
-        else { snapshot.timeline[snapshot.timeline.count - 1].text += text }
-        snapshot.phase = .reasoning
-        eventName = "reasoning_preamble"
-    case .reasoningDelta(let text):
-        if snapshot.timeline.last?.kind == .reasoning { snapshot.timeline[snapshot.timeline.count - 1].text += text }
-        else { snapshot.timeline.append(.reasoning(text)) }
-        snapshot.phase = .reasoning
-        eventName = "reasoning_delta"
-    case .reasoningEnded:
-        snapshot.reasoningEnded = true
-        snapshot.phase = .final
-        eventName = "reasoning_ended"
-    case .finalDelta(let text):
-        snapshot.finalText += text
-        snapshot.phase = .final
-        eventName = "final_delta"
-    case .toolActivity(let slot, let title, let completed):
-        if let index = snapshot.timeline.firstIndex(where: { $0.kind == .tool && $0.toolSlot == slot }) {
-            if !title.isEmpty { snapshot.timeline[index].text = title }
-            snapshot.timeline[index].completed = snapshot.timeline[index].completed || completed
-        } else {
-            snapshot.timeline.append(.tool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed))
-        }
-        eventName = completed ? "tool_completed" : "tool_invoked"
-    case .terminal:
-        if !snapshot.reasoningEnded, snapshot.finalText.isEmpty {
-            let provisionalFinal = snapshot.timeline.filter { $0.kind == .reasoning }.map(\.text).joined(separator: "\n\n").trimmingCharacters(in: .whitespacesAndNewlines)
-            if !provisionalFinal.isEmpty {
-                snapshot.finalText = provisionalFinal
-                snapshot.timeline.removeAll { $0.kind == .reasoning }
+        switch event {
+        case .composerReady: eventName = "composer_ready"
+        case .sendObserved: eventName = "send_observed"
+        case .responseAccepted:
+            snapshot.phase = .thinking
+            eventName = "response_accepted"
+        case .thinkingActive:
+            if snapshot.phase != .final { snapshot.phase = .thinking }
+            eventName = "thinking_active"
+        case .reasoningPreamble(let text, let segmentStart):
+            if segmentStart || snapshot.timeline.last?.kind != .reasoning { snapshot.timeline.append(.reasoning(text)) }
+            else { snapshot.timeline[snapshot.timeline.count - 1].text += text }
+            snapshot.phase = .reasoning
+            eventName = "reasoning_preamble"
+        case .reasoningDelta(let text):
+            if snapshot.timeline.last?.kind == .reasoning { snapshot.timeline[snapshot.timeline.count - 1].text += text }
+            else { snapshot.timeline.append(.reasoning(text)) }
+            snapshot.phase = .reasoning
+            eventName = "reasoning_delta"
+        case .reasoningEnded:
+            snapshot.reasoningEnded = true
+            snapshot.phase = .final
+            eventName = "reasoning_ended"
+        case .finalDelta(let text):
+            snapshot.finalText += text
+            snapshot.phase = .final
+            eventName = "final_delta"
+        case .toolActivity(let slot, let title, let completed, let inputJSON, let outputJSON, let iconKind):
+            if let index = snapshot.timeline.firstIndex(where: { $0.kind == .tool && $0.toolSlot == slot }) {
+                if !title.isEmpty { snapshot.timeline[index].text = title }
+                snapshot.timeline[index].completed = snapshot.timeline[index].completed || completed
+                if !inputJSON.isEmpty { snapshot.timeline[index].toolInputJSON = inputJSON }
+                if !outputJSON.isEmpty { snapshot.timeline[index].toolOutputJSON = outputJSON }
+                if iconKind != .generic || snapshot.timeline[index].toolIconKind == .generic { snapshot.timeline[index].toolIconKind = iconKind }
+            } else {
+                snapshot.timeline.append(.tool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed, inputJSON: inputJSON, outputJSON: outputJSON, iconKind: iconKind))
             }
+            eventName = completed ? "tool_completed" : "tool_invoked"
+        case .terminal:
+            if !snapshot.reasoningEnded, snapshot.finalText.isEmpty {
+                let provisionalFinal = snapshot.timeline.filter { $0.kind == .reasoning }.map(\.text).joined(separator: "\n\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !provisionalFinal.isEmpty {
+                    snapshot.finalText = provisionalFinal
+                    snapshot.timeline.removeAll { $0.kind == .reasoning }
+                }
+            }
+            snapshot.phase = .completed
+            eventName = "terminal"
+        case .failed(let reason):
+            snapshot.phase = .failed
+            snapshot.failureReason = reason
+            eventName = "failed"
         }
-        snapshot.phase = .completed
-        eventName = "terminal"
-    case .failed(let reason):
-        snapshot.phase = .failed
-        snapshot.failureReason = reason
-        eventName = "failed"
-    }
 
         responseRuntime.snapshots[conversationID] = snapshot
         var fields = diagnosticsFields(for: conversationID)
@@ -680,6 +717,7 @@ extension ConversationRepository {
         fields["finalCharacters"] = String(snapshot.finalText.count)
         fields["toolCount"] = String(snapshot.timeline.filter { $0.kind == .tool }.count)
         fields["timelineItemCount"] = String(snapshot.timeline.count)
+        fields["toolDetailCount"] = String(snapshot.timeline.filter { $0.kind == .tool && $0.hasToolDetail }.count)
         DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.event", fields: fields)
         responseRuntime.onChange?(conversationID)
     }
@@ -796,6 +834,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "发送", style: .default) { [weak self, weak alert] _ in
             guard let self, let text = alert?.textFields?.first?.text else { return }
+            self.view.endEditing(true)
             self.startValidationSend(text: text, conversationID: conversationID)
         })
         present(alert, animated: true)
@@ -805,7 +844,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, repository.selectedConversationID == conversationID, !sendExecutor.isBusy else { return }
         let generation: Int
-        switch repository.beginLiveResponse(conversationID: conversationID, promptCharacterCount: trimmed.count) {
+        switch repository.beginLiveResponse(conversationID: conversationID, promptText: trimmed) {
         case .success(let value): generation = value
         case .failure(let error):
             showValidationError(error.localizedDescription)

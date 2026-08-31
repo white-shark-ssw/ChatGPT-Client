@@ -8,7 +8,6 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal product/config head before this docs-only checkpoint update: `4edda892a04a1a07f4a07e74b135b969ea82193e`
 - Exact b72 product/config source: `d20536db37a028556c8032e7c74912805ade785c`
 - b72 Artifact: `9762189417`
 - b72 IPA SHA: `ff9d37022a310cab3eea0bb3c298e3d3ec8b0d3057f7256da4f0543dab18b53c`
@@ -110,32 +109,16 @@ On the primary iPhone/iOS17 device, install exact Build73 and focus on presentat
 
 Runtime/manual/real-device for b73 is **pending**. Do not describe the presentation defect as solved until this exact package passes.
 
-## Batch recovery point — b73 evidence sync
+## b73 evidence synchronization — complete
 
-Known state before docs-only synchronization:
-
-- exact b73 product/config source: `4edda892a04a1a07f4a07e74b135b969ea82193e`;
-- exact product source has successful Push/PR CI and canonical Artifact `9764247402` as recorded above;
-- b73 package identity is permanently reserved;
-- PR #29 is still open/unmerged; `main` is still `d323b9eed2dda75b9986fc06e14014d3e9b365fb`.
-
-Confirmed complete:
-
-1. b72 Runtime classification and b73 allocation checkpointed.
-2. b73 product code assembled/audited/Simulator-compiled.
-3. clean product/config source promoted non-force to formal branch.
-4. exact-head Push CI + PR CI succeeded.
-5. canonical Push Artifact downloaded and independently package-verified.
-
-Pending deterministic docs-only batch:
-
-1. synchronize `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `BUILD_TEST_INDEX.md` and any directly conflicting durable `PROJECT_SPECIFIC_RULES.md` wording to current b72/b73 evidence;
-2. detached-audit that the resulting range after `4edda892...` is docs-only;
-3. update PR #29 title/body to b73 current evidence while keeping it open/unmerged;
-4. verify final formal branch/PR/main state.
-
-Recovery must **not** modify product/config source after Artifact emission, must not touch b72/b67 accepted transport/concurrency code, and must not allocate b74 without concrete b73 Runtime evidence.
+- Exact b73 product/config source remains `4edda892a04a1a07f4a07e74b135b969ea82193e`; later docs-only commits do not redefine product identity.
+- Checkpoint package-evidence commit: `8a2437194f837e7002460829c15e4d2428832902`.
+- Durable docs-only commit: `3da5f09adf8d860b531428275e3c1e3ba97e8dad`; detached audit from `8a243719...` changed only six `docs/project/**` files.
+- `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `BUILD_TEST_INDEX.md` and directly conflicting `PROJECT_SPECIFIC_RULES.md` wording are synchronized to b72/b73 evidence.
+- PR #29 title/body is synchronized to b73 and remains open / mergeable / unmerged.
+- `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb` at this gate.
+- b73 Artifact/package identity is permanently reserved; recovery must not rewrite product/config source or allocate b74 without concrete b73 Runtime evidence.
 
 ## Exact next action
 
-Complete the pending docs-only/PR synchronization above, then hand exact Build73 IPA to the user for the human-only Runtime gate. Do not allocate b74 before exact b73 Runtime provides a concrete defect/next evidence need.
+Human-only gate: install exact Build73 IPA on the primary iPhone/iOS17 device and run the b73 Runtime matrix above. Return screenshots/recording and diagnostics if a defect remains. If b73 passes, record the exact Runtime result and continue to the next Phase 9 evidence gate; if it exposes a concrete defect, allocate the earliest unique b74 only after re-running the Resume Guard.

@@ -1,0 +1,124 @@
+name: b71 assembly repair
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b71-20260831
+    paths:
+      - ".github/workflows/b71-assembly-repair.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      BASE_SHA: 5e9c0a8cfa00118a4facca640e8ee739ce480c1a
+      PRODUCT_BRANCH: assembly/dev-send-stream-b71-product-20260831
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Execute audited b71 patch with indentation-tolerant anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, textwrap
+
+          raw = Path('.github/workflows/b71-assembly-tool.yml').read_text()
+          match = re.search(r"(?ms)^\s+python3 - <<'PY'\n(?P<code>.*?)(?=^\s+PY\s*$)", raw)
+          if not match:
+              raise SystemExit('original b71 patch block not found')
+          code = textwrap.dedent(match.group('code'))
+          old_fn = '''def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected 1 match, found {count}")
+              return text.replace(old, new, 1)
+          '''
+          new_fn = '''def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count == 1:
+                  return text.replace(old, new, 1)
+              if count > 1:
+                  raise SystemExit(f"{label}: expected 1 match, found {count}")
+              old_lines = old.splitlines()
+              source_lines = text.splitlines(keepends=True)
+              stripped = [line.strip() for line in old_lines]
+              matches = []
+              for start in range(0, len(source_lines) - len(stripped) + 1):
+                  if [line.strip() for line in source_lines[start:start + len(stripped)]] == stripped:
+                      matches.append(start)
+              if len(matches) != 1:
+                  raise SystemExit(f"{label}: whitespace-tolerant match count {len(matches)}")
+              start = matches[0]
+              actual = ''.join(source_lines[start:start + len(stripped)])
+              return text.replace(actual, new, 1)
+          '''
+          if old_fn not in code:
+              raise SystemExit('replace_once function anchor missing')
+          code = code.replace(old_fn, new_fn, 1)
+          exec(compile(code, 'b71-extracted-patch', 'exec'), {})
+          PY
+
+      - name: Audit product scope and b71 invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only "$BASE_SHA" -- .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift | sort)
+          expected=(
+            .github/workflows/ios-foundation.yml
+            ChatGPTClient.xcodeproj/project.pbxproj
+            ChatGPTClient/Conversation/ConversationFeature.swift
+            ChatGPTClient/RootViewController.swift
+          )
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          diff -u <(printf '%s\n' "${expected[@]}" | sort) <(printf '%s\n' "${changed[@]}")
+          grep -q 'CURRENT_PROJECT_VERSION = 71;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b71";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'reasoningDetail.presented' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'finished_duration_sec' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q "finished_duration_sec" ChatGPTClient/RootViewController.swift
+          if git diff "$BASE_SHA" -- ChatGPTClient/RootViewController.swift | grep -E '^\+.*(setComposerText|submitPendingSendIfReady|/backend-api/f/conversation|send_observed|send_response)'; then
+            echo 'unexpected transport-path addition in RootViewController.swift'
+            exit 1
+          fi
+
+      - name: Compile iOS Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Emit clean product-only branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "refs/heads/${PRODUCT_BRANCH}" >/dev/null 2>&1; then
+            echo "Product branch already exists; refusing to overwrite"
+            exit 1
+          fi
+          tmp="$(mktemp -d)"
+          mkdir -p "$tmp/.github/workflows" "$tmp/ChatGPTClient.xcodeproj" "$tmp/ChatGPTClient/Conversation" "$tmp/ChatGPTClient"
+          cp .github/workflows/ios-foundation.yml "$tmp/.github/workflows/ios-foundation.yml"
+          cp ChatGPTClient.xcodeproj/project.pbxproj "$tmp/ChatGPTClient.xcodeproj/project.pbxproj"
+          cp ChatGPTClient/Conversation/ConversationFeature.swift "$tmp/ChatGPTClient/Conversation/ConversationFeature.swift"
+          cp ChatGPTClient/RootViewController.swift "$tmp/ChatGPTClient/RootViewController.swift"
+          git reset --hard "$BASE_SHA"
+          cp "$tmp/.github/workflows/ios-foundation.yml" .github/workflows/ios-foundation.yml
+          cp "$tmp/ChatGPTClient.xcodeproj/project.pbxproj" ChatGPTClient.xcodeproj/project.pbxproj
+          cp "$tmp/ChatGPTClient/Conversation/ConversationFeature.swift" ChatGPTClient/Conversation/ConversationFeature.swift
+          cp "$tmp/ChatGPTClient/RootViewController.swift" ChatGPTClient/RootViewController.swift
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git diff --cached --check
+          git commit -m 'feat: b71 official reasoning presentation'
+          git push origin HEAD:"refs/heads/${PRODUCT_BRANCH}"

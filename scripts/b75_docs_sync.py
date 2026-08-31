@@ -51,4 +51,4 @@ for filename, heading, body in entries:
     path = Path(filename)
     text = path.read_text()
     if heading not in text:
-        path.write_text(text.rstrip() + '\n\n' + heading + '\n\n' + body + '\n')
+        path.write_text(text.rstrip() + '\n\n' + heading + '\n\n' + body.rstrip() + '\n')

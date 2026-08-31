@@ -1,0 +1,72 @@
+name: b75 minimal assembly
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b75-20260901
+    paths:
+      - 'scripts/b75_assembly.py'
+      - '.github/workflows/b75-assembly.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preserve patcher and reset to exact checkpoint head
+        run: |
+          cp scripts/b75_assembly.py /tmp/b75_assembly.py
+          git reset --hard d43661ef4dd9a01480b11b4d70af5a79e6792bff
+
+      - name: Apply evidence-backed b75 product delta
+        run: |
+          python3 /tmp/b75_assembly.py
+          git diff --check
+
+      - name: Audit exact scope and invariants
+        run: |
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            '.github/workflows/ios-foundation.yml' \
+            'ChatGPTClient.xcodeproj/project.pbxproj' \
+            'ChatGPTClient/Conversation/ConversationFeature.swift' \
+            'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$changed" = "$expected"
+          grep -Fq 'CURRENT_PROJECT_VERSION = 75;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -Fq 'DEV-send-stream-0.1.0-b75' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -Fq 'ChatGPTClient-DEV-send-stream-0.1.0-b75' .github/workflows/ios-foundation.yml
+          grep -Fq '/backend-api/f/conversation' ChatGPTClient/RootViewController.swift
+          grep -Fq '#prompt-textarea' ChatGPTClient/RootViewController.swift
+          grep -Fq '[contenteditable="true"][role="textbox"]' ChatGPTClient/RootViewController.swift
+          grep -Fq '/backend-api/f/conversation/resume' ChatGPTClient/RootViewController.swift
+          grep -Fq 'case .responseAccepted:' ChatGPTClient/RootViewController.swift
+          grep -Fq 'beginExternalLiveResponse' ChatGPTClient/RootViewController.swift
+          grep -Fq 'clearTerminalExternalLiveResponseAfterAuthoritativeRefresh' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'private static let toolLineHeight: CGFloat = 26' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'private static let compactAssistantLineHeight: CGFloat = toolLineHeight * 0.70' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'paragraph.maximumLineHeight = compactAssistantLineHeight' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'toolParagraph.maximumLineHeight = toolLineHeight' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'geometryMode": geometryReused ? "resident_cache" : "cooperative_main_queue"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'DispatchQueue.main.async { processBatch(startingAt: endIndex) }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'historicalGeometryBuildGeneration == geometryBuildGeneration' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! git diff d43661ef4dd9a01480b11b4d70af5a79e6792bff -- ChatGPTClient/RootViewController.swift ChatGPTClient/Conversation/ConversationFeature.swift | grep '^+' | grep -E 'Timer|asyncAfter|retry|watchdog|poll|URLSession.*resume'
+
+      - name: Build iOS Simulator
+        run: |
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+      - name: Commit and push clean b75 product source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B assembly/dev-send-stream-b75-product-20260901
+          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m 'fix: validate external resume and keep long-history navigation responsive'
+          test "$(git rev-parse HEAD^)" = 'd43661ef4dd9a01480b11b4d70af5a79e6792bff'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b75-product-20260901

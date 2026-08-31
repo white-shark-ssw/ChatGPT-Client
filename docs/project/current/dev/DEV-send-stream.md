@@ -2,173 +2,166 @@
 
 ## Status
 
-**Active — b67 protected-Send transport remains Runtime accepted; exact b72 Runtime positively supports the tested A-generating + B-send simultaneous-generation path. Exact b73 Runtime exposed three concrete b74 needs: long resident re-entry geometry cost, insufficient main tool-row spacing, and no Native adoption of externally initiated active responses. Exact b74 is now Code/scope/Simulator/Push+PR CI/Artifact/package verified and permanently reserved. Real-device Runtime remains pending. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b67 protected-Send transport remains Runtime accepted; exact b72 Runtime positively supports the tested A-generating + B-send simultaneous-generation path. Exact b74 is a valid/permanently-reserved package. Exact b74 iPhone/iOS17 Runtime is now partial/rejected for three concrete issues: page-owned external `/resume` request observation can create a false Native `回答失败` before the response is validated; successful explicit Sync/Reload does not clear that stale external terminal presentation; and first/changed long-history geometry can synchronously block the main UI for seconds, including left-edge back interaction. The user also corrected the requested text line-height mapping. b75 is allocated for only these evidence-backed corrections. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
+- Formal head before this checkpoint write: `f883326696676e30719f3e6fbe3c44152d79a0f2` — docs-only descendant of exact b74 product source.
 - Exact b74 product/config source: `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d`
-- Candidate: `DEV-send-stream-0.1.0-b74`
-- Version / Build: `0.1.0 (74)`
-- Final clean-reassembly run/job: `33420128454 / 99580192017` — success
-- Push CI run/job: `33420408779 / 99581104920` — success
-- PR CI run/job: `33420412792 / 99581117817` — success
-- Canonical Push Artifact: `9768668727`
-- Artifact ZIP digest: `sha256:6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`
-- IPA: `ChatGPTClient-0.1.0-b74-dev-send-stream.ipa`
-- IPA SHA: `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`
-- Built source marker: `50dd61b8b31c`
+- b74 Candidate / Version-Build: `DEV-send-stream-0.1.0-b74` / `0.1.0 (74)`
+- b74 Push CI: `33420408779 / 99581104920` — success
+- b74 PR CI: `33420412792 / 99581117817` — success
+- b74 canonical Artifact: `9768668727`
+- b74 ZIP: `sha256:6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`
+- b74 IPA SHA: `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`
 - b39-b74 permanently reserved.
+- **Allocated next Candidate: `DEV-send-stream-0.1.0-b75` / `0.1.0 (75)`. No b75 Artifact exists at allocation.**
 - Stable/Frozen Send: No.
 
 ## Retained accepted boundaries
 
-- b67: one local Send -> one protected official-page Send -> HTTP200 same-response SSE -> Repository updates -> terminal/reconcile is Runtime accepted.
-- b72: tested A-generating + B-send simultaneous-generation is Runtime positive; do not regress the per-conversation covered executor.
+- b67: one local Native Send -> one official-page protected `/backend-api/f/conversation` -> HTTP200 same-response SSE -> Repository reasoning/tool/final -> terminal/reconcile is Runtime accepted.
+- b72: tested A-generating + B-send/generate simultaneous-generation is Runtime positive; do not regress per-conversation executor ownership.
 - `ConversationRepository` remains sole conversation/list/detail/recovery/response lifecycle authority.
 - `AuthSessionStore` remains sole account authority; default `WKWebsiteDataStore` remains sole persistent auth-secret authority.
-- Covered official Web remains browser challenge/protected-Send/continuation transport only; full Web conversation rendering stays rejected.
-- b69 chronological reasoning/tool timeline + exact-parent association remain retained.
-- b38 deterministic long-message geometry/manual layout + quick navigation remain accepted; b74 only reuses already-derived geometry when presentation identity is unchanged.
+- Covered official Web remains browser challenge/protected-Send/page-owned continuation transport only; full Web conversation rendering remains rejected.
+- Cross-device continuation may consume only an official-page-owned matching `/backend-api/f/conversation/resume`; Native must not construct resume, derive/choose offset, poll `stream_status`, replay browser/session headers or use WebSocket frames as response-body authority.
+- b69 chronological reasoning/tool ordering + exact-parent tool association remain retained.
+- b38 deterministic/manual long-message geometry, bounded chunks, semantic rounds, Copy and quick-navigation remain accepted semantics. Performance work may change scheduling, not final geometry/ownership semantics.
 - `assistant:thoughts` and `inline_cot_expandable_content` remain non-presentational.
 - No retry/polling/timer/watchdog/fallback/compatibility shim/second message or response store.
 
-## Exact b73 Runtime evidence motivating b74 — 2026-09-01
+## Exact b74 Runtime evidence — 2026-09-01
 
-User supplied `RPReplay_Final1788192013.mp4` and `ChatGPTClient-Diagnostics-20260831-160234.json` from exact Build73 use.
+User supplied three screenshots plus exact diagnostics `ChatGPTClient-Diagnostics-20260831-175939.json`. Diagnostics metadata proves `DEV-send-stream-0.1.0-b74`, Build74, source marker `50dd61b8b31c`, Release, iPhone, iOS17.0.
 
-### Long resident re-entry stall
+### 1. External-platform response can become false Native `回答失败`
 
-The recording visibly showed repeated taps into a long resident conversation where list selection changed immediately but the detail transition waited roughly 1–1.5 seconds. Diagnostics localized the delay to historical presentation geometry, not network: a 32-authoritative-message / 68-presentation-row resident repeatedly showed `messagePresentation.rebuilt` around `1373–1427ms`, geometry around `1348–1393ms`, and `resident.firstVisible` around `1375–1429ms`; short resident entries were around `120–140ms`. Resident-hit reproductions did not issue a new Detail request before the stall.
+User reproduced: another platform sends a message; entering that conversation in Build74 shows `回答失败`. Even after the external answer has completed, explicit `同步最新消息` and `重载当前会话` continue to leave the failure row visible.
 
-b74 therefore adds bounded in-process reuse of derived b38 presentation geometry only when authoritative presentation identity is unchanged. It does not cache message bodies or create a second conversation store.
+Exact diagnostics for the affected conversation show:
 
-### Tool rhythm
+- `17:57:17` `liveResponse.started`, `source=external_resume`, generation 1, phase `thinking`, baseline visible count 9;
+- same moment `coveredExecutor.externalResumeObserved`;
+- `17:57:18` `coveredExecutor.resumeResponse`: **HTTP404**, `application/json`;
+- immediately `coveredExecutor.failed reason=resume_not_sse` and Repository `liveResponse.event=failed`, phase `failed`, zero reasoning/final/tool content.
 
-User explicitly requested more vertical spacing above and below visible main tool calls. b74 changes only tool-line vertical rhythm; ordering, semantic filtering, titles, parser and response ownership are unchanged.
+Current b74 source explains the defect: `external_resume_observed` promotes `observationEvents` to `activeEvents` and Root immediately calls `beginExternalLiveResponse(...)` **before** the page-owned resume response is known to be HTTP200 SSE. A matching request observation therefore incorrectly becomes user-visible response authority.
 
-### External active-response lifecycle gap
+**b75 rule:** a matching page-owned `/resume` request is structural observation only. Repository external live-response ownership begins only after the same page-owned response is validated as exact HTTP200 `text/event-stream` (`responseAccepted`). A page-owned 404/non-SSE before validation must not create a Native response snapshot and must not display `回答失败`. It remains diagnosable and the executor may be released; no retry/polling/fallback is added.
 
-User reported that a question sent from another platform could be actively thinking in official clients while entering the same conversation in this Native client showed no `正在思考` or ongoing reasoning.
+### 2. Successful authoritative Sync/Reload does not clear stale external terminal presentation
 
-A current Web Rule Lab capture then established the official cross-device continuation path:
+The same b74 export proves manual recovery itself succeeds:
 
-- official Web enters the target conversation and requests `GET /backend-api/conversation/{id}/stream_status` -> HTTP200 JSON;
-- while the response is active, the page itself issues `POST /backend-api/f/conversation/resume`;
-- observed request JSON keys are exactly `conversation_id` + `offset`;
-- response is HTTP200 `text/event-stream`;
-- a user-level `wss://ws.chatgpt.com/...` socket exists, but the capture did not prove it carries reasoning/final body data.
+- `17:58:01` explicit latest Sync -> `17:58:03` Detail HTTP200, ~635 KB, 128 mappings, 9 visible messages, `latestSync.end status=ok`, 3 changed visible messages;
+- `17:58:07` Reload -> `17:58:08` Detail HTTP200, 9 visible messages, `conversationReload.end status=ok`, 4 changed visible messages;
+- another Reload at `17:58:15` -> `17:58:17` HTTP200 and authoritative changes again.
 
-Current production rule: Native may observe/parse only the page-owned matching `/resume` SSE. Native must not construct `/resume`, choose/derive offset, poll `stream_status`, replay browser headers or issue a second Send. WebSocket remains structural evidence only.
+So the screenshot is not a Sync/Reload network failure. The stale external failed live snapshot remains layered above the newly authoritative Detail because existing `clearLiveResponseAfterAuthoritativeReconcile` requires a terminal response generation plus `authoritativeVisibleMessageCount > baselineVisibleMessageCount`; here the authoritative content changed while count stayed 9.
 
-## Exact b74 implementation
+**b75 rule:** after a successful explicit authoritative Sync/Reload, a terminal **external** live snapshot may be discarded even when visible message count does not increase, because that fresh Detail is the authority. Do not broadly clear local failed Sends. Under current source, local validation Send always has non-empty `promptText`; external adoption has empty `promptText`, so the correction can stay response-local without a second state owner.
 
-1. `ConversationFeature.swift` keeps the b38 deterministic/manual geometry model but adds bounded in-process derived-geometry reuse for unchanged resident presentation identity. Key/invalidation includes authoritative current node, layout width, timestamp preference and historical reasoning expansion state; cached data is projection/metrics/offsets/content-height/answer rows only.
-2. Main meaningful tool rows receive increased vertical rhythm.
-3. `CoveredWebSendExecutor` can observe a selected existing conversation without sending.
-4. The page bridge observes page-owned `/backend-api/f/conversation/resume`, parses only the request body's `conversation_id` for target equality, invokes the original fetch unchanged and returns the original response to official Web.
-5. For a matching resume, a `response.clone()` is consumed through the already accepted SSE/parser grammar; Native does not construct the request or offset.
-6. On first matching resume observation, the existing Repository response runtime creates one external live generation with an empty optimistic prompt and `thinking` phase; no second response store is added.
-7. reasoning/tool/final/terminal events reuse `consumeLiveResponseEvent`; terminal reuses the existing authoritative reconciliation path.
-8. External live presentation omits a synthetic user bubble because the authoritative external user message belongs to Detail/Repository history.
-9. Existing local Send `/backend-api/f/conversation`, accepted composer selectors, b72 per-conversation executor concurrency and hidden-response ownership are retained.
-10. User-level WebSocket is not parsed as response content.
+### 3. b74 geometry reuse is positive, but first/changed history can still block back navigation
 
-## b74 assembly / source evidence
+b74 resident derived-geometry reuse works when identity is unchanged: the supplied export contains multiple `geometryReused=true` resident applies completing in only a few milliseconds (for example a 9-message / 16-row presentation around 3–5 ms).
 
-The first audited integrated product tree was `17bc52281e38fe3eca76777fd280256d1e5acc2b`, built from earlier evidence head `c10b295e...`. A later docs-only checkpoint made that tree no longer fast-forwardable, so it was not promoted directly.
+The new exact defect is the cache-miss/changed-history path. The same Build74 export contains:
 
-A recovery checkpoint was written and final clean reassembly was performed from formal docs head `6d72d3e24c34d2594ac8466167c4c01749a91374`:
+- 38 authoritative messages / 77 rows: full geometry around **2452 ms**;
+- 74 authoritative messages / 170 rows: `messagePresentation.rebuilt durationMs=10098.53`, `geometryDurationMs=10047.64`, `geometryReused=false`;
+- one very large Detail request: ~15.46 MB, 3893 mappings, 51 visible messages, `detailLoad.end durationMs=14803.70`;
+- another multi-megabyte Detail with 809 mappings / 74 visible messages also takes multiple seconds before presentation.
 
-- tooling branch `assembly/dev-send-stream-b74-final-20260901`;
-- workflow/run/job `b74 final clean reassembly` / `33420128454 / 99580192017` — success;
-- workflow replayed exactly the four product files from the already-audited `c10b295e...17bc5228` delta;
-- `git diff --check` passed;
-- exact changed-file scope passed;
-- `git diff --exit-code 17bc5228 -- <four product files>` passed, proving final file contents match the prior audited product tree;
-- local-Send route, matching `/resume`, verified composer selector, Build74 identity and no resume timer/retry/poll invariants passed;
-- Xcode 16.4 iOS Simulator build passed;
-- clean final product source `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d` has direct parent `6d72d3e...` and changes exactly:
-  - `.github/workflows/ios-foundation.yml`
-  - `ChatGPTClient.xcodeproj/project.pbxproj`
-  - `ChatGPTClient/Conversation/ConversationFeature.swift`
-  - `ChatGPTClient/RootViewController.swift`
+User reports that if the conversation is just about to finish loading/displaying, a left-edge right-swipe Back has high latency and feels blocked. Current source performs cache-miss `rebuildPresentationGeometry(...)` synchronously in `apply(_:)` / `rebuildRoundProjection()` on the UI path, looping every presentation row and measuring text before the table is applied. This exact synchronous geometry window matches the Runtime symptom.
 
-Final promotion Guard verified formal head/PR/main/current checkpoint unchanged, then formal branch was non-force fast-forwarded to exact source `50dd61b8...`.
+**b75 scheduling rule:** preserve the exact b38-derived geometry result and b74 cache, but make a cache-miss/changed historical geometry build cooperative rather than one uninterrupted main-thread loop. Build the same row metrics/offsets in bounded main-queue batches that yield between batches and are guarded by the existing conversation/presentation generation identity before committing. No timer, debounce, watchdog, retry or approximate geometry is authorized. A superseded target must not commit late geometry. Cache hits remain immediate. The goal is specifically to let interactive Back/user navigation regain the run loop instead of waiting behind a multi-second synchronous loop.
 
-## Exact b74 CI / Artifact / package evidence
+## Exact typography correction from user screenshots
 
-### CI
+Current Build74 source values are now verified:
 
-- Push: `33420408779 / 99581104920` — success on exact source `50dd61b8...`.
-- PR: `33420412792 / 99581117817` — success on the same exact source.
-- Toolchain: macOS15, Xcode 16.4, iPhoneOS18.5 SDK.
-- Release iphoneos build succeeded; target arm64 / iOS14.0.
+- reasoning paragraph `minimumLineHeight = 26`;
+- tool paragraph `minimumLineHeight = 34`;
+- final answer uses plain `UILabel.text` / natural body-font measurement and therefore has no explicit matching line-height contract.
 
-### Canonical Artifact
+The user explicitly corrected the desired mapping:
 
-Push Artifact `9768668727`, name `ChatGPTClient-DEV-send-stream-0.1.0-b74`:
+1. **Tool message line height = the current reasoning line-height value = 26.**
+2. **Reasoning text line height = 26 × 70% = 18.2** (30% reduction).
+3. **Formal/final assistant answer line height = the same 18.2.**
+4. Final answer measurement and rendering must use the same paragraph line-height style so deterministic geometry remains consistent.
+5. User-message bubble typography is not part of this request.
+6. Do not reinterpret this as increasing reasoning spacing again. Other tool ordering/filtering/title semantics remain unchanged.
 
-- API/upload ZIP digest `sha256:6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`;
-- build log IPA SHA `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`;
-- build log Candidate `DEV-send-stream-0.1.0-b74`;
-- build log source `50dd61b8b31c`.
+Because preferred `.body` font natural line height can exceed 18.2, b75 must use an explicit paragraph line-height style for reasoning/final rather than setting only a minimum that has no reducing effect. Keep font size/weight unchanged unless exact compile/runtime evidence requires otherwise.
 
-The Artifact was independently downloaded and unpacked after CI. Independent verification found:
+## b75 minimal implementation scope
 
-- local ZIP SHA exactly `6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`;
-- archive contains only the expected IPA + SHA sidecar;
-- local IPA SHA exactly `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`;
-- built `Info.plist`: `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=74`, `DiagnosticsCandidate=DEV-send-stream-0.1.0-b74`, `DiagnosticsSourceCommit=50dd61b8b31c`, `DiagnosticsBuildConfiguration=Release`, `MinimumOSVersion=14.0`, bundle ID `com.whitesharkssw.chatgptclient`;
-- executable independently identified as Mach-O 64-bit arm64;
-- device family remains iPhone + iPad.
+Expected product files, subject to source audit:
 
-Because a valid b74 Artifact now exists, b74 is permanently reserved. Any product correction after new Runtime evidence must use the earliest unique next Candidate (currently b75), never rewrite b74.
+- `ChatGPTClient/RootViewController.swift`
+  - external observation starts Repository generation only on validated `.responseAccepted`;
+  - pre-accept non-SSE failure remains non-presentational and releases observation executor;
+  - no local Send route/selector/SSE grammar changes.
+- `ChatGPTClient/Conversation/ConversationFeature.swift`
+  - exact 26 / 18.2 / 18.2 line-height mapping with matching assistant-final measurement/rendering;
+  - successful explicit Sync/Reload clears only terminal external live snapshot;
+  - cache-miss historical geometry is cooperatively batched with current presentation-generation/target freshness and the same final metrics/offsets.
+- `ChatGPTClient.xcodeproj/project.pbxproj` and `.github/workflows/ios-foundation.yml`
+  - b75 identity only after product code is audited/compiled.
 
-Evidence ladder: **Code written / exact scope audited / Simulator compile passed / Push CI passed / PR CI passed / Artifact produced / package independently verified / Runtime pending / Stable-Frozen No.**
+No auth module, list transport, Web selector, protected-Send route, parser grammar, second cache/store or persistence change is currently authorized.
 
-## Batch recovery point — post-b74 package docs sync
+## b75 acceptance gate
 
-Known immutable product identity:
+Static/CI before Artifact:
 
-- exact b74 product/config source `50dd61b8b31cdae184353f4b4bfa6aca24e3a50d`;
-- Candidate `DEV-send-stream-0.1.0-b74`, Version/Build `0.1.0 (74)`;
-- Push `33420408779 / 99581104920`, PR `33420412792 / 99581117817` — success;
-- canonical Artifact `9768668727`;
-- ZIP digest `sha256:6ac4cc97954a0a26ed258a9775921cc4d12b17a1ff29c5e8d65cddf3c5595cb3`;
-- IPA SHA `07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da`;
+1. exact product diff limited to evidenced files plus Build/workflow identity;
+2. `git diff --check`;
+3. Xcode 16.4 iOS Simulator compile;
+4. retained assertions for local `/backend-api/f/conversation`, verified composer selectors, page-owned matching `/resume`, no Native resume/offset/polling/retry/timer/watchdog;
+5. source assertions for external begin only after response acceptance, external-terminal authoritative recovery, and 26/18.2/18.2 line-height contract;
+6. geometry batching must keep same deterministic `ConversationMessageCell.metrics` result and reject superseded presentation generation.
+
+Human iPhone/iOS17 Runtime after exact b75 Artifact:
+
+1. external-platform response: enter while still active; only a validated HTTP200 SSE resume may create `正在思考`/reasoning/tool/final. A page-owned 404/non-SSE must not create `回答失败`.
+2. after any external terminal/error state, successful explicit Sync and Reload must show authoritative Detail without stale `回答失败` overlay.
+3. tool rows use 26 line height; reasoning and final assistant text use the same 18.2 compact line height; chronology and hidden-thought exclusion remain correct.
+4. reproduce a multi-second first/changed long-history load and begin left-edge Back near presentation time; Back must remain interactive rather than wait behind one multi-second geometry loop.
+5. repeat resident re-entry and confirm b74 `geometryReused=true` fast path remains.
+6. regression-test one normal b67 local Send and b72 simultaneous A/B generation.
+7. b38 Copy/round/quick-navigation/final geometry correctness remains intact.
+
+## Batch recovery point — b75 allocation
+
+Known baseline before this checkpoint write:
+
+- formal head `f883326696676e30719f3e6fbe3c44152d79a0f2`;
+- PR #29 open / mergeable / unmerged at that head;
 - actual main `d323b9eed2dda75b9986fc06e14014d3e9b365fb`;
-- PR #29 remains open/unmerged.
+- unique Active dev checkpoint is `DEV-send-stream`;
+- b74 immutable Artifact identity above;
+- no repository match for `DEV-send-stream-0.1.0-b75` before allocation;
+- b75 allocated now, no Artifact.
 
-Completed product batches: Runtime evidence classification, Web Rule Lab `/resume` evidence, adapter rule update, UI/external-adoption implementation, clean reassembly, scope/compile audit, non-force promotion, exact-head Push+PR CI, canonical Artifact and independent package verification.
+Deterministic batches:
 
-Remaining docs-only batches:
+1. re-read the exact formal docs head created by this checkpoint write;
+2. create one isolated b75 assembly/tooling branch from that exact head;
+3. implement only the three Runtime corrections above and run source/scope/diff checks plus Xcode 16.4 Simulator build;
+4. audit clean product commit parent and exact file scope;
+5. final Guard against formal/PR/main/checkpoint/conflicts;
+6. non-force fast-forward formal only to the audited b75 product/config source;
+7. exact-head Push + PR CI; if green, use Push Artifact as canonical b75 package and independently verify package identity;
+8. sync checkpoint/durable docs/PR as docs-only state;
+9. hand exact b75 IPA to the user for the Runtime matrix above.
 
-1. after this checkpoint write, read its resulting formal docs-only head;
-2. update durable project documents to make b74 the current exact Runtime candidate while preserving b67/b72 accepted predecessors and b73 Runtime defect evidence;
-3. record page-owned matching `/resume` observation/adoption as a durable TD/rule extension without authorizing Native resume construction;
-4. update `BUILD_TEST_INDEX` with exact b74 source/CI/Artifact/digests and Runtime pending;
-5. audit docs-only diff and non-force fast-forward formal branch if an isolated docs assembly branch is used;
-6. update PR #29 title/body to exact b74 Runtime gate, keep open/unmerged;
-7. hand exact b74 IPA to the user for the human iPhone/iOS17 Runtime gate.
-
-Docs-only commits after `50dd61b8...` must never be described as the b74 product source.
-
-## Exact human Runtime gate — b74
-
-On the primary iPhone/iOS17 device using exact Build74:
-
-1. Confirm Candidate `DEV-send-stream-0.1.0-b74` and source marker `50dd61b8b31c`.
-2. Repeatedly enter/re-enter the previously slow long resident conversation. Verify the prior roughly 1.4-second resident geometry rebuild stall is materially removed while message geometry/scroll/quick-navigation remain correct. Export diagnostics after the reproduction.
-3. Run a response with meaningful tool calls and confirm the main tool rows have visibly larger top/bottom spacing while chronological reasoning/tool order remains correct.
-4. From another platform, start a sufficiently long reasoning/tool response; while it is still active, enter the same conversation in Build74. Native should adopt the page-owned matching `/resume` stream and show `正在思考` / ongoing visible reasoning/tools/final without a duplicate Send or synthetic user bubble; terminal should reconcile authoritative history once.
-5. Regression-test one normal Native local Send: one protected `/backend-api/f/conversation` -> HTTP200 SSE -> Repository reasoning/tool/final -> terminal/reconcile.
-6. Regression-test b72 A-generating + B-send/generate simultaneous ownership.
-7. Confirm `assistant:thoughts`/hidden thought content remains absent and b38 quick navigation/Copy/geometry semantics do not regress.
-
-Do not allocate b75 unless exact b74 Runtime supplies a concrete defect or new evidence-backed requirement.
+Recovery must not rewrite b74, must not generalize page-owned resume 404 into a Web-rule fallback, must not add retry/polling/timer/watchdog, and must not change b38 semantic geometry/quick-navigation ownership.
 
 ## Exact next action
 
-Synchronize durable project docs and PR #29 as docs-only state, then hand the independently verified exact b74 IPA to the user. The next evidence gate after handoff is human iPhone/iOS17 Runtime only; CI/Artifact do not prove the three Runtime issues are solved.
+Read the formal branch head created by this checkpoint write, create the isolated b75 assembly branch from that exact head, implement the minimal external-adoption validation/recovery + 26/18.2/18.2 typography + cooperative cache-miss geometry scheduling changes, then compile/audit before any b75 promotion or Artifact production.

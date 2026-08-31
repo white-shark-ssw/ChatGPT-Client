@@ -519,12 +519,6 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     """#
 }
 
-struct ConversationLiveTool: Equatable {
-    let slot: Int
-    var title: String
-    var completed: Bool
-}
-
 enum ConversationLiveResponsePhase: String {
     case preparing
     case thinking
@@ -546,9 +540,8 @@ struct ConversationLiveResponseSnapshot {
     let conversationID: String
     let baselineVisibleMessageCount: Int
     var phase: ConversationLiveResponsePhase
-    var reasoningText: String
+    var timeline: [ConversationResponseTimelineItem]
     var finalText: String
-    var tools: [ConversationLiveTool]
     var reasoningEnded: Bool
     var failureReason: String?
 }
@@ -598,7 +591,7 @@ extension ConversationRepository {
         let generation = (responseRuntime.generations[conversationID] ?? 0) + 1
         responseRuntime.generations[conversationID] = generation
         let baselineVisibleMessageCount = selectedConversationID == conversationID ? (selectedConversation?.messages.count ?? 0) : 0
-        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, phase: .preparing, reasoningText: "", finalText: "", tools: [], reasoningEnded: false, failureReason: nil)
+        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, failureReason: nil)
         var fields = diagnosticsFields(for: conversationID)
         fields["responseGeneration"] = String(generation)
         fields["phase"] = ConversationLiveResponsePhase.preparing.rawValue
@@ -627,62 +620,66 @@ extension ConversationRepository {
         }
 
         var eventName = "unknown"
-        switch event {
-        case .composerReady: eventName = "composer_ready"
-        case .sendObserved: eventName = "send_observed"
-        case .responseAccepted:
-            snapshot.phase = .thinking
-            eventName = "response_accepted"
-        case .thinkingActive:
-            if snapshot.phase != .final { snapshot.phase = .thinking }
-            eventName = "thinking_active"
-        case .reasoningPreamble(let text, let segmentStart):
-            if segmentStart, !snapshot.reasoningText.isEmpty, !snapshot.reasoningText.hasSuffix("\n\n") { snapshot.reasoningText += "\n\n" }
-            snapshot.reasoningText += text
-            snapshot.phase = .reasoning
-            eventName = "reasoning_preamble"
-        case .reasoningDelta(let text):
-            snapshot.reasoningText += text
-            snapshot.phase = .reasoning
-            eventName = "reasoning_delta"
-        case .reasoningEnded:
-            snapshot.reasoningEnded = true
-            snapshot.phase = .final
-            eventName = "reasoning_ended"
-        case .finalDelta(let text):
-            snapshot.finalText += text
-            snapshot.phase = .final
-            eventName = "final_delta"
-        case .toolActivity(let slot, let title, let completed):
-            if let index = snapshot.tools.firstIndex(where: { $0.slot == slot }) {
-                if !title.isEmpty { snapshot.tools[index].title = title }
-                snapshot.tools[index].completed = snapshot.tools[index].completed || completed
-            } else {
-                snapshot.tools.append(ConversationLiveTool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed))
-                snapshot.tools.sort { $0.slot < $1.slot }
-            }
-            eventName = completed ? "tool_completed" : "tool_invoked"
-        case .terminal:
-            if !snapshot.reasoningEnded, snapshot.finalText.isEmpty, !snapshot.reasoningText.isEmpty {
-                snapshot.finalText = snapshot.reasoningText
-                snapshot.reasoningText = ""
-            }
-            snapshot.phase = .completed
-            eventName = "terminal"
-        case .failed(let reason):
-            snapshot.phase = .failed
-            snapshot.failureReason = reason
-            eventName = "failed"
+    switch event {
+    case .composerReady: eventName = "composer_ready"
+    case .sendObserved: eventName = "send_observed"
+    case .responseAccepted:
+        snapshot.phase = .thinking
+        eventName = "response_accepted"
+    case .thinkingActive:
+        if snapshot.phase != .final { snapshot.phase = .thinking }
+        eventName = "thinking_active"
+    case .reasoningPreamble(let text, let segmentStart):
+        if segmentStart || snapshot.timeline.last?.kind != .reasoning { snapshot.timeline.append(.reasoning(text)) }
+        else { snapshot.timeline[snapshot.timeline.count - 1].text += text }
+        snapshot.phase = .reasoning
+        eventName = "reasoning_preamble"
+    case .reasoningDelta(let text):
+        if snapshot.timeline.last?.kind == .reasoning { snapshot.timeline[snapshot.timeline.count - 1].text += text }
+        else { snapshot.timeline.append(.reasoning(text)) }
+        snapshot.phase = .reasoning
+        eventName = "reasoning_delta"
+    case .reasoningEnded:
+        snapshot.reasoningEnded = true
+        snapshot.phase = .final
+        eventName = "reasoning_ended"
+    case .finalDelta(let text):
+        snapshot.finalText += text
+        snapshot.phase = .final
+        eventName = "final_delta"
+    case .toolActivity(let slot, let title, let completed):
+        if let index = snapshot.timeline.firstIndex(where: { $0.kind == .tool && $0.toolSlot == slot }) {
+            if !title.isEmpty { snapshot.timeline[index].text = title }
+            snapshot.timeline[index].completed = snapshot.timeline[index].completed || completed
+        } else {
+            snapshot.timeline.append(.tool(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: completed))
         }
+        eventName = completed ? "tool_completed" : "tool_invoked"
+    case .terminal:
+        if !snapshot.reasoningEnded, snapshot.finalText.isEmpty {
+            let provisionalFinal = snapshot.timeline.filter { $0.kind == .reasoning }.map(\.text).joined(separator: "\n\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            if !provisionalFinal.isEmpty {
+                snapshot.finalText = provisionalFinal
+                snapshot.timeline.removeAll { $0.kind == .reasoning }
+            }
+        }
+        snapshot.phase = .completed
+        eventName = "terminal"
+    case .failed(let reason):
+        snapshot.phase = .failed
+        snapshot.failureReason = reason
+        eventName = "failed"
+    }
 
         responseRuntime.snapshots[conversationID] = snapshot
         var fields = diagnosticsFields(for: conversationID)
         fields["responseGeneration"] = String(generation)
         fields["event"] = eventName
         fields["phase"] = snapshot.phase.rawValue
-        fields["reasoningCharacters"] = String(snapshot.reasoningText.count)
+        fields["reasoningCharacters"] = String(snapshot.timeline.filter { $0.kind == .reasoning }.reduce(0) { $0 + $1.text.count })
         fields["finalCharacters"] = String(snapshot.finalText.count)
-        fields["toolCount"] = String(snapshot.tools.count)
+        fields["toolCount"] = String(snapshot.timeline.filter { $0.kind == .tool }.count)
+        fields["timelineItemCount"] = String(snapshot.timeline.count)
         DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.event", fields: fields)
         responseRuntime.onChange?(conversationID)
     }

@@ -66,17 +66,16 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Emit clean product commit
+      - name: Emit four-file compiled product base
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .github/workflows/ios-foundation.yml \
             ChatGPTClient.xcodeproj/project.pbxproj \
             ChatGPTClient/Authentication/AuthSessionStore.swift \
             ChatGPTClient/Conversation/ConversationFeature.swift \
             ChatGPTClient/RootViewController.swift
-          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "5"
-          git commit -m "feat: assemble b70 daily chat parity fixes"
-          git push --force origin HEAD:refs/heads/assembly-product/dev-send-stream-b70-20260831
-          echo "PRODUCT_COMMIT=$(git rev-parse HEAD)"
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "4"
+          git commit -m "feat: stage compiled b70 product source"
+          git push --force origin HEAD:refs/heads/assembly-product-base/dev-send-stream-b70-20260831
+          echo "PRODUCT_BASE_COMMIT=$(git rev-parse HEAD)"

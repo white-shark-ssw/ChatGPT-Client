@@ -1,5 +1,11 @@
 # Technical Decisions
 
+## b76 qualification — 2026-09-01
+
+- **TD-029 current external-continuation rule:** a page-owned matching `/backend-api/f/conversation/resume` is accepted only on exact HTTP200 `text/event-stream`. Current visible-Web evidence also proves official Web can receive resume HTTP404 JSON and then follow the same active response through its own already-issued `stream_status` and plural `/backend-api/conversations/{conversation}` responses. Native must not reproduce either request or cadence. b76 may observe matching page-owned responses, validate target identity, derive service messages after the latest user, and atomically project them into the sole Repository response runtime. WebSocket remains non-authoritative. Raw plural message count is not a cursor because the response is rolling/paged.
+- **TD-014 presentation qualification:** b75 26/18.2/18.2 remains rejected. b76 tests 30/21/21 while preserving the 0.70 relationship and shared reasoning/final measurement/rendering behavior; visual acceptance is Runtime-only.
+- b67 local protected-Send Runtime and b72 tested concurrent ownership remain accepted predecessors. b76 CI/Artifact success does not establish Runtime success.
+
 ## b75 Runtime qualification — 2026-09-01
 
 - **TD-014 presentation qualification:** Build75 proves the numeric `26 / 18.2 / 18.2` tool/reasoning/final line-height implementation is not the accepted visual target; the latest exact screenshot rejects it as too tight. Future correction must increase the visible vertical rhythm while keeping reasoning/final measurement and rendering consistent and preserving chronological reasoning/tool semantics.

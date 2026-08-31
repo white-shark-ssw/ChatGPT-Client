@@ -1,5 +1,15 @@
 # Project State
 
+## DEV-send-stream b76 candidate override — 2026-09-01
+
+Exact b76 `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` is the current test candidate. Exact product/config source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` passed guarded exact-scope assembly plus Xcode 16.4 Simulator build, formal Push CI `33440101178 / 99645927061` and PR CI `33440098527 / 99645917529`. Canonical Push Artifact `9775920927` has ZIP `sha256:52f94ed7dbfbe311e37656fcce9a60bb5f8cc9c6b2af29434f7020d47729e944` and IPA `sha256:b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`. Independent package inspection confirms Release 0.1.0 (76), Candidate b76, source marker `0da5a7577f2c`, MinimumOSVersion 14.0, arm64, iPhone+iPad family.
+
+- Current visible official Web can receive matching page-owned `/resume` HTTP404 JSON and then follow the active response through its own already-issued `stream_status` + plural `/backend-api/conversations/{conversation}` reads.
+- The plural rolling `messages[]` window exposes the required service-message family during `IS_STREAMING` and the finished final message after `COMPLETE`; raw message count is not a cursor.
+- b76 observes only those page-owned responses, validates target identity, derives entries after the latest user, and atomically projects them into the existing `ConversationRepository` live-response owner. It adds no Native polling/cadence, Native resume/offset request, WebSocket body authority or second state store. Actual page-owned `/resume` HTTP200 SSE support remains strictly validated and retained when it occurs.
+- Typography candidate is tool 30 / reasoning 21 / final 21. Runtime visual acceptance is pending.
+- Runtime/manual/real-device b76: **Pending / Unverified**. Stable/Frozen Send: **No**. b39-b76 are permanently reserved.
+
 ## DEV-send-stream b75 Runtime override — 2026-09-01
 
 Exact b75 `DEV-send-stream-0.1.0-b75`, source `b77303b8870dc25851dbffbf38ffc153a47bbcb2`, Artifact `9772079468`, IPA SHA `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d` is package-verified and permanently reserved. iPhone/iOS17 Runtime is **partial/rejected**, not pending.

@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-09-01 through exact DEV-send-stream b75 Runtime qualification and the current Web Rule Lab continuation re-probe gate._
+_Last updated: 2026-09-01 through exact DEV-send-stream b76 Code/static/Simulator/Push+PR CI/Artifact/package verification; the next gate is b76 real-device Runtime._
 
 ## Purpose / delivery principles
 
@@ -22,6 +22,14 @@ Core rules: no speculative retry/fallback/timer/watchdog/polling/duplicate state
 Retain b38 bounded long-message chunks, deterministic geometry/manual layout, full-message Copy semantics, semantic rounds and continuous O(1)-target round navigation.
 
 ## Phase 9 — `DEV-send-stream` — Active production integration
+
+### Current b76 candidate / next gate — 2026-09-01
+
+- Exact candidate `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)`; source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`; Artifact `9775920927`; IPA SHA `b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`.
+- Guarded scope/Simulator passed; Push `33440101178 / 99645927061` and PR `33440098527 / 99645917529` passed; package identity independently verified.
+- Current external-response design observes only page-owned status/plural reads after current resume 404, validates target identity and atomically projects the latest-user-bounded service segment into the Repository response owner. No Native polling/cadence/resume construction/WebSocket body path. Actual HTTP200-SSE page-owned resume remains supported under strict validation.
+- b76 also tests 30/21/21 vertical rhythm.
+- **Next gate is Human Runtime:** cross-platform active-response adoption, b67 local Send regression, b72 concurrent-ownership regression, visual spacing, and worst-case Back responsiveness if reproduced. Stable/Frozen remains No.
 
 ### Durable authority / transport boundary
 

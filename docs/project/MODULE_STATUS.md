@@ -1,5 +1,13 @@
 # Module Status
 
+## DEV-send-stream b76 candidate override — 2026-09-01
+
+- Build/runtime metadata: exact b76 source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`; Push `33440101178 / 99645927061` and PR `33440098527 / 99645917529` success; Artifact `9775920927`; IPA `sha256:b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`; package independently verified as Release 0.1.0 (76), Candidate b76, source `0da5a7577f2c`, iOS14 minimum, arm64. Runtime pending.
+- Covered external continuation: current official page may `/resume` -> 404, then use its own `stream_status` + plural conversation reads. b76 observes only that existing page traffic and atomically projects the latest-user-bounded service segment into `ConversationRepository`; no Native polling/resume construction/WebSocket body path.
+- User-visible reasoning/tool/final: current probe evidence contains thinking preambles, exact-parent tools/results, reasoning recap/end and final in-progress/completed message structures. b76 Code/CI/Artifact is verified but device presentation remains unverified.
+- Typography: b76 candidate increases 26/18.2/18.2 -> 30/21/21 while preserving the 0.70 relationship and shared measurement/rendering style.
+- Geometry: b75 cooperative path evidence remains; worst-case Back responsiveness is still an open real-device gate if reproduced.
+
 ## DEV-send-stream b75 Runtime override — 2026-09-01
 
 - Build/runtime metadata: exact b75 package verified; Runtime partial/rejected; b39-b75 reserved; Stable/Frozen Send No.

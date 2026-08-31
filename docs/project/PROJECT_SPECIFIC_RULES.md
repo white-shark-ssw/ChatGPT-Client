@@ -1,5 +1,15 @@
 # Project-Specific Rules
 
+## b76 current candidate override — 2026-09-01
+
+- Exact b76 is allocated and permanently reserved: `DEV-send-stream-0.1.0-b76`, Build76, exact product/config source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Artifact `9775920927`, IPA SHA `b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`.
+- Current official-page external continuation is not `/resume`-SSE-only. A page-owned resume still requires exact HTTP200 SSE before SSE adoption; current evidence also allows official page-owned resume 404 followed by its own status/plural read path.
+- Production may observe only the page's already-issued matching status/plural responses. It must not construct/schedule Native polling, copy cadence, construct resume/offset, parse WebSocket bodies, resend, add retry/watchdog behavior or create a second conversation/message/response store.
+- Plural `messages[]` is rolling/paged; raw count is not a cursor. Bound the active segment by the latest user service message, validate target identity and project snapshots atomically into the sole `ConversationRepository` response owner.
+- `assistant:thoughts` / inline COT remain non-presentational; exact-parent tool association and narrow GitHub detail mapping remain unchanged.
+- b76 tool/reasoning/final line heights are candidate 30/21/21. Runtime visual acceptance pending.
+- Code/static/Simulator/Push+PR CI/Artifact/package are passed; real-device Runtime and Stable/Frozen remain **No / Unverified**.
+
 ## b75 current Runtime override — 2026-09-01
 
 - Exact b75 package is permanently reserved: source `b77303b8870dc25851dbffbf38ffc153a47bbcb2`, Artifact `9772079468`, IPA SHA `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d`.

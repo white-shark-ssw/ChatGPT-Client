@@ -1,7 +1,19 @@
 # Web Send Adapter / Rule Update Playbook
 
-_Last established: 2026-09-01 through DEV-send-stream b67 accepted local transport, b72 tested concurrent ownership, and current cross-device page-owned `/resume` evidence used by exact b74._
+_Last established: 2026-09-01 through b67 accepted local transport, b72 tested concurrent ownership, b75 visible-Web continuation probes, and exact b76 Code/CI/Artifact/package verification; b76 Runtime remains pending._
 
+
+## Current b76 external-response read rule — 2026-09-01
+
+Fresh visible official-Web evidence supersedes the older same-day assumption that cross-device adoption must receive a successful `/backend-api/f/conversation/resume` SSE. Current official-page behavior can be:
+
+`page-owned stream_status=IS_STREAMING -> page-owned /resume -> HTTP404 JSON -> repeated page-owned stream_status + plural /backend-api/conversations/{conversation} JSON -> stream_status=COMPLETE -> final plural snapshot`
+
+The plural response is a rolling/paged top-level `messages[]` window. Its raw count is not monotonic and is not a response cursor. Entries are the same service-message family already evidenced by the native parser. While streaming, the active segment can contain visible thinking preambles, assistant/non-all tool invocations, exact-parent tool results, hidden thoughts/inline COT, reasoning recap/end and an assistant final message with `status=in_progress`; after `COMPLETE`, the final assistant is `finished_successfully`, `end_turn=true` with completed body.
+
+**Current b76 production rule:** observe only page-owned matching requests/responses already issued by official Web; never construct or schedule Native status/plural reads and never reproduce cadence. Validate returned conversation identity, find the latest user service message, project only following entries atomically into the existing `ConversationRepository` live-response runtime, preserve existing reasoning/tool/final semantics, and terminal/reconcile once after page-owned COMPLETE plus the following plural snapshot. Historical page-owned `/resume` remains supported only when that exact response is HTTP200 `text/event-stream`. User-level WebSocket remains structural-only and is not a response-body source.
+
+Exact b76 has passed guarded scope/Simulator, Push+PR CI, Artifact and package identity checks. Those checks do not prove Runtime behavior; real-device adoption remains the Human Gate.
 ## Purpose
 
 This document is the durable maintenance contract for the ChatGPT-account protected-Send bridge used by the native iOS client.

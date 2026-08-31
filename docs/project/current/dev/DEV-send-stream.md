@@ -13,9 +13,13 @@
 - Clean b76 product commit: `60bebc9e5b2296f6426ad264d7b57979781360b7`
 - Clean product parent/checkpoint: `dd18b5beca16af34b075295dc3fc0782c714f26b`
 - Assembly validation: `33439797547 / 99644929642` — guarded patch + `git diff --check` + exact scope + Xcode 16.4 Simulator build passed
-- Push CI: Pending
-- PR CI: Pending
-- Artifact/package identity: Pending
+- Push CI: `33440101178 / 99645927061` — success
+- PR CI: `33440098527 / 99645917529` — success
+- Canonical Push Artifact: `9775920927`
+- ZIP SHA: `52f94ed7dbfbe311e37656fcce9a60bb5f8cc9c6b2af29434f7020d47729e944`
+- IPA: `ChatGPTClient-0.1.0-b76-dev-send-stream.ipa`
+- IPA SHA: `b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`
+- Package independently verified: Release `0.1.0 (76)`, Candidate b76, source marker `0da5a7577f2c`, MinimumOSVersion 14.0, arm64, iPhone+iPad family
 - b39-b76 permanently reserved
 - Runtime/manual/real-device b76: **Unverified**
 - Stable/Frozen Send: No
@@ -81,15 +85,15 @@ Exact source `0da5a757...` adds only `.github/workflows/ios-foundation.yml` to i
 - Code written: **Yes — exact b76 source `0da5a757...`**
 - Static/exact-scope checks: **Passed**
 - Xcode 16.4 Simulator build: **Passed in assembly run `33439797547 / 99644929642`**
-- Formal Push CI: **Pending**
-- Formal PR CI: **Pending**
-- Artifact produced: **Pending**
-- Package identity verified: **Pending**
+- Formal Push CI: **Passed — `33440101178 / 99645927061`**
+- Formal PR CI: **Passed — `33440098527 / 99645917529`**
+- Artifact produced: **Yes — canonical Push Artifact `9775920927`**
+- Package identity verified: **Yes — ZIP/IPA SHA and built Info.plist independently checked**
 - Runtime/manual/real-device: **No / Unverified**
 - Stable/Frozen Send: **No**
 
 ## Exact next action
 
-AI-owned: verify formal Push + PR CI for exact `0da5a757...`, obtain canonical Push Artifact, independently verify Build76/Candidate/source marker/package hashes, update `WEB_SEND_ADAPTER.md`, `BUILD_TEST_INDEX.md`, project/module state and PR metadata, then provide the exact b76 IPA.
+AI-owned build/CI/package/documentation work is complete. Next exact action is the Human b76 device gate using the canonical IPA; record Runtime evidence before any further product candidate.
 
 Next Human Gate: exact b76 iPhone/iOS17 Runtime. It must test cross-platform active-response adoption, local b67 Send regression, b72-style concurrent ownership regression, visual line spacing, and—if reproduced—worst-case left-edge Back responsiveness. CI/Artifact success must not be described as Runtime success.

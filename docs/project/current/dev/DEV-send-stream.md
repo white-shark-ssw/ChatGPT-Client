@@ -67,9 +67,9 @@ Current source explains the gap:
 
 This is not a missing-label bug. The missing feature is **adopting an already-active externally initiated response into the existing Repository response lifecycle when the user enters that conversation**.
 
-Historical b45 Runtime proves the official browser has a no-resend continuation route `POST /backend-api/f/conversation/resume` with `{conversation_id, offset}` returning HTTP200 SSE and normal terminal grammar after an interrupted response. It does **not** prove that current cross-device live adoption uses `/resume`, what the current offset is, or whether Web now uses WebSocket/another page-owned transport for this case. The user's current observation proves official Web can receive the state, but not the exact transport shape.
+The 2026-09-01 Web Rule Lab capture now closes that transport-shape gap for the tested cross-device case. After another platform started the response and official Web entered the same conversation, the page opened its normal user-level WebSocket, loaded conversation/bootstrap state, requested `GET /backend-api/conversation/{id}/stream_status` (HTTP200 JSON), then issued **page-owned** `POST /backend-api/f/conversation/resume` with request JSON keys exactly `conversation_id` + `offset`; that request returned HTTP200 `text/event-stream`. The capture did not expose response bodies or secret header values. Short WebSocket frames were observed but are not proven to carry the reasoning/final body.
 
-Therefore b74 must not guess `/resume`, add polling, or synthesize a fake `正在思考`. Before external-adoption product code, use the existing Web Rule Lab/current official page to capture the smallest structural evidence identifying the actual page-owned cross-device continuation mechanism. Once identified, the intended ownership remains:
+Therefore b74 is now authorized to observe the official page's own `/resume` SSE for external active-response adoption. Native must **not** construct the resume request, derive/guess `offset`, poll `stream_status`, or issue a second Send. The bridge must verify the page-owned resume targets the executor's current authoritative conversation before adopting it. Intended ownership remains:
 
 `page-owned external active-response transport observed -> Repository creates/adopts one external live response operation for the authoritative conversation -> existing reasoning/tool/final parser -> Native presentation -> deterministic terminal authoritative reconciliation`.
 
@@ -81,7 +81,7 @@ Evidence-backed product changes allowed before/alongside the external-transport 
 
 1. `ConversationFeature.swift`: add bounded in-process historical presentation-geometry reuse for unchanged resident conversation presentation, with deterministic invalidation and no second message authority.
 2. `ConversationFeature.swift`: increase main tool-row top/bottom rhythm only.
-3. External active-response adoption: **probe first**. Product source changes only after the current official browser transport shape is evidenced. Likely integration surfaces are `RootViewController.swift` covered executor + existing Repository response runtime, but no route/mechanism is authorized yet.
+3. External active-response adoption: current Runtime now authorizes observing the page-owned `/backend-api/f/conversation/resume` SSE for the executor's current authoritative conversation. Integration surfaces are `RootViewController.swift` covered executor + existing Repository response runtime. Native request construction/offset synthesis/polling remain prohibited.
 4. Xcode/workflow identity only after the complete coherent b74 product candidate is ready for CI/Artifact.
 
 ## Batch recovery point — b74
@@ -104,13 +104,13 @@ Allocated identity:
 Write batches:
 
 1. **Confirmed complete:** current b73 Runtime classification and b74 allocation in this checkpoint.
-2. **Next:** implement and statically audit only the evidence-backed geometry reuse + tool-spacing changes on a tooling assembly branch from this checkpoint head.
-3. **Then:** obtain current official-Web structural evidence for externally initiated active-response continuation using Web Rule Lab; update `WEB_SEND_ADAPTER.md` rule only if evidence supports a specific mechanism.
-4. **Then:** implement the smallest Repository-owned external-adoption bridge, run scope/diff/compile checks, promote one clean b74 product/config source, Push+PR CI, Artifact/package verification.
+2. **Confirmed complete:** geometry reuse + tool-spacing patch assembled on tooling branch; run `33414597158 / 99562115400` passed scope, `git diff --check` and Xcode 16.4 Simulator build, producing code commit `894eea1` on `assembly/dev-send-stream-b74-ui-product-20260901`. This is compile evidence only, not the final b74 product source.
+3. **Confirmed complete:** current Web Rule Lab cross-device capture proves page-owned `POST /backend-api/f/conversation/resume` `{conversation_id, offset}` -> HTTP200 SSE after `stream_status`; WebSocket remains non-authoritative structural evidence.
+4. **Next:** reassemble the UI patch plus the smallest page-owned-resume observation / Repository external-adoption bridge from the updated checkpoint, run scope/diff/compile checks, then promote one clean b74 product/config source, Push+PR CI, Artifact/package verification.
 5. **Then:** iPhone/iOS17 Runtime gate covering repeated long-conversation switching, tool spacing, local Send regression, external-platform active generation adoption, hidden-thought exclusion and b72 simultaneous-generation regression.
 
 Recovery must not touch b73 product identity, must not regress b67/b72 transport/concurrency, must not invent `/resume` semantics, and must not produce a b74 Artifact before the external-adoption mechanism is evidenced and the coherent candidate is complete.
 
 ## Exact next action
 
-Implement the deterministic geometry-reuse + tool-spacing patch and prepare the smallest Web Rule Lab probe for the external-platform active-generation reproduction. If the probe identifies the official continuation transport, implement that exact mechanism in b74; otherwise stop at the genuine human probe evidence gate rather than guessing.
+Reassemble the already-compiled geometry-reuse/tool-spacing patch together with the newly authorized page-owned `/backend-api/f/conversation/resume` observation path. External adoption must create one Repository live-response generation only after a matching page-owned resume is observed, consume the existing parser events, reconcile once at terminal, and add no native resume request, offset synthesis, polling, retry, timer, second Send or second response store.

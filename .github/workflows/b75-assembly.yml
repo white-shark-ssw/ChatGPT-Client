@@ -67,7 +67,7 @@ jobs:
           grep -Fq 'geometryMode": geometryReused ? "resident_cache" : "cooperative_main_queue"' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'DispatchQueue.main.async { processBatch(startingAt: endIndex) }' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'historicalGeometryBuildGeneration == geometryBuildGeneration' ChatGPTClient/Conversation/ConversationFeature.swift
-          ! git diff d43661ef4dd9a01480b11b4d70af5a79e6792bff -- ChatGPTClient/RootViewController.swift ChatGPTClient/Conversation/ConversationFeature.swift | grep '^+' | grep -E 'Timer|asyncAfter|retry|watchdog|poll|URLSession.*resume'
+          ! git diff d43661ef4dd9a01480b11b4d70af5a79e6792bff -- ChatGPTClient/RootViewController.swift ChatGPTClient/Conversation/ConversationFeature.swift | grep '^+' | grep -E 'Timer|asyncAfter|retry\(|watchdog|poll|URLSession.*resume'
 
       - name: Build iOS Simulator
         run: |

@@ -1,0 +1,278 @@
+name: b71 docs sync
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b71-20260831
+    paths:
+      - ".github/workflows/b71-docs-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_SHA: af8d4a4b291c05fb63a50cee0261c06d7ce474d3
+      DOCS_BRANCH: assembly/docs/dev-send-stream-b71-20260831
+    steps:
+      - name: Checkout exact b71 product source
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact formal source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$BASE_SHA"
+          if git ls-remote --exit-code --heads origin "refs/heads/${DOCS_BRANCH}" >/dev/null 2>&1; then
+            echo "Docs branch already exists; refusing to overwrite"
+            exit 1
+          fi
+
+      - name: Patch b71 durable evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path): return Path(path).read_text()
+          def write(path, text): Path(path).write_text(text)
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1: raise SystemExit(f"{label}: expected 1 match, found {count}")
+              return text.replace(old, new, 1)
+          def replace_regex(text, pattern, replacement, label, flags=re.S):
+              new, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1: raise SystemExit(f"{label}: expected 1 regex match, found {count}")
+              return new
+          def replace_line_prefix(text, prefix, new_line, label):
+              lines = text.splitlines()
+              indexes = [i for i,line in enumerate(lines) if line.startswith(prefix)]
+              if len(indexes) != 1: raise SystemExit(f"{label}: expected 1 line, found {len(indexes)}")
+              lines[indexes[0]] = new_line
+              return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+          # Checkpoint
+          p = 'docs/project/current/dev/DEV-send-stream.md'; t = read(p)
+          t = replace_regex(t, r'\*\*Active —.*?\*\*', '**Active — b71 presentation/performance Candidate is now Code/scope/Simulator/Push+PR CI/Artifact/package verified and awaits exact iPhone/iOS17 Runtime. b67 transport remains accepted; b70 presentation Runtime remains rejected/reserved; Stable/Frozen Send remains No; PR #29 stays open/unmerged.**', 'checkpoint status', flags=0)
+          milestone = '''## b71 formal source / CI / Artifact milestone — 2026-08-31
+
+- Exact product/config source: `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; clean product commit `38a12f52f1a5034c43a446f737b0da210a5a1a4f`; direct clean checkpoint parent `5e9c0a8cfa00118a4facca640e8ee739ce480c1a`.
+- Candidate: `DEV-send-stream-0.1.0-b71`; Version / Build: `0.1.0 (71)`.
+- Tooling assembly compile evidence: Run `33386550230`, Job `99470358015`; four-file scope audit passed and Xcode 16.4 iOS Simulator ended `BUILD SUCCEEDED`. The run itself later failed only when its GitHub Actions token was denied permission to push a workflow file; this is tooling-output failure, not product compile failure.
+- Clean product extraction: Run `33388165867`, Job `99475407591` — success; exact compiled patch reapplied and three product files emitted from the clean checkpoint; connector then changed only the formal workflow Candidate/Artifact identity.
+- Detached checkpoint -> candidate audit: exactly four authorized files; `.github/workflows/ios-foundation.yml` `+2/-2`, Xcode project `+4/-4`, `ConversationFeature.swift` `+425/-171`, `RootViewController.swift` `+9/-5`.
+- Push CI: `33388396118 / 99476130099` — success.
+- PR CI: `33388399484 / 99476140778` — success.
+- Push Artifact: `9756491305`, name `ChatGPTClient-DEV-send-stream-0.1.0-b71`, ZIP `sha256:74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`.
+- IPA: `ChatGPTClient-0.1.0-b71-dev-send-stream.ipa`, `sha256:a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; sidecar agrees.
+- Independently unpacked package identity: Release `0.1.0`, Build `71`, Candidate `DEV-send-stream-0.1.0-b71`, source marker `af8d4a4b291c`, minimum iOS `14.0`, device families `[1,2]`, Mach-O arm64.
+- Evidence ladder: **Code written / exact scope audited / Simulator compile passed / Push CI passed / PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No.**
+- b71 is now permanently reserved. Later docs-only commits do not redefine exact product source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`.
+
+'''
+          t = replace_once(t, '## Exact b70 Runtime evidence — 2026-08-31\n', milestone + '## Exact b70 Runtime evidence — 2026-08-31\n', 'checkpoint milestone insert')
+          t = replace_once(t, '- b71: justified/allocated direction only at this checkpoint; product source/CI/Artifact/Runtime not yet claimed.', '- b71: exact source/scope/Simulator compile/Push+PR CI/Artifact/package identity verified; exact iPhone/iOS17 Runtime pending.', 'checkpoint evidence ladder')
+          t = replace_regex(t, r'## Next exact action\n.*\Z', '''## Next exact action
+
+Install exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` on the primary iPhone/iOS17 device and compare directly with the supplied official screenshots. Verify Build71/Candidate/source marker, clear diagnostics, then confirm: compact `思考了 Ns`/`思考过程` summary and meaningful tool rows are aligned near the ~16pt assistant margin; GitHub icon is bounded and no generic empty `工具调用 · 已完成` row appears; tapping thinking opens the rounded `正在思考` sheet immediately without a full-table ~1.4s geometry rebuild; sheet disclosures grow intrinsically under one outer scroll view; duration/completion ordering is correct; final answer divider/spacing is compact; b67 one-Send transport, hidden-thought exclusion, b38 geometry/quick navigation and active-response navigation do not regress. Export diagnostics after terminal. Runtime/manual remains the only next acceptance gate.
+''', 'checkpoint next action')
+          write(p, t)
+
+          # BUILD_TEST_INDEX
+          p = 'docs/project/BUILD_TEST_INDEX.md'; t = read(p)
+          if 'DEV-send-stream-0.1.0-b71' not in t:
+              lines = t.splitlines()
+              idx = next((i for i,line in enumerate(lines) if line.startswith('| `DEV-send-stream-0.1.0-b70`')), None)
+              if idx is None: raise SystemExit('BUILD_TEST_INDEX b70 row missing')
+              row = '| `DEV-send-stream-0.1.0-b71` | `DEV-send-stream` | `0.1.0 (71)` | exact source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; clean product commit `38a12f52f1a5034c43a446f737b0da210a5a1a4f`; PR #29 | Sim compile `33386550230/99470358015` passed before tooling push-permission failure; clean extract `33388165867/99475407591` success; Push `33388396118/99476130099` success; PR `33388399484/99476140778` success; Artifact `9756491305`; ZIP `sha256:74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`; IPA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; Release/source `af8d4a4b291c`/iOS14/`[1,2]`/arm64 | Official-like compact thinking/tool summary + presentation-only reasoning sheet; removes historical full-table disclosure rebuild; exact b70 Runtime defects are the basis. | **Code/scope/static+sim compile/Push+PR CI/Artifact/package verified; Runtime pending; permanently reserved** |'
+              lines.insert(idx + 1, row)
+              t = '\n'.join(lines) + ('\n' if t.endswith('\n') else '')
+          write(p, t)
+
+          # PROJECT_STATE
+          p = 'docs/project/PROJECT_STATE.md'; t = read(p)
+          t = replace_regex(t, r'_Last updated:.*?_', '_Last updated: 2026-08-31 through accepted b67 production transport Runtime, exact b70 presentation Runtime rejection, and exact b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b71 human Runtime gate. Stable/Frozen Send remains No._', 'project state updated', flags=0)
+          current_block = '''Latest exact product Candidate is **`DEV-send-stream-0.1.0-b71` / `0.1.0 (71)`**:
+
+- exact product/config source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; clean product commit `38a12f52f1a5034c43a446f737b0da210a5a1a4f`; direct clean checkpoint parent `5e9c0a8cfa00118a4facca640e8ee739ce480c1a`;
+- Simulator compile `33386550230 / 99470358015` passed after exact four-file scope audit; the containing tooling run failed only at unauthorized workflow push;
+- clean extract `33388165867 / 99475407591` success;
+- Push `33388396118 / 99476130099` and PR `33388399484 / 99476140778` — success;
+- Artifact `9756491305`; ZIP `sha256:74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`;
+- IPA `sha256:a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`;
+- independently unpacked package `0.1.0 (71)` / Candidate b71 / source `af8d4a4b291c` / minimum iOS14 / `[1,2]` / arm64.
+
+b71 is presentation/performance-only: it preserves b67 protected-Send/SSE ownership and b69 ordered timeline, carries exact service `finished_duration_sec`, replaces b70 inline reasoning/tool disclosure with compact conversation summary + presentation-only reasoning sheet, removes historical disclosure-triggered full-table geometry rebuilds, uses one outer sheet scroller for intrinsic tool detail, and changes no protected route/selector/challenge/SSE ownership semantics. Exact b70 package remains valid/reserved but its supplied iPhone/iOS17 presentation Runtime is rejected. Evidence ladder: **Code / exact scope / Simulator compile / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b71 are permanently reserved.
+'''
+          t = replace_regex(t, r'Latest exact product Candidate is \*\*`DEV-send-stream-0\.1\.0-b70`.*?\n\n## b65 accepted probe predecessor', current_block + '\n## b65 accepted probe predecessor', 'project state current candidate')
+          gate = '''## Current exact Runtime gate
+
+Install exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` on the primary iPhone/iOS17 device. Verify Candidate/source marker, clear diagnostics, then compare the main conversation and `正在思考` sheet against the supplied official screenshots: compact service-duration summary or `思考过程`, bounded meaningful tool icons/rows, no empty generic completed placeholder, ~16pt assistant content alignment, compact divider/spacing, immediate sheet opening without full-table geometry rebuild, intrinsic input/output growth under one outer sheet scroller, correct duration/completion ordering, and no regressions to b67 one-Send transport, hidden-thought exclusion, active-response navigation or b38 deterministic geometry/quick navigation. Export diagnostics after terminal. b70 auth-403 recovery remains separately Unverified if this run does not exercise it.
+
+'''
+          t = replace_regex(t, r'## Current exact Runtime gate\n.*?\n\n## Remaining Unknown / Unverified', gate + '## Remaining Unknown / Unverified', 'project state runtime gate')
+          t = t.replace('Exact b70 daily-chat parity/auth-lifecycle Runtime,', 'Exact b71 presentation/performance Runtime, b70 transient-auth recovery when not exercised,', 1)
+          write(p, t)
+
+          # MODULE_STATUS
+          p = 'docs/project/MODULE_STATUS.md'; t = read(p)
+          t = replace_line_prefix(t, '| Build/runtime metadata |', '| Build/runtime metadata | **b71 exact identity; Runtime pending** | Xcode settings / built `Info.plist` | `0.1.0 (71)`, source `af8d4a4b291c...`, Artifact `9756491305`; b39-b71 reserved. |', 'module build metadata')
+          t = replace_line_prefix(t, '| IPA build / CI packaging |', '| IPA build / CI packaging | **Stable capability; b71 Artifact valid** | `scripts/build_ipa.sh`, workflow | Push `33388396118/99476130099`, PR `33388399484/99476140778`, Artifact `9756491305`, IPA `a9322dba...fd65`; package b71/source `af8d4a4b291c`/iOS14/arm64. |', 'module packaging')
+          t = replace_line_prefix(t, '| Streaming / Send |', '| Streaming / Send | **Active — b67 transport accepted; b71 presentation Runtime gate** | `DEV-send-stream`; PR #29; TD-029 | b71 exact source/Push+PR CI/Artifact/package verified; presentation/performance Runtime pending. |', 'module send')
+          t = replace_line_prefix(t, '| User-visible reasoning |', '| User-visible reasoning | **b71 Code/CI/Artifact/package verified; Runtime pending** | `ConversationRepository` + `DEV-send-stream` | Ordered timeline retained; exact service duration may label compact summary; detail moves to a presentation-only sheet so historical disclosure no longer rebuilds all b38 row geometry. |', 'module reasoning')
+          t = replace_line_prefix(t, '| Tool activity presentation |', '| Tool activity presentation | **b71 Code/CI/Artifact/package verified; Runtime pending** | `DEV-send-stream` | Meaningful compact tool rows + bounded local icons in conversation; intrinsic input/output detail moves to one outer-scroll reasoning sheet; exact-parent/GitHub authorization unchanged. |', 'module tools')
+          t = replace_line_prefix(t, '| Expandable GitHub tool detail |', '| Expandable GitHub tool detail | **b65 mapping accepted; b71 sheet presentation Runtime pending** | `DEV-send-stream` | Authorized exact-parent GitHub input/output remains unchanged; b71 removes the 260pt nested-scrolling cap from the new presentation-only sheet and keeps disclosure state local to that sheet. |', 'module github detail')
+          t = t.replace('- b70 source `fb83be9163838f78abfa47903e67f27b6f66ec52`, Artifact `9752289536`, IPA `8084e2ac...a44a` is the current daily-chat parity/auth-lifecycle Runtime candidate; package identity independently verified.', '- b70 remains a valid reserved package but its exact iPhone/iOS17 presentation Runtime is rejected. b71 source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`, Artifact `9756491305`, IPA `a9322dba...fd65` is the current presentation/performance Runtime candidate; package identity independently verified.', 1)
+          t = t.replace('- b39-b70 are reserved. Phase 9 Stable/Frozen: No.', '- b39-b71 are reserved. Phase 9 Stable/Frozen: No.', 1)
+          write(p, t)
+
+          # PROJECT_PROFILE
+          p = 'docs/project/PROJECT_PROFILE.md'; t = read(p)
+          t = replace_regex(t, r'\*\*Initialized — 2026-08-25; refreshed .*?\*\*', '**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, exact b70 presentation Runtime rejection, and exact b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verification.**', 'profile init', flags=0)
+          b70_b71 = '''## Exact b70 rejected presentation predecessor
+
+b70 retains accepted b67 protected-Send/SSE ownership and b69 chronological timeline while applying evidence-backed daily-chat corrections. Its exact package remains valid/reserved: Candidate `DEV-send-stream-0.1.0-b70`, source `fb83be9163838f78abfa47903e67f27b6f66ec52`, Artifact `9752289536`, IPA `8084e2ac...a44a`. Exact iPhone/iOS17 diagnostics/screenshots then rejected its daily-chat reasoning/tool presentation: literal `GH`/generic tool rows, ~1.4s full-table geometry rebuild on disclosure toggles, 260pt nested tool scrolling, extra assistant inset, and inline expansion instead of the supplied official compact-summary + reasoning-sheet interaction.
+
+## Exact b71 current Candidate
+
+b71 changes only the justified presentation/performance surface. It preserves b67 protected-Send route/selectors/challenge/SSE ownership and Repository response authority; carries exact service `finished_duration_sec`; uses a compact `思考了 Ns` or `思考过程` conversation summary with meaningful bounded tool rows; opens a presentation-only rounded `正在思考` sheet for intrinsic tool detail under one outer scroll view; and removes historical reasoning/tool toggles from the full b38 geometry rebuild path.
+
+Identity: Candidate `DEV-send-stream-0.1.0-b71`, `0.1.0 (71)`, exact product/config source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`, Push `33388396118/99476130099`, PR `33388399484/99476140778`, Artifact `9756491305`, ZIP `74b554c9...bda0`, IPA `a9322dba...fd65`, package source marker `af8d4a4b291c`, iOS14 minimum, arm64. Evidence: Code/scope/static+sim compile/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
+
+'''
+          t = replace_regex(t, r'## Exact b70 current Candidate\n.*?\n\n## Current product interaction target', b70_b71 + '## Current product interaction target', 'profile candidate block')
+          t = replace_regex(t, r'## Current next Candidate boundary\n.*?\n\n## Remaining Unknown / Unverified', '''## Current next Candidate boundary
+
+b39-b71 are permanently reserved. Exact b71 real-device presentation/performance evidence is the only current Candidate gate. Do not allocate b72 before b71 Runtime yields a concrete defect/next evidence need. The gate must compare compact conversation reasoning/tool rows and the reasoning detail sheet directly with the supplied official screenshots while preserving b67 one-Send transport, hidden-thought exclusion and b38 geometry/quick-navigation.
+
+## Remaining Unknown / Unverified''', 'profile candidate boundary')
+          t = t.replace('Exact b70 daily-chat parity/auth-lifecycle Runtime,', 'Exact b71 presentation/performance Runtime, b70 transient-auth recovery when not exercised,', 1)
+          write(p, t)
+
+          # TECHNICAL_DECISIONS append TD-031
+          p = 'docs/project/TECHNICAL_DECISIONS.md'; t = read(p)
+          if '### TD-031 —' not in t:
+              td = '''
+
+### TD-031 — User-visible reasoning uses a compact conversation summary plus presentation-only detail sheet; disclosure must not rebuild full b38 geometry
+- **Status**: Confirmed product/presentation decision; exact b71 Runtime pending
+- **Date**: 2026-08-31
+- **Evidence**: Exact b70 iPhone/iOS17 diagnostics measured reasoning/tool disclosure interactions around 1.4s while source correlation showed each toggle synchronously rebuilt deterministic metrics/offsets for the entire conversation; post-rebuild table layout itself was only milliseconds to tens of milliseconds. User-supplied official ChatGPT iOS screenshots show a compact `思考了 Ns` summary/tool row in the conversation and a rounded `正在思考` bottom sheet for detailed reasoning/tool content.
+- **Decision**: Main conversation keeps b38 deterministic final-message projection and only compact reasoning/tool summary rows. Exact service `finished_duration_sec` may label `思考了 Ns`; absent service duration uses `思考过程` and never fabricated wall-clock timing. Tapping the summary opens a presentation-only page sheet; it is not Repository/message authority.
+- **Detail ownership**: Tool input/output disclosure state belongs only to the presented sheet. Long detail grows intrinsically and one outer sheet scroll view owns overflow; do not reintroduce the b70 260pt nested-scroll cap.
+- **Performance invariant**: Historical reasoning/tool interaction must not call the full `rebuildPresentationGeometry(...)` path. b38 deterministic geometry and quick-navigation remain unchanged.
+- **Tool boundary**: Keep exact-parent association and the already authorized GitHub detail shape; hide only an empty generic placeholder `工具调用` with no authorized visible detail. Do not generalize to other connectors without evidence.
+- **Evidence ladder**: b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verified; Runtime pending; Stable/Frozen Send remains No.
+'''
+              t = t.rstrip() + td + '\n'
+          write(p, t)
+
+          # DEVELOPMENT_PLAN
+          p = 'docs/project/DEVELOPMENT_PLAN.md'; t = read(p)
+          t = replace_regex(t, r'_Last updated:.*?_', '_Last updated: 2026-08-31 through accepted b67 production transport Runtime, exact b70 presentation Runtime rejection, and exact b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verification._', 'development plan updated', flags=0)
+          t = t.replace('**Do not allocate b71 before exact b70 Runtime yields a concrete next need.** CI/Artifact/package success is not Runtime proof.', '**Exact b70 Runtime later supplied the concrete presentation/performance defects recorded in the active checkpoint, so b71 is now allocated and b70 remains permanently reserved.** CI/Artifact/package success is not Runtime proof.', 1)
+          b71_section = '''### Exact b71 — current presentation/performance Candidate
+
+Exact b70 iPhone/iOS17 diagnostics/screenshots retained the b67 one-Send transport but rejected reasoning/tool daily-chat parity and exposed a concrete ~1.4s interaction owner: full `rebuildPresentationGeometry(...)` on disclosure toggles. b71 therefore changes only the authorized presentation/config surface:
+
+1. service `finished_duration_sec` is carried into Repository-owned live/historical presentation;
+2. the main conversation shows compact `思考了 Ns` or `思考过程` plus meaningful bounded tool rows and a compact final divider;
+3. empty generic `工具调用` placeholders with no authorized visible detail are omitted, while real titled tools remain;
+4. tapping thinking presents a rounded `正在思考` page sheet; tool disclosure state is local to that sheet;
+5. sheet input/output grows intrinsically under one outer scroll view, removing b70's 260pt nested-scrolling cap;
+6. historical disclosure no longer rebuilds all b38 deterministic row geometry;
+7. protected-Send route/selectors/challenge/SSE grammar, `ConversationRepository` response authority, b38 quick navigation, Stop/new-chat/background/attachments and AuthSession lifecycle are not changed by this Candidate.
+
+Identity/evidence: Candidate `DEV-send-stream-0.1.0-b71`, `0.1.0 (71)`, exact source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; Simulator compile evidence `33386550230/99470358015`; Push `33388396118/99476130099`; PR `33388399484/99476140778`; Artifact `9756491305`; ZIP `74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`; IPA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; package `0.1.0 (71)` / source `af8d4a4b291c` / iOS14 / arm64. **Runtime pending; Stable-Frozen No.**
+
+'''
+          t = replace_once(t, '### Current Phase 9 human Runtime gate\n', b71_section + '### Current Phase 9 human Runtime gate\n', 'development b71 insert')
+          t = replace_regex(t, r'### Current Phase 9 human Runtime gate\n.*?\n\n### Shortest remaining Phase 9 sequence after b70 gate', '''### Current Phase 9 human Runtime gate
+
+Install exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` on the primary iPhone/iOS17 device. Verify Build71/Candidate/source marker, clear diagnostics, then compare compact main-conversation thinking/tool presentation and the rounded `正在思考` sheet directly with the supplied official screenshots. Required evidence: service-backed duration or `思考过程`; bounded meaningful tool icon/title rows with no empty generic completed placeholder; ~16pt assistant alignment and compact divider/spacing; immediate sheet presentation without full-table geometry rebuild; intrinsic tool details under one outer sheet scroller; duration then `完成`; no regressions to b67 one-Send transport, hidden-thought exclusion, active-response navigation or b38 geometry/quick-navigation. Export diagnostics after terminal.
+
+### Shortest remaining Phase 9 sequence after b71 gate''', 'development runtime gate')
+          t = replace_regex(t, r'## Current next action\n.*\Z', '''## Current next action
+
+Hand exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` to the user for the focused iPhone/iOS17 official-presentation/performance Runtime gate. Keep PR #29 open/unmerged. Do not allocate b72 or begin unrelated Composer/attachments/Stop/background work before that Runtime evidence.
+''', 'development next action')
+          write(p, t)
+
+          # PROJECT_SPECIFIC_RULES
+          p = 'docs/project/PROJECT_SPECIFIC_RULES.md'; t = read(p)
+          t = t.replace('- b24-b67 emitted identities are permanently reserved;', '- b24-b71 emitted identities are permanently reserved;', 1)
+          t = t.replace('- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; Runtime pending;', '- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; production transport Runtime accepted;', 1)
+          t = t.replace('- do not allocate b68 before exact b67 Runtime supplies a concrete need.', '- exact b70 package remains reserved but its presentation Runtime is rejected. Exact b71 package authority is `0.1.0 (71)`, source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`, Artifact `9756491305`, IPA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; Runtime pending. Do not allocate b72 before exact b71 Runtime supplies a concrete need.', 1)
+          anchor = '- Stable b37/b38 bounded display chunks + deterministic row geometry/manual layout remain message-presentation baseline.\n'
+          addition = '- User-visible reasoning summary/detail follows TD-031: compact main-conversation summary/tool rows plus a presentation-only `正在思考` sheet; historical disclosure must not trigger full `rebuildPresentationGeometry(...)`; sheet disclosure state is local UI state only.\n'
+          if addition not in t: t = replace_once(t, anchor, anchor + addition, 'specific reasoning presentation rule')
+          write(p, t)
+
+          # Durable b70 Runtime evidence file
+          p = Path('docs/project/runtime-evidence/DEV-send-stream-b70-runtime.md')
+          if p.exists(): raise SystemExit('b70 runtime evidence unexpectedly already exists')
+          p.write_text('''# DEV-send-stream b70 Runtime evidence — 2026-08-31
+
+## Exact identity
+
+- Candidate: `DEV-send-stream-0.1.0-b70`
+- Version / Build: `0.1.0 (70)`
+- Product source: `fb83be9163838f78abfa47903e67f27b6f66ec52`
+- Artifact: `9752289536`
+- IPA SHA: `8084e2ace5926b7ee6a790f3eeb2445a2c4ce1fee67d8953300aca93a446a44a`
+- Runtime device: primary iPhone / iOS17.0
+- Supplied diagnostics: `ChatGPTClient-Diagnostics-20260831-094954.json`
+
+## Accepted evidence retained
+
+The supplied run retained one local Send -> one submitted -> one real protected Send -> HTTP200 `text/event-stream` -> Repository response events -> terminal -> authoritative reconciliation. Navigation away while generation remained active did not create another response owner. This keeps the accepted b67 transport result intact. The supplied run did not independently prove every b70 transient-auth/403 recovery gate.
+
+## Presentation/performance rejection
+
+The user supplied two b70 screenshots and two official ChatGPT iOS reference screenshots and explicitly required the official interaction/presentation as the target with pixel-level attention to spacing, row height, icon size and thinking-time placement.
+
+Observed defects:
+
+1. GitHub tool presentation used literal `GH`; an additional generic `</> 工具调用 · 已完成` row made the timeline noisy compared with the supplied official reference.
+2. Reasoning and tool disclosure interactions were visibly slow. Exact diagnostics recorded `reasoningSummary.toggled` around 1.38–1.73s and `toolDetail.toggled` around 1.39–1.45s in the tested long conversation.
+3. Source correlation identified the owner: each historical toggle called full `rebuildPresentationGeometry(...)` and recomputed all presentation metrics/offsets before table reload; the following table layout itself was only milliseconds to tens of milliseconds.
+4. Expanded tool detail was capped at 260pt and used nested `UITextView` scrolling; the supplied official sheet instead grows detail and lets one outer surface scroll.
+5. Assistant clear-bubble content applied an additional 12pt horizontal inset on top of the 16pt table margin, yielding roughly 28pt alignment rather than the supplied official ~16–18pt alignment.
+6. b70 used inline `思考过程` expansion in the conversation. The official reference uses a compact `思考了 7s` summary + chevron/tool row and a rounded bottom sheet titled `正在思考`, with tool detail, progress/completion, `思考了 7s`, then `完成`.
+7. The supplied official GitHub mark is approximately 16pt square; literal `GH` is not acceptable parity.
+
+## Conclusion
+
+b70 is **Runtime Partial/Rejected for daily-chat reasoning/tool presentation parity**. Its package identity remains valid and permanently reserved. The evidence authorizes b71 only as a presentation/performance correction; it does not authorize protected-Send route/selector/challenge/SSE changes, another response owner, retry/poll/timer/watchdog machinery, or unrelated Composer/Stop/background/attachment work.
+''')
+          PY
+
+      - name: Audit docs-only delta and emit branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          test -n "$changed"
+          if printf '%s\n' "$changed" | grep -v '^docs/project/' >/dev/null; then
+            echo 'non-doc change detected'
+            exit 1
+          fi
+          grep -q 'DEV-send-stream-0.1.0-b71' docs/project/current/dev/DEV-send-stream.md
+          grep -q '9756491305' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'TD-031' docs/project/TECHNICAL_DECISIONS.md
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/project
+          git diff --cached --check
+          git commit -m 'docs: record b70 Runtime rejection and b71 artifact gate [skip ci]'
+          git push origin HEAD:"refs/heads/${DOCS_BRANCH}"

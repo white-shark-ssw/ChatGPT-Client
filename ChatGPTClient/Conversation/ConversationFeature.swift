@@ -1631,6 +1631,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var displayedConversationID: String?
     private var scrollAnchorsByConversationID: [String: ScrollAnchor] = [:]
     private var expandedReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
+    private var autoOpenedLiveReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
+    private var autoCollapsedLiveReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -1816,6 +1818,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         displayedConversationID = nil
         scrollAnchorsByConversationID.removeAll()
         expandedReasoningMessageIDsByConversationID.removeAll()
+        autoOpenedLiveReasoningMessageIDsByConversationID.removeAll()
+        autoCollapsedLiveReasoningMessageIDsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
         clearVisibleMessagePresentation()
@@ -1928,6 +1932,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
     let userMessage = ConversationMessage(id: "local-live-user-\(snapshot.generation)", role: .user, text: snapshot.promptText, responseTimeline: [], reasoningDurationSeconds: nil, createTime: nil)
     let assistantMessage = ConversationMessage(id: "local-live-response-\(snapshot.generation)", role: .assistant, text: bodyText, responseTimeline: snapshot.timeline, reasoningDurationSeconds: snapshot.reasoningDurationSeconds, createTime: nil)
+    synchronizeLiveReasoningDisclosure(snapshot: snapshot, messageID: assistantMessage.id, conversationID: id)
     livePresentationMessages = [userMessage, assistantMessage]
     liveMessagePresentation = ConversationMessagePresentationProjection.derive(from: livePresentationMessages)
     livePresentationRowMetrics.removeAll(keepingCapacity: true)
@@ -1961,6 +1966,27 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
     diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
 }
+
+    private func synchronizeLiveReasoningDisclosure(snapshot: ConversationLiveResponseSnapshot, messageID: String, conversationID: String) {
+        guard !snapshot.timeline.isEmpty else { return }
+        var autoOpened = autoOpenedLiveReasoningMessageIDsByConversationID[conversationID] ?? []
+        var autoCollapsed = autoCollapsedLiveReasoningMessageIDsByConversationID[conversationID] ?? []
+        var expanded = expandedReasoningMessageIDsByConversationID[conversationID] ?? []
+        var expansionChanged = false
+        if !snapshot.reasoningEnded, !autoOpened.contains(messageID) {
+            autoOpened.insert(messageID)
+            expanded.insert(messageID)
+            expansionChanged = true
+        }
+        if snapshot.reasoningEnded, !autoCollapsed.contains(messageID) {
+            autoCollapsed.insert(messageID)
+            expanded.remove(messageID)
+            expansionChanged = true
+        }
+        autoOpenedLiveReasoningMessageIDsByConversationID[conversationID] = autoOpened
+        autoCollapsedLiveReasoningMessageIDsByConversationID[conversationID] = autoCollapsed
+        if expansionChanged { expandedReasoningMessageIDsByConversationID[conversationID] = expanded }
+    }
 
     private func isReasoningExpanded(messageID: String, conversationID: String) -> Bool {
         expandedReasoningMessageIDsByConversationID[conversationID]?.contains(messageID) == true
@@ -2009,7 +2035,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func presentToolList(message: ConversationMessage) {
-        let tools = ConversationReasoningPresentation.visibleToolItems(message.responseTimeline)
+        let tools = ConversationReasoningPresentation.toolListItems(message.responseTimeline)
         guard !tools.isEmpty else { return }
         let controller = ConversationReasoningDetailViewController(timeline: tools, durationSeconds: message.reasoningDurationSeconds)
         controller.modalPresentationStyle = .pageSheet
@@ -2493,7 +2519,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let showsCopy = message.role == .assistant && presentationRow.isLastChunk
         let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
         let reasoningExpanded = displayedConversationID.map { isReasoningExpanded(messageID: message.id, conversationID: $0) } ?? false
-        let hasTools = !ConversationReasoningPresentation.visibleToolItems(responseTimeline).isEmpty
+        let hasTools = !ConversationReasoningPresentation.inlineToolItems(responseTimeline).isEmpty
         cell.configure(with: message, text: presentationRow.text, showTimestamp: showsTimestamp, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !presentationRow.text.isEmpty, metrics: presentationRowMetrics[indexPath.row], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: false) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
         return cell
     }
@@ -2505,7 +2531,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     let showsCopy = message.role == .assistant && !snapshot.phase.isActive && presentationRow.isLastChunk
     let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
     let reasoningExpanded = isReasoningExpanded(messageID: message.id, conversationID: id)
-    let hasTools = !ConversationReasoningPresentation.visibleToolItems(responseTimeline).isEmpty
+    let hasTools = !ConversationReasoningPresentation.inlineToolItems(responseTimeline).isEmpty
     cell.configure(with: message, text: presentationRow.text, showTimestamp: false, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty, metrics: livePresentationRowMetrics[liveRow], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: true) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
     return cell
 }
@@ -2538,13 +2564,15 @@ private enum ConversationReasoningPresentation {
 
     static func summaryTitle(durationSeconds: Int?) -> String { durationText(seconds: durationSeconds).map { "思考了 \($0)" } ?? "思考过程" }
 
-    static func visibleToolItems(_ timeline: [ConversationResponseTimelineItem]) -> [ConversationResponseTimelineItem] {
+    static func toolListItems(_ timeline: [ConversationResponseTimelineItem]) -> [ConversationResponseTimelineItem] {
         timeline.filter { item in
             guard item.kind == .tool else { return false }
-            let title = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !title.isEmpty else { return false }
-            return !(title == "工具调用" && item.toolInputJSON.isEmpty && item.toolOutputJSON.isEmpty)
+            return !item.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
+    }
+
+    static func inlineToolItems(_ timeline: [ConversationResponseTimelineItem]) -> [ConversationResponseTimelineItem] {
+        toolListItems(timeline).filter { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) != "工具调用" }
     }
 
     static func compactAttributedText(_ timeline: [ConversationResponseTimelineItem]) -> NSAttributedString {
@@ -2552,7 +2580,7 @@ private enum ConversationReasoningPresentation {
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = 1
         paragraph.paragraphSpacing = 5
-        for item in visibleToolItems(timeline) {
+        for item in inlineToolItems(timeline) {
             if output.length > 0 { output.append(NSAttributedString(string: "\n")) }
             if let image = toolIconImage(item.toolIconKind) {
                 let attachment = NSTextAttachment()
@@ -2792,7 +2820,7 @@ private final class ConversationReasoningDetailViewController: UIViewController 
         title.textColor = .label
         title.text = "正在思考"
         contentStack.addArrangedSubview(title)
-        for item in ConversationReasoningPresentation.visibleToolItems(timeline) { contentStack.addArrangedSubview(ConversationReasoningToolView(item: item)) }
+        for item in ConversationReasoningPresentation.toolListItems(timeline) { contentStack.addArrangedSubview(ConversationReasoningToolView(item: item)) }
         let status = UIStackView()
         status.axis = .vertical
         status.spacing = 20
@@ -2840,8 +2868,8 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private static let copyGap: CGFloat = 4
     private static let copySize: CGFloat = 28
     private static let bodyFont = UIFont.preferredFont(forTextStyle: .body)
-    private static let reasoningFont = UIFont.preferredFont(forTextStyle: .subheadline)
-    private static let toolFont = UIFont.systemFont(ofSize: reasoningFont.pointSize, weight: .medium)
+    private static let reasoningFont = bodyFont
+    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .regular)
     private static let detailFont = UIFont.monospacedSystemFont(ofSize: max(11, reasoningFont.pointSize - 1), weight: .regular)
     private static let timestampFont = UIFont.preferredFont(forTextStyle: .caption2)
     private static let timeFormatter: DateFormatter = {
@@ -3051,15 +3079,18 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState) -> NSAttributedString {
         let output = NSMutableAttributedString()
         let reasoningParagraph = NSMutableParagraphStyle()
-        reasoningParagraph.paragraphSpacing = 5
+        reasoningParagraph.minimumLineHeight = 26
+        reasoningParagraph.lineSpacing = 2
+        reasoningParagraph.paragraphSpacing = 8
         let toolParagraph = NSMutableParagraphStyle()
-        toolParagraph.paragraphSpacing = 5
-        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: reasoningParagraph]
+        toolParagraph.minimumLineHeight = 30
+        toolParagraph.paragraphSpacing = 9
+        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
         let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]
         for item in timeline {
             let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !normalized.isEmpty else { continue }
-            if item.kind == .tool, ConversationReasoningPresentation.visibleToolItems([item]).isEmpty { continue }
+            if item.kind == .tool, ConversationReasoningPresentation.inlineToolItems([item]).isEmpty { continue }
             if output.length > 0 { output.append(NSAttributedString(string: "\n", attributes: reasoningAttributes)) }
             switch item.kind {
             case .reasoning:

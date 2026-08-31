@@ -73,12 +73,13 @@ jobs:
         run: |
           xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
 
-      - name: Commit and push clean b75 product source
+      - name: Commit and push clean b75 product code
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -B assembly/dev-send-stream-b75-product-20260901
-          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
           git commit -m 'fix: validate external resume and keep long-history navigation responsive'
           test "$(git rev-parse HEAD^)" = 'd43661ef4dd9a01480b11b4d70af5a79e6792bff'
+          test "$(git diff --name-only HEAD^ HEAD | sort)" = "$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
           git push origin HEAD:refs/heads/assembly/dev-send-stream-b75-product-20260901

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — b76 is now allocated and code-written. Protocol discovery is closed. Exact b76 product/config source is `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Candidate `DEV-send-stream-0.1.0-b76`, Build 76. A guarded assembly from the exact prior checkpoint passed `git diff --check`, exact three-product-file scope audit and Xcode 16.4 Simulator build before the clean product commit was fast-forwarded into the formal PR branch; the workflow identity was then updated to b76. Formal Push/PR CI and Artifact/package identity are still pending at this checkpoint. Runtime/manual/device remains Unverified. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — exact b76 is fully assembled through Code/static/Simulator/Push+PR CI/Artifact/package verification and is now at the Human real-device Runtime gate. Exact product/config source is `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Candidate `DEV-send-stream-0.1.0-b76`, Build 76. Canonical Artifact `9775920927` and IPA identity are independently verified. Current formal branch head after docs-only synchronization is `406ad21637b2fe1feb19ff850d4d54d3a1d4a10c`; this does not redefine the tested product source. Runtime/manual/device remains Unverified, so external adoption, 30/21/21 visual spacing, worst-case Back behavior and Stable/Frozen status are not accepted yet. PR #29 stays open/unmerged and is titled `DEV-send-stream: b76 page-owned live snapshot Runtime gate`.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -26,7 +26,7 @@
 
 ## Identity / conflict guard
 
-Before allocation, PR #29 remained open, mergeable and unmerged; PR base and actual `main` both remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; no competing Active task/candidate conflict was found; b76 was unused. After allocation, PR #29 head was verified as exact `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` with the same base.
+Before allocation, PR #29 remained open, mergeable and unmerged; PR base and actual `main` both remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; no competing Active task/candidate conflict was found; b76 was unused. The formal product/config event head was exact `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` with that same base; all later formal descendants through current `406ad21637b2fe1feb19ff850d4d54d3a1d4a10c` are docs-only and do not redefine b76. PR #29 remains open/mergeable/unmerged and its metadata is synchronized to the b76 Runtime gate.
 
 The first temporary assembly run `33439592705 / 99644262927` stopped at an exact patch-match assertion before scope audit/build/commit and therefore produced no candidate. The corrected guarded assembly `33439797547 / 99644929642` passed patch application, exact scope audit and Xcode 16.4 Simulator build, then produced clean product commit `60bebc9e...` from parent `dd18b5...`. GitHub compare independently verified exactly three product files changed there. Workflow-only child `0da5a757...` gives the b76 Artifact identity, making it the exact product/config source.
 

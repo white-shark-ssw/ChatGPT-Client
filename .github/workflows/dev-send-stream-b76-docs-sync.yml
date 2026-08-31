@@ -1,0 +1,183 @@
+name: DEV send-stream b76 docs sync
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b76-docs-20260901
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Start from exact formal checkpoint
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "3b253fa7ee8804b222d53df75854a0cd98811e79"
+          git checkout --detach 3b253fa7ee8804b222d53df75854a0cd98811e79
+
+      - name: Apply durable b76 evidence updates
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          exact_source = "0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71"
+          push_run = "33440101178 / 99645927061"
+          pr_run = "33440098527 / 99645917529"
+          artifact = "9775920927"
+          zip_sha = "52f94ed7dbfbe311e37656fcce9a60bb5f8cc9c6b2af29434f7020d47729e944"
+          ipa_sha = "b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd"
+
+          def text(path): return Path(path).read_text()
+          def write(path, value): Path(path).write_text(value)
+          def prepend_after_title(path, block):
+              value = text(path)
+              first, sep, rest = value.partition("\n")
+              if not sep or not first.startswith("# "): raise SystemExit(f"bad title: {path}")
+              marker = block.strip().splitlines()[0]
+              if marker in value: raise SystemExit(f"block already present: {path}")
+              write(path, first + "\n\n" + block.strip() + "\n\n" + rest.lstrip("\n"))
+
+          prepend_after_title("docs/project/PROJECT_STATE.md", f'''## DEV-send-stream b76 candidate override — 2026-09-01
+
+Exact b76 `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` is now the current test candidate. Exact product/config source `{exact_source}` passed guarded exact-scope assembly plus Xcode 16.4 Simulator build, formal Push CI `{push_run}` and PR CI `{pr_run}`. Canonical Push Artifact `{artifact}` has ZIP `sha256:{zip_sha}` and IPA `sha256:{ipa_sha}`. Independent package inspection confirms Release 0.1.0 (76), Candidate b76, source marker `0da5a7577f2c`, MinimumOSVersion 14.0, arm64, iPhone+iPad family.
+
+- Current external-continuation evidence supersedes the earlier assumption that cross-device adoption must receive `/resume` SSE. Visible official Web itself currently can get matching page-owned `/resume` HTTP404 JSON and then follow the active response using its own already-issued `stream_status` + plural `/backend-api/conversations/{{conversation}}` reads.
+- The plural rolling `messages[]` window contains the required service-message family while `IS_STREAMING`: visible thinking preamble, assistant/non-all tool invocation, exact-parent tool result, hidden thoughts/inline COT, reasoning recap/end, and final assistant `in_progress`; after `COMPLETE` the final assistant is finished with full body.
+- b76 observes only those page-owned requests/responses, validates target identity, derives entries after the latest user, and atomically projects them into the existing `ConversationRepository` live-response owner. It creates no Native polling/cadence, resume/offset request, WebSocket body authority or second message store. Historical page-owned `/resume` HTTP200 SSE support remains strictly validated and retained when it actually occurs.
+- Typography candidate is tool 30 / reasoning 21 / final 21. This is Code/CI/Artifact/package verified only; visual acceptance remains a real-device Human Gate.
+- Runtime/manual/real-device b76: **Pending / Unverified**. Stable/Frozen Send: **No**. b39-b76 are permanently reserved.''')
+
+          prepend_after_title("docs/project/MODULE_STATUS.md", f'''## DEV-send-stream b76 candidate override — 2026-09-01
+
+- Build/runtime metadata: exact b76 source `{exact_source}`; Push `{push_run}` and PR `{pr_run}` success; Artifact `{artifact}`; IPA `sha256:{ipa_sha}`; package independently verified as Release 0.1.0 (76), Candidate b76, source `0da5a7577f2c`, iOS14 minimum, arm64. Runtime remains pending.
+- Covered external continuation: current official page may `/resume` -> 404, then use its own `stream_status` + plural conversation reads. b76 observes only that existing page traffic and atomically projects the current-response service-message segment into `ConversationRepository`; no Native polling/resume construction/WebSocket body path.
+- User-visible reasoning/tool/final: plural Runtime evidence contains thinking preambles, exact-parent tools/results, reasoning recap/end and final in-progress/completed message structures. b76 code is compiled/CI/Artifact verified but device presentation is unverified.
+- Typography: b76 candidate increases tool 26->30 and derived reasoning/final 18.2->21 while preserving the 0.70 relationship and shared measurement/rendering style. Runtime visual acceptance pending.
+- Geometry: b75 cooperative path evidence remains; worst-case Back responsiveness is still an open device gate unless reproduced and accepted on b76.''')
+
+          prepend_after_title("docs/project/TECHNICAL_DECISIONS.md", '''## b76 qualification — 2026-09-01
+
+- **TD-029 current external-continuation rule:** official page behavior is page-owned and service-variable. A matching `/backend-api/f/conversation/resume` is accepted only on exact HTTP200 `text/event-stream`. Current visible-Web evidence also proves the official page can receive resume HTTP404 JSON and then follow the same active response through its own already-issued `GET .../stream_status` and plural `GET /backend-api/conversations/{conversation}` responses. Native must not reproduce either request/cadence. b76 may observe those matching page-owned responses, validate target identity, derive the service messages after the latest user, and atomically project them into the existing Repository response runtime. WebSocket remains non-authoritative. Raw plural message count is explicitly not a cursor because the response is a rolling/paged window.
+- **TD-014 presentation qualification:** b75 26/18.2/18.2 remains rejected. b76 tests tool 30 with reasoning/final 21 (the existing 0.70 relationship); measurement/rendering consistency is retained. This numeric change is a candidate, not Runtime acceptance.
+- b67 local protected-Send Runtime and b72 tested concurrent ownership remain accepted predecessors. b76 CI/Artifact success does not establish external Runtime success.''')
+
+          prepend_after_title("docs/project/PROJECT_SPECIFIC_RULES.md", f'''## b76 current candidate override — 2026-09-01
+
+- Exact b76 is allocated and permanently reserved: `DEV-send-stream-0.1.0-b76`, Build76, exact product/config source `{exact_source}`, Artifact `{artifact}`, IPA SHA `{ipa_sha}`.
+- Current official-page external continuation is **not `/resume`-SSE-only**. A page-owned matching resume still requires exact HTTP200 SSE before adoption; a current evidenced HTTP404 may be followed by the page's own `stream_status` + plural conversation reads.
+- Production may observe only the page's already-issued matching status/plural responses. It must not construct/schedule Native polling, copy the cadence, construct resume/offset, use WebSocket bodies, resend, add retry/watchdog behavior or create a second conversation/message/response store.
+- Plural `messages[]` is rolling/paged; raw count is not a cursor. Bound the active segment by the latest user service message, validate target conversation identity, and project snapshots atomically into the sole `ConversationRepository` response owner.
+- `assistant:thoughts` / inline COT remain non-presentational; exact-parent tool association and narrow GitHub detail mapping remain unchanged.
+- b76 tool/reasoning/final line heights are candidate 30/21/21. Runtime visual acceptance remains pending.
+- Code/static/Simulator/Push+PR CI/Artifact/package are passed; real-device Runtime and Stable/Frozen remain **No / Unverified**.''')
+
+          web_path = "docs/project/WEB_SEND_ADAPTER.md"
+          web = text(web_path)
+          old_last = "_Last established: 2026-09-01 through DEV-send-stream b67 accepted local transport, b72 tested concurrent ownership, and current cross-device page-owned `/resume` evidence used by exact b74._"
+          new_last = "_Last established: 2026-09-01 through b67 accepted local transport, b72 tested concurrent ownership, b75 visible-Web continuation probes, and exact b76 Code/CI/Artifact/package verification; b76 Runtime remains pending._"
+          if web.count(old_last) != 1: raise SystemExit("WEB_SEND_ADAPTER last-established mismatch")
+          web = web.replace(old_last, new_last, 1)
+          marker = "## Current b76 external-response read rule — 2026-09-01"
+          if marker in web: raise SystemExit("WEB_SEND_ADAPTER b76 block already present")
+          insert_at = web.index("\n## Purpose")
+          block = '''\n\n## Current b76 external-response read rule — 2026-09-01
+
+Fresh visible official-Web evidence supersedes the older same-day assumption that cross-device adoption must receive a successful `/backend-api/f/conversation/resume` SSE. Current official-page behavior can be:
+
+`page-owned stream_status=IS_STREAMING -> page-owned /resume -> HTTP404 JSON -> repeated page-owned stream_status + plural /backend-api/conversations/{conversation} JSON -> stream_status=COMPLETE -> final plural snapshot`
+
+The plural response is a rolling/paged top-level `messages[]` window. Its raw count is not monotonic and is not a response cursor. The entries are the same service-message family already evidenced by the native parser. While streaming, the active segment can contain visible thinking preambles, assistant/non-all tool invocations, exact-parent tool results, hidden thoughts/inline COT, reasoning recap/end and an assistant final message with `status=in_progress`; after `COMPLETE`, the final assistant is `finished_successfully`, `end_turn=true` with completed body.
+
+**Current production rule for b76:**
+
+1. Never construct or schedule Native `stream_status` or plural-conversation reads; observe only matching requests the official page already issues.
+2. Never reproduce the page's cadence. No timer/retry/watchdog/polling machinery is authorized.
+3. Validate the returned conversation identity against the covered executor target.
+4. Find the latest user service message in the rolling window and treat only following entries as the current-response service segment; never use message count as cursor/identity.
+5. Atomically re-project each page-owned snapshot into the existing `ConversationRepository` live-response runtime, rather than append duplicate deltas or create a second message store.
+6. Preserve existing service semantics: thinking preamble is visible reasoning; exact-parent tool association; thoughts/inline COT hidden; reasoning recap/end; normal assistant text final.
+7. When page-owned status reaches `COMPLETE`, consume the following matching plural snapshot and then terminal/reconcile once.
+8. Historical page-owned `/resume` remains supported only when that exact request returns HTTP200 `text/event-stream`; strict validation is retained. If it succeeds, the existing same-response SSE parser remains the path.
+9. User-level WebSocket remains structural-only and is not parsed for response bodies.
+
+Exact b76 has passed guarded exact-scope assembly, Xcode 16.4 Simulator, Push+PR CI, Artifact and package identity checks. These checks **do not prove Runtime behavior**; real-device cross-platform adoption remains the next Human Gate.'''
+          web = web[:insert_at] + block + web[insert_at:]
+          write(web_path, web)
+
+          plan_path = "docs/project/DEVELOPMENT_PLAN.md"
+          plan = text(plan_path)
+          old_plan_last = "_Last updated: 2026-09-01 through exact DEV-send-stream b75 Runtime qualification and the current Web Rule Lab continuation re-probe gate._"
+          new_plan_last = "_Last updated: 2026-09-01 through exact DEV-send-stream b76 Code/static/Simulator/Push+PR CI/Artifact/package verification; the next gate is b76 real-device Runtime._"
+          if plan.count(old_plan_last) != 1: raise SystemExit("DEVELOPMENT_PLAN last-updated mismatch")
+          plan = plan.replace(old_plan_last, new_plan_last, 1)
+          phase_marker = "## Phase 9 — `DEV-send-stream` — Active production integration\n"
+          if plan.count(phase_marker) != 1: raise SystemExit("DEVELOPMENT_PLAN phase marker mismatch")
+          plan_block = f'''\n### Current b76 candidate / next gate — 2026-09-01\n\n- Exact candidate: `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)`; source `{exact_source}`; Artifact `{artifact}`; IPA SHA `{ipa_sha}`.\n- Guarded assembly and Xcode 16.4 Simulator passed; formal Push `{push_run}` and PR `{pr_run}` passed; package identity independently verified.\n- Current external-response design observes only official page-owned `stream_status` + plural conversation reads after current `/resume` 404, validates target identity, and atomically projects the latest-user-bounded service segment into the existing Repository response owner. No Native polling/cadence/resume construction/WebSocket body path.\n- Historical actual HTTP200-SSE page-owned `/resume` remains supported under strict response validation.\n- b76 also tests larger vertical rhythm: tool 30, reasoning/final 21.\n- **Next gate is Human Runtime:** cross-platform active-response adoption plus b67 local Send regression, b72 concurrent-ownership regression, visual spacing, and worst-case Back responsiveness if reproduced. Stable/Frozen remains No.\n'''
+          plan = plan.replace(phase_marker, phase_marker + plan_block, 1)
+          write(plan_path, plan)
+
+          index_path = "docs/project/BUILD_TEST_INDEX.md"
+          index = text(index_path)
+          candidate = "DEV-send-stream-0.1.0-b76"
+          if candidate in index: raise SystemExit("b76 already present in BUILD_TEST_INDEX")
+          table_header = "|---|---|---|---|---|---|---|\n"
+          if index.count(table_header) != 1: raise SystemExit("BUILD_TEST_INDEX table header mismatch")
+          row = f'''| `{candidate}` | `DEV-send-stream` | `0.1.0 (76)` | `{exact_source}`; PR #29 | Assembly `33439797547/99644929642`; Push `{push_run}`; PR `{pr_run}`; Artifact `{artifact}`; ZIP `{zip_sha}`; IPA `{ipa_sha}`; package Release/source `0da5a7577f2c`/iOS14/arm64 | Runtime pending: page-owned plural snapshot adoption + 30/21/21 spacing + regressions | **Code/CI/Artifact/package verified; Runtime Unverified; reserved** |\n'''
+          index = index.replace(table_header, table_header + row, 1)
+          write(index_path, index)
+
+          checkpoint_path = "docs/project/current/dev/DEV-send-stream.md"
+          cp = text(checkpoint_path)
+          replacements = {
+              "- Push CI: Pending": f"- Push CI: `{push_run}` — success",
+              "- PR CI: Pending": f"- PR CI: `{pr_run}` — success",
+              "- Artifact/package identity: Pending": f"- Canonical Push Artifact: `{artifact}`\n- ZIP SHA: `{zip_sha}`\n- IPA: `ChatGPTClient-0.1.0-b76-dev-send-stream.ipa`\n- IPA SHA: `{ipa_sha}`\n- Package independently verified: Release `0.1.0 (76)`, Candidate b76, source marker `0da5a7577f2c`, MinimumOSVersion 14.0, arm64, iPhone+iPad family",
+              "- Formal Push CI: **Pending**": f"- Formal Push CI: **Passed — `{push_run}`**",
+              "- Formal PR CI: **Pending**": f"- Formal PR CI: **Passed — `{pr_run}`**",
+              "- Artifact produced: **Pending**": f"- Artifact produced: **Yes — canonical Push Artifact `{artifact}`**",
+              "- Package identity verified: **Pending**": f"- Package identity verified: **Yes — ZIP/IPA SHA and built Info.plist independently checked**",
+          }
+          for old, new in replacements.items():
+              if cp.count(old) != 1: raise SystemExit(f"checkpoint replacement mismatch: {old}")
+              cp = cp.replace(old, new, 1)
+          cp = cp.replace("AI-owned: verify formal Push + PR CI for exact `0da5a757...`, obtain canonical Push Artifact, independently verify Build76/Candidate/source marker/package hashes, update `WEB_SEND_ADAPTER.md`, `BUILD_TEST_INDEX.md`, project/module state and PR metadata, then provide the exact b76 IPA.", "AI-owned documentation/PR synchronization is complete after this batch. The next action is the Human b76 device gate using the exact canonical IPA; record Runtime evidence before any further product candidate.", 1)
+          write(checkpoint_path, cp)
+
+          evidence_path = Path("docs/project/runtime-evidence/DEV-send-stream-b76-candidate.md")
+          if evidence_path.exists(): raise SystemExit("b76 candidate evidence already exists")
+          evidence_path.write_text(f'''# DEV-send-stream b76 Candidate Evidence\n\n_Date: 2026-09-01_\n\n## Exact identity\n\n- Candidate: `DEV-send-stream-0.1.0-b76`\n- Version/build: `0.1.0 (76)`\n- Exact product/config source: `{exact_source}`\n- Clean product commit: `60bebc9e5b2296f6426ad264d7b57979781360b7`, parent exact checkpoint `dd18b5beca16af34b075295dc3fc0782c714f26b`\n- Guarded assembly: `33439797547 / 99644929642` — exact patch, `git diff --check`, exact three-product-file scope and Xcode 16.4 Simulator build passed\n- Push CI: `{push_run}` — success\n- PR CI: `{pr_run}` — success\n- Canonical Push Artifact: `{artifact}`\n- Artifact ZIP SHA-256: `{zip_sha}`\n- IPA: `ChatGPTClient-0.1.0-b76-dev-send-stream.ipa`\n- IPA SHA-256: `{ipa_sha}`\n- Independent package inspection: Release 0.1.0 (76), Candidate b76, source marker `0da5a7577f2c`, MinimumOSVersion 14.0, iPhone+iPad family, Mach-O arm64\n\n## Code scope\n\nClean product compare changes exactly `ChatGPTClient/RootViewController.swift`, `ChatGPTClient/Conversation/ConversationFeature.swift`, and `ChatGPTClient.xcodeproj/project.pbxproj`; exact source additionally changes `.github/workflows/ios-foundation.yml` only for b76 Artifact identity.\n\nThe covered executor observes only official page-owned matching `stream_status` and plural conversation responses when external observation is active. The plural rolling window is bounded after the latest user service message and projected atomically into the existing Repository live-response runtime. No Native polling/cadence, Native resume/offset construction, WebSocket response-body parsing or duplicate Send is added. Strict real HTTP200-SSE `/resume` support remains.\n\nTypography candidate changes tool line height 26->30; the existing 0.70 relationship makes reasoning/final 21.\n\n## Evidence classification\n\n- Code written: Yes\n- Static/exact scope: Passed\n- Xcode 16.4 Simulator: Passed\n- Push CI: Passed\n- PR CI: Passed\n- Artifact produced: Yes\n- Package identity: Independently verified\n- Runtime/manual/real-device: **No / Pending**\n- Stable/Frozen Send: **No**\n\n## Human gate\n\nInstall the exact b76 IPA and test: (1) another platform starts a long active response, then entering the same existing conversation in Native must show Repository-owned thinking/reasoning/tools/final progression even when page-owned `/resume` returns 404; (2) terminal reconciliation occurs once after page-owned COMPLETE/final snapshot; (3) local b67 Send remains positive; (4) b72-style A-generating+B-send ownership remains positive; (5) 30/21/21 vertical rhythm is visually accepted or rejected; (6) if the former extreme long-history Back stall can be reproduced, classify it separately. Diagnostics must remain privacy-safe.\n''')
+          PY
+
+      - name: Audit documentation-only scope
+        run: |
+          git diff --check
+          git diff --name-only | sort > /tmp/actual
+          printf '%s\n' \
+            docs/project/BUILD_TEST_INDEX.md \
+            docs/project/DEVELOPMENT_PLAN.md \
+            docs/project/MODULE_STATUS.md \
+            docs/project/PROJECT_SPECIFIC_RULES.md \
+            docs/project/PROJECT_STATE.md \
+            docs/project/TECHNICAL_DECISIONS.md \
+            docs/project/WEB_SEND_ADAPTER.md \
+            docs/project/current/dev/DEV-send-stream.md \
+            docs/project/runtime-evidence/DEV-send-stream-b76-candidate.md | sort > /tmp/expected
+          diff -u /tmp/expected /tmp/actual
+
+      - name: Commit and fast-forward formal branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/project
+          git commit -m 'docs: classify b76 pre-runtime candidate'
+          git push origin HEAD:refs/heads/dev/send-stream-20260829

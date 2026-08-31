@@ -25,6 +25,7 @@ text = text.replace("for item in visibleToolItems(timeline) {", "for item in inl
 text = text.replace("ConversationReasoningPresentation.visibleToolItems([item]).isEmpty", "ConversationReasoningPresentation.inlineToolItems([item]).isEmpty")
 text = text.replace("let tools = ConversationReasoningPresentation.visibleToolItems(message.responseTimeline)", "let tools = ConversationReasoningPresentation.toolListItems(message.responseTimeline)")
 text = text.replace("!ConversationReasoningPresentation.visibleToolItems(responseTimeline).isEmpty", "!ConversationReasoningPresentation.inlineToolItems(responseTimeline).isEmpty")
+text = text.replace("for item in ConversationReasoningPresentation.visibleToolItems(timeline) {", "for item in ConversationReasoningPresentation.toolListItems(timeline) {")
 if "visibleToolItems" in text:
     raise SystemExit("visibleToolItems reference remains after split")
 

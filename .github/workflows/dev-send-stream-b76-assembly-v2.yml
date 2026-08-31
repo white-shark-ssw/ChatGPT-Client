@@ -1,0 +1,59 @@
+name: DEV send-stream b76 assembly v2
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b76-assembly-20260901
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preserve guarded patcher
+        run: cp scripts/dev_send_stream_b76_assembly_patch.py /tmp/dev_send_stream_b76_assembly_patch.py
+
+      - name: Select Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Start from exact formal checkpoint
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "dd18b5beca16af34b075295dc3fc0782c714f26b"
+          git checkout --detach dd18b5beca16af34b075295dc3fc0782c714f26b
+
+      - name: Apply minimal b76 product patch
+        run: python3 /tmp/dev_send_stream_b76_assembly_patch.py
+
+      - name: Audit exact scope
+        run: |
+          git diff --check
+          git diff --name-only | sort > /tmp/actual
+          printf '%s\n' \
+            ChatGPTClient.xcodeproj/project.pbxproj \
+            ChatGPTClient/Conversation/ConversationFeature.swift \
+            ChatGPTClient/RootViewController.swift | sort > /tmp/expected
+          diff -u /tmp/expected /tmp/actual
+          git diff --stat
+
+      - name: Build iOS Simulator
+        run: xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit clean product candidate to assembly result branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m 'feat: observe page-owned live snapshots for b76'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b76-product --force

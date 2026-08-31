@@ -43,7 +43,7 @@ Exact b66 Runtime established a durable one-Send orchestration rule in addition 
 - executor busy state must remain true through the existing active response operation, not reopen merely because the pending payload was consumed;
 - do not solve duplicate-submit races with debounce, timer, retry, resend, delayed submit, polling or a second state flag when the existing operation owner can enforce the invariant.
 
-Exact b67 implements this by using existing `activeEvents != nil` for `isBusy` and clearing `pendingSend` immediately before the one JS submit evaluation. Runtime acceptance of the correction remains pending.
+Exact b67 implements this by using existing `activeEvents != nil` for `isBusy` and clearing `pendingSend` immediately before the one JS submit evaluation. Exact b67 production transport Runtime is accepted for the recorded existing-conversation scope.
 
 ## Web Rule Lab contract
 
@@ -92,11 +92,12 @@ Not every response requires reasoning or tools; UI follows actual service events
 - never pair by order, adjacency, count alignment, title/name or recipient equality.
 - unmatched results remain unmatched and never force-complete a Native tool row.
 - local tool slots are response presentation bookkeeping only, never a second message/repository authority.
-- GitHub connector visible tool input/output mapping is authorized only for the b63-b65 evidenced exact-parent GitHub shape.
+- GitHub connector raw input/output mapping remains authorized only for the b63-b65 evidenced exact-parent GitHub shape.
 - authorized GitHub input = invocation `metadata.connector_tool_payload`.
-- authorized GitHub output = exact-parent matched completed result `message.content`.
-- `工具输入` / `工具输出` may use independent nested disclosures and decoded hierarchical output; presentation must not silently truncate authorized paired content merely to reduce density.
-- do not generalize expandable raw detail to another connector family until separately evidenced.
+- authorized GitHub output = exact-parent matched completed result `message.content`; current b72+ product requirement deliberately does **not** present tool output in the normal tool-list sheet. Retaining authorized source data for response association does not require showing it.
+- main inline reasoning is semantic: show only meaningful service-authored tool-purpose titles; omit fallback `工具调用` rows from the main surface without deleting the ordered tool list; never synthesize/merge titles by guess.
+- clicking a concrete main tool row opens the current assistant turn's ordered tools-only list; authorized input is shown directly without a `工具输入` disclosure/title; no reasoning prose and no tool-output UI.
+- do not generalize raw connector detail to another connector family until separately evidenced.
 - `assistant:thoughts`, unmatched result bodies and unrelated unverified connector payloads remain prohibited from Native presentation.
 
 ## Production response ownership
@@ -216,10 +217,11 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - once an Artifact identity is emitted, corrected product code never reuses it;
 - built `Info.plist` version/build/Candidate/source marker + IPA SHA are package identity authority;
 - `scripts/build_ipa.sh` must fail on identity mismatch;
-- b24-b67 emitted identities are permanently reserved;
+- b24-b73 emitted identities are permanently reserved;
 - exact b66 package authority remains `0.1.0 (66)`, source `9ce228ad880eaf81fc23ba26fe14f4d2bf524acb`, Artifact `9739572172`, IPA `7f62e875bbd75d54e2d7bf76340f277d02f03e695d464d818fa5cab664c630e9`; Runtime rejected its first production bridge but does not invalidate package identity;
-- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; Runtime pending;
-- do not allocate b68 before exact b67 Runtime supplies a concrete need.
+- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; production transport Runtime accepted for the recorded scope;
+- exact b73 package authority is `0.1.0 (73)`, source `4edda892a04a1a07f4a07e74b135b969ea82193e`, Artifact `9764247402`, IPA `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`; Runtime presentation pending;
+- do not allocate b74 before exact b73 Runtime supplies a concrete need.
 
 ## Message rendering / attachment boundary
 

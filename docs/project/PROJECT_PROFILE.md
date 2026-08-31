@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, b69 daily-chat defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, positive b72 tested cross-conversation simultaneous-generation Runtime, b72 presentation rejection, and exact b73 Code/scope/Simulator/Push+PR CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -30,7 +30,7 @@ Unsupported compatibility/protocol details remain `Unknown / Unverified` unless 
 - Native navigation shell / production covered-Send orchestration: `AppDelegate.swift`, `RootViewController.swift`.
 - Persistent auth-secret authority: default persistent `WKWebsiteDataStore` only.
 - Native auth/account authority: `Authentication/AuthSessionStore.swift`.
-- Production native conversation/list/read/recovery/**response lifecycle** authority: one `ConversationRepository` in `Conversation/ConversationFeature.swift`; b70 optimistic user/live assistant state, ordered reasoning/tools and stale copied-transport invalidation remain Repository-owned.
+- Production native conversation/list/read/recovery/**response lifecycle** authority: one `ConversationRepository` in `Conversation/ConversationFeature.swift`; optimistic user/live assistant state, ordered reasoning/tools and per-conversation response snapshots remain Repository-owned. b73 changes presentation state only and does not add a second response owner.
 - Conversation-list persistence: `ConversationListCacheStore`, storage-only behind Repository authority.
 - Native conversation presentation: `ConversationDetailViewController`.
 - Stable long-message geometry: `ConversationMessagePresentationProjection` + `ConversationMessageCell`, exact b38.
@@ -85,11 +85,13 @@ b66 implemented the first existing-conversation TD-029 production bridge + Repos
 - User independently confirmed the official ChatGPT app had already received the assistant reply. Therefore the protected Send reached/completed server-side, while the Native production wrapper lost the request before obtaining HTTP Response.
 - Source correlation identified a local Swift->JS duplicate-submit race, not an official Web selector/SSE rule change. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b66-runtime.md`.
 
-## Exact b70 current Candidate
+## Exact b73 current Candidate
 
-b70 retains accepted b67 protected-Send/SSE ownership and b69 chronological timeline while applying only evidence-backed daily-chat corrections: covered programmatic Web focus no longer owns visible keyboard state; the trimmed prompt is response-local optimistic user presentation; GitHub exact-parent input/output disclosures are restored with bounded local icons and deterministic spacing/divider; exact probe 403 preserves last verified account identity; list/detail 401/403 discards stale copied transient transport without replaying the failed operation.
+Build73 is the presentation-only correction after b72 Runtime accepted the tested A-generating + B-send simultaneous-generation path but rejected main reasoning/tool density and default live disclosure behavior. b73 preserves the b72 per-conversation covered executor implementation and b67 protected-Send/SSE path.
 
-Identity: Candidate `DEV-send-stream-0.1.0-b70`, `0.1.0 (70)`, exact source `fb83be9163838f78abfa47903e67f27b6f66ec52`, assembly `33373254877/99428895016`, Push `33377045570/99440767755`, PR `33377049590/99440781050`, Artifact `9752289536`, ZIP `bdf09b24...afde0`, IPA `8084e2ac...a44a`, package source marker `fb83be916383`, iOS14 minimum. Evidence: Code/scope/static+sim compile/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
+Identity: Candidate `DEV-send-stream-0.1.0-b73`, `0.1.0 (73)`, exact source `4edda892a04a1a07f4a07e74b135b969ea82193e`; product code commit `0e3eb6cad4cc56e8c2bcb946724d7cf1d4d55701`; assembly `33408291419` success after one tooling-only assertion failure; Push `33408695143/99542593642`; PR `33408698697/99542605699`; Artifact `9764247402`; ZIP `sha256:718c2f4fd0fe3521f7469f5996f6944960ffdaa3b2829c0c17e340ebd41dd206`; IPA `8285ba9d5f63207feb2eaf722ec722a886f3ee88956236a89a716ad58b884113`; package source marker `4edda892a04a`, Release, iOS14 minimum, arm64. Evidence: Code/scope/Simulator/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
+
+Build73 main inline reasoning shows body-scale primary reasoning prose and only meaningful service-authored tool titles with looser tool row rhythm, while the tools-only sheet retains the ordered call list. Live reasoning auto-opens once when visible reasoning/tool content first arrives and auto-collapses once on exact `reasoning_ended`; later user disclosure state remains user-owned.
 
 ## Current product interaction target
 
@@ -101,11 +103,11 @@ Tool phases remain optional. `assistant:thoughts` is never presented. General Ma
 
 ## Current next Candidate boundary
 
-b39-b70 are permanently reserved. Exact b70 real-device evidence is the only current Candidate gate. Do not allocate b71 before b70 Runtime yields a concrete defect/next evidence need. The gate must verify no covered-Web keyboard pop, one immediate nonduplicated optimistic user row, chronological reasoning/tools with restored GitHub details/icons/compact divider presentation, active-response navigation preservation, and transient Native 403 recovery on the next explicit/normal read without automatic retry.
+Build73 is the current exact real-device presentation Runtime candidate. b39-b73 are permanently reserved. Do not allocate b74 before exact b73 Runtime supplies a concrete defect/next evidence need. The gate must verify live default-expanded reasoning, one automatic collapse at exact reasoning end, user-owned disclosure after that transition, concise meaningful main tool rows with looser spacing/body-scale reasoning prose, tools-only/input-only sheet preservation, and no regression to the b72 tested cross-conversation simultaneous-generation path.
 
 ## Remaining Unknown / Unverified
 
-Exact b70 daily-chat parity/auth-lifecycle Runtime, new-chat authoritative identity timing, server Stop mechanism, simultaneous cross-conversation generation, connector detail beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b73 presentation Runtime, new-chat authoritative identity timing, server Stop mechanism, broader cross-conversation/service concurrency beyond the exact b72 A/B test, connector detail beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 

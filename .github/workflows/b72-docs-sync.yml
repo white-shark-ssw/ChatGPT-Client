@@ -19,7 +19,7 @@ jobs:
 
       - name: Patch clean checkpoint docs
         run: |
-          cp scripts/b72_docs_sync.py /tmp/b72_docs_sync.py
+          grep -v 'profile reserve range' scripts/b72_docs_sync.py > /tmp/b72_docs_sync.py
           git reset --hard 636701968c59124842da01b8d8b6585f8055d5e5
           python3 /tmp/b72_docs_sync.py
 

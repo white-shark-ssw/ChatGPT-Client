@@ -162,7 +162,7 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Evidence boundary**: b43's earlier smooth visible-Web result remains valid only for its shorter tested sequence; root cause of the long full-page freeze remains Unknown / Unverified.
 
 ### TD-029 — Production Send uses Native UI + covered official-Web protected-Send executor + Repository response ownership
-- **Status**: Confirmed product architecture decision; implementation/production Runtime still pending
+- **Status**: Confirmed product architecture decision; existing-conversation production transport Runtime accepted at b67; exact b70 daily-chat parity Runtime pending
 - **Date**: 2026-08-31
 - **User decision**: after b65 focused Runtime passed and the remaining blocker was the earlier visibility prohibition, the user explicitly selected Option B: authorize the already-tested Native composer -> covered official Web page-owned protected Send mechanism for production and prioritize finishing `DEV-send-stream` quickly.
 - **Evidence basis**: b42 proves pure-native ChatGPT-account Send is blocked by browser challenge output. b48-b65 then prove on the primary iPhone/iOS17 scope that a Native-controlled composer can drive the official page's verified composer, observe one real protected `/backend-api/f/conversation` HTTP200 SSE response, classify complete-looking reasoning/final text, preserve `title_generation` continuation, honor exact `reasoning_ended`, present event-driven thinking state, exact-parent tool lifecycle and the bounded GitHub detail mapping. b65 closes the tested tool-detail formatting defect.
@@ -173,7 +173,17 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Maintenance decision**: add and retain an in-app development **Web Rule Lab** using the same default WebKit store. It visibly opens ChatGPT Web, accepts user-pasted temporary JS probes, displays/copies/shares the temporary result, and never persists probe code/result bodies in diagnostics or app storage. Future Web changes should follow `reproduce -> Lab probe -> evidence -> one minimal adapter update -> one coherent product build`, not repeated speculative IPA builds.
 - **Durable adapter authority**: `docs/project/WEB_SEND_ADAPTER.md` owns current evidenced selectors/SSE/reasoning/tool rules and the Web Rule Lab update playbook. `SEND_STREAM_PREFLIGHT.md` owns Repository/new-chat/Stop/follow-tail state invariants.
 - **Implementation order**: Web Rule Lab foundation -> existing-conversation Repository-owned production Send/stream -> new-chat identity handoff -> exact Stop -> A/B/follow-tail -> Sync/Reload/b38 regression -> final daily-chat Runtime/merge decision.
-- **Evidence ladder**: architecture decision confirmed; production code/CI/Artifact/Runtime under this decision remain pending until a new unique Candidate is emitted and tested.
+- **Evidence ladder**: architecture decision confirmed; b67 production existing-conversation transport Runtime accepted; exact b70 Code/scope/Push+PR CI/Artifact/package verified; b70 real-device daily-chat parity/auth-lifecycle Runtime remains pending.
+
+### TD-030 — Transient Native read HTTP403 is not persistent logout by itself; stale copied transport is discarded without automatic replay
+- **Status**: Confirmed state-lifecycle decision; exact b70 Runtime pending
+- **Date**: 2026-08-31
+- **Evidence**: exact b69 diagnostics/source correlation showed the same browser-authenticated account could pass session/accounts, later receive Native list/detail or account-probe HTTP403, and later succeed again. b69 also cached one copied `AuthTransientSession` indefinitely for an unchanged account scope. Therefore one 403 does not prove logout/account replacement, and retaining the failed copied transport can make Native reads sticky.
+- **Decision**: exact HTTP403 at session/accounts probe stages is a temporary probe failure that preserves the last verified account identity while returning no fresh transient transport from that failed probe. Exact 401 retains unavailable/not-authenticated semantics.
+- **Repository behavior**: current list/detail 401/403 invalidates/discards the copied transient transport once; that operation still fails visibly. A later explicit/normal read follows the existing account-context probe and materializes current WebKit credentials. The framework does not replay the failed operation.
+- **User-navigation behavior**: returning from a user-opened login screen may issue one explicit list refresh; this is a new navigation operation, not hidden retry.
+- **Ownership/security retained**: `AuthSessionStore` remains sole account authority; `WKWebsiteDataStore.default()` remains sole persistent auth-secret authority; `ConversationRepository` remains sole read/response lifecycle authority. No second credential store, retry loop, polling, timer, watchdog, compatibility shim or challenge copying is authorized.
+- **Evidence boundary**: b70 Code/CI/Artifact/package success proves only implementation/package identity. Recovery from a real transient 403 remains a real-device Runtime gate.
 
 ## Rule
 

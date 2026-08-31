@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-31 through exact b66 Runtime failure and exact b67 Code/CI/Artifact/package verification._
+_Last updated: 2026-08-31 through accepted b67 production transport Runtime, b69 daily-chat defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification._
 
 ## Purpose / delivery principles
 
@@ -89,53 +89,47 @@ No `coveredExecutor.sendResponse` occurred and Native response text stayed empty
 
 Source correlation established a local Swift->JS duplicate-submit race: `pendingSend` remained available until later `send_observed`, allowing repeated composer-ready callbacks to schedule the same asynchronous JS submit twice. This is not evidence of a new Web selector/SSE rule. Detailed Runtime record: `docs/project/runtime-evidence/DEV-send-stream-b66-runtime.md`.
 
-### Exact b67 — current correction Candidate
+### b67 accepted transport predecessor / b69 daily-chat evidence
 
-b67 changes only the operation gate:
+Exact b67 accepted the production existing-conversation TD-029 transport gate: one local Send -> one protected official Send -> HTTP200 `text/event-stream` -> Repository reasoning/tool/final updates -> terminal -> one authoritative reconcile. This remains the transport predecessor and b70 does not replace its route/selectors/challenge/SSE grammar.
 
-1. `CoveredWebSendExecutor.isBusy` now follows existing `activeEvents != nil` lifetime.
-2. `pendingSend` is consumed immediately before issuing the one JS submit evaluation.
-3. Duplicate composer-ready callbacks can no longer schedule the same pending operation again.
-4. `activeEvents` keeps executor busy through terminal/failure, so consuming `pendingSend` does not open a second user-Send window.
-5. Web selectors, protected route, parser/filter grammar, Repository owner, Web Rule Lab and diagnostics privacy are unchanged.
-6. No retry, resend, timer, polling, watchdog, fallback or compatibility shim was added.
+b69 then implemented one Repository-owned chronological response timeline. Exact iPhone/iOS17 Runtime retained real Send success but exposed six concrete daily-chat defects: covered-Web keyboard pop, missing immediate user row, excessive reasoning/tool spacing/no divider, lost b65 GitHub nested details, missing tool icons, and sticky Native reads around temporary 403.
 
-Exact Root change is `+2/-1`; assembly audit showed only Root + b67 Xcode/workflow identity files changed relative to the b66 Runtime checkpoint.
+### Exact b70 — current correction Candidate
 
-Identity:
+b70 makes only the evidence-backed corrections:
 
-- Candidate `DEV-send-stream-0.1.0-b67`, `0.1.0 (67)`;
-- exact product/config source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`; tree `dcd492d142bf0035208b8466ff02b6ae7209193c`;
-- Push `33338865423 / 99330666394` — success;
-- PR `33338868896 / 99330678769` — success;
-- Push Artifact `9739891865`;
-- ZIP `sha256:7e41508c76556466ab180009a30f36b5c12cbc731197d4213387698ed54d78c2`;
-- IPA `sha256:3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`;
-- Release / source marker `52ab38f16fe9` / iOS14 / `[1,2]` / arm64.
+1. suppress covered-Web virtual keyboard during temporary programmatic composer focus and blur after injection;
+2. keep the actual trimmed prompt only in the current Repository live-response snapshot and render exactly one optimistic user row before the assistant row;
+3. restore b65 exact-parent GitHub `工具输入` / `工具输出` mapping inside the ordered timeline, with bounded local icons and compact deterministic spacing/divider;
+4. preserve last verified account identity across exact probe 403, retain 401 unavailable semantics, and discard stale copied transient read transport on list/detail 401/403 while visibly failing the current operation;
+5. next explicit/normal read probes current WebKit credentials; no automatic replay/retry/poll/timer/watchdog;
+6. returning from user-opened login may perform one explicit list refresh;
+7. `ConversationRepository`, `AuthSessionStore`, default WebKit auth store, b38 geometry, and accepted b67 one-Send transport remain their existing authorities.
 
-Evidence ladder: **Code / diff audit / Push CI / PR CI / Artifact / package identity passed; Runtime pending; Stable-Frozen No.**
+Identity/evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b70`, `0.1.0 (70)`;
+- exact product/config source `fb83be9163838f78abfa47903e67f27b6f66ec52`, direct parent clean checkpoint `5c379b3d994b28cb0ba5a3c793e4efa193a003a1`;
+- assembly `33373254877 / 99428895016`: exact five-file scope audit, `git diff --check`, Xcode16.4 iOS Simulator compile passed;
+- Push `33377045570 / 99440767755` and PR `33377049590 / 99440781050` — success;
+- Artifact `9752289536`; ZIP `sha256:bdf09b246ff259ee80d46acfad675713c1a0b51aee3b44f7ea9f0a7e67eafde0`;
+- IPA `sha256:8084e2ace5926b7ee6a790f3eeb2445a2c4ce1fee67d8953300aca93a446a44a`;
+- independently unpacked package `0.1.0 (70)` / Candidate b70 / source marker `fb83be916383` / iOS14 / arm64.
+
+Evidence ladder: **Code / exact scope/static / Simulator compile / Push CI / PR CI / Artifact / package identity passed; Runtime pending; Stable-Frozen No.**
 
 ### Current Phase 9 human Runtime gate
 
-Install exact b67 on the primary iPhone/iOS17 device, clear diagnostics and run **one clean existing-conversation validation Send**.
+Install exact b70 Artifact `9752289536` on the primary iPhone/iOS17 device and verify Build70/Candidate/source marker. Clear diagnostics, then test normal daily chat and one transient-read-auth recovery opportunity if reproducible.
 
-Required first-pass evidence:
+Required evidence: no covered-Web keyboard pop; exactly one immediate optimistic user row with no terminal duplication; chronological reasoning/tool order and in-place tool completion; restored GitHub nested input/output, bounded icons, compact spacing and final divider; active response survives navigation; a transient Native 403 does not become sticky and can recover on the next explicit/normal read from current WebKit credentials without automatic replay/retry; hidden thoughts stay excluded; b38 geometry and b67 one-Send transport do not regress. Export diagnostics after terminal/recovery.
 
-- only one `submit_result=submitted` for the response generation;
-- only one real `sendObserved`;
-- `coveredExecutor.sendResponse` appears with HTTP200 `text/event-stream`;
-- Native moves beyond preparing into actual response updates with nonzero reasoning/final where service emits them;
-- no immediate `send_transport_error`;
-- real terminal occurs;
-- terminal authoritative Sync reconciles without an automatic resend/poll loop.
+**Do not allocate b71 before exact b70 Runtime yields a concrete next need.** CI/Artifact/package success is not Runtime proof.
 
-Export diagnostics after terminal. One clean run is sufficient initially. Do not add A/B/background/new-chat complexity to this first retry gate.
+### Shortest remaining Phase 9 sequence after b70 gate
 
-**Do not allocate b68 before exact b67 Runtime yields a concrete next need.** If b67 still fails with only one submit, discard the duplicate-submit diagnosis as sufficient explanation and investigate the new exact evidence rather than adding retries.
-
-### Shortest remaining Phase 9 sequence after b67 gate
-
-1. accept/fix existing-conversation production Repository-owned Send/stream;
+1. accept/fix this daily-chat existing-conversation parity/auth-lifecycle gate from exact Runtime evidence;
 2. new-chat first Send and pending->authoritative handoff only if actual timing requires it;
 3. exact server Stop evidence + response-scoped Stop implementation;
 4. A/B hidden-response ownership + follow-tail/history intent;
@@ -170,4 +164,4 @@ Conversation-list preview, Markdown export, long-conversation profiling beyond a
 
 ## Current next action
 
-Hand exact b67 Artifact `9739891865` / IPA SHA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497` to the user for the focused one-submit existing-conversation Runtime gate. Keep PR #29 open/unmerged and do not allocate b68 before that evidence.
+Hand exact b70 Artifact `9752289536` / IPA SHA `8084e2ace5926b7ee6a790f3eeb2445a2c4ce1fee67d8953300aca93a446a44a` to the user for the focused b70 real-device daily-chat/auth-lifecycle gate. Keep PR #29 open/unmerged. Do not allocate b71 or begin unrelated Composer/attachments/Stop/background work before that Runtime evidence.

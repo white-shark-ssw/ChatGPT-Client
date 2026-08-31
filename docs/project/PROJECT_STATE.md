@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-31 through accepted b67 production transport Runtime, b68 superseded presentation Artifact, and exact b69 Code/CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b69 human Runtime gate. Stable/Frozen Send remains No._
+_Last updated: 2026-08-31 through accepted b67 production transport Runtime, b69 Runtime defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b70 human Runtime gate. Stable/Frozen Send remains No._
 
 ## Current accepted merged baseline
 
@@ -10,15 +10,16 @@ Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-co
 
 `DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged and evidence-only. Current actual `main` last verified this cycle is `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; final target-main synchronization is still required before merge.
 
-Latest exact product Candidate is **`DEV-send-stream-0.1.0-b69` / `0.1.0 (69)`**:
+Latest exact product Candidate is **`DEV-send-stream-0.1.0-b70` / `0.1.0 (70)`**:
 
-- source `5e9c2183483094304f7eaeecf4ffc7ad8e65b902`;
-- Push `33366226539 / 99407331552` and PR `33366229125 / 99407340011` — success;
-- Artifact `9748400171`; ZIP `sha256:b1d91179c47822a7a42bf5405ef4bbd7240b97ddff58743a8a12e5f16fb232f1`;
-- IPA `sha256:0c06256dc90aed86c706f8c72950528f61afa7f7fcdb504b2604d40befe3b0aa`;
-- package `0.1.0 (69)` / Candidate b69 / source `5e9c21834830` / minimum iOS14.
+- exact product/config source `fb83be9163838f78abfa47903e67f27b6f66ec52`, direct parent `5c379b3d994b28cb0ba5a3c793e4efa193a003a1`;
+- assembly `33373254877 / 99428895016` — exact five-file scope audit, `git diff --check` and Xcode 16.4 iOS Simulator compile passed;
+- Push `33377045570 / 99440767755` and PR `33377049590 / 99440781050` — success;
+- Artifact `9752289536`; ZIP `sha256:bdf09b246ff259ee80d46acfad675713c1a0b51aee3b44f7ea9f0a7e67eafde0`;
+- IPA `sha256:8084e2ace5926b7ee6a790f3eeb2445a2c4ce1fee67d8953300aca93a446a44a`;
+- independently unpacked package `0.1.0 (70)` / Candidate b70 / source `fb83be916383` / minimum iOS14 / arm64.
 
-b69 replaces b68's flattened live reasoning/tool representation with one Repository-owned ordered timeline matching `reasoning -> tool -> reasoning -> tool -> final`. Covered-Web transport remains the accepted b67 path. Evidence ladder: **Code / detached diff / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b69 are reserved; do not allocate b70 before concrete b69 Runtime evidence.
+b70 retains b67 protected-Send/SSE ownership and b69 ordered timeline, while correcting the concrete b69 daily-chat defects: covered-Web keyboard focus, missing immediate user row, GitHub detail/icon/spacing/divider presentation, and stale Native transient-auth 401/403 lifecycle. No automatic retry/replay/poll/timer/watchdog or second state owner was added. Evidence ladder: **Code / exact scope / static+sim compile / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b70 are permanently reserved.
 
 ## b65 accepted probe predecessor
 
@@ -60,7 +61,7 @@ Exact Root delta is only `+2/-1`; Xcode/workflow changes only allocate b67 ident
 - **TD-029 remains the production Send decision.** Native history/composer/reasoning/tool/final UI is the product surface; one process-resident covered official Web surface may perform browser challenge + exactly one page-owned protected Send.
 - Covered Web is transport/challenge execution only, never conversation/message/response/list/draft authority.
 - `ConversationRepository` remains sole native conversation/list/detail/recovery/response lifecycle authority.
-- `AuthSessionStore` remains sole auth/account authority; `WKWebsiteDataStore.default()` remains sole persistent auth-secret authority.
+- `AuthSessionStore` remains sole auth/account authority; `WKWebsiteDataStore.default()` remains sole persistent auth-secret authority. b70 treats exact probe HTTP403 as temporary failure that preserves the last verified identity, while list/detail 401/403 discards stale copied transient transport and never auto-replays the failed operation.
 - Full existing-conversation mobile-Web rendering remains rejected by TD-025/TD-028.
 - No challenge solving/replay, no second credential store, no duplicate Send to obtain a stream, no automatic Sync/poll loop.
 - Sync/Reload never resend/regenerate.
@@ -73,7 +74,7 @@ The in-app Web Rule Lab is now implemented in the current production branch: vis
 
 ## Current implementation boundary / shortest remaining Phase 9 sequence
 
-Current source now contains the first Repository-owned existing-conversation production bridge and Web Rule Lab. Exact b67 Runtime is the immediate gate.
+Current source contains the Repository-owned existing-conversation production bridge and Web Rule Lab. b67 transport Runtime is accepted; exact b70 daily-chat parity/auth-lifecycle Runtime is the immediate gate.
 
 After that gate, the shortest remaining sequence is:
 
@@ -88,8 +89,8 @@ Final Composer hierarchy/dynamic input/attachment staging belongs future seriali
 
 ## Current exact Runtime gate
 
-Install exact b69 on the primary iPhone/iOS17 device and run one request naturally yielding at least `reasoning A -> tool 1 -> reasoning B -> tool 2 -> final`. Verify chronological live ordering, in-place tool completion, later reasoning below the preceding tool, exact reasoning-end/final transition, authoritative historical preservation, hidden-thought prohibition and no floating overlay. Export diagnostics after terminal.
+Install exact b70 Artifact `9752289536` / IPA SHA `8084e2ac...a44a` on the primary iPhone/iOS17 device. Verify Candidate/source marker, clear diagnostics, then confirm: no covered-Web keyboard pop; exactly one immediate optimistic user row without terminal duplication; chronological reasoning/tools with in-place completion; restored GitHub nested input/output + bounded icons + compact spacing/divider; active response survives navigation; transient Native 403 can recover on the next explicit/normal read from current WebKit credentials without automatic replay/retry; hidden thoughts remain excluded; b38 geometry and b67 one-Send transport do not regress. Export diagnostics after terminal/recovery.
 
 ## Remaining Unknown / Unverified
 
-Exact b69 ordered-timeline Runtime, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b70 daily-chat parity/auth-lifecycle Runtime, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.

@@ -24,6 +24,18 @@ jobs:
           cp scripts/b75_assembly.py /tmp/b75_assembly.py
           git reset --hard d43661ef4dd9a01480b11b4d70af5a79e6792bff
 
+      - name: Correct recovered patch target
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/b75_assembly.py')
+          text = path.read_text()
+          old = "conv = replace_once(conv, needle, addition, 'external terminal authoritative refresh')"
+          new = "root = replace_once(root, needle, addition, 'external terminal authoritative refresh')\nroot_path.write_text(root)"
+          assert text.count(old) == 1
+          path.write_text(text.replace(old, new, 1))
+          PY
+
       - name: Apply evidence-backed b75 product delta
         run: |
           python3 /tmp/b75_assembly.py
@@ -47,7 +59,7 @@ jobs:
           grep -Fq '/backend-api/f/conversation/resume' ChatGPTClient/RootViewController.swift
           grep -Fq 'case .responseAccepted:' ChatGPTClient/RootViewController.swift
           grep -Fq 'beginExternalLiveResponse' ChatGPTClient/RootViewController.swift
-          grep -Fq 'clearTerminalExternalLiveResponseAfterAuthoritativeRefresh' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'clearTerminalExternalLiveResponseAfterAuthoritativeRefresh' ChatGPTClient/RootViewController.swift
           grep -Fq 'private static let toolLineHeight: CGFloat = 26' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'private static let compactAssistantLineHeight: CGFloat = toolLineHeight * 0.70' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'paragraph.maximumLineHeight = compactAssistantLineHeight' ChatGPTClient/Conversation/ConversationFeature.swift

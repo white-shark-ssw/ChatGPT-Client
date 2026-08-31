@@ -2,14 +2,14 @@
 
 ## Status
 
-**Active — b67 local protected-Send transport remains Runtime accepted; b72 tested A-generating + B-send simultaneous ownership remains Runtime positive. Exact b75 is a valid/permanently-reserved package and is Runtime partial/rejected on iPhone/iOS17: pre-accept external resume 404 no longer creates a false Native `回答失败`, cooperative history geometry is active, but cross-platform active reasoning still is not adopted because every observed page-owned matching `/resume` returned HTTP404 JSON; the exact b75 26/18.2/18.2 typography also rendered too tight and is rejected by the user's latest screenshot/feedback. Stable/Frozen Send remains No; PR #29 stays open/unmerged. Current next step is the Human-only Web Rule Lab continuation re-probe; no b76 product code is authorized before that evidence.**
+**Active — b67 local protected-Send transport remains Runtime accepted; b72 tested A-generating + B-send simultaneous ownership remains Runtime positive. Exact b75 remains a valid/permanently-reserved but Runtime partial/rejected package. The current visible Web Rule Lab now independently reproduces the same external-continuation shape as covered production: page-owned `stream_status` -> matching `{conversation_id, offset}` `/resume` -> HTTP404 JSON, followed by repeated page-owned `stream_status` + conversation fetches and short WebSocket frames, with no later HTTP/SSE continuation observed in the captured window. Therefore the earlier visible-Web HTTP200-SSE `/resume` result is historical rather than the current rule. One narrower structural response-body probe is now required before any b76 product code; b76 remains unallocated. b75 typography 26/18.2/18.2 remains visually rejected as too tight. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Routing aliases / keywords: Send, stream, reasoning, tool, external resume, cross-platform response, continuation, 行高
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal head before this checkpoint write: `105583cc6e367815397a95361d17dc08004a0f54` (`docs: align send-stream plan with b75 runtime gate`)
+- Formal head before this checkpoint write: `0c6d014788d75406eb8ec96390346659b04f527e` (docs-only takeover synchronization)
 - Exact b75 product/config source: `b77303b8870dc25851dbffbf38ffc153a47bbcb2`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b75` / `0.1.0 (75)`
 - Assembly validation: `33429163152` — exact scope + `git diff --check` + Xcode 16.4 Simulator build passed
@@ -33,6 +33,7 @@ This conversation resumed the existing Work from the supplied historical transcr
 - the formal branch contains only this Active development checkpoint plus the checkpoint template under `docs/project/current/dev/`; no competing Active development checkpoint/candidate conflict was found on the branch;
 - b76 remains globally unallocated by the current repository search guard;
 - `DEVELOPMENT_PLAN.md` was found stale at b70 and was docs-only synchronized to the current b75 Runtime/Web Rule Lab gate in commit `105583cc6e367815397a95361d17dc08004a0f54`;
+- the takeover checkpoint synchronization then advanced the docs-only branch head to `0c6d014788d75406eb8ec96390346659b04f527e`;
 - no product/config source changed during this takeover; exact b75 tested product source remains `b77303b8870dc25851dbffbf38ffc153a47bbcb2`.
 
 ## Retained accepted boundaries
@@ -63,7 +64,7 @@ Diagnostics prove the covered executor did reach the target official page and re
 
 Authoritative Detail does move while the external response proceeds, but not as a live reasoning stream: visible count stays 11 through several successful Sync/Reload calls while mapping/filtered-node counts change; later Sync increases visible count 11->12, then 12->13 as server-backed visible messages become authoritative. That cannot substitute for incremental reasoning/tool SSE.
 
-**Conclusion:** b75 successfully fixes the b74 false-failure presentation, but the production assumption that the covered official page will yield a usable matching HTTP200 SSE `/resume` is rejected for this exact Runtime. Do not bypass the validation gate and do not fabricate Native polling/resume/offset. The next action is Web Rule Lab evidence on the same account/session to determine why official visible Web can resume while the covered production page gets 404, and whether there is a later page-owned request/transport after the first 404.
+**Conclusion:** b75 successfully fixes the b74 false-failure presentation, but the production assumption that the covered official page will yield a usable matching HTTP200 SSE `/resume` is rejected for this exact Runtime. Do not bypass the validation gate and do not fabricate Native polling/resume/offset.
 
 ### 2. Cooperative geometry path is active in the supplied run
 
@@ -80,23 +81,38 @@ Exact source uses:
 
 The user's latest screenshot and explicit feedback reject the actual result: tool rows remain visually too short/tight, and reasoning plus final answer line height also remain too low. Therefore **26/18.2/18.2 is not an accepted visual baseline**, even though the code implements those numbers. The latest user Runtime feedback outranks the earlier numeric requirement. The next product correction must increase visible vertical rhythm; do not claim the old numbers are accepted merely because they were implemented.
 
+## Visible Web Rule Lab continuation re-probe — 2026-09-01
+
+The user ran the requested privacy-safe network-structure probe in Settings -> Web Rule Lab before entering an externally active conversation and supplied the complete bounded JSON result.
+
+Observed current official-page sequence:
+
+1. a user-level `wss://ws.chatgpt.com/.../ws/user/{user}` connection is active; observed string frames were bounded by length only, including 375-byte and repeated 54-byte frames; no WebSocket body authority is established;
+2. on target entry, the page performs its normal conversation bootstrap and then `GET /backend-api/conversation/{conversation}/stream_status` -> HTTP200 `application/json`;
+3. immediately after that status response, the page itself issues `POST /backend-api/f/conversation/resume` with request JSON keys exactly `conversation_id,offset`;
+4. that page-owned resume returns **HTTP404 `application/json`**;
+5. immediately after the 404 the page issues another `stream_status` plus `GET /backend-api/conversations/{conversation}`; both return HTTP200 JSON;
+6. the same page-owned `stream_status` + conversation GET pair repeats at roughly six-second intervals in the captured window;
+7. no later `/resume`, no second `/backend-api/f/conversation` Send, and no later HTTP200 `text/event-stream` continuation were observed through the dump at 97.898s, approximately 18.5s after the resume 404;
+8. short 54-byte WebSocket frames occur during the repeated status/detail cycle, but their structure/content was intentionally not captured, so they remain notification/transport-shape evidence only.
+
+**Current evidence conclusion:** the b75 404 is not merely a hidden/covered executor anomaly. The current visible official Web itself reproduces `stream_status 200 -> matching resume 404`, then continues with page-owned repeated status/detail fetching. The earlier same-day visible-Web HTTP200-SSE `/resume` capture remains valid historical evidence for that exact run but is superseded as the current continuation rule. Do not Native-construct resume/offset or copy the page's polling cadence. The next probe must determine what the official page is learning from the already-observed page-owned status/detail responses and whether the short WebSocket frames are only triggers or carry independently authoritative response structure.
+
 ## Current Web evidence gate before b76 product code
 
-`WEB_SEND_ADAPTER.md` requires a probe-first workflow when the official page continuation behavior differs from the documented rule. The current defect is exactly such a case: production observed page-owned matching `/resume`, but it returned 404 JSON while the external response was still active.
+One narrower read-only Web Rule Lab probe is required before product code:
 
-Use the existing Settings -> Web Rule Lab on the same logged-in `.default()` WebKit store to capture only structural facts for the target active conversation:
+1. clone only page-owned `stream_status` and `/backend-api/conversations/{conversation}` responses and emit privacy-safe structural summaries, not bodies;
+2. for `stream_status`, record root keys and only safe status/state/type/boolean/number fields while redacting IDs/tokens/text;
+3. for conversation snapshots, record root keys, mapping/message counts, current-node presence, role/content-type/status counts, and a bounded tail of message **structure only** (role, status, content type, part/text character counts, metadata key names), never message text or raw IDs;
+4. parse WebSocket strings only to top-level key/type/event/status structure when JSON; otherwise record only length/type;
+5. determine whether repeated page-owned conversation snapshots change incrementally while the external response is still generating and whether those changes contain user-visible reasoning/tool/final structural nodes.
 
-1. whether page-owned `GET /backend-api/conversation/{id}/stream_status` occurs and its HTTP status/content-type;
-2. how many page-owned matching `/backend-api/f/conversation/resume` requests occur after entering the conversation;
-3. for each resume: request JSON key names only, response status/content-type, and relative ordering after stream-status;
-4. whether a later page-owned HTTP/SSE transport appears after an initial resume 404;
-5. WebSocket remains structural-only unless exact evidence proves reasoning/final body authority.
-
-Do not capture/export Cookie, Authorization, challenge values, raw prompt/answer/reasoning bodies, tool bodies, or raw account/conversation/message/response IDs.
+Do not capture/export Cookie, Authorization, challenge values, raw prompt/answer/reasoning/tool bodies, raw IDs, or arbitrary Web storage. Do not Send from the Lab.
 
 ## b76 allocation rule
 
-b76 is **not allocated yet**. Exact b75 supplies a concrete defect, so b76 is permitted, but do not emit/allocate it until the Web Rule Lab result resolves the continuation transport rule and the visual spacing correction is defined as one coherent product scope. Once allocated, earliest valid identity is `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` if still globally unused at final allocation guard.
+b76 is **not allocated yet**. Exact b75 supplies a concrete defect and the current visible-Web re-probe supplies a current transport direction, but the response-body semantics remain unresolved. Do not emit/allocate b76 until the narrow structural probe establishes whether a minimal page-owned status/detail observation rule can preserve the required reasoning/tool/final lifecycle without creating Native polling or a second conversation/response authority. The clearly required larger reasoning/tool/final vertical rhythm remains part of the eventual coherent correction. Earliest valid identity remains `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` if still globally unused at final allocation guard.
 
 ## Completed documentation batch — b75 Runtime classification
 
@@ -104,11 +120,10 @@ b76 is **not allocated yet**. Exact b75 supplies a concrete defect, so b76 is pe
 - Checkpoint Runtime classification commit: `d07cde81277d5bbb1e57d2c3f85c8772a64745c7`.
 - Durable b75 Runtime docs commit: `238b9e93b4e5f780aaf525106ec672de8ed8225b`, audited as exactly `BUILD_TEST_INDEX.md`, `MODULE_STATUS.md`, `PROJECT_STATE.md`, and `WEB_SEND_ADAPTER.md`.
 - Prior final docs-only handoff head: `73e7f758c95f89bffaa61caa702f3160b84eed33`.
-- Current takeover docs-only plan synchronization: `105583cc6e367815397a95361d17dc08004a0f54`.
-- PR #29 metadata remains synchronized to title `DEV-send-stream: b75 Runtime rejection -> Web continuation re-probe gate`; it remains open / mergeable / unmerged.
-- Actual `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb` at the current guard. Stable/Frozen Send remains No.
-- b76 remains unallocated.
+- Current takeover docs-only plan/checkpoint synchronization reached `0c6d014788d75406eb8ec96390346659b04f527e` before this new visible-Web evidence checkpoint.
+- PR #29 remains open / mergeable / unmerged; actual `main` remains `d323b9eed2dda75b9986fc06e14014d3e9b365fb` at the current guard.
+- Stable/Frozen Send remains No; b76 remains unallocated.
 
 ## Exact next action
 
-Human-only Web Rule Lab gate: while another platform owns a still-active response, instrument only page-owned network structure before entering that target conversation, then report `stream_status` / matching `/resume` ordering, response status/content-type, request JSON key names, and whether another page-owned HTTP/SSE transport follows an initial 404. Do not send from the Lab and do not capture secrets or message bodies. After that evidence arrives, rerun the required identity light/full guard as appropriate, define the current continuation rule, combine it with the clearly required larger reasoning/tool/final vertical rhythm, allocate b76 once, then compile/CI/package one coherent Runtime candidate.
+Human-only narrow Web Rule Lab gate: before entering a fresh externally active target conversation, install a response-structure probe that clones only the page's own `stream_status` and `/backend-api/conversations/{conversation}` JSON responses plus privacy-safe WebSocket frame structure. Confirm whether the repeated page-owned snapshots change during generation and whether their structural tail contains in-progress user-visible reasoning/tool/final nodes. Do not Send, do not log bodies/secrets/raw IDs, and do not Native-poll. After that evidence arrives, update `WEB_SEND_ADAPTER.md`/durable project state, define or reject a minimal current continuation transport rule, then and only then allocate b76 and combine the transport correction with the required larger vertical rhythm into one Runtime candidate.

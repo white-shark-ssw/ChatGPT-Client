@@ -58,6 +58,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('docs/project/TECHNICAL_DECISIONS.md')
+          path.write_text(path.read_text().rstrip() + '\n')
+          PY
           git diff --check
           changed="$(git diff --name-only | sort)"
           printf '%s\n' "$changed"

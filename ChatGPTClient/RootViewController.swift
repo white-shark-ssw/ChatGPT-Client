@@ -14,7 +14,7 @@ enum CoveredWebSendEvent {
     case thinkingActive
     case reasoningPreamble(String, segmentStart: Bool)
     case reasoningDelta(String)
-    case reasoningEnded
+    case reasoningEnded(Int?)
     case finalDelta(String)
     case toolActivity(slot: Int, title: String, completed: Bool, inputJSON: String, outputJSON: String, iconKind: ConversationToolIconKind)
     case terminal
@@ -166,7 +166,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         case "reasoning_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
             activeEvents?(.reasoningDelta(text))
-        case "reasoning_ended": activeEvents?(.reasoningEnded)
+        case "reasoning_ended": activeEvents?(.reasoningEnded((body["durationSec"] as? NSNumber)?.intValue))
         case "final_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
             activeEvents?(.finalDelta(text))
@@ -361,7 +361,9 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         if (!content || content.content_type !== 'reasoning_recap' || typeof content.content !== 'string' || !content.content.trim()) return;
         if (!metadata || metadata.reasoning_status !== 'reasoning_ended' || metadata.reasoning_recap_type !== 'collapse') return;
         state.reasoningEnded = true;
-        post({ kind: 'reasoning_ended' });
+        const rawDuration = metadata.finished_duration_sec;
+        const durationSec = typeof rawDuration === 'number' && Number.isFinite(rawDuration) && rawDuration >= 0 ? Math.round(rawDuration) : null;
+        post({ kind: 'reasoning_ended', durationSec });
       };
       const observeToolActivity = (payload, state) => {
         const message = findMessage(payload);
@@ -572,6 +574,7 @@ struct ConversationLiveResponseSnapshot {
     var timeline: [ConversationResponseTimelineItem]
     var finalText: String
     var reasoningEnded: Bool
+    var reasoningDurationSeconds: Int?
     var failureReason: String?
 }
 
@@ -620,7 +623,7 @@ extension ConversationRepository {
         let generation = (responseRuntime.generations[conversationID] ?? 0) + 1
         responseRuntime.generations[conversationID] = generation
         let baselineVisibleMessageCount = selectedConversationID == conversationID ? (selectedConversation?.messages.count ?? 0) : 0
-        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, promptText: promptText, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, failureReason: nil)
+        responseRuntime.snapshots[conversationID] = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: baselineVisibleMessageCount, promptText: promptText, phase: .preparing, timeline: [], finalText: "", reasoningEnded: false, reasoningDurationSeconds: nil, failureReason: nil)
         var fields = diagnosticsFields(for: conversationID)
         fields["responseGeneration"] = String(generation)
         fields["phase"] = ConversationLiveResponsePhase.preparing.rawValue
@@ -668,8 +671,9 @@ extension ConversationRepository {
         else { snapshot.timeline.append(.reasoning(text)) }
         snapshot.phase = .reasoning
         eventName = "reasoning_delta"
-    case .reasoningEnded:
+    case .reasoningEnded(let durationSeconds):
         snapshot.reasoningEnded = true
+        snapshot.reasoningDurationSeconds = durationSeconds
         snapshot.phase = .final
         eventName = "reasoning_ended"
     case .finalDelta(let text):

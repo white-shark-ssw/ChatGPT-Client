@@ -1,0 +1,60 @@
+name: b74 durable docs sync
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b74-docs-20260901
+    paths:
+      - 'scripts/b74_docs_finalize.py'
+      - '.github/workflows/b74-docs-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preserve sync script and reset to exact checkpoint head
+        run: |
+          cp scripts/b74_docs_finalize.py /tmp/b74_docs_finalize.py
+          git reset --hard a6671af8a6168be88ebe15e69dc37c2ed31a5f72
+
+      - name: Apply b74 durable docs sync
+        run: |
+          python3 /tmp/b74_docs_finalize.py
+          git diff --check
+
+      - name: Audit docs-only scope and identity wording
+        run: |
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            'docs/project/BUILD_TEST_INDEX.md' \
+            'docs/project/MODULE_STATUS.md' \
+            'docs/project/PROJECT_PROFILE.md' \
+            'docs/project/PROJECT_SPECIFIC_RULES.md' \
+            'docs/project/PROJECT_STATE.md' \
+            'docs/project/TECHNICAL_DECISIONS.md' \
+            'docs/project/WEB_SEND_ADAPTER.md' | sort)"
+          test "$changed" = "$expected"
+          grep -Fq '50dd61b8b31cdae184353f4b4bfa6aca24e3a50d' docs/project/PROJECT_STATE.md
+          grep -Fq '9768668727' docs/project/BUILD_TEST_INDEX.md
+          grep -Fq '07c999fd0e9aaa5685725e6a97f066221f1f986cc3e23a99693a91accda285da' docs/project/PROJECT_PROFILE.md
+          grep -Fq 'b74 external continuation extension' docs/project/TECHNICAL_DECISIONS.md
+          grep -Fq 'External active-response adoption' docs/project/PROJECT_SPECIFIC_RULES.md
+          grep -Fq 'matching page-owned `/backend-api/f/conversation/resume`' docs/project/WEB_SEND_ADAPTER.md
+          grep -Fq 'Runtime pending' docs/project/MODULE_STATUS.md
+          ! grep -q 'Exact b73 current Candidate' docs/project/PROJECT_PROFILE.md
+
+      - name: Commit and push clean docs branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B assembly/dev-send-stream-b74-docs-product-20260901
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/WEB_SEND_ADAPTER.md
+          git commit -m 'docs: synchronize exact b74 package and Runtime gate'
+          git push origin HEAD:refs/heads/assembly/dev-send-stream-b74-docs-product-20260901

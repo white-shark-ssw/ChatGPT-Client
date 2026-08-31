@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b70 transport/response ownership remains usable, but the user’s exact Build70 iPhone/iOS17 Runtime rejects the current reasoning/tool presentation and interaction performance. b70 is permanently reserved and superseded for UI acceptance. b71 is now justified as a presentation/performance correction only. Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
+**Active — b71 presentation/performance Candidate is now Code/scope/Simulator/Push+PR CI/Artifact/package verified and awaits exact iPhone/iOS17 Runtime. b67 transport remains accepted; b70 presentation Runtime remains rejected/reserved; Stable/Frozen Send remains No; PR #29 stays open/unmerged.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -16,6 +16,21 @@
 - b39-b70 permanently reserved; never reuse b70
 - Repository/code search found no existing `DEV-send-stream-0.1.0-b71`; b71 is justified by the exact Runtime evidence below
 - Stable/Frozen Send: No
+
+## b71 formal source / CI / Artifact milestone — 2026-08-31
+
+- Exact product/config source: `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; clean product commit `38a12f52f1a5034c43a446f737b0da210a5a1a4f`; direct clean checkpoint parent `5e9c0a8cfa00118a4facca640e8ee739ce480c1a`.
+- Candidate: `DEV-send-stream-0.1.0-b71`; Version / Build: `0.1.0 (71)`.
+- Tooling assembly compile evidence: Run `33386550230`, Job `99470358015`; four-file scope audit passed and Xcode 16.4 iOS Simulator ended `BUILD SUCCEEDED`. The run itself later failed only when its GitHub Actions token was denied permission to push a workflow file; this is tooling-output failure, not product compile failure.
+- Clean product extraction: Run `33388165867`, Job `99475407591` — success; exact compiled patch reapplied and three product files emitted from the clean checkpoint; connector then changed only the formal workflow Candidate/Artifact identity.
+- Detached checkpoint -> candidate audit: exactly four authorized files; `.github/workflows/ios-foundation.yml` `+2/-2`, Xcode project `+4/-4`, `ConversationFeature.swift` `+425/-171`, `RootViewController.swift` `+9/-5`.
+- Push CI: `33388396118 / 99476130099` — success.
+- PR CI: `33388399484 / 99476140778` — success.
+- Push Artifact: `9756491305`, name `ChatGPTClient-DEV-send-stream-0.1.0-b71`, ZIP `sha256:74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`.
+- IPA: `ChatGPTClient-0.1.0-b71-dev-send-stream.ipa`, `sha256:a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; sidecar agrees.
+- Independently unpacked package identity: Release `0.1.0`, Build `71`, Candidate `DEV-send-stream-0.1.0-b71`, source marker `af8d4a4b291c`, minimum iOS `14.0`, device families `[1,2]`, Mach-O arm64.
+- Evidence ladder: **Code written / exact scope audited / Simulator compile passed / Push CI passed / PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No.**
+- b71 is now permanently reserved. Later docs-only commits do not redefine exact product source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`.
 
 ## Exact b70 Runtime evidence — 2026-08-31
 
@@ -124,9 +139,9 @@ Recovery must never replay tooling-only commits onto the formal branch and must 
 - b67 protected-Send transport: Runtime accepted.
 - b69 ordered timeline direction: retained.
 - b70: Code/scope/static+sim compile/Push+PR CI/Artifact/package passed; exact iPhone/iOS17 presentation Runtime **Partial/Rejected** by the user-supplied screenshots + diagnostics; auth 403 recovery remains unverified in this supplied run.
-- b71: justified/allocated direction only at this checkpoint; product source/CI/Artifact/Runtime not yet claimed.
+- b71: exact source/scope/Simulator compile/Push+PR CI/Artifact/package identity verified; exact iPhone/iOS17 Runtime pending.
 - Stable/Frozen Send: No.
 
 ## Next exact action
 
-Re-read the formal head after this checkpoint write, repeat branch/PR/main/Active/candidate conflict Guard, then assemble the smallest b71 presentation/performance candidate on the four authorized files. The b71 human gate must compare the main conversation and reasoning sheet directly against the supplied official screenshots and verify that opening thinking/tool details is immediate rather than a full-table ~1.4s geometry rebuild.
+Install exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` on the primary iPhone/iOS17 device and compare directly with the supplied official screenshots. Verify Build71/Candidate/source marker, clear diagnostics, then confirm: compact `思考了 Ns`/`思考过程` summary and meaningful tool rows are aligned near the ~16pt assistant margin; GitHub icon is bounded and no generic empty `工具调用 · 已完成` row appears; tapping thinking opens the rounded `正在思考` sheet immediately without a full-table ~1.4s geometry rebuild; sheet disclosures grow intrinsically under one outer scroll view; duration/completion ordering is correct; final answer divider/spacing is compact; b67 one-Send transport, hidden-thought exclusion, b38 geometry/quick navigation and active-response navigation do not regress. Export diagnostics after terminal. Runtime/manual remains the only next acceptance gate.

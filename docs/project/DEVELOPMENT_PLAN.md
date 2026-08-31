@@ -1,6 +1,6 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-08-31 through accepted b67 production transport Runtime, b69 daily-chat defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification._
+_Last updated: 2026-08-31 through accepted b67 production transport Runtime, exact b70 presentation Runtime rejection, and exact b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verification._
 
 ## Purpose / delivery principles
 
@@ -119,15 +119,25 @@ Identity/evidence:
 
 Evidence ladder: **Code / exact scope/static / Simulator compile / Push CI / PR CI / Artifact / package identity passed; Runtime pending; Stable-Frozen No.**
 
+### Exact b71 — current presentation/performance Candidate
+
+Exact b70 iPhone/iOS17 diagnostics/screenshots retained the b67 one-Send transport but rejected reasoning/tool daily-chat parity and exposed a concrete ~1.4s interaction owner: full `rebuildPresentationGeometry(...)` on disclosure toggles. b71 therefore changes only the authorized presentation/config surface:
+
+1. service `finished_duration_sec` is carried into Repository-owned live/historical presentation;
+2. the main conversation shows compact `思考了 Ns` or `思考过程` plus meaningful bounded tool rows and a compact final divider;
+3. empty generic `工具调用` placeholders with no authorized visible detail are omitted, while real titled tools remain;
+4. tapping thinking presents a rounded `正在思考` page sheet; tool disclosure state is local to that sheet;
+5. sheet input/output grows intrinsically under one outer scroll view, removing b70's 260pt nested-scrolling cap;
+6. historical disclosure no longer rebuilds all b38 deterministic row geometry;
+7. protected-Send route/selectors/challenge/SSE grammar, `ConversationRepository` response authority, b38 quick navigation, Stop/new-chat/background/attachments and AuthSession lifecycle are not changed by this Candidate.
+
+Identity/evidence: Candidate `DEV-send-stream-0.1.0-b71`, `0.1.0 (71)`, exact source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; Simulator compile evidence `33386550230/99470358015`; Push `33388396118/99476130099`; PR `33388399484/99476140778`; Artifact `9756491305`; ZIP `74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`; IPA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; package `0.1.0 (71)` / source `af8d4a4b291c` / iOS14 / arm64. **Runtime pending; Stable-Frozen No.**
+
 ### Current Phase 9 human Runtime gate
 
-Install exact b70 Artifact `9752289536` on the primary iPhone/iOS17 device and verify Build70/Candidate/source marker. Clear diagnostics, then test normal daily chat and one transient-read-auth recovery opportunity if reproducible.
+Install exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` on the primary iPhone/iOS17 device. Verify Build71/Candidate/source marker, clear diagnostics, then compare compact main-conversation thinking/tool presentation and the rounded `正在思考` sheet directly with the supplied official screenshots. Required evidence: service-backed duration or `思考过程`; bounded meaningful tool icon/title rows with no empty generic completed placeholder; ~16pt assistant alignment and compact divider/spacing; immediate sheet presentation without full-table geometry rebuild; intrinsic tool details under one outer sheet scroller; duration then `完成`; no regressions to b67 one-Send transport, hidden-thought exclusion, active-response navigation or b38 geometry/quick-navigation. Export diagnostics after terminal.
 
-Required evidence: no covered-Web keyboard pop; exactly one immediate optimistic user row with no terminal duplication; chronological reasoning/tool order and in-place tool completion; restored GitHub nested input/output, bounded icons, compact spacing and final divider; active response survives navigation; a transient Native 403 does not become sticky and can recover on the next explicit/normal read from current WebKit credentials without automatic replay/retry; hidden thoughts stay excluded; b38 geometry and b67 one-Send transport do not regress. Export diagnostics after terminal/recovery.
-
-**Do not allocate b71 before exact b70 Runtime yields a concrete next need.** CI/Artifact/package success is not Runtime proof.
-
-### Shortest remaining Phase 9 sequence after b70 gate
+### Shortest remaining Phase 9 sequence after b71 gate
 
 1. accept/fix this daily-chat existing-conversation parity/auth-lifecycle gate from exact Runtime evidence;
 2. new-chat first Send and pending->authoritative handoff only if actual timing requires it;
@@ -164,4 +174,4 @@ Conversation-list preview, Markdown export, long-conversation profiling beyond a
 
 ## Current next action
 
-Hand exact b70 Artifact `9752289536` / IPA SHA `8084e2ace5926b7ee6a790f3eeb2445a2c4ce1fee67d8953300aca93a446a44a` to the user for the focused b70 real-device daily-chat/auth-lifecycle gate. Keep PR #29 open/unmerged. Do not allocate b71 or begin unrelated Composer/attachments/Stop/background work before that Runtime evidence.
+Hand exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` to the user for the focused iPhone/iOS17 official-presentation/performance Runtime gate. Keep PR #29 open/unmerged. Do not allocate b72 or begin unrelated Composer/attachments/Stop/background work before that Runtime evidence.

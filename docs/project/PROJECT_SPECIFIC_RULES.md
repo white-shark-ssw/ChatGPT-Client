@@ -169,6 +169,7 @@ Exact near-bottom threshold is Runtime tuning, not a preflight constant to guess
 - timestamps use authoritative historical time when available; omit rather than fabricate.
 - Copy uses full authoritative visible message text and never issues network requests.
 - Stable b37/b38 bounded display chunks + deterministic row geometry/manual layout remain message-presentation baseline.
+- User-visible reasoning summary/detail follows TD-031: compact main-conversation summary/tool rows plus a presentation-only `正在思考` sheet; historical disclosure must not trigger full `rebuildPresentationGeometry(...)`; sheet disclosure state is local UI state only.
 - Stable b38 quick navigation uses derived O(1) geometry and one cancellable `UIViewPropertyAnimator(duration: 0.35, curve: .easeInOut)`; no pre-jump teleport, `scrollToRow` geometry discovery, correction snap or debounce.
 - rapid retargeting starts from current visual position; real finger drag immediately retakes ownership.
 - per-conversation scroll state is semantic presentation state, not Repository message state.
@@ -216,10 +217,10 @@ Permitted diagnostics are bounded structural/aggregate facts such as route class
 - once an Artifact identity is emitted, corrected product code never reuses it;
 - built `Info.plist` version/build/Candidate/source marker + IPA SHA are package identity authority;
 - `scripts/build_ipa.sh` must fail on identity mismatch;
-- b24-b67 emitted identities are permanently reserved;
+- b24-b71 emitted identities are permanently reserved;
 - exact b66 package authority remains `0.1.0 (66)`, source `9ce228ad880eaf81fc23ba26fe14f4d2bf524acb`, Artifact `9739572172`, IPA `7f62e875bbd75d54e2d7bf76340f277d02f03e695d464d818fa5cab664c630e9`; Runtime rejected its first production bridge but does not invalidate package identity;
-- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; Runtime pending;
-- do not allocate b68 before exact b67 Runtime supplies a concrete need.
+- exact b67 package authority is `0.1.0 (67)`, source `52ab38f16fe914ef8316bb1dc712b77c2c87a271`, Artifact `9739891865`, IPA `3712dec92cddfe64e84fc797e1506d83231cd878633b932b9acf0e7381795497`; production transport Runtime accepted;
+- exact b70 package remains reserved but its presentation Runtime is rejected. Exact b71 package authority is `0.1.0 (71)`, source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`, Artifact `9756491305`, IPA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`; Runtime pending. Do not allocate b72 before exact b71 Runtime supplies a concrete need.
 
 ## Message rendering / attachment boundary
 

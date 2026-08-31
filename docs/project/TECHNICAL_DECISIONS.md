@@ -188,3 +188,13 @@ This file records durable, evidence-backed technical decisions and rejected rout
 ## Rule
 
 Do not write speculation here as fact. Historical plans, CI and Artifacts are not Runtime proof. Stable does not mean Frozen. A newer explicit TD may supersede only the clauses it names; all unaffected evidence and boundaries remain active.
+
+### TD-031 — User-visible reasoning uses a compact conversation summary plus presentation-only detail sheet; disclosure must not rebuild full b38 geometry
+- **Status**: Confirmed product/presentation decision; exact b71 Runtime pending
+- **Date**: 2026-08-31
+- **Evidence**: Exact b70 iPhone/iOS17 diagnostics measured reasoning/tool disclosure interactions around 1.4s while source correlation showed each toggle synchronously rebuilt deterministic metrics/offsets for the entire conversation; post-rebuild table layout itself was only milliseconds to tens of milliseconds. User-supplied official ChatGPT iOS screenshots show a compact `思考了 Ns` summary/tool row in the conversation and a rounded `正在思考` bottom sheet for detailed reasoning/tool content.
+- **Decision**: Main conversation keeps b38 deterministic final-message projection and only compact reasoning/tool summary rows. Exact service `finished_duration_sec` may label `思考了 Ns`; absent service duration uses `思考过程` and never fabricated wall-clock timing. Tapping the summary opens a presentation-only page sheet; it is not Repository/message authority.
+- **Detail ownership**: Tool input/output disclosure state belongs only to the presented sheet. Long detail grows intrinsically and one outer sheet scroll view owns overflow; do not reintroduce the b70 260pt nested-scroll cap.
+- **Performance invariant**: Historical reasoning/tool interaction must not call the full `rebuildPresentationGeometry(...)` path. b38 deterministic geometry and quick-navigation remain unchanged.
+- **Tool boundary**: Keep exact-parent association and the already authorized GitHub detail shape; hide only an empty generic placeholder `工具调用` with no authorized visible detail. Do not generalize to other connectors without evidence.
+- **Evidence ladder**: b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verified; Runtime pending; Stable/Frozen Send remains No.

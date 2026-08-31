@@ -2,7 +2,7 @@
 
 ## Initialization
 
-**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, b69 daily-chat defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification.**
+**Initialized — 2026-08-25; refreshed 2026-08-31 through accepted b67 production transport Runtime, exact b70 presentation Runtime rejection, and exact b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verification.**
 
 Unsupported compatibility/protocol details remain `Unknown / Unverified` unless explicitly accepted below.
 
@@ -85,11 +85,15 @@ b66 implemented the first existing-conversation TD-029 production bridge + Repos
 - User independently confirmed the official ChatGPT app had already received the assistant reply. Therefore the protected Send reached/completed server-side, while the Native production wrapper lost the request before obtaining HTTP Response.
 - Source correlation identified a local Swift->JS duplicate-submit race, not an official Web selector/SSE rule change. Detailed evidence: `docs/project/runtime-evidence/DEV-send-stream-b66-runtime.md`.
 
-## Exact b70 current Candidate
+## Exact b70 rejected presentation predecessor
 
-b70 retains accepted b67 protected-Send/SSE ownership and b69 chronological timeline while applying only evidence-backed daily-chat corrections: covered programmatic Web focus no longer owns visible keyboard state; the trimmed prompt is response-local optimistic user presentation; GitHub exact-parent input/output disclosures are restored with bounded local icons and deterministic spacing/divider; exact probe 403 preserves last verified account identity; list/detail 401/403 discards stale copied transient transport without replaying the failed operation.
+b70 retains accepted b67 protected-Send/SSE ownership and b69 chronological timeline while applying evidence-backed daily-chat corrections. Its exact package remains valid/reserved: Candidate `DEV-send-stream-0.1.0-b70`, source `fb83be9163838f78abfa47903e67f27b6f66ec52`, Artifact `9752289536`, IPA `8084e2ac...a44a`. Exact iPhone/iOS17 diagnostics/screenshots then rejected its daily-chat reasoning/tool presentation: literal `GH`/generic tool rows, ~1.4s full-table geometry rebuild on disclosure toggles, 260pt nested tool scrolling, extra assistant inset, and inline expansion instead of the supplied official compact-summary + reasoning-sheet interaction.
 
-Identity: Candidate `DEV-send-stream-0.1.0-b70`, `0.1.0 (70)`, exact source `fb83be9163838f78abfa47903e67f27b6f66ec52`, assembly `33373254877/99428895016`, Push `33377045570/99440767755`, PR `33377049590/99440781050`, Artifact `9752289536`, ZIP `bdf09b24...afde0`, IPA `8084e2ac...a44a`, package source marker `fb83be916383`, iOS14 minimum. Evidence: Code/scope/static+sim compile/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
+## Exact b71 current Candidate
+
+b71 changes only the justified presentation/performance surface. It preserves b67 protected-Send route/selectors/challenge/SSE ownership and Repository response authority; carries exact service `finished_duration_sec`; uses a compact `思考了 Ns` or `思考过程` conversation summary with meaningful bounded tool rows; opens a presentation-only rounded `正在思考` sheet for intrinsic tool detail under one outer scroll view; and removes historical reasoning/tool toggles from the full b38 geometry rebuild path.
+
+Identity: Candidate `DEV-send-stream-0.1.0-b71`, `0.1.0 (71)`, exact product/config source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`, Push `33388396118/99476130099`, PR `33388399484/99476140778`, Artifact `9756491305`, ZIP `74b554c9...bda0`, IPA `a9322dba...fd65`, package source marker `af8d4a4b291c`, iOS14 minimum, arm64. Evidence: Code/scope/static+sim compile/Push+PR CI/Artifact/package verified; **Runtime pending**; Stable-Frozen No.
 
 ## Current product interaction target
 
@@ -101,11 +105,11 @@ Tool phases remain optional. `assistant:thoughts` is never presented. General Ma
 
 ## Current next Candidate boundary
 
-b39-b70 are permanently reserved. Exact b70 real-device evidence is the only current Candidate gate. Do not allocate b71 before b70 Runtime yields a concrete defect/next evidence need. The gate must verify no covered-Web keyboard pop, one immediate nonduplicated optimistic user row, chronological reasoning/tools with restored GitHub details/icons/compact divider presentation, active-response navigation preservation, and transient Native 403 recovery on the next explicit/normal read without automatic retry.
+b39-b71 are permanently reserved. Exact b71 real-device presentation/performance evidence is the only current Candidate gate. Do not allocate b72 before b71 Runtime yields a concrete defect/next evidence need. The gate must compare compact conversation reasoning/tool rows and the reasoning detail sheet directly with the supplied official screenshots while preserving b67 one-Send transport, hidden-thought exclusion and b38 geometry/quick-navigation.
 
 ## Remaining Unknown / Unverified
 
-Exact b70 daily-chat parity/auth-lifecycle Runtime, new-chat authoritative identity timing, server Stop mechanism, simultaneous cross-conversation generation, connector detail beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b71 presentation/performance Runtime, b70 transient-auth recovery when not exercised, new-chat authoritative identity timing, server Stop mechanism, simultaneous cross-conversation generation, connector detail beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background execution, WebContent termination, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
 
 ## Auto-refresh rule
 

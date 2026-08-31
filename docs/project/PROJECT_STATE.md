@@ -1,6 +1,6 @@
 # Project State
 
-_Last updated: 2026-08-31 through accepted b67 production transport Runtime, b69 Runtime defect evidence, and exact b70 Code/scope/Push+PR CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b70 human Runtime gate. Stable/Frozen Send remains No._
+_Last updated: 2026-08-31 through accepted b67 production transport Runtime, exact b70 presentation Runtime rejection, and exact b71 Code/scope/Simulator compile/Push+PR CI/Artifact/package verification. Phase 9 `DEV-send-stream` remains Active at the b71 human Runtime gate. Stable/Frozen Send remains No._
 
 ## Current accepted merged baseline
 
@@ -10,16 +10,17 @@ Foundation b1, auth b6, protocol-read b7, native-read b9, recovery b15, multi-co
 
 `DEV-send-stream` is Active on `dev/send-stream-20260829`; PR #29 remains open / mergeable / unmerged and evidence-only. Current actual `main` last verified this cycle is `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; final target-main synchronization is still required before merge.
 
-Latest exact product Candidate is **`DEV-send-stream-0.1.0-b70` / `0.1.0 (70)`**:
+Latest exact product Candidate is **`DEV-send-stream-0.1.0-b71` / `0.1.0 (71)`**:
 
-- exact product/config source `fb83be9163838f78abfa47903e67f27b6f66ec52`, direct parent `5c379b3d994b28cb0ba5a3c793e4efa193a003a1`;
-- assembly `33373254877 / 99428895016` — exact five-file scope audit, `git diff --check` and Xcode 16.4 iOS Simulator compile passed;
-- Push `33377045570 / 99440767755` and PR `33377049590 / 99440781050` — success;
-- Artifact `9752289536`; ZIP `sha256:bdf09b246ff259ee80d46acfad675713c1a0b51aee3b44f7ea9f0a7e67eafde0`;
-- IPA `sha256:8084e2ace5926b7ee6a790f3eeb2445a2c4ce1fee67d8953300aca93a446a44a`;
-- independently unpacked package `0.1.0 (70)` / Candidate b70 / source `fb83be916383` / minimum iOS14 / arm64.
+- exact product/config source `af8d4a4b291c05fb63a50cee0261c06d7ce474d3`; clean product commit `38a12f52f1a5034c43a446f737b0da210a5a1a4f`; direct clean checkpoint parent `5e9c0a8cfa00118a4facca640e8ee739ce480c1a`;
+- Simulator compile `33386550230 / 99470358015` passed after exact four-file scope audit; the containing tooling run failed only at unauthorized workflow push;
+- clean extract `33388165867 / 99475407591` success;
+- Push `33388396118 / 99476130099` and PR `33388399484 / 99476140778` — success;
+- Artifact `9756491305`; ZIP `sha256:74b554c98333e365b03073a39b0286f966b98c94ec2a695d62b81cb4f8f7bda0`;
+- IPA `sha256:a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65`;
+- independently unpacked package `0.1.0 (71)` / Candidate b71 / source `af8d4a4b291c` / minimum iOS14 / `[1,2]` / arm64.
 
-b70 retains b67 protected-Send/SSE ownership and b69 ordered timeline, while correcting the concrete b69 daily-chat defects: covered-Web keyboard focus, missing immediate user row, GitHub detail/icon/spacing/divider presentation, and stale Native transient-auth 401/403 lifecycle. No automatic retry/replay/poll/timer/watchdog or second state owner was added. Evidence ladder: **Code / exact scope / static+sim compile / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b70 are permanently reserved.
+b71 is presentation/performance-only: it preserves b67 protected-Send/SSE ownership and b69 ordered timeline, carries exact service `finished_duration_sec`, replaces b70 inline reasoning/tool disclosure with compact conversation summary + presentation-only reasoning sheet, removes historical disclosure-triggered full-table geometry rebuilds, uses one outer sheet scroller for intrinsic tool detail, and changes no protected route/selector/challenge/SSE ownership semantics. Exact b70 package remains valid/reserved but its supplied iPhone/iOS17 presentation Runtime is rejected. Evidence ladder: **Code / exact scope / Simulator compile / Push+PR CI / Artifact / package verified / Runtime pending / Stable-Frozen No.** b39-b71 are permanently reserved.
 
 ## b65 accepted probe predecessor
 
@@ -89,8 +90,8 @@ Final Composer hierarchy/dynamic input/attachment staging belongs future seriali
 
 ## Current exact Runtime gate
 
-Install exact b70 Artifact `9752289536` / IPA SHA `8084e2ac...a44a` on the primary iPhone/iOS17 device. Verify Candidate/source marker, clear diagnostics, then confirm: no covered-Web keyboard pop; exactly one immediate optimistic user row without terminal duplication; chronological reasoning/tools with in-place completion; restored GitHub nested input/output + bounded icons + compact spacing/divider; active response survives navigation; transient Native 403 can recover on the next explicit/normal read from current WebKit credentials without automatic replay/retry; hidden thoughts remain excluded; b38 geometry and b67 one-Send transport do not regress. Export diagnostics after terminal/recovery.
+Install exact b71 Artifact `9756491305` / IPA SHA `a9322dba9351842ac2d2374a1f8792129fe64750a1c79da514e2444bb785fd65` on the primary iPhone/iOS17 device. Verify Candidate/source marker, clear diagnostics, then compare the main conversation and `正在思考` sheet against the supplied official screenshots: compact service-duration summary or `思考过程`, bounded meaningful tool icons/rows, no empty generic completed placeholder, ~16pt assistant content alignment, compact divider/spacing, immediate sheet opening without full-table geometry rebuild, intrinsic input/output growth under one outer sheet scroller, correct duration/completion ordering, and no regressions to b67 one-Send transport, hidden-thought exclusion, active-response navigation or b38 deterministic geometry/quick navigation. Export diagnostics after terminal. b70 auth-403 recovery remains separately Unverified if this run does not exercise it.
 
 ## Remaining Unknown / Unverified
 
-Exact b70 daily-chat parity/auth-lifecycle Runtime, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.
+Exact b71 presentation/performance Runtime, b70 transient-auth recovery when not exercised, new-chat authoritative identity timing, exact server Stop mechanism, cross-conversation simultaneous server generation, connector-detail schemas beyond the evidenced GitHub mapping, Native first/exclusive resume, 5/15-minute background behavior, WebContent termination recovery, lower iOS/iPad, non-personal workspace/account switching and native attachment handoff remain Unknown / Unverified unless explicitly tested. CI/Artifact success is never Runtime proof.

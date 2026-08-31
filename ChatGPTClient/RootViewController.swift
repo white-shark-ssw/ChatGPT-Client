@@ -161,7 +161,6 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         case "external_resume_observed":
             if activeEvents == nil, let observationEvents {
                 activeEvents = observationEvents
-                responseActive = true
                 activeEvents?(.externalResumeObserved)
                 diagnostics.info(category: "webSend", name: "coveredExecutor.externalResumeObserved", fields: ["target": "existing_conversation"])
             }
@@ -169,8 +168,12 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let status = (body["status"] as? NSNumber)?.intValue ?? 0
             let contentType = body["contentType"] as? String ?? ""
             diagnostics.info(category: "webSend", name: "coveredExecutor.resumeResponse", fields: ["httpStatus": String(status), "contentType": Self.safeToken(contentType)])
-            if status == 200 && contentType == "text/event-stream" { activeEvents?(.responseAccepted) }
-            else if activeEvents != nil { failCurrent("resume_not_sse") }
+            if status == 200 && contentType == "text/event-stream" {
+                responseActive = true
+                activeEvents?(.responseAccepted)
+            } else if activeEvents != nil {
+                failCurrent("resume_not_sse")
+            }
         case "composer_state":
             let ready = (body["ready"] as? NSNumber)?.boolValue ?? false
             let pageConversationID = body["conversationID"] as? String
@@ -840,6 +843,18 @@ extension ConversationRepository {
         return true
     }
 
+    func clearTerminalExternalLiveResponseAfterAuthoritativeRefresh(conversationID: String) -> Bool {
+        precondition(Thread.isMainThread)
+        guard let snapshot = responseRuntime.snapshots[conversationID], !snapshot.phase.isActive, snapshot.promptText.isEmpty else { return false }
+        responseRuntime.snapshots.removeValue(forKey: conversationID)
+        var fields = diagnosticsFields(for: conversationID)
+        fields["responseGeneration"] = String(snapshot.generation)
+        fields["reason"] = "authoritative_refresh"
+        DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.externalTerminalCleared", fields: fields)
+        responseRuntime.onChange?(conversationID)
+        return true
+    }
+
     func resetAllLiveResponsesForAccountChange() {
         precondition(Thread.isMainThread)
         let ids = Array(responseRuntime.snapshots.keys)
@@ -973,26 +988,40 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         var externalGeneration: Int?
         sendExecutor.observeExistingConversation(conversationID: conversationID) { [weak self, weak sendExecutor] event in
             guard let self, let sendExecutor else { return }
-            if case .externalResumeObserved = event {
-                guard externalGeneration == nil, !self.repository.isLiveResponseActive(for: conversationID) else { return }
-                switch self.repository.beginExternalLiveResponse(conversationID: conversationID) {
-                case .success(let generation):
-                    externalGeneration = generation
-                    self.updateLivePresentation()
-                case .failure:
+            switch event {
+            case .externalResumeObserved:
+                return
+            case .responseAccepted:
+                if externalGeneration == nil {
+                    guard !self.repository.isLiveResponseActive(for: conversationID) else {
+                        self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                        return
+                    }
+                    switch self.repository.beginExternalLiveResponse(conversationID: conversationID) {
+                    case .success(let generation):
+                        externalGeneration = generation
+                        self.updateLivePresentation()
+                    case .failure:
+                        self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                        return
+                    }
+                }
+                guard let generation = externalGeneration else { return }
+                self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
+            case .terminal:
+                guard let generation = externalGeneration else {
+                    self.releaseExecutor(for: conversationID, expected: sendExecutor)
                     return
                 }
-                return
-            }
-            guard let generation = externalGeneration else { return }
-            self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
-            switch event {
-            case .terminal:
+                self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
                 self.releaseExecutor(for: conversationID, expected: sendExecutor)
                 self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)
             case .failed:
+                if let generation = externalGeneration { self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation) }
                 self.releaseExecutor(for: conversationID, expected: sendExecutor)
-            default: break
+            default:
+                guard let generation = externalGeneration else { return }
+                self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
             }
         }
     }

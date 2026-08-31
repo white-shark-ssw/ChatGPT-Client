@@ -1,0 +1,39 @@
+name: b68 assembly repair
+
+on:
+  push:
+    branches:
+      - assembly/dev-send-stream-b68-20260831
+    paths:
+      - ".github/workflows/b68-assembly-repair.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: assembly/dev-send-stream-b68-20260831
+          fetch-depth: 0
+      - name: Repair tooling-only range assertion
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/b68-assembly-tool.yml')
+          text = path.read_text()
+          old = "test \"$(git diff --name-only 745de68faf15b330c9afec0d84da855e036df91a | sort)\" = \"$(printf '%s\\n' '.github/workflows/b68-assembly-tool.yml' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)\""
+          new = "test \"$(git diff --name-only 745de68faf15b330c9afec0d84da855e036df91a | sort)\" = \"$(printf '%s\\n' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)\""
+          if text.count(old) != 1: raise SystemExit('assembly assertion marker mismatch')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          rm .github/workflows/b68-assembly-repair.yml
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "tooling: fix b68 assembly range assertion"
+          git push origin HEAD:assembly/dev-send-stream-b68-20260831

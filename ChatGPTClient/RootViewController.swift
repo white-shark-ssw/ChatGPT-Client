@@ -1223,8 +1223,8 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             self.show(.secondary)
             self.observeExternalResponseIfNeeded(conversationID: id)
         }
-        detailViewController.onManualLatestSyncApplied = { [weak self] id, latestUserChanged in
-            guard let self, latestUserChanged, self.repository.selectedConversationID == id, !self.repository.isLiveResponseActive(for: id) else { return }
+        detailViewController.onManualLatestSyncApplied = { [weak self] id, _ in
+            guard let self, self.repository.selectedConversationID == id, !self.repository.isLiveResponseActive(for: id) else { return }
             self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
         }
     }

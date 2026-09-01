@@ -300,7 +300,7 @@ A current third-party open-source implementation independently reports a protoco
 - conversation event type `conversation-update`;
 - per-turn topic subscriptions with offsets.
 
-This source is **Hypothesis / cross-check evidence only**, not current product authority. Its value is that these route/topic names are now narrow candidates for direct verification in the existing Web Rule Lab.
+Source: `tianya518/gptclient-go`, `sentinel/chat_ws.go`, inspected 2026-09-02. This source is **Hypothesis / cross-check evidence only**, not current product authority. Its value is that these route/topic names are now narrow candidates for direct verification in the existing Web Rule Lab.
 
 ## 9. Current investigation decision
 

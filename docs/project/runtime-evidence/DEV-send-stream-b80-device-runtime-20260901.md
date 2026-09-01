@@ -59,6 +59,10 @@ Separate user Runtime evidence already proves official PC Web can stay on conver
 
 Its exact transport/schema remains Unknown / Unverified. Before a product change, Web Rule Lab must capture that account-level signal privacy-safely while A remains open and B starts/completes elsewhere.
 
+## Current Human Gate
+
+Before allocating or implementing b81, keep Web Rule Lab on conversation A, install a privacy-safe account-signal probe, start a sufficiently long response in never-opened conversation B on another platform, keep A visible, and capture only structural event metadata while B starts/reasons/completes. The probe must identify the actual account-level event source before automatic Sync/haptic or a replacement acquisition trigger is implemented.
+
 ## b80 overall result
 
 **Runtime partial-positive / partial-rejected.**

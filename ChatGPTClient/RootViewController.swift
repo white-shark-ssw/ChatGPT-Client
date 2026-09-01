@@ -83,12 +83,12 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         diagnostics.info(category: "webSend", name: "coveredExecutor.attached", fields: ["store": "default", "visibility": "covered"])
     }
 
-    func observeExistingConversation(conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {
+    func observeExistingConversation(conversationID: String, forceReload: Bool = false, events: @escaping (CoveredWebSendEvent) -> Void) {
         precondition(Thread.isMainThread)
         guard !conversationID.isEmpty else { return }
         observationEvents = events
         observingExternalResponse = true
-        if currentConversationID == conversationID {
+        if currentConversationID == conversationID, !forceReload {
             webView.evaluateJavaScript("window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.probeComposer(true);", completionHandler: nil)
             return
         }
@@ -96,7 +96,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         currentConversationID = conversationID
         guard let encoded = conversationID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed), let url = URL(string: "https://chatgpt.com/c/\(encoded)") else { return }
         webView.load(URLRequest(url: url))
-        diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation"])
+        diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation", "mode": forceReload ? "manual_sync_rearm" : "selection"])
     }
 
     func sendExistingConversation(text: String, conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {
@@ -762,6 +762,8 @@ struct ConversationLiveResponseSnapshot {
     var reasoningEnded: Bool
     var reasoningDurationSeconds: Int?
     var failureReason: String?
+
+    var isExternalStoppedWithoutFinal: Bool { promptText.isEmpty && phase == .completed && !reasoningEnded && finalText.isEmpty && !timeline.isEmpty }
 }
 
 enum ConversationLiveResponseError: LocalizedError {
@@ -1020,7 +1022,7 @@ extension ConversationRepository {
         }
         eventName = completed ? "tool_completed" : "tool_invoked"
     case .terminal:
-        if !snapshot.reasoningEnded, snapshot.finalText.isEmpty {
+        if !snapshot.reasoningEnded, snapshot.finalText.isEmpty, !snapshot.promptText.isEmpty {
             let provisionalFinal = snapshot.timeline.filter { $0.kind == .reasoning }.map(\.text).joined(separator: "\n\n").trimmingCharacters(in: .whitespacesAndNewlines)
             if !provisionalFinal.isEmpty {
                 snapshot.finalText = provisionalFinal
@@ -1128,6 +1130,10 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             self.show(.secondary)
             self.observeExternalResponseIfNeeded(conversationID: id)
         }
+        detailViewController.onManualLatestSyncApplied = { [weak self] id, latestUserChanged in
+            guard let self, latestUserChanged, self.repository.selectedConversationID == id, !self.repository.isLiveResponseActive(for: id) else { return }
+            self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
+        }
     }
 
     @available(*, unavailable)
@@ -1200,11 +1206,11 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         for (id, executor) in idle { releaseExecutor(for: id, expected: executor) }
     }
 
-    private func observeExternalResponseIfNeeded(conversationID: String) {
+    private func observeExternalResponseIfNeeded(conversationID: String, forcePageReload: Bool = false) {
         guard repository.selectedConversationID == conversationID, !repository.isLiveResponseActive(for: conversationID) else { return }
         let sendExecutor = executor(for: conversationID)
         var externalGeneration: Int?
-        sendExecutor.observeExistingConversation(conversationID: conversationID) { [weak self, weak sendExecutor] event in
+        sendExecutor.observeExistingConversation(conversationID: conversationID, forceReload: forcePageReload) { [weak self, weak sendExecutor] event in
             guard let self, let sendExecutor else { return }
             func ensureGeneration() -> Int? {
                 if let externalGeneration { return externalGeneration }

@@ -2,12 +2,13 @@
 
 ## Status
 
-**Active — b83 is built and packaged for the narrowed Send MVP. b82 manual cross-platform Sync is Runtime Rejected for intermittent reasoning acquisition. b83 removes the source-backed `latestUserChanged` re-arm gate so every successful explicit manual Sync can perform one bounded covered-page re-arm when the selected conversation has no active Repository live response. Client-owned requests remain true SSE. Cross-platform block/page-snapshot progressive reasoning is acceptable for MVP. Automatic discovery and cross-platform token-level SSE remain deferred. b83 real-device Runtime is Pending; Stable/Frozen Send remains No.**
+**Active — b83 is built and packaged for the narrowed Send MVP and is currently under real-device Runtime testing. b82 manual cross-platform Sync is Runtime Rejected for intermittent reasoning acquisition. b83 removes the source-backed `latestUserChanged` re-arm gate so every successful explicit manual Sync can perform one bounded covered-page re-arm when the selected conversation has no active Repository live response. Client-owned requests remain true SSE. Cross-platform block/page-snapshot progressive reasoning is acceptable for MVP. Automatic discovery and cross-platform token-level SSE remain deferred. A separate post-b83 requirement is now recorded: entering a conversation should automatically request one latest-message sync attempt. b83 Runtime result remains Pending; Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main` last verified this round: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
+- Current branch head verified before this documentation update: `58d6d585eae1d5155334d737dad3ffda882bff4e`
 - Exact b83 product/config source: `12e3c27138ebc81cbbae6236347122f79e03bf08`
 - Clean b83 CI/package head: `3771ddccc8d0847ce28f72acbbe311aaf30b7482`
 - Candidate: `DEV-send-stream-0.1.0-b83`
@@ -44,9 +45,24 @@ Deferred until broader product completion:
 - cross-platform progressive final-answer token streaming;
 - production integration of the official iOS native realtime/WebSocket path.
 
+## Recorded next requirement — one sync attempt when entering a conversation
+
+User requirement recorded on 2026-09-02 while b83 Runtime testing is still in progress:
+
+- when the user enters/selects a conversation, automatically request one latest-message synchronization attempt for that conversation;
+- this should behave as a one-shot entry refresh, not a polling loop, timer, watchdog, repeated retry, or second state authority;
+- `ConversationRepository` must remain the authoritative Detail/content owner;
+- the current b83 Candidate must not be modified while its Runtime result is being qualified; implementation belongs to a later Candidate only after the current b83 result is known;
+- user-observed reference behavior: the official ChatGPT app appears to make a network refresh attempt whenever entering a conversation, although the official app itself can still fail to visibly refresh under poor/network-changing conditions;
+- evidence classification: the desired product behavior is an explicit user requirement; the observation that the official app issues an entry refresh is user Runtime/behavior evidence; the exact official endpoint, cadence, internal state machine, and failure handling remain **Unverified** and must not be guessed.
+
+When implemented, prefer reusing the existing authoritative `syncLatestMessages`/Detail operation path rather than adding another refresh owner. Preserve existing operation coalescing/cancellation rules and avoid duplicate concurrent Detail operations.
+
 ## Latest Runtime evidence
 
 The user reports b82 manual Sync sometimes fails to acquire the active external reasoning stream. Therefore b82 fails the final manual-Sync MVP reliability gate.
+
+b83 is currently being exercised by the user in this same conversation. No pass/fail conclusion has been reported yet, so b83 Runtime remains Pending.
 
 Previous accepted evidence remains:
 
@@ -80,7 +96,8 @@ Automatic acquisition logic and client-owned SSE were not changed.
 - b83 Push CI: **Passed**
 - b83 PR CI: **Passed**
 - b83 Artifact produced/package identity: **Verified**
-- b83 Runtime/manual/real-device: **Pending**
+- b83 Runtime/manual/real-device: **Testing in progress / result Pending**
+- conversation-entry one-shot sync requirement: **Recorded only / Code not written / Candidate not allocated**
 - Stable/Frozen Send: **No**
 
 Durable Runtime evidence:
@@ -99,14 +116,16 @@ Durable Runtime evidence:
 
 ## Session round counter
 
-The user explicitly reset the conversation round count. This user turn is **round 11**. Continue displaying the current round count at the end of each user-facing response.
+The user explicitly reset the conversation round count. This user turn is **round 12**. Continue displaying the current round count at the end of each user-facing response.
 
 ## Next exact action — Human Runtime gate
 
-Install exact b83 IPA and test repeated active cross-platform turns.
+Continue exact b83 real-device testing in the current conversation and wait for the user's Runtime result before modifying product code or allocating another Candidate.
 
-For each test, press Sync exactly once while reasoning is active. Verify the latest state and first reasoning/tool block appear, then do not press Sync again and verify at least one later genuine reasoning/tool block arrives before completion. Verify final convergence.
+For each b83 test, press Sync exactly once while reasoning is active. Verify the latest state and first reasoning/tool block appear, then do not press Sync again and verify at least one later genuine reasoning/tool block arrives before completion. Verify final convergence.
 
 At least one test must cover the exact b83 edge case: the remote user message is already visible locally before Sync, but no reasoning stream is active. Pressing Sync must still re-arm and acquire the active reasoning path.
 
-If b83 passes repeated cases, freeze this manual cross-platform block-stream MVP and move to the next product phase. If it still fails, use the b83 diagnostics to localize the next exact page-owned acquisition failure; do not reopen automatic discovery or cross-platform SSE research as part of this MVP fix.
+After the b83 result is classified, the recorded conversation-entry one-shot sync requirement may be scheduled as the next minimal product change. It must reuse the authoritative Detail/sync path and must not become polling or a second response owner.
+
+If b83 passes repeated cases, freeze the manual cross-platform block-stream MVP before taking the entry-sync change as the next Candidate. If b83 still fails, first use b83 diagnostics to localize the exact page-owned acquisition failure; do not mix that diagnosis with the entry-sync requirement and do not reopen automatic discovery or cross-platform SSE research as part of this MVP fix.

@@ -1,12 +1,13 @@
 # Module Status
 
-## DEV-send-stream b85 candidate override — 2026-09-02
+## DEV-send-stream b86 diagnostics / b85 Runtime override — 2026-09-02
 
-- Build/runtime metadata: exact b85 product source `ec64dd170a6386612af8cb68b394045ce3c85313`; Push/PR CI passed; canonical Artifact `9822441595`; IPA `sha256:f03f5d657cbf71772d197fcea969cafb73d249c2dcc3dd2feb72e139d6e9cf61`; package `0.1.0 (85)`, source `6be1e8a8bafa`, iOS14 minimum, arm64. Runtime pending.
-- Cross-platform manual Sync: b84 Runtime proved authoritative Detail can contain approved trailing reasoning/tool timeline during active generation before a visible assistant row. b85 projects that timeline through the existing per-conversation response owner; covered Web remains optional continuation rather than the sole deterministic manual acquisition source.
-- Explicit Sync remains allowed for active external responses; Reload remains disabled during active response. No polling/timer/retry/watchdog/duplicate Send or hidden-thought presentation.
-- Client-owned Send true SSE, b80 spacing/stopped-thinking/final-materialization boundaries remain preserved. Stable/Frozen Send remains No; b39-b85 are permanently reserved.
-
+- b85 identity: exact product source `ec64dd170a6386612af8cb68b394045ce3c85313`; Push/PR CI passed; Artifact `9822441595`; IPA `sha256:f03f5d657cbf71772d197fcea969cafb73d249c2dcc3dd2feb72e139d6e9cf61`.
+- b85 real-device Runtime: explicit Sync reliably projected active authoritative Detail reasoning/tool timeline `1 -> 5 -> 7` on the same external response generation and final authoritative assistant materialization reconciled/cleared it. Manual block acquisition is Runtime Positive.
+- b85 automatic continuation: Rejected for reliability. Covered page re-armed/loaded after Sync but no external streaming/snapshot/resume event appeared; each newer block required another explicit Sync.
+- b86 identity: exact diagnostics product source `dc77a94be5b2f7eecd822480f759358ad6a0ad25`; Push `33566939415/100052171917` and PR `33566968066/100052259409` passed; canonical Artifact `9823485856`; IPA `sha256:25d483ac31473b124e6ad555b79c488e78da91ec1761ee8a40076b6e978bee6f`.
+- b86 is diagnostics-only: matching page-owned `stream_status` request/HTTP/state and matching resume offset structure are logged without issuing any new request or changing acquisition behavior. Runtime pending.
+- Client-owned Send remains true SSE; no Native guessed resume/offset, polling, timer, retry/watchdog, duplicate Send or hidden-thought presentation. Stable/Frozen Send remains No; b39-b86 reserved.
 
 ## DEV-send-stream b82 Runtime override — 2026-09-02
 

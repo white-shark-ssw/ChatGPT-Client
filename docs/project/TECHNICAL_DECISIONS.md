@@ -1,5 +1,12 @@
 # Technical Decisions
 
+## b85 Runtime / b86 continuation diagnostics qualification — 2026-09-02
+
+- **Authoritative block path:** b85 real-device Runtime confirms explicit `同步最新消息` may project the already-approved active Detail trailing reasoning/tool timeline through the existing per-conversation Repository response owner. Repeated Sync updated one response generation (`1 -> 5 -> 7` timeline items) and final authoritative materialization reconciled it correctly.
+- **Continuation qualification:** this does not establish one-Sync automatic continuation. In the supplied b85 run the covered page re-armed and loaded, but no page-owned streaming/snapshot/resume event appeared; each newer block required another explicit Sync. The remaining problem is page-owned continuation activation, not Native response ownership.
+- **Diagnostic decision:** b86 may log only matching page-owned `stream_status` request/HTTP/status token and matching resume offset structure/response. It must not issue new requests, construct Native resume/offset, poll, retry, resend or create another state owner.
+- **SSE research boundary:** historical exact Runtime already proves official Web can perform cross-device `/resume {conversation_id, offset}` -> HTTP200 `text/event-stream`; b86 exists only to determine whether/when the current covered page enters that official path after the new authoritative active-Detail anchor is known.
+
 ## Send MVP / b83 qualification — 2026-09-02
 
 - **TD-029 current MVP qualification:** client-owned Send continues to require the existing real SSE stream. For cross-platform/external turns, genuine block/page-snapshot progressive reasoning/tool updates are acceptable for the current MVP; token-level external SSE parity is deferred.

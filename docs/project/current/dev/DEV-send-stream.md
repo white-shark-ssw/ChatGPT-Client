@@ -2,24 +2,27 @@
 
 ## Status
 
-**Active — exact b83 is Runtime Rejected for the narrowed Send MVP. Repeated explicit manual Sync calls did execute `manual_sync_rearm`, but no external live reasoning/snapshot was acquired; the response only appeared after final authoritative synchronization. The former `latestUserChanged` gate was a real defect but not the final root cause. Client-owned Send remains true SSE. Cross-platform block/page-snapshot progressive reasoning remains the MVP target; automatic discovery and cross-platform token-level SSE remain deferred. A separate later requirement remains recorded: entering/selecting a conversation should make one latest-message sync attempt. Stable/Frozen Send remains No.**
+**Active — b83 is Runtime Rejected for manual cross-platform reasoning acquisition. b84 is a diagnostic-only Candidate now built and packaged to determine whether authoritative Detail already contains a trailing, already-presentational reasoning/tool timeline during active generation that current Native projection drops before a visible assistant row exists. Client-owned Send remains true SSE. Cross-platform block/page-snapshot reasoning remains the MVP target. Automatic discovery, cross-platform token-level SSE, progressive external final-token streaming, and official-native realtime production integration remain deferred. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Actual `main` verified: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Branch head before this checkpoint update: `dc34c1808fc507a0ba32319cdfcdeab8d38de2fd`
-- Exact b83 product/config source: `12e3c27138ebc81cbbae6236347122f79e03bf08`
-- Clean b83 CI/package head: `3771ddccc8d0847ce28f72acbbe311aaf30b7482`
-- Candidate: `DEV-send-stream-0.1.0-b83`
-- Version / Build: `0.1.0 (83)`
-- Push `33556857625 / 100019684027` — success
-- PR `33556862137` — success
-- Canonical Artifact: `9819681774`
-- Artifact ZIP: `sha256:b76c71493b01c88c6dfc60f9ef886e9e1c862d15a6e93ee00794ae6740a42682`
-- IPA SHA-256: `46f06106c3d47b3845a584665666fb6cb6d39cd66c0c9415412702e81795be97`
-- b39-b83 permanently reserved
-- b84: not yet emitted at this checkpoint; intended next scope is structural Detail-projection diagnostics only
+- Actual `main` verified this round: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
+- Branch head before this checkpoint update: `6d4db9f0317191ffb9c8e910726032c22ac0fcae`
+- b83 exact product/config source: `12e3c27138ebc81cbbae6236347122f79e03bf08`
+- b83 Candidate: `DEV-send-stream-0.1.0-b83` / `0.1.0 (83)` — Runtime Rejected
+- b84 exact product/config source: `626c3ad4d4d592618d794c4cb8854324f719f4a4`
+- b84 clean CI/package head: `c7398eea6b20788f0e13a18f98e79d3c81ebfc21`
+- b84 Candidate: `DEV-send-stream-0.1.0-b84`
+- Version / Build: `0.1.0 (84)`
+- Push run/job: `33559649854 / 100028790782` — success
+- PR run/job: `33559655688 / 100028812048` — success
+- Canonical b84 Artifact: `9820763662`
+- Artifact ZIP digest: `sha256:65ff52ddc7b6c4ad1e85e0c084a4f55799da06baad602dff3693edd12a814e9f`
+- IPA: `ChatGPTClient-0.1.0-b84-dev-send-stream.ipa`
+- IPA SHA-256: `1a276fbfc46efeb75566989892d8811561563d6c43a664b1bb7b30799468be38`
+- Package identity: `0.1.0 (84)` / `DEV-send-stream-0.1.0-b84` / source `c7398eea6b20` / iOS14 minimum / arm64
+- b39-b84 permanently reserved
 - Stable/Frozen Send: No
 
 ## Send MVP contract
@@ -30,7 +33,7 @@ Keep the existing true SSE response stream. Do not downgrade it.
 
 ### Cross-platform Send
 
-For MVP, genuine block/page-snapshot progressive reasoning/tool updates are acceptable instead of token-level SSE. Explicit manual Sync is the acquisition boundary: it must converge to newest authoritative Detail and then acquire an active reasoning path whose later genuine blocks can continue without another Sync for every block. Final completion keeps the b80 final-materialization boundary.
+For MVP, genuine block/page-snapshot progressive reasoning/tool updates are acceptable instead of token-level SSE. Explicit manual Sync remains the current acquisition boundary: it must converge to newest authoritative Detail and eventually acquire an active reasoning path whose later genuine blocks can continue without another Sync for every block. Final completion keeps the b80 final-materialization boundary.
 
 Deferred until broader product completion:
 
@@ -41,48 +44,53 @@ Deferred until broader product completion:
 
 ## b83 Runtime rejection — 2026-09-02
 
-Exact uploaded diagnostics identify `0.1.0 (83)`, Candidate `DEV-send-stream-0.1.0-b83`, source `3771ddccc8d0`, iOS 17.0.
+Exact b83 diagnostics from the user prove repeated successful manual Sync calls executed `manual_sync_rearm`; several covered-page re-arms also reached `page state=loaded`, yet no external live reasoning/snapshot was acquired and `livePresentationRowCount` stayed 0. The response only became available later as historical content after authoritative Detail advanced to the completed assistant message.
 
-Observed on conversation `sha256:d597360f6d29`:
+During the active response, authoritative Detail changed materially while visible message count stayed fixed: `mappingCount` advanced `1020 -> 1027 -> 1033 -> 1038 -> 1043` and `filteredRecipientMessageCount` advanced `427 -> 430 -> 433 -> 434 -> 436`. Therefore active server-side Detail is evolving before current Native visible projection exposes the assistant row.
 
-- repeated user Syncs returned authoritative Detail HTTP200 and repeatedly emitted `coveredExecutor.observing mode=manual_sync_rearm`;
-- several re-arms reached `coveredExecutor.page state=loaded`, proving the b83 callback correction executed;
-- two navigations also produced isolated `NSURLErrorDomain -999 / navigation_failed`, and one later background interval terminated the Web process; these are real noise but cannot be the sole root cause because clean page loads also failed to acquire reasoning;
-- no `external_page_owned`, live-response adoption, reasoning snapshot, or live presentation was observed; `livePresentationRowCount` stayed 0;
-- the user-socket structural frames remained `targetMatch=false` in this export;
-- during generation the authoritative Detail payload visibly evolved even while `visibleMessageCount` stayed 22: `mappingCount` advanced `1020 -> 1027 -> 1033 -> 1038 -> 1043`, and `filteredRecipientMessageCount` advanced `427 -> 430 -> 433 -> 434 -> 436`;
-- only later did authoritative visible count advance to 23 and the completed reasoning become historical content.
+The former `latestUserChanged` re-arm gate was a real defect and b83 fixed it, but that correction is insufficient. `NSURLErrorDomain -999` and one Web-process termination occurred, but cannot be the sole root cause because clean page loads also failed. Covered-page re-arm is not accepted as a deterministic active-reasoning acquisition mechanism.
 
-Conclusion: b83 proves the explicit re-arm gate is no longer skipped, but covered-page re-arm is not a deterministic active-reasoning acquisition mechanism. b83 is **Runtime Rejected** for the manual cross-platform block-stream MVP.
+Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b83-manual-sync-determinism-20260902.md`.
 
-## Current source-backed investigation
+## b84 exact diagnostic scope
 
-`ConversationRepository.parseCurrentBranch` builds a `pendingTimeline` from already-authorized presentational sources such as service/tool events, collapsed reasoning recap, and `is_thinking_preamble_message`. That timeline is attached only when a visible assistant message is appended. If parsing ends while the response is still active, the current function returns only `messages` plus `filteredRecipientMessageCount`; any trailing `pendingTimeline` is not surfaced. The same parser explicitly skips `assistant` content types `thoughts` and `inline_cot_expandable_content`.
+Current source inspection shows `ConversationRepository.parseCurrentBranch` can accumulate an already-presentational `pendingTimeline` from recognized reasoning recap/thinking-preamble/tool events and attaches it only when a visible assistant message is appended. Historically, if parsing ended while the response remained active, any trailing `pendingTimeline` was not surfaced by the return value.
 
-Do **not** infer that the skipped raw thoughts types are user-visible or authorized for presentation. The next diagnostic must record structure/counts only and must not export prompt, reasoning body, final body, tool body, auth/query/challenge data, or raw hidden chain-of-thought.
+b84 changes no acquisition behavior. It adds integer-only structural fields to `detail.response`:
 
-## Recorded later requirement — one sync attempt on conversation entry
+- `trailingTimelineItemCount`
+- `trailingReasoningItemCount`
+- `trailingToolItemCount`
+- `thinkingPreambleMessageCount`
+- `ignoredThoughtsMessageCount`
+- `ignoredInlineCotMessageCount`
 
-After the current reasoning-acquisition problem is resolved, entering/selecting a conversation should automatically request one latest-message synchronization attempt. It must reuse the authoritative Detail/`ConversationRepository` operation path, avoid duplicate concurrent Detail work, and remain a one-shot entry refresh rather than polling/timer/watchdog/retry machinery. The user's observation that the official app makes an entry refresh attempt is Runtime/behavior reference evidence; its exact endpoint/cadence/state machine remain Unverified.
+The last two fields count skipped internal message types only. Raw `thoughts` and `inline_cot_expandable_content` remain explicitly non-presentational. b84 does not export prompt text, reasoning text, final text, tool bodies, auth/session/challenge values, signed query values, or hidden chain-of-thought.
+
+Exact product source `626c3ad4...` changes only `ConversationFeature.swift` plus build/Candidate identity. Normal Push and PR CI both pass; canonical Artifact/package identity is verified. Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b84-detail-projection-diagnostics-20260902.md`.
+
+## Recorded later requirement — one Sync attempt on conversation entry
+
+After the current reasoning-acquisition problem is resolved, entering/selecting a conversation should automatically request exactly one latest-message synchronization attempt. It must reuse the authoritative Detail/`ConversationRepository` path, avoid duplicate concurrent Detail work, and remain a one-shot entry refresh rather than polling/timer/watchdog/retry machinery.
+
+The user's observation that the official app makes a network refresh attempt on conversation entry is Runtime/behavior reference evidence. Exact official endpoint/cadence/state machine remain Unverified. This requirement is **not implemented in b84**.
 
 ## Evidence ladder
 
 - b82 manual external Sync stability: **Runtime Rejected**
-- b83 Code written: **Yes**
-- b83 Push CI / PR CI: **Passed**
-- b83 Artifact/package identity: **Verified**
+- b83 Code / CI / Artifact: **Verified**
 - b83 real-device Runtime: **Rejected**
 - b83 former `latestUserChanged` defect: **Fixed but insufficient**
-- Detail payload changes during active generation: **Runtime Confirmed**
-- trailing pending presentational timeline during active Detail: **Unknown / next diagnostic target**
-- raw `thoughts` / `inline_cot_expandable_content` presentational authorization: **No / do not surface without separate evidence**
-- conversation-entry one-shot sync: **Requirement recorded / code not written**
+- active authoritative Detail graph evolution: **Runtime Confirmed**
+- b84 Code written: **Yes**
+- b84 Push CI: **Passed**
+- b84 PR CI: **Passed**
+- b84 Artifact/package identity: **Verified**
+- b84 Runtime/manual/real-device: **Pending**
+- trailing already-presentational pending timeline during active Detail: **Unknown / b84 Runtime target**
+- raw `thoughts` / `inline_cot_expandable_content` presentational authorization: **No**
+- conversation-entry one-shot Sync: **Requirement recorded / not implemented**
 - Stable/Frozen Send: **No**
-
-Durable evidence:
-
-- `docs/project/runtime-evidence/DEV-send-stream-b83-manual-sync-determinism-20260902.md`
-- next evidence file should record the b83 rejection chronology and any b84 structural Detail-projection result.
 
 ## Frozen / preserved boundaries
 
@@ -92,32 +100,39 @@ Durable evidence:
 - b67 client-owned protected Send and b72 tested simultaneous ownership: preserve.
 - `ConversationRepository` remains sole Native response/content authority.
 - `AuthSessionStore` remains sole native auth/account authority.
-- no duplicate Send/resend, fake stream, speculative retry/watchdog/fallback, second response owner, or raw hidden-thought presentation.
+- no duplicate Send/resend, fake stream, speculative retry/watchdog/fallback, polling, second response owner, or raw hidden-thought presentation.
 
-## Batch recovery point — b83 rejection to b84 diagnostic
+## Batch recovery point — b84 Runtime handoff
 
-Baseline: branch `dev/send-stream-20260829`, PR #29, head `dc34c1808fc507a0ba32319cdfcdeab8d38de2fd`, b83 permanently reserved and Runtime Rejected.
+Baseline: branch `dev/send-stream-20260829`, PR #29, b83 permanently reserved/Runtime Rejected, b84 product source `626c3ad4...`, clean CI/package head `c7398eea...`.
 
 Confirmed complete:
 
-- user Runtime result received;
-- uploaded b83 diagnostics inspected;
-- b83 re-arm execution and failure chronology localized;
-- source parser inspection identified trailing `pendingTimeline` as the next exact unknown.
+- b83 user Runtime result and diagnostics analyzed;
+- durable b83 Runtime rejection evidence written;
+- b84 identity verified unused and allocated;
+- privacy-safe b84 structural diagnostic source committed;
+- Push and PR CI passed;
+- canonical b84 Artifact downloaded and package identity verified;
+- b84 durable evidence written.
 
-Pending deterministic writes/actions:
+Pending deterministic docs/actions:
 
-1. durable b83 rejection evidence and BUILD_TEST_INDEX status update;
-2. update PR #29 to b83 rejected / b84 structural diagnostic next;
-3. verify b84 identity is unused, then allocate `DEV-send-stream-0.1.0-b84` only for privacy-safe structural Detail-projection diagnostics;
-4. instrument counts/structural classifications only, build/CI/package, then hand exact b84 to human Runtime.
+1. update `BUILD_TEST_INDEX.md` b83 status and add b84 row;
+2. update PR #29 to b83 rejected / b84 Runtime diagnostic next;
+3. hand exact b84 IPA to user for real-device structural diagnostic.
 
-Do not touch client-owned SSE, automatic discovery, cross-platform token SSE, entry-one-shot Sync behavior, or the official realtime research probe during this batch.
+Do not touch client-owned SSE, automatic discovery, cross-platform token SSE, conversation-entry one-shot Sync behavior, or official realtime probe while b84 Runtime is pending.
 
 ## Session round counter
 
 This user turn is **round 13**. Continue displaying the current round count at the end of each user-facing response.
 
-## Next exact action
+## Next exact action — Human Runtime gate
 
-Complete the durable b83 Runtime rejection record, then allocate b84 after identity/conflict verification. b84 must answer one question only: during active cross-platform generation, does authoritative Detail parsing end with a non-empty already-authorized presentational `pendingTimeline` (reasoning/tool/thinking-preamble) that the current projection drops before a visible assistant message exists? If yes, use that evidence for the next minimal acquisition design. If no, stop and reassess the data source; do not expose skipped raw thoughts and do not add speculative polling.
+Install exact b84. Start a deliberately long cross-platform response. While it is still generating, press manual Sync two or three times at separated points; b84 is not expected to fix the UI. Export diagnostics while the response is still active if possible and provide the JSON.
+
+Decisive result:
+
+- any active `detail.response` with `trailingTimelineItemCount > 0` proves an already-authorized presentational trailing timeline exists in authoritative Detail and is being dropped by the current projection; next work may be a minimal Native projection fix;
+- if active samples consistently show `trailingTimelineItemCount == 0`, reject that hypothesis and reassess the data source. Do not expose raw skipped thoughts and do not add speculative polling.

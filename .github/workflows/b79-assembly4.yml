@@ -1,0 +1,58 @@
+name: b79 persist validated product blobs
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b79-assembly-20260901
+    paths:
+      - ".github/workflows/b79-assembly4.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard formal branch
+        shell: bash
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "b88c5269cfd0fb4e76f3a19ee4475cd03785a753" || { echo "Formal branch drifted before b79 assembly"; exit 1; }
+
+      - name: Apply exact b79 patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          script = Path('.github/scripts/b79_apply.py').read_text()
+          needle = "replace_exact(feature, '        let showsCopy = message.role == .assistant && !snapshot.phase.isActive && row.isLastChunk\\n', '        let showsCopy = message.role == .assistant && !snapshot.phase.isActive && !message.text.isEmpty && row.isLastChunk\\n')"
+          replacement = needle[:-1] + ', expected=2)'
+          if script.count(needle) != 1: raise SystemExit(f'expected one showsCopy patch call, found {script.count(needle)}')
+          exec(compile(script.replace(needle, replacement, 1), '.github/scripts/b79_apply.py', 'exec'))
+          PY
+
+      - name: Exact scope and Xcode validation
+        shell: bash
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated non-workflow blobs
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "dev: stage validated b79 product blobs"
+          git push origin HEAD:${GITHUB_REF_NAME}

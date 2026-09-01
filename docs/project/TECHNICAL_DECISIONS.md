@@ -1,5 +1,12 @@
 # Technical Decisions
 
+## Send MVP / b83 qualification — 2026-09-02
+
+- **TD-029 current MVP qualification:** client-owned Send continues to require the existing real SSE stream. For cross-platform/external turns, genuine block/page-snapshot progressive reasoning/tool updates are acceptable for the current MVP; token-level external SSE parity is deferred.
+- **Explicit recovery contract:** manual `同步最新消息` is a hard reliability boundary. After a successful explicit Sync, if the same conversation remains selected and `ConversationRepository` does not already own an active live response, the covered target page may be force re-armed exactly once even when the latest user ID did not change. b83 implements only this source-backed correction.
+- **Deferred:** automatic remote-turn discovery/acquisition, cross-platform token-level reasoning SSE, progressive external final-token streaming, and production integration of the official iOS native realtime/WebSocket path are postponed until the broader product is completed.
+- This qualification supersedes the earlier requirement that automatic prompt receipt/live acquisition block the current Send MVP. It does not revoke b80 stopped-thinking/final-materialization boundaries, b67 client-owned protected Send, b72 tested simultaneous ownership, or `ConversationRepository` response ownership.
+
 ## b82 Runtime qualification — 2026-09-02
 
 - **TD-029 external-acquisition qualification:** exact b82 proves the current at-document-start user-socket exact-conversation `targetMatch=true` event is sufficient to trigger an automatic authoritative Sync/re-arm, but in the tested long remote turn it arrived only after authoritative Detail already contained the added user+assistant pair (8 -> 10). No earlier incoming socket frame, page-owned active-response signal, external snapshot or Repository live response was observed. Therefore this event is authorized as a completion/update trigger only, not as a request-start/live-stream trigger.

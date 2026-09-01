@@ -1,0 +1,71 @@
+name: b79 guarded assembly retry
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b79-assembly-20260901
+    paths:
+      - ".github/workflows/b79-assembly3.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard formal branch
+        shell: bash
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "b88c5269cfd0fb4e76f3a19ee4475cd03785a753" || { echo "Formal branch drifted before b79 assembly"; exit 1; }
+
+      - name: Apply exact b79 patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          script = Path('.github/scripts/b79_apply.py').read_text()
+          script = script.replace('raise SystemExit(f"{path}: expected {expected} matches, found {count}")', 'raise SystemExit(f"{path}: expected {expected} matches, found {count}; old={old[:100]!r}")')
+          needle = "replace_exact(feature, '        let showsCopy = message.role == .assistant && !snapshot.phase.isActive && row.isLastChunk\\n', '        let showsCopy = message.role == .assistant && !snapshot.phase.isActive && !message.text.isEmpty && row.isLastChunk\\n')"
+          replacement = needle[:-1] + ', expected=2)'
+          if script.count(needle) != 1:
+              raise SystemExit(f'expected one showsCopy patch call, found {script.count(needle)}')
+          script = script.replace(needle, replacement, 1)
+          exec(compile(script, '.github/scripts/b79_apply.py', 'exec'))
+          PY
+
+      - name: Exact scope and diff check
+        shell: bash
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          grep -q 'CURRENT_PROJECT_VERSION = 79;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DEV-send-stream-0.1.0-b79' .github/workflows/ios-foundation.yml
+          grep -q 'manual_sync_rearm' ChatGPTClient/RootViewController.swift
+          grep -q 'isExternalStoppedWithoutFinal' ChatGPTClient/RootViewController.swift
+          grep -q '已停止思考' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Xcode 16.4 Simulator build
+        shell: bash
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated b79 product state
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "dev: assemble b79 runtime corrections"
+          git push origin HEAD:${GITHUB_REF_NAME}

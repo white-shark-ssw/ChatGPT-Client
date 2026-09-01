@@ -118,3 +118,5 @@ This development conversation completed round 14 before the current b80 Runtime 
 ## Write-chain note
 
 Two attempted updates to older durable evidence files were rejected by GitHub with SHA mismatch and were not replayed blindly. No product/config state changed. The current b80 Runtime evidence and this checkpoint contain the current classification and Human Gate.
+
+Current feature branch has advanced only through documentation commits after the exact b80 product source; product/config source identity remains `b0f51041c2d7b645f152752ea6196526b2e4e0f6`.

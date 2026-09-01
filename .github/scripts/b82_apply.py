@@ -37,6 +37,12 @@ replace_exact(
 
 replace_exact(
     root,
+    "    case .externalStreamingObserved: eventName = \"external_streaming_observed\"\n    case .externalConversationSnapshot(_, _): eventName = \"external_conversation_snapshot\"",
+    "    case .externalStreamingObserved: eventName = \"external_streaming_observed\"\n    case .externalAcquisitionHint: eventName = \"external_acquisition_hint\"\n    case .externalConversationSnapshot(_, _): eventName = \"external_conversation_snapshot\"",
+)
+
+replace_exact(
+    root,
     "            switch event {\n            case .externalResumeObserved:\n                return",
     "            switch event {\n            case .externalAcquisitionHint:\n                guard externalGeneration == nil else { return }\n                self.handleExternalAcquisitionHint(conversationID: conversationID, sendExecutor: sendExecutor)\n                return\n            case .externalResumeObserved:\n                return",
 )
@@ -77,7 +83,7 @@ helper = '''    private func handleExternalAcquisitionHint(conversationID: Strin
                 fields["visibleMessageCount"] = String(detail.messages.count)
                 self.diagnostics.info(category: "webSend", name: "externalAcquisitionSync.completed", fields: fields)
                 if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
-                guard latestUserChanged, self.repository.selectedConversationID == conversationID, !self.repository.isLiveResponseActive(for: conversationID) else { return }
+                guard latestUserChanged, self.repository.selectedConversationID == conversationID, !self.repository.isLiveResponseActive(for: conversationID), self.sendExecutors[conversationID] === sendExecutor else { return }
                 self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true)
             case .failure(let error):
                 self.diagnostics.error(category: "webSend", name: "externalAcquisitionSync.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))

@@ -114,3 +114,7 @@ Do not interpret these sub-boundary freezes as `DEV-send-stream` Stable/Frozen a
 ## Session round counter
 
 This development conversation completed round 14 before the current b80 Runtime result; this checkpoint update occurs during round 15. Continue displaying the current round count at the end of each user-facing response in this conversation.
+
+## Write-chain note
+
+A later attempt to update the older account-wide notification evidence file hit a GitHub SHA mismatch and was not replayed blindly. No product/config state changed. The current b80 Runtime evidence file and this checkpoint already carry the required current acquisition-gate conclusion.

@@ -102,6 +102,15 @@ Required conclusion from the probe:
 
 Do **not** allocate b81 merely to guess the transport. If the probe remains ambiguous, stay at Human Gate.
 
+## Frozen sub-boundaries for this Work
+
+The following are now frozen unless the user supplies new explicit Runtime evidence requiring change:
+
+- final tool/timeline -> reasoning-divider spacing accepted in b80;
+- stopped external reasoning/tools remain reasoning/tools and are not promoted into final body text.
+
+Do not interpret these sub-boundary freezes as `DEV-send-stream` Stable/Frozen as a whole.
+
 ## Session round counter
 
 This development conversation completed round 14 before the current b80 Runtime result; this checkpoint update occurs during round 15. Continue displaying the current round count at the end of each user-facing response in this conversation.

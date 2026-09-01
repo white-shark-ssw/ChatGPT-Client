@@ -152,6 +152,8 @@ struct ConversationDetail {
     let title: String
     let currentNodeID: String
     let messages: [ConversationMessage]
+    let trailingResponseTimeline: [ConversationResponseTimelineItem]
+    let trailingReasoningDurationSeconds: Int?
 }
 
 enum ConversationRepositoryError: LocalizedError, Equatable {
@@ -1067,7 +1069,7 @@ final class ConversationRepository {
             let projection = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
             let messages = projection.messages
             let title = Self.normalizedTitle(payload["title"] as? String)
-            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages)
+            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages, trailingResponseTimeline: projection.trailingResponseTimeline, trailingReasoningDurationSeconds: projection.trailingReasoningDurationSeconds)
             var fields = callbackFields
             fields["httpStatus"] = String(response.statusCode)
             fields["byteCount"] = String(data.count)
@@ -1307,7 +1309,7 @@ final class ConversationRepository {
         return error
     }
 
-    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int, trailingTimelineItemCount: Int, trailingReasoningItemCount: Int, trailingToolItemCount: Int, thinkingPreambleMessageCount: Int, ignoredThoughtsMessageCount: Int, ignoredInlineCotMessageCount: Int) {
+    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int, trailingResponseTimeline: [ConversationResponseTimelineItem], trailingReasoningDurationSeconds: Int?, trailingTimelineItemCount: Int, trailingReasoningItemCount: Int, trailingToolItemCount: Int, thinkingPreambleMessageCount: Int, ignoredThoughtsMessageCount: Int, ignoredInlineCotMessageCount: Int) {
     var nodeIDs: [String] = []
     var visited = Set<String>()
     var nodeID: String? = currentNode
@@ -1404,7 +1406,7 @@ final class ConversationRepository {
     }
     let trailingReasoningItemCount = pendingTimeline.filter { $0.kind == .reasoning }.count
     let trailingToolItemCount = pendingTimeline.filter { $0.kind == .tool }.count
-    return (messages, filteredRecipientMessageCount, pendingTimeline.count, trailingReasoningItemCount, trailingToolItemCount, thinkingPreambleMessageCount, ignoredThoughtsMessageCount, ignoredInlineCotMessageCount)
+    return (messages, filteredRecipientMessageCount, pendingTimeline, pendingReasoningDurationSeconds, pendingTimeline.count, trailingReasoningItemCount, trailingToolItemCount, thinkingPreambleMessageCount, ignoredThoughtsMessageCount, ignoredInlineCotMessageCount)
 }
 
     private static func collapsedReasoningSummary(from message: [String: Any], content: [String: Any]) -> String? {
@@ -2128,6 +2130,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)
     fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
     diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
+    updateConversationMenu()
 }
 
     private func synchronizeLiveReasoningDisclosure(snapshot: ConversationLiveResponseSnapshot, messageID: String, conversationID: String) {
@@ -2337,18 +2340,25 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let selectedID = repository.selectedConversationID
         let operationKind = selectedID.flatMap { repository.detailOperationSnapshot(for: $0)?.kind }
         let recoveryInProgress = operationKind == .sync || operationKind == .reload
-        let canRecover = selectedID != nil && !recoveryInProgress
-        let recoveryAttributes: UIMenuElement.Attributes = canRecover ? [] : [.disabled]
-        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: recoveryAttributes) { [weak self] _ in self?.syncLatestMessages() }
-        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: recoveryAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
+        let liveSnapshot = selectedID.flatMap { repository.liveResponse(for: $0) }
+        let responseActive = liveSnapshot?.phase.isActive == true
+        let localResponseActive = responseActive && !(liveSnapshot?.promptText.isEmpty ?? true)
+        let canSync = selectedID != nil && !recoveryInProgress && !localResponseActive
+        let canReload = selectedID != nil && !recoveryInProgress && !responseActive
+        let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
+        let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
+        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
+        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: reloadAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), primaryAction: nil, menu: UIMenu(children: [syncAction, reloadAction]))
     }
 
     private func syncLatestMessages() {
         guard let id = repository.selectedConversationID else { return }
+        if let snapshot = repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
         if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         let previousMessages = messages
         let previousLatestUserID = previousMessages.last(where: { $0.role == .user })?.id
+        let previousTrailingTimeline = repository.selectedConversation?.trailingResponseTimeline ?? []
         let hadLoadedDetail = repository.selectedConversation?.id == id
         presentationGeneration += 1
         let currentPresentationGeneration = presentationGeneration
@@ -2360,9 +2370,10 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             self.activityIndicator.stopAnimating()
             switch result {
             case .success(let detail):
-                let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
+                let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages) || previousTrailingTimeline != detail.trailingResponseTimeline
                 let latestUserChanged = detail.messages.last(where: { $0.role == .user })?.id != previousLatestUserID
                 _ = self.repository.clearTerminalExternalLiveResponseAfterAuthoritativeRefresh(conversationID: id)
+                _ = self.repository.adoptExternalAuthoritativeDetailTimeline(conversationID: id, timeline: detail.trailingResponseTimeline, reasoningDurationSeconds: detail.trailingReasoningDurationSeconds, authoritativeVisibleMessageCount: detail.messages.count, latestVisibleRole: detail.messages.last?.role)
                 self.apply(detail) { [weak self] in
                     guard let self else { return }
                     self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0)
@@ -2605,6 +2616,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID else { return }
+        guard !repository.isLiveResponseActive(for: id) else { return }
         if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         captureScrollAnchor(for: id)
         presentationGeneration += 1

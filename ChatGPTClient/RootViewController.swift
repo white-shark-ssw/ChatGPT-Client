@@ -1017,6 +1017,67 @@ extension ConversationRepository {
         return ExternalPageProjection(timeline: timeline, finalText: finalText, reasoningEnded: reasoningEnded, reasoningDurationSeconds: reasoningDurationSeconds, hasFinalMessage: hasFinalMessage)
     }
 
+    @discardableResult
+    func adoptExternalAuthoritativeDetailTimeline(conversationID: String, timeline: [ConversationResponseTimelineItem], reasoningDurationSeconds: Int?, authoritativeVisibleMessageCount: Int, latestVisibleRole: ConversationMessage.Role?) -> Int? {
+        precondition(Thread.isMainThread)
+        if timeline.isEmpty {
+            guard let snapshot = responseRuntime.snapshots[conversationID], snapshot.phase.isActive, snapshot.promptText.isEmpty else { return nil }
+            guard authoritativeVisibleMessageCount > snapshot.baselineVisibleMessageCount, latestVisibleRole == .assistant else { return snapshot.generation }
+            responseRuntime.snapshots.removeValue(forKey: conversationID)
+            var fields = diagnosticsFields(for: conversationID)
+            fields["responseGeneration"] = String(snapshot.generation)
+            fields["authoritativeVisibleMessageCount"] = String(authoritativeVisibleMessageCount)
+            fields["baselineVisibleMessageCount"] = String(snapshot.baselineVisibleMessageCount)
+            fields["reason"] = "authoritative_assistant_materialized"
+            DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.externalDetailReconciled", fields: fields)
+            responseRuntime.onChange?(conversationID)
+            return nil
+        }
+
+        if let active = responseRuntime.snapshots[conversationID], active.phase.isActive, !active.promptText.isEmpty {
+            var fields = diagnosticsFields(for: conversationID)
+            fields["responseGeneration"] = String(active.generation)
+            fields["reason"] = "client_owned_response_active"
+            DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.externalDetailDiscarded", fields: fields)
+            return nil
+        }
+
+        let generation: Int
+        var snapshot: ConversationLiveResponseSnapshot
+        if let active = responseRuntime.snapshots[conversationID], active.phase.isActive, active.promptText.isEmpty {
+            generation = active.generation
+            snapshot = active
+        } else {
+            generation = (responseRuntime.generations[conversationID] ?? 0) + 1
+            responseRuntime.generations[conversationID] = generation
+            snapshot = ConversationLiveResponseSnapshot(generation: generation, conversationID: conversationID, baselineVisibleMessageCount: authoritativeVisibleMessageCount, promptText: "", phase: .reasoning, timeline: [], finalText: "", reasoningEnded: false, reasoningDurationSeconds: nil, failureReason: nil)
+            var fields = diagnosticsFields(for: conversationID)
+            fields["responseGeneration"] = String(generation)
+            fields["phase"] = ConversationLiveResponsePhase.reasoning.rawValue
+            fields["source"] = "external_authoritative_detail"
+            fields["baselineVisibleMessageCount"] = String(authoritativeVisibleMessageCount)
+            DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.started", fields: fields)
+        }
+
+        let changed = snapshot.phase != .reasoning || snapshot.timeline != timeline || snapshot.reasoningDurationSeconds != reasoningDurationSeconds || !snapshot.finalText.isEmpty
+        snapshot.phase = .reasoning
+        snapshot.timeline = timeline
+        snapshot.finalText = ""
+        snapshot.reasoningDurationSeconds = reasoningDurationSeconds
+        snapshot.failureReason = nil
+        responseRuntime.snapshots[conversationID] = snapshot
+        var fields = diagnosticsFields(for: conversationID)
+        fields["responseGeneration"] = String(generation)
+        fields["changed"] = changed ? "true" : "false"
+        fields["timelineItemCount"] = String(timeline.count)
+        fields["reasoningItemCount"] = String(timeline.filter { $0.kind == .reasoning }.count)
+        fields["toolCount"] = String(timeline.filter { $0.kind == .tool }.count)
+        fields["source"] = "authoritative_detail"
+        DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.externalDetailSnapshot", fields: fields)
+        if changed { responseRuntime.onChange?(conversationID) }
+        return generation
+    }
+
     func consumeExternalConversationSnapshot(_ serviceMessages: [[String: Any]], conversationID: String, generation: Int) {
         precondition(Thread.isMainThread)
         guard var snapshot = responseRuntime.snapshots[conversationID], snapshot.generation == generation, snapshot.phase.isActive else {
@@ -1224,7 +1285,8 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             self.observeExternalResponseIfNeeded(conversationID: id)
         }
         detailViewController.onManualLatestSyncApplied = { [weak self] id, _ in
-            guard let self, self.repository.selectedConversationID == id, !self.repository.isLiveResponseActive(for: id) else { return }
+            guard let self, self.repository.selectedConversationID == id else { return }
+            if let snapshot = self.repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
             self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
         }
     }
@@ -1300,9 +1362,11 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     private func observeExternalResponseIfNeeded(conversationID: String, forcePageReload: Bool = false) {
-        guard repository.selectedConversationID == conversationID, !repository.isLiveResponseActive(for: conversationID) else { return }
+        guard repository.selectedConversationID == conversationID else { return }
+        let existingSnapshot = repository.liveResponse(for: conversationID)
+        guard existingSnapshot?.phase.isActive != true || existingSnapshot?.promptText.isEmpty == true else { return }
         let sendExecutor = executor(for: conversationID)
-        var externalGeneration: Int?
+        var externalGeneration: Int? = existingSnapshot?.phase.isActive == true ? existingSnapshot?.generation : nil
         sendExecutor.observeExistingConversation(conversationID: conversationID, forceReload: forcePageReload) { [weak self, weak sendExecutor] event in
             guard let self, let sendExecutor else { return }
             func ensureGeneration() -> Int? {
@@ -1468,9 +1532,10 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
         let snapshot = repository.liveResponse(for: conversationID)
         let selectedResponseActive = snapshot?.phase.isActive ?? false
+        let localResponseActive = selectedResponseActive && !(snapshot?.promptText.isEmpty ?? true)
         validationSendButton.isEnabled = !selectedResponseActive
         validationSendButton.setTitle(selectedResponseActive ? "回答中…" : "测试发送…", for: .normal)
-        detailViewController.navigationItem.rightBarButtonItem?.isEnabled = !selectedResponseActive
+        detailViewController.navigationItem.rightBarButtonItem?.isEnabled = !localResponseActive
     }
 
     private func showValidationError(_ message: String) {

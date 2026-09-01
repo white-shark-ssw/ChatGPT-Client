@@ -1,0 +1,71 @@
+name: b78 governance docs sync
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b78-assembly-20260901
+    paths:
+      - ".github/workflows/b78-doc-sync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout formal feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Sync b77/b78 durable governance state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def insert_once(path, marker, insertion):
+              p = Path(path)
+              text = p.read_text()
+              if insertion.strip() in text:
+                  return
+              count = text.count(marker)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one marker, found {count}: {marker!r}")
+              p.write_text(text.replace(marker, insertion + marker, 1))
+
+          build = Path("docs/project/BUILD_TEST_INDEX.md")
+          text = build.read_text()
+          marker = "| `DEV-send-stream-0.1.0-b76`"
+          if "`DEV-send-stream-0.1.0-b78`" not in text:
+              rows = (
+                  "| `DEV-send-stream-0.1.0-b78` | `DEV-send-stream` | `0.1.0 (78)` | exact product/config source `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809`; clean product `180065e0faf947292a9f21b56c4ea366a5c322fe`; PR #29 | Final assembly/Xcode `33482721335/99775722851`; Push `33482983693/99776545604`; PR `33482987997/99776557269`; canonical Push Artifact `9790836559`; ZIP `sha256:7b5900a960ef680cce34642ca6cef232f201a260b182d6b640266e81982b081f`; IPA `sha256:726e3c09bcac4eb8a40a8ecb79b8abb0f145d89e41481083bc51941a7978620e`; package Release/source `031b1a1f2c1d`/iOS14/arm64 | Runtime pending: tool prominence/geometry, user-message parity+no truncation, relaunch-history/read terminalization, retained external reasoning/tool continuation | **Code/Simulator/Push+PR CI/Artifact/package verified; Runtime Unverified; permanently reserved** |\n"
+                  "| `DEV-send-stream-0.1.0-b77` | `DEV-send-stream` | `0.1.0 (77)` | exact source `c0266e83a5a27d2e39751ecb84a25e0072fb01f4`; PR #29 | Assembly `33443341526/99656536553`; Push `33443626427/99657452954`; PR `33443630320/99657464938`; Artifact `9777216066`; ZIP `sha256:ce26379ad43e338afc64bbe51e2fbbbad0063eb85923ba736504ff59f092a2d8`; IPA `sha256:651f5cfe05e862a74153e22479f2df649baf3412c10e583242d0a24b139e531b` | Device Runtime partial/rejected: tool rows still wrong/not prominent, user bubble raw-markup + truncation, relaunch list 403 cancelled shared Detail and left zombie coalesced operation; DOM probe did not expose earlier progressive final body | **Runtime partial/rejected; permanently reserved** |\n"
+              )
+              idx = text.find(marker)
+              if idx < 0:
+                  raise SystemExit("BUILD_TEST_INDEX b76 marker missing")
+              build.write_text(text[:idx] + rows + text[idx:])
+
+          state_override = """## DEV-send-stream b78 candidate override — 2026-09-01\n\nExact b78 `DEV-send-stream-0.1.0-b78` / `0.1.0 (78)` is the current real-device candidate. Clean product commit `180065e0faf947292a9f21b56c4ea366a5c322fe` changes only `ChatGPTClient/Conversation/ConversationFeature.swift` and `ChatGPTClient.xcodeproj/project.pbxproj`; workflow-only child `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809` is the exact product/config source. Final tooling validation `33482721335 / 99775722851` passed exact scope, `git diff --check`, and Xcode 16.4 Simulator build. Formal Push CI `33482983693 / 99776545604` and PR CI `33482987997 / 99776557269` passed. Canonical Push Artifact `9790836559` has ZIP `sha256:7b5900a960ef680cce34642ca6cef232f201a260b182d6b640266e81982b081f` and IPA `sha256:726e3c09bcac4eb8a40a8ecb79b8abb0f145d89e41481083bc51941a7978620e`; independent package inspection confirms Release 0.1.0 (78), Candidate b78, source marker `031b1a1f2c1d`, MinimumOSVersion 14.0, Mach-O arm64.\n\n- b77 device Runtime is partial/rejected: inline tool rows still lacked correct deterministic/prominent presentation; Native user messages could show raw inline Markdown and truncate because rendering and measurement diverged; a route-level list HTTP403 invalidated-and-cancelled the shared transient session, cancelling the selected Detail, whose cancellation path failed to terminalize the current operation and caused permanent coalescing/`正在读取会话…`.\n- b78 uses one attributed representation for user rendering and measurement, explicit character wrapping and inline-only Markdown on supported OS versions; it records privacy-safe latest-user character count for integrity evidence.\n- b78 retires a 401/403-invalidated transient session with `finishTasksAndInvalidate()` so already-running Detail tasks are not cancelled; any current Detail cancellation is terminalized instead of leaving a zombie operation. No retry/timer/watchdog/polling/fallback was added.\n- b78 tool rows are a distinct medium-weight/label-color presentation whose icon/text/separator paragraph geometry is owned by the tool paragraph style instead of mixed reasoning/tool spacing. Runtime visual acceptance remains required.\n- b77's structure-only DOM evidence remains negative for an earlier progressive final-body source; b78 does not promote DOM text/WebSocket bodies or fake final streaming.\n- Runtime/manual/real-device b78: **Pending / Unverified**. Stable/Frozen Send: **No**. b39-b78 are permanently reserved.\n\n"""
+          insert_once("docs/project/PROJECT_STATE.md", "## DEV-send-stream b76 candidate override — 2026-09-01\n", state_override)
+
+          module_override = """## DEV-send-stream b78 candidate override — 2026-09-01\n\n- Build/runtime metadata: exact b78 product/config source `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809`; clean product commit `180065e0faf947292a9f21b56c4ea366a5c322fe`; final Xcode validation `33482721335 / 99775722851`; Push `33482983693 / 99776545604` and PR `33482987997 / 99776557269` success; canonical Artifact `9790836559`; ZIP `7b5900a9...b081f`; IPA `726e3c09...8620e`; package independently verified as Release 0.1.0 (78), Candidate b78, source `031b1a1f2c1d`, iOS14 minimum, arm64. Runtime pending.\n- Conversation read/recovery: b77 diagnostics prove list HTTP403 cancelled the shared transient session and the selected Detail, then the cancelled Detail operation remained coalescible forever. b78 retires the transport without cancelling in-flight work and terminalizes current Detail cancellation; no retry/fallback/state-owner duplication.\n- User-message presentation: b78 renders and measures from the same attributed representation, uses character wrapping, and supports inline-only Markdown semantics on supported OS versions; this targets the exact official-Web parity/truncation defect reported on b77.\n- Tool activity presentation: b78 removes mixed paragraph-style ownership at reasoning/tool boundaries and treats tool icon/text/separator as one distinct tool paragraph presentation; visual prominence remains a real-device gate.\n- External continuation: b76/b77 reasoning/tool adoption remains the accepted positive boundary. b77 DOM-structure evidence did not reveal final text before plural completion, so progressive final-body authority remains unresolved and no fake stream is added.\n- Stable/Frozen Send remains No; b39-b78 are permanently reserved.\n\n"""
+          insert_once("docs/project/MODULE_STATUS.md", "## DEV-send-stream b76 candidate override — 2026-09-01\n", module_override)
+          PY
+
+      - name: Commit docs-only sync
+        shell: bash
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md | sort)"
+          test "$changed" = "$expected" || { echo "Unexpected docs scope:"; printf '%s\n' "$changed"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md
+          git commit -m "docs: record b78 candidate and b77 runtime boundary"
+          git push origin HEAD:dev/send-stream-20260829

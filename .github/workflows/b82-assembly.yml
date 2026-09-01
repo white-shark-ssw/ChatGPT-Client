@@ -1,0 +1,55 @@
+name: b82 guarded assembly
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b82-assembly-20260902
+    paths:
+      - ".github/workflows/b82-assembly.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard formal branch
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "9183daa299fac5ec28ebe53ab89bb919a991d6d2" || { echo "Formal branch drifted before b82 assembly"; exit 1; }
+
+      - name: Apply exact b82 product patch
+        run: python3 .github/scripts/b82_apply.py
+
+      - name: Validate exact scope and invariants
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          ! git diff -- ChatGPTClient/RootViewController.swift | grep -E '^\+.*(Timer|asyncAfter|watchdog|retry|poll)' || exit 1
+          grep -q 'case externalAcquisitionHint' ChatGPTClient/RootViewController.swift
+          grep -q 'externalAcquisitionSync.started' ChatGPTClient/RootViewController.swift
+          grep -q 'latestUserChanged' ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 82;' ChatGPTClient.xcodeproj/project.pbxproj)" = 2
+          test "$(grep -c 'DEV-send-stream-0.1.0-b82' ChatGPTClient.xcodeproj/project.pbxproj)" = 2
+
+      - name: Xcode 16.4 Simulator build
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated product blobs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/RootViewController.swift
+          git commit -m "dev: stage validated b82 acquisition trigger"
+          git push origin HEAD:${GITHUB_REF_NAME}

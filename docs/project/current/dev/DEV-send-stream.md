@@ -89,6 +89,9 @@ Exact research IPA:
 - `ChatGPT-Official-RealtimeProbe-TrollStore.ipa`
 - SHA-256: `f23adc1e78dc3f76b66140f23548e331a3545c5b9772608122f493e738242e0f`
 - approx size: 95 MB
+- bundle ID: `com.openai.chat`
+- version/build: `1.2026.202 / 30140022279`
+- ZIP integrity validation: Passed
 
 Static extracted-tree comparison versus the user source package found exactly three intentional file-content changes:
 
@@ -112,7 +115,7 @@ Durable evidence:
 - chained Probe CI: Passed
 - chained Probe Artifact produced: Yes
 - TrollStore research IPA assembled: Yes
-- package static hash/difference validation: Passed
+- package static hash/difference/ZIP validation: Passed
 - TrollStore install: **Pending Human Runtime**
 - Probe UI load: **Pending Human Runtime**
 - original Enhancer preserved at runtime: **Pending Human Runtime**
@@ -143,7 +146,7 @@ The user explicitly reset the conversation round count. This user turn is **roun
 
 **Do not allocate b83 yet.**
 
-1. Install exact research IPA `ChatGPT-Official-RealtimeProbe-TrollStore.ipa` SHA-256 `f23adc1e78dc3f76b66140f23548e331a3545c5b9772608122f493e738242e0f` through TrollStore.
+1. Install exact research IPA `ChatGPT-Official-RealtimeProbe-TrollStore.ipa` SHA-256 `f23adc1e78dc3f76b66140f23548e331a3545c5b9772608122f493e738242e0f` through TrollStore. Prefer installing over the existing ChatGPT rather than manually deleting it first; if TrollStore rejects the replacement, preserve the existing app and report the exact error.
 2. Fully terminate and relaunch ChatGPT.
 3. Confirm a small blue `Probe` button appears near the top-right safe area.
 4. If the app fails to launch or no Probe button appears, stop and report that exact result; diagnose packaging/load only.

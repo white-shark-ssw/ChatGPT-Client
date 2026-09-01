@@ -34,27 +34,14 @@ This avoids destabilizing an active transport/evidence task while also ensuring 
 
 The active Send/Stream branch changes shared roadmap files. Until that Work closes/synchronizes, this document records the intended insertion point without editing its checkpoint, branch, Candidate, `DEVELOPMENT_PLAN.md`, `START_HERE.md` or attachment plan.
 
-## Parallel-development boundary with `DEV-send-stream`
+### Serial execution boundary
 
-`DEV-send-stream` and `DEV-composer-parity` **must not run as independent sibling development branches from `main`** while Send/Stream remains unmerged.
+The user explicitly chooses **one development task at a time** for this sequence.
 
-Current source evidence establishes direct overlap:
-
-- Send/Stream owns the authoritative `ConversationRepository` live-response lifecycle and its current product corrections modify `ChatGPTClient/Conversation/ConversationFeature.swift`.
-- Send/Stream also modifies `ChatGPTClient/RootViewController.swift`; the current temporary validation UI explicitly says the final input box belongs to `DEV-composer-parity`.
-- Both Works ultimately touch Send/Stop presentation and Xcode/build identity integration.
-
-Therefore the only allowed overlap is an **explicit stacked/dependent Work**:
-
-1. Wait until the current Send/Stream product Candidate has a fixed product source and has entered its Human Runtime gate. Do not start Composer product integration while the parent Candidate is still being assembled.
-2. Create `DEV-composer-parity` with its own Work ID, checkpoint, branch and later PR, but base that branch on the exact current `dev/send-stream-20260829` product/head dependency rather than creating an independent sibling from `main`.
-3. Record the dependency in the Composer checkpoint and PR. A stacked Composer PR may temporarily target the Send/Stream branch; after Send/Stream merges, synchronize/retarget to current `main` before final CI/Artifact/merge.
-4. Composer may develop its isolated presentation layer while Send/Stream Runtime is being tested: Composer view hierarchy/state machine, per-conversation draft presentation, inline/full-screen editor, keyboard behavior, local Files/Photos picker UI, attachment strip/removal/local preview, and other UI-only components that do not redefine the response owner.
-5. Composer must consume the parent Send/Stream lifecycle for Send/Stop. It may not create a second response owner, second stream flag, duplicate Send path or alternate terminal state merely to permit parallel development.
-6. If Send/Stream Runtime rejects the current parent Candidate and changes any shared integration owner/file, rebase the stacked Composer branch onto the new accepted parent direction and rerun affected build/Runtime checks. Do not preserve compatibility shims for the rejected parent.
-7. Do not allocate a Composer Artifact/Candidate identity while a conflicting next Send/Stream build number could still be needed. Coordinate the global build/Candidate sequence immediately before Composer packaging.
-
-This means **parallel calendar time is allowed, independent architecture is not**. The preferred overlap window is: Send/Stream exact Candidate in Human Runtime -> Composer stacked development begins -> Send/Stream acceptance/merge -> Composer synchronizes to merged `main` -> Composer final integration/Artifact/Runtime.
+- Do not activate `DEV-composer-parity`, create its product development branch/PR/Candidate, or modify product code for it while `DEV-send-stream` remains Active/unmerged.
+- Do not use a stacked/dependent Composer development branch on top of the unmerged Send/Stream branch.
+- After `DEV-send-stream` is Runtime-accepted as required, completed/merged, and its durable docs are synchronized, start `DEV-composer-parity` from the then-current verified `main` using the normal new-Work preflight.
+- Rules/planning documents may retain requirements in advance, but they do not authorize Composer product development before the serial gate opens.
 
 ## Product-parity rule and explicit user deviations
 
@@ -465,7 +452,7 @@ Exact target-device Candidate should verify at minimum:
 ## Explicit non-goals / rejected routes
 
 - Do not modify the current active Send/Stream product Candidate merely to prototype Composer parity.
-- Do not run Composer as an independent sibling branch from `main` while its required Send/Stop owner remains unmerged; use the stacked/dependent rule above.
+- Do not activate or start Composer product development before `DEV-send-stream` is completed/merged; do not use a stacked/dependent Composer branch while the serial execution rule is in force.
 - Do not merge Composer UI into an unrelated Send/Stream Runtime gate.
 - Do not reintroduce the official Add File intermediate sheet unless the user explicitly changes this requirement.
 - Do not apply an image-only photo-picker filter that hides videos.

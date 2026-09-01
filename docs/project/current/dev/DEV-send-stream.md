@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Product source / tested package identity is fixed below; all post-package branch changes are evidence/docs/tool cleanup only and do not redefine b85 product source.
+- Product source / tested package identity is fixed below; post-package branch changes are evidence/docs/tool cleanup only and do not redefine b85 product source.
 - b84 exact product/config source: `626c3ad4d4d592618d794c4cb8854324f719f4a4`
 - b84 Candidate: `DEV-send-stream-0.1.0-b84` / `0.1.0 (84)` — diagnostic Runtime Positive, product acquisition still unstable
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`

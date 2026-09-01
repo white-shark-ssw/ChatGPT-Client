@@ -3,7 +3,9 @@
 
 static NSString * const RPTOriginalEnhancerBackupName = @"ChatGPTEnhancer-0.1.0-alpha60-runtime-image-map.original.dylib";
 
-__attribute__((constructor)) static void RPTLoadOriginalEnhancerIfPresent(void) {
+// Load the package's pre-existing enhancer before the Probe installs its own NSURLSession hooks.
+// This keeps the existing behavior and lets the Probe wrap the final method implementations.
+__attribute__((constructor(101))) static void RPTLoadOriginalEnhancerIfPresent(void) {
     @autoreleasepool {
         NSString *frameworks = NSBundle.mainBundle.privateFrameworksPath;
         if (!frameworks.length) return;

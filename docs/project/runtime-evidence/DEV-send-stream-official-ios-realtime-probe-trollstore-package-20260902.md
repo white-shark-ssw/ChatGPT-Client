@@ -50,6 +50,9 @@ Expected runtime load chain:
 - File: `ChatGPT-Official-RealtimeProbe-TrollStore.ipa`
 - IPA SHA-256: `f23adc1e78dc3f76b66140f23548e331a3545c5b9772608122f493e738242e0f`
 - Approximate size: 95 MB
+- Bundle ID remains `com.openai.chat`.
+- Version/build remains `1.2026.202 / 30140022279`.
+- ZIP structural integrity check: **passed** (`unzip -t` reports no compressed-data errors).
 
 Static package inspection confirms:
 
@@ -70,7 +73,7 @@ No other extracted App file content changed.
 - chained Probe CI compile/validate: Passed
 - chained Probe Artifact produced: Yes
 - TrollStore IPA assembled: Yes
-- package static hash/difference validation: Passed
+- package static hash/difference/ZIP validation: Passed
 - TrollStore install: **Pending Human Runtime**
 - Probe UI visible in official app: **Pending Human Runtime**
 - original enhancer preserved at runtime: **Pending Human Runtime**
@@ -80,7 +83,7 @@ No other extracted App file content changed.
 
 ## Next Human Runtime gate
 
-1. Install `ChatGPT-Official-RealtimeProbe-TrollStore.ipa` through TrollStore. This package uses the same bundle ID as the supplied official ChatGPT app, so it is intended as the research replacement/update for that app, not as a parallel product app.
+1. Install `ChatGPT-Official-RealtimeProbe-TrollStore.ipa` through TrollStore. This package uses the same bundle ID as the supplied official ChatGPT app, so it is intended as the research replacement/update for that app, not as a parallel product app. Prefer installing over the existing app rather than manually deleting it first; if TrollStore rejects the replacement, preserve the existing install and report the exact error instead of changing package identity speculatively.
 2. Fully terminate ChatGPT and relaunch it.
 3. Confirm a small blue `Probe` button appears near the top-right safe area.
 4. If the button does not appear or the app does not launch, stop and report that exact result; do not perform the conversation test.

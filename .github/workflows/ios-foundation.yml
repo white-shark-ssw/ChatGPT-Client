@@ -1,5 +1,5 @@
-# Candidate: DEV-send-stream-0.1.0-b82
-name: iOS Native Web Send Engine Probe
+# Candidate: DEV-send-stream-0.1.0-b83
+name: iOS Send Manual Sync Determinism b83
 
 on:
   push:
@@ -21,6 +21,9 @@ on:
       - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-ipa:
     runs-on: macos-15
@@ -31,6 +34,46 @@ jobs:
 
       - name: Toolchain
         run: xcodebuild -version
+
+      - name: Apply exact b83 source correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("ChatGPTClient/RootViewController.swift")
+          text = root.read_text()
+          old = '''        detailViewController.onManualLatestSyncApplied = { [weak self] id, latestUserChanged in
+                      guard let self, latestUserChanged, self.repository.selectedConversationID == id, !self.repository.isLiveResponseActive(for: id) else { return }
+                      self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
+                  }'''
+          new = '''        detailViewController.onManualLatestSyncApplied = { [weak self] id, _ in
+                      guard let self, self.repository.selectedConversationID == id, !self.repository.isLiveResponseActive(for: id) else { return }
+                      self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
+                  }'''
+          if text.count(old) != 1:
+              raise SystemExit(f"expected one manual-sync callback block, found {text.count(old)}")
+          root.write_text(text.replace(old, new))
+
+          project = Path("ChatGPTClient.xcodeproj/project.pbxproj")
+          text = project.read_text()
+          if text.count("CURRENT_PROJECT_VERSION = 82;") != 2:
+              raise SystemExit("expected two build-82 settings")
+          if text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b82";') != 2:
+              raise SystemExit("expected two b82 candidate settings")
+          text = text.replace("CURRENT_PROJECT_VERSION = 82;", "CURRENT_PROJECT_VERSION = 83;")
+          text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b82";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b83";')
+          project.write_text(text)
+          PY
+          git diff --check
+          git diff -- ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Commit exact b83 product source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m "fix(send): make manual sync rearm deterministic (b83)"
+          git push origin HEAD:dev/send-stream-20260829
 
       - name: Build unsigned TrollStore IPA candidate
         run: bash scripts/build_ipa.sh
@@ -43,7 +86,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b82
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b83
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

@@ -23,33 +23,20 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           index = Path("docs/project/BUILD_TEST_INDEX.md")
           text = index.read_text()
           marker = "|---|---|---|---|---|---|---|\n"
           row = "| `DEV-send-stream-0.1.0-b83` | `DEV-send-stream` | `0.1.0 (83)` | exact product/config source `12e3c27138ebc81cbbae6236347122f79e03bf08`; clean CI/package head `3771ddccc8d0847ce28f72acbbe311aaf30b7482`; PR #29 | Push `33556857625/100019684027`; PR `33556862137`; canonical Artifact `9819681774`; ZIP `sha256:b76c71493b01c88c6dfc60f9ef886e9e1c862d15a6e93ee00794ae6740a42682`; IPA `sha256:46f06106c3d47b3845a584665666fb6cb6d39cd66c0c9415412702e81795be97`; package Release/source `3771ddccc8d0`/iOS14/arm64 | Runtime Pending: b82 explicit manual Sync was intermittent; b83 removes `latestUserChanged` as the explicit re-arm gate so a successful user Sync can re-arm once whenever the selected conversation has no active live response | **Code/Push+PR CI/Artifact/package verified; Runtime Pending; permanently reserved** |\n"
           if "DEV-send-stream-0.1.0-b83" not in text:
-              if text.count(marker) != 1:
-                  raise SystemExit("candidate table marker mismatch")
-              text = text.replace(marker, marker + row, 1)
-              index.write_text(text)
-
+              if text.count(marker) != 1: raise SystemExit("candidate table marker mismatch")
+              index.write_text(text.replace(marker, marker + row, 1))
           decisions = Path("docs/project/TECHNICAL_DECISIONS.md")
           text = decisions.read_text()
           heading = "# Technical Decisions\n\n"
-          section = """## Send MVP / b83 qualification — 2026-09-02
-
-- **TD-029 current MVP qualification:** client-owned Send continues to require the existing real SSE stream. For cross-platform/external turns, genuine block/page-snapshot progressive reasoning/tool updates are acceptable for the current MVP; token-level external SSE parity is deferred.
-- **Explicit recovery contract:** manual `同步最新消息` is a hard reliability boundary. After a successful explicit Sync, if the same conversation remains selected and `ConversationRepository` does not already own an active live response, the covered target page may be force re-armed exactly once even when the latest user ID did not change. b83 implements only this source-backed correction.
-- **Deferred:** automatic remote-turn discovery/acquisition, cross-platform token-level reasoning SSE, progressive external final-token streaming, and production integration of the official iOS native realtime/WebSocket path are postponed until the broader product is completed.
-- This qualification supersedes the earlier requirement that automatic prompt receipt/live acquisition block the current Send MVP. It does not revoke b80 stopped-thinking/final-materialization boundaries, b67 client-owned protected Send, b72 tested simultaneous ownership, or `ConversationRepository` response ownership.
-
-"""
+          section = "## Send MVP / b83 qualification — 2026-09-02\n\n- **TD-029 current MVP qualification:** client-owned Send continues to require the existing real SSE stream. For cross-platform/external turns, genuine block/page-snapshot progressive reasoning/tool updates are acceptable for the current MVP; token-level external SSE parity is deferred.\n- **Explicit recovery contract:** manual `同步最新消息` is a hard reliability boundary. After a successful explicit Sync, if the same conversation remains selected and `ConversationRepository` does not already own an active live response, the covered target page may be force re-armed exactly once even when the latest user ID did not change. b83 implements only this source-backed correction.\n- **Deferred:** automatic remote-turn discovery/acquisition, cross-platform token-level reasoning SSE, progressive external final-token streaming, and production integration of the official iOS native realtime/WebSocket path are postponed until the broader product is completed.\n- This qualification supersedes the earlier requirement that automatic prompt receipt/live acquisition block the current Send MVP. It does not revoke b80 stopped-thinking/final-materialization boundaries, b67 client-owned protected Send, b72 tested simultaneous ownership, or `ConversationRepository` response ownership.\n\n"
           if "## Send MVP / b83 qualification — 2026-09-02" not in text:
-              if not text.startswith(heading):
-                  raise SystemExit("technical decisions heading mismatch")
-              text = heading + section + text[len(heading):]
-              decisions.write_text(text)
+              if not text.startswith(heading): raise SystemExit("technical decisions heading mismatch")
+              decisions.write_text(heading + section + text[len(heading):])
           PY
           git diff --check
           git diff -- docs/project/BUILD_TEST_INDEX.md docs/project/TECHNICAL_DECISIONS.md

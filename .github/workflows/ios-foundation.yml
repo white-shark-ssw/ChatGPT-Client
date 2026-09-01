@@ -74,68 +74,14 @@ jobs:
           text = text.replace("CURRENT_PROJECT_VERSION = 83;", "CURRENT_PROJECT_VERSION = 84;")
           text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b83";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b84";')
           project.write_text(text)
-
-          workflow = Path(".github/workflows/ios-foundation.yml")
-          workflow.write_text('''# Candidate: DEV-send-stream-0.1.0-b84
-          name: iOS Send Detail Projection Diagnostics b84
-
-          on:
-            push:
-              branches:
-                - dev/send-stream-20260829
-              paths:
-                - "ChatGPTClient/**"
-                - "ChatGPTClient.xcodeproj/**"
-                - "scripts/build_ipa.sh"
-                - "scripts/reconstruct_app_icon.sh"
-                - "scripts/assets/**"
-                - ".github/workflows/ios-foundation.yml"
-            pull_request:
-              paths:
-                - "ChatGPTClient/**"
-                - "ChatGPTClient.xcodeproj/**"
-                - "scripts/build_ipa.sh"
-                - "scripts/reconstruct_app_icon.sh"
-                - ".github/workflows/ios-foundation.yml"
-            workflow_dispatch:
-
-          jobs:
-            build-ipa:
-              runs-on: macos-15
-              timeout-minutes: 20
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v4
-
-                - name: Toolchain
-                  run: xcodebuild -version
-
-                - name: Build unsigned TrollStore IPA candidate
-                  run: bash scripts/build_ipa.sh
-
-                - name: Inspect artifact
-                  run: |
-                    ls -lh build/artifacts
-                    unzip -l build/artifacts/*.ipa | head -n 40
-
-                - name: Upload IPA candidate
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: ChatGPTClient-DEV-send-stream-0.1.0-b84
-                    path: |
-                      build/artifacts/*.ipa
-                      build/artifacts/*.sha256
-                    if-no-files-found: error
-                    retention-days: 14
-          '''.replace("          ", ""))
           PY
           git diff --check
-          git diff -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/ios-foundation.yml
+          git diff -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj
 
       - name: Commit b84 diagnostic source
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/ios-foundation.yml
+          git add ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj
           git commit -m "diag(send): add b84 detail projection structure counters"
           git push origin HEAD:dev/send-stream-20260829

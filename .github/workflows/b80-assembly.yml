@@ -1,0 +1,83 @@
+name: b80 guarded assembly
+
+on:
+  workflow_dispatch:
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply exact b80 product patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, got {count}: {old[:100]!r}")
+              p.write_text(s.replace(old, new, 1))
+
+          conversation = "ChatGPTClient/Conversation/ConversationFeature.swift"
+          replace_once(conversation,
+              "Self.responseTimelineAttributedText(responseTimeline, disclosureState: toolDisclosureState)",
+              "Self.responseTimelineAttributedText(responseTimeline, disclosureState: toolDisclosureState, trailingSeparator: showsReasoningDivider)")
+          replace_once(conversation,
+              "measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth, disclosureState: toolDisclosureState)",
+              "measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth, disclosureState: toolDisclosureState, trailingSeparator: showsReasoningDivider)")
+          replace_once(conversation,
+              "    private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState) -> NSAttributedString {",
+              "    private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState, trailingSeparator: Bool) -> NSAttributedString {")
+          replace_once(conversation,
+              "        return output\n    }\n\n    private static func appendToolIcon",
+              "        if trailingSeparator, output.length > 0 { output.append(NSAttributedString(string: \\\"\\n\\u{200B}\\n\\\", attributes: separatorAttributes)) }\n        return output\n    }\n\n    private static func appendToolIcon")
+          replace_once(conversation,
+              "    private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat, disclosureState: ConversationToolDisclosureState) -> CGSize {\n        let attributed = responseTimelineAttributedText(timeline, disclosureState: disclosureState)",
+              "    private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat, disclosureState: ConversationToolDisclosureState, trailingSeparator: Bool) -> CGSize {\n        let attributed = responseTimelineAttributedText(timeline, disclosureState: disclosureState, trailingSeparator: trailingSeparator)")
+          replace_once(conversation,
+              "        if showsReasoningDivider {\n            bubbleY += 12\n            reasoningDividerFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 1 / UIScreen.main.scale)",
+              "        if showsReasoningDivider {\n            reasoningDividerFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 1 / UIScreen.main.scale)")
+
+          root = "ChatGPTClient/RootViewController.swift"
+          replace_once(root,
+              "                  if (externalStreamingState.completePending) {\n                    externalStreamingState.active = false;\n                    externalStreamingState.completePending = false;\n                  }\n",
+              "")
+          replace_once(root,
+              "                if complete {\n                    self.repository.consumeLiveResponseEvent(.terminal, conversationID: conversationID, generation: generation)\n                    self.releaseExecutor(for: conversationID, expected: sendExecutor)\n                    self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)\n                }",
+              "                if complete {\n                    guard let snapshot = self.repository.liveResponse(for: conversationID), snapshot.generation == generation else { return }\n                    if snapshot.reasoningEnded && snapshot.finalText.isEmpty {\n                        var fields = self.repository.diagnosticsFields(for: conversationID)\n                        fields[\\\"responseGeneration\\\"] = String(generation)\n                        fields[\\\"reason\\\"] = \\\"final_not_materialized\\\"\n                        self.diagnostics.info(category: \\\"webSend\\\", name: \\\"coveredExecutor.externalCompletionDeferred\\\", fields: fields)\n                        return\n                    }\n                    self.repository.consumeLiveResponseEvent(.terminal, conversationID: conversationID, generation: generation)\n                    self.releaseExecutor(for: conversationID, expected: sendExecutor)\n                    self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)\n                }")
+
+          pbx = "ChatGPTClient.xcodeproj/project.pbxproj"
+          p = Path(pbx); s = p.read_text()
+          if s.count("CURRENT_PROJECT_VERSION = 79;") != 2 or s.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b79";') != 2:
+              raise SystemExit("unexpected b79 Xcode identity count")
+          s = s.replace("CURRENT_PROJECT_VERSION = 79;", "CURRENT_PROJECT_VERSION = 80;")
+          s = s.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b79";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b80";')
+          p.write_text(s)
+
+          workflow = ".github/workflows/ios-foundation.yml"
+          p = Path(workflow); s = p.read_text()
+          if s.count("DEV-send-stream-0.1.0-b79") != 2:
+              raise SystemExit("unexpected b79 workflow identity count")
+          p.write_text(s.replace("DEV-send-stream-0.1.0-b79", "DEV-send-stream-0.1.0-b80"))
+          PY
+      - name: Validate exact scope and forbidden patterns
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          ! git diff -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift | grep -E '^\+.*(Timer|asyncAfter|watchdog|retry|poll|WebSocket.*data|duplicate.*Send)' || exit 1
+          grep -q 'DEV-send-stream-0.1.0-b80' .github/workflows/ios-foundation.yml
+          grep -q 'CURRENT_PROJECT_VERSION = 80;' ChatGPTClient.xcodeproj/project.pbxproj
+      - name: Xcode 16.4 Simulator build
+        run: |
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Release -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+      - name: Commit validated product patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m 'dev: assemble b80 runtime corrections'
+          git push origin HEAD:${GITHUB_REF_NAME}

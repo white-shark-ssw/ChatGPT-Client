@@ -2,44 +2,73 @@
 
 ## Status
 
-**Active — b76 Runtime is now partial-positive / partial-rejected, and exact b77 has completed Code/static/Simulator/Push+PR CI/Artifact/package verification. b77 is now at the Human real-device Runtime gate. Stable/Frozen Send remains No.**
+**Active — exact b78 has completed Code/static/Simulator/Push+PR CI/Artifact/package verification and is now at the Human real-device Runtime gate. b77 Runtime is partial/rejected. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Exact b77 product/config source: `c0266e83a5a27d2e39751ecb84a25e0072fb01f4`
-- Candidate / Version-Build: `DEV-send-stream-0.1.0-b77` / `0.1.0 (77)`
-- Clean b77 product commit: `4c88a7dc5bb2b09dafa616e82cd75ee13eff9c4d`
-- Clean product parent/checkpoint: `81dbe729b0ad50bf63300bb6b5bd9b23cb20b87b`
-- Guarded assembly: `33443341526 / 99656536553` — exact patch application + exact scope + `git diff --check` + Xcode 16.4 Simulator build passed
-- Formal Push CI: `33443626427 / 99657452954` — success
-- Formal PR CI: `33443630320 / 99657464938` — success
-- Canonical Push Artifact: `9777216066`
-- Artifact ZIP SHA: `ce26379ad43e338afc64bbe51e2fbbbad0063eb85923ba736504ff59f092a2d8`
-- IPA: `ChatGPTClient-0.1.0-b77-dev-send-stream.ipa`
-- IPA SHA: `651f5cfe05e862a74153e22479f2df649baf3412c10e583242d0a24b139e531b`
-- Independent package inspection: Release `0.1.0 (77)`, Candidate `DEV-send-stream-0.1.0-b77`, source marker `c0266e83a5a2`, MinimumOSVersion 14.0, iPhone+iPad family, Mach-O arm64
-- b39-b77 permanently reserved
-- Runtime/manual/real-device b77: **Pending / Unverified**
+- Formal branch head after durable b78 docs sync: `cdf30f26e827193edc9b2c7d31dc832cd1266386`
+- Clean b78 product commit: `180065e0faf947292a9f21b56c4ea366a5c322fe`
+- Exact b78 product/config source: `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809`
+- Candidate / Version-Build: `DEV-send-stream-0.1.0-b78` / `0.1.0 (78)`
+- Final tooling Xcode validation: `33482721335 / 99775722851` — exact final presentation patch + exact scope + `git diff --check` + Xcode 16.4 Simulator build passed on the complete b78 tooling state
+- Formal Push CI: `33482983693 / 99776545604` — success
+- Formal PR CI: `33482987997 / 99776557269` — success
+- Canonical Push Artifact: `9790836559`
+- Artifact ZIP SHA: `7b5900a960ef680cce34642ca6cef232f201a260b182d6b640266e81982b081f`
+- IPA: `ChatGPTClient-0.1.0-b78-dev-send-stream.ipa`
+- IPA SHA: `726e3c09bcac4eb8a40a8ecb79b8abb0f145d89e41481083bc51941a7978620e`
+- Independent package inspection: Release `0.1.0 (78)`, Candidate `DEV-send-stream-0.1.0-b78`, source marker `031b1a1f2c1d`, MinimumOSVersion 14.0, Mach-O arm64
+- b39-b78 permanently reserved
+- Runtime/manual/real-device b78: **Pending / Unverified**
 - Stable/Frozen Send: **No**
 
-## Resume / identity / conflict guard
+## Resume / identity / final-artifact guard
 
-Before b77 allocation, the formal feature branch was `81dbe729...`, PR #29 remained open/mergeable/unmerged, PR base and actual `main` were both `d323b9ee...`, and no exact `DEV-send-stream-0.1.0-b77` repository use was found. The b77 patch was first assembled on isolated tooling branch `tooling/dev-send-stream-b77-assembly-20260901`; guarded run `33443341526 / 99656536553` passed exact patch/scope/diff and Xcode 16.4 Simulator build. The resulting product blobs were transplanted into one clean formal product commit `4c88a7dc...` directly on parent `81dbe729...`; compare verifies exactly four product files changed. Workflow-only child `c0266e83...` identifies the b77 candidate/artifact and is the exact product/config source. Any later documentation-only descendants do not redefine b77.
+This is the same continuously selected Work. Final artifact synchronization was re-checked before handoff:
 
-## b76 Runtime evidence now accepted
+- PR #29 remains open / mergeable / unmerged.
+- PR base remains `main` at `d323b9eed2dda75b9986fc06e14014d3e9b365fb`; no target/base drift occurred during b78 assembly/packaging.
+- PR head exact product/config source for the canonical b78 Push Artifact is `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809`; later descendants are docs-only and do not redefine the tested product.
+- Clean compare from b78 parent/checkpoint to product commit changes exactly `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- `DEV-send-stream-0.1.0-b78` is reserved and recorded in `BUILD_TEST_INDEX.md`; no later candidate is allocated.
 
-Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b76-device-runtime-20260831.md`.
+## b77 Runtime evidence — partial/rejected
 
-User real-device evidence establishes:
+Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b77-device-runtime-20260901.md`.
 
-- **Cross-platform thinking/reasoning/tools adoption: positive.** An externally-started response now starts one Repository-owned `external_page_owned` live generation and updates reasoning/tool state while the official page-owned `/resume` returns HTTP404 JSON and the page continues via its own read path.
-- **Cross-platform final body progression: rejected.** During final phase the observed plural snapshots remained `finalCharacters=0` and then jumped directly to the complete final body (`6718` characters in the captured run) at terminal. Therefore the currently evidenced plural response path does not provide incremental final body bytes.
-- **Refresh/login complaint: secure-transport failure, not proven login loss.** The failure window is `NSURLErrorDomain/-1200`; WebKit persistent auth data remains present and there is no 401/403/not-authenticated evidence in the supplied run.
-- **b76 typography: rejected.** The b76 `30 / 21 / 21` line-height candidate still looked too tight, and the tool paragraph additionally retained asymmetric `paragraphSpacingBefore=5` vs `paragraphSpacing=12`.
+The user-supplied iPhone screenshots and exact b77 diagnostics establish:
 
-b76 remains permanently reserved and is not Stable/Frozen.
+1. **Inline tool presentation rejected.** Tool/GitHub operation rows still had visibly wrong vertical rhythm and insufficient prominence as a special message type. Source inspection found the transition separator/newline still inherited reasoning paragraph style while tool text/icon used a different style, so changing only numeric line height/spacing could not make boundaries deterministic.
+2. **User-message parity/integrity rejected.** Native rendered user messages as plain `UILabel.text` while measuring through a separate `NSString.boundingRect` path. A long Markdown/link-bearing message visibly differed from official Web and the Native bubble truncated mid-message.
+3. **Relaunch/history read rejected; root cause identified.** On relaunch, account/session probes were HTTP200 and state `verified`. The conversation-list request alone returned HTTP403; current source then called `invalidateAndCancel()` on the shared transient session, cancelling the selected Detail request. The Detail cancellation branch returned without finishing/removing its current operation. Later Detail requests coalesced onto that zombie operation, so authoritative history/user rows remained absent while external live reasoning/tool state could still render and the UI stayed on `正在读取会话…`.
+4. **Progressive final-body source remains unresolved.** b77 structure-only DOM evidence changed only after the plural page-owned response had already exposed the full final body. No evidence authorizes DOM text, WebSocket bodies, fake typewriter streaming, Native polling, resume synthesis, timer, retry or watchdog.
+
+b77 remains permanently reserved and is not Stable/Frozen.
+
+## Exact b78 correction scope
+
+### Tool-operation presentation
+
+- Tool text uses medium weight and primary label color so tool operations remain visually distinct from ordinary reasoning.
+- Tool `paragraphSpacingBefore` is removed as a second directional spacing source.
+- The icon attachment, tool text and separator/newline are assigned the tool paragraph style instead of allowing reasoning paragraph style to own the transition boundary.
+- Existing tool/reasoning/final line-height relationship is retained from b77; b78 changes deterministic ownership/prominence rather than blindly increasing the numbers again.
+
+### User-message official-like representation / truncation
+
+- User messages now render through `userBodyAttributedText(...)` instead of plain `UILabel.text`.
+- The same attributed representation is used for both rendering and `boundingRect` measurement.
+- Explicit character wrapping is used.
+- On supported OS versions, inline-only Markdown preserving whitespace is parsed; links receive system link color. If parsing is unavailable/fails, exact plain text is preserved.
+- Privacy-safe `latestUserCharacters` is emitted on Detail response to distinguish service/projection loss from UI clipping if Runtime still fails.
+
+### Relaunch/history Detail lifecycle
+
+- Route-level 401/403 invalidation retires the shared transient `URLSession` with `finishTasksAndInvalidate()` instead of `invalidateAndCancel()`, so already-running Detail requests are not killed merely because another route rejected the copied transport.
+- If a current Detail request is cancelled for another legitimate reason, the cancellation branch now calls `finishDetailOperation(...)` so the operation cannot remain forever coalescible.
+- No retry, timer, watchdog, polling, fallback, duplicate Send or second state owner was added.
 
 ## Retained architecture / protocol boundaries
 
@@ -47,61 +76,33 @@ b76 remains permanently reserved and is not Stable/Frozen.
 - `AuthSessionStore` remains sole native auth/account owner; `WKWebsiteDataStore.default()` remains sole persistent browser auth-secret authority.
 - Covered official Web remains browser challenge/protected-Send/page-owned observation transport only; it is not a second conversation/message store.
 - b67 local Native Send -> one protected official Web Send -> HTTP200 SSE -> Repository reasoning/tool/final -> terminal/reconcile remains Runtime accepted.
-- b72 exact tested A-generating + B-send/generate ownership path remains Runtime positive.
+- b72 tested A-generating + B-send/generate ownership remains Runtime positive.
+- b76/b77 cross-platform thinking/reasoning/tool adoption remains positive even when official page-owned `/resume` returns HTTP404 JSON and the page follows its own read path.
 - `assistant:thoughts` / inline COT remain non-presentational.
-- No Native polling/cadence, Native resume/offset synthesis, duplicate Send, retry/timer/watchdog, guessed fallback, compatibility shim, second response owner, or WebSocket-body authority.
-
-## Exact b77 product scope
-
-GitHub compare from `81dbe729...` to clean product commit `4c88a7dc...` is exactly:
-
-- `ChatGPTClient.xcodeproj/project.pbxproj`
-- `ChatGPTClient/Authentication/AuthSessionStore.swift`
-- `ChatGPTClient/Conversation/ConversationFeature.swift`
-- `ChatGPTClient/RootViewController.swift`
-
-Exact source `c0266e83...` adds only the b77 identity update in `.github/workflows/ios-foundation.yml` after that clean product commit.
-
-### Typography correction
-
-- Tool fixed line height: `30 -> 36` (+20%).
-- Existing shared ratio remains `toolLineHeight * 0.70`, therefore reasoning/final fixed line height becomes `25.2` (+20% from 21).
-- Tool paragraph upper/lower spacing is now symmetric: `paragraphSpacingBefore=12`, `paragraphSpacing=12` instead of `5 / 12`.
-- Font sizes are unchanged. This is still a Runtime visual candidate until the user accepts it on-device.
-
-### Secure-transport / auth-state semantics
-
-- A previously verified in-memory account context is no longer demoted to `.probing` merely because another account-context probe starts.
-- If that subsequent probe returns the existing temporary `.failed` state while a verified context is still present, the verified account state is preserved and a privacy-safe `session.accountStatePreserved` diagnostic is emitted; the current operation still receives failure and no retry is created.
-- Direct native list/detail `NSURLErrorSecureConnectionFailed` (`-1200`) is normalized to an explicit `secureConnectionUnavailable` error instead of being presented as authentication invalidation.
-- This does **not** claim to fix an underlying TLS/network outage, and a cold launch that cannot establish any verified native context still cannot synthesize one.
-
-### Final-body evidence probe
-
-b77 does **not** fake final streaming and does **not** adopt a guessed body source. While an external page-owned response is active, the covered official page now emits only a privacy-safe structural diagnostic for the latest assistant DOM node: assistant-node count + text-character count. No DOM body text is copied into Repository state. This evidence is used only to decide whether the official page itself has progressive final text before the plural API exposes the completed body. WebSocket bodies remain unused.
+- No Native polling/cadence, Native resume/offset synthesis, duplicate Send, retry/timer/watchdog, guessed fallback, compatibility shim, second response owner, fake final streaming, DOM-body authority or WebSocket-body authority.
 
 ## Evidence classification
 
-- Code written: **Yes — clean product commit `4c88a7dc...`; exact product/config source `c0266e83...`**
+- Code written: **Yes — clean product commit `180065e0...`; exact product/config source `031b1a1f...`**
 - Exact-scope / `git diff --check`: **Passed**
-- Xcode 16.4 Simulator build: **Passed — assembly `33443341526 / 99656536553`**
-- Formal Push CI: **Passed — `33443626427 / 99657452954`**
-- Formal PR CI: **Passed — `33443630320 / 99657464938`**
-- Artifact produced: **Yes — canonical Push Artifact `9777216066`**
-- Package identity verified: **Yes — ZIP/IPA hashes, Info.plist and arm64 Mach-O independently inspected**
-- Runtime/manual/real-device b77: **Pending / Unverified**
+- Xcode 16.4 Simulator build: **Passed — final validation `33482721335 / 99775722851`**
+- Formal Push CI: **Passed — `33482983693 / 99776545604`**
+- Formal PR CI: **Passed — `33482987997 / 99776557269`**
+- Artifact produced: **Yes — canonical Push Artifact `9790836559`**
+- Package identity verified: **Yes — artifact ZIP digest, IPA sidecar/hash, built Info.plist and arm64 Mach-O independently inspected**
+- Runtime/manual/real-device b78: **Pending / Unverified**
 - Stable/Frozen Send: **No**
 
 ## Exact next action
 
-Human b77 device gate using the canonical IPA.
+Human b78 real-device gate using the canonical Push IPA.
 
-Required evidence in one real-device pass:
+Test in this order so one pass covers the three user-reported defects plus retained response behavior:
 
-1. Verify the tool row now has visibly symmetric vertical rhythm and the `36 / 25.2 / 25.2` tool/reasoning/final spacing is acceptable or reject it with screenshot.
-2. Start a sufficiently long response on another platform, enter the same conversation in Native, and confirm b76's positive thinking/reasoning/tool continuation still works.
-3. During the final phase, keep the app open until completion, then export diagnostics. Inspect `coveredExecutor.externalDOMStructure` timestamps/character counts against `liveResponse.externalSnapshot finalCharacters=0` and terminal to decide whether a true progressive page-owned final-body source exists.
-4. If refresh/secure-connection failure recurs, export diagnostics; distinguish `-1200` transport failure from actual 401/403/not-authenticated evidence. Do not interpret cached/verified state preservation as proof that TLS is repaired.
-5. Regression-check local protected Send (b67 boundary) and, when practical, b72-style concurrent ownership.
+1. **Tool presentation:** expand a response with multiple GitHub/tool operations. Confirm tool rows are clearly more prominent than normal reasoning and that the vertical rhythm above/below each tool operation is visually consistent. Screenshot any rejection.
+2. **User message parity/integrity:** open the same round that contains a long link/Markdown-bearing user message. Confirm the user bubble renders the full message without mid-text clipping and that inline link presentation is substantially consistent with official Web. Screenshot any mismatch.
+3. **Relaunch during external active response:** on another platform start a sufficiently long response in an existing conversation; while it is still reasoning/generating, kill Native and relaunch into that conversation. Confirm authoritative history **including the latest user message** appears, `正在读取会话…` terminates normally, and external reasoning/tools can still be adopted.
+4. After step 3, export diagnostics even if it passes. The decisive b78 evidence is: account/list/Detail statuses, presence/absence of `authTransport.retired`, a terminal Detail operation, no permanent `detail.coalesced` zombie, `latestUserCharacters`, and retained `externalSnapshot` reasoning/tool lifecycle.
+5. Regression-check local protected Send and b72-style concurrent ownership when practical.
 
-Do not allocate another product candidate until b77 Runtime evidence is classified. CI/Artifact/package success must not be described as Runtime success.
+Do not allocate b79 until b78 Runtime evidence is classified. CI/Artifact/package success is not Runtime success.

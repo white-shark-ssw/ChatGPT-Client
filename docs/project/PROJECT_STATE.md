@@ -1,5 +1,16 @@
 # Project State
 
+## DEV-send-stream b78 candidate override — 2026-09-01
+
+Exact b78 `DEV-send-stream-0.1.0-b78` / `0.1.0 (78)` is the current real-device candidate. Clean product commit `180065e0faf947292a9f21b56c4ea366a5c322fe` changes only `ChatGPTClient/Conversation/ConversationFeature.swift` and `ChatGPTClient.xcodeproj/project.pbxproj`; workflow-only child `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809` is the exact product/config source. Final tooling validation `33482721335 / 99775722851` passed exact scope, `git diff --check`, and Xcode 16.4 Simulator build. Formal Push CI `33482983693 / 99776545604` and PR CI `33482987997 / 99776557269` passed. Canonical Push Artifact `9790836559` has ZIP `sha256:7b5900a960ef680cce34642ca6cef232f201a260b182d6b640266e81982b081f` and IPA `sha256:726e3c09bcac4eb8a40a8ecb79b8abb0f145d89e41481083bc51941a7978620e`; independent package inspection confirms Release 0.1.0 (78), Candidate b78, source marker `031b1a1f2c1d`, MinimumOSVersion 14.0, Mach-O arm64.
+
+- b77 device Runtime is partial/rejected: inline tool rows still lacked correct deterministic/prominent presentation; Native user messages could show raw inline Markdown and truncate because rendering and measurement diverged; a route-level list HTTP403 invalidated-and-cancelled the shared transient session, cancelling the selected Detail, whose cancellation path failed to terminalize the current operation and caused permanent coalescing/`正在读取会话…`.
+- b78 uses one attributed representation for user rendering and measurement, explicit character wrapping and inline-only Markdown on supported OS versions; it records privacy-safe latest-user character count for integrity evidence.
+- b78 retires a 401/403-invalidated transient session with `finishTasksAndInvalidate()` so already-running Detail tasks are not cancelled; any current Detail cancellation is terminalized instead of leaving a zombie operation. No retry/timer/watchdog/polling/fallback was added.
+- b78 tool rows are a distinct medium-weight/label-color presentation whose icon/text/separator paragraph geometry is owned by the tool paragraph style instead of mixed reasoning/tool spacing. Runtime visual acceptance remains required.
+- b77's structure-only DOM evidence remains negative for an earlier progressive final-body source; b78 does not promote DOM text/WebSocket bodies or fake final streaming.
+- Runtime/manual/real-device b78: **Pending / Unverified**. Stable/Frozen Send: **No**. b39-b78 are permanently reserved.
+
 ## DEV-send-stream b76 candidate override — 2026-09-01
 
 Exact b76 `DEV-send-stream-0.1.0-b76` / `0.1.0 (76)` is the current test candidate. Exact product/config source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71` passed guarded exact-scope assembly plus Xcode 16.4 Simulator build, formal Push CI `33440101178 / 99645927061` and PR CI `33440098527 / 99645917529`. Canonical Push Artifact `9775920927` has ZIP `sha256:52f94ed7dbfbe311e37656fcce9a60bb5f8cc9c6b2af29434f7020d47729e944` and IPA `sha256:b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`. Independent package inspection confirms Release 0.1.0 (76), Candidate b76, source marker `0da5a7577f2c`, MinimumOSVersion 14.0, arm64, iPhone+iPad family.

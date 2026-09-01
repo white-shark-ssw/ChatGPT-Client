@@ -1,5 +1,14 @@
 # Module Status
 
+## DEV-send-stream b78 candidate override — 2026-09-01
+
+- Build/runtime metadata: exact b78 product/config source `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809`; clean product commit `180065e0faf947292a9f21b56c4ea366a5c322fe`; final Xcode validation `33482721335 / 99775722851`; Push `33482983693 / 99776545604` and PR `33482987997 / 99776557269` success; canonical Artifact `9790836559`; ZIP `7b5900a9...b081f`; IPA `726e3c09...8620e`; package independently verified as Release 0.1.0 (78), Candidate b78, source `031b1a1f2c1d`, iOS14 minimum, arm64. Runtime pending.
+- Conversation read/recovery: b77 diagnostics prove list HTTP403 cancelled the shared transient session and the selected Detail, then the cancelled Detail operation remained coalescible forever. b78 retires the transport without cancelling in-flight work and terminalizes current Detail cancellation; no retry/fallback/state-owner duplication.
+- User-message presentation: b78 renders and measures from the same attributed representation, uses character wrapping, and supports inline-only Markdown semantics on supported OS versions; this targets the exact official-Web parity/truncation defect reported on b77.
+- Tool activity presentation: b78 removes mixed paragraph-style ownership at reasoning/tool boundaries and treats tool icon/text/separator as one distinct tool paragraph presentation; visual prominence remains a real-device gate.
+- External continuation: b76/b77 reasoning/tool adoption remains the accepted positive boundary. b77 DOM-structure evidence did not reveal final text before plural completion, so progressive final-body authority remains unresolved and no fake stream is added.
+- Stable/Frozen Send remains No; b39-b78 are permanently reserved.
+
 ## DEV-send-stream b76 candidate override — 2026-09-01
 
 - Build/runtime metadata: exact b76 source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`; Push `33440101178 / 99645927061` and PR `33440098527 / 99645917529` success; Artifact `9775920927`; IPA `sha256:b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`; package independently verified as Release 0.1.0 (76), Candidate b76, source `0da5a7577f2c`, iOS14 minimum, arm64. Runtime pending.

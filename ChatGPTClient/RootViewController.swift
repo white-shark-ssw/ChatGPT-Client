@@ -165,6 +165,20 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == Self.handlerName, let body = message.body as? [String: Any], let kind = body["kind"] as? String else { return }
         switch kind {
+        case "external_stream_status_request":
+            guard observingExternalResponse else { return }
+            diagnostics.info(category: "webSend", name: "coveredExecutor.externalStreamStatusRequest", fields: ["target": "existing_conversation"])
+        case "external_stream_status_response":
+            guard observingExternalResponse else { return }
+            let status = (body["status"] as? NSNumber)?.intValue ?? 0
+            let streamState = Self.safeToken(body["streamState"] as? String ?? "")
+            diagnostics.info(category: "webSend", name: "coveredExecutor.externalStreamStatusResponse", fields: ["httpStatus": String(status), "streamState": streamState])
+        case "external_resume_request":
+            guard observingExternalResponse else { return }
+            let hasOffset = (body["hasOffset"] as? NSNumber)?.boolValue ?? false
+            let offsetType = Self.safeToken(body["offsetType"] as? String ?? "missing")
+            let offsetValue = (body["offsetValue"] as? NSNumber)?.intValue ?? -1
+            diagnostics.info(category: "webSend", name: "coveredExecutor.externalResumeRequest", fields: ["hasOffset": hasOffset ? "true" : "false", "offsetType": offsetType, "offsetValue": String(offsetValue)])
         case "external_resume_observed":
             guard observingExternalResponse else { return }
             observationEvents?(.externalResumeObserved)
@@ -728,13 +742,23 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const isPluralConversation = !activeSend && method === 'GET' && pageConversationID && decodedPathID(pluralConversationMatch) === pageConversationID;
         if (isResume) {
           let resumeConversationID = null;
+          let resumeOffsetType = 'missing';
+          let resumeOffsetValue = -1;
           if (init && typeof init.body === 'string') {
             try {
               const resumeBody = JSON.parse(init.body);
-              if (resumeBody && typeof resumeBody === 'object' && !Array.isArray(resumeBody) && typeof resumeBody.conversation_id === 'string') resumeConversationID = resumeBody.conversation_id;
+              if (resumeBody && typeof resumeBody === 'object' && !Array.isArray(resumeBody)) {
+                if (typeof resumeBody.conversation_id === 'string') resumeConversationID = resumeBody.conversation_id;
+                if (Object.prototype.hasOwnProperty.call(resumeBody, 'offset')) {
+                  resumeOffsetType = typeof resumeBody.offset;
+                  if (typeof resumeBody.offset === 'number' && Number.isSafeInteger(resumeBody.offset)) resumeOffsetValue = resumeBody.offset;
+                  else if (typeof resumeBody.offset === 'string' && /^\d+$/.test(resumeBody.offset)) resumeOffsetValue = Number(resumeBody.offset);
+                }
+              }
             } catch (_) {}
           }
           if (resumeConversationID && resumeConversationID === pageConversationID) {
+            post({ kind: 'external_resume_request', hasOffset: resumeOffsetType !== 'missing', offsetType: resumeOffsetType, offsetValue: resumeOffsetValue });
             post({ kind: 'external_resume_observed' });
             try {
               const response = await originalFetch(input, init);
@@ -752,10 +776,13 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           }
         }
         if (isStreamStatus && !externalStreamingState.resumeSSE) {
+          post({ kind: 'external_stream_status_request' });
           const response = await originalFetch(input, init);
+          let streamState = '';
           if (response.status === 200) {
             try {
               const payload = await response.clone().json();
+              if (payload && typeof payload.status === 'string') streamState = payload.status;
               if (payload && payload.status === 'IS_STREAMING') {
                 externalStreamingState.completePending = false;
                 if (!externalStreamingState.active) {
@@ -769,6 +796,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
               }
             } catch (_) {}
           }
+          post({ kind: 'external_stream_status_response', status: response.status, streamState });
           return response;
         }
         if (isPluralConversation && !externalStreamingState.resumeSSE) {

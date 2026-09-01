@@ -65,10 +65,10 @@ The supplied app bundle also contains an injected `ChatGPTEnhancer-0.1.0-alpha60
 
 The official framework contains explicit source/type strings:
 
+- `Conversations/WebSocketConfiguration.swift`;
 - `Conversations/WebSocketConversationObserver.swift`;
 - `Conversations/WebSocketConversationEventsService.swift`;
 - `Conversations/ConversationPollingManager.swift`;
-- `Conversations/WebSocketConfiguration.swift`;
 - `APIClient/WebSocketService.swift`;
 - `APIClient/WebSocketModels.swift`.
 
@@ -290,27 +290,54 @@ The official native client has a bounded, state-aware conversation polling mecha
 
 It does not authorize copying an unknown polling cadence or adding a hidden fixed timer now. Exact trigger, endpoint, cadence/termination and authority semantics remain unknown.
 
-## 8. Current investigation decision
+## 8. External cross-check — hypothesis only
+
+A current third-party open-source implementation independently reports a protocol shape that strongly overlaps the official-iOS static models:
+
+- `GET /backend-api/celsius/ws/user` -> JSON `websocket_url`;
+- WebSocket command envelope containing `connect` and `subscribe`;
+- base topics including `conversations`;
+- conversation event type `conversation-update`;
+- per-turn topic subscriptions with offsets.
+
+This source is **Hypothesis / cross-check evidence only**, not current product authority. Its value is that these route/topic names are now narrow candidates for direct verification in the existing Web Rule Lab.
+
+## 9. Current investigation decision
 
 Order of investigation is now:
 
-1. evidence the official native `websocketURL` acquisition path;
-2. evidence the exact conversation topic ID and serialized connect/subscribe behavior;
-3. evidence auth/account/workspace binding and offset/catchup/live semantics;
+1. verify the WebSocket registration route and URL shape on the current logged-in account;
+2. verify the exact conversation topic ID and serialized connect/subscribe behavior;
+3. verify auth/account/workspace binding and offset/catchup/live semantics;
 4. determine whether `conversation-update`, `add-messages` or async-status events appear near remote request start and what exact identity/status/content they supply;
 5. if an early event exists, initially use it only to activate/reconcile through the existing authoritative Repository path unless exact evidence separately authorizes WebSocket message content;
 6. if an early subscribable signal cannot be established, explicitly design a bounded selected-conversation status monitor using the official polling architecture as reference.
 
 No b83 product Candidate is allocated yet.
 
+## 10. Next Human protocol gate
+
+Use the existing Web Rule Lab with the same `.default()` logged-in WebKit store. Run a bounded, read-only protocol probe that:
+
+- does not send a chat message from the Lab;
+- does not alter conversation state;
+- never outputs full signed WebSocket URLs, query parameters, Cookie, Authorization or challenge values;
+- tests the hypothesized registration route and returns only HTTP status / JSON keys / WebSocket host+path shape;
+- opens one diagnostic socket if registration succeeds;
+- sends only `connect` / `subscribe` control frames;
+- tests the `conversations` topic as a hypothesis;
+- records only bounded structural frame information and whether a frame's `conversation_id` matches the already-open target conversation;
+- during the observation window, the user sends one long turn from another platform.
+
+The decisive result is whether an exact target-matching conversation event arrives **before** the assistant finishes. If yes, inspect its update type/timing and use it as the next evidence source. If no, the WebSocket-start hypothesis is rejected for this account/flow and the official polling architecture becomes the next explicit design branch.
+
 ## Prohibited shortcuts retained
 
 Do not:
 
-- guess the topic ID;
-- guess the websocket URL or config route;
+- guess the topic ID in product code;
+- guess the websocket URL or config route in product code;
 - guess offset/cursor/recovery semantics;
-- replay guessed connect/subscribe payloads;
 - promote generic WebSocket payload bodies to Native message authority;
 - add fixed polling/timers/watchdogs as a concealed workaround;
 - synthesize remote user/final rows;

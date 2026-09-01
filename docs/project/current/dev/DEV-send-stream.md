@@ -2,19 +2,19 @@
 
 ## Status
 
-**Active — `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)` is now a formally built and independently verified Runtime candidate. Exact product source, Push CI, PR CI, canonical IPA and package identity are all verified. Runtime/manual/real-device remains Pending. Stable/Frozen Send remains No.**
+**Active — b80 Runtime is partial-positive / partial-rejected. The b80 spacing boundary is accepted and Frozen for this Work; adopted external final materialization and stopped-thinking semantics are Runtime positive. Reliable automatic acquisition of a newly-started cross-platform response remains rejected/intermittent. No b81 is allocated. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / unmerged
-- Current `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b80 product/config source: `b0f51041c2d7b645f152752ea6196526b2e4e0f6`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)`
 - Canonical Push Artifact: `9801761448`
 - IPA: `ChatGPTClient-0.1.0-b80-dev-send-stream.ipa`
 - IPA SHA-256: `87c360175a4adc4fa476383b395cffe74c57c5e75db252dd49acdf42be39ce1f`
 - b39-b80 permanently reserved
-- b80 Runtime/manual/real-device: **Pending**
+- b80 Runtime/manual/real-device: **Partial-positive / partial-rejected**
+- b81: **Not allocated**
 - Stable/Frozen Send: **No**
 
 Durable evidence:
@@ -22,123 +22,82 @@ Durable evidence:
 - `docs/project/runtime-evidence/DEV-send-stream-b79-device-runtime-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-account-wide-web-notification-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b80-build-artifact-20260901.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b80-device-runtime-20260901.md`
 
-Do not allocate b81 until b80 Runtime is classified.
+## Identity / validation retained
 
-## Resume / identity / conflict guard
+Formal b80 source `b0f51041c2d7b645f152752ea6196526b2e4e0f6` changes exactly:
 
-The post-interruption full resume guard was completed before b80 formalization:
+- `.github/workflows/ios-foundation.yml`
+- `ChatGPTClient.xcodeproj/project.pbxproj`
+- `ChatGPTClient/Conversation/ConversationFeature.swift`
+- `ChatGPTClient/RootViewController.swift`
 
-- feature branch / PR identity matched the selected Work;
-- `docs/project/current/dev/` contained no second Active Work owner;
-- b80 remained uniquely allocated;
-- `main` had advanced to `94f0c5777dad262cd1fb22be49082dbd92c962f2`, but compare from the previously recorded main showed only `docs/project/COMPOSER_PARITY_PLAN.md` as a net changed file;
-- no b80 product/config path or Send state owner overlapped, so the main drift did not invalidate the validated b80 patch.
+Validation/artifact:
 
-## b80 formalization recovery chain — completed through Artifact
+- guarded assembly `33506668882`: exact-scope/static/prohibited-pattern guard + Xcode 16.4 Simulator build **passed**;
+- Push `33511327452`: **success**;
+- PR `33511332786`: **success**;
+- canonical Artifact `9801761448`;
+- ZIP SHA-256 `0d6a5ddfa3c05d956708e43fb91acd6bb19988198a5a3cf34e6b72e289091db9`;
+- package independently verified as Release `0.1.0 (80)`, Candidate b80, source marker `b0f51041c2d7`, Release, iOS14 minimum, arm64.
 
-The non-atomic recovery chain recorded before formalization has now completed through the Artifact/package-verification milestone.
+## Exact b80 Runtime classification
 
-Completed deterministic batches:
+### Tool/timeline -> reasoning-divider spacing
 
-1. recovery checkpoint established at `81e322c7e626a63048a1b303891a0c3efd87e83b`;
-2. one exact four-file product/config tree was created and formalized as `b0f51041c2d7b645f152752ea6196526b2e4e0f6`;
-3. branch fast-forwarded without force;
-4. exact formal commit verified to change only:
-   - `.github/workflows/ios-foundation.yml`
-   - `ChatGPTClient.xcodeproj/project.pbxproj`
-   - `ChatGPTClient/Conversation/ConversationFeature.swift`
-   - `ChatGPTClient/RootViewController.swift`
-5. Push CI passed;
-6. PR CI passed;
-7. canonical Push Artifact downloaded and independently verified;
-8. durable b80 build/artifact evidence written.
+**Accepted / Frozen for this Work.** User explicitly reports the result as normal and asks to freeze it. Do not alter this spacing without new explicit Runtime evidence/requirement.
 
-No product retry/fallback/timer/watchdog or unrelated refactor was introduced.
+### Adopted external final materialization
 
-## Exact b80 product scope
+**Positive.** Supplied b80 diagnostics show adopted external responses remaining alive with `finalCharacters=0` through the waiting phase, then materializing a real final before Native terminal/reconcile (`5656` chars at `13:21:04Z`; another sequence `2874` chars at `13:28:45Z`). The b79 early-terminal race is therefore fixed for the adopted-response path.
 
-The formal source implements only the evidence-backed scope:
+This is page-snapshot materialization, not token/SSE-delta progressive final streaming.
 
-1. **Final timeline/tool -> reasoning-divider spacing** — the terminal expanded-timeline boundary now uses the same neutral separator representation instead of a separate pre-divider spacing owner; the 36-point tool line height was not increased.
-2. **Normal external COMPLETE materialization gate** — when page-owned `complete=true` arrives while `reasoningEnded == true` and `finalText` is still empty, Native keeps the same covered observation alive instead of terminalizing/releasing immediately.
-3. **Bridge ownership correction** — page-owned external observation state is no longer cleared merely because the first COMPLETE-associated plural snapshot was posted; Native release remains the terminal owner.
-4. **Identity-only b80 changes** — Xcode Build/Candidate and workflow artifact identity moved from b79 to b80.
+### External stopped-thinking semantics
 
-Explicitly excluded and still excluded:
+**Positive / preserve.** User confirms manually stopped external reasoning is presented correctly; reasoning/tools are not promoted into normal final body text.
 
-- account-wide haptic / automatic Sync implementation;
-- timer/poll/retry/watchdog;
-- duplicate Sync/Send;
-- fake progressive final/typewriter;
-- DOM-body or WebSocket-body authority;
-- Native resume/offset synthesis;
-- second response owner;
-- Composer work or unrelated refactor.
+### Manual-Sync re-arm
 
-## Validation / Artifact evidence
+**Positive / preserve.** Explicit Sync can discover a changed latest remote turn, reload/re-arm the same covered target page once, and then adopt page-owned reasoning/tool snapshots when the page emits the required signal.
 
-Guarded assembly run `33506668882`:
+### Automatic cross-platform acquisition
 
-- exact patch application: **Passed**
-- exact-scope / prohibited-pattern / static guard: **Passed**
-- Xcode 16.4 Simulator build: **Passed**
+**Rejected / intermittent.** User tested two conversations; one behaved normally, while another did not acquire even reasoning until explicit Sync.
 
-Formal exact source `b0f51041c2d7b645f152752ea6196526b2e4e0f6`:
+Diagnostics localize the failure before Repository live adoption. In a representative sequence for `sha256:37824321c607`:
 
-- Push run `33511327452`: **success**
-- PR run `33511332786`: **success**
-- canonical Push Artifact `9801761448`
-- Artifact ZIP SHA-256: `0d6a5ddfa3c05d956708e43fb91acd6bb19988198a5a3cf34e6b72e289091db9`
-- IPA SHA-256: `87c360175a4adc4fa476383b395cffe74c57c5e75db252dd49acdf42be39ce1f`
+- selection observation page loaded at `13:27:04Z`;
+- no external live response was adopted;
+- explicit Sync at `13:27:19Z` discovered server-side change;
+- `manual_sync_rearm` reloaded the target page;
+- only then did `coveredExecutor.externalStreamingObserved` arrive at `13:27:31Z`, followed by reasoning/tool snapshots from `13:27:37Z` onward and final materialization at `13:28:45Z`.
 
-Independent built-package inspection:
+Current `CoveredWebSendExecutor` bridge activates this path only after the **official page itself** produces a matching `stream_status == IS_STREAMING` response or a validated matching resume SSE. Native does not issue that target-status request. Therefore a selected page that does not emit the signal cannot start Repository live adoption.
 
-- Release: `0.1.0`
-- Build: `80`
-- Candidate: `DEV-send-stream-0.1.0-b80`
-- Source marker: `b0f51041c2d7`
-- Build configuration: `Release`
-- Deployment target / Minimum OS: `14.0`
-- Executable: Mach-O 64-bit `arm64`
+No speculative Native polling/status construction, retry/timer/watchdog, duplicate Sync, fake progressive final, DOM/WebSocket body authority or second response owner is authorized.
 
-Evidence classification:
+## Account-wide signal evidence and current gate
 
-- Code written: **Yes**
-- Static/local/Simulator checks: **Passed**
-- Push CI: **Passed**
-- PR CI: **Passed**
-- Artifact produced: **Yes**
-- Package identity verified: **Yes**
-- Runtime/manual/real-device: **Pending**
-- Stable/Frozen: **No**
+User Runtime evidence already proves official Web can remain on conversation A while a never-opened B completes and still show an upper-right new-answer bubble; official iOS also provides account-wide completion haptics. This is now directly relevant to the acquisition defect because official completion awareness is not inherently tied to the target conversation page being selected.
 
-CI and Artifact success are not Runtime proof.
+Exact account-wide transport/schema/conversation identity/covered-WKWebView observability remain **Unknown / Unverified**.
 
-## Retained b79 Runtime findings to verify against b80
+## Next exact action — Human Web Rule Lab evidence gate
 
-- Tool presentation was partial-positive / rejected because final timeline/tool -> divider spacing remained asymmetric.
-- Manual-Sync external re-arm was Runtime positive and must remain positive.
-- External stopped-thinking semantics were Runtime positive and must remain positive.
-- External reasoning/tools remain page-snapshot granular, not token/SSE-delta granular.
-- Progressive external final token streaming remains unavailable from the currently authorized source.
-- b79 had a proven COMPLETE/final-materialization race: page COMPLETE could arrive while reasoning ended but final text was still empty, causing early terminal/release and a missed later final until another manual Sync.
+Before allocating or implementing b81:
 
-## Account-wide official completion/new-answer signal boundary
+1. Keep official Web Rule Lab on conversation A using the same `.default()` logged-in WebKit store.
+2. Install a privacy-safe account-signal probe **before** B starts generating.
+3. On another platform, start a sufficiently long response in conversation B that has not been opened in the Lab session.
+4. Keep A visible; do not enter B and do not send from the Lab.
+5. Capture the account-level event path while B starts/reasons/completes and the official Web notification behavior occurs.
+6. Return only structural metadata: fetch/XHR paths/status/content-type; WebSocket/EventSource/service-worker/window/BroadcastChannel event type/key shape/length; no Cookie/Authorization/challenge/raw conversation IDs/message bodies/tool bodies.
 
-User Runtime evidence supports an account-wide official new-answer/completion signal: official iOS can haptically signal another conversation and official PC Web can remain on A while never-opened B completes and still show an upper-right new-answer notification.
+Required conclusion from the probe:
 
-Exact transport/mechanism/schema/conversation identity/covered-WKWebView/background semantics remain **Unknown / Unverified**. This was deliberately excluded from b80. Do not infer WebSocket/APNs/service-worker semantics or imitate it with polling/timers.
+- identify the exact account-level event source, if any, and whether it exposes a privacy-safe usable conversation identity or a bounded trigger for one authoritative list/detail refresh;
+- only then decide the minimal b81 scope for reliable acquisition + optional completion haptic/automatic Sync.
 
-## Next exact action — Human Runtime Gate
-
-Install and test the exact b80 IPA. Verify:
-
-1. **Spacing:** final tool/timeline -> reasoning-divider spacing is now visually symmetric/acceptable.
-2. **Normal remote completion:** start a sufficiently long response from another platform; when the page reaches COMPLETE before final materialization, the client must keep observing and the eventual final answer must appear without requiring another manual Sync.
-3. **Stopped-thinking regression:** external stopped-thinking still preserves reasoning/tools instead of promoting reasoning into normal final body text.
-4. **Manual-Sync re-arm regression:** when a changed latest user turn is discovered by explicit Sync, the same covered page can still re-arm/reload once and adopt page-owned reasoning/tool snapshots.
-
-Progressive final token streaming remains an open protocol gap and is **not** claimed fixed by b80.
-
-After the exact b80 Runtime result is supplied, classify b80 first. Only then decide whether b81 is necessary. Separately, the account-wide Web signal probe remains future evidence work after b80 classification.
+Do **not** allocate b81 merely to guess the transport. If the probe remains ambiguous, stay at Human Gate.

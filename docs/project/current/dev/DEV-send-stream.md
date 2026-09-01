@@ -2,12 +2,12 @@
 
 ## Status
 
-**Active — exact b82 Runtime remains Partial. Automatic cross-platform final acquisition works, but the current generic Web user-socket exact-conversation trigger is completion-time rather than start-time. The follow-up Human Gate is now resolved Negative: an already-open visible official ChatGPT Web page on the same conversation does not automatically show the remote user turn, active response, or even the completed turn without an explicit page refresh/navigation. Therefore passive official-Web visibility/focus is rejected as the missing early acquisition mechanism. Stable/Frozen Send as a whole remains No.**
+**Active — exact b82 Runtime remains Partial. Automatic cross-platform final acquisition works, but the current generic Web user-socket exact-conversation trigger is completion-time rather than start-time. The follow-up Human Gate is now resolved Negative: an already-open visible official ChatGPT Web page on the same conversation does not automatically show the remote user turn, active response, or even the completed turn without an explicit page refresh/navigation. Therefore passive official-Web visibility/focus is rejected as the missing early acquisition mechanism. Static official-iOS evidence plus external cross-check now supports a targeted read-only WebSocket registration/topic probe as the next Human protocol gate. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Exact branch head before this checkpoint write: `7d050c22bf47dfb0a5597b8db92090075450d59a`
+- Formal branch head before this checkpoint refresh: `5e721b08cf2f5098dbb9f2153e86999c22abb6d3`
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b82 product/config source: `c7a274786dfd175e8f476fc15c4964840e112a1d`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
@@ -29,7 +29,7 @@ Durable evidence:
 - `docs/project/runtime-evidence/DEV-send-stream-b82-allocation-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b82-build-artifact-20260902.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b82-device-runtime-20260902.md`
-- pending this documentation batch: visible-Web negative gate + official-iOS static realtime architecture evidence
+- `docs/project/runtime-evidence/DEV-send-stream-visible-web-native-realtime-evidence-20260902.md`
 
 ## Exact b82 Runtime finding — 2026-09-02
 
@@ -74,18 +74,51 @@ The b82 user-level socket observation remains useful only as currently evidenced
 
 ## Official iOS static realtime architecture evidence — investigation direction
 
-The user-supplied decrypted official ChatGPT iOS artifact (`com.openai.chat`, `1.2026.202`, build `30140022279`, MinimumOSVersion 17.0) contains stronger static evidence that the native official client has a separate realtime layer rather than depending on passive Web refresh:
+The user-supplied decrypted official ChatGPT iOS artifact (`com.openai.chat`, `1.2026.202`, build `30140022279`, MinimumOSVersion 17.0) contains strong static evidence that the native official client has a separate realtime layer rather than depending on passive Web refresh.
 
-- `Conversations/WebSocketConversationObserver.swift`;
-- `Conversations/WebSocketConversationEventsService.swift`;
-- `Conversations/ConversationPollingManager.swift`;
-- `APIClient/WebSocketService.swift` and `APIClient/WebSocketModels.swift`;
-- WebSocket command raw strings `connect`, `subscribe`, `presence`;
-- topic/event model fields including `topicId`, `offset`, message `id/type/payload/offset`, and topic event cases `catchup` / `live`;
-- conversation event/update raw values `conversation-update`, `add-messages`, `title-update`, `set-conversation-async-status`, `async-task-update-message`, `async-task-completed`;
-- `ConversationPollingManager` diagnostics including `ios.conversation_polling.is_streaming_message`, `is_waiting_for_server_streaming`, `chat_has_active_async_tasks`, and explicit polling termination reasons.
+Exact reflected structures now include:
 
-This is **static architecture evidence only**. It does not yet prove the exact current WebSocket URL acquisition, topic ID, subscribe envelope, auth/cookie/header requirements, offset/cursor semantics, or which event is emitted at remote request start for the user's account. Do not guess those fields from names alone.
+- `WebSocketRegisterResponse.websocketURL`;
+- `WebSocketTopic(topicId, offset)`;
+- Topic events `catchup` / `live`;
+- `SubscribePayload(topicId, lastOffset, recovered, catchups)`;
+- commands `connect`, `subscribe`, `presence`;
+- `WebSocketConversationEvent.conversationUpdate`;
+- `ConversationUpdate` coding keys `conversationId`, `updateType`, `content`;
+- known update types `addMessages`, `titleUpdate`, `setConversationAsyncStatus`, `asyncTaskUpdateMessage`, `asyncTaskCompleted`, `stop`;
+- `AddMessagesUpdateContent.messages`;
+- account/workspace-scoped `DefaultWebSocketConversationEventsService` and `WebSocketConversationObserver`;
+- `ConversationPollingManager` with bounded state-aware polling termination diagnostics.
+
+This is static architecture evidence only. It does not yet prove the exact current WebSocket URL acquisition, topic ID, serialized subscribe envelope, auth/cookie/header requirements, or which event is emitted at remote request start for the user's account. Do not guess those fields from names alone.
+
+## External cross-check — hypothesis only
+
+A current third-party open-source implementation independently reports a protocol shape that strongly overlaps the official-iOS static models:
+
+- `GET /backend-api/celsius/ws/user` -> JSON `websocket_url`;
+- WebSocket command envelope containing `connect` and `subscribe`;
+- base topics including `conversations`;
+- conversation event type `conversation-update`;
+- per-turn topic subscriptions with offsets.
+
+This external implementation is **Hypothesis / cross-check evidence only**, not product authority. It is useful because the route/topic names can now be tested directly in the existing Web Rule Lab without modifying product behavior or allocating a Candidate.
+
+## Next Human protocol gate — read-only Web Rule Lab probe
+
+Use Web Rule Lab with the same logged-in `.default()` WebKit store to verify the current account's exact registration/topic behavior before b83.
+
+The probe must:
+
+1. first inspect existing same-origin resource paths for a `celsius/ws/user` registration request without exposing query/token material;
+2. if necessary, make one same-origin GET to the hypothesized registration path and return only HTTP status, JSON key names and WebSocket host/path shape — never the full signed URL;
+3. open one diagnostic WebSocket using the returned URL;
+4. send only connection/subscription control commands, not a chat Send or state mutation;
+5. subscribe to the hypothesized `conversations` topic and record bounded structural frames only: frame type, topic equality, conversation ID match, update type, payload key names, offsets/catchup/live shape and timing;
+6. from another platform, send one long turn to the already-selected conversation and determine whether an early conversation event appears before completion;
+7. never return Cookie/Authorization/challenge/signed-WebSocket query values or prompt/answer/reasoning bodies.
+
+A positive early `conversation-update` / `add-messages` / async-status signal can authorize a minimal b83 acquisition design. A negative result keeps the official `ConversationPollingManager`-style bounded selected-conversation status monitor as the next design branch.
 
 ## Runtime classification
 
@@ -96,6 +129,7 @@ This is **static architecture evidence only**. It does not yet prove the exact c
 - `targetMatch=true` user-socket event as a completion/update trigger: **Positive**.
 - `targetMatch=true` as request-start/live-stream trigger: **Rejected by b82 reproduction**.
 - already-open visible Web passive refresh: **Rejected, including after completion**.
+- official-iOS topic-based realtime architecture: **Static evidence positive; exact network contract Unverified**.
 - fake typewriter/synthetic progressive final: **Still prohibited**.
 
 The user's current requirement remains explicit: for a long cross-platform response, Native must show promptly that the request was received and then expose real progressive response state rather than remaining unchanged until completion.
@@ -117,33 +151,28 @@ Passive Web acquisition is now ruled out for the tested flow. The next safe dire
 
 Investigation priority:
 
-1. determine the official native WebSocket URL/config acquisition path;
-2. determine the exact conversation topic ID and `connect`/`subscribe` envelope for the current account;
-3. determine whether a `conversation-update` / `add-messages` / async-status event arrives near remote request start and what non-body identity it provides;
-4. only then decide whether that event can trigger existing authoritative Detail/stream-status/resume acquisition without becoming a second message authority;
-5. if no usable realtime start signal can be evidenced, explicitly design a bounded selected-conversation status-monitoring path using the official client's polling evidence as a reference. Do not smuggle fixed polling into the product before that decision is documented.
+1. verify the WebSocket registration route and URL shape on the current logged-in account;
+2. verify the exact conversation topic ID and connect/subscribe envelope;
+3. verify auth/account/workspace binding and offset/catchup/live semantics;
+4. determine whether a conversation update appears near remote request start and what exact non-body identity/status it supplies;
+5. only then decide whether that event can trigger existing authoritative Detail/stream-status/resume acquisition without becoming a second message authority;
+6. if no usable realtime start signal can be evidenced, explicitly design a bounded selected-conversation status-monitoring path using the official client's polling evidence as a reference. Do not smuggle fixed polling into the product before that decision is documented.
 
-Current b82 source and the official-app static strings do **not** authorize constructing a guessed subscribe command, guessed topic ID, guessed offset, guessed websocket URL, or guessed auth framing.
+Current b82 source and the official-app static strings do **not** authorize constructing a guessed product subscribe command, guessed topic ID, guessed offset, guessed websocket URL, or guessed auth framing.
 
-## Documentation batch recovery point
+## Documentation batch status
 
-This checkpoint write starts a docs-only evidence batch after the visible-Web Human Gate result.
+The visible-Web negative Runtime result and official-iOS static realtime evidence are now durably recorded in this checkpoint plus `docs/project/runtime-evidence/DEV-send-stream-visible-web-native-realtime-evidence-20260902.md`.
 
-Known baseline before batch:
+Completed writes so far:
 
-- formal branch head `7d050c22bf47dfb0a5597b8db92090075450d59a`;
-- exact tested product source remains `c7a274786dfd175e8f476fc15c4964840e112a1d`;
-- Candidate b82 remains unchanged; b83 is not allocated.
+1. `7b57f564b7f202a078d940767c3ffe23dea7bece` — checkpoint records visible-Web negative gate and opens docs-only evidence batch;
+2. `082f5ee21a25c82b0314fd1c51ec4dd817943795` — creates dedicated evidence doc;
+3. `5e721b08cf2f5098dbb9f2153e86999c22abb6d3` — corrects/refines exact Swift reflection structures.
 
-Intended deterministic docs batch:
+No product/config/version file changed and exact b82 product source remains `c7a274786dfd175e8f476fc15c4964840e112a1d`. b83 remains unallocated.
 
-1. checkpoint this visible-Web negative result and static official-iOS realtime evidence;
-2. add one runtime/static evidence document;
-3. update `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, and `WEB_SEND_ADAPTER.md` only where current truth changed;
-4. update PR #29 summary after durable docs are synchronized;
-5. close this recovery point with the resulting formal docs head and exact next action.
-
-Do not touch product/config/version files in this batch and do not allocate b83.
+The remaining durable status truth is represented by the selected checkpoint/evidence doc and PR #29 summary; candidate/build tables do not require a new identity row because no Candidate changed. Long-term architecture docs must not promote the hypothesized external route/topic to Confirmed until the current-account probe verifies it.
 
 ## Session round counter
 
@@ -151,4 +180,4 @@ Conversation round count was explicitly reset by the user. Current work is **rou
 
 ## Next exact action
 
-Complete the docs-only evidence batch, then continue static/protocol investigation of the official native WebSocket conversation-events path. Do not allocate b83 until the exact WebSocket URL/topic/subscribe/auth/offset semantics and an earlier useful event are evidenced, or until the project explicitly chooses a bounded selected-conversation status-monitoring design because no subscribable early signal can be established.
+Update PR #29 with the closed visible-Web gate and current protocol investigation boundary, then have the user run the bounded read-only Web Rule Lab registration/topic probe. Use that exact result to choose the b83 scope or the bounded status-monitor design; do not allocate b83 in advance.

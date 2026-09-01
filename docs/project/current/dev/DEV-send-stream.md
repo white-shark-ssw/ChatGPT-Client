@@ -2,101 +2,125 @@
 
 ## Status
 
-**Active — exact b79 is Code/static/Simulator/Push+PR CI/Artifact/package verified and is now at the real-device Human Runtime gate. Stable/Frozen Send remains No.**
+**Active — exact b79 Runtime is partial-positive / partial-rejected. The next evidence-backed product candidate is b80, but b80 is not allocated until the fresh pre-allocation identity guard below is completed. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
-- Formal b79 product/config source: `a3d307b05d70e95568672bc29b0c939b7f3b8141`
+- Exact b79 product/config source: `a3d307b05d70e95568672bc29b0c939b7f3b8141`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b79` / `0.1.0 (79)`
 - Guarded staging validation: `33488975445 / 99795672696` — exact scope + `git diff --check` + Xcode 16.4 Simulator passed
 - Formal Push CI: `33489654106 / 99797864816` — success
 - Formal PR CI: `33489658656 / 99797878467` — success
 - Canonical Push Artifact: `9793240789`
 - Artifact ZIP SHA: `2016508002ae7ff43d803c90fcbb92ba01c45906c885be6f6e50a1e43e1e87fc`
-- IPA: `ChatGPTClient-0.1.0-b79-dev-send-stream.ipa`
 - IPA SHA: `39f64dd9146c3a8dc28cb9b733d1c56d4fbf3ff090a442c8ecbd27c672234fb4`
-- Independent package inspection: Release `0.1.0 (79)`, Candidate b79, source marker `a3d307b05d70`, MinimumOSVersion 14.0, Mach-O arm64
 - b39-b79 permanently reserved
-- Runtime/manual/real-device b79: **Pending / Unverified**
+- Runtime/manual/real-device b79: **Partial / rejected**
 - Stable/Frozen Send: **No**
 
-Durable predecessor Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b78-device-runtime-20260901.md`.
+Durable b79 evidence: `docs/project/runtime-evidence/DEV-send-stream-b79-device-runtime-20260901.md`.
 
 ## Resume / identity / conflict guard
 
-The selected Work remains `DEV-send-stream`. Immediately before b79 formal assembly:
+The selected Work remains `DEV-send-stream`. Before this Runtime evidence sync:
 
-- feature branch was `dev/send-stream-20260829` at `b88c5269cfd0fb4e76f3a19ee4475cd03785a753`;
+- formal feature head was `608d7d77f2d65c786eab5ac5a0b04095f02d608a`;
 - PR #29 remained open / mergeable / unmerged and based on `main`;
-- `main` remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`, so no target/base drift occurred;
-- b79 had been allocated by the evidence-only checkpoint commit and no parallel Active checkpoint conflict was found;
-- the formal b79 product diff from `b88c...` to `a3d307...` is exactly four files: `ChatGPTClient/RootViewController.swift`, `ChatGPTClient/Conversation/ConversationFeature.swift`, `ChatGPTClient.xcodeproj/project.pbxproj`, `.github/workflows/ios-foundation.yml`.
+- `main` remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`, so no target/base drift was observed;
+- exact search found no `DEV-send-stream-0.1.0-b80` before this evidence sync;
+- `docs/project/current/dev/` still had a stale temporary b79 scope marker in addition to this checkpoint and README; it is assembly residue, not a separate Active Work, and must be removed now that b79 is classified.
 
-## b78 Runtime evidence accepted as the b79 basis
+Re-run the branch/PR/main/b80 non-use guard immediately before allocating b80.
 
-1. **Tool presentation partial-positive / spacing rejected.** Tool operation prominence/line-height was visibly active, but reasoning -> tool and tool -> next spacing differed because the separator inherited the preceding paragraph style.
-2. **User-message clipping focused positive.** The supplied long link-bearing message was no longer truncated; this did not promote full official-rendering parity to Stable.
-3. **Cross-platform reasoning/tools only page-snapshot granular.** External snapshots changed reasoning/tool state, but not at SSE/token-delta cadence.
-4. **Progressive external final rejected.** Final remained zero characters across repeated snapshots and then jumped to the full body at terminal. No fake typewriter, polling, DOM-body or WebSocket-body authority is allowed.
-5. **Already-open new external turn rejected.** Manual Sync could reveal the new user turn but the already-current covered page was not re-entered/reloaded, so no new page-owned external-response lifecycle started.
-6. **External manual stop rejected.** The terminal fallback promoted external reasoning into final body text when no real final existed.
+## Exact b79 Runtime classification
 
-## Exact b79 product corrections
+### Tool presentation
 
-### 1. Deterministic reasoning/tool transition spacing
+**Partial positive / rejected.** The stronger special tool-operation presentation remains visible, but the final tool row still has asymmetric space above/below. b79 neutralized only inter-item attributed-string transitions. The terminal timeline -> horizontal reasoning-divider boundary is still separately owned by cell geometry, so the last tool row and divider do not share one spacing owner.
 
-Reasoning and tool paragraphs no longer own inter-item spacing. A neutral 12-point separator owns each inter-item transition, so reasoning -> tool and tool -> next no longer depend on the preceding item's line height.
+### Manual-Sync external re-arm
 
-### 2. Explicit manual-Sync external re-arm
+**Positive.** An explicit Sync that discovers a changed latest user turn re-arms/reloads the same covered official page once. The supplied diagnostics then show `manual_sync_rearm`, page load, external response start, `/resume` 404 JSON page-owned fallback, and adopted reasoning/tool snapshots before completion.
 
-After an explicit successful `同步最新消息`, if the authoritative Detail shows a changed latest user turn, the same conversation is still selected, and no Repository live response is active, Native forces one reload/re-arm of the already-current covered official page. The page still owns its own `stream_status` / plural conversation reads and any resume behavior.
+### External stopped-thinking semantics
 
-This is event-driven from the user's explicit Sync. It is **not** automatic polling and adds no retry/timer/watchdog/cadence.
+**Positive.** External terminal-without-final now preserves reasoning/tools instead of promoting reasoning into normal final body text. The tested stopped-thinking case retains reasoning and tools with final characters remaining zero.
 
-### 3. External stopped-thinking semantics
+### Cross-platform streaming boundary
 
-`external_page_owned` terminal-without-real-final no longer promotes reasoning into final. Reasoning/tools are preserved, the live body is empty rather than synthesized, copy is suppressed for the empty body, and the reasoning disclosure title becomes `已停止思考`.
+**Reasoning/tools remain only page-snapshot granular.** Tool count and service-message structure advance in coarse page-owned snapshots; this is not token/SSE-delta reasoning streaming.
 
-The b67 local protected-Send compatibility fallback remains unchanged for local responses.
+**Progressive final remains unavailable.** Final characters remain zero through the observed final phase. No fake typewriter, Native polling/cadence, DOM-body authority or WebSocket-body authority is justified.
+
+### New exact b79 defect — COMPLETE/final materialization race
+
+**Rejected; root cause localized.** In the latest run, page-owned snapshots enter final phase with reasoning ended and five tools but `finalCharacters=0`. The page later reports `complete=true` while the final body is still absent. Current b79 immediately terminalizes/releases the covered executor and performs one authoritative Detail reconcile; that Detail still has no new assistant message. With the observation owner already released, the later materialized final is missed until a manual Sync about a minute later.
+
+Current bridge/source explains the race:
+
+- page `COMPLETE` sets `completePending`;
+- the first following plural conversation read posts `complete=true` and immediately clears external streaming state;
+- Swift unconditionally terminalizes/releases on that `complete` flag even when normal reasoning has ended but `finalText` is still empty.
+
+For a normal external response, `COMPLETE` is therefore not sufficient terminal evidence when `reasoningEnded == true && finalText.isEmpty`.
+
+### Large-conversation manual Sync latency
+
+One supplied Detail Sync transferred roughly 2.2 MB and took about 10.27 seconds. This explains a separate short-lived `正在同步最新消息…` delay but not the later missing-final case above.
+
+## Official-app completion haptic / automatic Sync boundary
+
+The user reports that official ChatGPT iOS gives a two-stage haptic when any account conversation completes even if another screen/conversation is visible. Treat that as user Runtime evidence that **the official app has an account-wide completion signal**, but the transport is **Unknown / Unverified** for this client.
+
+- For responses already owned by this client's `ConversationRepository`, a completion haptic is straightforward to trigger from the accepted terminal transition.
+- Account-wide haptic/automatic Sync for conversations this client is not currently observing requires a proven account-level event source.
+- If a privacy-safe account-level completion/new-turn event is later evidenced, one deduplicated event may drive both a haptic and one bounded authoritative Sync/list refresh.
+- Do not infer APNs, WebSocket, service-worker or another mechanism from haptic behavior alone.
+- Do not implement fixed polling/timers/watchdogs to imitate it.
+
+## Evidence-backed b80 scope — not yet allocated at this checkpoint
+
+Only these product changes are authorized by b79 Runtime:
+
+1. **Final timeline/tool -> reasoning-divider spacing:** make the last visible reasoning/tool item use the same deterministic neutral vertical-rhythm owner as other timeline transitions; do not blindly increase line height.
+2. **Normal external COMPLETE materialization gate:** after consuming a page-owned `complete=true` snapshot, if this is a normal response with `reasoningEnded == true` but `finalText` is still empty, do not terminalize/release yet. Keep the same covered page observation alive for its own subsequent page-owned reads. Terminal normally when a real final body is observed. Preserve the already-positive stopped-thinking path where reasoning did not end and no final exists.
+3. **No automatic Sync/haptic implementation in b80.** The official-app completion signal observation is a future protocol-evidence gate, not authorization for polling.
+4. **No progressive-final invention.** No timer/poll/retry/watchdog, duplicate Sync/Send, fake typewriter, DOM-body authority, WebSocket-body authority, second response owner or compatibility shim.
+
+Expected minimum product scope after exact call-site inspection: `ChatGPTClient/Conversation/ConversationFeature.swift`, `ChatGPTClient/RootViewController.swift`, plus identity-only Xcode/workflow changes if b80 is allocated.
 
 ## Retained architecture / protocol boundaries
 
 - `ConversationRepository` remains sole production conversation/list/detail/recovery/response owner.
 - `AuthSessionStore` remains sole native auth/account owner; `WKWebsiteDataStore.default()` remains sole persistent browser auth-secret authority.
-- Covered official Web remains challenge/protected-Send/page-owned observation transport only, not a second message store.
+- Covered official Web remains browser challenge/protected-Send/page-owned observation transport only, not a second message store.
 - b67 local protected Send and b72 tested simultaneous ownership remain accepted predecessors.
 - `assistant:thoughts` / hidden COT remain non-presentational.
-- No Native polling/cadence, Native resume/offset synthesis, duplicate Send, retry/timer/watchdog, guessed fallback, compatibility shim, second response owner, fake final streaming, DOM-body authority or WebSocket-body authority.
-
-## Automatic Sync boundary
-
-Automatic Sync is technically feasible but remains **not implemented**. Current evidence does not justify a fixed timer/poll/watchdog. A future implementation should be event-driven from a proven page-owned/lifecycle signal; the b78 evidence specifically showed the already-loaded page does not reliably emit the needed new-turn signal by itself.
-
-## Human Runtime gate — exact b79
-
-Install the canonical b79 IPA and test the following on the primary iPhone/iOS17 device:
-
-1. **Tool spacing:** use a response containing reasoning + multiple tool rows and confirm the vertical gap above and below each tool operation is visually symmetric/consistent.
-2. **Already-open remote turn:** keep Native inside conversation A, start a long response for A on another platform, then tap `同步最新消息` once while the remote response is still active. Confirm the new user turn appears and Native then adopts page-owned thinking/reasoning/tools without waiting for server completion. Do not send from Native in this test.
-3. **External manual stop:** start a remote response, stop it while still thinking, then Sync/re-arm as needed. Confirm Native preserves the stopped reasoning/tools under `已停止思考` and does not render the reasoning text as normal final body text.
-4. **Progressive final observation:** note whether final body still appears only at terminal. b79 does not claim to fix progressive final streaming.
-5. **Regression where practical:** one normal local Native Send still follows the b67 protected-Send HTTP200 SSE path; b72-style A-generating + B-send/generate ownership remains correct.
-6. Export diagnostics after tests 2/3 even if they pass.
+- No Native polling/cadence, Native resume/offset synthesis, duplicate Send, retry/timer/watchdog, guessed fallback, fake final streaming, DOM-body authority or WebSocket-body authority.
 
 ## Evidence classification
 
-- Code written: **Yes**
-- Static/exact scope checks: **Passed**
-- Xcode 16.4 Simulator build: **Passed**
-- Push CI: **Passed**
-- PR CI: **Passed**
-- Artifact produced: **Yes**
-- Package identity independently verified: **Yes**
-- Runtime/manual/real-device b79: **Pending / Unverified**
+- b79 Code/static/Simulator/Push+PR CI/Artifact/package: **Verified**
+- b79 Runtime/manual/real-device: **Partial / rejected**
+- Tool prominence: **Positive**
+- Tool terminal-boundary spacing symmetry: **Rejected**
+- Manual-Sync external re-arm: **Positive**
+- External stopped-thinking semantics: **Positive**
+- External reasoning/tool adoption: **Positive at page-snapshot granularity only**
+- External progressive final: **Rejected / no authorized progressive source**
+- COMPLETE/final-materialization handling: **Rejected; premature terminal/release localized**
+- Official-app account-wide completion haptic mechanism for this client: **Unknown / Unverified**
 - Stable/Frozen Send: **No**
 
 ## Next exact action
 
-Human Runtime-test the exact canonical b79 package above and return screenshots/diagnostics for the tool-spacing, already-open remote-turn manual-Sync re-arm, and externally stopped-thinking cases. Do **not** allocate b80 before b79 Runtime evidence is classified. If b79 passes those scopes, continue from the remaining proven gap: external progressive final still lacks an authorized incremental source, plus any regression that the b79 Runtime actually reproduces.
+1. Remove the stale temporary b79 assembly scope marker.
+2. Re-check formal branch / PR / main base and exact b80 non-use.
+3. If still clean, allocate `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)` once.
+4. Implement only the two evidence-backed product corrections above.
+5. Run exact-scope/static checks and Xcode 16.4 Simulator build through the guarded assembly path; then formal Push + PR CI, canonical IPA production and independent package verification.
+6. Human Runtime gate: verify the last tool row has symmetric divider spacing; a normal remote response no longer terminalizes before its final body materializes; stopped-thinking and manual-Sync re-arm remain positive; note that progressive final token streaming remains an open protocol gap.
+
+Do not claim CI/Artifact success as Runtime success.

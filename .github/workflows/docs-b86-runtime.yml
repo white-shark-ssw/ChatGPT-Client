@@ -1,0 +1,31 @@
+name: Update b85 Runtime and b86 diagnostics docs
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/docs-b86-runtime.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update durable records
+        run: |
+          python3 scripts/research/update_b86_docs.py
+          git diff --check
+      - name: Commit durable docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "docs(send): qualify b85 runtime and index b86"
+          git push origin HEAD:dev/send-stream-20260829

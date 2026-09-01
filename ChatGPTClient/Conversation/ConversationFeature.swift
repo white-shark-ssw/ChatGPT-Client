@@ -3238,21 +3238,27 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         toolParagraph.paragraphSpacing = 12
         let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
         let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]
+        var separatorAttributes: [NSAttributedString.Key: Any]?
         for item in timeline {
             let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !normalized.isEmpty else { continue }
             if item.kind == .tool, ConversationReasoningPresentation.inlineToolItems([item]).isEmpty { continue }
-            if output.length > 0 { output.append(NSAttributedString(string: "\n", attributes: reasoningAttributes)) }
+            if output.length > 0, let separatorAttributes { output.append(NSAttributedString(string: "\n", attributes: separatorAttributes)) }
             switch item.kind {
             case .reasoning:
                 output.append(NSAttributedString(string: normalized, attributes: reasoningAttributes))
+                separatorAttributes = reasoningAttributes
             case .tool:
                 let start = output.length
                 appendToolIcon(item.toolIconKind, to: output)
-                if output.length > start { output.append(NSAttributedString(string: "  ", attributes: toolAttributes)) }
+                if output.length > start {
+                    output.addAttributes(toolAttributes, range: NSRange(location: start, length: output.length - start))
+                    output.append(NSAttributedString(string: "  ", attributes: toolAttributes))
+                }
                 output.append(NSAttributedString(string: normalized, attributes: toolAttributes))
                 if !item.completed { output.append(NSAttributedString(string: "  调用中", attributes: [.font: UIFont.systemFont(ofSize: reasoningFont.pointSize - 2, weight: .regular), .foregroundColor: UIColor.tertiaryLabel, .paragraphStyle: toolParagraph])) }
                 if let slot = item.toolSlot, let url = URL(string: "chatgpt-tool-list://slot/\(slot)") { output.addAttribute(.link, value: url, range: NSRange(location: start, length: output.length - start)) }
+                separatorAttributes = toolAttributes
             }
         }
         return output

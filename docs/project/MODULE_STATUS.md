@@ -1,5 +1,14 @@
 # Module Status
 
+## DEV-send-stream b79 candidate override — 2026-09-01
+
+- Build/runtime metadata: exact b79 source `a3d307b05d70e95568672bc29b0c939b7f3b8141`; guarded staging `33488975445 / 99795672696` passed exact scope + `git diff --check` + Xcode 16.4 Simulator; formal Push `33489654106 / 99797864816` and PR `33489658656 / 99797878467` passed; canonical Artifact `9793240789`; ZIP `20165080...e87fc`; IPA `39f64dd9...34fb4`; package independently verified as Release 0.1.0 (79), Candidate b79, source `a3d307b05d70`, iOS14 minimum, arm64. Runtime pending.
+- Tool activity presentation: inter-item spacing now has one neutral separator owner instead of preceding reasoning/tool paragraph ownership; real-device symmetry remains the acceptance gate.
+- Covered external continuation: explicit Sync detecting a changed latest user may reload/re-arm the already-current covered official page once, preserving the page-owned observation model and adding no polling/automatic Sync.
+- External stop semantics: external terminal-without-final preserves reasoning/tools and uses stopped-thinking presentation; local protected-Send terminal fallback remains unchanged.
+- External progressive final remains unavailable from the currently authorized source; b79 adds no fake stream, DOM body, WebSocket body, retry, timer, watchdog or second state owner.
+- Stable/Frozen Send remains No; b39-b79 are permanently reserved.
+
 ## DEV-send-stream b78 candidate override — 2026-09-01
 
 - Build/runtime metadata: exact b78 product/config source `031b1a1f2c1d01900c2ab79ff14b1f2fb6c7e809`; clean product commit `180065e0faf947292a9f21b56c4ea366a5c322fe`; final Xcode validation `33482721335 / 99775722851`; Push `33482983693 / 99776545604` and PR `33482987997 / 99776557269` success; canonical Artifact `9790836559`; ZIP `7b5900a9...b081f`; IPA `726e3c09...8620e`; package independently verified as Release 0.1.0 (78), Candidate b78, source `031b1a1f2c1d`, iOS14 minimum, arm64. Runtime pending.

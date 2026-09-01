@@ -1,6 +1,13 @@
 # Development Plan — Native iOS ChatGPT Client
 
-_Last updated: 2026-09-01 through exact DEV-send-stream b76 Code/static/Simulator/Push+PR CI/Artifact/package verification; the next gate is b76 real-device Runtime._
+_Last updated: 2026-09-01 through exact DEV-send-stream b79 Code/static/Simulator/Push+PR CI/Artifact/package verification; the next gate is b79 real-device Runtime._
+
+## Current DEV-send-stream b79 gate — 2026-09-01
+
+- Exact candidate `DEV-send-stream-0.1.0-b79` / `0.1.0 (79)`; source `a3d307b05d70e95568672bc29b0c939b7f3b8141`; Push `33489654106 / 99797864816`; PR `33489658656 / 99797878467`; canonical Artifact `9793240789`; IPA SHA `39f64dd9146c3a8dc28cb9b733d1c56d4fbf3ff090a442c8ecbd27c672234fb4`.
+- b79 implements only the b78 Runtime-backed corrections: neutral reasoning/tool transition spacing, explicit-manual-Sync same-page re-arm after a changed latest user turn, and preservation of external stopped-thinking reasoning instead of synthesizing final body text.
+- External reasoning/tool continuation remains page-snapshot granular. External progressive final still has no authorized progressive source; do not fake it. Automatic Sync remains future evidence work and must not be implemented as fixed polling.
+- **Next gate is Human Runtime:** verify symmetric tool spacing, manual Sync adopts an already-open conversation's newly-started external response, stopped external reasoning displays as stopped reasoning rather than body text, and retained b67/b72 behavior where practical. Stable/Frozen remains No.
 
 ## Purpose / delivery principles
 

@@ -2,149 +2,124 @@
 
 ## Status
 
-**Active — exact b81 is now the Human Runtime candidate for externally initiated cross-platform acquisition evidence. Account-wide notification discovery remains deferred. b80 spacing and external stopped-thinking semantics remain Frozen. b81 changes only privacy-safe at-document-start WebSocket structural diagnostics plus Build/Artifact identity; socket bodies remain non-authoritative. Stable/Frozen Send as a whole remains No.**
+**Active — b81 automatic external acquisition is Runtime-rejected, while its at-document-start WebSocket structural probe is Runtime-positive and supplies an evidence-backed one-shot acquisition trigger. `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)` is now allocated to convert that exact target-conversation event into one bounded authoritative Sync + one covered-page re-arm. Account-wide notification remains deferred. b80 spacing and external stopped-thinking semantics remain Frozen. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / unmerged at product gate
+- PR: #29 — open / mergeable / unmerged at allocation guard
+- Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b81 product/config source: `d1d4d197cc5d2a5022a28b332afebe485b216ea1`
-- Candidate / Version-Build: `DEV-send-stream-0.1.0-b81` / `0.1.0 (81)`
-- Guarded assembly: `33529062319 / 99927255152` — success
-- Formal Push CI: `33529489996 / 99928687280` — success
-- Formal PR CI: `33529494465` — success
-- Canonical Push Artifact: `9809150111`
-- Artifact ZIP SHA-256: `b02224911a3443e1a79b6c8d5fbabee0d6811f6c80bf50df8f76f6d603843469`
-- IPA: `ChatGPTClient-0.1.0-b81-dev-send-stream.ipa`
-- IPA SHA-256: `d48d2398dc5a7ef16b9983021a9173d87ba3b852f4a45c9431dff2ebcf057038`
-- Actual `main` at Artifact gate: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- b39-b81 permanently reserved
-- b81 Runtime/manual/real-device: **Pending / Unverified**
+- b81 Candidate / Version-Build: `DEV-send-stream-0.1.0-b81` / `0.1.0 (81)`
+- b81 canonical Artifact: `9809150111`
+- b81 IPA SHA-256: `d48d2398dc5a7ef16b9983021a9173d87ba3b852f4a45c9431dff2ebcf057038`
+- Allocated b82 Candidate / Version-Build: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
+- b39-b82 permanently reserved
+- b81 Runtime: **Automatic acquisition rejected / structural trigger positive**
+- b82 Runtime: **Not yet produced**
 - Stable/Frozen Send: **No**
 
-Durable evidence:
+Durable b81 Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b81-device-runtime-20260901.md`.
 
-- `docs/project/runtime-evidence/DEV-send-stream-b80-device-runtime-20260901.md`
-- `docs/project/runtime-evidence/DEV-send-stream-b81-allocation-20260901.md`
-- `docs/project/runtime-evidence/DEV-send-stream-b81-build-artifact-20260901.md`
+## b82 allocation guard
 
-## User scope decision — round 17
+Immediately before allocation:
 
-The user explicitly defers official account-wide notification/haptic discovery. Do not block `DEV-send-stream` on the official A-page/B-conversation notification bubble.
+- formal feature head was `68bb0688878c1135399bdc21ceacbfd7f150250e` before the b81 Runtime evidence write;
+- PR #29 remained open / mergeable / unmerged, head `dev/send-stream-20260829`, base `main`;
+- actual `main` remained `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
+- exact repository search returned no `DEV-send-stream-0.1.0-b82`;
+- `docs/project/current/dev/` contained only this Active checkpoint plus README;
+- no parallel Active candidate/state-owner conflict was found.
 
-Current required scope:
+Therefore b82 is allocated exactly once here. Do not allocate b83 before b82 Runtime classification.
 
-1. preserve accepted client-owned protected Send and response ownership;
-2. improve externally initiated cross-platform acquisition/streaming;
-3. progressive external final-body streaming remains an evidence problem — do not fake it;
-4. account-wide auto-notification/Sync for conversations the client neither started nor adopted is later work.
+## Exact b81 Runtime finding
 
-Future completion notification for **client-owned** Sends can consume the existing Repository-owned active-response set/terminal transition; it does not require the official account-wide transport.
+The supplied exact b81 diagnostics prove:
 
-## Frozen / accepted b80 boundaries
+1. selected conversation observation begins at 16:19:14Z and the covered page is loaded by 16:19:15Z;
+2. `wss://ws.chatgpt.com/p24/ws/user/{id}` is observed from creation/open at 16:19:18-19Z;
+3. while the client shows no external live response and the user does not press Sync, the socket produces a JSON-array frame at **16:22:20Z** with `targetMatch=true` and a second at **16:24:24Z** with `targetMatch=true`;
+4. before manual Sync there is no `externalStreamingObserved`, no `externalSnapshot`, and no Repository external live-response start;
+5. manual Sync at 16:24:59Z returns authoritative Detail at 16:25:00Z with visible messages **4 -> 8**, four added visible messages, then the existing manual path performs `manual_sync_rearm`.
 
-- final tool/timeline -> reasoning-divider spacing: **Accepted / Frozen**;
-- external stopped-thinking semantics: **Accepted / Frozen**;
-- adopted external final materialization gate: **Positive / preserve**;
-- explicit manual-Sync re-arm: **Positive / preserve**;
-- b67 client-owned protected Send Runtime and b72 tested A/B simultaneous ownership: **preserve**.
+In b81, `targetMatch=true` means the parsed frame contains an exact string equal to the current page conversation ID in the bounded privacy-safe structural traversal. Raw frame/body/ID content is not exported.
 
-## Remaining cross-platform defect
+Conclusion: a target-conversation-correlated user-level WebSocket event reaches the covered page **before and independently of** the currently unreliable page-owned `stream_status` acquisition path. The event is sufficient as a discovery trigger; it remains non-authoritative for response content.
 
-Externally initiated response acquisition is intermittent before Repository adoption. A selected covered target can load without the official page emitting matching `stream_status == IS_STREAMING`; explicit Sync/re-arm can later cause that page-owned signal and adoption then starts. Native must not manufacture `stream_status`, polling, retry loops or duplicate Sync.
+## Frozen / preserved boundaries
 
-Historical official-Web evidence already proves a user-level `wss://ws.chatgpt.com/...` exists during cross-device active-response continuation, but `WEB_SEND_ADAPTER.md` correctly keeps it structural-only/non-authoritative for reasoning/final bodies. The latest Lab account probe was inconclusive because it was installed after page startup and could not observe a socket already created.
+- b80 final tool/timeline -> reasoning-divider spacing: **Frozen**;
+- external stopped-thinking semantics: **Frozen**;
+- b80 external final-materialization gate: preserve;
+- explicit manual-Sync re-arm: preserve as recovery;
+- b67 client-owned protected Send Runtime and b72 tested simultaneous A/B ownership: preserve;
+- `ConversationRepository` remains sole production conversation/response owner;
+- covered official Web remains transport/observation only;
+- account-wide notification/haptic discovery remains deferred;
+- progressive external final token streaming remains an evidence gap and must not be faked.
 
-The production covered bridge is injected at document start, so b81 captures socket **structure** from creation onward without changing response authority.
+## Exact b82 product scope
 
-## Exact b81 product scope
-
-Formal source `d1d4d197cc5d2a5022a28b332afebe485b216ea1` differs from its predecessor in exactly three product/config files:
+Authorized product/config changes only:
 
 1. `ChatGPTClient/RootViewController.swift`
-   - privacy-safe at-document-start WebSocket lifecycle/message structural diagnostics;
-   - sanitized host/path, frame transport type/length, JSON key names, safe short `type/event/kind/action/topic/name` tokens, presence of conversation-id-shaped keys, and boolean exact target-conversation match;
-   - no raw frame data/IDs/prompt/answer/reasoning/tool bodies exported;
-   - no socket frame mutates `ConversationRepository` in b81.
+   - introduce a dedicated external-acquisition-hint event from the existing b81 structural WebSocket path only when a `message` frame has `targetMatch=true`, the executor is observing the current conversation, and no response has yet been acquired;
+   - consume **only the first** such hint in one observation cycle;
+   - on that hint, trigger exactly one `ConversationRepository.syncLatestMessages(id:)` for the selected conversation;
+   - after that one authoritative Sync completes, update the selected detail presentation if still selected and perform exactly one covered-page re-arm/reload for the same conversation;
+   - after re-arm, existing page-owned `stream_status / plural-read` remains the only external reasoning/tool/final content source;
+   - add privacy-safe diagnostics for hint received, Sync result, and re-arm.
 2. `ChatGPTClient.xcodeproj/project.pbxproj`
-   - Build 81 / Candidate b81 identity only.
+   - Build 82 / Candidate b82 identity only.
 3. `.github/workflows/ios-foundation.yml`
-   - b81 Artifact identity only.
+   - b82 Artifact identity only.
 
-Explicitly excluded: account-wide notification/haptic code, Native `stream_status`, timer/poll/retry/watchdog, repeated automatic Sync/reload, DOM body authority, WebSocket body authority, fake progressive final/typewriter, duplicate Send/resend, second response owner, Frozen spacing/stopped-thinking changes.
+Explicitly excluded:
 
-## Validation / Artifact evidence
+- timer/polling/cadence;
+- retries/watchdogs/repeated automatic Sync loops;
+- WebSocket frame/body content authority;
+- Native construction of `stream_status`, resume or plural response bodies;
+- fake typewriter/progressive final;
+- duplicate Send/resend;
+- second response owner;
+- account-wide notification/haptic implementation;
+- changes to Frozen spacing/stopped-thinking behavior.
 
-Guarded tooling assembly `33529062319 / 99927255152` passed:
+## b82 design guard
 
-- formal-head guard;
-- exact patch and exact product scope;
-- `git diff --check`;
-- prohibited-pattern guard;
-- Xcode 16.4 generic iOS Simulator build;
-- validated product blob commit.
+The one-shot hint state belongs to the covered executor observation cycle, not Repository response state. It prevents the second target-matching frame seen in b81 from causing duplicate automatic Sync. An explicit new observation cycle / newly-created executor may arm one new hint for a later response.
 
-Formal exact source `d1d4d197...` then passed Push `33529489996` and PR `33529494465`. Canonical Push Artifact `9809150111` was independently downloaded and verified:
+If the one automatic authoritative Sync fails, b82 must record the failure and stop; no automatic retry is authorized. Existing explicit manual Sync remains the recovery path.
 
-- GitHub ZIP digest == local ZIP SHA `b02224911a3443e1a79b6c8d5fbabee0d6811f6c80bf50df8f76f6d603843469`;
-- IPA SHA `d48d2398dc5a7ef16b9983021a9173d87ba3b852f4a45c9431dff2ebcf057038`, matching sidecar;
-- package `0.1.0 (81)`;
-- Candidate `DEV-send-stream-0.1.0-b81`;
-- source marker `d1d4d197cc5d`;
-- MinimumOSVersion 14.0;
-- UIDeviceFamily `[1,2]`;
-- Mach-O 64-bit arm64.
+## b82 Runtime gate
 
-CI/Artifact/package evidence does not establish Runtime success.
+1. Open conversation A in b82 and leave it selected until covered page load.
+2. Start a sufficiently long new turn in the same A from another platform.
+3. Do not press Sync.
+4. Expected: first target-matching socket event triggers one automatic authoritative Sync and one covered-page re-arm; Native then begins adopting page-owned reasoning/tools without user Sync.
+5. Repeat at least twice to check one-shot behavior and no duplicate Sync.
+6. After completion export Diagnostics regardless of success.
+7. Also confirm b80 Frozen spacing and external stopped-thinking semantics did not regress if naturally exercised.
 
-## Human Runtime gate — exact next action
-
-Install exact b81 and test the externally-started acquisition boundary:
-
-1. Open conversation A in b81 and leave it selected until the covered page is loaded.
-2. On another platform, start a sufficiently long new turn in the **same A conversation**.
-3. Do **not** press Sync initially.
-4. Record whether Native automatically acquires reasoning/tools and later final materialization.
-5. Wait for completion and export Diagnostics whether success or failure.
-6. Only if automatic acquisition failed, press Sync once **after** the failure is established; export again if useful.
-7. If practical, also run one normal client-owned Send as a regression check, but do not block the structural experiment on that optional check.
-
-Required correlation:
-
-- socket created/open before the remote turn;
-- structural frames around remote start/reasoning/completion;
-- stable `type/event/kind/action/topic/name` / key shapes and target-match booleans;
-- ordering relative to page-owned `stream_status`, `externalStreamingObserved` and plural snapshots;
-- difference, if any, between automatically successful and failed acquisition runs.
-
-Only a proven stable event may authorize the next minimal acquisition change. WebSocket frame bodies remain non-authoritative unless separately evidenced.
-
-## Target/base / conflict state
-
-At the b81 Artifact gate:
-
-- PR #29 remained open / mergeable / unmerged;
-- actual `main` remained `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- the known `main` movement relative to the PR's older recorded base modifies only `docs/project/COMPOSER_PARITY_PLAN.md`, so no Send product/state-owner conflict was found;
-- only one Active development checkpoint exists;
-- no b82 is allocated.
+Progressive external final token streaming is **not** claimed solved by b82; the current authorized final source may still materialize in coarse/final snapshots.
 
 ## Evidence classification
 
-- b81 Code written: **Yes**
-- b81 static/exact scope: **Passed**
-- b81 Xcode Simulator: **Passed**
-- b81 Push CI: **Passed**
-- b81 PR CI: **Passed**
-- b81 Artifact/package: **Produced / independently verified**
-- b81 Runtime/manual/real-device: **Pending / Unverified**
-- b80 spacing: **Frozen**
-- b80 external stopped-thinking semantics: **Frozen**
+- b81 Code/static/Simulator/Push+PR CI/Artifact/package: **Verified**
+- b81 Runtime automatic acquisition: **Rejected**
+- b81 WebSocket structural trigger evidence: **Positive**
+- b82 allocation: **Done**
+- b82 Code/static/CI/Artifact/Runtime: **Pending**
 - Stable/Frozen Send as a whole: **No**
 
 ## Session round counter
 
-Current work is round 17. Continue displaying the current round count at the end of each user-facing response.
+Current work is round 19. Continue displaying the current round count at the end of each user-facing response.
 
 ## Next exact action
 
-Human installs the exact b81 IPA and returns one success/failure observation plus Diagnostics from the no-Sync external-turn test. Do not allocate b82 before classifying that Runtime evidence.
+Create an isolated b82 tooling branch from the current formal docs head, apply only the three-file one-shot event-driven acquisition change, validate exact scope / prohibited patterns / `git diff --check` / Xcode 16.4 Simulator, then transplant the validated three product/config blobs to the formal feature branch and continue through Push+PR CI, canonical Artifact, independent package verification, checkpoint/PR update, and exact IPA handoff.
+
+Do not claim CI/Artifact as Runtime success.

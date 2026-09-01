@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — MVP scope narrowed to reliable manual acquisition. Exact b82 remains the latest product Candidate. Automatic early cross-platform acquisition and token-level external streaming are no longer required for the minimum product gate. The minimum requirement is: while a remote turn is active, one explicit Sync must reliably acquire the newest authoritative turn state, re-arm the existing covered observation, and expose the latest available reasoning/tool snapshot; if the response remains active, the existing page-owned observation may continue to refresh later snapshots. b83 remains unallocated until the current b82 manual path is re-validated against this narrowed gate. Stable/Frozen Send as a whole remains No.**
+**Active — MVP scope is manual-triggered progressive reasoning. Exact b82 remains the latest product Candidate. Automatic early cross-platform acquisition is no longer required for the minimum gate, but progressive reasoning after one explicit Sync is required. The accepted minimum is: while a remote turn is active, one explicit Sync must reliably acquire the newest turn, re-arm the existing covered observation, and then continue presenting multiple real reasoning/tool updates while the turn remains active. Token-by-token SSE parity is not required unless separately requested, but one-shot-only reasoning refresh is insufficient. b83 remains unallocated until exact b82 is re-validated against this corrected gate. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -16,68 +16,68 @@
 - b83: **not allocated**
 - Stable/Frozen Send: No
 
-## Latest product minimum
+## Corrected MVP requirement
 
-The minimum acceptable external-response behavior is now manual rather than automatic:
+Minimum acceptable external-response behavior:
 
-1. User keeps or opens the target conversation in ChatGPTClient.
-2. A remote platform starts or is already generating a response for that conversation.
-3. User taps Sync once.
-4. Native performs the authoritative latest-message sync.
-5. If the authoritative latest-user/turn state changed, the covered target page is re-armed exactly once.
-6. The existing page-owned external-response path adopts the latest available reasoning/tool snapshot.
-7. If the response is still active, later page-owned snapshots may continue updating without another synthetic response owner.
-8. If the response is already complete, Sync must converge to the latest completed authoritative state.
+1. A remote platform starts or is already generating a response for the selected conversation.
+2. User taps Sync once.
+3. Native performs the authoritative latest-message sync.
+4. If the latest turn changed, the covered target page is re-armed once.
+5. The existing page-owned external-response path starts/adopts the active response.
+6. While the remote turn remains active, Native must receive and display **multiple real cumulative reasoning/tool updates over time** without requiring another manual Sync for every update.
+7. Completion must converge to the latest final state using the preserved b80 materialization boundary.
 
-This requirement does **not** require automatic request-start discovery, token-by-token external reasoning, token-by-token external final text, hidden polling, timers, retry loops, duplicate Send, WebSocket-body content authority or fake typewriter animation.
+A single one-shot reasoning snapshot after Sync is **not sufficient**.
 
-The phrase `latest reasoning stream` for this MVP means **latest cumulative reasoning/tool snapshot(s)**. It is not a claim of token-level streaming.
+The MVP does not require automatic request-start detection. It also does not require token-by-token SSE/delta parity if the real page-owned source only exposes coarser progressive snapshots. No fake typewriter animation or synthetic deltas are allowed.
 
-## Evidence supporting this scope
+## Existing Runtime evidence
 
-### b79 manual Sync — Runtime Positive
+### b78 proves progressive reasoning snapshots exist
 
-`docs/project/runtime-evidence/DEV-send-stream-b79-device-runtime-20260901.md` proves the explicit manual path on real device:
+`docs/project/runtime-evidence/DEV-send-stream-b78-device-runtime-20260901.md` records an active external response where Native received changing page-owned snapshots while reasoning/tools were active. Reasoning characters progressed `131 -> 260` while tool count progressed `2 -> 8` before completion. This is genuine progressive update behavior, but at page-snapshot granularity rather than token/SSE granularity.
 
-- explicit Sync started;
-- authoritative Detail advanced `45 -> 46`;
-- covered observation entered `mode=manual_sync_rearm`;
-- an `external_page_owned` live response started;
-- reasoning/tool snapshots were subsequently adopted.
+The same b78 evidence shows the previous defect: a newly-started external turn in an already-open conversation could require manual Sync/re-arm before that progressive path starts.
 
-The same evidence also proves external reasoning/tools are page-snapshot granular, not token-streaming.
+### b79 proves manual Sync can enter the progressive path
 
-### b80 preservation/fix
+`docs/project/runtime-evidence/DEV-send-stream-b79-device-runtime-20260901.md` proves on real device:
 
-`docs/project/runtime-evidence/DEV-send-stream-b80-device-runtime-20260901.md` preserves the manual-Sync re-arm path and fixes the later COMPLETE/final-materialization race. Stopped-thinking semantics and the final-materialization gate remain preserved.
+- explicit Sync starts;
+- authoritative Detail advances;
+- covered observation enters `mode=manual_sync_rearm`;
+- an `external_page_owned` live response starts;
+- subsequent reasoning/tool snapshots are adopted.
+
+This is the direct evidence-backed basis for the corrected MVP.
+
+### b80 preserves terminal correctness
+
+`docs/project/runtime-evidence/DEV-send-stream-b80-device-runtime-20260901.md` preserves manual-Sync re-arm and fixes the COMPLETE-before-final-materialization race. External stopped-thinking semantics and the final-materialization gate remain preserved.
 
 ### b81/b82 automatic acquisition
 
-- b81 found a target-correlated socket signal but did not automatically acquire the external response.
-- b82 automatically acquired the completed turn, but the signal arrived too late for live UX.
+Automatic early acquisition remains unresolved/late and is no longer an MVP blocker. b82's automatic completion acquisition can remain as a bonus behavior but cannot substitute for the required manual-triggered progressive reasoning path.
 
-These automatic-acquisition results no longer block the narrowed MVP because automatic early discovery is now optional follow-up work rather than a release gate.
+## Current answer
 
-## Current answer to the MVP question
+**Yes, this MVP is evidence-backed as technically achievable with the existing architecture.** We have separate real-device evidence that:
 
-**Architecture/evidence: Yes, the manual path is already evidence-backed and likely already present in b82.**
+- manual Sync can re-arm and enter the external response path;
+- once in that path, reasoning/tool state can update multiple times while the response is active.
 
-**Stable/Frozen: Not yet.** The exact narrowed requirement has not yet been re-run as a focused b82 Human Runtime gate across repeated active-turn cases. Do not describe it as Stable until that gate passes.
+**Not yet Stable/Frozen:** exact b82 has not yet been run as a focused repeated test of the combined requirement `one manual Sync -> progressive reasoning updates continue`. Do not claim the current b82 package already satisfies it until that Human Runtime gate passes.
 
-A very large conversation may make the authoritative Sync itself slow; b79 recorded a roughly 2.2 MB Detail response taking about 10 seconds. That is latency, not a failure to acquire reasoning.
+## Progressive final text boundary
+
+Current evidence does **not** show progressive external final-body text. b78 shows final text staying at zero and then jumping to the full body. Therefore the corrected MVP requirement is specifically progressive **reasoning/tool** updates plus correct final convergence, not progressive final-answer token streaming.
+
+If the user later requires progressive final text too, that is a separate protocol/source problem.
 
 ## Official native realtime research
 
-The official iOS realtime Probe/research package remains useful future evidence, but it is no longer on the critical path for the MVP. Do not spend a product Candidate on native WebSocket integration unless the user later restores automatic acquisition as a requirement.
-
-Research artifacts/evidence remain preserved under:
-
-- `docs/project/runtime-evidence/DEV-send-stream-official-ios-runtime-hook-plan-20260902.md`
-- `docs/project/runtime-evidence/DEV-send-stream-official-ios-realtime-probe-build-20260902.md`
-- `docs/project/runtime-evidence/DEV-send-stream-official-ios-realtime-probe-export-ui-20260902.md`
-- `docs/project/runtime-evidence/DEV-send-stream-official-ios-realtime-probe-trollstore-package-20260902.md`
-
-The official package remains an evidence oracle, not a ChatGPTClient product dependency.
+Official iOS realtime Probe work remains preserved as optional future research but is not on the critical path for this MVP. Do not allocate a product Candidate for native WebSocket integration unless needed after the manual-triggered progressive gate is evaluated.
 
 ## Frozen / preserved boundaries
 
@@ -91,19 +91,18 @@ The official package remains an evidence oracle, not a ChatGPTClient product dep
 
 ## Session round counter
 
-The user explicitly reset the conversation round count. This user turn is **round 8**. Continue displaying the current round count at the end of each user-facing response.
+The user explicitly reset the conversation round count. This user turn is **round 9**. Continue displaying the current round count at the end of each user-facing response.
 
 ## Next exact action
 
-**Do not allocate b83 yet. Do not continue the official realtime Probe as the critical path.**
+**Do not allocate b83 yet.** First run exact b82 against the corrected focused Human Runtime gate:
 
-Use exact b82 first for a focused manual-MVP Human Runtime gate:
+- start a sufficiently long remote reasoning turn for the selected conversation;
+- while reasoning is active, press Sync exactly once;
+- verify the remote user turn appears;
+- verify the first reasoning/tool snapshot appears;
+- without pressing Sync again, verify at least one later reasoning/tool update arrives while the turn is still active;
+- repeat on a second turn/conversation;
+- verify final convergence after completion.
 
-- start a sufficiently long remote response while the target conversation is selected;
-- during active reasoning, press Sync once;
-- verify the latest remote user turn is acquired and the latest cumulative reasoning/tool snapshot appears;
-- leave the response active and verify whether subsequent page-owned snapshots continue updating;
-- repeat on at least one second conversation/turn;
-- after completion, press Sync once and verify convergence to the latest final state.
-
-If b82 passes this focused gate repeatedly, freeze manual external acquisition as the MVP and remove automatic early acquisition/native WebSocket research from the Send release blocker. If b82 fails, allocate b83 only for the smallest evidence-backed manual-Sync determinism fix.
+If b82 passes repeatedly, freeze manual-triggered progressive reasoning as the Send MVP. If b82 fails, allocate b83 only for the smallest evidence-backed fix needed to make `manual Sync -> re-arm -> continuing page-owned progressive snapshots` deterministic.

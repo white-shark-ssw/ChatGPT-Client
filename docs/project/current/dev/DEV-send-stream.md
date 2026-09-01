@@ -2,116 +2,111 @@
 
 ## Status
 
-**Active — b82 manual external Sync is Runtime rejected for stability. The current user report is that manual Sync sometimes fails to acquire the active external reasoning stream. b83 is now allocated only for a bounded manual-Sync determinism correction. Client-owned requests keep real SSE. Cross-platform responses may remain block/page-snapshot progressive. Automatic discovery, cross-platform token-level SSE and progressive external final-token streaming remain deferred. Stable/Frozen Send as a whole remains No.**
+**Active — b83 is built and packaged for the narrowed Send MVP. b82 manual cross-platform Sync is Runtime Rejected for intermittent reasoning acquisition. b83 removes the source-backed `latestUserChanged` re-arm gate so every successful explicit manual Sync can perform one bounded covered-page re-arm when the selected conversation has no active Repository live response. Client-owned requests remain true SSE. Cross-platform block/page-snapshot progressive reasoning is acceptable for MVP. Automatic discovery and cross-platform token-level SSE remain deferred. b83 real-device Runtime is Pending; Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Resume/pre-change head: `1bfb7a1ff87de9ab8242f4a1e55843efc1e8cd0c`
-- Actual `main` verified this round: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest tested Candidate: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
-- b82 exact product/config source: `c7a274786dfd175e8f476fc15c4964840e112a1d`
-- b82 canonical Artifact: `9811406038`
-- b82 IPA SHA-256: `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`
-- b39-b82 permanently reserved
-- **b83 allocated: `DEV-send-stream-0.1.0-b83` / `0.1.0 (83)`**
-- b83 product source: Pending until the minimal code/config write is committed
-- b83 Artifact: Pending
+- Actual `main` last verified this round: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
+- Exact b83 product/config source: `12e3c27138ebc81cbbae6236347122f79e03bf08`
+- Clean b83 CI/package head: `3771ddccc8d0847ce28f72acbbe311aaf30b7482`
+- Candidate: `DEV-send-stream-0.1.0-b83`
+- Version / Build: `0.1.0 (83)`
+- Push workflow run/job: `33556857625 / 100019684027` — success
+- PR workflow run: `33556862137` — success
+- Canonical b83 Artifact: `9819681774`
+- Artifact ZIP digest: `sha256:b76c71493b01c88c6dfc60f9ef886e9e1c862d15a6e93ee00794ae6740a42682`
+- IPA: `ChatGPTClient-0.1.0-b83-dev-send-stream.ipa`
+- IPA SHA-256: `46f06106c3d47b3845a584665666fb6cb6d39cd66c0c9415412702e81795be97`
+- b39-b83 permanently reserved
 - Stable/Frozen Send: No
 
 ## Final Send MVP contract
 
 ### Client-owned Send
 
-Keep the existing real SSE response stream. Do not downgrade this path to page snapshots, polling or synthetic typewriter behavior.
+Keep the existing true SSE response stream. Do not downgrade this path.
 
-### Cross-platform / externally-started Send
+### Cross-platform Send
 
-The MVP accepts genuine block/page-snapshot progressive reasoning/tool updates rather than token-level SSE parity, but explicit manual Sync is a hard reliability requirement:
+For MVP, genuine block/page-snapshot progressive reasoning/tool updates are acceptable instead of token-level SSE, but explicit manual Sync is a hard reliability requirement:
 
-1. a remote turn may already be active;
-2. user taps `同步最新消息` once;
-3. authoritative Detail must converge to the newest available remote state;
-4. if Repository does not already own an active live response, the selected covered page must be re-armed exactly once by that explicit recovery action;
-5. when an active remote response exists, the external page-owned path may then produce the latest reasoning/tool block and later genuine blocks without repeated Sync for each block;
-6. completion must converge through the preserved b80 final-materialization boundary.
+1. user presses `同步最新消息` once;
+2. authoritative Detail converges to the newest available remote state;
+3. if the selected conversation has no active Repository live response, that successful explicit Sync performs one covered-page force re-arm;
+4. if the remote response is active, the latest reasoning/tool block is acquired and later genuine blocks may continue without another Sync for every block;
+5. final completion converges through the preserved b80 final-materialization boundary.
 
-Automatic remote-turn discovery, official-iOS native realtime product integration, cross-platform token-level reasoning SSE and progressive external final-token streaming are explicitly deferred until the broader product is completed.
+Deferred until broader product completion:
 
-## Latest user Runtime evidence
+- automatic remote-turn discovery/acquisition;
+- cross-platform token-level reasoning SSE parity;
+- cross-platform progressive final-answer token streaming;
+- production integration of the official iOS native realtime/WebSocket path.
 
-The user reports that **manual Sync sometimes does not acquire the reasoning stream and is not stable**. This rejects b82 for the final manual-sync MVP gate. The failure is specifically about external reasoning acquisition after explicit Sync; client-owned SSE is not rejected by this report.
+## Latest Runtime evidence
 
-## Current source-backed defect
+The user reports b82 manual Sync sometimes fails to acquire the active external reasoning stream. Therefore b82 fails the final manual-Sync MVP reliability gate.
 
-Current `ConversationDetailViewController.syncLatestMessages()` computes `latestUserChanged`, then invokes `onManualLatestSyncApplied(id, latestUserChanged)` only after authoritative Sync/apply succeeds.
+Previous accepted evidence remains:
 
-Current `RootViewController` handles that callback with a guard requiring `latestUserChanged == true` before calling `observeExternalResponseIfNeeded(conversationID:forcePageReload:true)`.
+- b78: real external reasoning/tool state can update multiple times at page-snapshot granularity;
+- b79: explicit manual Sync can enter `manual_sync_rearm`, acquire `external_page_owned`, and adopt reasoning/tool snapshots;
+- b80: stopped-thinking semantics and final-materialization boundary are preserved;
+- b82: automatic completed-turn refresh works but is too late and is no longer an MVP blocker.
 
-Therefore this valid state can occur:
+## b83 root cause and exact correction
 
-- newest remote user message is already present locally;
-- Repository has no active external live response because the reasoning path was not acquired;
-- user explicitly taps Sync again;
-- authoritative Sync succeeds but latest user ID is unchanged;
-- current code skips the only manual force-reload/re-arm action;
-- reasoning stream remains unattached.
+Current source inspection identified that b82's `onManualLatestSyncApplied` callback required `latestUserChanged == true` before the only explicit force re-arm.
 
-This logic is narrower than the accepted MVP contract and directly matches the reported intermittent symptom. The fix does not require a timer, retry loop, WebSocket content authority or automatic discovery.
+That fails when the latest remote user message is already present locally but the external live response was never acquired. A second explicit Sync succeeds, sees the same latest user ID, and b82 skips re-arm.
 
-## b83 exact scope
+b83 exact source commit `12e3c27138ebc81cbbae6236347122f79e03bf08` changes only the manual callback gate plus build identity:
 
-Make only the minimum ownership-preserving correction:
+- callback ignores `latestUserChanged` as a re-arm gate;
+- still requires same selected conversation;
+- still refuses to re-arm while Repository already owns an active live response;
+- still performs only one force reload per successful explicit manual Sync callback;
+- build/candidate becomes 83/b83.
 
-- after a successful **explicit manual Sync** callback, if the conversation is still selected and Repository has no active live response, force one covered-page re-arm regardless of `latestUserChanged`;
-- preserve `latestUserChanged` diagnostics if useful, but do not use it as the gate for the explicit re-arm;
-- leave automatic acquisition logic unchanged;
-- leave client-owned SSE unchanged;
-- no polling/timer/watchdog/retry loop/duplicate Send/fake stream/second response owner.
+Automatic acquisition logic and client-owned SSE were not changed.
 
 ## Evidence ladder
 
-- b82 code/CI/Artifact: previously verified
-- b82 manual external Sync stability: **Runtime Rejected by latest user report**
-- b83 Candidate identity: Allocated
-- b83 code: Pending
-- b83 static/local checks: Pending
-- b83 CI: Pending
-- b83 Artifact: Pending
-- b83 real-device Runtime: Pending
-- Stable/Frozen Send: No
+- b82 manual external Sync stability: **Runtime Rejected**
+- b83 source/root cause: **Verified from current source**
+- b83 Code written: **Yes**
+- b83 static diff/config identity: **Verified**
+- b83 Push CI: **Passed**
+- b83 PR CI: **Passed**
+- b83 Artifact produced/package identity: **Verified**
+- b83 Runtime/manual/real-device: **Pending**
+- Stable/Frozen Send: **No**
 
-## Batch recovery point
+Durable Runtime evidence:
 
-Known baseline before b83 writes:
+- `docs/project/runtime-evidence/DEV-send-stream-b83-manual-sync-determinism-20260902.md`
 
-- branch `dev/send-stream-20260829`
-- PR #29
-- head `1bfb7a1ff87de9ab8242f4a1e55843efc1e8cd0c`
-- actual main `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- project config currently `0.1.0 (82)` / `DEV-send-stream-0.1.0-b82`
-- no separate competing Active development checkpoint is present under `docs/project/current/dev/`; the only task checkpoint is this Send work (the round7 addendum is supplemental, not another Work ID)
-- b83 was not present in `BUILD_TEST_INDEX.md` or repository code search before allocation
+## Frozen / preserved boundaries
 
-Confirmed completed in this write chain:
-
-- PR #29 title/body updated to record b82 manual-Sync instability and b83 scope.
-- this checkpoint allocated b83 and records the recovery point.
-
-Still pending, in order:
-
-1. change only the manual-Sync callback gate in `RootViewController.swift`;
-2. bump Debug+Release product config from build 82/b82 to build 83/b83;
-3. record b83 allocation/source in `BUILD_TEST_INDEX.md` and Runtime evidence;
-4. run the normal CI/artifact path and verify exact package identity;
-5. hand b83 to the user for focused real-device Runtime.
-
-Recovery must not touch automatic discovery/native realtime research or other deferred product areas.
+- b80 tool/timeline -> reasoning-divider spacing: Frozen.
+- external stopped-thinking semantics: Frozen.
+- b80 final-materialization gate: preserve.
+- b67 client-owned protected Send and b72 tested simultaneous ownership: preserve.
+- `ConversationRepository` remains sole Native response/content authority.
+- `AuthSessionStore` remains sole native auth/account authority.
+- no duplicate Send/resend, fake stream, polling, timer, speculative retry/watchdog/fallback or second response owner.
 
 ## Session round counter
 
 The user explicitly reset the conversation round count. This user turn is **round 11**. Continue displaying the current round count at the end of each user-facing response.
 
-## Next exact action
+## Next exact action — Human Runtime gate
 
-Apply the minimal b83 source/config change, then validate/package it. Human Runtime focus after Artifact: run at least two active remote turns; during each, press Sync once while reasoning is active; verify the current reasoning block appears and at least one later real reasoning/tool block arrives without another Sync. Also reproduce the important edge case where the latest remote user message is already visible before pressing Sync; b83 must still re-arm and acquire the active reasoning path.
+Install exact b83 IPA and test repeated active cross-platform turns.
+
+For each test, press Sync exactly once while reasoning is active. Verify the latest state and first reasoning/tool block appear, then do not press Sync again and verify at least one later genuine reasoning/tool block arrives before completion. Verify final convergence.
+
+At least one test must cover the exact b83 edge case: the remote user message is already visible locally before Sync, but no reasoning stream is active. Pressing Sync must still re-arm and acquire the active reasoning path.
+
+If b83 passes repeated cases, freeze this manual cross-platform block-stream MVP and move to the next product phase. If it still fails, use the b83 diagnostics to localize the next exact page-owned acquisition failure; do not reopen automatic discovery or cross-platform SSE research as part of this MVP fix.

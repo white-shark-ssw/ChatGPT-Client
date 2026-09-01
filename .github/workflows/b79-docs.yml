@@ -1,0 +1,43 @@
+name: b79 durable docs patch
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b79-assembly-20260901
+    paths:
+      - ".github/workflows/b79-docs.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact durable docs patch
+        run: python3 .github/scripts/b79_docs_apply.py
+
+      - name: Validate scope
+        shell: bash
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' 'docs/project/BUILD_TEST_INDEX.md' 'docs/project/DEVELOPMENT_PLAN.md' 'docs/project/MODULE_STATUS.md' 'docs/project/PROJECT_STATE.md' | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          grep -q 'DEV-send-stream-0.1.0-b79' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'Current DEV-send-stream b79 gate' docs/project/DEVELOPMENT_PLAN.md
+
+      - name: Commit durable docs blobs
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/DEVELOPMENT_PLAN.md docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md
+          git commit -m "docs: align project state with b79 candidate"
+          git push origin HEAD:${GITHUB_REF_NAME}

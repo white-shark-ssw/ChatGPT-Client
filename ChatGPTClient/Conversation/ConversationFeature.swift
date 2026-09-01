@@ -699,10 +699,10 @@ final class ConversationRepository {
     private func invalidateTransientSessionIfCurrent(_ context: ConversationTransportContext, httpStatus: Int, route: String) {
         requireMainThread()
         guard Self.isUnauthorizedStatus(httpStatus), let transientSession, transientSession === context.session, transientSessionScope == context.scope else { return }
-        transientSession.invalidateAndCancel()
+        transientSession.finishTasksAndInvalidate()
         self.transientSession = nil
         transientSessionScope = nil
-        diagnostics.info(category: "conversation", name: "authTransport.invalidated", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient"])
+        diagnostics.info(category: "conversation", name: "authTransport.retired", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient", "inFlightPolicy": "finish"])
     }
 
     private static func isUnauthorizedStatus(_ status: Int) -> Bool { status == 401 || status == 403 }
@@ -1032,6 +1032,7 @@ final class ConversationRepository {
                 if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
                     self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)
                     span.end(status: "cancelled", fields: callbackFields)
+                    self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
                     return
                 }
                 self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: callbackFields)
@@ -1073,6 +1074,7 @@ final class ConversationRepository {
             fields["mappingCount"] = String(mapping.count)
             fields["visibleMessageCount"] = String(messages.count)
             fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)
+            fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
             self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .success(detail))
@@ -3010,7 +3012,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private static let copySize: CGFloat = 28
     private static let bodyFont = UIFont.preferredFont(forTextStyle: .body)
     private static let reasoningFont = bodyFont
-    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .regular)
+    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .medium)
     private static let toolLineHeight: CGFloat = 36
     private static let compactAssistantLineHeight: CGFloat = toolLineHeight * 0.70
     private static let detailFont = UIFont.monospacedSystemFont(ofSize: max(11, reasoningFont.pointSize - 1), weight: .regular)
@@ -3121,11 +3123,9 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     self.onToggleReasoning = onToggleReasoning
     self.onToggleToolDetail = onToggleToolDetail
     layoutMetrics = metrics
-    if message.role == .assistant {
-        messageLabel.attributedText = Self.assistantBodyAttributedText(text)
-    } else {
-        messageLabel.attributedText = nil
-        messageLabel.text = text
+    switch message.role {
+    case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text)
+    case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)
     }
     let showsReasoning = message.role == .assistant && isFirstChunk && !responseTimeline.isEmpty
     reasoningButton.isHidden = !showsReasoning
@@ -3230,14 +3230,14 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         let reasoningParagraph = NSMutableParagraphStyle()
         reasoningParagraph.minimumLineHeight = compactAssistantLineHeight
         reasoningParagraph.maximumLineHeight = compactAssistantLineHeight
-        reasoningParagraph.paragraphSpacing = 8
+        reasoningParagraph.paragraphSpacing = 12
         let toolParagraph = NSMutableParagraphStyle()
         toolParagraph.minimumLineHeight = toolLineHeight
         toolParagraph.maximumLineHeight = toolLineHeight
-        toolParagraph.paragraphSpacingBefore = 12
+        toolParagraph.paragraphSpacingBefore = 0
         toolParagraph.paragraphSpacing = 12
         let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
-        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]
+        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]
         for item in timeline {
             let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !normalized.isEmpty else { continue }
@@ -3276,14 +3276,28 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         return NSAttributedString(string: text, attributes: [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph])
     }
 
+    private static func userBodyAttributedText(_ text: String) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byCharWrapping
+        let attributes: [NSAttributedString.Key: Any] = [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph]
+        if #available(iOS 15.0, *), let markdown = try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
+            let output = NSMutableAttributedString(attributedString: NSAttributedString(markdown))
+            let range = NSRange(location: 0, length: output.length)
+            output.addAttributes(attributes, range: range)
+            output.enumerateAttribute(.link, in: range) { value, linkRange, _ in
+                if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }
+            }
+            return output
+        }
+        return NSAttributedString(string: text, attributes: attributes)
+    }
+
     private static func measuredTextSize(_ text: String, role: ConversationMessage.Role, maxWidth: CGFloat) -> CGSize {
         if text.isEmpty { return CGSize(width: 0, height: ceil(role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight)) }
-        if role == .assistant {
-            let rect = assistantBodyAttributedText(text).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
-            return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(compactAssistantLineHeight), ceil(rect.height) + 1))
-        }
-        let rect = (text as NSString).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: bodyFont], context: nil)
-        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(bodyFont.lineHeight), ceil(rect.height) + 1))
+        let attributed = role == .assistant ? assistantBodyAttributedText(text) : userBodyAttributedText(text)
+        let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        let minimumHeight = role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight
+        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(minimumHeight), ceil(rect.height) + 1))
     }
 
     private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat, disclosureState: ConversationToolDisclosureState) -> CGSize {

@@ -7,7 +7,7 @@
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Formal branch head before this checkpoint refresh: `107deddf8d26e6c232e16f329abad178ad6665a7`
+- Formal branch head before this checkpoint refresh: `363002caa5dc220ec652ef2559898d7536d90235`
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b82 product/config source: `c7a274786dfd175e8f476fc15c4964840e112a1d`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
@@ -169,7 +169,8 @@ Completed docs writes:
 1. `7b57f564b7f202a078d940767c3ffe23dea7bece` — checkpoint records visible-Web negative gate;
 2. `082f5ee21a25c82b0314fd1c51ec4dd817943795` — creates dedicated evidence doc;
 3. `5e721b08cf2f5098dbb9f2153e86999c22abb6d3` — corrects/refines exact Swift reflection structures;
-4. `107deddf8d26e6c232e16f329abad178ad6665a7` — adds the external cross-check strictly as hypothesis and defines the read-only protocol gate.
+4. `107deddf8d26e6c232e16f329abad178ad6665a7` — evidence doc adds external cross-check strictly as hypothesis and defines the read-only protocol gate;
+5. `363002caa5dc220ec652ef2559898d7536d90235` — evidence doc records source identity for the external cross-check.
 
 No product/config/version file changed and exact b82 product source remains `c7a274786dfd175e8f476fc15c4964840e112a1d`. b83 remains unallocated.
 

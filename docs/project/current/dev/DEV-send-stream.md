@@ -56,7 +56,7 @@ This is page-snapshot materialization, not token/SSE-delta progressive final str
 
 ### External stopped-thinking semantics
 
-**Positive / preserve.** User confirms manually stopped external reasoning is presented correctly; reasoning/tools are not promoted into normal final body text.
+**Positive / Frozen semantic boundary for this Work.** User confirms manually stopped external reasoning is presented correctly; reasoning/tools are not promoted into normal final body text. Do not alter this semantic boundary without new explicit Runtime evidence/requirement.
 
 ### Manual-Sync re-arm
 

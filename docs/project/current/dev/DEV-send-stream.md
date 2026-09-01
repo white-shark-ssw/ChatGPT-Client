@@ -2,20 +2,30 @@
 
 ## Status
 
-**Active — account-wide notification discovery is deferred by explicit user decision. Current priority is client-owned Send/stream correctness plus reliable externally initiated cross-platform acquisition/streaming. b80 spacing and external stopped-thinking semantics are Frozen. `DEV-send-stream-0.1.0-b81` / `0.1.0 (81)` is allocated as a focused at-document-start WebSocket structural-probe candidate; WebSocket bodies remain non-authoritative. Stable/Frozen Send as a whole remains No.**
+**Active — exact b81 is now the Human Runtime candidate for externally initiated cross-platform acquisition evidence. Account-wide notification discovery remains deferred. b80 spacing and external stopped-thinking semantics remain Frozen. b81 changes only privacy-safe at-document-start WebSocket structural diagnostics plus Build/Artifact identity; socket bodies remain non-authoritative. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / unmerged
-- Exact b80 product/config source: `b0f51041c2d7b645f152752ea6196526b2e4e0f6`
-- b80 Candidate / Version-Build: `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)`
-- b80 canonical Artifact: `9801761448`
-- b80 IPA SHA-256: `87c360175a4adc4fa476383b395cffe74c57c5e75db252dd49acdf42be39ce1f`
-- Allocated b81 Candidate / Version-Build: `DEV-send-stream-0.1.0-b81` / `0.1.0 (81)`
+- PR: #29 — open / mergeable / unmerged at product gate
+- Exact b81 product/config source: `d1d4d197cc5d2a5022a28b332afebe485b216ea1`
+- Candidate / Version-Build: `DEV-send-stream-0.1.0-b81` / `0.1.0 (81)`
+- Guarded assembly: `33529062319 / 99927255152` — success
+- Formal Push CI: `33529489996 / 99928687280` — success
+- Formal PR CI: `33529494465` — success
+- Canonical Push Artifact: `9809150111`
+- Artifact ZIP SHA-256: `b02224911a3443e1a79b6c8d5fbabee0d6811f6c80bf50df8f76f6d603843469`
+- IPA: `ChatGPTClient-0.1.0-b81-dev-send-stream.ipa`
+- IPA SHA-256: `d48d2398dc5a7ef16b9983021a9173d87ba3b852f4a45c9431dff2ebcf057038`
+- Actual `main` at Artifact gate: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - b39-b81 permanently reserved
-- b81 Runtime: Pending
+- b81 Runtime/manual/real-device: **Pending / Unverified**
+- Stable/Frozen Send: **No**
 
-Durable allocation evidence: `docs/project/runtime-evidence/DEV-send-stream-b81-allocation-20260901.md`.
+Durable evidence:
+
+- `docs/project/runtime-evidence/DEV-send-stream-b80-device-runtime-20260901.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b81-allocation-20260901.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b81-build-artifact-20260901.md`
 
 ## User scope decision — round 17
 
@@ -28,7 +38,7 @@ Current required scope:
 3. progressive external final-body streaming remains an evidence problem — do not fake it;
 4. account-wide auto-notification/Sync for conversations the client neither started nor adopted is later work.
 
-Client-owned completion notification can later use the existing Repository-owned active-response set and terminal transitions; it does not require official account-wide transport.
+Future completion notification for **client-owned** Sends can consume the existing Repository-owned active-response set/terminal transition; it does not require the official account-wide transport.
 
 ## Frozen / accepted b80 boundaries
 
@@ -44,67 +54,92 @@ Externally initiated response acquisition is intermittent before Repository adop
 
 Historical official-Web evidence already proves a user-level `wss://ws.chatgpt.com/...` exists during cross-device active-response continuation, but `WEB_SEND_ADAPTER.md` correctly keeps it structural-only/non-authoritative for reasoning/final bodies. The latest Lab account probe was inconclusive because it was installed after page startup and could not observe a socket already created.
 
-The production covered bridge is injected at document start, so b81 can capture socket **structure** from creation onward without changing response authority.
+The production covered bridge is injected at document start, so b81 captures socket **structure** from creation onward without changing response authority.
 
 ## Exact b81 product scope
 
-Authorized product/config paths:
+Formal source `d1d4d197cc5d2a5022a28b332afebe485b216ea1` differs from its predecessor in exactly three product/config files:
 
 1. `ChatGPTClient/RootViewController.swift`
-   - add privacy-safe at-document-start WebSocket lifecycle/message structural diagnostics only;
-   - record sanitized host/path, frame transport type/length, JSON key names, safe short `type/event/kind/action/topic/name` tokens, presence of conversation-id-shaped keys, and a boolean exact match against the current page conversation ID;
-   - do not export raw frame data, IDs, prompts, answers, reasoning or tool bodies;
-   - do not feed socket frames into `ConversationRepository` in b81.
-2. `ChatGPTClient.xcodeproj/project.pbxproj` — Build 81 / Candidate b81 identity only.
-3. `.github/workflows/ios-foundation.yml` — b81 Artifact identity only.
+   - privacy-safe at-document-start WebSocket lifecycle/message structural diagnostics;
+   - sanitized host/path, frame transport type/length, JSON key names, safe short `type/event/kind/action/topic/name` tokens, presence of conversation-id-shaped keys, and boolean exact target-conversation match;
+   - no raw frame data/IDs/prompt/answer/reasoning/tool bodies exported;
+   - no socket frame mutates `ConversationRepository` in b81.
+2. `ChatGPTClient.xcodeproj/project.pbxproj`
+   - Build 81 / Candidate b81 identity only.
+3. `.github/workflows/ios-foundation.yml`
+   - b81 Artifact identity only.
 
 Explicitly excluded: account-wide notification/haptic code, Native `stream_status`, timer/poll/retry/watchdog, repeated automatic Sync/reload, DOM body authority, WebSocket body authority, fake progressive final/typewriter, duplicate Send/resend, second response owner, Frozen spacing/stopped-thinking changes.
 
-## b81 Runtime gate
+## Validation / Artifact evidence
 
-1. Open conversation A in the exact b81 client and leave it selected until the covered page has loaded.
-2. Start a sufficiently long new turn in the same A from another platform.
-3. Do not press Sync initially.
-4. Observe whether Native automatically acquires reasoning/tools/final materialization.
-5. Export Diagnostics after the response whether success or failure.
-6. Only if acquisition failed, press Sync once after the failure is established and export again if useful.
+Guarded tooling assembly `33529062319 / 99927255152` passed:
 
-Need to correlate socket creation/frames with remote start/reasoning/completion and with page-owned `stream_status`/plural reads. Only a proven stable event may authorize a later bounded trigger. Socket frame bodies remain non-authoritative unless separately evidenced.
+- formal-head guard;
+- exact patch and exact product scope;
+- `git diff --check`;
+- prohibited-pattern guard;
+- Xcode 16.4 generic iOS Simulator build;
+- validated product blob commit.
 
-## Batch recovery point — b81 assembly
+Formal exact source `d1d4d197...` then passed Push `33529489996` and PR `33529494465`. Canonical Push Artifact `9809150111` was independently downloaded and verified:
 
-Latest formal feature head after the b81 allocation evidence write: `9e49c966d6f776e59e7300bd387b5eda7fcea165`.
+- GitHub ZIP digest == local ZIP SHA `b02224911a3443e1a79b6c8d5fbabee0d6811f6c80bf50df8f76f6d603843469`;
+- IPA SHA `d48d2398dc5a7ef16b9983021a9173d87ba3b852f4a45c9431dff2ebcf057038`, matching sidecar;
+- package `0.1.0 (81)`;
+- Candidate `DEV-send-stream-0.1.0-b81`;
+- source marker `d1d4d197cc5d`;
+- MinimumOSVersion 14.0;
+- UIDeviceFamily `[1,2]`;
+- Mach-O 64-bit arm64.
 
-Guard facts:
+CI/Artifact/package evidence does not establish Runtime success.
 
-- PR #29 open / mergeable / unmerged;
-- actual `main` `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- main delta from the PR's older recorded base modifies only `docs/project/COMPOSER_PARITY_PLAN.md`, so no Send product/state-owner conflict was found;
-- exact b81 repository search was unused before allocation;
-- `docs/project/current/dev/` contains only this Active Work checkpoint plus README;
-- b81 must never be reused.
+## Human Runtime gate — exact next action
 
-Pending coherent batches:
+Install exact b81 and test the externally-started acquisition boundary:
 
-1. create isolated tooling branch from `9e49c966...`;
-2. apply only RootViewController structural probe + b81 Xcode identity;
-3. run exact-scope/prohibited-pattern/`git diff --check` + Xcode 16.4 Simulator validation;
-4. validate b81 workflow identity separately;
-5. transplant the three validated product/config blobs to formal branch in one Git-data commit;
-6. run formal Push + PR CI, canonical Artifact and independent IPA identity/hash verification;
-7. update checkpoint/Build-Test/PR and hand the exact b81 IPA to the user.
+1. Open conversation A in b81 and leave it selected until the covered page is loaded.
+2. On another platform, start a sufficiently long new turn in the **same A conversation**.
+3. Do **not** press Sync initially.
+4. Record whether Native automatically acquires reasoning/tools and later final materialization.
+5. Wait for completion and export Diagnostics whether success or failure.
+6. Only if automatic acquisition failed, press Sync once **after** the failure is established; export again if useful.
+7. If practical, also run one normal client-owned Send as a regression check, but do not block the structural experiment on that optional check.
 
-Do not touch account-wide notification product code, Frozen spacing, stopped-thinking semantics, or another task checkpoint during recovery.
+Required correlation:
+
+- socket created/open before the remote turn;
+- structural frames around remote start/reasoning/completion;
+- stable `type/event/kind/action/topic/name` / key shapes and target-match booleans;
+- ordering relative to page-owned `stream_status`, `externalStreamingObserved` and plural snapshots;
+- difference, if any, between automatically successful and failed acquisition runs.
+
+Only a proven stable event may authorize the next minimal acquisition change. WebSocket frame bodies remain non-authoritative unless separately evidenced.
+
+## Target/base / conflict state
+
+At the b81 Artifact gate:
+
+- PR #29 remained open / mergeable / unmerged;
+- actual `main` remained `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
+- the known `main` movement relative to the PR's older recorded base modifies only `docs/project/COMPOSER_PARITY_PLAN.md`, so no Send product/state-owner conflict was found;
+- only one Active development checkpoint exists;
+- no b82 is allocated.
 
 ## Evidence classification
 
-- b80 Code/static/Simulator/Push+PR CI/Artifact/package: Verified
-- b80 Runtime: Partial-positive / partial-rejected
-- b80 spacing: Frozen
-- b80 external stopped-thinking semantics: Frozen
-- b81 allocation: Done
-- b81 Code/static/CI/Artifact/Runtime: Pending
-- Stable/Frozen Send as a whole: No
+- b81 Code written: **Yes**
+- b81 static/exact scope: **Passed**
+- b81 Xcode Simulator: **Passed**
+- b81 Push CI: **Passed**
+- b81 PR CI: **Passed**
+- b81 Artifact/package: **Produced / independently verified**
+- b81 Runtime/manual/real-device: **Pending / Unverified**
+- b80 spacing: **Frozen**
+- b80 external stopped-thinking semantics: **Frozen**
+- Stable/Frozen Send as a whole: **No**
 
 ## Session round counter
 
@@ -112,4 +147,4 @@ Current work is round 17. Continue displaying the current round count at the end
 
 ## Next exact action
 
-Create isolated b81 tooling branch from `9e49c966...` and continue through canonical IPA production unless a real identity/evidence/CI blocker occurs.
+Human installs the exact b81 IPA and returns one success/failure observation plus Diagnostics from the no-Sync external-turn test. Do not allocate b82 before classifying that Runtime evidence.

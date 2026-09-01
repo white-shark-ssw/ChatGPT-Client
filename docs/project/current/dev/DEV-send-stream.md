@@ -2,12 +2,12 @@
 
 ## Status
 
-**Active — exact b82 Runtime is now Partial: automatic cross-platform acquisition works, but the evidenced `targetMatch=true` trigger is completion-time rather than start-time. The user's remote user message and assistant answer appeared only after the long answer had already completed. Therefore b82 closes the manual-Sync requirement for final refresh, but it does not satisfy request-received visibility or live reasoning/final streaming. b80 spacing and external stopped-thinking semantics remain Frozen. Stable/Frozen Send as a whole remains No.**
+**Active — exact b82 Runtime is Partial: automatic cross-platform final acquisition works, but the evidenced `targetMatch=true` trigger is completion-time rather than start-time. The user's remote user message and assistant answer appeared only after the long answer had already completed. Therefore b82 closes the manual-Sync requirement for final refresh, but it does not satisfy request-received visibility or live reasoning/final streaming. b80 spacing and external stopped-thinking semantics remain Frozen. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Current formal branch head at this Runtime classification: `5dc69b8ac8ac7d7f1acaf9e9a2d3b8703c042bb8`
+- Formal docs head before this checkpoint-finalization write: `e1a841ac8d77e581233fab952ad0457e790ecd3a`
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b82 product/config source: `c7a274786dfd175e8f476fc15c4964840e112a1d`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
@@ -22,11 +22,12 @@
 - b83: **not allocated**
 - Stable/Frozen Send: No
 
-Durable predecessors:
+Durable evidence:
 
 - `docs/project/runtime-evidence/DEV-send-stream-b81-device-runtime-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b82-allocation-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b82-build-artifact-20260902.md`
+- `docs/project/runtime-evidence/DEV-send-stream-b82-device-runtime-20260902.md`
 
 ## Exact b82 Runtime finding — 2026-09-02
 
@@ -73,28 +74,39 @@ b82 proves that waiting for the current generic user-socket exact-conversation n
 
 A new product implementation therefore needs an **earlier evidence-backed discovery source**. Do not simply increase observation frequency: there was no earlier observed event to sample.
 
-The next investigation should distinguish two cases before allocating b83 product behavior:
+The next investigation must distinguish two cases before allocating b83 product behavior:
 
-1. **Visible official Web already open on A does begin cross-device live acquisition** — then inspect the concrete visibility/focus/network difference and reproduce only that evidenced browser behavior in the covered executor.
-2. **Visible official Web also waits until completion while already open on A** — then the current page does not provide a passive early trigger; the project must separately evidence either a subscribable real-time turn signal or explicitly decide on a bounded selected-conversation status-monitoring design. Do not smuggle polling in as a guessed fix.
+1. **Visible official Web already open on A does begin cross-device live acquisition** — inspect the concrete visibility/focus/network difference and reproduce only that evidenced browser behavior in the covered executor.
+2. **Visible official Web also waits until completion while already open on A** — the current page does not provide a passive early trigger; separately evidence either a subscribable real-time turn signal or explicitly decide on a bounded selected-conversation status-monitoring design. Do not smuggle polling in as a guessed fix.
 
 Current public/third-party observations about `ws.chatgpt.com`, `celsius/ws/user`, generic `conversations` subscriptions or per-turn topics are hypothesis-level only until reproduced on the user's exact current official page/account flow.
 
-## Batch recovery point — b82 Runtime documentation sync
+## Completed b82 Runtime documentation sync
 
-Known source/head before durable sync: formal branch head `5dc69b8ac8ac7d7f1acaf9e9a2d3b8703c042bb8`; exact tested product source remains `c7a274786dfd175e8f476fc15c4964840e112a1d` and must not be redefined by docs-only descendants.
+The batch recovery point created before the multi-file docs mutation is now closed.
 
-Intended docs batch:
+Completed deterministic writes:
 
-1. create exact b82 device Runtime evidence;
-2. update `BUILD_TEST_INDEX.md` with b80-b82/current classification if practical;
-3. update current external-continuation rule docs (`WEB_SEND_ADAPTER.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_STATE.md`/`MODULE_STATUS.md` where necessary) so they no longer imply b82 is Runtime pending;
-4. update PR #29 Runtime gate text;
-5. finish this checkpoint with the next exact human/protocol action.
+1. checkpoint initially recorded at commit `f918f0d21b6f1521012213ca3fb060d8c5b87c6c`;
+2. exact b82 device Runtime evidence created at commit `4dec8ffb21bff3c7875af3c15310e9c2cedfdc0b`;
+3. `BUILD_TEST_INDEX.md` now contains b80/b81/b82 rows, with b82 classified automatic-final-positive/live-timing-rejected;
+4. current b82 Runtime overrides were added to `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, and `WEB_SEND_ADAPTER.md`;
+5. docs-only sync run `33542439708 / 99971732145` passed apply, `git diff --check`, exact seven-file docs scope and formal push, producing formal docs commit `e1a841ac8d77e581233fab952ad0457e790ecd3a`;
+6. prior docs orchestration failures are retained as tooling evidence only: `33541942032` failed before jobs because the first workflow YAML embedded unindented multiline Python; `33542346778 / 99971428869` then failed because the tooling-only script disappeared after checkout of the formal branch. Neither failure changed the formal branch;
+7. PR #29 title/body now classifies b82 Runtime Partial and records the visible-Web next evidence gate. PR remained open / mergeable / unmerged at head `e1a841ac8d77e581233fab952ad0457e790ecd3a` before this checkpoint-finalization write.
 
-Confirmed completed in this batch so far: this checkpoint recovery point only.
+Exact tested product source remains `c7a274786dfd175e8f476fc15c4964840e112a1d`; all later commits in this Runtime documentation batch are docs-only and do not redefine b82 product identity.
 
-Do not change product code or allocate b83 until the next evidence source is selected under the rule above.
+## Human protocol gate
+
+Use **visible official ChatGPT Web**, preferably the in-app Web Rule Lab because it shares the same default WebKit store, and have the same conversation A already open **before** starting a long remote turn from another platform.
+
+Do not refresh/navigate/press Native Sync during the test. Record only the behavioral distinction:
+
+- Does the remote user message appear in the already-open visible Web page shortly after remote Send?
+- While the answer is still generating, does visible Web show active reasoning/answer progression before completion?
+
+A yes result authorizes investigation of the exact browser visibility/focus/network difference. A no result rejects passive-page acquisition as the missing source and moves the next evidence gate to a real-time subscription/status design. No b83 product code is authorized until that distinction is known.
 
 ## Session round counter
 
@@ -102,4 +114,4 @@ Current work is round 21. Continue displaying the current round count at the end
 
 ## Next exact action
 
-Record the supplied b82 Runtime export durably, then use Web Rule Lab / visible official Web on the same conversation to determine whether an already-open visible official page itself receives the remote user turn and active response before completion. That human observation is the next evidence gate; it decides whether to reproduce a browser visibility/focus behavior or move to a separately authorized real-time-status design. Do not allocate b83 before this distinction is made.
+Have the user run the visible official-Web already-open-A test above and report whether the remote user row and active response appear before completion. Then inspect only the evidenced path and decide the b83 allocation/scope; do not allocate b83 in advance.

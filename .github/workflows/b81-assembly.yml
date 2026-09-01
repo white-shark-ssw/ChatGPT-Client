@@ -1,0 +1,54 @@
+name: b81 guarded structural probe assembly
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b81-assembly-20260901
+    paths:
+      - ".github/workflows/b81-assembly.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard formal branch
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "fef9d91b9a91bb9e446566cb53321a8c37498ef5" || { echo "Formal branch drifted before b81 assembly"; exit 1; }
+
+      - name: Apply exact b81 patch
+        run: python3 .github/scripts/b81_apply.py
+
+      - name: Exact scope and invariant validation
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected product scope:"; printf '%s\n' "$actual"; exit 1; }
+          ! git diff -- ChatGPTClient/RootViewController.swift | grep -E '^\+.*(Timer|asyncAfter|watchdog|retry|poll)' || exit 1
+          grep -q 'coveredExecutor.webSocketStructure' ChatGPTClient/RootViewController.swift
+          grep -q 'window.WebSocket = new Proxy' ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 81;' ChatGPTClient.xcodeproj/project.pbxproj)" = 2
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b81\";' ChatGPTClient.xcodeproj/project.pbxproj)" = 2
+
+      - name: Xcode 16.4 Simulator build
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated product blobs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m "dev: stage validated b81 structural probe"
+          git push origin HEAD:${GITHUB_REF_NAME}

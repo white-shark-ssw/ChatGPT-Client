@@ -2,12 +2,12 @@
 
 ## Status
 
-**Active — exact b82 Runtime remains Partial. Automatic cross-platform final acquisition works, but the current generic Web user-socket exact-conversation trigger is completion-time rather than start-time. The follow-up Human Gate is now resolved Negative: an already-open visible official ChatGPT Web page on the same conversation does not automatically show the remote user turn, active response, or even the completed turn without an explicit page refresh/navigation. Therefore passive official-Web visibility/focus is rejected as the missing early acquisition mechanism. Static official-iOS evidence plus external cross-check now supports a targeted read-only WebSocket registration/topic probe as the next Human protocol gate. Stable/Frozen Send as a whole remains No.**
+**Active — exact b82 Runtime remains Partial. Automatic cross-platform final acquisition works, but the current generic Web user-socket exact-conversation trigger is completion-time rather than start-time. The follow-up visible-Web Human Gate is resolved Negative: an already-open visible official ChatGPT Web page on the same conversation does not automatically show the remote user turn, active response, or even the completed turn without an explicit refresh/navigation. Passive official-Web visibility/focus is therefore rejected as the missing early acquisition mechanism. Static official-iOS evidence plus external cross-check now supports a targeted read-only WebSocket registration/topic probe as the next Human protocol gate. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Formal branch head before this checkpoint refresh: `5e721b08cf2f5098dbb9f2153e86999c22abb6d3`
+- Formal branch head before this checkpoint refresh: `107deddf8d26e6c232e16f329abad178ad6665a7`
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b82 product/config source: `c7a274786dfd175e8f476fc15c4964840e112a1d`
 - Candidate / Version-Build: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
@@ -110,7 +110,7 @@ Use Web Rule Lab with the same logged-in `.default()` WebKit store to verify the
 
 The probe must:
 
-1. first inspect existing same-origin resource paths for a `celsius/ws/user` registration request without exposing query/token material;
+1. inspect existing same-origin resource paths for a `celsius/ws/user` registration request without exposing query/token material;
 2. if necessary, make one same-origin GET to the hypothesized registration path and return only HTTP status, JSON key names and WebSocket host/path shape — never the full signed URL;
 3. open one diagnostic WebSocket using the returned URL;
 4. send only connection/subscription control commands, not a chat Send or state mutation;
@@ -162,17 +162,18 @@ Current b82 source and the official-app static strings do **not** authorize cons
 
 ## Documentation batch status
 
-The visible-Web negative Runtime result and official-iOS static realtime evidence are now durably recorded in this checkpoint plus `docs/project/runtime-evidence/DEV-send-stream-visible-web-native-realtime-evidence-20260902.md`.
+The visible-Web negative Runtime result and official-iOS static realtime evidence are durably recorded in this checkpoint plus `docs/project/runtime-evidence/DEV-send-stream-visible-web-native-realtime-evidence-20260902.md`.
 
-Completed writes so far:
+Completed docs writes:
 
-1. `7b57f564b7f202a078d940767c3ffe23dea7bece` — checkpoint records visible-Web negative gate and opens docs-only evidence batch;
+1. `7b57f564b7f202a078d940767c3ffe23dea7bece` — checkpoint records visible-Web negative gate;
 2. `082f5ee21a25c82b0314fd1c51ec4dd817943795` — creates dedicated evidence doc;
-3. `5e721b08cf2f5098dbb9f2153e86999c22abb6d3` — corrects/refines exact Swift reflection structures.
+3. `5e721b08cf2f5098dbb9f2153e86999c22abb6d3` — corrects/refines exact Swift reflection structures;
+4. `107deddf8d26e6c232e16f329abad178ad6665a7` — adds the external cross-check strictly as hypothesis and defines the read-only protocol gate.
 
 No product/config/version file changed and exact b82 product source remains `c7a274786dfd175e8f476fc15c4964840e112a1d`. b83 remains unallocated.
 
-The remaining durable status truth is represented by the selected checkpoint/evidence doc and PR #29 summary; candidate/build tables do not require a new identity row because no Candidate changed. Long-term architecture docs must not promote the hypothesized external route/topic to Confirmed until the current-account probe verifies it.
+Candidate/build tables do not require a new identity row because no Candidate changed. The dedicated Runtime evidence document is the durable source for this post-b82 Human Gate result. Long-term architecture docs must not promote the hypothesized external route/topic to Confirmed until the current-account probe verifies it.
 
 ## Session round counter
 

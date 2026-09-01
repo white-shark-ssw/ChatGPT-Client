@@ -1,0 +1,103 @@
+name: b78 presentation assembly
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b78-assembly2-20260901
+    paths:
+      - ".github/workflows/b78-assembly2.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact presentation patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("ChatGPTClient/Conversation/ConversationFeature.swift")
+          text = p.read_text()
+          old = '''        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
+        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]
+        for item in timeline {
+            let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalized.isEmpty else { continue }
+            if item.kind == .tool, ConversationReasoningPresentation.inlineToolItems([item]).isEmpty { continue }
+            if output.length > 0 { output.append(NSAttributedString(string: "\\n", attributes: reasoningAttributes)) }
+            switch item.kind {
+            case .reasoning:
+                output.append(NSAttributedString(string: normalized, attributes: reasoningAttributes))
+            case .tool:
+                let start = output.length
+                appendToolIcon(item.toolIconKind, to: output)
+                if output.length > start { output.append(NSAttributedString(string: "  ", attributes: toolAttributes)) }
+                output.append(NSAttributedString(string: normalized, attributes: toolAttributes))
+                if !item.completed { output.append(NSAttributedString(string: "  调用中", attributes: [.font: UIFont.systemFont(ofSize: reasoningFont.pointSize - 2, weight: .regular), .foregroundColor: UIColor.tertiaryLabel, .paragraphStyle: toolParagraph])) }
+                if let slot = item.toolSlot, let url = URL(string: "chatgpt-tool-list://slot/\\(slot)") { output.addAttribute(.link, value: url, range: NSRange(location: start, length: output.length - start)) }
+            }
+        }
+'''
+          new = '''        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
+        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]
+        var separatorAttributes: [NSAttributedString.Key: Any]?
+        for item in timeline {
+            let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalized.isEmpty else { continue }
+            if item.kind == .tool, ConversationReasoningPresentation.inlineToolItems([item]).isEmpty { continue }
+            if output.length > 0, let separatorAttributes { output.append(NSAttributedString(string: "\\n", attributes: separatorAttributes)) }
+            switch item.kind {
+            case .reasoning:
+                output.append(NSAttributedString(string: normalized, attributes: reasoningAttributes))
+                separatorAttributes = reasoningAttributes
+            case .tool:
+                let start = output.length
+                appendToolIcon(item.toolIconKind, to: output)
+                if output.length > start {
+                    output.addAttributes(toolAttributes, range: NSRange(location: start, length: output.length - start))
+                    output.append(NSAttributedString(string: "  ", attributes: toolAttributes))
+                }
+                output.append(NSAttributedString(string: normalized, attributes: toolAttributes))
+                if !item.completed { output.append(NSAttributedString(string: "  调用中", attributes: [.font: UIFont.systemFont(ofSize: reasoningFont.pointSize - 2, weight: .regular), .foregroundColor: UIColor.tertiaryLabel, .paragraphStyle: toolParagraph])) }
+                if let slot = item.toolSlot, let url = URL(string: "chatgpt-tool-list://slot/\\(slot)") { output.addAttribute(.link, value: url, range: NSRange(location: start, length: output.length - start)) }
+                separatorAttributes = toolAttributes
+            }
+        }
+'''
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f"expected one exact timeline block, found {count}")
+          p.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Exact scope and diff check
+        shell: bash
+        run: |
+          git diff --check
+          actual="$(git diff --name-only)"
+          test "$actual" = "ChatGPTClient/Conversation/ConversationFeature.swift" || { echo "Unexpected scope: $actual"; exit 1; }
+
+      - name: Xcode 16.4 Simulator build
+        shell: bash
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated presentation patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "dev: finalize b78 tool presentation geometry"
+          git push origin HEAD:${GITHUB_REF_NAME}

@@ -1074,6 +1074,12 @@ final class ConversationRepository {
             fields["mappingCount"] = String(mapping.count)
             fields["visibleMessageCount"] = String(messages.count)
             fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)
+            fields["trailingTimelineItemCount"] = String(projection.trailingTimelineItemCount)
+            fields["trailingReasoningItemCount"] = String(projection.trailingReasoningItemCount)
+            fields["trailingToolItemCount"] = String(projection.trailingToolItemCount)
+            fields["thinkingPreambleMessageCount"] = String(projection.thinkingPreambleMessageCount)
+            fields["ignoredThoughtsMessageCount"] = String(projection.ignoredThoughtsMessageCount)
+            fields["ignoredInlineCotMessageCount"] = String(projection.ignoredInlineCotMessageCount)
             fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
@@ -1301,7 +1307,7 @@ final class ConversationRepository {
         return error
     }
 
-    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {
+    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int, trailingTimelineItemCount: Int, trailingReasoningItemCount: Int, trailingToolItemCount: Int, thinkingPreambleMessageCount: Int, ignoredThoughtsMessageCount: Int, ignoredInlineCotMessageCount: Int) {
     var nodeIDs: [String] = []
     var visited = Set<String>()
     var nodeID: String? = currentNode
@@ -1313,6 +1319,9 @@ final class ConversationRepository {
 
     var messages: [ConversationMessage] = []
     var filteredRecipientMessageCount = 0
+    var thinkingPreambleMessageCount = 0
+    var ignoredThoughtsMessageCount = 0
+    var ignoredInlineCotMessageCount = 0
     var pendingTimeline: [ConversationResponseTimelineItem] = []
     var pendingReasoningDurationSeconds: Int?
     var pendingToolIndexByServiceID: [String: Int] = [:]
@@ -1357,11 +1366,21 @@ final class ConversationRepository {
     }
         let isThinkingPreamble = role == .assistant && (metadata?["is_thinking_preamble_message"] as? Bool) == true
         if isThinkingPreamble {
+            thinkingPreambleMessageCount += 1
             let reasoning = visibleText(from: content)
             if !reasoning.isEmpty { pendingTimeline.append(.reasoning(reasoning)) }
             continue
         }
-        if role == .assistant, let contentType = content["content_type"] as? String, contentType == "thoughts" || contentType == "inline_cot_expandable_content" { continue }
+        if role == .assistant, let contentType = content["content_type"] as? String {
+            if contentType == "thoughts" {
+                ignoredThoughtsMessageCount += 1
+                continue
+            }
+            if contentType == "inline_cot_expandable_content" {
+                ignoredInlineCotMessageCount += 1
+                continue
+            }
+        }
         let visible = visibleText(from: content)
         guard !visible.isEmpty else { continue }
         if role == .user {
@@ -1383,7 +1402,9 @@ final class ConversationRepository {
             pendingToolInputByServiceID.removeAll()
         }
     }
-    return (messages, filteredRecipientMessageCount)
+    let trailingReasoningItemCount = pendingTimeline.filter { $0.kind == .reasoning }.count
+    let trailingToolItemCount = pendingTimeline.filter { $0.kind == .tool }.count
+    return (messages, filteredRecipientMessageCount, pendingTimeline.count, trailingReasoningItemCount, trailingToolItemCount, thinkingPreambleMessageCount, ignoredThoughtsMessageCount, ignoredInlineCotMessageCount)
 }
 
     private static func collapsedReasoningSummary(from message: [String: Any], content: [String: Any]) -> String? {

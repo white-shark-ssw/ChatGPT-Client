@@ -79,34 +79,77 @@ It also contains startup/storage names indicating the WebSocket conversation ser
 - `webSocketConversationEventsService`;
 - `conversationPollingManager`.
 
-Static inference supported by these names: the native official client has dedicated realtime/polling infrastructure. Exact service behavior still requires protocol/Runtime evidence.
+Swift reflection further shows:
+
+- `DefaultWebSocketConversationEventsService` fields: `accountID`, event subject, lazy WebSocket service, WebSocket events task, bag, injected dependencies;
+- its injected/provider dependencies include `userWorkspaceID`;
+- `WebSocketConversationObserver` fields include `accountID`, `conversationCoordinator`, `conversationService`, `webSocketService`, `eventStream`, application-state observation and live-activity service.
+
+Static inference supported by these names: the native official client has dedicated account/workspace-scoped realtime/polling infrastructure. Exact service behavior still requires protocol/Runtime evidence.
 
 ## 5. WebSocket service model evidence
 
-Swift reflection metadata in the official framework exposes the following WebSocket model/state field shapes:
+Swift reflection metadata in the official framework exposes the following exact type/field shapes.
 
 ### Topic
 
-A topic model contains:
+`APIClient.WebSocketTopic` contains:
 
 - `topicId`;
 - `offset`.
 
-A topic message model contains:
-
-- `id`;
-- `type`;
-- `payload`;
-- `offset`.
-
-The topic event enum exposes raw cases:
+`APIClient.WebSocketTopic.Event` has cases:
 
 - `catchup`;
 - `live`.
 
-### Service
+`APIClient.WebSocketTopic.Frame` has cases:
 
-The default WebSocket service stores fields including:
+- `message`;
+- `reply`;
+- `unknown`.
+
+`APIClient.WebSocketTopic.Frame.MessageEnvelope` contains:
+
+- `topicId`;
+- `payload`;
+- `offset`.
+
+`APIClient.WebSocketTopic.Frame.SubscribePayload` contains stored fields:
+
+- `topicId`;
+- `lastOffset`;
+- `recovered`;
+- backing `_catchups`.
+
+Its CodingKeys are:
+
+- `topicId`;
+- `lastOffset`;
+- `recovered`;
+- `catchups`.
+
+`APIClient.WebSocketTopic.Frame.Reply.Payload` supports:
+
+- `subscribe`;
+- `connect`;
+- `presence`;
+- `unknown`.
+
+### Commands / service
+
+`APIClient.WebSocketTopic.Command` has cases:
+
+- `connect`;
+- `subscribe`;
+- `presence`.
+
+`APIClient.WebSocketTopic.CommandEnvelope` contains:
+
+- `id`;
+- `command`.
+
+`APIClient.DefaultWebSocketService` stores fields including:
 
 - `registerWebSocket`;
 - `connection`;
@@ -134,17 +177,17 @@ Diagnostics include:
 - `Unknown WebSocket topic frame type:`;
 - `Failed to decode WebSocket topic message type`.
 
-A registration/config response model contains `websocketURL`.
+`APIClient.WebSocketRegisterResponse` contains `websocketURL`.
 
 ### Evidence boundary
 
-This establishes the existence of a topic-based WebSocket protocol with offsets and live/catchup semantics in the official iOS client. It does **not** establish:
+This establishes a topic-based WebSocket protocol with connection registration, subscribe commands, offsets, catch-up and live frames in the official iOS client. It does **not** establish:
 
 - the endpoint that returns `websocketURL`;
 - the exact WebSocket URL for the user's current account;
-- exact connect/subscribe JSON envelope shape;
+- exact serialized connect/subscribe envelope bytes;
 - exact topic ID used for conversation updates;
-- exact offset/cursor acquisition and reconnect rules;
+- exact initial `lastOffset` / recovery / catchup rules;
 - auth/cookie/account headers required;
 - whether the same endpoint/protocol is available to this third-party client under the current accepted auth boundary.
 
@@ -152,16 +195,56 @@ Those values must not be guessed from the field names.
 
 ## 6. Conversation WebSocket event model evidence
 
-The official framework exposes `WebSocketConversationEvent`, `ConversationUpdate`, `KnownUpdateType`, and update-content types including:
+Exact Swift reflection names establish the following hierarchy:
 
-- `AddMessagesUpdateContent`;
-- `AsyncTaskMessageUpdate`;
-- `AsyncTaskCompletedUpdate`;
-- `TitleUpdateContent`;
-- `AsyncStatusUpdate`;
-- `StopUpdateContent`.
+- `ConversationsInterface.WebSocketConversationEvent` with case `conversationUpdate`;
+- `WebSocketConversationEvent.KnownType` with `conversationUpdate`;
+- `WebSocketConversationEvent.ConversationUpdate`;
+- `ConversationUpdate.KnownUpdateType`;
+- `ConversationUpdate.Content` and concrete update-content models.
 
-Raw update/event strings include:
+### Conversation update structure
+
+`ConversationsInterface.WebSocketConversationEvent.ConversationUpdate` stores:
+
+- `conversationId`;
+- `content`.
+
+Its CodingKeys are:
+
+- `conversationId`;
+- `updateType`;
+- `content`.
+
+`ConversationUpdate.KnownUpdateType` contains:
+
+- `addMessages`;
+- `titleUpdate`;
+- `setConversationAsyncStatus`;
+- `asyncTaskUpdateMessage`;
+- `asyncTaskCompleted`;
+- `stop`.
+
+`ConversationUpdate.Content` contains:
+
+- `addMessages`;
+- `titleUpdate`;
+- `stop`;
+- `setAsyncStatus`;
+- `asyncTaskUpdateMessage`;
+- `asyncTaskCompleted`;
+- `unknown`.
+
+Concrete payloads include:
+
+- `AddMessagesUpdateContent` -> CodingKey `messages`;
+- `AsyncTaskMessageUpdate` -> `message`;
+- `AsyncTaskCompletedUpdate` -> `message`;
+- `TitleUpdateContent` -> `title`;
+- `AsyncStatusUpdate` -> `conversationAsyncStatus`;
+- `StopUpdateContent` -> `runId`.
+
+Raw event/update strings in the binary include:
 
 - `conversation-update`;
 - `add-messages`;
@@ -169,12 +252,6 @@ Raw update/event strings include:
 - `set-conversation-async-status`;
 - `async-task-update-message`;
 - `async-task-completed`.
-
-Conversation-update model field names include:
-
-- `conversationId`;
-- `updateType`;
-- `updateContent`.
 
 `WebSocketConversationObserver` static diagnostics include:
 
@@ -184,9 +261,9 @@ Conversation-update model field names include:
 
 ### Working implication
 
-This is substantially stronger evidence than the Web page's generic user-socket completion hint: the official iOS app contains a conversation-specific WebSocket update layer with explicit conversation identity and message/async-status update classes.
+This is substantially stronger evidence than the Web page's generic user-socket completion hint: the official iOS app contains a conversation-specific WebSocket update layer with explicit conversation identity and message/async-status update models.
 
-However, static names do not prove which event arrives first for a cross-platform text turn or whether `add-messages` contains authoritative full message data versus an update hint. Product code must not promote these static names directly into message authority.
+The `add-messages` payload model statically contains `messages`, but static type information alone does not establish delivery timing, completeness, branch semantics, authorization boundary, or whether these WebSocket message objects can safely replace current Repository Detail/SSE authority. Product code must not promote the payload directly into message authority until exact Runtime/protocol evidence establishes that contract.
 
 ## 7. Official conversation polling evidence
 
@@ -205,6 +282,8 @@ However, static names do not prove which event arrives first for a cross-platfor
 - `Polling timed out`;
 - `polling_finish_reason`.
 
+Static reflection also shows `ConversationPollingManager` owns account ID, conversation coordinator/repository/clock dependencies, start state, initial backend-streaming snapshot state, turn-exchange reload tracker and per-conversation `pollingTasks`.
+
 ### Working implication
 
 The official native client has a bounded, state-aware conversation polling mechanism in addition to the WebSocket event layer. This supports keeping a bounded selected-conversation status-monitoring design as a legitimate fallback direction **if** the exact WebSocket subscription path cannot be evidenced.
@@ -216,10 +295,10 @@ It does not authorize copying an unknown polling cadence or adding a hidden fixe
 Order of investigation is now:
 
 1. evidence the official native `websocketURL` acquisition path;
-2. evidence the exact conversation topic ID and connect/subscribe envelope;
-3. evidence auth/account binding and offset/catchup/live semantics;
-4. determine whether a conversation update appears near remote request start and what exact non-body identity/status it supplies;
-5. if an early event exists, use it only to activate the existing authoritative Repository acquisition path unless exact evidence separately authorizes message content;
+2. evidence the exact conversation topic ID and serialized connect/subscribe behavior;
+3. evidence auth/account/workspace binding and offset/catchup/live semantics;
+4. determine whether `conversation-update`, `add-messages` or async-status events appear near remote request start and what exact identity/status/content they supply;
+5. if an early event exists, initially use it only to activate/reconcile through the existing authoritative Repository path unless exact evidence separately authorizes WebSocket message content;
 6. if an early subscribable signal cannot be established, explicitly design a bounded selected-conversation status monitor using the official polling architecture as reference.
 
 No b83 product Candidate is allocated yet.
@@ -230,7 +309,7 @@ Do not:
 
 - guess the topic ID;
 - guess the websocket URL or config route;
-- guess offset/cursor semantics;
+- guess offset/cursor/recovery semantics;
 - replay guessed connect/subscribe payloads;
 - promote generic WebSocket payload bodies to Native message authority;
 - add fixed polling/timers/watchdogs as a concealed workaround;

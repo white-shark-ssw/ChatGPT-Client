@@ -1,5 +1,9 @@
 # Project State
 
+## DEV-send-stream b82 Runtime override — 2026-09-02
+
+Exact b82 `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`, product/config source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2` is Runtime **Partial**. Automatic final acquisition now works without manual Sync, but the observed current-conversation WebSocket trigger arrived only when authoritative Detail already changed 8 -> 10 (+2 visible messages) and the user reports the remote user message plus assistant answer appeared only after the answer had fully generated. No earlier WebSocket message, `externalStreamingObserved`, external snapshot or Repository external live response was captured. Therefore b82 is a completion/update acquisition path, not live request-start acquisition. b83 is not allocated. The next gate is an already-open visible official-Web comparison before choosing any new discovery mechanism.
+
 ## DEV-send-stream b79 candidate override — 2026-09-01
 
 Exact b79 `DEV-send-stream-0.1.0-b79` / `0.1.0 (79)` is now the latest test candidate. Formal exact product/config source is `a3d307b05d70e95568672bc29b0c939b7f3b8141`. The guarded staging path `33488975445 / 99795672696` passed exact scope, `git diff --check` and Xcode 16.4 Simulator build before the validated product blobs were transplanted. Formal Push `33489654106 / 99797864816` and PR `33489658656 / 99797878467` both passed. Canonical Push Artifact `9793240789` has ZIP `sha256:2016508002ae7ff43d803c90fcbb92ba01c45906c885be6f6e50a1e43e1e87fc` and IPA `sha256:39f64dd9146c3a8dc28cb9b733d1c56d4fbf3ff090a442c8ecbd27c672234fb4`; independent unpacking confirms Release 0.1.0 (79), Candidate b79, source marker `a3d307b05d70`, MinimumOSVersion 14.0 and Mach-O arm64.

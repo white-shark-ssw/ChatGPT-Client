@@ -1,5 +1,12 @@
 # Module Status
 
+## DEV-send-stream b82 Runtime override — 2026-09-02
+
+- Build/runtime metadata: exact b82 source `c7a274786dfd175e8f476fc15c4964840e112a1d`; Push/PR CI passed; Artifact `9811406038`; IPA `3ca16867...d6d2`; exact iPhone/iOS17 Runtime Partial.
+- Covered external acquisition: b82 automatic Sync/re-arm fires without manual Sync, but only after the current user-socket target notification; the supplied run had authoritative visible messages 8 -> 10 at that point and no earlier live event. Treat this signal as completion/update only for the tested flow.
+- Live cross-platform request acknowledgement/reasoning/final: still rejected/open. Do not fake progress or silently add polling/timers.
+- b80 spacing and external stopped-thinking semantics remain Frozen. Stable/Frozen Send remains No; b39-b82 are reserved.
+
 ## DEV-send-stream b79 candidate override — 2026-09-01
 
 - Build/runtime metadata: exact b79 source `a3d307b05d70e95568672bc29b0c939b7f3b8141`; guarded staging `33488975445 / 99795672696` passed exact scope + `git diff --check` + Xcode 16.4 Simulator; formal Push `33489654106 / 99797864816` and PR `33489658656 / 99797878467` passed; canonical Artifact `9793240789`; ZIP `20165080...e87fc`; IPA `39f64dd9...34fb4`; package independently verified as Release 0.1.0 (79), Candidate b79, source `a3d307b05d70`, iOS14 minimum, arm64. Runtime pending.

@@ -1,5 +1,11 @@
 # Technical Decisions
 
+## b82 Runtime qualification — 2026-09-02
+
+- **TD-029 external-acquisition qualification:** exact b82 proves the current at-document-start user-socket exact-conversation `targetMatch=true` event is sufficient to trigger an automatic authoritative Sync/re-arm, but in the tested long remote turn it arrived only after authoritative Detail already contained the added user+assistant pair (8 -> 10). No earlier incoming socket frame, page-owned active-response signal, external snapshot or Repository live response was observed. Therefore this event is authorized as a completion/update trigger only, not as a request-start/live-stream trigger.
+- The user's current requirement is explicit: a long cross-platform turn must show prompt request receipt and real progressive response state. Do not satisfy that requirement with synthetic text, duplicate Send or an unevidenced timer/polling loop.
+- Before changing production behavior again, compare an already-open visible official Web page on the same conversation. If visible Web has an earlier live path, reproduce the exact evidenced browser behavior; if it also waits until completion, separately evidence a real-time subscription/status design before implementation. b83 remains unallocated.
+
 ## b76 qualification — 2026-09-01
 
 - **TD-029 current external-continuation rule:** a page-owned matching `/backend-api/f/conversation/resume` is accepted only on exact HTTP200 `text/event-stream`. Current visible-Web evidence also proves official Web can receive resume HTTP404 JSON and then follow the same active response through its own already-issued `stream_status` and plural `/backend-api/conversations/{conversation}` responses. Native must not reproduce either request or cadence. b76 may observe matching page-owned responses, validate target identity, derive service messages after the latest user, and atomically project them into the sole Repository response runtime. WebSocket remains non-authoritative. Raw plural message count is not a cursor because the response is rolling/paged.

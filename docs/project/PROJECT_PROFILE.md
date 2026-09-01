@@ -1,5 +1,11 @@
 # Project Profile
 
+## DEV-send-stream b82 current Runtime override — 2026-09-02
+
+- Exact current tested package: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`, product/config source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`.
+- iPhone/iOS17 Runtime is Partial: automatic final refresh works without manual Sync, but the remote user message and assistant answer remain absent until the current user-socket completion/update signal arrives; no active external response was acquired before completion.
+- b80 spacing + external stopped-thinking semantics remain Frozen. Cross-platform request acknowledgement/progressive stream remains open. b39-b82 are permanently reserved; b83 is not allocated.
+
 ## DEV-send-stream b75 current Runtime override — 2026-09-01
 
 - Exact current package remains `DEV-send-stream-0.1.0-b75` / `0.1.0 (75)`, product/config source `b77303b8870dc25851dbffbf38ffc153a47bbcb2`, Artifact `9772079468`, IPA SHA `a912547a1845cae182d83d551eb51955b5060062f66ec3fbdf14be45954dab9d`.

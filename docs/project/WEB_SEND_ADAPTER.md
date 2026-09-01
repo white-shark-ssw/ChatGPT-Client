@@ -1,5 +1,13 @@
 # Web Send Adapter / Rule Update Playbook
 
+## b82 completion-time acquisition qualification — 2026-09-02
+
+Exact b82 Runtime changes the external-discovery interpretation. The covered user WebSocket was injected/observed from document start and produced no incoming frame during the long remote generation interval; the first exact-conversation `targetMatch=true` frame arrived only when an automatic authoritative Detail Sync already returned two added visible messages (remote user + assistant) and the user reports the answer was complete. The subsequent one-time page re-arm produced no `externalStreamingObserved` or external snapshot.
+
+**Current rule:** the tested generic user-socket exact-conversation notification may trigger one bounded authoritative completion/update Sync, but it is not an evidenced request-start/live-stream signal. The existing page-owned `stream_status` / plural-read machinery remains content authority only when the official page actually enters that path. Do not increase observation frequency when no event exists, do not parse the generic socket as message-body authority, and do not introduce hidden polling/timers merely to mask this timing gap.
+
+Next maintenance gate: with visible official Web already open on the same target conversation before a remote Send, determine whether the page itself begins live acquisition before completion. A positive result must identify the concrete browser/network behavior to reproduce; a negative result means a separate real-time subscription or deliberately authorized bounded status-monitor design must be evidenced before product code.
+
 _Last established: 2026-09-01 through b67 accepted local transport, b72 tested concurrent ownership, b75 visible-Web continuation probes, and exact b76 Code/CI/Artifact/package verification; b76 Runtime remains pending._
 
 

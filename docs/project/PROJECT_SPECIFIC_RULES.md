@@ -1,5 +1,13 @@
 # Project-Specific Rules
 
+## b82 current Runtime override — 2026-09-02
+
+- Exact b82 is permanently reserved: source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`.
+- Automatic no-manual-Sync final acquisition is Runtime positive, but live timing is rejected: the target-matching user-socket event arrived when authoritative Detail already added the remote user+assistant pair, and there was no earlier observed live acquisition event.
+- Treat the current exact target-match socket event as completion/update discovery only. Do not label it request-start or live-stream authority.
+- The current requirement is prompt remote-user visibility plus real progressive response. No fake typewriter, synthetic optimistic remote user row, duplicate Send, speculative retry/watchdog, silent polling/timer or second response owner.
+- b83 is not allocated until an earlier source is evidenced or a deliberate new monitoring architecture is explicitly authorized from evidence.
+
 ## b76 current candidate override — 2026-09-01
 
 - Exact b76 is allocated and permanently reserved: `DEV-send-stream-0.1.0-b76`, Build76, exact product/config source `0da5a7577f2cf3b2a6882d8a0ec920b5c8f37c71`, Artifact `9775920927`, IPA SHA `b130c9059ec85d08d95105b32b71157a4be2b2ecea25112963f0a548ec252bcd`.

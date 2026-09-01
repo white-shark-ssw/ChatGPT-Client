@@ -692,10 +692,6 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
                   const serviceMessages = payload.messages.slice(latestUserIndex + 1);
                   post({ kind: 'external_snapshot', complete: externalStreamingState.completePending, messages: serviceMessages });
                   reportExternalAssistantDOM();
-                  if (externalStreamingState.completePending) {
-                    externalStreamingState.active = false;
-                    externalStreamingState.completePending = false;
-                  }
                 }
               }
             } catch (_) {}
@@ -1238,6 +1234,14 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 guard let generation = ensureGeneration() else { return }
                 self.repository.consumeExternalConversationSnapshot(messages, conversationID: conversationID, generation: generation)
                 if complete {
+                    guard let snapshot = self.repository.liveResponse(for: conversationID), snapshot.generation == generation else { return }
+                    if snapshot.reasoningEnded && snapshot.finalText.isEmpty {
+                        var fields = self.repository.diagnosticsFields(for: conversationID)
+                        fields["responseGeneration"] = String(generation)
+                        fields["reason"] = "final_not_materialized"
+                        self.diagnostics.info(category: "webSend", name: "coveredExecutor.externalCompletionDeferred", fields: fields)
+                        return
+                    }
                     self.repository.consumeLiveResponseEvent(.terminal, conversationID: conversationID, generation: generation)
                     self.releaseExecutor(for: conversationID, expected: sendExecutor)
                     self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)

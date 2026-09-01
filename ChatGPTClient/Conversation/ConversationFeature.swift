@@ -3143,7 +3143,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     let chevron = UIImage(systemName: reasoningExpanded ? "chevron.up" : "chevron.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 9, weight: .semibold))
     reasoningButton.setImage(showsReasoning ? chevron : nil, for: .normal)
     reasoningButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 6, bottom: 0, right: -6)
-    let timelineText = showsReasoning && reasoningExpanded ? Self.responseTimelineAttributedText(responseTimeline, disclosureState: toolDisclosureState) : NSAttributedString()
+    let timelineText = showsReasoning && reasoningExpanded ? Self.responseTimelineAttributedText(responseTimeline, disclosureState: toolDisclosureState, trailingSeparator: showsReasoningDivider) : NSAttributedString()
     reasoningTextView.attributedText = timelineText.length > 0 ? timelineText : nil
     reasoningTextView.isHidden = timelineText.length == 0
     reasoningTextView.isScrollEnabled = false
@@ -3206,14 +3206,13 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     if role == .assistant, isFirstChunk, !responseTimeline.isEmpty {
         reasoningButtonFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 24)
         bubbleY = reasoningButtonFrame.maxY
-        let timelineSize = reasoningExpanded ? measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth, disclosureState: toolDisclosureState) : .zero
+        let timelineSize = reasoningExpanded ? measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth, disclosureState: toolDisclosureState, trailingSeparator: showsReasoningDivider) : .zero
         if timelineSize.height > 0 {
             bubbleY += 6
             reasoningBodyFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: timelineSize.height)
             bubbleY = reasoningBodyFrame.maxY
         }
         if showsReasoningDivider {
-            bubbleY += 12
             reasoningDividerFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 1 / UIScreen.main.scale)
             bubbleY = reasoningDividerFrame.maxY + 12
         } else {
@@ -3234,7 +3233,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     return Metrics(rowHeight: max(1, ceil(y)), timestampFrame: timestampFrame, bubbleFrame: bubbleFrame, reasoningButtonFrame: reasoningButtonFrame, reasoningBodyFrame: reasoningBodyFrame, reasoningDividerFrame: reasoningDividerFrame, messageFrame: messageFrame, copyFrame: copyFrame)
 }
 
-    private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState) -> NSAttributedString {
+    private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState, trailingSeparator: Bool) -> NSAttributedString {
         let output = NSMutableAttributedString()
         let reasoningParagraph = NSMutableParagraphStyle()
         reasoningParagraph.minimumLineHeight = compactAssistantLineHeight
@@ -3271,6 +3270,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
                 if let slot = item.toolSlot, let url = URL(string: "chatgpt-tool-list://slot/\(slot)") { output.addAttribute(.link, value: url, range: NSRange(location: start, length: output.length - start)) }
             }
         }
+        if trailingSeparator, output.length > 0 { output.append(NSAttributedString(string: "\n\u{200B}\n", attributes: separatorAttributes)) }
         return output
     }
 
@@ -3316,8 +3316,8 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(minimumHeight), ceil(rect.height) + 1))
     }
 
-    private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat, disclosureState: ConversationToolDisclosureState) -> CGSize {
-        let attributed = responseTimelineAttributedText(timeline, disclosureState: disclosureState)
+    private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat, disclosureState: ConversationToolDisclosureState, trailingSeparator: Bool) -> CGSize {
+        let attributed = responseTimelineAttributedText(timeline, disclosureState: disclosureState, trailingSeparator: trailingSeparator)
         guard attributed.length > 0 else { return .zero }
         let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
         return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(reasoningFont.lineHeight), ceil(rect.height) + 2))

@@ -23,7 +23,7 @@ jobs:
       - name: Guard formal branch
         run: |
           git fetch origin dev/send-stream-20260829
-          test "$(git rev-parse origin/dev/send-stream-20260829)" = "15ac2afb9d78a4f0c50ac8dc8abf7e9ca3e2da66" || { echo "Formal branch drifted before b80 assembly"; exit 1; }
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "8e850233127fea29d954ad8fdda52abaeade575f" || { echo "Formal branch drifted before b80 assembly"; exit 1; }
 
       - name: Apply exact b80 patch
         run: python3 .github/scripts/b80_apply.py
@@ -45,10 +45,10 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
           xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 
-      - name: Commit validated product blobs
+      - name: Commit validated non-workflow product blobs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
-          git commit -m "dev: stage validated b80 product blobs"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "dev: stage validated b80 non-workflow blobs"
           git push origin HEAD:${GITHUB_REF_NAME}

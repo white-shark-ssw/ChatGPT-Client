@@ -1,45 +1,52 @@
-# Candidate staging: DEV-send-stream-0.1.0-b86
-name: Stage Send Continuation Diagnostics b86
+# Candidate: DEV-send-stream-0.1.0-b86
+name: iOS Send Continuation Diagnostics b86
 
 on:
   push:
     branches:
       - dev/send-stream-20260829
     paths:
-      - "ChatGPTClient/RootViewController.swift"
-      - "ChatGPTClient.xcodeproj/project.pbxproj"
-      - "scripts/research/stage_b86.py"
+      - "ChatGPTClient/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/build_ipa.sh"
+      - "scripts/reconstruct_app_icon.sh"
+      - "scripts/assets/**"
+      - ".github/workflows/ios-foundation.yml"
+  pull_request:
+    paths:
+      - "ChatGPTClient/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/build_ipa.sh"
+      - "scripts/reconstruct_app_icon.sh"
+      - "scripts/assets/**"
       - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  stage-b86:
+  build-ipa:
     runs-on: macos-15
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Build unsigned TrollStore IPA candidate
+        run: bash scripts/build_ipa.sh
+
+      - name: Inspect artifact
+        run: |
+          ls -lh build/artifacts
+          unzip -l build/artifacts/*.ipa | head -n 40
+
+      - name: Upload IPA candidate
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 0
-
-      - name: Apply exact b86 diagnostics-only patch
-        run: |
-          python3 scripts/research/stage_b86.py
-          git diff --check
-          grep -q 'coveredExecutor.externalStreamStatusRequest' ChatGPTClient/RootViewController.swift
-          grep -q 'coveredExecutor.externalStreamStatusResponse' ChatGPTClient/RootViewController.swift
-          grep -q 'coveredExecutor.externalResumeRequest' ChatGPTClient/RootViewController.swift
-          grep -q 'CURRENT_PROJECT_VERSION = 86;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DEV-send-stream-0.1.0-b86' ChatGPTClient.xcodeproj/project.pbxproj
-
-      - name: Commit exact b86 diagnostics patch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "diag(send): expose page continuation request structure"
-          git push origin HEAD:dev/send-stream-20260829
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b86
+          path: |
+            build/artifacts/*.ipa
+            build/artifacts/*.sha256
+          if-no-files-found: error
+          retention-days: 14

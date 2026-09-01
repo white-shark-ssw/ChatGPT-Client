@@ -2,27 +2,24 @@
 
 ## Status
 
-**Active — exact b84 diagnostic Runtime proved manual Sync already receives approved trailing reasoning/tool timeline during active cross-platform generation, while current Native projection dropped it. Exact b85 implements the minimal correction by adopting that authoritative Detail timeline into the existing per-conversation response runtime. Push+PR CI and canonical IPA/package identity are verified. Runtime/manual/real-device remains Pending. Client-owned Send remains true SSE; cross-platform block-level reasoning/tool snapshots remain the MVP. Automatic discovery, cross-platform token SSE, progressive external final-token streaming and official-native realtime product integration remain deferred. Stable/Frozen Send remains No.**
+**Active — exact b85 real-device Runtime is now Partial Positive / MVP continuation Rejected. Manual `同步最新消息` reliably adopts the authoritative Detail trailing reasoning/tool timeline into the existing response owner and updates the UI, but the covered official-Web continuation does not automatically attach in this sample: every newer block required another explicit Sync. Client-owned Send remains true SSE. Cross-platform block-level reasoning is available through explicit Sync, but the current MVP requirement that one Sync can re-arm later genuine block continuation without pressing Sync for every block is not met. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Product source / tested package identity is fixed below; post-package branch changes are evidence/docs/tool cleanup only and do not redefine b85 product source.
-- b84 exact product/config source: `626c3ad4d4d592618d794c4cb8854324f719f4a4`
-- b84 Candidate: `DEV-send-stream-0.1.0-b84` / `0.1.0 (84)` — diagnostic Runtime Positive, product acquisition still unstable
+- Branch head before this Runtime checkpoint update: `1c54a40d01ad50545c82cc8bc25435e421e3e6ef`
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - b85 clean Push CI/package head: `6be1e8a8bafa80ef09c6fcebff014006de264e0f`
-- b85 Candidate: `DEV-send-stream-0.1.0-b85`
+- Candidate: `DEV-send-stream-0.1.0-b85`
 - Version / Build: `0.1.0 (85)`
 - Push run/job: `33564141168 / 100043319389` — success
 - PR run/job: `33564179303 / 100043444613` — success
-- Canonical b85 Artifact: `9822441595`
-- Artifact ZIP digest: `sha256:0e32a52f91cb8580b91451d97d37696073fb4ee57c5df3918897aab69700ba48`
-- IPA: `ChatGPTClient-0.1.0-b85-dev-send-stream.ipa`
+- Canonical Artifact: `9822441595`
 - IPA SHA-256: `f03f5d657cbf71772d197fcea969cafb73d249c2dcc3dd2feb72e139d6e9cf61`
-- Package identity: `0.1.0 (85)` / Candidate b85 / source `6be1e8a8bafa` / iOS14 minimum / arm64
+- Uploaded Runtime package metadata: `0.1.0 (85)` / Candidate b85 / source `6be1e8a8bafa` / iOS17.0
 - b39-b85 permanently reserved
+- b86: **not allocated**
 - Stable/Frozen Send: No
 
 ## Send MVP contract
@@ -33,103 +30,115 @@ Keep the existing true SSE response stream. Do not downgrade it.
 
 ### Cross-platform Send
 
-For MVP, genuine block/page-snapshot progressive reasoning/tool updates are acceptable instead of token-level SSE. Explicit manual Sync must reliably converge to newest authoritative messages and expose the newest approved reasoning/tool block available from authoritative Detail/page-owned sources. Page-owned continuation may keep updating the same response generation when it attaches; another explicit Sync remains allowed for an active external response when page continuation does not attach.
+For MVP, genuine block/page-snapshot progressive reasoning/tool updates are acceptable instead of token-level SSE, but explicit manual Sync must be a stable acquisition/re-arm boundary: one Sync should expose the newest authoritative block and, when the external response remains active, the covered page should be able to continue newer genuine blocks without requiring another Sync for every block. Final completion keeps the b80 materialization boundary.
 
-Deferred until broader product completion:
+Deferred unless explicitly reopened by current user work:
 
 - automatic remote-turn discovery/acquisition;
 - cross-platform token-level reasoning SSE parity;
-- cross-platform progressive final-answer token streaming;
-- production integration of the official iOS native realtime/WebSocket path.
+- progressive external final-answer token streaming;
+- production official-native realtime/WebSocket integration.
+
+The user has now explicitly reopened the narrower question of whether the newly proven authoritative active-Detail anchor can help establish true page-owned cross-platform SSE continuation. Do not interpret that as authorization for polling or guessed Native resume requests.
 
 ## b84 decisive Runtime
 
+Exact b84 proved active authoritative Detail can expose an already-presentational trailing timeline before a visible assistant row exists. On the previously problematic conversation it grew `1 -> 4 -> 5 -> 6` while covered Web never acquired the live response. Raw `assistant:thoughts` / `inline_cot_expandable_content` remained skipped.
+
 Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b84-active-detail-trailing-timeline-20260902.md`.
 
-Exact problematic target on b84/iOS17 produced active authoritative Detail samples while no page-owned live response existed:
+## b85 implementation
 
-- `21:28:16`: visible `25 -> 26`, mapping 1297, trailing timeline **1 = reasoning 1**;
-- `21:28:37`: visible 26, mapping 1303, trailing timeline **4 = reasoning 1 + tools 3**;
-- `21:28:49`: visible 26, mapping 1305, trailing timeline **5 = reasoning 1 + tools 4**;
-- `21:28:56`: visible 26, mapping 1307, trailing timeline **6 = reasoning 1 + tools 5**.
-
-`livePresentationRowCount` stayed 0 and covered Web did not acquire `external_page_owned`. Therefore `parseCurrentBranch` already had user-visible thinking/tool structure, but the ordinary Detail projection discarded the trailing `pendingTimeline` before a visible assistant row existed.
-
-Raw `thoughts` / `inline_cot_expandable_content` remained skipped and are not authorized for presentation.
-
-## b85 implemented correction
+b85 carries the approved trailing timeline in `ConversationDetail`, adopts it into the existing per-conversation `responseRuntime` on explicit Sync, permits repeated Sync while the active response is external, and lets a later page-owned continuation reuse the same response generation. No second response store, polling, retry loop, timer, watchdog, duplicate Send/resend, automatic discovery, conversation-entry Sync or cross-platform token SSE was added.
 
 Durable build evidence: `docs/project/runtime-evidence/DEV-send-stream-b85-authoritative-detail-block-build-20260902.md`.
 
-Exact product commit `ec64dd17...` changes only:
+## b85 real-device Runtime — 2026-09-02
 
-- `ChatGPTClient/Conversation/ConversationFeature.swift`
-- `ChatGPTClient/RootViewController.swift`
-- `ChatGPTClient.xcodeproj/project.pbxproj`
+Uploaded diagnostics identify exact b85 on iOS17.0 and target conversation marker `sha256:d597360f6d29`.
 
-Behavior:
+### Manual authoritative block path — Runtime Positive
 
-1. `ConversationDetail` carries the actual already-approved trailing response timeline and reasoning duration returned by `parseCurrentBranch`.
-2. Explicit manual Sync adopts/updates it through the existing `ConversationRepository` per-conversation `responseRuntime`; no second response store.
-3. A Detail-backed external response and a later page-owned external continuation reuse the same response generation.
-4. `同步最新消息` remains available while an external response is active, allowing another explicit authoritative block refresh if page continuation does not attach.
-5. `重载当前会话` remains disabled during any active response; client-owned local Send continues to block recovery actions.
-6. A later manual Sync with a materialized authoritative assistant beyond the external baseline and no trailing timeline reconciles/clears the Detail-backed live snapshot.
-7. Client-owned SSE and all hidden-thought boundaries remain unchanged.
+The same live response generation (`responseGeneration=1`) advances only when the user explicitly presses Sync:
 
-No polling, timer, retry, watchdog, duplicate Send/resend, automatic discovery, conversation-entry Sync or cross-platform token SSE was added.
+- `22:17:29` Sync requested -> `22:17:34` Detail: visible `29 -> 30`, mapping `1622`, trailing timeline **1 = reasoning 1** -> `liveResponse.started source=external_authoritative_detail` -> `externalDetailSnapshot timeline=1` -> live row shown.
+- `22:18:23` Sync requested -> `22:18:29` Detail: visible still `30`, mapping `1630`, trailing timeline **5 = reasoning 1 + tools 4** -> same `responseGeneration=1` updated to timeline 5.
+- `22:19:35` Sync requested -> `22:19:39` Detail: visible still `30`, mapping `1637`, trailing timeline **7 = reasoning 2 + tools 5** -> same generation updated to timeline 7.
+- `22:20:34` Sync requested -> `22:20:38` Detail: visible `31`, trailing timeline 0 -> `liveResponse.externalDetailReconciled reason=authoritative_assistant_materialized` and live row cleared.
 
-## Durable architecture/status updates
+This proves b85's Native Detail projection/reconciliation and single response-owner design work on real device.
 
-- `BUILD_TEST_INDEX.md`: b84 promoted to Diagnostic Runtime Positive; b85 added as Code/CI/Artifact verified, Runtime Pending.
-- `MODULE_STATUS.md`: b85 Active override records authoritative Detail as an accepted block-source architecture with Runtime pending.
-- `TECHNICAL_DECISIONS.md`: TD-023 records explicit manual Sync adoption of approved trailing Detail timeline through the existing response owner; b85 product Runtime remains pending.
-- Temporary staging/docs workflows and staging script have been removed from the current branch.
+### Automatic continuation after Sync — Runtime Rejected in this sample
+
+After each active Sync, `manual_sync_rearm` occurs and the covered page reports `state=loaded`, but the export contains:
+
+- zero `coveredExecutor.externalStreamingObserved`;
+- zero `coveredExecutor.externalSnapshot`;
+- zero `liveResponse.externalSnapshot`;
+- zero `coveredExecutor.externalResumeObserved`;
+- zero `coveredExecutor.resumeResponse`.
+
+Therefore no page-owned continuation transport was acquired at all. This is not a failure of the b85 timeline parser or generation reuse; the official page never entered the currently observed `stream_status` / resume / plural-read path during these windows.
+
+User observation exactly matches the log: each explicit Sync reveals a newer portion of reasoning, but no automatic continuation occurs between Sync actions.
+
+### Lifecycle qualification
+
+The app entered background shortly after several page re-arms, and the covered user WebSocket produced error/close events. The longest clean foreground windows after page load in this export are only several seconds. Therefore this export proves current behavior is not stable enough for the MVP, but by itself does **not** prove that a fully foreground page could never attach later. Previous b83/b84 failures with clean page loads still show this is a real reliability problem rather than only a background artifact.
+
+### Current technical conclusion
+
+The remaining bottleneck is **page-owned continuation activation**, not Native authoritative block acquisition. The bridge is already able to consume page-owned `stream_status`, `/resume` SSE, and plural snapshots when the official page actually issues those requests. Current b85 logs cannot distinguish:
+
+1. page never requested `stream_status`, versus
+2. page requested it but received a state/status that did not trigger `externalStreamingObserved`.
+
+Do not guess `offset`, construct Native `/resume`, add Detail polling, or add refresh/retry loops. The next evidence must instrument the existing page-owned network interception just enough to distinguish those cases.
+
+## Narrow SSE research direction
+
+Existing exact historical Runtime proves official Web can perform cross-device continuation as:
+
+`stream_status -> POST /backend-api/f/conversation/resume {conversation_id, offset} -> HTTP200 text/event-stream`
+
+and other current runs can fall back to page-owned plural snapshots after resume 404. b84/b85 now provide a reliable authoritative active-response anchor and immediate UI snapshot, but they do not themselves create SSE.
+
+The next question is not whether SSE exists. It is: **what official page state causes the target conversation to issue `stream_status` and then a valid resume/read continuation after an explicit authoritative Sync/re-entry?**
 
 ## Recorded later requirement — one Sync on conversation entry
 
-After the current reasoning-acquisition MVP is accepted, entering/selecting a conversation should automatically request exactly one latest-message synchronization attempt through the authoritative Detail/`ConversationRepository` path. It must avoid duplicate concurrent Detail work and remain one-shot, not polling/timer/watchdog/retry machinery. This is **not part of b85**.
-
-## Frozen / preserved boundaries
-
-- b80 tool/timeline -> reasoning-divider spacing: Frozen.
-- external stopped-thinking semantics: Frozen.
-- b80 final-materialization gate: preserve.
-- b67 client-owned protected Send and b72 tested simultaneous ownership: preserve.
-- `ConversationRepository` remains sole Native response/content authority.
-- `AuthSessionStore` remains sole native auth/account authority.
-- default persistent WebKit store remains sole persistent auth-secret authority.
-- WebSocket bodies remain structural only without separate Runtime authorization.
-- no raw hidden-thought presentation.
+Entering/selecting a conversation should eventually perform exactly one latest-message Sync attempt through the authoritative Detail/Repository path. This one-shot refresh does not solve automatic continuation by itself and remains unimplemented in b85.
 
 ## Evidence ladder
 
 - b83 manual acquisition: **Runtime Rejected**
-- b84 active authoritative trailing presentational timeline: **Runtime Positive**
-- b84 active timeline growth without visible assistant: **Runtime Positive (`1 -> 4 -> 5 -> 6`)**
-- b85 Code written: **Yes**
-- b85 guarded exact-match staging / `git diff --check`: **Passed**
-- b85 Push CI: **Passed**
-- b85 PR CI: **Passed**
-- b85 Artifact/package identity: **Verified**
-- b85 Runtime/manual/real-device: **Pending**
+- b84 active authoritative trailing timeline: **Runtime Positive**
+- b85 Code / Push+PR CI / Artifact/package: **Verified**
+- b85 explicit manual Detail block projection: **Runtime Positive**
+- b85 repeated Sync updates same external response generation: **Runtime Positive**
+- b85 final authoritative reconciliation: **Runtime Positive**
+- b85 automatic page-owned continuation after one Sync: **Runtime Rejected in uploaded sample**
+- b85 true cross-platform SSE continuation: **Not acquired**
 - Stable/Frozen Send: **No**
 
-## Next exact action — Human Runtime gate
+## Batch recovery point — b85 Runtime documentation + next diagnostic decision
 
-Install exact b85. On a long cross-platform turn, press `同步最新消息` while it is active.
+Baseline/head before this checkpoint write: `1c54a40d01ad50545c82cc8bc25435e421e3e6ef` on `dev/send-stream-20260829`; PR #29 open/mergeable; b85 product identity remains fixed at source `ec64dd17...`, package head `6be1e8a8...`, Artifact `9822441595`.
 
-Expected decisive behavior:
+Small write batches:
 
-1. if authoritative Detail has a non-empty trailing timeline, the current reasoning/tool block appears immediately from that Sync result without requiring covered Web acquisition;
-2. if page-owned continuation later attaches, newer blocks continue on the same live response;
-3. if it does not attach, a later explicit Sync advances the displayed block from newer Detail;
-4. when the completed assistant materializes, a later Sync reconciles to completed historical content and clears the live snapshot.
+1. **Completed by this checkpoint write:** record uploaded b85 Runtime and classify manual block path Positive / auto continuation Rejected.
+2. **Pending:** create durable b85 Runtime evidence file from the uploaded diagnostics.
+3. **Pending:** update `BUILD_TEST_INDEX.md` b85 Runtime status and `MODULE_STATUS.md` Send override; TD-023 needs only status qualification, not a new architecture rule.
+4. **Pending:** refresh PR #29 stale b84 title/body to b85 Runtime truth.
+5. **Pending decision after durable docs:** do not allocate b86 unless exact source inspection confirms a privacy-safe diagnostic gap that cannot be answered from existing logs. If allocated, b86 must be diagnostics-only around page-owned `stream_status` / resume request structure and must not change acquisition behavior.
 
-Export b85 diagnostics either way. Key events: `liveResponse.started source=external_authoritative_detail`, `liveResponse.externalDetailSnapshot`, optional page-owned snapshot on the same generation, and `liveResponse.externalDetailReconciled`.
+Do not touch b85 product source, canonical Artifact identity, client-owned SSE, b80 Frozen presentation/final boundaries, or raw hidden-thought rules during recovery.
 
-Do not modify product code or allocate b86 before this Runtime result unless a deterministic packaging/source defect is discovered.
+## Next exact action
+
+Complete the pending durable Runtime documentation above, then inspect the current covered bridge's `stream_status`/resume interception. If current diagnostics do not log non-IS_STREAMING `stream_status` responses or whether a matching resume request carried an offset, allocate a single diagnostics-only b86 candidate to expose only those structural facts. Otherwise use b85 for one foreground-held targeted Runtime probe. No behavior change before that evidence.
 
 ## Session round counter
 
-This user turn is **round 15**.
+This user turn is **round 17**.

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-b84 is a diagnostic-only Candidate created after exact b83 was Runtime Rejected. It does not attempt another Web re-arm fix and does not change user-visible reasoning behavior. Its single question is whether an authoritative manual Detail Sync already ends with a non-empty, previously-authorized presentational reasoning/tool timeline that the current Native projection drops before a visible assistant message exists.
+b84 is a diagnostic-only Candidate created after exact b83 was Runtime Rejected. It does not attempt another Web re-arm fix and does not change user-visible reasoning behavior. Its original single question was whether an authoritative manual Detail Sync already ends with a non-empty, previously-authorized presentational reasoning/tool timeline that the current Native projection drops before a visible assistant message exists.
+
+This document now also records the first exact b84 real-device sample where manual Sync successfully re-armed the covered official page and Native immediately acquired a real external reasoning snapshot.
 
 ## Identity
 
@@ -69,29 +71,72 @@ Push and PR builds both completed successfully with Xcode 16.4. The canonical Pu
 
 Downloaded Artifact inspection independently matched the sidecar and verified actual package metadata `0.1.0 (84)`, Candidate `DEV-send-stream-0.1.0-b84`, `DiagnosticsSourceCommit=c7398eea6b20`, minimum iOS 14.0 and an arm64 Mach-O executable.
 
-## Runtime gate
+## First b84 real-device Runtime sample — partial positive
 
-Runtime is **Pending**.
+Uploaded diagnostics identify exact b84 (`0.1.0 (84)`, Candidate `DEV-send-stream-0.1.0-b84`, source `c7398eea6b20`) on iOS17.0. Privacy-safe target conversation marker: `sha256:6f429823a988`.
 
-On a deliberately long cross-platform turn, while the remote response is still generating:
+The user reported that in this different conversation, pressing Sync made the reasoning block attach immediately. The log supports that observation.
 
-1. press manual Sync two or three times at separated points during the active response;
-2. do not rely on the covered page visually showing reasoning — b84 is diagnostic-only;
-3. export the app diagnostics while the turn is still active if possible;
-4. provide the diagnostic JSON.
+Chronology:
 
-Decisive interpretation:
+1. `21:24:32` selection starts observing the existing conversation. Initial Detail at `21:24:33` is HTTP200, `visibleMessageCount=13`, `mappingCount=134`, `trailingTimelineItemCount=0`, `thinkingPreambleMessageCount=8`, `ignoredThoughtsMessageCount=12`.
+2. After returning to the app, `21:25:00` latest Sync starts. The authoritative Sync result at `21:25:01` advances visible messages `13 -> 14` and mapping `134 -> 135`, but still reports `trailingTimelineItemCount=0`, `trailingReasoningItemCount=0`, `trailingToolItemCount=0`.
+3. The successful Sync immediately emits `coveredExecutor.observing mode=manual_sync_rearm` at `21:25:01`; the covered page reaches `state=loaded` at `21:25:02`.
+4. At `21:25:06`, only about four seconds after page load, Native starts `liveResponse` with `source=external_page_owned`, phase `thinking`. The same second records `externalStreamingObserved`, `externalDOMStructure assistantNodeCount=4 / textCharacters=1326`, and page-owned resume observation.
+5. The page-owned resume response is HTTP404 JSON, so the already-established `page_owned_read_path` fallback is used; no Native-constructed resume/request is introduced.
+6. At `21:25:07`, Native receives a changed external snapshot with `phase=reasoning`, `reasoningCharacters=258`, `serviceMessageCount=9`, `toolCount=3`. This is the first exact b84 Runtime proof that a manual Sync re-arm can successfully acquire live external reasoning in the covered production path.
+7. At `21:25:13`, a later changed external snapshot reports `serviceMessageCount=11`; the live response then records `terminal / completed`, still with `finalCharacters=0`, and the covered snapshot reports `complete=true`.
+8. The following authoritative reconcile at `21:25:14` still has `visibleMessageCount=14`, but now reports `trailingTimelineItemCount=6`, `trailingReasoningItemCount=2`, `trailingToolItemCount=4`, `thinkingPreambleMessageCount=10`, `ignoredThoughtsMessageCount=13`.
 
-- `trailingTimelineItemCount > 0` during active generation means authoritative Detail already contains an approved presentational trailing timeline that current projection drops before a visible assistant row; this authorizes investigating a minimal Native projection fix.
-- `trailingTimelineItemCount == 0` across active Detail samples means this hypothesis is rejected; reassess the data source instead of exposing raw skipped thoughts or adding speculative polling.
+## What this sample proves
 
-## Evidence ladder
+### Runtime confirmed
 
-- b84 Code written: **Yes**
+- Exact b84 manual Sync re-arm can successfully acquire a covered-page external live response.
+- In this successful sample, `manual_sync_rearm -> page loaded -> external_page_owned -> non-empty reasoning snapshot` occurs within seconds.
+- Page-owned `/resume` may still be HTTP404 while the existing page-owned read path supplies a genuine external reasoning/tool snapshot.
+- A non-empty approved presentational trailing timeline can exist in authoritative Detail while the visible assistant row has still not been added (`visibleMessageCount` remained 14 at the `trailingTimelineItemCount=6` reconcile).
+
+### Important timing qualification
+
+The `trailingTimelineItemCount=6` authoritative Detail sample occurs **after** the live external response already emitted `terminal / completed` at `21:25:13`. Therefore this sample does **not** yet prove that `trailingTimelineItemCount > 0` is available during the still-active generation phase before terminal.
+
+What it does prove is narrower and still useful: after page-owned completion but before the authoritative visible assistant row materializes, the current Detail parser can end with a non-empty already-presentational timeline that is not attached to a visible assistant message.
+
+### Strong hypothesis, not yet a decision
+
+The user's observation is that conversations which begin producing visible reasoning text quickly appear much easier to attach, while conversations with a long initial interval before visible reasoning repeatedly fail to acquire.
+
+This successful sample is consistent with that hypothesis: shortly after the covered page loaded, it exposed enough live page/service structure for `external_page_owned` adoption and a real reasoning snapshot. The earlier b83 failure had repeated clean page loads but never entered `external_page_owned` during the long active interval.
+
+Do **not** promote this correlation to a production rule yet. One same-build A/B comparison is still needed to distinguish first-presentational-content timing from other per-conversation/page-state differences.
+
+## Current Runtime classification
+
+b84 is **Runtime Partial Positive**, not Stable and not a product fix.
+
+- Code written: **Yes**
 - Exact product diff verified: **Yes**
 - Push CI: **Passed**
 - PR CI: **Passed**
 - Artifact produced: **Yes**
 - Package identity / SHA / architecture: **Verified**
-- Runtime/manual/real-device: **Pending**
+- Covered-page manual Sync live reasoning acquisition: **Runtime Positive in this sample**
+- Post-terminal/pre-visible-assistant non-empty trailing presentational timeline: **Runtime Positive**
+- Active-generation non-empty trailing presentational timeline before terminal: **Still Unverified**
+- Deterministic acquisition across conversations/response shapes: **Still Rejected/Unproven**
 - Stable/Frozen Send: **No**
+
+## Next exact action
+
+Keep exact b84; do **not** allocate b85 yet.
+
+Use the user's simultaneous test of the current conversation as the next A/B Runtime sample. For the same b84 build, determine whether manual Sync enters `external_page_owned` and whether a live reasoning snapshot appears while the answer is still generating. Export the diagnostics regardless of success or failure.
+
+Decisive comparison:
+
+- if the current conversation again fails despite clean `manual_sync_rearm` / page load while the successful conversation above acquires live reasoning within seconds, compare the timing/availability of user-visible page/service reasoning structure rather than adding another refresh/retry;
+- if the current conversation also succeeds, b84 has two positive samples and the next investigation should focus on why prior long-running b83/b82 cases lacked page-owned presentational acquisition;
+- if an active pre-terminal Detail sample ever shows `trailingTimelineItemCount > 0`, the original b84 projection hypothesis becomes directly Runtime confirmed for active generation and can justify a separate minimal Native projection design.
+
+Do not expose raw skipped thoughts and do not add polling, timer, retry, duplicate Send/resend or a second response owner.

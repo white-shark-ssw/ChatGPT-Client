@@ -101,3 +101,7 @@ Required conclusion from the probe:
 - only then decide the minimal b81 scope for reliable acquisition + optional completion haptic/automatic Sync.
 
 Do **not** allocate b81 merely to guess the transport. If the probe remains ambiguous, stay at Human Gate.
+
+## Session round counter
+
+This development conversation completed round 14 before the current b80 Runtime result; this checkpoint update occurs during round 15. Continue displaying the current round count at the end of each user-facing response in this conversation.

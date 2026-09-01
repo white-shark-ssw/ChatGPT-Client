@@ -22,12 +22,13 @@ jobs:
 
       - name: Guard and checkout formal branch
         run: |
+          cp .github/scripts/b82_runtime_docs_sync.py /tmp/b82_runtime_docs_sync.py
           git fetch origin dev/send-stream-20260829
           test "$(git rev-parse origin/dev/send-stream-20260829)" = "4dec8ffb21bff3c7875af3c15310e9c2cedfdc0b" || { echo "Formal branch drifted before b82 Runtime docs sync"; exit 1; }
           git checkout -B b82-runtime-docs origin/dev/send-stream-20260829
 
       - name: Apply durable b82 Runtime docs
-        run: python3 .github/scripts/b82_runtime_docs_sync.py
+        run: python3 /tmp/b82_runtime_docs_sync.py
 
       - name: Validate docs-only scope
         run: |

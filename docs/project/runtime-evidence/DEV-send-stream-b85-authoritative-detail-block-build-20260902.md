@@ -13,7 +13,7 @@ b85 is the minimal product correction authorized by exact b84 Runtime: explicit 
 - Version / Build: `0.1.0 (85)`
 - Exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - Clean Push CI/workflow head: `6be1e8a8bafa80ef09c6fcebff014006de264e0f`
-- Current branch after temporary staging-script cleanup: `6a2ae623a812742528083fb650cb559b6a4c2ac0`
+- Final branch head before Human Runtime checkpoint: `5d12630af84d907b0294a85c38ababba9c1177ee` (product unchanged since clean package head; later commits are evidence/docs/tool cleanup)
 - Push run/job: `33564141168 / 100043319389` — success
 - PR run/job: `33564179303 / 100043444613` — success
 - Canonical Push Artifact: `9822441595`
@@ -36,7 +36,7 @@ Compared with the staging parent, exact stats are:
 - `ConversationFeature.swift`: 20 additions / 8 deletions;
 - `RootViewController.swift`: 69 additions / 4 deletions.
 
-The temporary guarded staging script was deleted after the product commit and is not part of the runtime package.
+Temporary guarded staging and one-time durable-doc workflows/scripts were removed from the final branch and are not part of the runtime package.
 
 ## Behavior change
 
@@ -50,6 +50,13 @@ The temporary guarded staging script was deleted after the product commit and is
 - Raw `thoughts` and `inline_cot_expandable_content` remain non-presentational.
 
 No polling, timer, retry loop, watchdog, duplicate Send/resend, automatic discovery, conversation-entry one-shot Sync or cross-platform token-SSE change was added.
+
+## Durable documentation state
+
+- `BUILD_TEST_INDEX.md`: b84 diagnostic Runtime Positive; b85 Code/CI/Artifact verified, Runtime Pending.
+- `MODULE_STATUS.md`: b85 Active override recorded.
+- `TECHNICAL_DECISIONS.md`: TD-023 records authoritative Detail block adoption through the existing external response owner.
+- Current checkpoint points directly to this Human Runtime gate.
 
 ## Validation classification
 

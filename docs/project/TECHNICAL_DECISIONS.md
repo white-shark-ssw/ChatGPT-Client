@@ -211,6 +211,13 @@ This file records durable, evidence-backed technical decisions and rejected rout
 - **Ownership/security retained**: `AuthSessionStore` remains sole account authority; `WKWebsiteDataStore.default()` remains sole persistent auth-secret authority; `ConversationRepository` remains sole read/response lifecycle authority. No second credential store, retry loop, polling, timer, watchdog, compatibility shim or challenge copying is authorized.
 - **Evidence boundary**: b70 Code/CI/Artifact/package success proves only implementation/package identity. Recovery from a real transient 403 remains a real-device Runtime gate.
 
+### TD-023 — Explicit cross-platform Sync may adopt approved trailing Detail timeline into the existing response owner
+- **Status**: Confirmed architecture from b84 Runtime; b85 product Runtime pending
+- **Date**: 2026-09-02
+- **Evidence**: Exact b84 real-device samples on the previously problematic conversation showed authoritative Detail trailing presentational timeline growth `1 -> 4 -> 5 -> 6` while visible assistant count stayed fixed and covered Web never acquired a live response. Parser sources were already-authorized thinking preambles/reasoning recap/tools; raw `thoughts` and `inline_cot_expandable_content` remained skipped.
+- **Decision**: Explicit manual `同步最新消息` may project that already-approved trailing Detail timeline through the existing per-conversation `ConversationRepository` response runtime. If page-owned continuation later attaches it updates the same external response generation. Another explicit Sync may refresh a newer block while the external response remains active.
+- **Rejected**: covered-page re-arm as the sole deterministic manual acquisition mechanism; polling/timer/retry/watchdog loops; duplicate Send/resend; WebSocket body authority; raw hidden-thought presentation.
+
 ## Rule
 
 Do not write speculation here as fact. Historical plans, CI and Artifacts are not Runtime proof. Stable does not mean Frozen. A newer explicit TD may supersede only the clauses it names; all unaffected evidence and boundaries remain active.

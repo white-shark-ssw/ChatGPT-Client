@@ -2,37 +2,33 @@
 
 ## Status
 
-**Active — exact b79 Runtime is partial-positive / partial-rejected. The next evidence-backed product candidate is b80, but b80 is not allocated until the fresh pre-allocation identity guard below is completed. Stable/Frozen Send remains No.**
+**Active — exact b79 Runtime is partial-positive / partial-rejected. `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)` is now allocated for the two evidence-backed corrections below; product assembly is in progress. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `d323b9eed2dda75b9986fc06e14014d3e9b365fb`
 - Exact b79 product/config source: `a3d307b05d70e95568672bc29b0c939b7f3b8141`
-- Candidate / Version-Build: `DEV-send-stream-0.1.0-b79` / `0.1.0 (79)`
-- Guarded staging validation: `33488975445 / 99795672696` — exact scope + `git diff --check` + Xcode 16.4 Simulator passed
-- Formal Push CI: `33489654106 / 99797864816` — success
-- Formal PR CI: `33489658656 / 99797878467` — success
-- Canonical Push Artifact: `9793240789`
-- Artifact ZIP SHA: `2016508002ae7ff43d803c90fcbb92ba01c45906c885be6f6e50a1e43e1e87fc`
-- IPA SHA: `39f64dd9146c3a8dc28cb9b733d1c56d4fbf3ff090a442c8ecbd27c672234fb4`
-- b39-b79 permanently reserved
+- Allocated next Candidate / Version-Build: `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)`
+- b39-b80 permanently reserved
 - Runtime/manual/real-device b79: **Partial / rejected**
+- Runtime/manual/real-device b80: **Not yet produced**
 - Stable/Frozen Send: **No**
 
 Durable b79 evidence: `docs/project/runtime-evidence/DEV-send-stream-b79-device-runtime-20260901.md`.
 
 ## Resume / identity / conflict guard
 
-The selected Work remains `DEV-send-stream`. Before this Runtime evidence sync:
+Immediately before b80 allocation:
 
-- formal feature head was `608d7d77f2d65c786eab5ac5a0b04095f02d608a`;
-- PR #29 remained open / mergeable / unmerged and based on `main`;
-- `main` remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`, so no target/base drift was observed;
-- exact search found no `DEV-send-stream-0.1.0-b80` before this evidence sync;
-- `docs/project/current/dev/` still had a stale temporary b79 scope marker in addition to this checkpoint and README; it is assembly residue, not a separate Active Work, and must be removed now that b79 is classified.
+- formal feature branch `dev/send-stream-20260829` was at `412ed03c7519649bd65ec90e1d061e23ecfd820b`;
+- PR #29 remained open / mergeable / unmerged, head branch `dev/send-stream-20260829`, base `main`;
+- PR/base `main` remained `d323b9eed2dda75b9986fc06e14014d3e9b365fb`, so no target/base drift was observed;
+- exact repository search returned no `DEV-send-stream-0.1.0-b80` before allocation;
+- the stale temporary b79 assembly marker was removed; `docs/project/current/dev/` has no second Active Work checkpoint;
+- no parallel Active branch/candidate conflict was found.
 
-Re-run the branch/PR/main/b80 non-use guard immediately before allocating b80.
+Therefore b80 is allocated exactly once here. Do not allocate b81 until b80 Runtime is classified.
 
 ## Exact b79 Runtime classification
 
@@ -46,7 +42,7 @@ Re-run the branch/PR/main/b80 non-use guard immediately before allocating b80.
 
 ### External stopped-thinking semantics
 
-**Positive.** External terminal-without-final now preserves reasoning/tools instead of promoting reasoning into normal final body text. The tested stopped-thinking case retains reasoning and tools with final characters remaining zero.
+**Positive.** External terminal-without-final now preserves reasoning/tools instead of promoting reasoning into normal final body text.
 
 ### Cross-platform streaming boundary
 
@@ -80,16 +76,26 @@ The user reports that official ChatGPT iOS gives a two-stage haptic when any acc
 - Do not infer APNs, WebSocket, service-worker or another mechanism from haptic behavior alone.
 - Do not implement fixed polling/timers/watchdogs to imitate it.
 
-## Evidence-backed b80 scope — not yet allocated at this checkpoint
+## Exact b80 product scope
 
-Only these product changes are authorized by b79 Runtime:
+Only these product changes are authorized:
 
-1. **Final timeline/tool -> reasoning-divider spacing:** make the last visible reasoning/tool item use the same deterministic neutral vertical-rhythm owner as other timeline transitions; do not blindly increase line height.
-2. **Normal external COMPLETE materialization gate:** after consuming a page-owned `complete=true` snapshot, if this is a normal response with `reasoningEnded == true` but `finalText` is still empty, do not terminalize/release yet. Keep the same covered page observation alive for its own subsequent page-owned reads. Terminal normally when a real final body is observed. Preserve the already-positive stopped-thinking path where reasoning did not end and no final exists.
-3. **No automatic Sync/haptic implementation in b80.** The official-app completion signal observation is a future protocol-evidence gate, not authorization for polling.
-4. **No progressive-final invention.** No timer/poll/retry/watchdog, duplicate Sync/Send, fake typewriter, DOM-body authority, WebSocket-body authority, second response owner or compatibility shim.
+1. **Final timeline/tool -> reasoning-divider spacing:** the final expanded timeline boundary must use the same neutral separator representation as inter-item transitions. Remove the separate pre-divider spacing owner so the last tool/reasoning item and the divider share one deterministic rhythm. Do not increase the 36-point tool line height.
+2. **Normal external COMPLETE materialization gate:** after consuming page-owned `complete=true`, if the external snapshot has `reasoningEnded == true` but `finalText` is still empty, do not terminalize/release. Keep the same covered page observation alive for its own subsequent page-owned plural reads. Terminal normally when a real final body is present. Preserve the b79-positive stopped-thinking terminal case where reasoning did not end and no final exists.
+3. **Bridge ownership correction:** do not clear the page-owned external observation state merely because the first COMPLETE-associated plural snapshot was posted; native release remains the terminal owner.
+4. **Identity-only changes:** Xcode Build 80/Candidate b80 and workflow artifact identity.
 
-Expected minimum product scope after exact call-site inspection: `ChatGPTClient/Conversation/ConversationFeature.swift`, `ChatGPTClient/RootViewController.swift`, plus identity-only Xcode/workflow changes if b80 is allocated.
+Explicitly excluded from b80:
+
+- automatic Sync / account-wide haptic implementation;
+- timer/poll/retry/watchdog;
+- duplicate Sync/Send;
+- fake progressive final/typewriter;
+- DOM-body or WebSocket-body authority;
+- Native resume/offset synthesis;
+- second response owner or unrelated refactor.
+
+Expected exact product/config scope: `ChatGPTClient/Conversation/ConversationFeature.swift`, `ChatGPTClient/RootViewController.swift`, `ChatGPTClient.xcodeproj/project.pbxproj`, `.github/workflows/ios-foundation.yml`.
 
 ## Retained architecture / protocol boundaries
 
@@ -97,6 +103,7 @@ Expected minimum product scope after exact call-site inspection: `ChatGPTClient/
 - `AuthSessionStore` remains sole native auth/account owner; `WKWebsiteDataStore.default()` remains sole persistent browser auth-secret authority.
 - Covered official Web remains browser challenge/protected-Send/page-owned observation transport only, not a second message store.
 - b67 local protected Send and b72 tested simultaneous ownership remain accepted predecessors.
+- b79 manual-Sync re-arm and stopped-thinking semantics are positive predecessors to preserve.
 - `assistant:thoughts` / hidden COT remain non-presentational.
 - No Native polling/cadence, Native resume/offset synthesis, duplicate Send, retry/timer/watchdog, guessed fallback, fake final streaming, DOM-body authority or WebSocket-body authority.
 
@@ -104,23 +111,15 @@ Expected minimum product scope after exact call-site inspection: `ChatGPTClient/
 
 - b79 Code/static/Simulator/Push+PR CI/Artifact/package: **Verified**
 - b79 Runtime/manual/real-device: **Partial / rejected**
-- Tool prominence: **Positive**
-- Tool terminal-boundary spacing symmetry: **Rejected**
-- Manual-Sync external re-arm: **Positive**
-- External stopped-thinking semantics: **Positive**
-- External reasoning/tool adoption: **Positive at page-snapshot granularity only**
-- External progressive final: **Rejected / no authorized progressive source**
-- COMPLETE/final-materialization handling: **Rejected; premature terminal/release localized**
-- Official-app account-wide completion haptic mechanism for this client: **Unknown / Unverified**
+- b80 Candidate allocation: **Done**
+- b80 Code/static/CI/Artifact/Runtime: **Pending**
 - Stable/Frozen Send: **No**
 
 ## Next exact action
 
-1. Remove the stale temporary b79 assembly scope marker.
-2. Re-check formal branch / PR / main base and exact b80 non-use.
-3. If still clean, allocate `DEV-send-stream-0.1.0-b80` / `0.1.0 (80)` once.
-4. Implement only the two evidence-backed product corrections above.
-5. Run exact-scope/static checks and Xcode 16.4 Simulator build through the guarded assembly path; then formal Push + PR CI, canonical IPA production and independent package verification.
-6. Human Runtime gate: verify the last tool row has symmetric divider spacing; a normal remote response no longer terminalizes before its final body materializes; stopped-thinking and manual-Sync re-arm remain positive; note that progressive final token streaming remains an open protocol gap.
+1. Assemble the four-file b80 scope from formal head `412ed03c...` plus this allocation checkpoint.
+2. Validate exact source substitutions, no prohibited retry/poll/timer/watchdog patterns, `git diff --check`, and Xcode 16.4 Simulator build.
+3. If validation passes, transplant only the four product/config files to the formal feature branch, run Push + PR CI, produce and independently verify the canonical b80 IPA, then update checkpoint/durable state/PR in the same round.
+4. Human Runtime gate: verify the last tool row has symmetric divider spacing; a normal remote response no longer terminalizes before its final body materializes; stopped-thinking and manual-Sync re-arm remain positive; note that progressive final token streaming remains an open protocol gap.
 
 Do not claim CI/Artifact success as Runtime success.

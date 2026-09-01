@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — b80 Runtime is partial-positive / partial-rejected. The b80 spacing boundary is accepted and Frozen for this Work; adopted external final materialization and stopped-thinking semantics are Runtime positive. Reliable automatic acquisition of a newly-started cross-platform response remains rejected/intermittent. No b81 is allocated. Stable/Frozen Send as a whole remains No.**
+**Active — b80 Runtime is partial-positive / partial-rejected. The b80 spacing boundary is accepted and Frozen for this Work; adopted external final materialization and stopped-thinking semantics are Runtime positive. Reliable automatic acquisition of a newly-started cross-platform response remains rejected/intermittent. The latest account-signal probe is inconclusive, but the official account-wide signal is no longer a prerequisite for completion notification of responses initiated and owned by this client. No b81 is allocated. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -21,6 +21,7 @@ Durable evidence:
 
 - `docs/project/runtime-evidence/DEV-send-stream-b79-device-runtime-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-account-wide-web-notification-20260901.md`
+- `docs/project/runtime-evidence/DEV-send-stream-account-signal-probe-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b80-build-artifact-20260901.md`
 - `docs/project/runtime-evidence/DEV-send-stream-b80-device-runtime-20260901.md`
 
@@ -78,29 +79,35 @@ Current `CoveredWebSendExecutor` bridge activates this path only after the **off
 
 No speculative Native polling/status construction, retry/timer/watchdog, duplicate Sync, fake progressive final, DOM/WebSocket body authority or second response owner is authorized.
 
-## Account-wide signal evidence and current gate
+## Account-wide signal probe classification
 
-User Runtime evidence already proves official Web can remain on conversation A while a never-opened B completes and still show an upper-right new-answer bubble; official iOS also provides account-wide completion haptics. This is now directly relevant to the acquisition defect because official completion awareness is not inherently tied to the target conversation page being selected.
+The latest privacy-safe Web Rule Lab capture is **inconclusive** for the official account-wide completion/new-answer transport. It contains ordinary page/Sentinel/telemetry traffic and an explicit current-page protected Send, but no clear cross-conversation WebSocket/EventSource/BroadcastChannel/service-worker/window event attributable to a different conversation completing.
 
-Exact account-wide transport/schema/conversation identity/covered-WKWebView observability remain **Unknown / Unverified**.
+Do not infer a transport/schema from this capture and do not continue probing it merely to implement completion notification for this client's own Sends.
 
-## Next exact action — Human Web Rule Lab evidence gate
+## Notification ownership clarification
 
-Before allocating or implementing b81:
+Completion notification for a response **initiated by this client** does not require the official account-wide signal.
 
-1. Keep official Web Rule Lab on conversation A using the same `.default()` logged-in WebKit store.
-2. Install a privacy-safe account-signal probe **before** B starts generating.
-3. On another platform, start a sufficiently long response in conversation B that has not been opened in the Lab session.
-4. Keep A visible; do not enter B and do not send from the Lab.
-5. Capture the account-level event path while B starts/reasons/completes and the official Web notification behavior occurs.
-6. Return only structural metadata: fetch/XHR paths/status/content-type; WebSocket/EventSource/service-worker/window/BroadcastChannel event type/key shape/length; no Cookie/Authorization/challenge/raw conversation IDs/message bodies/tool bodies.
+The existing architecture already provides the needed authority:
 
-Required conclusion from the probe:
+- every client-owned Send creates/uses the normal `ConversationRepository` response lifecycle for a known conversation;
+- multiple owned responses are a set of independently owned response lifecycles, not one global streaming flag;
+- a completion notification can be emitted from that response's authoritative terminal transition, with at-most-once deduplication;
+- the official account-wide signal is only relevant to activity the client did **not** start and has not yet adopted.
 
-- identify the exact account-level event source, if any, and whether it exposes a privacy-safe usable conversation identity or a bounded trigger for one authoritative list/detail refresh;
-- only then decide the minimal b81 scope for reliable acquisition + optional completion haptic/automatic Sync.
+This matches `BACKGROUND_EXECUTION_PLAN.md`; no new notification state owner, polling route or guessed account transport is needed.
 
-Do **not** allocate b81 merely to guess the transport. If the probe remains ambiguous, stay at Human Gate.
+## Next exact action — scope decision, not another notification probe
+
+Do **not** allocate b81 solely to chase the account-wide notification transport.
+
+The remaining open b80 issue is specifically **externally initiated cross-platform response auto-acquisition**. Before any further Send product change, classify whether that behavior remains a required blocker for `DEV-send-stream` or is deferred as a separate cross-platform parity enhancement:
+
+1. if it remains required, gather evidence for a deterministic externally-started acquisition source and make only the minimal evidence-backed b81 change;
+2. if it is deferred, preserve explicit Sync/manual re-arm as the recovery path and do not let the unresolved official account-wide transport block client-owned Send completion notification/background work.
+
+For future `DEV-background-notify`, use the Repository-owned active-response set and terminal transitions defined in `BACKGROUND_EXECUTION_PLAN.md`; the official account-wide signal is not a prerequisite for client-owned Sends.
 
 ## Frozen sub-boundaries for this Work
 
@@ -113,10 +120,10 @@ Do not interpret these sub-boundary freezes as `DEV-send-stream` Stable/Frozen a
 
 ## Session round counter
 
-This development conversation completed round 14 before the current b80 Runtime result; this checkpoint update occurs during round 15. Continue displaying the current round count at the end of each user-facing response in this conversation.
+This checkpoint update occurs during round 16. Continue displaying the current round count at the end of each user-facing response in this conversation.
 
 ## Write-chain note
 
-Two attempted updates to older durable evidence files were rejected by GitHub with SHA mismatch and were not replayed blindly. No product/config state changed. The current b80 Runtime evidence and this checkpoint contain the current classification and Human Gate.
+Earlier attempted updates to older durable evidence files were rejected by GitHub with SHA mismatch and were not replayed blindly. A later accidental attempt to create a duplicate PR was rejected by GitHub because PR #29 already exists; it made no repository change. No product/config state changed during the account-signal clarification.
 
-Current feature branch has advanced only through documentation commits after the exact b80 product source; product/config source identity remains `b0f51041c2d7b645f152752ea6196526b2e4e0f6`. The next product write is prohibited until the account-level Web signal source is evidenced.
+Current feature branch has advanced only through documentation commits after the exact b80 product source; product/config source identity remains `b0f51041c2d7b645f152752ea6196526b2e4e0f6`. The next product write is gated by the externally-started acquisition scope/evidence decision, not by client-owned completion notification transport discovery.

@@ -1,6 +1,6 @@
 # Official Composer Parity Plan
 
-_Last planned: 2026-08-31 from the user-supplied official ChatGPT iOS screen recording; refined by the user's explicit picker/preview requirements._
+_Last planned: 2026-09-01 from the user-supplied official ChatGPT iOS screen recording and subsequent explicit picker/video requirements._
 
 ## Purpose
 
@@ -20,7 +20,7 @@ User-facing name:
 
 Current `DEV-send-stream` PR #29 is an Active evidence branch. Its current Candidate/Runtime gate must not be broadened with unrelated Composer polish.
 
-Default serialized order after the current Send/Stream acceptance boundary is:
+Default serialized product dependency remains:
 
 `DEV-send-stream -> DEV-composer-parity -> DEV-attachments -> DEV-message-rendering -> DEV-conversation-list-preview`
 
@@ -33,6 +33,28 @@ Reason for the dedicated stage:
 This avoids destabilizing an active transport/evidence task while also ensuring native attachment transfer is built on the final official-style Composer instead of a temporary input box.
 
 The active Send/Stream branch changes shared roadmap files. Until that Work closes/synchronizes, this document records the intended insertion point without editing its checkpoint, branch, Candidate, `DEVELOPMENT_PLAN.md`, `START_HERE.md` or attachment plan.
+
+## Parallel-development boundary with `DEV-send-stream`
+
+`DEV-send-stream` and `DEV-composer-parity` **must not run as independent sibling development branches from `main`** while Send/Stream remains unmerged.
+
+Current source evidence establishes direct overlap:
+
+- Send/Stream owns the authoritative `ConversationRepository` live-response lifecycle and its current product corrections modify `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- Send/Stream also modifies `ChatGPTClient/RootViewController.swift`; the current temporary validation UI explicitly says the final input box belongs to `DEV-composer-parity`.
+- Both Works ultimately touch Send/Stop presentation and Xcode/build identity integration.
+
+Therefore the only allowed overlap is an **explicit stacked/dependent Work**:
+
+1. Wait until the current Send/Stream product Candidate has a fixed product source and has entered its Human Runtime gate. Do not start Composer product integration while the parent Candidate is still being assembled.
+2. Create `DEV-composer-parity` with its own Work ID, checkpoint, branch and later PR, but base that branch on the exact current `dev/send-stream-20260829` product/head dependency rather than creating an independent sibling from `main`.
+3. Record the dependency in the Composer checkpoint and PR. A stacked Composer PR may temporarily target the Send/Stream branch; after Send/Stream merges, synchronize/retarget to current `main` before final CI/Artifact/merge.
+4. Composer may develop its isolated presentation layer while Send/Stream Runtime is being tested: Composer view hierarchy/state machine, per-conversation draft presentation, inline/full-screen editor, keyboard behavior, local Files/Photos picker UI, attachment strip/removal/local preview, and other UI-only components that do not redefine the response owner.
+5. Composer must consume the parent Send/Stream lifecycle for Send/Stop. It may not create a second response owner, second stream flag, duplicate Send path or alternate terminal state merely to permit parallel development.
+6. If Send/Stream Runtime rejects the current parent Candidate and changes any shared integration owner/file, rebase the stacked Composer branch onto the new accepted parent direction and rerun affected build/Runtime checks. Do not preserve compatibility shims for the rejected parent.
+7. Do not allocate a Composer Artifact/Candidate identity while a conflicting next Send/Stream build number could still be needed. Coordinate the global build/Candidate sequence immediately before Composer packaging.
+
+This means **parallel calendar time is allowed, independent architecture is not**. The preferred overlap window is: Send/Stream exact Candidate in Human Runtime -> Composer stacked development begins -> Send/Stream acceptance/merge -> Composer synchronizes to merged `main` -> Composer final integration/Artifact/Runtime.
 
 ## Product-parity rule and explicit user deviations
 
@@ -181,7 +203,7 @@ Rules:
 - picker presentation begins immediately from the `文件` action;
 - cancelling the picker leaves the draft unchanged;
 - selecting a file stages it locally in the owning Composer draft and does not automatically Send;
-- local staging still does not prove or perform server upload. Upload/asset identity remains `DEV-attachments` work.
+- local staging does not perform server upload. Upload/asset identity remains `DEV-attachments` work.
 
 ### File card visual contract
 
@@ -215,7 +237,7 @@ PDF and other system-previewable document types may use the same system preview 
 
 ### 10. Photos/media picker must include videos
 
-Selecting `照片` opens the native system media picker, but **must not use an image-only filter**.
+Selecting `照片` opens the native system media picker and **must not use an image-only filter**.
 
 Target behavior:
 
@@ -226,7 +248,7 @@ Target behavior:
 - selected video is represented by a thumbnail/poster-style card with a clear video/play affordance;
 - adding media does not automatically Send.
 
-Local video selection is a Composer capability. It is **not proof** that the current ChatGPT service accepts/processes video. Server-side video support remains an explicit evidence gate in `DEV-attachments`.
+The user has confirmed ChatGPT video-upload capability through current official iOS Files upload and desktop Web drag/drop. `DEV-attachments` therefore must implement and prove the native video transfer path; what remains Unverified is the exact current upload/asset/Send binding, limits and processing details, not whether video is a required product capability.
 
 ### 11. Multiple media items
 
@@ -399,7 +421,7 @@ Integrate with the accepted `DEV-send-stream` lifecycle:
 
 - upload/create asset;
 - bind authoritative asset identity to the exact outgoing message;
-- establish actual current image/file/video server capability separately;
+- implement and prove current image/file/video native transfer behavior, including actual format/size/count limits and video processing behavior;
 - progress/failure where real transport supports it;
 - assistant file cards;
 - tap -> file-backed download -> system share sheet.
@@ -438,16 +460,17 @@ Exact target-device Candidate should verify at minimum:
 26. Dynamic Type / VoiceOver / light-dark basic sanity without breaking the official geometry intent.
 27. No prompt/draft/attachment content or private selector/request values leak into diagnostics.
 
-`DEV-attachments` later owns the separate server-side acceptance gate for actually uploading/processing selected videos. A locally selectable/previewable video must not be falsely reported as server-supported before that evidence exists.
+`DEV-attachments` later owns the separate native-transfer acceptance gate and must prove at least one real video selected directly from Photos can be uploaded and sent on the target iPhone/iOS17 device without a Save-to-Files workaround.
 
 ## Explicit non-goals / rejected routes
 
 - Do not modify the current active Send/Stream product Candidate merely to prototype Composer parity.
+- Do not run Composer as an independent sibling branch from `main` while its required Send/Stop owner remains unmerged; use the stacked/dependent rule above.
 - Do not merge Composer UI into an unrelated Send/Stream Runtime gate.
 - Do not reintroduce the official Add File intermediate sheet unless the user explicitly changes this requirement.
 - Do not apply an image-only photo-picker filter that hides videos.
 - Do not guess attachment upload/download endpoints from the recording or local picker behavior.
-- Do not treat local video selection as proof that the ChatGPT service accepts/processes video.
+- Do not infer the native video upload protocol merely from the confirmed product capability.
 - Do not implement hidden Web file-input injection or private WebKit picker override.
 - Do not hard-code unverified reasoning-effort levels/request values.
 - Do not create one global draft shared by conversations.
@@ -458,9 +481,9 @@ Exact target-device Candidate should verify at minimum:
 
 ## Durable product decision
 
-The official ChatGPT iOS Composer interaction shown in the user recording is the required baseline for the native client, with two explicit user-owned deviations now frozen:
+The official ChatGPT iOS Composer interaction shown in the user recording is the required baseline for the native client, with two explicit user-owned deviations frozen:
 
 1. `文件` goes directly to the system Files Picker;
-2. the media picker exposes both images and videos.
+2. the media picker exposes both images and videos, and direct Photos video Send is a required product capability.
 
 Selected files retain the recorded rectangular card language, including file type + filename, and safely previewable text/document files are tappable before Send. The future implementation should aim for **1:1 behavioral parity everywhere else**, then tune geometry/animation on exact device by side-by-side comparison. Further deviations require an explicit user requirement, platform limitation or stronger current-service evidence.

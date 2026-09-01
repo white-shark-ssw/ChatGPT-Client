@@ -33,9 +33,9 @@ This does **not** establish token/SSE-delta progressive final streaming; the fin
 
 ### 3. External stopped-thinking semantics
 
-**Accepted / preserve.**
+**Accepted / Frozen semantic boundary for the current Send work.**
 
-The user reports that manually stopping reasoning on the other platform is displayed correctly in b80. The earlier b79 positive semantic fix remains accepted: stopped external reasoning/tools must not be promoted into normal final body text.
+The user reports that manually stopping reasoning on the other platform is displayed correctly in b80. Stopped external reasoning/tools must remain reasoning/tools and must not be promoted into normal final body text. Do not alter this semantic boundary without new explicit Runtime evidence/requirement.
 
 ### 4. Cross-platform response acquisition before manual Sync
 
@@ -68,7 +68,7 @@ Accepted/frozen/preserve:
 - b80 final tool/timeline -> divider spacing;
 - adopted-response final materialization gate;
 - external stopped-thinking semantics;
-- explicit manual-Sync re-arm fallback behavior.
+- explicit manual-Sync re-arm behavior.
 
 Still rejected/open:
 

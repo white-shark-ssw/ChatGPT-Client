@@ -10,6 +10,7 @@ private final class WeakCoveredWebSendMessageHandler: NSObject, WKScriptMessageH
 enum CoveredWebSendEvent {
     case externalResumeObserved
     case externalStreamingObserved
+    case externalAcquisitionHint
     case externalConversationSnapshot(messages: [[String: Any]], complete: Bool)
     case composerReady
     case sendObserved
@@ -202,6 +203,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let hasConversationKey = (body["hasConversationKey"] as? NSNumber)?.boolValue ?? false
             let targetMatch = (body["targetMatch"] as? NSNumber)?.boolValue ?? false
             diagnostics.info(category: "webSend", name: "coveredExecutor.webSocketStructure", fields: ["state": state, "host": host, "path": path, "dataType": dataType, "length": String(length), "topKeys": topKeys, "nestedKeys": nestedKeys, "typeToken": typeToken, "eventToken": eventToken, "kindToken": kindToken, "actionToken": actionToken, "topicToken": topicToken, "nameToken": nameToken, "hasConversationKey": hasConversationKey ? "true" : "false", "targetMatch": targetMatch ? "true" : "false"])
+            if state == "message", targetMatch, activeEvents == nil {
+                observationEvents?(.externalAcquisitionHint)
+                diagnostics.info(category: "webSend", name: "coveredExecutor.externalAcquisitionHint", fields: ["source": "websocket_target_match", "target": "existing_conversation"])
+            }
         case "resume_response":
             let status = (body["status"] as? NSNumber)?.intValue ?? 0
             let contentType = body["contentType"] as? String ?? ""
@@ -1067,6 +1072,7 @@ extension ConversationRepository {
     switch event {
     case .externalResumeObserved: eventName = "external_resume_observed"
     case .externalStreamingObserved: eventName = "external_streaming_observed"
+    case .externalAcquisitionHint: eventName = "external_acquisition_hint"
     case .externalConversationSnapshot(_, _): eventName = "external_conversation_snapshot"
     case .composerReady: eventName = "composer_ready"
     case .sendObserved: eventName = "send_observed"
@@ -1174,6 +1180,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     private let diagnostics = DiagnosticsLogger.shared
     private let repository = ConversationRepository()
     private var sendExecutors: [String: CoveredWebSendExecutor] = [:]
+    private var externalAcquisitionSyncs: Set<String> = []
     private let validationSendButton = UIButton(type: .system)
     private let sidebarViewController: ConversationSidebarViewController
     private let detailViewController: ConversationDetailViewController
@@ -1196,6 +1203,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             guard let self else { return }
             let executors = Array(self.sendExecutors.values)
             self.sendExecutors.removeAll()
+            self.externalAcquisitionSyncs.removeAll()
             for executor in executors { executor.resetForAccountChange() }
             self.repository.resetAllLiveResponsesForAccountChange()
             self.sidebarViewController.resetForAccountScopeChange()
@@ -1314,6 +1322,10 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 }
             }
             switch event {
+            case .externalAcquisitionHint:
+                guard externalGeneration == nil else { return }
+                self.handleExternalAcquisitionHint(conversationID: conversationID, sendExecutor: sendExecutor)
+                return
             case .externalResumeObserved:
                 return
             case .externalStreamingObserved:
@@ -1352,6 +1364,49 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             default:
                 guard let generation = externalGeneration else { return }
                 self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
+            }
+        }
+    }
+
+    private func handleExternalAcquisitionHint(conversationID: String, sendExecutor: CoveredWebSendExecutor) {
+        guard repository.selectedConversationID == conversationID else {
+            diagnostics.info(category: "webSend", name: "externalAcquisitionSync.skipped", fields: ["reason": "conversation_not_selected"])
+            return
+        }
+        guard !repository.isLiveResponseActive(for: conversationID) else {
+            diagnostics.info(category: "webSend", name: "externalAcquisitionSync.skipped", fields: ["reason": "live_response_active"])
+            return
+        }
+        guard !externalAcquisitionSyncs.contains(conversationID) else {
+            diagnostics.info(category: "webSend", name: "externalAcquisitionSync.skipped", fields: ["reason": "sync_in_flight"])
+            return
+        }
+        guard repository.detailOperationSnapshot(for: conversationID) == nil else {
+            diagnostics.info(category: "webSend", name: "externalAcquisitionSync.skipped", fields: ["reason": "detail_operation_in_flight"])
+            return
+        }
+
+        let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id
+        externalAcquisitionSyncs.insert(conversationID)
+        diagnostics.info(category: "webSend", name: "externalAcquisitionSync.started", fields: repository.diagnosticsFields(for: conversationID))
+        repository.syncLatestMessages(id: conversationID) { [weak self, weak sendExecutor] result in
+            guard let self else { return }
+            self.externalAcquisitionSyncs.remove(conversationID)
+            guard let sendExecutor else { return }
+            switch result {
+            case .success(let detail):
+                let latestUserID = detail.messages.last(where: { $0.role == .user })?.id
+                let latestUserChanged = latestUserID != nil && latestUserID != previousLatestUserID
+                _ = self.repository.clearTerminalExternalLiveResponseAfterAuthoritativeRefresh(conversationID: conversationID)
+                var fields = self.repository.diagnosticsFields(for: conversationID)
+                fields["latestUserChanged"] = latestUserChanged ? "true" : "false"
+                fields["visibleMessageCount"] = String(detail.messages.count)
+                self.diagnostics.info(category: "webSend", name: "externalAcquisitionSync.completed", fields: fields)
+                if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
+                guard latestUserChanged, self.repository.selectedConversationID == conversationID, !self.repository.isLiveResponseActive(for: conversationID), self.sendExecutors[conversationID] === sendExecutor else { return }
+                self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true)
+            case .failure(let error):
+                self.diagnostics.error(category: "webSend", name: "externalAcquisitionSync.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
             }
         }
     }

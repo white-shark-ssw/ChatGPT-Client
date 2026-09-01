@@ -8,11 +8,11 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
+- Final current branch head before Human Runtime: `88b504786d5a4f6fe7d51612ad1e506872dd8b68` (b85 product unchanged since clean package head; later changes are evidence/docs/tool cleanup)
 - b84 exact product/config source: `626c3ad4d4d592618d794c4cb8854324f719f4a4`
 - b84 Candidate: `DEV-send-stream-0.1.0-b84` / `0.1.0 (84)` — diagnostic Runtime Positive, product acquisition still unstable
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - b85 clean Push CI/package head: `6be1e8a8bafa80ef09c6fcebff014006de264e0f`
-- branch after staging cleanup + build evidence: `b03259e7dfe28464a984299334c46d0da7c5a1be`
 - b85 Candidate: `DEV-send-stream-0.1.0-b85`
 - Version / Build: `0.1.0 (85)`
 - Push run/job: `33564141168 / 100043319389` — success
@@ -78,6 +78,13 @@ Behavior:
 7. Client-owned SSE and all hidden-thought boundaries remain unchanged.
 
 No polling, timer, retry, watchdog, duplicate Send/resend, automatic discovery, conversation-entry Sync or cross-platform token SSE was added.
+
+## Durable architecture/status updates
+
+- `BUILD_TEST_INDEX.md`: b84 promoted to Diagnostic Runtime Positive; b85 added as Code/CI/Artifact verified, Runtime Pending.
+- `MODULE_STATUS.md`: b85 Active override records authoritative Detail as an accepted block-source architecture with Runtime pending.
+- `TECHNICAL_DECISIONS.md`: TD-023 records explicit manual Sync adoption of approved trailing Detail timeline through the existing response owner; b85 product Runtime remains pending.
+- Temporary staging/docs workflows and staging script have been removed from the current branch.
 
 ## Recorded later requirement — one Sync on conversation entry
 

@@ -14,8 +14,10 @@ xcrun --sdk iphoneos clang \
   -fobjc-arc -fblocks \
   -dynamiclib \
   -framework Foundation \
+  -framework UIKit \
   -o "$TARGET" \
   "$ROOT/ChatGPTRealtimeProbe.m" \
+  "$ROOT/ProbeExportUI.m" \
   -Wl,-install_name,@rpath/ChatGPTRealtimeProbe.dylib \
   -Wl,-dead_strip
 

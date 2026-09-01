@@ -1,0 +1,54 @@
+name: b80 guarded assembly
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b80-assembly-20260901
+    paths:
+      - ".github/workflows/b80-assembly.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard formal branch
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "15ac2afb9d78a4f0c50ac8dc8abf7e9ca3e2da66" || { echo "Formal branch drifted before b80 assembly"; exit 1; }
+
+      - name: Apply exact b80 patch
+        run: python3 .github/scripts/b80_apply.py
+
+      - name: Exact scope and invariant validation
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' 'ChatGPTClient/RootViewController.swift' | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          ! git diff -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift | grep -E '^\+.*(Timer|asyncAfter|watchdog|retry|poll)' || exit 1
+          grep -q 'externalCompletionDeferred' ChatGPTClient/RootViewController.swift
+          grep -q 'trailingSeparator: showsReasoningDivider' ChatGPTClient/Conversation/ConversationFeature.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 80;' ChatGPTClient.xcodeproj/project.pbxproj)" = 2
+          test "$(grep -c 'DEV-send-stream-0.1.0-b80' .github/workflows/ios-foundation.yml)" = 2
+
+      - name: Xcode 16.4 Simulator build
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit validated product blobs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/ios-foundation.yml ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "dev: stage validated b80 product blobs"
+          git push origin HEAD:${GITHUB_REF_NAME}

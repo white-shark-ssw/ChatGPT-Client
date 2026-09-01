@@ -1,51 +1,141 @@
-# Candidate: DEV-send-stream-0.1.0-b83
-name: iOS Send Manual Sync Determinism b83
+name: Stage b84 Detail Projection Diagnostics
 
 on:
   push:
     branches:
       - dev/send-stream-20260829
     paths:
-      - "ChatGPTClient/**"
-      - "ChatGPTClient.xcodeproj/**"
-      - "scripts/build_ipa.sh"
-      - "scripts/reconstruct_app_icon.sh"
-      - "scripts/assets/**"
       - ".github/workflows/ios-foundation.yml"
-  pull_request:
-    paths:
-      - "ChatGPTClient/**"
-      - "ChatGPTClient.xcodeproj/**"
-      - "scripts/build_ipa.sh"
-      - "scripts/reconstruct_app_icon.sh"
-      - ".github/workflows/ios-foundation.yml"
-  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build-ipa:
+  stage-b84:
     runs-on: macos-15
-    timeout-minutes: 20
     steps:
-      - name: Checkout
+      - name: Checkout feature branch
         uses: actions/checkout@v4
-
-      - name: Toolchain
-        run: xcodebuild -version
-
-      - name: Build unsigned TrollStore IPA candidate
-        run: bash scripts/build_ipa.sh
-
-      - name: Inspect artifact
-        run: |
-          ls -lh build/artifacts
-          unzip -l build/artifacts/*.ipa | head -n 40
-
-      - name: Upload IPA candidate
-        uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b83
-          path: |
-            build/artifacts/*.ipa
-            build/artifacts/*.sha256
-          if-no-files-found: error
-          retention-days: 14
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Apply exact b84 structural diagnostic patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          source = Path("ChatGPTClient/Conversation/ConversationFeature.swift")
+          text = source.read_text()
+          text = replace_once(
+              text,
+              '    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {',
+              '    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int, trailingTimelineItemCount: Int, trailingReasoningItemCount: Int, trailingToolItemCount: Int, thinkingPreambleMessageCount: Int, ignoredThoughtsMessageCount: Int, ignoredInlineCotMessageCount: Int) {',
+              "parse signature",
+          )
+          text = replace_once(
+              text,
+              '    var filteredRecipientMessageCount = 0\n    var pendingTimeline: [ConversationResponseTimelineItem] = []',
+              '    var filteredRecipientMessageCount = 0\n    var thinkingPreambleMessageCount = 0\n    var ignoredThoughtsMessageCount = 0\n    var ignoredInlineCotMessageCount = 0\n    var pendingTimeline: [ConversationResponseTimelineItem] = []',
+              "structural counters",
+          )
+          text = replace_once(
+              text,
+              '        if isThinkingPreamble {\n            let reasoning = visibleText(from: content)\n            if !reasoning.isEmpty { pendingTimeline.append(.reasoning(reasoning)) }\n            continue\n        }\n        if role == .assistant, let contentType = content["content_type"] as? String, contentType == "thoughts" || contentType == "inline_cot_expandable_content" { continue }',
+              '        if isThinkingPreamble {\n            thinkingPreambleMessageCount += 1\n            let reasoning = visibleText(from: content)\n            if !reasoning.isEmpty { pendingTimeline.append(.reasoning(reasoning)) }\n            continue\n        }\n        if role == .assistant, let contentType = content["content_type"] as? String {\n            if contentType == "thoughts" {\n                ignoredThoughtsMessageCount += 1\n                continue\n            }\n            if contentType == "inline_cot_expandable_content" {\n                ignoredInlineCotMessageCount += 1\n                continue\n            }\n        }',
+              "preamble/thought counters",
+          )
+          text = replace_once(
+              text,
+              '    return (messages, filteredRecipientMessageCount)\n}',
+              '    let trailingReasoningItemCount = pendingTimeline.filter { $0.kind == .reasoning }.count\n    let trailingToolItemCount = pendingTimeline.filter { $0.kind == .tool }.count\n    return (messages, filteredRecipientMessageCount, pendingTimeline.count, trailingReasoningItemCount, trailingToolItemCount, thinkingPreambleMessageCount, ignoredThoughtsMessageCount, ignoredInlineCotMessageCount)\n}',
+              "parse return",
+          )
+          text = replace_once(
+              text,
+              '            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)\n            fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)',
+              '            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)\n            fields["trailingTimelineItemCount"] = String(projection.trailingTimelineItemCount)\n            fields["trailingReasoningItemCount"] = String(projection.trailingReasoningItemCount)\n            fields["trailingToolItemCount"] = String(projection.trailingToolItemCount)\n            fields["thinkingPreambleMessageCount"] = String(projection.thinkingPreambleMessageCount)\n            fields["ignoredThoughtsMessageCount"] = String(projection.ignoredThoughtsMessageCount)\n            fields["ignoredInlineCotMessageCount"] = String(projection.ignoredInlineCotMessageCount)\n            fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)',
+              "detail response fields",
+          )
+          source.write_text(text)
+
+          project = Path("ChatGPTClient.xcodeproj/project.pbxproj")
+          text = project.read_text()
+          if text.count("CURRENT_PROJECT_VERSION = 83;") != 2:
+              raise SystemExit("expected exactly two build-83 settings")
+          if text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b83";') != 2:
+              raise SystemExit("expected exactly two b83 candidate settings")
+          text = text.replace("CURRENT_PROJECT_VERSION = 83;", "CURRENT_PROJECT_VERSION = 84;")
+          text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b83";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b84";')
+          project.write_text(text)
+
+          workflow = Path(".github/workflows/ios-foundation.yml")
+          workflow.write_text('''# Candidate: DEV-send-stream-0.1.0-b84
+          name: iOS Send Detail Projection Diagnostics b84
+
+          on:
+            push:
+              branches:
+                - dev/send-stream-20260829
+              paths:
+                - "ChatGPTClient/**"
+                - "ChatGPTClient.xcodeproj/**"
+                - "scripts/build_ipa.sh"
+                - "scripts/reconstruct_app_icon.sh"
+                - "scripts/assets/**"
+                - ".github/workflows/ios-foundation.yml"
+            pull_request:
+              paths:
+                - "ChatGPTClient/**"
+                - "ChatGPTClient.xcodeproj/**"
+                - "scripts/build_ipa.sh"
+                - "scripts/reconstruct_app_icon.sh"
+                - ".github/workflows/ios-foundation.yml"
+            workflow_dispatch:
+
+          jobs:
+            build-ipa:
+              runs-on: macos-15
+              timeout-minutes: 20
+              steps:
+                - name: Checkout
+                  uses: actions/checkout@v4
+
+                - name: Toolchain
+                  run: xcodebuild -version
+
+                - name: Build unsigned TrollStore IPA candidate
+                  run: bash scripts/build_ipa.sh
+
+                - name: Inspect artifact
+                  run: |
+                    ls -lh build/artifacts
+                    unzip -l build/artifacts/*.ipa | head -n 40
+
+                - name: Upload IPA candidate
+                  uses: actions/upload-artifact@v4
+                  with:
+                    name: ChatGPTClient-DEV-send-stream-0.1.0-b84
+                    path: |
+                      build/artifacts/*.ipa
+                      build/artifacts/*.sha256
+                    if-no-files-found: error
+                    retention-days: 14
+          '''.replace("          ", ""))
+          PY
+          git diff --check
+          git diff -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/ios-foundation.yml
+
+      - name: Commit b84 diagnostic source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/ios-foundation.yml
+          git commit -m "diag(send): add b84 detail projection structure counters"
+          git push origin HEAD:dev/send-stream-20260829

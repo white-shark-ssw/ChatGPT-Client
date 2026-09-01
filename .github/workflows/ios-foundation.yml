@@ -1,5 +1,5 @@
-# Candidate staging: DEV-send-stream-0.1.0-b85
-name: Stage Send Detail Projection b85
+# Candidate: DEV-send-stream-0.1.0-b85
+name: iOS Send Authoritative Detail Blocks b85
 
 on:
   push:
@@ -8,40 +8,45 @@ on:
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
-      - "scripts/research/stage_b85.py"
+      - "scripts/build_ipa.sh"
+      - "scripts/reconstruct_app_icon.sh"
+      - "scripts/assets/**"
+      - ".github/workflows/ios-foundation.yml"
+  pull_request:
+    paths:
+      - "ChatGPTClient/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/build_ipa.sh"
+      - "scripts/reconstruct_app_icon.sh"
+      - "scripts/assets/**"
       - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  stage-b85:
+  build-ipa:
     runs-on: macos-15
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Build unsigned TrollStore IPA candidate
+        run: bash scripts/build_ipa.sh
+
+      - name: Inspect artifact
+        run: |
+          ls -lh build/artifacts
+          unzip -l build/artifacts/*.ipa | head -n 40
+
+      - name: Upload IPA candidate
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 0
-
-      - name: Apply exact b85 product patch
-        run: |
-          python3 scripts/research/stage_b85.py
-          git diff --check
-          grep -q 'CURRENT_PROJECT_VERSION = 85;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DEV-send-stream-0.1.0-b85' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'trailingResponseTimeline' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'external_authoritative_detail' ChatGPTClient/RootViewController.swift
-
-      - name: Commit exact b85 product patch
-        run: |
-          if git diff --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
-          git commit -m "fix(send): adopt authoritative Detail reasoning blocks"
-          git push origin HEAD:dev/send-stream-20260829
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b85
+          path: |
+            build/artifacts/*.ipa
+            build/artifacts/*.sha256
+          if-no-files-found: error
+          retention-days: 14

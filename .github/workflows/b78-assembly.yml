@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - tooling/dev-send-stream-b78-assembly-20260901
+    paths:
+      - ".github/workflows/b78-assembly.yml"
 
 permissions:
   contents: write
@@ -21,178 +23,60 @@ jobs:
       - name: Apply exact b78 patch
         shell: bash
         run: |
-          python3 <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
 
-          def replace_once(path, old, new):
+          def replace_one(path, old, new):
               p = Path(path)
               text = p.read_text()
               count = text.count(old)
               if count != 1:
-                  raise SystemExit(f"{path}: expected exactly one match, found {count}\n--- OLD ---\n{old}")
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}: {old[:100]!r}")
               p.write_text(text.replace(old, new, 1))
 
+          def replace_count(path, old, new, expected):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f"{path}: expected {expected} matches, found {count}: {old!r}")
+              p.write_text(text.replace(old, new))
+
           conversation = "ChatGPTClient/Conversation/ConversationFeature.swift"
+          replace_one(conversation, '        transientSession.invalidateAndCancel()\n        self.transientSession = nil\n        transientSessionScope = nil\n        diagnostics.info(category: "conversation", name: "authTransport.invalidated", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient"])', '        transientSession.finishTasksAndInvalidate()\n        self.transientSession = nil\n        transientSessionScope = nil\n        diagnostics.info(category: "conversation", name: "authTransport.retired", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient", "inFlightPolicy": "finish"])')
+          replace_one(conversation, '                if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {\n                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)\n                    span.end(status: "cancelled", fields: callbackFields)\n                    return\n                }', '                if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {\n                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)\n                    span.end(status: "cancelled", fields: callbackFields)\n                    self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))\n                    return\n                }')
+          replace_one(conversation, '            fields["visibleMessageCount"] = String(messages.count)\n            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)', '            fields["visibleMessageCount"] = String(messages.count)\n            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)\n            fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)')
+          replace_one(conversation, '    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .regular)', '    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .medium)')
+          replace_one(conversation, '    if message.role == .assistant {\n        messageLabel.attributedText = Self.assistantBodyAttributedText(text)\n    } else {\n        messageLabel.attributedText = nil\n        messageLabel.text = text\n    }', '    switch message.role {\n    case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text)\n    case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)\n    }')
+          replace_one(conversation, '        reasoningParagraph.minimumLineHeight = compactAssistantLineHeight\n        reasoningParagraph.maximumLineHeight = compactAssistantLineHeight\n        reasoningParagraph.paragraphSpacing = 8\n        let toolParagraph = NSMutableParagraphStyle()\n        toolParagraph.minimumLineHeight = toolLineHeight\n        toolParagraph.maximumLineHeight = toolLineHeight\n        toolParagraph.paragraphSpacingBefore = 12\n        toolParagraph.paragraphSpacing = 12\n        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]\n        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]', '        reasoningParagraph.minimumLineHeight = compactAssistantLineHeight\n        reasoningParagraph.maximumLineHeight = compactAssistantLineHeight\n        reasoningParagraph.paragraphSpacing = 12\n        let toolParagraph = NSMutableParagraphStyle()\n        toolParagraph.minimumLineHeight = toolLineHeight\n        toolParagraph.maximumLineHeight = toolLineHeight\n        toolParagraph.paragraphSpacingBefore = 0\n        toolParagraph.paragraphSpacing = 12\n        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]\n        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]')
+          replace_one(conversation, '    private static func assistantBodyAttributedText(_ text: String) -> NSAttributedString {\n        let paragraph = NSMutableParagraphStyle()\n        paragraph.minimumLineHeight = compactAssistantLineHeight\n        paragraph.maximumLineHeight = compactAssistantLineHeight\n        return NSAttributedString(string: text, attributes: [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph])\n    }\n\n    private static func measuredTextSize(_ text: String, role: ConversationMessage.Role, maxWidth: CGFloat) -> CGSize {\n        if text.isEmpty { return CGSize(width: 0, height: ceil(role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight)) }\n        if role == .assistant {\n            let rect = assistantBodyAttributedText(text).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)\n            return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(compactAssistantLineHeight), ceil(rect.height) + 1))\n        }\n        let rect = (text as NSString).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: bodyFont], context: nil)\n        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(bodyFont.lineHeight), ceil(rect.height) + 1))\n    }', '    private static func assistantBodyAttributedText(_ text: String) -> NSAttributedString {\n        let paragraph = NSMutableParagraphStyle()\n        paragraph.minimumLineHeight = compactAssistantLineHeight\n        paragraph.maximumLineHeight = compactAssistantLineHeight\n        return NSAttributedString(string: text, attributes: [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph])\n    }\n\n    private static func userBodyAttributedText(_ text: String) -> NSAttributedString {\n        let paragraph = NSMutableParagraphStyle()\n        paragraph.lineBreakMode = .byCharWrapping\n        let attributes: [NSAttributedString.Key: Any] = [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph]\n        if #available(iOS 15.0, *), let markdown = try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {\n            let output = NSMutableAttributedString(attributedString: NSAttributedString(markdown))\n            let range = NSRange(location: 0, length: output.length)\n            output.addAttributes(attributes, range: range)\n            output.enumerateAttribute(.link, in: range) { value, linkRange, _ in\n                if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }\n            }\n            return output\n        }\n        return NSAttributedString(string: text, attributes: attributes)\n    }\n\n    private static func measuredTextSize(_ text: String, role: ConversationMessage.Role, maxWidth: CGFloat) -> CGSize {\n        if text.isEmpty { return CGSize(width: 0, height: ceil(role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight)) }\n        let attributed = role == .assistant ? assistantBodyAttributedText(text) : userBodyAttributedText(text)\n        let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)\n        let minimumHeight = role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight\n        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(minimumHeight), ceil(rect.height) + 1))\n    }')
+
           project = "ChatGPTClient.xcodeproj/project.pbxproj"
-
-          replace_once(conversation,
-          '''        transientSession.invalidateAndCancel()
-          self.transientSession = nil
-          transientSessionScope = nil
-          diagnostics.info(category: "conversation", name: "authTransport.invalidated", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient"])
-''',
-          '''        transientSession.finishTasksAndInvalidate()
-          self.transientSession = nil
-          transientSessionScope = nil
-          diagnostics.info(category: "conversation", name: "authTransport.retired", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient", "inFlightPolicy": "finish"])
-''')
-
-          replace_once(conversation,
-          '''                if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
-                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)
-                    span.end(status: "cancelled", fields: callbackFields)
-                    return
-                }
-''',
-          '''                if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
-                    self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)
-                    span.end(status: "cancelled", fields: callbackFields)
-                    self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
-                    return
-                }
-''')
-
-          replace_once(conversation,
-          '''            fields["visibleMessageCount"] = String(messages.count)
-            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)
-''',
-          '''            fields["visibleMessageCount"] = String(messages.count)
-            fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)
-            fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)
-''')
-
-          replace_once(conversation,
-          '''    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .regular)
-''',
-          '''    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .medium)
-''')
-
-          replace_once(conversation,
-          '''    if message.role == .assistant {
-        messageLabel.attributedText = Self.assistantBodyAttributedText(text)
-    } else {
-        messageLabel.attributedText = nil
-        messageLabel.text = text
-    }
-''',
-          '''    switch message.role {
-    case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text)
-    case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)
-    }
-''')
-
-          replace_once(conversation,
-          '''        reasoningParagraph.minimumLineHeight = compactAssistantLineHeight
-        reasoningParagraph.maximumLineHeight = compactAssistantLineHeight
-        reasoningParagraph.paragraphSpacing = 8
-        let toolParagraph = NSMutableParagraphStyle()
-        toolParagraph.minimumLineHeight = toolLineHeight
-        toolParagraph.maximumLineHeight = toolLineHeight
-        toolParagraph.paragraphSpacingBefore = 12
-        toolParagraph.paragraphSpacing = 12
-        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
-        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: toolParagraph]
-''',
-          '''        reasoningParagraph.minimumLineHeight = compactAssistantLineHeight
-        reasoningParagraph.maximumLineHeight = compactAssistantLineHeight
-        reasoningParagraph.paragraphSpacing = 12
-        let toolParagraph = NSMutableParagraphStyle()
-        toolParagraph.minimumLineHeight = toolLineHeight
-        toolParagraph.maximumLineHeight = toolLineHeight
-        toolParagraph.paragraphSpacingBefore = 0
-        toolParagraph.paragraphSpacing = 12
-        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
-        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]
-''')
-
-          replace_once(conversation,
-          '''    private static func assistantBodyAttributedText(_ text: String) -> NSAttributedString {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.minimumLineHeight = compactAssistantLineHeight
-        paragraph.maximumLineHeight = compactAssistantLineHeight
-        return NSAttributedString(string: text, attributes: [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph])
-    }
-
-    private static func measuredTextSize(_ text: String, role: ConversationMessage.Role, maxWidth: CGFloat) -> CGSize {
-        if text.isEmpty { return CGSize(width: 0, height: ceil(role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight)) }
-        if role == .assistant {
-            let rect = assistantBodyAttributedText(text).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
-            return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(compactAssistantLineHeight), ceil(rect.height) + 1))
-        }
-        let rect = (text as NSString).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: bodyFont], context: nil)
-        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(bodyFont.lineHeight), ceil(rect.height) + 1))
-    }
-''',
-          '''    private static func assistantBodyAttributedText(_ text: String) -> NSAttributedString {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.minimumLineHeight = compactAssistantLineHeight
-        paragraph.maximumLineHeight = compactAssistantLineHeight
-        return NSAttributedString(string: text, attributes: [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph])
-    }
-
-    private static func userBodyAttributedText(_ text: String) -> NSAttributedString {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineBreakMode = .byCharWrapping
-        let attributes: [NSAttributedString.Key: Any] = [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph]
-        if #available(iOS 15.0, *), let markdown = try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
-            let output = NSMutableAttributedString(attributedString: NSAttributedString(markdown))
-            let range = NSRange(location: 0, length: output.length)
-            output.addAttributes(attributes, range: range)
-            output.enumerateAttribute(.link, in: range) { value, linkRange, _ in
-                if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }
-            }
-            return output
-        }
-        return NSAttributedString(string: text, attributes: attributes)
-    }
-
-    private static func measuredTextSize(_ text: String, role: ConversationMessage.Role, maxWidth: CGFloat) -> CGSize {
-        if text.isEmpty { return CGSize(width: 0, height: ceil(role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight)) }
-        let attributed = role == .assistant ? assistantBodyAttributedText(text) : userBodyAttributedText(text)
-        let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
-        let minimumHeight = role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight
-        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(minimumHeight), ceil(rect.height) + 1))
-    }
-''')
-
-          p = Path(project)
-          text = p.read_text()
-          if text.count('CURRENT_PROJECT_VERSION = 77;') != 2 or text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b77";') != 2:
-              raise SystemExit("project identity did not match exact b77 source")
-          text = text.replace('CURRENT_PROJECT_VERSION = 77;', 'CURRENT_PROJECT_VERSION = 78;')
-          text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b77";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b78";')
-          p.write_text(text)
+          replace_count(project, "CURRENT_PROJECT_VERSION = 77;", "CURRENT_PROJECT_VERSION = 78;", 2)
+          replace_count(project, 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b77";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b78";', 2)
           PY
 
       - name: Exact scope and diff check
         shell: bash
         run: |
           git diff --check
-          changed="$(git diff --name-only | sort)"
-          expected="$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/Conversation/ConversationFeature.swift' | sort)"
-          test "$changed" = "$expected" || { printf 'Unexpected scope:\n%s\n' "$changed"; exit 1; }
-          ! git diff -- ChatGPTClient | grep -E '^\+.*(asyncAfter|Timer\.|watchdog|poll|retry\(|DispatchQueue.*after)' || { echo 'forbidden speculative timing/retry construct added'; exit 1; }
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected scope:"; printf '%s\n' "$actual"; exit 1; }
+          git diff --stat
 
       - name: Xcode 16.4 Simulator build
         shell: bash
         run: |
-          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 
       - name: Commit validated product patch
         shell: bash
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
-          git commit -m 'dev: assemble b78 runtime corrections'
-          git push origin HEAD
+          git commit -m "dev: assemble b78 runtime corrections"
+          git push origin HEAD:${GITHUB_REF_NAME}

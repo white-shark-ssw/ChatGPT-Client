@@ -2,22 +2,22 @@
 
 ## Status
 
-**Active — b82 Runtime remains Partial. Passive official Web is now Runtime Rejected as an early or guaranteed completion refresh source. Static analysis of the user-supplied official iOS package proves a separate native topic-based WebSocket conversation layer and a bounded polling manager, but the exact registration URL/topic/auth/offset contract remains Unverified. Whole-package inspection found no ordinary literal `/backend-api/celsius/ws/user`; the supplied TrollStore research package already contains a usable dylib injection chain, so the next evidence path is runtime observation of the official app rather than borrowing its framework. Stable/Frozen Send as a whole remains No.**
+**Active — b82 Runtime remains Partial. Passive official Web is Runtime Rejected. Official iOS static evidence proves a separate topic-based realtime layer, and a research-only Foundation WebSocket observer has now been written, compiled with the iOS SDK, validated as a Mach-O dylib and produced as a unique workflow Artifact. Exact registration/topic/current-account behavior is still Runtime Pending; therefore b83 remains unallocated. Stable/Frozen Send as a whole remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
-- Branch head before this checkpoint write: `040f69844f0a95eb5f3ed7c4ea7370c8d71bd7ea`
-- Actual `main` last verified: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
+- Branch head before this checkpoint write: `549a551fef56a99d620b85dc8c9fccbc59a4e3a5`
+- Actual `main` verified this round: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Exact b82 product/config source: `c7a274786dfd175e8f476fc15c4964840e112a1d`
 - Candidate: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`
-- Canonical Artifact: `9811406038`
-- IPA SHA-256: `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`
+- Canonical b82 Artifact: `9811406038`
+- b82 IPA SHA-256: `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`
 - b39-b82 permanently reserved
 - b83: **not allocated**
 - Stable/Frozen Send: No
 
-## Current accepted evidence
+## Current accepted Runtime evidence
 
 ### b82
 
@@ -27,7 +27,7 @@ b82 automatically acquires a completed remote turn without manual Sync, but the 
 
 The user tested official ChatGPT Web already open on the same conversation before a remote long turn. It did not automatically show the remote user row, live response, or even the completed turn without explicit refresh/navigation. Passive page visibility/focus is therefore rejected as the missing acquisition mechanism.
 
-### Official iOS static realtime architecture
+## Official iOS static realtime architecture
 
 The supplied official package (`com.openai.chat` 1.2026.202 / build 30140022279) exposes static native models/services including:
 
@@ -42,27 +42,54 @@ The supplied official package (`com.openai.chat` 1.2026.202 / build 30140022279)
 
 This proves official iOS has a separate native realtime layer. It does not prove the exact current network contract.
 
-### Whole-package static limit
+Whole-package inspection also proves the supplied research package already contains a TrollFools-style injection chain (`CydiaSubstrate.framework`, `.troll-fools`, existing `ChatGPTEnhancer` dylib). The official framework remains an evidence oracle, not a product dependency.
 
-The complete decrypted app bundle was searched. Neither literal `/backend-api/celsius/ws/user` nor JSON spelling `websocket_url` is present as an ordinary searchable string. The third-party implementation reporting that route and a `conversations` topic remains hypothesis/cross-check evidence only.
+## Research realtime probe — ready for Runtime injection
 
-The likely explanation is generated API/configuration/closure wiring. Do not spend more time treating absence of a cstring as a product defect.
+Research source/tooling:
 
-### Existing runtime injection path
+- `scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m`
+- `scripts/research/official_ios_realtime_probe/build_probe.sh`
+- `scripts/research/official_ios_realtime_probe/README.md`
+- `.github/workflows/research-official-ios-realtime-probe.yml`
 
-The supplied package already contains:
+Research source/workflow head:
 
-- `CydiaSubstrate.framework` plus `.troll-fools` marker;
-- `ChatGPTEnhancer-0.1.0-alpha60-runtime-image-map.dylib`;
-- `Assets.framework/Assets` weak-loads that injected dylib.
+- `501839a8aad91373c2a90397c08cf84251553f41`
 
-Therefore a research-only runtime observer can use the existing injection style to observe the official app's real registration request and WebSocket control/event frames on the user's current version/account.
+CI / Artifact:
 
-Durable evidence:
+- Workflow: `Research Official iOS Realtime Probe`
+- Run: `33552727671` — **success**
+- Job: `100005909674`
+- `Build research dylib`: success
+- `Validate research artifact`: success
+- `Upload research probe`: success
+- Artifact ID: `9818074442`
+- Artifact: `ChatGPTRealtimeProbe-501839a8aad91373c2a90397c08cf84251553f41`
+- Artifact ZIP digest: `sha256:220c19a6074ca2678b3a70c30fe60bfda257be3df3cb1a607d995665d06ec056`
+- Exact dylib SHA-256: `7b449f91bc903fa56216d142f2373c0f0c94065271ba7a7160aae0a0f5c4b6ff`
+- Exact dylib size: `112352` bytes
 
-- `docs/project/runtime-evidence/DEV-send-stream-b82-device-runtime-20260902.md`
-- `docs/project/runtime-evidence/DEV-send-stream-visible-web-native-realtime-evidence-20260902.md`
-- `docs/project/runtime-evidence/DEV-send-stream-official-ios-runtime-hook-plan-20260902.md`
+Downloaded Artifact re-verification reproduced the exact dylib SHA above.
+
+The dylib links only system Foundation / Objective-C / System / CoreFoundation libraries. It does **not** link `ChatGPT.framework`, CydiaSubstrate or ChatGPTEnhancer.
+
+### Probe observation boundary
+
+The probe records only privacy-safe structure:
+
+- likely realtime registration HTTP method/path/status and response JSON key names;
+- WebSocket host/path plus query presence/count, never signed query values;
+- outbound command/frame keys, command type, safe symbolic topic, offset value class;
+- inbound frame/payload keys, event/update type, message count and short SHA-256 conversation identity hash;
+- transport error domain/code.
+
+It does not intentionally record Cookie/Authorization/token/challenge values, request/response body text, prompt/answer/reasoning/tool text or raw conversation IDs. Post-build string spot-check found none of the sensitive/body logging tokens checked.
+
+Durable build evidence:
+
+- `docs/project/runtime-evidence/DEV-send-stream-official-ios-realtime-probe-build-20260902.md`
 
 ## Product decision for official-package use
 
@@ -81,20 +108,7 @@ Rejected product route:
 - depend on official DI containers/private Swift ABI for product state;
 - let official WebSocket service become a second conversation/auth/response owner.
 
-After exact evidence, reimplement only the minimum verified protocol in our own Swift/Foundation code.
-
-## Runtime probe boundary
-
-The official-app observer may inspect only privacy-safe structure:
-
-- normalized registration path, method, HTTP status and response key names;
-- WebSocket host/path shape without signed query values;
-- outbound command type/id/key names/topic/offset class;
-- inbound frame type/topic/offset, catchup/live/reply classification;
-- target-conversation match, update type and update-content key names/counts;
-- timing relative to remote Send and completion.
-
-Never export Cookie/Authorization/token/challenge values, signed WebSocket query values, prompt/answer/reasoning/tool bodies or raw conversation IDs.
+After exact Runtime evidence, reimplement only the minimum verified protocol in our own Swift/Foundation code.
 
 ## Frozen / preserved boundaries
 
@@ -113,14 +127,29 @@ Preferred product shape:
 
 `AuthSessionStore verified transient context -> our URLSession / URLSessionWebSocketTask -> verified registration + topic subscription -> realtime event -> existing ConversationRepository acquisition/response owner`.
 
-At first, use native WebSocket events as notification/state triggers and keep Detail/SSE/resume/plural paths authoritative for message/reasoning/final content. Promote WebSocket content only after separate exact evidence.
+Initially use native WebSocket events as notification/state triggers and keep existing Detail/SSE/resume/plural paths authoritative for message/reasoning/final content. Promote WebSocket content only after separate exact evidence.
 
-If the WebSocket contract cannot be reproduced under our accepted auth boundary, explicitly design a bounded selected-conversation status monitor using official `ConversationPollingManager` evidence. Do not introduce hidden fixed polling by default.
+If the native topic subscription cannot be reproduced under the accepted auth boundary, explicitly design the bounded selected-conversation status-monitor branch using official `ConversationPollingManager` evidence. Do not add hidden fixed polling.
 
 ## Session round counter
 
-The user explicitly reset the conversation round count. This user turn is **round 3**. Continue displaying the current round count at the end of each user-facing response.
+The user explicitly reset the conversation round count. This user turn is **round 5**. Continue displaying the current round count at the end of each user-facing response.
 
-## Next exact action
+## Next exact action — Human Runtime Gate
 
-Do **not** allocate b83 yet. Build/prepare a research-only official-app WebSocket observer using the supplied package's existing injection path. Capture the current account/version's exact registration request and structural `connect`/`subscribe`/conversation-update frames during one cross-platform long turn. Use that evidence to decide the minimal b83 protocol scope. The existing Web Rule Lab remains an optional quicker same-origin check, but runtime official-app observation is the stronger authority for dynamic registration/topic/auth behavior.
+Do **not** allocate b83 yet.
+
+Inject the exact research dylib SHA `7b449f91bc903fa56216d142f2373c0f0c94065271ba7a7160aae0a0f5c4b6ff` into the supplied official ChatGPT TrollStore app as an additional TrollFools dylib. Keep the existing ChatGPTEnhancer injection.
+
+Then:
+
+1. fully terminate and relaunch official ChatGPT;
+2. verify `ChatGPTRealtimeProbe.jsonl` is created and contains `probe.loaded` / `probe.hooks_installed`;
+3. keep target conversation A available;
+4. from another platform, send one deliberately long text turn to A;
+5. do not manually refresh A during generation;
+6. after completion, provide only `ChatGPTRealtimeProbe.jsonl` for analysis.
+
+The decisive evidence is whether a target-matching `conversation-update`, `add-messages`, async-status or per-turn subscription event arrives before completion, plus the exact registration path and subscribe framing observed on the current account/version.
+
+If probe loading fails, do not alter product code or allocate b83; first diagnose injection/load/hook execution only.

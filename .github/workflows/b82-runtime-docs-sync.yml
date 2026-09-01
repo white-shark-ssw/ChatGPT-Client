@@ -1,0 +1,113 @@
+name: b82 Runtime docs sync
+
+on:
+  push:
+    branches:
+      - tooling/dev-send-stream-b82-runtime-docs-20260902
+    paths:
+      - ".github/workflows/b82-runtime-docs-sync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard and checkout formal branch
+        run: |
+          git fetch origin dev/send-stream-20260829
+          test "$(git rev-parse origin/dev/send-stream-20260829)" = "4dec8ffb21bff3c7875af3c15310e9c2cedfdc0b" || { echo "Formal branch drifted before b82 Runtime docs sync"; exit 1; }
+          git checkout -B b82-runtime-docs origin/dev/send-stream-20260829
+
+      - name: Apply durable b82 Runtime docs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def insert_after_title(path, block):
+              p = Path(path)
+              text = p.read_text()
+              marker = text.splitlines()[0] + "\n"
+              if block.splitlines()[0] in text:
+                  raise SystemExit(f"already updated: {path}")
+              if not text.startswith(marker):
+                  raise SystemExit(f"title anchor missing: {path}")
+              p.write_text(marker + "\n" + block.rstrip() + "\n\n" + text[len(marker):].lstrip("\n"))
+
+          index = Path("docs/project/BUILD_TEST_INDEX.md")
+          text = index.read_text()
+          anchor = "|---|---|---|---|---|---|---|\n"
+          if text.count(anchor) != 1:
+              raise SystemExit("BUILD_TEST_INDEX table anchor mismatch")
+          if "DEV-send-stream-0.1.0-b82" in text or "DEV-send-stream-0.1.0-b81" in text or "DEV-send-stream-0.1.0-b80" in text:
+              raise SystemExit("b80-b82 row already present")
+          rows = """| `DEV-send-stream-0.1.0-b82` | `DEV-send-stream` | `0.1.0 (82)` | exact product/config source `c7a274786dfd175e8f476fc15c4964840e112a1d`; PR #29 | Guarded assembly `33534965707/99946924531`; Push `33535342383/99948156535`; PR `33535347654/99948174293`; canonical Artifact `9811406038`; ZIP `sha256:bcb9c65f7cee7680580acd6238d3dd9f03f30b3c5f9024cd251b31690ac13681`; IPA `sha256:3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`; package Release/source `c7a274786dfd`/iOS14/arm64 | Runtime Partial: no-manual-Sync final refresh positive, but remote user message + assistant answer appeared only after the answer had completed; one `targetMatch=true` then authoritative Detail `8->10` (+2), no earlier socket message/external streaming/snapshot/live response | **Automatic final acquisition positive / live-acquisition timing rejected; permanently reserved** |
+| `DEV-send-stream-0.1.0-b81` | `DEV-send-stream` | `0.1.0 (81)` | exact product/config source `d1d4d197cc5d2a5022a28b332afebe485b216ea1`; PR #29 | canonical Artifact `9809150111`; IPA `sha256:d48d2398dc5a7ef16b9983021a9173d87ba3b852f4a45c9431dff2ebcf057038` | Runtime: automatic acquisition rejected; at-document-start user-socket structural trigger positive; user confirmed the two `targetMatch=true` frames corresponded to two separate remote Sends | **Runtime structural evidence positive / acquisition rejected; permanently reserved** |
+| `DEV-send-stream-0.1.0-b80` | `DEV-send-stream` | `0.1.0 (80)` | exact product/config source `b0f51041c2d7b645f152752ea6196526b2e4e0f6`; PR #29 | canonical Artifact `9801761448`; IPA `sha256:87c360175a4adc4fa476383b395cffe74c57c5e75db252dd49acdf42be39ce1f` | Runtime partial-positive/rejected: tool/timeline->divider spacing accepted/Frozen; external stopped-thinking semantics accepted/Frozen; adopted final materialization positive; automatic cross-platform acquisition intermittent and progressive external final unresolved | **Runtime partial; spacing + stopped-thinking Frozen; permanently reserved** |
+"""
+          index.write_text(text.replace(anchor, anchor + rows, 1))
+
+          insert_after_title("docs/project/PROJECT_STATE.md", """## DEV-send-stream b82 Runtime override — 2026-09-02
+
+Exact b82 `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`, product/config source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2` is Runtime **Partial**. Automatic final acquisition now works without manual Sync, but the observed current-conversation WebSocket trigger arrived only when authoritative Detail already changed 8 -> 10 (+2 visible messages) and the user reports the remote user message plus assistant answer appeared only after the answer had fully generated. No earlier WebSocket message, `externalStreamingObserved`, external snapshot or Repository external live response was captured. Therefore b82 is a completion/update acquisition path, not live request-start acquisition. b83 is not allocated. The next gate is an already-open visible official-Web comparison before choosing any new discovery mechanism.""")
+
+          insert_after_title("docs/project/MODULE_STATUS.md", """## DEV-send-stream b82 Runtime override — 2026-09-02
+
+- Build/runtime metadata: exact b82 source `c7a274786dfd175e8f476fc15c4964840e112a1d`; Push/PR CI passed; Artifact `9811406038`; IPA `3ca16867...d6d2`; exact iPhone/iOS17 Runtime Partial.
+- Covered external acquisition: b82 automatic Sync/re-arm fires without manual Sync, but only after the current user-socket target notification; the supplied run had authoritative visible messages 8 -> 10 at that point and no earlier live event. Treat this signal as completion/update only for the tested flow.
+- Live cross-platform request acknowledgement/reasoning/final: still rejected/open. Do not fake progress or silently add polling/timers.
+- b80 spacing and external stopped-thinking semantics remain Frozen. Stable/Frozen Send remains No; b39-b82 are reserved.""")
+
+          insert_after_title("docs/project/TECHNICAL_DECISIONS.md", """## b82 Runtime qualification — 2026-09-02
+
+- **TD-029 external-acquisition qualification:** exact b82 proves the current at-document-start user-socket exact-conversation `targetMatch=true` event is sufficient to trigger an automatic authoritative Sync/re-arm, but in the tested long remote turn it arrived only after authoritative Detail already contained the added user+assistant pair (8 -> 10). No earlier incoming socket frame, page-owned active-response signal, external snapshot or Repository live response was observed. Therefore this event is authorized as a completion/update trigger only, not as a request-start/live-stream trigger.
+- The user's current requirement is explicit: a long cross-platform turn must show prompt request receipt and real progressive response state. Do not satisfy that requirement with synthetic text, duplicate Send or an unevidenced timer/polling loop.
+- Before changing production behavior again, compare an already-open visible official Web page on the same conversation. If visible Web has an earlier live path, reproduce the exact evidenced browser behavior; if it also waits until completion, separately evidence a real-time subscription/status design before implementation. b83 remains unallocated.""")
+
+          insert_after_title("docs/project/PROJECT_SPECIFIC_RULES.md", """## b82 current Runtime override — 2026-09-02
+
+- Exact b82 is permanently reserved: source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`.
+- Automatic no-manual-Sync final acquisition is Runtime positive, but live timing is rejected: the target-matching user-socket event arrived when authoritative Detail already added the remote user+assistant pair, and there was no earlier observed live acquisition event.
+- Treat the current exact target-match socket event as completion/update discovery only. Do not label it request-start or live-stream authority.
+- The current requirement is prompt remote-user visibility plus real progressive response. No fake typewriter, synthetic optimistic remote user row, duplicate Send, speculative retry/watchdog, silent polling/timer or second response owner.
+- b83 is not allocated until an earlier source is evidenced or a deliberate new monitoring architecture is explicitly authorized from evidence.""")
+
+          insert_after_title("docs/project/WEB_SEND_ADAPTER.md", """## b82 completion-time acquisition qualification — 2026-09-02
+
+Exact b82 Runtime changes the external-discovery interpretation. The covered user WebSocket was injected/observed from document start and produced no incoming frame during the long remote generation interval; the first exact-conversation `targetMatch=true` frame arrived only when an automatic authoritative Detail Sync already returned two added visible messages (remote user + assistant) and the user reports the answer was complete. The subsequent one-time page re-arm produced no `externalStreamingObserved` or external snapshot.
+
+**Current rule:** the tested generic user-socket exact-conversation notification may trigger one bounded authoritative completion/update Sync, but it is not an evidenced request-start/live-stream signal. The existing page-owned `stream_status` / plural-read machinery remains content authority only when the official page actually enters that path. Do not increase observation frequency when no event exists, do not parse the generic socket as message-body authority, and do not introduce hidden polling/timers merely to mask this timing gap.
+
+Next maintenance gate: with visible official Web already open on the same target conversation before a remote Send, determine whether the page itself begins live acquisition before completion. A positive result must identify the concrete browser/network behavior to reproduce; a negative result means a separate real-time subscription or deliberately authorized bounded status-monitor design must be evidenced before product code.""")
+
+          insert_after_title("docs/project/PROJECT_PROFILE.md", """## DEV-send-stream b82 current Runtime override — 2026-09-02
+
+- Exact current tested package: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`, product/config source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`.
+- iPhone/iOS17 Runtime is Partial: automatic final refresh works without manual Sync, but the remote user message and assistant answer remain absent until the current user-socket completion/update signal arrives; no active external response was acquired before completion.
+- b80 spacing + external stopped-thinking semantics remain Frozen. Cross-platform request acknowledgement/progressive stream remains open. b39-b82 are permanently reserved; b83 is not allocated.""")
+          PY
+
+      - name: Validate docs-only scope
+        run: |
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/WEB_SEND_ADAPTER.md | sort)"
+          test "$actual" = "$expected" || { echo "Unexpected docs scope:"; printf '%s\n' "$actual"; exit 1; }
+          grep -q 'DEV-send-stream-0.1.0-b82' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b82 completion-time acquisition qualification' docs/project/WEB_SEND_ADAPTER.md
+          grep -q 'b82 Runtime qualification' docs/project/TECHNICAL_DECISIONS.md
+
+      - name: Commit and push formal docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/WEB_SEND_ADAPTER.md
+          git commit -m "docs: classify b82 completion-time acquisition Runtime"
+          git push origin HEAD:dev/send-stream-20260829

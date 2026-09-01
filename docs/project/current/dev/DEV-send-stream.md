@@ -117,4 +117,4 @@ This development conversation completed round 14 before the current b80 Runtime 
 
 ## Write-chain note
 
-A later attempt to update the older account-wide notification evidence file hit a GitHub SHA mismatch and was not replayed blindly. No product/config state changed. The current b80 Runtime evidence file and this checkpoint already carry the required current acquisition-gate conclusion.
+Two attempted updates to older durable evidence files were rejected by GitHub with SHA mismatch and were not replayed blindly. No product/config state changed. The current b80 Runtime evidence and this checkpoint contain the current classification and Human Gate.

@@ -13,22 +13,14 @@ A trusted transition from the project conversation to an ordinary non-project co
 - `GET /backend-api/conversations/{id}` with query keys `include_has_versions` and `num_turns`;
 - `POST /backend-api/conversation/init`;
 - ordinary Detail response HTTP 200 JSON;
-- scoped-key scan of that ordinary Detail showed:
-  - `gizmo_id = null`;
-  - `gizmo_type = null`;
-  - `memory_scope` non-empty but not equal to the project route scope;
-  - `context_scopes` empty;
+- scoped-key scan of that ordinary Detail showed `gizmo_id=null`, `gizmo_type=null`, `memory_scope` non-empty but not equal to the project route scope, and `context_scopes` empty;
 - page-owned `GET /backend-api/conversation/{id}/stream_status` -> HTTP 200 JSON.
 
 This ordinary-conversation structure is not a source for the target project's scope.
 
 ## Project conversation re-entry
 
-Before navigation, the trusted click already targeted the exact official project conversation anchor shape:
-
-`/g/{scope}/c/{conversation}`
-
-The official visible Web then emitted:
+Before navigation, the trusted click already targeted the exact official project conversation anchor shape `/g/{scope}/c/{conversation}`. Official visible Web then emitted:
 
 - `history.pushState` from `/c/{id}` to `/g/{scope}/c/{conversation}`;
 - `POST /backend-api/conversation/init`;
@@ -37,42 +29,68 @@ The official visible Web then emitted:
 - project `stream_status` -> HTTP 200 JSON;
 - init -> HTTP 200 JSON.
 
-No project `GET /backend-api/conversations/{conversation}` response was required in this captured successful transition, so this sample does not support claiming that any project Detail field supplied the route scope at entry time.
+No project `GET /backend-api/conversations/{conversation}` response was required in this successful transition, so this sample does not support claiming that a project Detail field supplied the route scope at entry time.
 
 ## Deliberate unscoped-route DOM probe
 
-From the same project conversation, a later probe saved the current project scope/conversation internally and deliberately requested a full navigation toward the unscoped form `/c/{conversation}`. After load, without exposing the raw IDs, DOM inspection found:
+From the same project conversation, a probe deliberately requested a full navigation toward `/c/{conversation}`. After load, DOM inspection found exactly one visible exact scoped canonical anchor for that same conversation:
 
-- `sameConversationLinkCount = 1`;
-- `scopedConversationLinkCount = 1`;
-- `exactCanonicalLinkCount = 1`;
-- `exactCanonicalVisibleCount = 1`;
-- `sameProjectScopeLinkCount = 1`.
+- `sameConversationLinkCount=1`;
+- `scopedConversationLinkCount=1`;
+- `exactCanonicalLinkCount=1`;
+- `exactCanonicalVisibleCount=1`;
+- `sameProjectScopeLinkCount=1`.
 
-Therefore the rendered official page state possessed exactly one visible anchor for that same selected conversation using the exact expected canonical `/g/{scope}/c/{conversation}` href, even though the navigation had been deliberately initiated through the unscoped form.
+A follow-up boolean route comparison proved the post-navigation location itself was exact scoped canonical:
 
-## Exact post-navigation route check
+- `currentKind=EXACT_SCOPED_CANONICAL`;
+- `currentIsExactScopedCanonical=true`;
+- `currentIsExactUnscoped=false`;
+- `currentIsProjectShape=true`;
+- `currentConversationMatchesSaved=true`.
 
-A follow-up boolean-only comparison used the internally saved scope/conversation and returned:
+This proved official Web can canonicalize an unscoped project conversation route in a warm visible-Web session.
 
-- `currentKind = EXACT_SCOPED_CANONICAL`;
-- `currentIsExactScopedCanonical = true`;
-- `currentIsExactUnscoped = false`;
-- `currentIsProjectShape = true`;
-- `currentConversationMatchesSaved = true`.
+## Fresh-root production-like unscoped control — Positive
 
-Therefore, in this **warm visible-Web session that had already visited the project conversation**, requesting `/c/{conversation}` ended with official Web at the exact scoped canonical `/g/{scope}/c/{conversation}` location.
+A stronger control then reproduced the covered executor's route shape more closely:
 
-This is direct Runtime evidence that official Web has a canonicalization mechanism. It is **not** yet evidence that a fresh/root covered-Web document which has never entered this project route has enough state to perform the same canonicalization. The existing b88 project failures remain incompatible with assuming warm-session canonicalization always occurs in production covered execution.
+1. save only the target scope/conversation for result comparison;
+2. full-navigate the visible Web Rule Lab to a fresh `/` root document;
+3. while the remote project response was active, wait until transient user activation was false;
+4. from root, full-navigate directly to unscoped `/c/{conversation}`;
+5. observe the resulting route and Resource Timing without manually entering the project route.
+
+Exact user result:
+
+- marker `phase=unscoped_full_navigation_started`;
+- `activationAtNavigation=false`;
+- elapsed since navigation request about 111.5s;
+- page `readyState=complete`, `visibilityState=visible`, `hasFocus=true`;
+- final `currentKind=EXACT_SCOPED_CANONICAL`;
+- `currentIsExactScopedCanonical=true`;
+- `currentIsExactUnscoped=false`;
+- Resource Timing `totalResourceCount=4`, `possiblySaturated=false`;
+- `plural_snapshot=1`;
+- `stream_status=1`;
+- `resume=0`;
+- `canonicalizationObserved=true`;
+- `continuationObserved=true`.
+
+This is decisive against the single-cause hypothesis that production fails merely because it initially requests `/c/<project-conversationID>` instead of `/g/<scope>/c/<conversationID>`. In this tested visible-Web browsing context, official Web itself recovered the exact scoped canonical route and started genuine page-owned continuation from an unscoped full navigation with transient activation false.
+
+The observed continuation was page-owned status/snapshot behavior, not resume-SSE in this sample, because no `/resume` resource was observed.
 
 ## Interpretation
 
-1. The official visible Web possesses the project/GPT scoped canonical conversation route in an anchor href before successful target entry.
-2. A successful project SPA transition can immediately issue page-owned `stream_status` using that canonical route without first fetching a project Detail payload that exposes the scope.
-3. In a warm visible-Web session, even a deliberate unscoped `/c/{conversation}` navigation is canonicalized back to exact `/g/{scope}/c/{conversation}`.
-4. `gizmo_id` remains external corroboration only, not a Runtime-confirmed route contract for ChatGPTClient.
-5. The prior Control B remains decisive: a fresh full navigation to the exact official `/g/{scope}/c/{conversation}` route with transient user activation false starts genuine official page-owned continuation.
-6. Before b89, reproduce the production covered-Web starting condition more closely: start from a fresh root document and then navigate directly to the unscoped project conversation while an external response is active. This will distinguish warm official canonicalization from a canonical-route defect that only exists in the covered cold/root path.
+1. Official Web possesses and can use exact project/GPT scoped canonical conversation identity without Native synthesizing it.
+2. Exact scoped full navigation remains Runtime Positive for continuation.
+3. Trusted click and same-document SPA entry are not required.
+4. A fresh root document followed by direct unscoped `/c/{conversation}` navigation can also canonicalize and continue in the visible Web Rule Lab browsing context.
+5. Therefore scoped-route identity alone no longer explains b88 covered-Web failure and must not drive a route-only b89 fix.
+6. `gizmo_id` remains external corroboration only, not a Runtime-confirmed ChatGPTClient route contract.
+7. The remaining investigation target is the covered-vs-visible WKWebView runtime/browsing-context differential. b87/b88 already ruled out hidden/detached/unready page state and b88 proves covered `document.hasFocus=true` is achievable; transient user activation at navigation is now also shown unnecessary in the successful visible path.
+8. Next smallest evidence action is to read `navigator.userActivation.isActive/hasBeenActive` on the successful visible page. If sticky activation is absent, the next code-backed A/B should target the remaining WKWebView presentation/interactivity differential rather than route identity.
 
 ## Preserved boundary
 

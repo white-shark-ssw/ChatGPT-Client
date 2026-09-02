@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest checkpoint docs head before PR metadata sync: `c3ba15dd14fed1b1c2b9cb678af1ea21d4679cc8`
+- Latest checkpoint docs head before PR metadata sync: `f46b56a7d2c0904669ca5320d8cfdd3670150ce8`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`

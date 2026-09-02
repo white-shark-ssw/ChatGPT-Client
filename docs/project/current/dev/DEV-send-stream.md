@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Last verified PR head before this checkpoint write: `b13806e6ef50179acecc29e6a61facfbe246f302`
+- Verified PR head after wrong-route canonical evidence: `4ce3deec58fcfe03ce48bf86e96c0da7a26e3ae1`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 product / Artifact / IPA identity unchanged
 - Stable/Frozen Send: No
@@ -22,12 +22,7 @@ Current exact facts:
 
 1. Control B: fresh full document navigation to exact official `/g/{scope}/c/{conversation}` with transient activation false starts page-owned `stream_status + plural_snapshot` continuation.
 2. Official trusted project re-entry: sidebar anchor already contains `/g/{scope}/c/{conversation}` before navigation; page immediately issues project `stream_status` without a project Detail response supplying the scope.
-3. Deliberate wrong-route probe: after asking the same visible official Web session to navigate to `/c/{conversation}`, DOM inspection found:
-   - `sameConversationLinkCount=1`;
-   - `scopedConversationLinkCount=1`;
-   - `exactCanonicalLinkCount=1`;
-   - `exactCanonicalVisibleCount=1`;
-   - `sameProjectScopeLinkCount=1`.
+3. Deliberate wrong-route probe: after asking the same visible official Web session to navigate to `/c/{conversation}`, DOM inspection found `sameConversationLinkCount=1`, `scopedConversationLinkCount=1`, `exactCanonicalLinkCount=1`, `exactCanonicalVisibleCount=1`, and `sameProjectScopeLinkCount=1`.
 4. The same probe returned `currentRoute=other`, because its classifier only labeled an exact `/c/{id}` path and did not classify the actual post-navigation route. Therefore do not yet claim whether the page remained unscoped or automatically canonicalized to `/g/{scope}/c/{conversation}`.
 
 ## Next exact action
@@ -43,7 +38,7 @@ Do not allocate b89 before this route ambiguity is closed. No guessed `gizmo_id`
 
 ## Batch recovery state
 
-This checkpoint write starts the new wrong-route-canonical evidence batch. Pending after this point: extend the existing canonical-anchor Runtime evidence with the exact wrong-route DOM counts; then verify PR/head identity. Do not touch product/version/Candidate/Artifact/IPA and do not replay earlier Control B or canonical-anchor writes.
+Wrong-route canonical evidence batch complete: checkpoint updated, durable canonical-anchor evidence extended, PR/head re-verified open / mergeable / unmerged at `4ce3deec58fcfe03ce48bf86e96c0da7a26e3ae1`. PR title/body remain temporarily behind this newest evidence because the currently available GitHub action surface has no PR-metadata write action; current checkpoint and exact Runtime evidence outrank PR metadata. No product/version/Candidate/Artifact/IPA changed.
 
 ## Preserved boundaries
 

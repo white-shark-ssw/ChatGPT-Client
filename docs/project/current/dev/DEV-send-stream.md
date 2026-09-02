@@ -2,53 +2,68 @@
 
 ## Status
 
-**Active — exact scoped full navigation `/g/{scope}/c/{conversation}` is Runtime Positive for official page-owned continuation. Latest Web Rule Lab result closes the prior route ambiguity: after deliberately requesting the same already-visited project conversation through `/c/{conversation}`, official Web ended at the exact scoped canonical `/g/{scope}/c/{conversation}` route. This proves official Web can canonicalize an unscoped project route in at least a warm visible-Web state. It does not yet prove that a fresh/root production-like covered Web can do the same without prior project-route state. Stable/Frozen Send remains No.**
+**Active — fresh-root visible-Web `/c/{project-conversation}` control is Runtime Positive: with transient activation false, official Web canonicalized to exact `/g/{scope}/c/{conversation}` and started page-owned continuation. Therefore scoped-route identity alone no longer explains b88. Product code must not be changed to a guessed route fix yet. Remaining differential is between a newly created covered WKWebView and the visible Web Rule Lab runtime/browsing-context state. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified PR head after warm-canonicalization evidence + PR sync: `0ca095d74f38fcbc6f223cf2725a334482ea5d7d`
+- Verified pre-batch PR head: `777d3182b12d09b6b1984dec89f22fb08e878d75`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 product / Artifact / IPA identity unchanged
 - Stable/Frozen Send: No
 
-## Runtime evidence
+## Latest fresh-root Runtime result
 
-- `docs/project/runtime-evidence/DEV-send-stream-scoped-full-navigation-continuation-positive-20260903.md`
-- `docs/project/runtime-evidence/DEV-send-stream-official-project-canonical-anchor-20260903.md`
+User production-like Web Rule Lab control:
 
-Current exact facts:
+- marker `phase=unscoped_full_navigation_started`;
+- `activationAtNavigation=false`;
+- elapsed about 111.5s after navigation request;
+- final `currentKind=EXACT_SCOPED_CANONICAL`;
+- `currentIsExactScopedCanonical=true`;
+- `currentIsExactUnscoped=false`;
+- page visible, focused, complete;
+- Resource Timing not saturated: 4 resources total;
+- observed `plural_snapshot=1`, `stream_status=1`, `resume=0`;
+- `canonicalizationObserved=true`;
+- `continuationObserved=true`.
 
-1. Control B: fresh full document navigation to exact official `/g/{scope}/c/{conversation}` with transient activation false starts page-owned `stream_status + plural_snapshot` continuation.
-2. Official trusted project re-entry: sidebar anchor already contains `/g/{scope}/c/{conversation}` before navigation; page immediately issues project `stream_status` without a project Detail response supplying the scope.
-3. Deliberate wrong-route probe in the same warm visible-Web session found exactly one visible exact scoped canonical anchor for the same conversation.
-4. Final boolean route check proves the post-navigation location itself is `EXACT_SCOPED_CANONICAL`: `currentIsExactScopedCanonical=true`, `currentIsExactUnscoped=false`, `currentIsProjectShape=true`, and the current conversation matches the saved target.
-5. Therefore official Web can canonicalize `/c/{project-conversation}` back to `/g/{scope}/c/{conversation}` in this warm session.
-6. This does **not** yet prove the fresh/root production-like covered Web has enough state to canonicalize the same way. b88 project failures remain evidence that current covered execution did not reach working continuation from its existing `/c/<conversationID>` path.
-7. `gizmo_id` remains unverified as the route-source contract and must not be guessed.
+This proves that, in the visible Web Rule Lab browsing context after a fresh root document load, directly full-navigating to the unscoped `/c/{project-conversation}` can still recover the exact scoped project route and start genuine official page-owned continuation. The current official page does not require Native to know or synthesize the scope in this tested browsing context.
+
+## Consequence
+
+The earlier root-cause hypothesis “production fails because it hard-loads `/c/<conversationID>` instead of `/g/<scope>/c/<conversationID>`” is now insufficient by itself and must not drive b89.
+
+The remaining evidenced differential is between:
+
+- Web Rule Lab: a newly constructed visible/interactable WKWebView using `.default()` website data store; and
+- CoveredWebSendExecutor: a newly constructed covered WKWebView using the same `.default()` store, but `isUserInteractionEnabled=false`, inserted behind Native siblings, with current b88 focus activation available.
+
+b87/b88 already showed covered page visible/complete/attached and b88 can obtain `document.hasFocus=true`; the fresh-root visible control additionally shows transient user activation at navigation is not required.
 
 ## Next exact action
 
-Run one final production-like Web Rule Lab control from a **fresh root document**: preserve the target project conversation ID/scope only in `sessionStorage`, full-navigate to `/`, then from that fresh root full-navigate directly to the unscoped `/c/{conversation}` while transient activation is false and the remote response is clearly active. Observe only whether official Web (a) canonicalizes to exact `/g/{scope}/c/{conversation}` and (b) starts page-owned continuation (`stream_status` / official snapshots).
+Do not allocate a route-fix b89. First close the remaining browsing-context/user-activation differential with the smallest evidence action:
 
-Decision:
+1. on the current fresh-root positive visible page, read only `navigator.userActivation.isActive` and `navigator.userActivation.hasBeenActive` after continuation has already started;
+2. if `hasBeenActive=false`, sticky user activation is ruled out for this successful path, and the next code-backed A/B should target the remaining WKWebView presentation/interactivity differential rather than route identity;
+3. if `hasBeenActive=true`, do one fresh WKWebView control (new Web Rule Lab controller, same `.default()` store) before product code to distinguish sticky browsing-context activation/state from covered behavior.
 
-- if fresh-root `/c/{conversation}` canonicalizes and continuation starts, current b88 failure is not explained by scoped-route identity alone; re-open covered-Web state differential before product code;
-- if fresh-root `/c/{conversation}` does not canonicalize or canonicalizes without continuation while exact scoped Control B remains Positive, b89 may target deterministic official canonical-route acquisition/reload rather than guessed `gizmo_id`.
-
-Do not allocate b89 before this production-like control. No guessed project endpoint, router internals, polling, timers, retries or Native continuation synthesis.
+No guessed `gizmo_id`, project endpoint, router internals, Native `stream_status`/`resume`, offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
 
 ## Batch recovery state
 
-Warm-canonicalization evidence batch complete:
+Fresh-root positive evidence batch started from exact head `777d3182b12d09b6b1984dec89f22fb08e878d75`.
 
-- checkpoint recovery point written;
-- durable canonical-anchor evidence updated with exact scoped-canonical result;
-- PR #29 title/body synchronized;
-- PR re-verified open / mergeable / unmerged at head `0ca095d74f38fcbc6f223cf2725a334482ea5d7d` before this close write.
+Planned writes:
 
-This close write changes docs only. Product source, version/build, Candidate, Artifact and IPA remain unchanged.
+1. checkpoint recovery point — **confirmed by this write**;
+2. extend `docs/project/runtime-evidence/DEV-send-stream-official-project-canonical-anchor-20260903.md` with fresh-root positive result — pending;
+3. synchronize PR #29 title/body — pending;
+4. re-verify PR/head and close checkpoint identity — pending.
+
+Do not touch product source, version/build, Candidate, Artifact or IPA in this batch.
 
 ## Preserved boundaries
 
@@ -56,4 +71,4 @@ Official page owns continuation; `ConversationRepository` owns Native response/c
 
 ## Session round counter
 
-This user turn is **round 51**.
+This user turn is **round 52**.

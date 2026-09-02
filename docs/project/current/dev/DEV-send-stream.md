@@ -2,58 +2,71 @@
 
 ## Status
 
-**Active — fresh-root visible-Web `/c/{project-conversation}` control is Runtime Positive: with transient activation false, official Web canonicalized to exact `/g/{scope}/c/{conversation}` and started page-owned continuation. Therefore scoped-route identity alone no longer explains b88. Product code must not be changed to a guessed route fix yet. Remaining differential is between a newly created covered WKWebView and the visible Web Rule Lab runtime/browsing-context state. Stable/Frozen Send remains No.**
+**Active — fresh-root visible-Web `/c/{project-conversation}` control is Runtime Positive: with transient activation false, official Web canonicalized to exact `/g/{scope}/c/{conversation}` and started page-owned continuation. Scoped-route identity alone no longer explains b88. The follow-up Web Rule Lab `navigator.userActivation` read is not causal evidence because executing the probe itself can create/retain user activation and the page had already timed out. Next candidate is a diagnostics-focused b89 single-variable A/B on the remaining covered-WKWebView interactivity differential. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
-- b88 product / Artifact / IPA identity unchanged
+- Verified pre-b89 PR head: `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`
+- b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)` permanently reserved
+- b89 Candidate / Build allocated: `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)`
 - Stable/Frozen Send: No
 
-## Latest fresh-root Runtime result
+## Latest Runtime result
 
-User production-like Web Rule Lab control:
+The fresh-root visible-Web control remains decisive:
 
-- marker `phase=unscoped_full_navigation_started`;
+- `phase=unscoped_full_navigation_started`;
 - `activationAtNavigation=false`;
-- elapsed about 111.5s after navigation request;
-- final `currentKind=EXACT_SCOPED_CANONICAL`;
-- `currentIsExactScopedCanonical=true`;
-- `currentIsExactUnscoped=false`;
+- final route exact `/g/{scope}/c/{conversation}`;
 - page visible, focused, complete;
-- Resource Timing not saturated: 4 resources total;
-- observed `plural_snapshot=1`, `stream_status=1`, `resume=0`;
-- `canonicalizationObserved=true`;
-- `continuationObserved=true`.
+- Resource Timing not saturated;
+- page-owned `stream_status=1`, `plural_snapshot=1`, `resume=0`;
+- canonicalization and continuation both observed.
 
-This proves that, in the visible Web Rule Lab browsing context after a fresh root document load, directly full-navigating to the unscoped `/c/{project-conversation}` can still recover the exact scoped project route and start genuine official page-owned continuation. The current official page does not require Native to know or synthesize the scope in this tested browsing context.
+Therefore Native does not need a guessed project scope merely to make the tested official page continue.
 
-## Consequence
+The later manual Web Rule Lab read returned `isActive=true`, `hasBeenActive=true`, but this is **measurement-contaminated / non-decisive** because Web Rule Lab requires a user-triggered Execute action and sticky activation cannot be cleared afterward; page timeout additionally prevents treating that late read as the state when continuation began. Do not repeat the same probe.
 
-The earlier root-cause hypothesis “production fails because it hard-loads `/c/<conversationID>` instead of `/g/<scope>/c/<conversationID>`” is now insufficient by itself and must not drive b89.
+## b89 exact A/B intent
 
-The remaining evidenced differential is between:
+Keep b88 behavior unchanged except for one native behavior variable:
 
-- Web Rule Lab: a newly constructed visible/interactable WKWebView using `.default()` website data store; and
-- CoveredWebSendExecutor: a newly constructed covered WKWebView using the same `.default()` store, but `isUserInteractionEnabled=false`, inserted behind Native siblings, with current b88 focus activation available.
+- change covered `WKWebView.isUserInteractionEnabled` from `false` to `true`;
+- keep the covered WebView behind Native siblings, no full-Web daily-chat UI;
+- retain b88 one-shot focus activation after manual Sync rearm;
+- add privacy-safe automatic page-activation diagnostics for `navigator.userActivation.isActive` / `hasBeenActive` only, so no Web Rule Lab Execute action is needed to measure covered state;
+- do not change route construction, continuation protocol, Send behavior, polling/cadence, response ownership or Repository state.
 
-b87/b88 already showed covered page visible/complete/attached and b88 can obtain `document.hasFocus=true`; the fresh-root visible control additionally shows transient user activation at navigation is not required.
+Acceptance gate: on a deliberately long remote response, one explicit Sync/rearm must establish the external generation; after covered load/focus, observe whether official page-owned `stream_status` / `/resume` / snapshot continuation begins while the remote generation remains active. Artifact/CI success is not Runtime proof.
 
 ## Next exact action
 
-Do not allocate a route-fix b89. First close the remaining browsing-context/user-activation differential with the smallest evidence action:
-
-1. on the current fresh-root positive visible page, read only `navigator.userActivation.isActive` and `navigator.userActivation.hasBeenActive` after continuation has already started;
-2. if `hasBeenActive=false`, sticky user activation is ruled out for this successful path, and the next code-backed A/B should target the remaining WKWebView presentation/interactivity differential rather than route identity;
-3. if `hasBeenActive=true`, do one fresh WKWebView control (new Web Rule Lab controller, same `.default()` store) before product code to distinguish sticky browsing-context activation/state from covered behavior.
-
-No guessed `gizmo_id`, project endpoint, router internals, Native `stream_status`/`resume`, offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
+Complete b89 product + version changes, run exact source/static/CI validation, produce one canonical b89 IPA, then hand it to the user for the real-device A/B. No route/gizmo fix, Native `stream_status`/`resume`, guessed offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
 
 ## Batch recovery state
 
-Fresh-root positive evidence batch has checkpoint and durable Runtime evidence written. PR metadata synchronization and final head close remain pending; product source, version/build, Candidate, Artifact and IPA are untouched.
+**Recovery point opened for b89.**
+
+Baseline before writes:
+
+- branch `dev/send-stream-20260829`;
+- PR #29 open / mergeable / unmerged;
+- head `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`;
+- b88 identities untouched and permanently reserved;
+- b89 newly allocated as `0.1.0 (89)` / `DEV-send-stream-0.1.0-b89`.
+
+Planned coherent batches:
+
+1. product source: `ChatGPTClient/RootViewController.swift` — interactivity single-variable A/B + user-activation diagnostics;
+2. version identity: `ChatGPTClient.xcodeproj/project.pbxproj` — build 89 / Candidate b89;
+3. verify exact branch head/diff, then CI/package identity;
+4. after Artifact identity is known, update BUILD_TEST_INDEX / MODULE_STATUS / WEB_SEND_ADAPTER / checkpoint and PR metadata.
+
+Confirmed complete: recovery point only.
+Pending: all product/version/CI/Artifact/doc-sync batches above.
+Do not touch b88 product/Artifact/IPA identities, unrelated modules or other work checkpoints.
 
 ## Preserved boundaries
 
@@ -61,4 +74,4 @@ Official page owns continuation; `ConversationRepository` owns Native response/c
 
 ## Session round counter
 
-This user turn is **round 52**.
+This user turn is **round 53**.

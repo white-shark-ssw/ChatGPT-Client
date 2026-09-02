@@ -1,5 +1,13 @@
 # Module Status
 
+## DEV-send-stream b88 decisive focus-negative override — 2026-09-02
+
+- Exact b88 identity remains unchanged: product `31d24e8b9ab4676effd757a793162abbdb0d7012`, clean package head `378811691ccbd6f44b232d8cc5564628e9b021e1`, Candidate/Build `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`, Artifact `9848999246`, IPA `sha256:cb89cf51f451252087b2abdd6533407113614b2e9efa072ba84e4877f2d02298`.
+- Second real-device b88 sample is decisive: manual-Sync rearm produced `nativeFirstResponder=true` and `documentHasFocus=true`; the user then observed multiple additional PC tool rounds from the same remote generation while ChatGPTClient stayed on the six-tool snapshot and covered Web emitted zero `stream_status`, `/resume`, external SSE or page-owned snapshot.
+- Focus is therefore rejected as a **sufficient** condition for continuation under the current direct full conversation navigation. This does not prove focus is universally irrelevant.
+- Completed assistant still required explicit Sync (`visible 12 -> 13`, mapping `507`, trailing `0/0`, `authoritative_assistant_materialized`). Automatic final convergence remains rejected.
+- Next evidence target is genuine official SPA/router conversation-entry behavior; causality remains Unverified. No b89 until one exact router-entry variable is evidenced. Stable/Frozen Send remains No.
+
 ## DEV-send-stream b88 focus Runtime override — 2026-09-02
 
 - Known-good visible official Web can immediately acquire/live-continue a newly active cross-platform response and shows Stop while `document.hasFocus=true`; the coarse route probe is not conversation-state authority.

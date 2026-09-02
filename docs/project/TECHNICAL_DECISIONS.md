@@ -1,5 +1,13 @@
 # Technical Decisions
 
+## b88 decisive focus-negative qualification — 2026-09-02
+
+- The clean second b88 Runtime sample closes the focus A/B. Covered first-responder activation and `document.hasFocus=true` are Runtime Positive, but focus alone is **not sufficient** for official cross-platform continuation with the current programmatic full `/c/<conversation>` load.
+- Evidence: authoritative Detail advanced to six tool items before focus; after focus the user directly observed multiple additional PC tool rounds from the same remote generation, while covered Web produced zero page-owned `stream_status`, `/resume`, external SSE or snapshot and Native remained on the six-tool live snapshot.
+- Final materialization again required explicit Sync. Therefore neither focus nor the current generic user-socket structural frames provide reliable continuation/final convergence for this path.
+- The remaining known-good differential is genuine official SPA/router conversation entry versus direct full navigation. Treat router causality as **Unverified** until a privacy-safe causal A/B identifies one exact variable. Do not jump directly to a router workaround from correlation alone.
+- Existing boundaries remain: no Native protocol synthesis or guessed offsets, no polling/timers/retries/watchdogs, no duplicate Send, no WebSocket body authority, no second response store.
+
 ## b88 focus Runtime qualification — 2026-09-02
 
 - b88 real-device Runtime proves covered first-responder activation is technically effective: manual-Sync rearm produced `nativeFirstResponder=true`, a page focus event, and direct `document.hasFocus=true`.

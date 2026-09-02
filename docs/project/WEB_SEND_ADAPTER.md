@@ -1,5 +1,13 @@
 # Web Send Adapter / Rule Update Playbook
 
+## b88 decisive focus-negative continuation qualification — 2026-09-02
+
+The second exact b88 real-device sample resolves the earlier near-terminal ambiguity. Manual-Sync rearm successfully made the covered WKWebView first responder and direct `document.hasFocus()` returned true. The same remote generation then visibly continued through multiple additional tool rounds on PC, but the covered page issued no matching `stream_status`, `/resume`, external SSE or page-owned snapshot and ChatGPTClient remained on the six-tool authoritative Detail snapshot.
+
+Therefore **focus is rejected as a sufficient activation condition** for the current covered executor's direct full conversation navigation. This does not establish that focus is irrelevant to the known-good visible Web path; it only removes focus-alone as the missing variable.
+
+The next maintenance target is the remaining differential: a genuine user-driven official SPA/router conversation-entry transition versus programmatic full `/c/<conversation>` load. Do not implement a router workaround until a privacy-safe experiment identifies the exact official transition behavior. The existing prohibitions on Native status/resume synthesis, offset guessing, polling, timers, retries/watchdogs, duplicate Send, WebSocket-body authority and second response stores remain in force.
+
 ## b88 focus activation Runtime qualification — 2026-09-02
 
 A known-good visible Web Rule Lab sample on the same `WKWebsiteDataStore.default()` authority immediately acquired/live-continued a newly active cross-platform response and showed the active Stop control while `document.hasFocus=true`. Its coarse `route=other` result confirms route shape is diagnostic-only.

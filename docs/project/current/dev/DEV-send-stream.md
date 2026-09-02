@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest feature/docs head before PR-summary synchronization: `6211ba8b2d1db5c6fea116a1685778fb1f44b9b2`
+- Latest feature/docs head before PR-summary synchronization: `ea8017a2e300f37d216ef9d6eb0d6e37cb5a9faf`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -66,9 +66,9 @@ Confirmed writes:
 
 - recovery checkpoint `190cbfca019c3aa0f3f2d20e5538d56cf2e08f96`;
 - durable canonical-href Runtime evidence `b13806e6ef50179acecc29e6a61facfbe246f302`;
-- verification/checkpoint adjustments through `6211ba8b2d1db5c6fea116a1685778fb1f44b9b2`.
+- recovery/checkpoint adjustments through `ea8017a2e300f37d216ef9d6eb0d6e37cb5a9faf`.
 
-Still pending: PR #29 title/body synchronization to canonical-href evidence, PR/head verification, final checkpoint identity close. No product source, version/build, Candidate, Artifact or IPA may change in this docs-only batch.
+Still pending: PR #29 title/body synchronization, PR/head verification, final checkpoint identity close. Do not replay prior writes. No product source, version/build, Candidate, Artifact or IPA may change in this docs-only batch.
 
 ## Evidence ladder / preserved boundaries
 

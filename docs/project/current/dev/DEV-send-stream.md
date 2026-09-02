@@ -8,8 +8,8 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- b87 Runtime docs/index head before checkpoint-only close: `1874a6651036d7b8e13a93e01cf26412f64e6125`
-- checkpoint-only close commit: `bd682c121b0c381d2f5c608e7ada51dfb513f8f4`
+- b87 Runtime docs/index head before checkpoint close: `1874a6651036d7b8e13a93e01cf26412f64e6125`
+- checkpoint close commits: `bd682c121b0c381d2f5c608e7ada51dfb513f8f4`, `0984ac528968b4953a1cc76c6e205c06e473faa1`
 - b87 exact diagnostics product source: `6f98816f37c749c8d4cb8dfef4c4645df2c0f27a`
 - b87 clean feature/package source: `49cf74f5f97e5afd3ad78aa59d3b9ad19673d488`
 - b87 Candidate / Build: `DEV-send-stream-0.1.0-b87` / `0.1.0 (87)`
@@ -132,7 +132,7 @@ Do **not** allocate b88 or change product continuation behavior before this A/B 
 - Runtime evidence file: written.
 - `BUILD_TEST_INDEX.md` b87 row: updated to Diagnostic Runtime Positive / continuation rejected.
 - Temporary b87 Runtime docsync script/workflow: removed from staging branch after successful target write.
-- PR #29 metadata update: pending as the next exact action in this same round; PR metadata does not alter branch source.
+- PR #29 metadata: to be updated immediately after this checkpoint commit; metadata-only and does not alter product source or Candidate identity.
 
 ## Session round counter
 

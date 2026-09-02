@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — b88 focus A/B remains closed: focus alone is insufficient. Two independent visible official-Web project/GPT-scoped Runtime samples now show the same canonical `/g/{x}/c/{x}` same-document SPA entry followed by official `stream_status`, page-owned `/resume`, and repeated page-owned `stream_status + plural snapshot` fallback after `/resume` returned HTTP404 JSON. The user also reports that prior ordinary non-project conversations had real-device cases where Sync exposed a reasoning block and later progression continued automatically, while the recent covered-production failures were project conversations. Current production still hard-loads every conversation as `/c/<conversationID>` and Native conversation models do not preserve project/GPT route context. Project/GPT route-context loss is therefore a high-priority root-cause candidate, but SPA entry, scoped route context, and trusted activation are not yet causally separated. Do not allocate b89 until the untrusted official-anchor Web Rule Lab A/B completes. Stable/Frozen Send remains No.**
+**Active — b88 focus A/B remains closed: focus alone is insufficient. Two independent visible official-Web project/GPT-scoped Runtime samples use canonical `/g/{x}/c/{x}` same-document SPA entry and then start official continuation (`stream_status`, page-owned `/resume`, and repeated page-owned `stream_status + plural snapshot` when `/resume` returns HTTP404 JSON). Current production still hard-loads every conversation as `/c/<conversationID>`, while Native conversation models/list cache discard project/GPT scoped route identity. External read-only comparison research independently corroborates that `gizmo_id` is used by current third-party implementations to distinguish `/c/{conversation}` from `/g/{gizmo}/c/{conversation}` and Project membership/scope, but this remains external corroboration rather than our own Runtime causality proof. The next gate is a Web Rule Lab 2×2 that separates scoped route, SPA/router lifecycle, and trusted activation. Do not allocate b89 until the two unknown controls are measured. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Feature head after second project visible-Web evidence: `84344593c93f0d561ac706d8be14a5aa3a20eb4e`
+- Verified PR head before this checkpoint update: `da4bf533f6df4d0a4843af19bbee3748d30c4ca6`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -19,7 +19,7 @@
 
 ## Closed b88 Runtime conclusion
 
-Exact b88 proves `WKWebView.becomeFirstResponder()` can make the covered page `document.hasFocus=true`, but a remote generation continued through multiple additional PC tool rounds while covered production emitted zero matching `stream_status`, `/resume`, external SSE or page-owned snapshot. Focus is rejected as a sufficient activation condition under the current direct full `/c/<conversation>` load. Automatic final convergence also failed and required explicit Sync.
+Exact b88 proves `WKWebView.becomeFirstResponder()` can make the covered page `document.hasFocus=true`, but the same external generation continued through multiple PC tool rounds while covered production emitted zero matching `stream_status`, `/resume`, external SSE or page-owned snapshot. Focus is rejected as a sufficient activation condition under current direct full `/c/<conversation>` load. Automatic final convergence also required explicit Sync.
 
 Durable evidence:
 
@@ -30,68 +30,72 @@ Durable evidence:
 
 Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-visible-web-spa-continuation-20260903.md`.
 
-### Sample 1
+Both independent project conversations reproduced:
 
-- trusted official anchor click from `/` to `/g/{x}/c/{x}`;
-- same-document `history.pushState`;
-- plural snapshot GET + conversation bootstrap/detail POST;
-- `stream_status` -> HTTP200 JSON;
-- `/backend-api/f/conversation/resume` -> HTTP404 JSON;
-- immediate repeated page-owned `stream_status + plural snapshot` fallback roughly every six seconds while the response progressed.
+`/ -> trusted official anchor -> history.pushState -> /g/{x}/c/{x} -> plural snapshot + bootstrap -> stream_status -> /resume -> HTTP404 JSON -> repeated page-owned stream_status + plural snapshot`.
 
-### Sample 2
-
-A second independent project conversation reproduced the same chain:
-
-- `6.763s`: trusted official anchor click to `/g/{x}/c/{x}`;
-- `6.826-6.828s`: same-document `history.pushState`;
-- `7.014-7.015s`: plural snapshot GET + conversation bootstrap/detail POST;
-- `10.245s`: `stream_status` GET -> HTTP200 JSON;
-- `11.535s`: `/resume` POST -> HTTP404 JSON;
-- `12.356s`: immediate `stream_status + plural snapshot` fallback;
-- further paired status/snapshot starts around `19.563s`, `26.657s`, `34.121s`, and `40.983s`, all returning HTTP200 JSON during the roughly 45.6-second capture.
-
-The user reports the visible project conversation progressed normally. This is enough to establish continuation even though the visible observation window after entry was short.
-
-Important: neither current project sample is an HTTP200 resume-SSE sample. Both are official 404-resume snapshot-fallback samples. Continuous-looking UI must not be labelled SSE without `Content-Type: text/event-stream` evidence.
+The second sample continued paired status/snapshot requests through the ~45.6 second capture. Neither current project sample is HTTP200 resume-SSE; continuous-looking UI is official continuation but must not be labelled SSE without `Content-Type: text/event-stream` evidence.
 
 ## Ordinary-vs-project scope correlation
 
-New user Runtime report:
+User Runtime report:
 
-- ordinary conversations outside projects previously had real-device cases where explicit Sync exposed the current reasoning block and later blocks then continued automatically;
-- the recent repeated covered-production no-continuation failures were project conversations;
-- both current known-good visible project samples use canonical `/g/{x}/c/{x}`.
+- ordinary non-project conversations previously had cases where explicit Sync exposed the current reasoning block and later progression then continued automatically;
+- recent repeated covered-production no-continuation failures were project conversations;
+- both current known-good visible project samples use `/g/{x}/c/{x}`.
 
-This is a strong scope correlation, not yet a controlled same-build ordinary-vs-project A/B. Do not treat it as universal proof that every ordinary conversation works or every project conversation fails.
+This is strong scope correlation, not yet a controlled same-build ordinary-vs-project A/B.
 
-## Current source differential
+## Confirmed source gap
 
 Current `CoveredWebSendExecutor.observeExistingConversation` and `sendExistingConversation` always construct `https://chatgpt.com/c/<conversationID>` and call `WKWebView.load`.
 
-Current Native `ConversationSummary` holds only `id`, `title`, and `updateTime`; `ConversationDetail` has no project/GPT route context; list summary parsing keeps only conversation ID/title/update time. Therefore production currently has no preserved canonical `/g/<project-or-gpt>/c/<conversation>` entry identity at this boundary.
+Current Native `ConversationSummary` preserves only `id`, `title`, `updateTime`; list parsing/cache preserve the same fields; `ConversationDetail` has no project/GPT scoped route identity. Therefore the product currently loses information needed to reproduce canonical `/g/<scope>/c/<conversation>` entry.
 
-The known-good official project path instead uses an official anchor and same-document SPA transition to `/g/{x}/c/{x}` before the page starts continuation traffic.
+Classification:
 
-## Current causal boundary
+- scoped identity information loss in current source: **Confirmed**;
+- external `gizmo_id` semantics: **Strongly corroborated by read-only comparison research**;
+- target project has scoped official anchor `/g/{x}/c/{x}`: **Runtime Positive**;
+- scoped identity loss as continuation root cause: **Unverified**.
 
-Project/GPT route-context loss is now a **high-priority root-cause candidate** for project-only covered failures, but these variables remain entangled:
+Do not add `gizmo_id` to production or change ordinary navigation until causality is isolated.
 
-1. official SPA/router conversation entry versus full `WKWebView.load`;
-2. preserving `/g/{x}/c/{x}` project/GPT context versus hard-coded `/c/<conversationID>`;
-3. trusted/transient browser activation versus an untrusted programmatic official-anchor click.
+## 2×2 causal matrix
 
-Do not change ordinary-conversation navigation or add a generic router workaround yet.
+| Entry | Route | Current result |
+|---|---|---|
+| Full load | `/c/{id}` | Negative in b88 project samples |
+| Full load | exact official `/g/{scope}/c/{id}` | Unknown — Control B |
+| SPA programmatic click | exact official `/g/{scope}/c/{id}` | Unknown — Control A |
+| SPA trusted click | exact official `/g/{scope}/c/{id}` | Positive — two visible-Web samples |
 
-## Next exact action — Web Rule Lab only
+Interpretation after both controls:
 
-Do not change product code and do not allocate b89 yet.
+- A positive + B positive -> trusted activation and SPA are not required; scoped route becomes strongest candidate.
+- A positive + B negative -> trusted activation not required; SPA/router lifecycle becomes strongest candidate.
+- A negative + B positive -> scoped route works under full navigation; inspect whether synthetic click actually invokes the official router before blaming activation.
+- A negative + B negative while trusted SPA stays positive -> trusted/transient activation becomes a stronger remaining candidate.
 
-Use a project conversation and test the official conversation anchor programmatically after transient `navigator.userActivation.isActive` has become false. Require evidence that the synthetic click is `isTrusted=false` and `userActivationIsActive=false`, then observe whether the same `history.pushState -> bootstrap -> stream_status -> resume/fallback` chain starts.
+## Next exact action — Human Web Rule Lab gate
 
-If positive, b89 can be narrowly scoped to a product-reproducible **project canonical-router entry** A/B using the official page/router and preserving `/g/.../c/...` without Native guessing. Keep ordinary `/c/...` behavior unchanged unless separate evidence requires modification.
+### Control A — first
 
-If negative, trusted browser activation remains a separate candidate; do not synthesize protocol requests.
+Use a project conversation. Preserve the existing privacy-safe entry/network probe. From the target `/g/.../c/...` page, save the exact target pathname locally in the page, return to `/` in the same document, then trigger `.click()` on the matching official anchor only after transient `navigator.userActivation.isActive` is false. Acceptance requires the captured click to show `isTrusted=false` and `userActivationIsActive=false`.
+
+Observe whether the page itself still performs:
+
+`history.pushState -> /g/.../c/... -> bootstrap/plural snapshot -> stream_status -> /resume or official fallback`.
+
+Do not Send a new prompt and do not Native-construct status/resume.
+
+### Control B — only after Control A result
+
+Use the official page's exact scoped href; do not guess the scope ID. Perform a true full document navigation to that exact `/g/.../c/...` URL for another external-active project response, then use a post-navigation privacy-safe resource/state probe to determine whether page-owned bootstrap/status/resume/snapshot traffic starts. This fills the route-vs-SPA control.
+
+## b89 gate
+
+Do not allocate b89 before Controls A and B are known. The eventual b89 must change only the one variable supported by the matrix. In particular do not combine `gizmo_id` model changes, router changes, resume synthesis, WebSocket subscription, retries/polling or ordinary-conversation navigation changes in one Candidate.
 
 ## Preserved boundaries
 
@@ -105,4 +109,4 @@ If negative, trusted browser activation remains a separate candidate; do not syn
 
 ## Session round counter
 
-This user turn is **round 35**.
+This user turn is **round 37**.

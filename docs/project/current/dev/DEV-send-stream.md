@@ -8,7 +8,6 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Branch head before b86 Runtime evidence write: `729b0c372b1fd554a29be4a1e1f1c2902dad9be0`
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - b85 Runtime: **manual authoritative block projection Positive / automatic continuation Rejected**
 - b86 exact diagnostics product source: `dc77a94be5b2f7eecd822480f759358ad6a0ad25`
@@ -25,75 +24,50 @@
 
 ## Send MVP contract
 
-### Client-owned Send
-
-Preserve the existing true same-response SSE. Do not downgrade it.
-
-### Cross-platform Send
-
-Real block/page-snapshot reasoning/tool progression is acceptable for MVP, but explicit `同步最新消息` must be a stable acquisition boundary and later genuine blocks should continue without pressing Sync for every block when a real page-owned continuation attaches.
+Client-owned Send keeps true same-response SSE. Cross-platform MVP may use real block/page snapshots, but one explicit Sync must be a stable acquisition boundary and later genuine blocks should continue without pressing Sync for every block when a real page-owned continuation attaches.
 
 Do not satisfy this with fake typewriter, polling, timer, watchdog, speculative retry/fallback, duplicate Send/resend, a second response store, guessed Native resume/offset, WebSocket-body authority, or raw hidden-thought presentation.
 
-## Accepted Runtime facts
+## b86 decisive Runtime
 
-### b84/b85
+Target privacy-safe conversation hash: `sha256:d597360f6d29`.
 
-- Authoritative singular Detail can contain user-visible trailing reasoning/tool timeline before a visible assistant row exists.
-- b85 projects that approved tail into the existing `ConversationRepository` response owner.
-- Repeated explicit Sync can update the same external response generation.
-- Final authoritative assistant materialization reconciles/clears the temporary live row correctly when Detail is fetched.
-
-### b86 decisive result
-
-Exact supplied b86 log, target privacy-safe conversation hash `sha256:d597360f6d29`:
-
-1. `07:15:10` explicit Sync started.
-2. `07:15:20` authoritative Detail HTTP200 returned visible `34`, trailing timeline `6 = reasoning 1 + tools 5`.
-3. `responseGeneration=1` started from `external_authoritative_detail` and one live row rendered.
-4. `07:15:21` `manual_sync_rearm`; `07:15:22` covered page `state=loaded`.
-5. From that load until the next explicit Sync at `07:16:37` (~75 seconds), there were **zero**:
-   - `externalStreamStatusRequest` / `externalStreamStatusResponse`;
-   - `externalResumeRequest` / `externalResumeObserved` / `resumeResponse`;
-   - `externalStreamingObserved`;
-   - page-owned / Repository external snapshots.
-6. The user WebSocket opened and emitted a structural message, but `hasConversationKey=false`, `targetMatch=false`; the current exact-target `externalAcquisitionHint` completion/update trigger therefore did not fire.
-7. `07:16:37` user pressed Sync again.
-8. `07:16:43` authoritative Detail returned visible `35`, trailing `0`; `externalDetailReconciled(reason=authoritative_assistant_materialized)` cleared the live row.
+- `07:15:10` explicit Sync started.
+- `07:15:20` authoritative Detail HTTP200 returned visible `34`, trailing timeline `6 = reasoning 1 + tools 5`.
+- `responseGeneration=1` started from `external_authoritative_detail` and one live row rendered.
+- `07:15:21` `manual_sync_rearm`; `07:15:22` covered page loaded.
+- From that load until the next explicit Sync at `07:16:37` (~75 seconds), there were zero `externalStreamStatus*`, `externalResume*`, `externalStreamingObserved`, or page-owned/Repository snapshot events.
+- User WebSocket emitted a structural message with `hasConversationKey=false`, `targetMatch=false`; current exact-target completion hint did not fire.
+- `07:16:37` user pressed Sync again.
+- `07:16:43` Detail returned visible `35`, trailing `0`; `externalDetailReconciled(reason=authoritative_assistant_materialized)` cleared the live row.
 
 Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b86-no-continuation-no-final-auto-convergence-20260902.md`.
 
 ## Current conclusion
 
-b86 resolves the previous diagnostic fork: the covered page did **not** request `stream_status` at all in the clean foreground observation window. Therefore the next bottleneck is *before* resume/offset and before page-owned plural reads: **official page continuation activation itself**.
+b86 resolves the prior fork: the covered page did **not** request `stream_status` at all during the clean observation window. The bottleneck is before resume/offset and before page-owned plural reads: **official page continuation activation itself**.
 
-Do not guess or synthesize `/resume` or offset next; there was no resume request to reproduce.
+The lack of automatic final answer is separately explained by the current completion/update trigger also not firing: the user-socket structural frame did not match the target conversation. The b82 exact-target WebSocket hint is opportunistic, not reliable convergence.
 
-The lack of automatic final answer in this run is separately explained by the current completion/update trigger also not firing: the user-socket structural frame did not match the target conversation. The exact-target WebSocket hint remains opportunistic, not a reliable convergence source.
+Recorded visible Web Rule Lab evidence uses the same default persistent `WKWebsiteDataStore`. When the user visibly entered an externally active target conversation, official Web issued matching `stream_status` within roughly two seconds, then page-owned `/resume {conversation_id, offset}` and, after a 404, repeated page-owned `stream_status + /backend-api/conversations/{conversation}` reads.
 
-## Visible-Web comparison
-
-Recorded visible Web Rule Lab evidence uses the same default persistent `WKWebsiteDataStore`. When the user visibly entered an externally active target conversation, official Web issued matching `stream_status` within roughly two seconds, then page-owned `/resume {conversation_id, offset}`; after a 404 it continued repeated page-owned `stream_status + /backend-api/conversations/{conversation}` reads.
-
-Exact b86 covered programmatic `/c/<id>` load differs materially: page load completed while authoritative Detail independently proved active reasoning existed, but no matching `stream_status` was issued for at least 75 seconds.
-
-This strengthens the user's working hypothesis that server capability is not the primary blocker. The likely differential is the page's **activation/navigation/visibility/focus state**, but the exact causal field/action remains Unverified.
+Exact b86 covered programmatic `/c/<id>` load differs materially. This strengthens the working hypothesis that server capability is not the primary blocker; the likely differential is page activation/navigation/visibility/focus state, but the exact causal field/action remains Unverified.
 
 ## Next exact action
 
-Before any behavioral fix, inspect/diagnose the covered page activation state against the known-good visible Web entry path. Evidence should be privacy-safe and limited to:
+Before behavioral changes, diagnose the covered page activation state against the known-good visible Web entry path, limited to privacy-safe structure:
 
 - `document.visibilityState` / `document.hidden`;
 - `document.hasFocus()`;
-- route/readiness at and shortly after `didFinish`;
-- Native WebView `window != nil`, `isHidden`, alpha and bounds/window-intersection state;
-- whether a genuinely user-visible navigation/activation transition is what makes official Web issue `stream_status`.
+- route/readiness shortly after `didFinish`;
+- Native WebView window attachment / hidden / alpha / bounds intersection;
+- whether a genuinely user-visible navigation/activation transition is what causes official Web to issue `stream_status`.
 
-A diagnostics-only next Candidate may be allocated after normal identity/conflict checks. Do not change request cadence, call `stream_status` natively, guess resume offset, add retry/polling, or make the Web UI a product dependency.
+Do not call `stream_status` natively, guess `/resume` offset, add retry/polling, or make full Web UI a product dependency.
 
-## Recorded later requirement — one Sync on conversation entry
+## Recorded later requirement
 
-Entering/selecting a conversation should eventually perform exactly one authoritative latest-message Sync through `ConversationRepository`. This remains separate from continuation and does not by itself keep an active external response current after entry.
+Entering/selecting a conversation should eventually perform exactly one authoritative latest-message Sync through `ConversationRepository`. This remains separate from continuation and does not keep an active external response current by itself.
 
 ## Frozen / preserved boundaries
 
@@ -123,18 +97,21 @@ Entering/selecting a conversation should eventually perform exactly one authorit
 
 ## Batch recovery point — b86 Runtime documentation
 
-Baseline before this batch: branch `729b0c372b1fd554a29be4a1e1f1c2902dad9be0`, PR #29 open/mergeable, b86 identity unchanged.
+Known branch before the mistaken index write: `c5b4d0bd9ded4efd228532b5c850137a1920bea3`.
 
 Completed:
-1. Durable b86 Runtime evidence file created.
-2. This checkpoint updated with exact b86 Runtime conclusion and next evidence target.
+1. Durable b86 Runtime evidence created.
+2. Checkpoint updated with b86 Runtime conclusion.
+3. A mistaken whole-file `BUILD_TEST_INDEX.md` replacement at commit `8436d4529aa2c5b476d59a5f083e3a99e0e6ff48` truncated historical rows; this is a documentation-only error.
+4. A repair commit object `49905f8b4a686487f9651cef683dd2d1dbf39165` was created whose tree restores `docs/project/BUILD_TEST_INDEX.md` to exact prior blob `55673bc3f855bbe843c54d5095509037f0f69245` while preserving the b86 evidence/checkpoint commits.
 
-Pending in this documentation batch:
-1. Update `BUILD_TEST_INDEX.md` b86 Runtime from Pending to diagnostic Runtime Positive / activation absent.
-2. Update PR #29 current state/gate.
-3. If needed, add one concise top qualification to `TECHNICAL_DECISIONS.md`; do not rewrite unrelated historical sections.
+Pending:
+1. Move branch ref to repair commit `49905f8b4a686487f9651cef683dd2d1dbf39165` if it has not already been moved.
+2. Verify full BUILD_TEST_INDEX history is restored.
+3. Update only the b86 row using a non-destructive exact-line patch method.
+4. Update PR #29 to b86 Runtime gate.
 
-Must not touch during recovery: b86 product/config source, b86 Artifact identity, b85 accepted Detail projection, client-owned SSE, Frozen presentation/final boundaries.
+Must not touch during recovery: b86 product/config source, Artifact identity, b85 accepted Detail projection, client-owned SSE, Frozen presentation/final boundaries.
 
 ## Session round counter
 

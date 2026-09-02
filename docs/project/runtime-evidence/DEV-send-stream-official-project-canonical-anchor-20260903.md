@@ -2,20 +2,14 @@
 
 ## Runtime setup
 
-A privacy-safe Web Rule Lab observer was installed on the visible official Web while already on a project/GPT-scoped conversation route. The user then:
+Privacy-safe Web Rule Lab probes were run on visible official Web project/GPT-scoped conversation state. The probes returned only sanitized route/path shapes and structural counts/booleans. They did not return raw conversation IDs, project/scope IDs, titles, message bodies, Cookie, token or auth material.
 
-1. clicked an ordinary non-project conversation;
-2. waited for that ordinary route to load;
-3. clicked back to the target project conversation.
+## Ordinary conversation comparison
 
-The observer recorded only sanitized route/path shapes, HTTP methods/status/content-types, query-key names, safe request-body structure, and scoped-field booleans/types. It did not return raw conversation IDs, project/scope IDs, titles, message bodies, Cookie, token or auth material.
-
-## Ordinary conversation transition
-
-The official visible Web emitted:
+A trusted transition from the project conversation to an ordinary non-project conversation emitted:
 
 - trusted click target `/c/{id}`;
-- `history.pushState` from `/g/{scope}/c/{conversation}` to `/c/{id}`;
+- `history.pushState` to `/c/{id}`;
 - `GET /backend-api/conversations/{id}` with query keys `include_has_versions` and `num_turns`;
 - `POST /backend-api/conversation/init`;
 - ordinary Detail response HTTP 200 JSON;
@@ -45,14 +39,28 @@ The official visible Web then emitted:
 
 No project `GET /backend-api/conversations/{conversation}` response was required in this captured successful transition, so this sample does not support claiming that any project Detail field supplied the route scope at entry time.
 
+## Deliberate unscoped-route DOM probe
+
+From the same project conversation, a later probe saved the current project scope/conversation internally and deliberately requested a full navigation toward the unscoped form `/c/{conversation}`. After load, without exposing the raw IDs, DOM inspection found:
+
+- `sameConversationLinkCount = 1`;
+- `scopedConversationLinkCount = 1`;
+- `exactCanonicalLinkCount = 1`;
+- `exactCanonicalVisibleCount = 1`;
+- `sameProjectScopeLinkCount = 1`.
+
+Therefore the rendered official page state possessed exactly one visible anchor for that same selected conversation using the exact expected canonical `/g/{scope}/c/{conversation}` href, even though the navigation had been deliberately initiated through the unscoped form.
+
+The probe's coarse current-route classifier returned `other` because it only labeled an exact `/c/{id}` path and did not classify the actual post-navigation path. This sample therefore does **not yet** prove whether official Web automatically canonicalized the browser location itself back to `/g/{scope}/c/{conversation}` or stayed on another route while exposing the canonical href. A one-step boolean route comparison is the next evidence action.
+
 ## Interpretation
 
-1. The official visible Web already possesses the project/GPT scoped canonical conversation route in the sidebar anchor href before target entry.
+1. The official visible Web possesses the project/GPT scoped canonical conversation route in an anchor href before successful target entry.
 2. A successful project SPA transition can immediately issue page-owned `stream_status` using that canonical route without first fetching a project Detail payload that exposes the scope.
-3. Therefore `gizmo_id` remains only external corroboration, not a Runtime-confirmed service contract for ChatGPTClient.
-4. The prior Control B remains decisive: a fresh full navigation to the exact official `/g/{scope}/c/{conversation}` route with transient user activation false starts genuine official page-owned continuation.
-5. The product defect remains that current covered-Web code hard-loads `/c/<conversationID>` and has no persisted scoped canonical route identity.
-6. The next implementation-evidence question is whether covered official Web can deterministically resolve the canonical href for a Native-selected conversation without manual sidebar/project expansion. Prefer an already-present official canonical href/page-state source over guessing an API field.
+3. Even after deliberately requesting the same project conversation through `/c/{conversation}`, the rendered page state exposes the exact scoped canonical anchor for that conversation in this visible-Web session.
+4. `gizmo_id` remains external corroboration only, not a Runtime-confirmed route contract for ChatGPTClient.
+5. The prior Control B remains decisive: a fresh full navigation to the exact official `/g/{scope}/c/{conversation}` route with transient user activation false starts genuine official page-owned continuation.
+6. Before b89, resolve whether the wrong-route navigation itself was automatically canonicalized. If not, then verify that exact canonical-anchor resolution is deterministic in the covered production-like page state without manual sidebar/project expansion.
 
 ## Preserved boundary
 

@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — b88 focus A/B remains closed: focus alone is insufficient. Two independent visible official-Web project/GPT-scoped Runtime samples use canonical `/g/{x}/c/{x}` same-document SPA entry and then start official continuation (`stream_status`, page-owned `/resume`, and repeated page-owned `stream_status + plural snapshot` when `/resume` returns HTTP404 JSON). Current production still hard-loads every conversation as `/c/<conversationID>`, while Native conversation models/list cache discard project/GPT scoped route identity. External read-only comparison research independently corroborates that `gizmo_id` is used by current third-party implementations to distinguish `/c/{conversation}` from `/g/{gizmo}/c/{conversation}` and Project membership/scope, but this remains external corroboration rather than our own Runtime causality proof. The next gate is a Web Rule Lab 2×2 that separates scoped route, SPA/router lifecycle, and trusted activation. Do not allocate b89 until the two unknown controls are measured. Stable/Frozen Send remains No.**
+**Active — b88 focus A/B remains closed: focus alone is insufficient. Two independent visible official-Web project/GPT-scoped Runtime samples use canonical `/g/{x}/c/{x}` same-document SPA entry and then start official continuation (`stream_status`, page-owned `/resume`, and repeated page-owned `stream_status + plural snapshot` when `/resume` returns HTTP404 JSON). Current production still hard-loads every conversation as `/c/<conversationID>`, while Native conversation models/list cache discard project/GPT scoped route identity. External read-only comparison research independently corroborates that `gizmo_id` is used by current third-party implementations to distinguish `/c/{conversation}` from `/g/{gizmo}/c/{conversation}` and Project membership/scope, but this remains external corroboration rather than our own Runtime causality proof. The first untrusted-anchor Control A attempt is **Infrastructure/Inconclusive**, not Negative: transient user activation was successfully false, but the target scoped anchor was absent from the root-page DOM (`matchCount=0`), so no synthetic target click or router transition occurred. Do not allocate b89 until Control A is rerun with the official target anchor present and Control B is measured. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest docs-only checkpoint head before this write: `76aedd272599264079c6bbe1278b8476c2240e72`
+- Verified PR head before this checkpoint write: `e4fb022fbfbf59904f581fba196f5ee6b7788c32`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -17,9 +17,9 @@
 - b39-b88 permanently reserved
 - Stable/Frozen Send: No
 
-## Recovery note for this round
+## Recovery note
 
-Multiple sequential checkpoint-only replacement commits were emitted while recording this same 2×2 gate. No product/config/version/Candidate/Artifact file changed. Treat this latest checkpoint as authority; do not replay those writes. PR metadata may be temporarily behind and can be synchronized after the Human Runtime result without changing experiment validity.
+A prior docs-only round emitted multiple sequential checkpoint replacement commits while recording the 2×2 gate. No product/config/version/Candidate/Artifact file changed. Treat the latest checkpoint as authority; do not replay those writes. PR metadata may be temporarily behind and can be synchronized after the Human Runtime matrix without changing experiment validity.
 
 ## Closed b88 Runtime conclusion
 
@@ -69,14 +69,38 @@ Classification:
 |---|---|---|
 | Full load | `/c/{id}` | Negative in b88 project samples |
 | Full load | exact official `/g/{scope}/c/{id}` | Unknown — Control B |
-| SPA programmatic click | exact official `/g/{scope}/c/{id}` | Unknown — Control A |
+| SPA programmatic click | exact official `/g/{scope}/c/{id}` | Infrastructure/Inconclusive — first attempt found no target anchor in root DOM |
 | SPA trusted click | exact official `/g/{scope}/c/{id}` | Positive — two visible-Web samples |
+
+## Control A attempt 1 — anchor absent / Inconclusive
+
+User followed the intended sequence correctly:
+
+1. root page verified `path=/`, `state=ROOT`;
+2. manually entered the target project conversation;
+3. save-and-back script returned `ok=true`, `targetSaved=true`, `targetShape=/g/{x}/c/{x}` and used `history.back()`;
+4. root verification returned `path=/`, `state=ROOT`, `targetSaved=true`;
+5. Control A probe installed successfully with `currentRoute=/`, `targetSaved=true`;
+6. launcher armed for an 8-second delayed synthetic click;
+7. at click time `activationAtClick=false`, proving transient browser user activation had expired;
+8. launcher found `matchCount=0` and terminated as `aborted_anchor_not_found`;
+9. probe recorded no synthetic scoped-anchor click, no `history.pushState`, and no continuation request chain.
+
+The screenshots show the root page with the navigation/sidebar collapsed, consistent with the target conversation anchor not being mounted in the current DOM. Therefore this attempt does **not** test whether `isTrusted=false` can activate the official router. It is not evidence against programmatic SPA entry.
 
 ## Next exact action — Human Web Rule Lab gate
 
-Control A first: use a project conversation, save the exact target pathname locally in page memory, return to `/` in the same document, and programmatically click the matching official scoped anchor only when transient `navigator.userActivation.isActive=false`. Acceptance requires the captured synthetic click to be `isTrusted=false` and activation false, followed (or not) by page-owned `history.pushState -> bootstrap/plural snapshot -> stream_status -> /resume/fallback`.
+Repeat Control A, but first ensure the official target project conversation anchor is actually present in the root-page DOM. The simplest controlled path is:
 
-After Control A, Control B will full-navigate to the exact official scoped href and use a post-navigation privacy-safe resource/state probe to separate scoped route from SPA lifecycle.
+1. return to `/` with the saved target pathname still present;
+2. manually expand the official sidebar/navigation so the project conversation list is mounted;
+3. run a non-mutating anchor-presence probe and require exactly one matching `/g/.../c/...` target anchor (`matchCount >= 1`) before arming the experiment;
+4. then do not touch the page; wait until `navigator.userActivation.isActive=false`;
+5. run the same delayed programmatic target-anchor click and capture `isTrusted=false`, activation false, and whether `history.pushState -> bootstrap/plural snapshot -> stream_status -> /resume/fallback` occurs.
+
+Manual sidebar expansion before the activation-expiry wait is allowed; the causal variable is the **target conversation click**. The launcher must still prove activation false at that target click.
+
+After Control A is decisive, Control B will full-navigate to the exact official scoped href and use a post-navigation privacy-safe resource/state probe to separate scoped route from SPA lifecycle.
 
 ## b89 gate
 
@@ -94,4 +118,4 @@ Do not allocate b89 before Controls A and B are known. The eventual b89 must cha
 
 ## Session round counter
 
-This user turn is **round 37**.
+This user turn is **round 39**.

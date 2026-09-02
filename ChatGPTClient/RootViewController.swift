@@ -82,6 +82,20 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             webView.bottomAnchor.constraint(equalTo: hostView.bottomAnchor)
         ])
         diagnostics.info(category: "webSend", name: "coveredExecutor.attached", fields: ["store": "default", "visibility": "covered"])
+        logWebViewActivationState(stage: "attached")
+    }
+
+    private func logWebViewActivationState(stage: String) {
+        let window = webView.window
+        let boundsEmpty = webView.bounds.isEmpty
+        let frameInWindow = window.map { webView.convert(webView.bounds, to: $0) }
+        let intersectsWindow = window.map { !boundsEmpty && $0.bounds.intersects(frameInWindow ?? .zero) } ?? false
+        let siblings = webView.superview?.subviews ?? []
+        let subviewIndex = siblings.firstIndex(where: { $0 === webView }) ?? -1
+        let visibleSiblingCountAbove: Int
+        if subviewIndex >= 0 { visibleSiblingCountAbove = siblings.dropFirst(subviewIndex + 1).filter { !$0.isHidden && $0.alpha > 0.01 && !$0.bounds.isEmpty }.count }
+        else { visibleSiblingCountAbove = 0 }
+        diagnostics.info(category: "webSend", name: "coveredExecutor.webViewActivation", fields: ["stage": stage, "windowAttached": window == nil ? "false" : "true", "windowIsKey": window?.isKeyWindow == true ? "true" : "false", "hidden": webView.isHidden ? "true" : "false", "alphaZero": webView.alpha <= 0.01 ? "true" : "false", "boundsEmpty": boundsEmpty ? "true" : "false", "intersectsWindow": intersectsWindow ? "true" : "false", "subviewIndex": String(subviewIndex), "siblingCount": String(siblings.count), "visibleSiblingCountAbove": String(visibleSiblingCountAbove), "userInteractionEnabled": webView.isUserInteractionEnabled ? "true" : "false"])
     }
 
     func observeExistingConversation(conversationID: String, forceReload: Bool = false, events: @escaping (CoveredWebSendEvent) -> Void) {
@@ -96,6 +110,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         composerReadyConversationID = nil
         currentConversationID = conversationID
         guard let encoded = conversationID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed), let url = URL(string: "https://chatgpt.com/c/\(encoded)") else { return }
+        logWebViewActivationState(stage: "before_observe_load")
         webView.load(URLRequest(url: url))
         diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation", "mode": forceReload ? "manual_sync_rearm" : "selection"])
     }
@@ -145,6 +160,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         diagnostics.info(category: "webSend", name: "coveredExecutor.page", fields: ["state": "loaded", "target": currentConversationID == nil ? "root" : "existing_conversation"])
+        logWebViewActivationState(stage: "did_finish")
         webView.evaluateJavaScript("window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.probeComposer(true);", completionHandler: nil)
     }
 
@@ -165,6 +181,15 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == Self.handlerName, let body = message.body as? [String: Any], let kind = body["kind"] as? String else { return }
         switch kind {
+        case "page_activation_state":
+            guard observingExternalResponse else { return }
+            let reason = Self.safeToken(body["reason"] as? String ?? "unknown")
+            let visibilityState = Self.safeToken(body["visibilityState"] as? String ?? "unknown")
+            let readyState = Self.safeToken(body["readyState"] as? String ?? "unknown")
+            let route = Self.safeToken(body["route"] as? String ?? "unknown")
+            let hidden = (body["hidden"] as? NSNumber)?.boolValue ?? false
+            let hasFocus = (body["hasFocus"] as? NSNumber)?.boolValue ?? false
+            diagnostics.info(category: "webSend", name: "coveredExecutor.pageActivation", fields: ["reason": reason, "visibilityState": visibilityState, "hidden": hidden ? "true" : "false", "hasFocus": hasFocus ? "true" : "false", "readyState": readyState, "route": route])
         case "external_stream_status_request":
             guard observingExternalResponse else { return }
             diagnostics.info(category: "webSend", name: "coveredExecutor.externalStreamStatusRequest", fields: ["target": "existing_conversation"])
@@ -351,6 +376,20 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         const match = location.pathname.match(/^\/c\/([^/?#]+)/);
         return match ? decodeURIComponent(match[1]) : null;
       };
+      const pageRouteShape = () => currentConversationID() ? 'conversation' : location.pathname === '/' ? 'root' : 'other';
+      const reportPageActivation = reason => {
+        const visibilityState = ['visible', 'hidden', 'prerender'].includes(document.visibilityState) ? document.visibilityState : 'other';
+        const readyState = ['loading', 'interactive', 'complete'].includes(document.readyState) ? document.readyState : 'other';
+        post({ kind: 'page_activation_state', reason, visibilityState, hidden: !!document.hidden, hasFocus: typeof document.hasFocus === 'function' ? document.hasFocus() : false, readyState, route: pageRouteShape() });
+      };
+      document.addEventListener('readystatechange', () => reportPageActivation('readystatechange'));
+      document.addEventListener('visibilitychange', () => reportPageActivation('visibilitychange'));
+      window.addEventListener('focus', () => reportPageActivation('focus'));
+      window.addEventListener('blur', () => reportPageActivation('blur'));
+      window.addEventListener('pageshow', () => reportPageActivation('pageshow'));
+      window.addEventListener('pagehide', () => reportPageActivation('pagehide'));
+      window.addEventListener('popstate', () => reportPageActivation('popstate'));
+      reportPageActivation('initial');
       const isChatGPTHost = host => host === 'chatgpt.com' || host.endsWith('.chatgpt.com');
       const safeStructureToken = value => typeof value === 'string' && value.length <= 64 && /^[A-Za-z][A-Za-z0-9_.:/-]{0,63}$/.test(value) ? value : '';
       const scrubSocketPath = value => String(value || '').split('/').map(segment => /^[A-Za-z0-9_-]{20,}$/.test(segment) ? '{id}' : segment).join('/').slice(0, 150);

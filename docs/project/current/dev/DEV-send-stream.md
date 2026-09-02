@@ -6,9 +6,9 @@
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / unmerged before this docs sync
+- PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Branch/PR head before b87 Runtime docs: `e41e2daf531988889ce76fef4102d78fa1f2db08`
+- b87 Runtime docs/index head before this checkpoint-only close: `1874a6651036d7b8e13a93e01cf26412f64e6125`
 - b87 exact diagnostics product source: `6f98816f37c749c8d4cb8dfef4c4645df2c0f27a`
 - b87 clean feature/package source: `49cf74f5f97e5afd3ad78aa59d3b9ad19673d488`
 - b87 Candidate / Build: `DEV-send-stream-0.1.0-b87` / `0.1.0 (87)`
@@ -65,7 +65,7 @@ This rejects the earlier broad hypothesis that continuation failed simply becaus
 - `09:45:22` Detail returned visible `2`, mapping `197`, trailing `0`; `liveResponse.externalDetailReconciled(reason=authoritative_assistant_materialized)` then cleared the live row and materialized the completed assistant.
 - So final reconciliation logic still works **when authoritative Detail is fetched**; what is absent is an automatic trigger/source that fetches it.
 
-Durable evidence file: `docs/project/runtime-evidence/DEV-send-stream-b87-visible-unfocused-no-continuation-20260902.md`.
+Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b87-visible-unfocused-no-continuation-20260902.md`.
 
 ## Current conclusion
 
@@ -77,7 +77,7 @@ b87 narrows the continuation blocker substantially:
 4. `/resume` offset remains downstream and should not be investigated until the page actually begins `stream_status`.
 5. b82 exact-target user-socket completion hint remains opportunistic and is not reliable final convergence.
 
-## Next exact action — no new IPA yet
+## Next exact action — visible Web Rule Lab A/B, no new IPA yet
 
 Use the existing **visible Web Rule Lab** with the same default persistent WebKit store to get the missing A/B without allocating b88:
 
@@ -126,23 +126,12 @@ Do **not** allocate b88 or change product continuation behavior before this A/B 
 - true cross-platform SSE continuation: **Not acquired**
 - Stable/Frozen Send: **No**
 
-## Batch recovery point — b87 Runtime documentation
+## Documentation state
 
-Known feature head before this checkpoint write: `e41e2daf531988889ce76fef4102d78fa1f2db08`.
-
-Completed in this batch:
-
-1. exact b87 Runtime log analyzed;
-2. checkpoint updated with Runtime classification and next exact Web Rule Lab A/B.
-
-Pending deterministic docs-only writes:
-
-1. create `docs/project/runtime-evidence/DEV-send-stream-b87-visible-unfocused-no-continuation-20260902.md`;
-2. update b87 row in `docs/project/BUILD_TEST_INDEX.md` from Runtime Pending to this Diagnostic Runtime result;
-3. update PR #29 title/body to b87 Runtime finding;
-4. verify PR remains open/mergeable/unmerged and record actual docs-only head.
-
-Recovery must not modify b87 product/config identity, allocate b88, change continuation behavior, alter Frozen presentation/final boundaries, or rewrite b85/b86 evidence.
+- Runtime evidence file: written.
+- `BUILD_TEST_INDEX.md` b87 row: updated to Diagnostic Runtime Positive / continuation rejected.
+- Temporary b87 Runtime docsync script/workflow: removed from staging branch after successful target write.
+- PR #29 metadata: updated in this round; PR metadata does not alter branch source.
 
 ## Session round counter
 

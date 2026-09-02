@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest known checkpoint write head before this recovery correction: `32098008e59e489f0e77671f3794dd07a5cec91d`
+- Latest docs-only checkpoint head before this write: `2a73497c3bb8c5f3ff04a0aea8039247754d9ae1`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -17,14 +17,9 @@
 - b39-b88 permanently reserved
 - Stable/Frozen Send: No
 
-## Batch recovery point — 2×2 evidence/docs sync
+## Recovery note for this round
 
-- baseline before docs chain: PR #29 head `da4bf533f6df4d0a4843af19bbee3748d30c4ca6`, base `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- completed: checkpoint content now records the external comparison classification, confirmed scoped-identity source gap, and 2×2 Human Runtime gate;
-- note: several docs-only checkpoint replacement commits were emitted while attempting the same sync; no product/config/version/Candidate/Artifact file changed in those writes;
-- pending: PR #29 metadata sync may be completed independently and is not a Runtime blocker;
-- next exact action: user runs Control A in visible Web Rule Lab; no product source/version/Candidate/Artifact changes;
-- recovery must not touch b88 product source/package identity or allocate b89.
+Several sequential checkpoint-only replacement commits were emitted while recording the same 2×2 gate. They contain no product/config/version/Candidate/Artifact change. Treat the latest checkpoint content as authority and do not replay earlier checkpoint writes. PR metadata may remain temporarily behind; that is docs metadata only and does not block the Human Runtime gate.
 
 ## Closed b88 Runtime conclusion
 
@@ -68,8 +63,6 @@ Classification:
 - target project has scoped official anchor `/g/{x}/c/{x}`: **Runtime Positive**;
 - scoped identity loss as continuation root cause: **Unverified**.
 
-Do not add `gizmo_id` to production or change ordinary navigation until causality is isolated.
-
 ## 2×2 causal matrix
 
 | Entry | Route | Current result |
@@ -79,32 +72,19 @@ Do not add `gizmo_id` to production or change ordinary navigation until causalit
 | SPA programmatic click | exact official `/g/{scope}/c/{id}` | Unknown — Control A |
 | SPA trusted click | exact official `/g/{scope}/c/{id}` | Positive — two visible-Web samples |
 
-Interpretation after both controls:
-
-- A positive + B positive -> trusted activation and SPA are not required; scoped route becomes strongest candidate.
-- A positive + B negative -> trusted activation not required; SPA/router lifecycle becomes strongest candidate.
-- A negative + B positive -> scoped route works under full navigation; inspect whether synthetic click actually invokes the official router before blaming activation.
-- A negative + B negative while trusted SPA stays positive -> trusted/transient activation becomes a stronger remaining candidate.
-
 ## Next exact action — Human Web Rule Lab gate
 
 ### Control A — first
 
-Use a project conversation. Preserve the existing privacy-safe entry/network probe. From the target `/g/.../c/...` page, save the exact target pathname locally in the page, return to `/` in the same document, then trigger `.click()` on the matching official anchor only after transient `navigator.userActivation.isActive` is false. Acceptance requires the captured click to show `isTrusted=false` and `userActivationIsActive=false`.
+Use a project conversation. Preserve the privacy-safe entry/network probe. From the target `/g/.../c/...` page, save the exact target pathname locally in the page, return to `/` in the same document, then trigger `.click()` on the matching official anchor only after transient `navigator.userActivation.isActive` is false. Acceptance requires `isTrusted=false` and `userActivationIsActive=false` at the synthetic click. Observe whether the page itself still performs `history.pushState -> /g/.../c/... -> bootstrap/plural snapshot -> stream_status -> /resume or official fallback`.
 
-Observe whether the page itself still performs:
-
-`history.pushState -> /g/.../c/... -> bootstrap/plural snapshot -> stream_status -> /resume or official fallback`.
-
-Do not Send a new prompt and do not Native-construct status/resume.
-
-### Control B — only after Control A result
+### Control B — after Control A result
 
 Use the official page's exact scoped href; do not guess the scope ID. Perform a true full document navigation to that exact `/g/.../c/...` URL for another external-active project response, then use a post-navigation privacy-safe resource/state probe to determine whether page-owned bootstrap/status/resume/snapshot traffic starts.
 
 ## b89 gate
 
-Do not allocate b89 before Controls A and B are known. The eventual b89 must change only the one variable supported by the matrix. In particular do not combine `gizmo_id` model changes, router changes, resume synthesis, WebSocket subscription, retries/polling or ordinary-conversation navigation changes in one Candidate.
+Do not allocate b89 before Controls A and B are known. The eventual b89 must change only the one variable supported by the matrix. Do not combine `gizmo_id` model changes, router changes, resume synthesis, WebSocket subscription, retries/polling or ordinary-conversation navigation changes in one Candidate.
 
 ## Preserved boundaries
 

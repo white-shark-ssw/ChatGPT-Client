@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest docs-only checkpoint head before this write: `2a73497c3bb8c5f3ff04a0aea8039247754d9ae1`
+- Latest docs-only checkpoint head before this write: `76aedd272599264079c6bbe1278b8476c2240e72`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -19,7 +19,7 @@
 
 ## Recovery note for this round
 
-Several sequential checkpoint-only replacement commits were emitted while recording the same 2×2 gate. They contain no product/config/version/Candidate/Artifact change. Treat the latest checkpoint content as authority and do not replay earlier checkpoint writes. PR metadata may remain temporarily behind; that is docs metadata only and does not block the Human Runtime gate.
+Multiple sequential checkpoint-only replacement commits were emitted while recording this same 2×2 gate. No product/config/version/Candidate/Artifact file changed. Treat this latest checkpoint as authority; do not replay those writes. PR metadata may be temporarily behind and can be synchronized after the Human Runtime result without changing experiment validity.
 
 ## Closed b88 Runtime conclusion
 
@@ -74,13 +74,9 @@ Classification:
 
 ## Next exact action — Human Web Rule Lab gate
 
-### Control A — first
+Control A first: use a project conversation, save the exact target pathname locally in page memory, return to `/` in the same document, and programmatically click the matching official scoped anchor only when transient `navigator.userActivation.isActive=false`. Acceptance requires the captured synthetic click to be `isTrusted=false` and activation false, followed (or not) by page-owned `history.pushState -> bootstrap/plural snapshot -> stream_status -> /resume/fallback`.
 
-Use a project conversation. Preserve the privacy-safe entry/network probe. From the target `/g/.../c/...` page, save the exact target pathname locally in the page, return to `/` in the same document, then trigger `.click()` on the matching official anchor only after transient `navigator.userActivation.isActive` is false. Acceptance requires `isTrusted=false` and `userActivationIsActive=false` at the synthetic click. Observe whether the page itself still performs `history.pushState -> /g/.../c/... -> bootstrap/plural snapshot -> stream_status -> /resume or official fallback`.
-
-### Control B — after Control A result
-
-Use the official page's exact scoped href; do not guess the scope ID. Perform a true full document navigation to that exact `/g/.../c/...` URL for another external-active project response, then use a post-navigation privacy-safe resource/state probe to determine whether page-owned bootstrap/status/resume/snapshot traffic starts.
+After Control A, Control B will full-navigate to the exact official scoped href and use a post-navigation privacy-safe resource/state probe to separate scoped route from SPA lifecycle.
 
 ## b89 gate
 

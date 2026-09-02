@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest feature/docs head before PR metadata synchronization: `96cb683758db422d60a5fef5634e01a31ac89f24`
+- Latest feature/docs head before PR metadata synchronization: `13c53edf5ecfb5d269efeee56ab68b2428820c34`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 product / Artifact / IPA identity unchanged
 - Stable/Frozen Send: No
@@ -26,7 +26,7 @@ Do not allocate b89 yet. Inspect current covered-Web source/page state for deter
 
 ## Batch recovery state
 
-All canonical-href evidence docs are written. Only PR #29 title/body synchronization, PR/head verification, and final checkpoint identity close remain. Exact head before PR metadata write: `96cb683758db422d60a5fef5634e01a31ac89f24`. Do not replay prior docs writes; do not touch product/version/Candidate/Artifact/IPA.
+All canonical-href evidence docs are written. Only PR #29 title/body synchronization, PR/head verification, and final checkpoint identity close remain. Exact head before PR metadata write: `13c53edf5ecfb5d269efeee56ab68b2428820c34`. Do not replay prior docs writes; do not touch product/version/Candidate/Artifact/IPA.
 
 ## Preserved boundaries
 

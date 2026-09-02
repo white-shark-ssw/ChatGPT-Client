@@ -1,0 +1,57 @@
+name: Stage b88 Focus A-B
+
+on:
+  push:
+    branches:
+      - staging/send-stream-b88-focus-ab-20260902
+    paths:
+      - "scripts/stage_b88_focus_ab.py"
+      - ".github/workflows/stage-b88-focus-ab.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging tooling
+        uses: actions/checkout@v4
+        with:
+          ref: staging/send-stream-b88-focus-ab-20260902
+          path: tools
+
+      - name: Checkout exact feature target
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+          path: target
+
+      - name: Guard exact target head
+        working-directory: target
+        run: |
+          test "$(git rev-parse HEAD)" = "69301659382c0291d5a9e7e53763a73ac7b48220"
+
+      - name: Apply exact b88 patch
+        working-directory: target
+        run: |
+          python3 ../tools/scripts/stage_b88_focus_ab.py
+          git diff --check
+          test "$(git diff --name-only | sort)" = $'.github/workflows/ios-foundation.yml\nChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          grep -F 'manualSyncFocusProbePending = forceReload' ChatGPTClient/RootViewController.swift >/dev/null
+          grep -F 'coveredExecutor.focusActivationAttempt' ChatGPTClient/RootViewController.swift >/dev/null
+          grep -F 'coveredExecutor.focusActivationResult' ChatGPTClient/RootViewController.swift >/dev/null
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 88;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DEV-send-stream-0.1.0-b88' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -F 'ChatGPTClient-DEV-send-stream-0.1.0-b88' .github/workflows/ios-foundation.yml >/dev/null
+
+      - name: Commit exact b88 product/config source
+        working-directory: target
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/ios-foundation.yml
+          git diff --cached --check
+          git commit -m 'feat(send): probe covered Web focus activation b88'
+          git push origin HEAD:dev/send-stream-20260829

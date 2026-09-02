@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — Control B is Runtime Positive and materially changes the root-cause ranking. A fresh full document navigation to the exact official project/GPT-scoped `/g/{scope}/c/{conversation}` route, started with transient user activation false, did start the official page-owned continuation loop. This proves trusted target-entry click is not required and proves the current production loss of scoped project route identity is the strongest evidenced defect. Do not synthesize Native `stream_status`/`resume`; the page still owns continuation. Before b89 product code, verify from the current service payload which existing field supplies the scoped route identity (external research strongly suggests `gizmo_id`, but that field is not yet our own Runtime-confirmed contract). Stable/Frozen Send remains No.**
+**Active — Control B remains Runtime Positive: fresh full navigation to exact official `/g/{scope}/c/{conversation}` starts official page-owned continuation with transient user activation false. New visible-Web trace now proves the project scope is already encoded in the official sidebar conversation anchor href before project entry; trusted SPA entry from an ordinary `/c/{id}` conversation to that anchor immediately issues page-owned `stream_status`. The earlier `gizmo_id` payload hypothesis is not Runtime-confirmed and is no longer the only pre-b89 path. Next evidence decision is whether b89 can safely reuse/resolve the official canonical href without inventing service fields. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Feature head after durable Control B evidence: `6621af9ece5e6820f934240fa155cb34a2d3decf`
+- Verified PR head before this documentation batch: `0bad8e48bd93cffeff320ff2b335bab00945398c`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -21,37 +21,51 @@
 
 Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-scoped-full-navigation-continuation-positive-20260903.md`.
 
-User Web Rule Lab result:
+- `phase=full_navigation_started`, `activationAtNavigation=false`;
+- Navigation Timing `type=navigate`;
+- final route `/g/{x}/c/{x}`;
+- Resource Timing not saturated;
+- page-owned `plural_snapshot=9`, `stream_status=8`, `resume=0`;
+- therefore exact scoped fresh navigation can start genuine official status/snapshot continuation without trusted click or same-document SPA entry.
 
-- marker `phase=full_navigation_started`;
-- `activationAtNavigation=false`;
-- target shape `/g/{x}/c/{x}`;
-- current page `/g/{x}/c/{x}`, visible, `hidden=false`, `hasFocus=true`, `readyState=complete`;
-- Navigation Timing `type=navigate` and duration about 926 ms, proving a fresh document navigation rather than same-document SPA transition;
-- capture elapsed about 149 seconds after navigation request;
-- Resource Timing not saturated: 24 total resources, `possiblySaturated=false`;
-- page-owned observed counts: `plural_snapshot=9`, `stream_status=8`, `resume=0`, `conversation_detail=0` in this post-load Resource Timing window;
-- first observed plural snapshot at ~89.1s; then from ~96.4s through ~145.7s the page repeatedly issued paired `stream_status + plural_snapshot` requests roughly every 6-8 seconds;
-- interpretation flags: `bootstrapObserved=true`, `continuationObserved=true`.
-
-This is official page-owned continuation but is **not evidence of resume-SSE** in this run because no `/resume` resource was observed. The current official page can continue the external active response through its own status/snapshot path.
-
-## 2×2 causal matrix — now decisive
+## Control A / B causal matrix
 
 | Entry | Route | Result |
 |---|---|---|
 | Full load | `/c/{id}` | Negative in b88 project samples |
-| Full load | exact official `/g/{scope}/c/{id}` | **Positive — Control B; page-owned status/snapshot continuation started** |
-| SPA programmatic click | exact official `/g/{scope}/c/{id}` | Router/bootstrap Positive; continuation Negative in Control A |
-| SPA trusted click | exact official `/g/{scope}/c/{id}` | Positive — two visible-Web samples |
+| Full load | exact official `/g/{scope}/c/{id}` | **Positive — Control B** |
+| SPA programmatic click | exact official `/g/{scope}/c/{id}` | Router/bootstrap Positive; continuation Negative |
+| SPA trusted click | exact official `/g/{scope}/c/{id}` | Positive — visible-Web samples |
+
+The strongest evidenced defect remains production loss of project/GPT scoped route identity. Native must not synthesize `stream_status`, `/resume`, offsets or cadence.
+
+## New canonical-href Runtime evidence — 2026-09-03
+
+Latest privacy-safe visible-Web observer started on an already loaded project route, then the user entered an ordinary conversation and clicked back to the target project conversation.
+
+Observed ordinary entry:
+
+- trusted click anchor target `/c/{id}`;
+- official `history.pushState` to `/c/{id}`;
+- official `GET /backend-api/conversations/{id}` with query keys `include_has_versions,num_turns` -> HTTP 200 JSON;
+- that ordinary payload exposed `gizmo_id=null`, `gizmo_type=null`, non-matching `memory_scope`, empty `context_scopes`;
+- official ordinary page then issued `GET /backend-api/conversation/{id}/stream_status` -> HTTP 200.
+
+Observed project re-entry:
+
+- trusted click target was already the exact official anchor `/g/{scope}/c/{conversation}` **before** navigation;
+- official `history.pushState` used that exact scoped target;
+- after route change, page issued `POST /backend-api/conversation/init`, `GET /backend-api/conversation/{conversation}/stream_status`, and sentinel prepare/finalize requests;
+- project `stream_status` returned HTTP 200;
+- no project `GET /backend-api/conversations/{conversation}` response was needed in this captured transition, so no project payload field can be claimed as the source of the scope from this sample.
 
 Interpretation:
 
-1. trusted click is **not required**, because Control B had activation false and still continued;
-2. same-document SPA entry is **not required**, because Control B was a fresh `navigate`;
-3. correct project/GPT scoped route identity is now the strongest evidenced differentiator versus the failed production `/c/{id}` path;
-4. Control A shows that scoped route plus an untrusted SPA transition is not automatically equivalent to a fresh scoped document load; therefore b89 should preserve the currently evidenced full-load behavior rather than invent a router emulation;
-5. Native must still not construct `stream_status`, `/resume`, offsets, cadence, polling or a second response authority.
+1. current official Web possesses the canonical scoped route in the conversation anchor itself before target entry;
+2. the route scope does not need to be rediscovered from a project Detail request during this successful transition;
+3. `gizmo_id` remains plausible external corroboration but is **not** a Runtime-confirmed service contract for this client;
+4. b89 should prefer an evidenced official canonical-route source over guessing an API field;
+5. whether the covered production Web can resolve that canonical href deterministically for a Native-selected conversation without manual sidebar expansion remains the key implementation evidence gap.
 
 ## Confirmed source gap
 
@@ -61,49 +75,41 @@ Current source still has:
 - `ConversationDetail`: no project/GPT scoped route identity;
 - list cache persists only `id/title/updateTime`;
 - `parseConversationSummary` reads only `id/title/update_time`;
-- `CoveredWebSendExecutor.observeExistingConversation` and `sendExistingConversation` both hard-load `https://chatgpt.com/c/<conversationID>`.
+- `CoveredWebSendExecutor.observeExistingConversation` and `sendExistingConversation` hard-load `https://chatgpt.com/c/<conversationID>`.
 
-Therefore current production cannot reproduce the exact scoped project full-load that Control B proved works.
+Therefore production cannot reproduce the exact scoped route that Control B proved works.
 
-## Remaining evidence gate before b89 code
+## Next exact action
 
-External read-only comparison research strongly corroborates `gizmo_id` as the current service field used for `/g/{gizmo}/c/{conversation}` and Project membership. That is useful corroboration but does not satisfy the repository rule against guessing service fields.
+Do **not** allocate b89 yet and do not guess `gizmo_id`.
 
-Next Human Web Rule Lab gate: on a current project conversation, make one privacy-safe structural read of the current official conversation/list payload and return only booleans/types proving whether the matching current item/detail exposes a non-empty `gizmo_id` (or another existing scoped-route field). Do not return the actual ID, body, title, Cookie, token or auth material.
+First inspect current covered-Web source and existing Web-side state to determine whether, for a Native-selected `conversationID`, the official page already exposes a deterministic canonical conversation href independent of manually expanding project/sidebar UI. Candidate evidence surfaces must be current official DOM/page state or an already-used official response; do not add broad auto-discovery, timers, retries, polling, router emulation or a guessed project endpoint.
 
-If `gizmo_id` is Runtime-confirmed, b89 may be narrowly scoped to preserving that existing route identity through `ConversationSummary`/cache (and Detail only if required by actual call flow) and using exact full `/g/<scope>/c/<conversation>` navigation for project targets while leaving ordinary `/c/<conversation>` unchanged. Do not combine router emulation, resume synthesis, polling, WebSocket subscription or unrelated Send changes.
+If a deterministic canonical href is available, b89 may be narrowly scoped to using exact fresh full navigation to that official href for scoped conversations while leaving ordinary `/c/<conversation>` unchanged. If not, one further privacy-safe Web Rule Lab structure probe may be needed before product code.
 
-## Documentation batch status
+## Batch recovery point — canonical href evidence docs
 
-Control B docs batch is complete:
+Baseline before batch: PR #29 head `0bad8e48bd93cffeff320ff2b335bab00945398c`, open / mergeable / unmerged, base `main` at `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
 
-- checkpoint updated;
-- durable Runtime evidence created;
-- PR #29 title/body synchronized;
-- verified PR remained open / mergeable / unmerged with head `6621af9ece5e6820f934240fa155cb34a2d3decf` before this checkpoint-close write.
+Planned batches:
 
-No product source, version/build, Candidate, Artifact or IPA identity changed in this batch. Durable MODULE_STATUS / TECHNICAL_DECISIONS / WEB_SEND_ADAPTER still contain the earlier Control-A hypothesis in their top override text; current checkpoint and exact Control B Runtime evidence outrank them until the next source-field/product milestone, when those durable summaries must be synchronized in the same round.
+1. checkpoint this recovery state — **this write**;
+2. create durable Runtime evidence for the official canonical project anchor transition;
+3. synchronize PR #29 summary to the new canonical-href evidence;
+4. close checkpoint batch with actual resulting head and next exact action.
 
-## Evidence ladder / identity
+Do not touch product source, version/build, Candidate, Artifact or IPA during this docs-only batch. b88 identity remains unchanged.
 
-- Control B: Web Rule Lab Runtime Positive for exact scoped full navigation and page-owned status/snapshot continuation.
+## Evidence ladder / preserved boundaries
+
+- Control B: Runtime Positive for exact scoped full navigation continuation.
+- New anchor trace: Runtime Positive that official project scope is already encoded in trusted visible-Web anchor href and project entry immediately starts `stream_status`.
 - No product source changed yet.
-- No new Candidate allocated yet.
-- No CI/Artifact/IPA produced yet.
-- b88 identity remains unchanged.
-- Stable/Frozen Send: No.
-
-## Preserved boundaries
-
-- client-owned Send keeps true same-response SSE;
-- cross-platform continuation follows genuine official page-owned SSE or page-owned status/snapshot behavior, whichever the official page actually emits;
-- `ConversationRepository` remains sole Native response/content authority;
-- `AuthSessionStore` remains sole Native auth/account authority;
-- default persistent `WKWebsiteDataStore` remains persistent Web auth authority;
-- no Native `stream_status`, `/resume`, guessed offset, polling, retry/watchdog, duplicate Send, WebSocket-body authority or second response store;
-- hidden thoughts remain non-presentational;
-- b80 presentation/final boundaries remain preserved.
+- No new Candidate / CI / Artifact / IPA.
+- `ConversationRepository` remains sole Native response/content authority.
+- Native must not construct `stream_status`, `/resume`, guessed offset, polling, retry/watchdog, duplicate Send or WebSocket-body authority.
+- hidden thoughts remain non-presentational; b80 presentation/final boundaries remain preserved.
 
 ## Session round counter
 
-This user turn is **round 43**.
+This user turn is **round 49**.

@@ -8,6 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
+- Branch head before this final checkpoint write: `b6955c4e14d531b79196bdceca734cc45404c14c`
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - b85 Runtime: **manual authoritative block projection Positive / automatic continuation Rejected**
 - b86 exact diagnostics product source: `dc77a94be5b2f7eecd822480f759358ad6a0ad25`
@@ -95,23 +96,19 @@ Entering/selecting a conversation should eventually perform exactly one authorit
 - b86 true cross-platform SSE: **Not acquired**
 - Stable/Frozen Send: **No**
 
-## Batch recovery point — b86 Runtime documentation
+## Documentation recovery — completed
 
-Known branch before the mistaken index write: `c5b4d0bd9ded4efd228532b5c850137a1920bea3`.
+During this round a whole-file `BUILD_TEST_INDEX.md` update accidentally truncated historical candidate rows. This affected documentation only; b86 product source, package and Runtime evidence were unchanged.
 
-Completed:
-1. Durable b86 Runtime evidence created.
-2. Checkpoint updated with b86 Runtime conclusion.
-3. A mistaken whole-file `BUILD_TEST_INDEX.md` replacement at commit `8436d4529aa2c5b476d59a5f083e3a99e0e6ff48` truncated historical rows; this is a documentation-only error.
-4. A repair commit object `49905f8b4a686487f9651cef683dd2d1dbf39165` was created whose tree restores `docs/project/BUILD_TEST_INDEX.md` to exact prior blob `55673bc3f855bbe843c54d5095509037f0f69245` while preserving the b86 evidence/checkpoint commits.
+Recovery is complete:
 
-Pending:
-1. Move branch ref to repair commit `49905f8b4a686487f9651cef683dd2d1dbf39165` if it has not already been moved.
-2. Verify full BUILD_TEST_INDEX history is restored.
-3. Update only the b86 row using a non-destructive exact-line patch method.
-4. Update PR #29 to b86 Runtime gate.
+1. full index history was restored from exact prior blob `55673bc3f855bbe843c54d5095509037f0f69245`;
+2. b86 Runtime was then updated through an exact one-line guarded patch only;
+3. verification confirmed historical b82/b81/b80/etc. rows remain present;
+4. temporary index patcher/workflow were removed;
+5. PR #29 now reflects the b86 Runtime gate.
 
-Must not touch during recovery: b86 product/config source, Artifact identity, b85 accepted Detail projection, client-owned SSE, Frozen presentation/final boundaries.
+Current authoritative b86 index row: **Diagnostic Runtime Positive; page continuation + automatic final convergence absent in exact run; permanently reserved**.
 
 ## Session round counter
 

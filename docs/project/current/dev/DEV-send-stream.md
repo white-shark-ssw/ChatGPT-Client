@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified PR head before this documentation batch: `0bad8e48bd93cffeff320ff2b335bab00945398c`
+- Verified feature head after durable canonical-href evidence: `b13806e6ef50179acecc29e6a61facfbe246f302`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -39,7 +39,9 @@ Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-scoped-full-nav
 
 The strongest evidenced defect remains production loss of project/GPT scoped route identity. Native must not synthesize `stream_status`, `/resume`, offsets or cadence.
 
-## New canonical-href Runtime evidence — 2026-09-03
+## Canonical-href Runtime evidence — 2026-09-03
+
+Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-official-project-canonical-anchor-20260903.md`.
 
 Latest privacy-safe visible-Web observer started on an already loaded project route, then the user entered an ordinary conversation and clicked back to the target project conversation.
 
@@ -87,23 +89,21 @@ First inspect current covered-Web source and existing Web-side state to determin
 
 If a deterministic canonical href is available, b89 may be narrowly scoped to using exact fresh full navigation to that official href for scoped conversations while leaving ordinary `/c/<conversation>` unchanged. If not, one further privacy-safe Web Rule Lab structure probe may be needed before product code.
 
-## Batch recovery point — canonical href evidence docs
+## Documentation batch status
 
-Baseline before batch: PR #29 head `0bad8e48bd93cffeff320ff2b335bab00945398c`, open / mergeable / unmerged, base `main` at `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+Canonical-href evidence batch:
 
-Planned batches:
+- checkpoint recovery point written at commit `190cbfca019c3aa0f3f2d20e5538d56cf2e08f96`;
+- durable Runtime evidence created at commit `b13806e6ef50179acecc29e6a61facfbe246f302`;
+- PR #29 verified open / mergeable / unmerged at head `b13806e6ef50179acecc29e6a61facfbe246f302` before final checkpoint close;
+- PR summary synchronization is the only remaining docs action after this checkpoint verification write.
 
-1. checkpoint this recovery state — **this write**;
-2. create durable Runtime evidence for the official canonical project anchor transition;
-3. synchronize PR #29 summary to the new canonical-href evidence;
-4. close checkpoint batch with actual resulting head and next exact action.
-
-Do not touch product source, version/build, Candidate, Artifact or IPA during this docs-only batch. b88 identity remains unchanged.
+No product source, version/build, Candidate, Artifact or IPA changed. b88 identity remains unchanged.
 
 ## Evidence ladder / preserved boundaries
 
 - Control B: Runtime Positive for exact scoped full navigation continuation.
-- New anchor trace: Runtime Positive that official project scope is already encoded in trusted visible-Web anchor href and project entry immediately starts `stream_status`.
+- Canonical-href trace: Runtime Positive that official project scope is already encoded in visible-Web anchor href and project entry immediately starts `stream_status`.
 - No product source changed yet.
 - No new Candidate / CI / Artifact / IPA.
 - `ConversationRepository` remains sole Native response/content authority.

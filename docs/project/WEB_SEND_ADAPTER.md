@@ -1,5 +1,15 @@
 # Web Send Adapter / Rule Update Playbook
 
+## b88 focus activation Runtime qualification — 2026-09-02
+
+A known-good visible Web Rule Lab sample on the same `WKWebsiteDataStore.default()` authority immediately acquired/live-continued a newly active cross-platform response and showed the active Stop control while `document.hasFocus=true`. Its coarse `route=other` result confirms route shape is diagnostic-only.
+
+Exact b88 then changed only first-responder activation after manual-Sync rearm. Real-device Runtime produced `nativeFirstResponder=true` and direct `document.hasFocus=true`, proving the covered page can obtain focus without enabling Web interaction or changing the programmatic target load.
+
+No page-owned `stream_status`, `/resume`, external streaming or snapshot followed in that run; final authoritative materialization required another explicit Sync. Do **not** yet conclude that focus is insufficient: the target was already at its final tool call, and the last authoritative proof that the generation was active preceded focus by only ~1 second. Repeat exact b88 earlier in a long generation before moving to SPA/router entry work.
+
+This evidence still does not authorize Native protocol synthesis, guessed offsets, polling, timers, retries/watchdogs, duplicate Send, WebSocket-body authority or a second response store.
+
 ## b82 completion-time acquisition qualification — 2026-09-02
 
 Exact b82 Runtime changes the external-discovery interpretation. The covered user WebSocket was injected/observed from document start and produced no incoming frame during the long remote generation interval; the first exact-conversation `targetMatch=true` frame arrived only when an automatic authoritative Detail Sync already returned two added visible messages (remote user + assistant) and the user reports the answer was complete. The subsequent one-time page re-arm produced no `externalStreamingObserved` or external snapshot.

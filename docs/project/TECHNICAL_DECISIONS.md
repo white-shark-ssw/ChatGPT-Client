@@ -1,5 +1,13 @@
 # Technical Decisions
 
+## b88 focus Runtime qualification — 2026-09-02
+
+- b88 real-device Runtime proves covered first-responder activation is technically effective: manual-Sync rearm produced `nativeFirstResponder=true`, a page focus event, and direct `document.hasFocus=true`.
+- The same run produced no official page-owned continuation traffic and final materialization still required a later explicit Sync. This is not yet sufficient to reject focus because the user entered at the final tool call and authoritative active Detail at `14:44:36Z` preceded focus at `14:44:37Z` by only about one second.
+- Therefore focus causality remains **Inconclusive**. Do not promote SPA/router entry as causal yet and do not allocate b89. Repeat exact b88 earlier in a long remote generation.
+- The visible-Web known-good sample remains valid: current official Web can acquire/live-continue cross-platform active responses under the same persistent WebKit session authority. The remaining problem is covered-page activation/entry behavior, not server capability or Repository response ownership.
+- Existing prohibitions remain: no Native `stream_status`/`resume`/offset construction, polling, timers, retries/watchdogs, duplicate Send, WebSocket body authority or second response store.
+
 ## b85 Runtime / b86 continuation diagnostics qualification — 2026-09-02
 
 - **Authoritative block path:** b85 real-device Runtime confirms explicit `同步最新消息` may project the already-approved active Detail trailing reasoning/tool timeline through the existing per-conversation Repository response owner. Repeated Sync updated one response generation (`1 -> 5 -> 7` timeline items) and final authoritative materialization reconciled it correctly.

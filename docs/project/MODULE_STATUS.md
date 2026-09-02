@@ -1,5 +1,13 @@
 # Module Status
 
+## DEV-send-stream b88 focus Runtime override — 2026-09-02
+
+- Known-good visible official Web can immediately acquire/live-continue a newly active cross-platform response and shows Stop while `document.hasFocus=true`; the coarse route probe is not conversation-state authority.
+- b88 identity: exact product source `31d24e8b9ab4676effd757a793162abbdb0d7012`; clean package head `378811691ccbd6f44b232d8cc5564628e9b021e1`; Candidate/Build `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`; Push+PR CI passed; Artifact `9848999246`; IPA `sha256:cb89cf51f451252087b2abdd6533407113614b2e9efa072ba84e4877f2d02298`.
+- Exact b88 Runtime proves the one-shot focus mechanism works: `nativeFirstResponder=true` and direct `documentHasFocus=true` after manual-Sync rearm.
+- No `stream_status`, `/resume`, external streaming or snapshot followed in the supplied run, and final materialization still required another explicit Sync. However the response was already at the final tool phase; the last authoritative active Detail proof preceded focus by only ~1 second, so focus causality remains Inconclusive rather than Rejected.
+- Reuse exact b88 for one earlier/mid-generation A/B. No b89/product change yet. Stable/Frozen Send remains No.
+
 ## DEV-send-stream b86 diagnostics / b85 Runtime override — 2026-09-02
 
 - b85 identity: exact product source `ec64dd170a6386612af8cb68b394045ce3c85313`; Push/PR CI passed; Artifact `9822441595`; IPA `sha256:f03f5d657cbf71772d197fcea969cafb73d249c2dcc3dd2feb72e139d6e9cf61`.

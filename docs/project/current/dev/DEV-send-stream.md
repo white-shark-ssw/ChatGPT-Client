@@ -19,50 +19,38 @@
 
 ## b87 exact Runtime
 
-Exact canonical b87 / iPhone / iOS17.0.
-
 - Active authoritative Detail evolved `mapping 168 -> 170`, trailing timeline/tools `66 -> 67`; one explicit Sync correctly created the existing external response generation.
 - Manual-rearm official page reached route `conversation`, `readyState=complete`, `visibilityState=visible`, `document.hidden=false`.
 - Native WKWebView was attached to key window, not hidden, non-empty and intersecting the window.
 - It remained non-interactive, under one visible Native sibling, and every recorded page event had `document.hasFocus=false`.
-- After re-arm page load, approximately **161 seconds** of clean foreground produced zero `stream_status`, `/resume`, page-owned snapshot, DOM continuation or SSE events.
+- After re-arm page load, approximately **161 seconds** clean foreground produced zero `stream_status`, `/resume`, page-owned snapshot, DOM continuation or SSE events.
 - User WebSocket frames remained `targetMatch=false`.
-- Final assistant materialized only after a later explicit Sync; `externalDetailReconciled(authoritative_assistant_materialized)` worked once authoritative Detail was fetched.
+- Final assistant materialized only after a later explicit Sync; final reconciliation worked once authoritative Detail was fetched.
 
 ## Current conclusion
 
-Rejected as primary blockers: Page Visibility hidden state, detached/off-window WebView, incomplete readiness, wrong conversation route, or insufficient foreground wait.
+Rejected as primary blockers: Page Visibility hidden state, detached/off-window WebView, incomplete readiness, wrong conversation route, insufficient foreground wait.
 
-Remaining evidence fork:
-
-1. focus/interactivity/Native occlusion is causally required; or
-2. genuine visible official SPA/router conversation-entry transition is the trigger rather than programmatic full `/c/<id>` load.
-
-`document.hasFocus=false` is a strong observed differential, **not yet a proven cause**. `/resume` offset remains downstream and must not be guessed before page-owned `stream_status` begins.
+Remaining evidence fork: focus/interactivity/Native occlusion vs genuine visible official SPA/router conversation-entry transition. `document.hasFocus=false` is a strong observed differential, not a proven cause. `/resume` offset remains downstream.
 
 Automatic final convergence remains absent because no reliable acquisition/completion trigger fetched authoritative Detail after completion.
 
 ## Next exact action — visible Web Rule Lab A/B
 
-No b88 and no new IPA yet.
+No b88 and no new IPA yet. While another official client generates a long response, open Settings -> Web Rule Lab, visibly enter the same active conversation, and return only:
 
-While another official client is generating a long response:
+- `document.visibilityState`
+- `document.hidden`
+- `document.hasFocus()`
+- `document.readyState`
+- route shape `conversation/root/other`
 
-1. open Settings -> Web Rule Lab;
-2. visibly enter/tap the same active conversation in official Web UI;
-3. return only these privacy-safe fields from that visible active page:
-   - `document.visibilityState`
-   - `document.hidden`
-   - `document.hasFocus()`
-   - `document.readyState`
-   - route shape `conversation/root/other`.
-
-If known-good visible Web has `hasFocus=true` while continuation starts, focus/activation A/B is evidence-backed. If visible Web also has `hasFocus=false` while continuation starts, reject focus and investigate SPA/router entry transition.
+If known-good visible Web has `hasFocus=true` while continuation starts, focus/activation A/B is evidence-backed. If it also has `hasFocus=false` while continuation starts, reject focus and investigate SPA/router entry transition.
 
 ## Preserved boundaries
 
 - client-owned Send true same-response SSE preserved;
-- `ConversationRepository` remains sole Native response/content authority;
+- `ConversationRepository` sole Native response/content authority;
 - no polling/timer/watchdog/retry/fallback/duplicate Send;
 - no guessed Native resume offset;
 - hidden thoughts non-presentational;
@@ -78,7 +66,7 @@ If known-good visible Web has `hasFocus=true` while continuation starts, focus/a
 - focus causality: **Unverified**
 - Stable/Frozen Send: **No**
 
-Durable Runtime evidence and `BUILD_TEST_INDEX.md` are updated; temporary docs tooling is removed. PR #29 metadata is maintained separately and does not alter branch/product identity.
+Durable Runtime evidence and `BUILD_TEST_INDEX.md` are updated; temporary docs tooling is removed. PR metadata is external to branch source.
 
 ## Session round counter
 

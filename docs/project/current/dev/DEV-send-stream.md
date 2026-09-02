@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — exact b86 Runtime is Diagnostic Positive / continuation activation absent. b85 authoritative Detail block projection remains Runtime Positive, but the covered official page issued no matching `stream_status`, `/resume`, page-owned snapshot or SSE for at least 75 seconds after a clean manual re-arm while authoritative Detail proved active reasoning existed. In the same run the user-socket exact-target completion hint also did not fire (`targetMatch=false`), so the completed assistant message appeared only after a later explicit Sync. Stable/Frozen Send remains No.**
+**Active — exact b86 Runtime is Diagnostic Positive / continuation activation absent. b85 authoritative Detail block projection remains Runtime Positive. b87 is now allocated as diagnostics-only to compare covered-page activation/visibility/focus/readiness with the known-good visible official-Web entry path; no continuation behavior change is authorized yet. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Branch head before this final checkpoint write: `b6955c4e14d531b79196bdceca734cc45404c14c`
+- Verified branch/PR head before b87 allocation: `7ead51842d3176ad8ceab3360bc8c940ffcb72b4`
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - b85 Runtime: **manual authoritative block projection Positive / automatic continuation Rejected**
 - b86 exact diagnostics product source: `dc77a94be5b2f7eecd822480f759358ad6a0ad25`
@@ -20,7 +20,8 @@
 - b86 ZIP: `sha256:cdccdcd034964b99e98e62c2e79a9bece96c190138c774e6f1590896d54fbacb`
 - b86 IPA: `sha256:25d483ac31473b124e6ad555b79c488e78da91ec1761ee8a40076b6e978bee6f`
 - b86 Runtime export: exact Candidate b86 / source `f90caca0419f` / iPhone / iOS17.0
-- b39-b86 permanently reserved
+- b87 Candidate / Build: `DEV-send-stream-0.1.0-b87` / `0.1.0 (87)` — **allocated, not yet produced**
+- b39-b87 permanently reserved once b87 product identity is emitted; until then this checkpoint owns the allocation and no other task may use it
 - Stable/Frozen Send: No
 
 ## Send MVP contract
@@ -54,17 +55,40 @@ Recorded visible Web Rule Lab evidence uses the same default persistent `WKWebsi
 
 Exact b86 covered programmatic `/c/<id>` load differs materially. This strengthens the working hypothesis that server capability is not the primary blocker; the likely differential is page activation/navigation/visibility/focus state, but the exact causal field/action remains Unverified.
 
-## Next exact action
+## b87 diagnostics-only scope
 
-Before behavioral changes, diagnose the covered page activation state against the known-good visible Web entry path, limited to privacy-safe structure:
+Candidate availability was checked against the current candidate index, actual Xcode identity (`0.1.0 (86)`), active checkpoints, branch/PR identity and repository commit search; no existing b87 allocation/commit was found.
 
-- `document.visibilityState` / `document.hidden`;
-- `document.hasFocus()`;
-- route/readiness shortly after `didFinish`;
-- Native WebView window attachment / hidden / alpha / bounds intersection;
-- whether a genuinely user-visible navigation/activation transition is what causes official Web to issue `stream_status`.
+b87 may add only privacy-safe, event-driven diagnostics:
 
-Do not call `stream_status` natively, guess `/resume` offset, add retry/polling, or make full Web UI a product dependency.
+- JS page activation state: `document.visibilityState`, `document.hidden`, `document.hasFocus()`, `document.readyState`;
+- route shape only (`conversation` / `root` / `other`), never raw IDs or full paths;
+- event reason only for initial/readystatechange/visibilitychange/focus/blur/pageshow/pagehide/popstate;
+- Native WKWebView structure at attach/load: window attachment, hidden state, alpha-zero boolean, empty bounds, coarse window intersection, sibling/subview position and interaction-enabled boolean.
+
+b87 must **not** call `stream_status`, call `/resume`, choose/guess offset, add polling/timers/retries/watchdogs, front/focus/show the covered WebView, implement conversation-entry Sync, change response authority, or expose hidden reasoning.
+
+## Batch recovery point — b87 activation diagnostics
+
+Known baseline before b87 writes:
+
+- branch/PR head: `7ead51842d3176ad8ceab3360bc8c940ffcb72b4`;
+- main: `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
+- current product identity: b86 / build 86;
+- normal package workflow still names b86;
+- b87 allocation belongs only to `DEV-send-stream`.
+
+Planned small write batches:
+
+1. **Completed:** checkpoint allocation + recovery point.
+2. **Pending:** guarded product/config patch: `ChatGPTClient/RootViewController.swift` + `ChatGPTClient.xcodeproj/project.pbxproj` only.
+3. **Pending:** verify product commit and diff; update normal `.github/workflows/ios-foundation.yml` to b87 identity without Actions self-modifying workflow code.
+4. **Pending:** Push/PR CI, Artifact/package identity verification.
+5. **Pending:** durable b87 build evidence, `BUILD_TEST_INDEX.md`, PR #29 and final checkpoint synchronization; remove any temporary staging script/workflow.
+
+Next exact recovery action: if interrupted, re-read this checkpoint and actual branch head, then perform only the first still-pending deterministic batch. Do not replay completed writes and do not reuse b87 elsewhere.
+
+Must not touch during recovery: b85/b86 evidence identities, client-owned Send SSE, b80 Frozen presentation/final boundaries, response/auth state owners, or deferred automatic discovery scope.
 
 ## Recorded later requirement
 
@@ -94,22 +118,9 @@ Entering/selecting a conversation should eventually perform exactly one authorit
 - b86 page-owned continuation activation: **Absent in exact run**
 - b86 automatic final convergence: **Absent in exact run; final materialized only after manual Sync**
 - b86 true cross-platform SSE: **Not acquired**
+- b87 Code/CI/Artifact/Runtime: **Pending**
 - Stable/Frozen Send: **No**
-
-## Documentation recovery — completed
-
-During this round a whole-file `BUILD_TEST_INDEX.md` update accidentally truncated historical candidate rows. This affected documentation only; b86 product source, package and Runtime evidence were unchanged.
-
-Recovery is complete:
-
-1. full index history was restored from exact prior blob `55673bc3f855bbe843c54d5095509037f0f69245`;
-2. b86 Runtime was then updated through an exact one-line guarded patch only;
-3. verification confirmed historical b82/b81/b80/etc. rows remain present;
-4. temporary index patcher/workflow were removed;
-5. PR #29 now reflects the b86 Runtime gate.
-
-Current authoritative b86 index row: **Diagnostic Runtime Positive; page continuation + automatic final convergence absent in exact run; permanently reserved**.
 
 ## Session round counter
 
-This user turn is **round 19**.
+This user turn is **round 20**.

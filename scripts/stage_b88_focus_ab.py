@@ -3,7 +3,6 @@ from pathlib import Path
 root = Path('.')
 root_vc = root / 'ChatGPTClient/RootViewController.swift'
 pbx = root / 'ChatGPTClient.xcodeproj/project.pbxproj'
-workflow = root / '.github/workflows/ios-foundation.yml'
 
 text = root_vc.read_text()
 
@@ -121,16 +120,6 @@ text = text.replace('CURRENT_PROJECT_VERSION = 87;', 'CURRENT_PROJECT_VERSION = 
 text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b87";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b88";')
 pbx.write_text(text)
 
-text = workflow.read_text()
-assert text.count('# Candidate: DEV-send-stream-0.1.0-b87') == 1, 'workflow candidate anchor mismatch'
-assert text.count('name: iOS Send Page Activation Diagnostics b87') == 1, 'workflow name anchor mismatch'
-assert text.count('name: ChatGPTClient-DEV-send-stream-0.1.0-b87') == 1, 'workflow artifact anchor mismatch'
-text = text.replace('# Candidate: DEV-send-stream-0.1.0-b87', '# Candidate: DEV-send-stream-0.1.0-b88', 1)
-text = text.replace('# Product source: 6f98816f37c749c8d4cb8dfef4c4645df2c0f27a', '# Product scope: focus-only causal A/B after visible-Web Runtime evidence', 1)
-text = text.replace('name: iOS Send Page Activation Diagnostics b87', 'name: iOS Send Focus Activation A-B b88', 1)
-text = text.replace('name: ChatGPTClient-DEV-send-stream-0.1.0-b87', 'name: ChatGPTClient-DEV-send-stream-0.1.0-b88', 1)
-workflow.write_text(text)
-
 assert 'manualSyncFocusProbePending = forceReload' in root_vc.read_text()
 assert 'coveredExecutor.focusActivationAttempt' in root_vc.read_text()
 assert 'coveredExecutor.focusActivationResult' in root_vc.read_text()
@@ -138,4 +127,3 @@ assert root_vc.read_text().count('webView.isUserInteractionEnabled = false') == 
 assert 'CURRENT_PROJECT_VERSION = 87;' not in pbx.read_text()
 assert pbx.read_text().count('CURRENT_PROJECT_VERSION = 88;') == 2
 assert pbx.read_text().count('DEV-send-stream-0.1.0-b88') == 2
-assert 'DEV-send-stream-0.1.0-b87' not in workflow.read_text()

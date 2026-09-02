@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified feature head before this checkpoint write: `aa369ba43c490dca03acbcd168c920cda517e4eb`
+- Feature head after durable Control B evidence: `6621af9ece5e6820f934240fa155cb34a2d3decf`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -18,6 +18,8 @@
 - Stable/Frozen Send: No
 
 ## Control B Runtime — exact scoped full navigation Positive
+
+Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-scoped-full-navigation-continuation-positive-20260903.md`.
 
 User Web Rule Lab result:
 
@@ -71,23 +73,16 @@ Next Human Web Rule Lab gate: on a current project conversation, make one privac
 
 If `gizmo_id` is Runtime-confirmed, b89 may be narrowly scoped to preserving that existing route identity through `ConversationSummary`/cache (and Detail only if required by actual call flow) and using exact full `/g/<scope>/c/<conversation>` navigation for project targets while leaving ordinary `/c/<conversation>` unchanged. Do not combine router emulation, resume synthesis, polling, WebSocket subscription or unrelated Send changes.
 
-## Batch recovery point — Control B durable sync
+## Documentation batch status
 
-Baseline before this write:
+Control B docs batch is complete:
 
-- feature head `aa369ba43c490dca03acbcd168c920cda517e4eb`;
-- PR #29 open / mergeable / unmerged;
-- main `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- b88 product/Candidate/Artifact/IPA identity unchanged.
+- checkpoint updated;
+- durable Runtime evidence created;
+- PR #29 title/body synchronized;
+- verified PR remained open / mergeable / unmerged with head `6621af9ece5e6820f934240fa155cb34a2d3decf` before this checkpoint-close write.
 
-Planned documentation batches:
-
-1. checkpoint with exact Control B result and next source-field gate — **this batch**;
-2. durable Runtime evidence file for Control B;
-3. synchronize PR #29 summary;
-4. close checkpoint recovery state after verifying actual head.
-
-Do not touch product source, version/build settings, Candidate or Artifact during this docs batch. Durable MODULE_STATUS / TECHNICAL_DECISIONS / WEB_SEND_ADAPTER must be synchronized no later than the first b89 source-field/product milestone; current checkpoint + Runtime evidence outrank their earlier Control-A hypothesis in the interim.
+No product source, version/build, Candidate, Artifact or IPA identity changed in this batch. Durable MODULE_STATUS / TECHNICAL_DECISIONS / WEB_SEND_ADAPTER still contain the earlier Control-A hypothesis in their top override text; current checkpoint and exact Control B Runtime evidence outrank them until the next source-field/product milestone, when those durable summaries must be synchronized in the same round.
 
 ## Evidence ladder / identity
 

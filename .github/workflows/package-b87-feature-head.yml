@@ -1,0 +1,42 @@
+name: Package exact b87 feature head
+
+on:
+  push:
+    branches:
+      - staging/send-stream-b87-activation-20260902
+    paths:
+      - ".github/workflows/package-b87-feature-head.yml"
+
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact feature head
+        uses: actions/checkout@v4
+        with:
+          ref: 49cf74f5f97e5afd3ad78aa59d3b9ad19673d488
+
+      - name: Verify exact source
+        run: |
+          test "$(git rev-parse HEAD)" = "49cf74f5f97e5afd3ad78aa59d3b9ad19673d488"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 87;' ChatGPTClient.xcodeproj/project.pbxproj)" -eq 2
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b87\";' ChatGPTClient.xcodeproj/project.pbxproj)" -eq 2
+
+      - name: Build unsigned TrollStore IPA candidate
+        run: bash scripts/build_ipa.sh
+
+      - name: Inspect artifact
+        run: |
+          ls -lh build/artifacts
+          unzip -l build/artifacts/*.ipa | head -n 40
+
+      - name: Upload exact feature-head IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b87-feature-head
+          path: |
+            build/artifacts/*.ipa
+            build/artifacts/*.sha256
+          if-no-files-found: error
+          retention-days: 14

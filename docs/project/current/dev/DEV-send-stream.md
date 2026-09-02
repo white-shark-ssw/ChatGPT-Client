@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — Control B remains Runtime Positive: fresh full navigation to exact official `/g/{scope}/c/{conversation}` starts official page-owned continuation with transient user activation false. New visible-Web trace now proves the project scope is already encoded in the official sidebar conversation anchor href before project entry; trusted SPA entry from an ordinary `/c/{id}` conversation to that anchor immediately issues page-owned `stream_status`. The earlier `gizmo_id` payload hypothesis is not Runtime-confirmed and is no longer the only pre-b89 path. Next evidence decision is whether b89 can safely reuse/resolve the official canonical href without inventing service fields. Stable/Frozen Send remains No.**
+**Active — Control B remains Runtime Positive: fresh full navigation to exact official `/g/{scope}/c/{conversation}` starts official page-owned continuation with transient user activation false. New visible-Web trace proves the project scope is already encoded in the official sidebar conversation anchor href before project entry; trusted SPA entry from an ordinary `/c/{id}` conversation to that anchor immediately issues page-owned `stream_status`. The earlier `gizmo_id` payload hypothesis is not Runtime-confirmed and is no longer the only pre-b89 path. Next evidence decision is whether b89 can safely reuse/resolve the official canonical href without inventing service fields. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified feature head after durable canonical-href evidence: `b13806e6ef50179acecc29e6a61facfbe246f302`
+- Latest verified docs head before PR-summary sync: `4633f18a113710276838c2d65c0ea58c144d9752`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -91,14 +91,13 @@ If a deterministic canonical href is available, b89 may be narrowly scoped to us
 
 ## Documentation batch status
 
-Canonical-href evidence batch:
+Canonical-href evidence docs are complete:
 
-- checkpoint recovery point written at commit `190cbfca019c3aa0f3f2d20e5538d56cf2e08f96`;
-- durable Runtime evidence created at commit `b13806e6ef50179acecc29e6a61facfbe246f302`;
-- PR #29 verified open / mergeable / unmerged at head `b13806e6ef50179acecc29e6a61facfbe246f302` before final checkpoint close;
-- PR summary synchronization is the only remaining docs action after this checkpoint verification write.
-
-No product source, version/build, Candidate, Artifact or IPA changed. b88 identity remains unchanged.
+- recovery checkpoint: `190cbfca019c3aa0f3f2d20e5538d56cf2e08f96`;
+- durable Runtime evidence: `b13806e6ef50179acecc29e6a61facfbe246f302`;
+- verification checkpoint: `4633f18a113710276838c2d65c0ea58c144d9752`;
+- PR #29 remained open / mergeable / unmerged throughout the verified batch;
+- PR summary should reflect canonical-href evidence; no product source, version/build, Candidate, Artifact or IPA changed.
 
 ## Evidence ladder / preserved boundaries
 

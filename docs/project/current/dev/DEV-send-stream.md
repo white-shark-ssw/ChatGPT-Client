@@ -2,13 +2,13 @@
 
 ## Status
 
-**Active — exact b88 real-device Runtime is Partial/Diagnostic Positive: covered first-responder activation works and `document.hasFocus=true` is proven, but this sample entered at the final tool phase and authoritative active evidence preceded focus by only ~1 second. Focus causality remains Inconclusive, not Rejected. Automatic final convergence remained absent and required a later explicit Sync. Reuse exact b88 for one clean early/mid-generation A/B; do not allocate b89 yet. Stable/Frozen Send remains No.**
+**Active — exact b88 real-device Runtime now cleanly rejects focus as a sufficient condition for covered official-Web cross-platform continuation. The focus mechanism itself remains Runtime Positive (`nativeFirstResponder=true`, `document.hasFocus=true`), but a second early/mid-generation sample stayed stale while the user directly observed multiple additional PC tool rounds after focus. No covered `stream_status`, `/resume`, external SSE or page-owned snapshot appeared, and the completed assistant still required a final explicit Sync. Next evidence target is genuine official SPA/router conversation-entry behavior; router causality remains Unverified. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / unmerged; title/body synced to b88 Runtime gate
+- PR: #29 — open / mergeable / unmerged before this Runtime metadata sync
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Durable b88 Runtime docs head before this checkpoint close: `a90844be98d3c1ebe564674e3c66903cc353f778`
+- Branch head before this Runtime-doc batch: `e74e79d642e20750012d72acd409a627167e2e9a`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -24,81 +24,97 @@
 
 ## Known-good visible official Web differential
 
-Using Web Rule Lab with the same `WKWebsiteDataStore.default()` session authority, the user visibly entered a newly active cross-platform conversation and immediately observed live continuation with the composer already in Stop state. Probe state was `visibilityState=visible`, `hidden=false`, `readyState=complete`, `document.hasFocus=true`.
+Web Rule Lab on the same `WKWebsiteDataStore.default()` authority visibly entered a newly active cross-platform conversation and immediately showed live continuation plus the active Stop control while `document.hasFocus=true`. The coarse probe returned `route=other` despite visibly being inside the active conversation, so route shape is diagnostic-only.
 
-The same visible page returned coarse `route=other` despite visibly being inside the active conversation, so the existing route-shape probe is diagnostic-only and is not conversation-state authority.
+Exact b87 covered production was visible/loaded/attached but `document.hasFocus=false` and produced no continuation. b88 therefore isolated focus first; the first b88 sample proved the focus mechanism works but was near-terminal and inconclusive.
 
-This contrasts with b87 covered production, which was visible/loaded/attached but stayed `document.hasFocus=false` and produced zero page-owned continuation during about 161 seconds foreground. Focus was still only correlation because the visible sample also included genuine user-driven SPA/router conversation entry.
-
-Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-visible-web-focus-sse-ab-20260902.md`.
+Durable visible-Web evidence: `docs/project/runtime-evidence/DEV-send-stream-visible-web-focus-sse-ab-20260902.md`.
 
 ## b88 implementation boundary
 
-b88 varies one thing only after explicit manual-Sync rearm: after the existing programmatic target page load finishes, covered WKWebView calls `becomeFirstResponder()` once and directly evaluates `document.hasFocus()`.
+b88 changes only explicit manual-Sync rearm focus activation after the existing programmatic target page load:
 
-Preserved:
-
-- programmatic conversation load unchanged;
+- `WKWebView.becomeFirstResponder()` once after re-armed load;
+- direct `document.hasFocus()` probe;
+- existing programmatic `/c/<conversation>` load unchanged;
 - Web interaction remains disabled;
-- no Native `stream_status`, `/resume`, offset, polling, timers, retries, watchdogs, duplicate Send, router workaround, WebSocket-body authority or second response store;
-- client-owned protected-Send SSE and Repository ownership unchanged.
+- no Native `stream_status`, `/resume`, offset, polling, timers, retries, watchdogs, duplicate Send, router workaround, WebSocket-body authority or second response store.
 
-## Exact b88 Runtime sample — 2026-09-02 22:44 local
+## First b88 Runtime sample — near-terminal / inconclusive
 
-Uploaded diagnostics: `ChatGPTClient-Diagnostics-20260902-144605.json` on exact Release b88 / iPhone / iOS17.0.
-
-- Selection page loaded visible/complete but initially `hasFocus=false`.
-- `14:44:25Z` Detail: visible `10`, mapping `450`, trailing timeline/tools `24/24`.
-- Explicit Sync returned `14:44:36Z`: visible still `10`, mapping `452`, trailing timeline/tools `25/25`. The active turn had advanced by one tool and no final assistant had materialized at that authoritative fetch.
-- Existing Detail projection started response generation `1` with 25 tool/timeline items.
-- Manual-Sync rearm completed at `14:44:37Z`.
-- `coveredExecutor.focusActivationAttempt`: `nativeFirstResponder=true`.
-- Page emitted a `focus` event with `hasFocus=true`.
-- `coveredExecutor.focusActivationResult`: `documentHasFocus=true`, evaluation succeeded.
-- From focus acquisition until the user's second explicit Sync at `14:46:00Z` (~83 seconds), zero matching `stream_status`, `/resume`, resume-response, external-streaming or external-snapshot events were recorded; user-socket messages remained `targetMatch=false`.
-- Memory warning did not evict the protected resident; no WebContent-process termination was recorded.
-- Second explicit Sync returned at `14:46:02Z`: visible `10 -> 11`, mapping `465`, trailing timeline/tools `0/0`; `externalDetailReconciled(reason=authoritative_assistant_materialized)` correctly cleared the live row.
-
-### Runtime classification
-
-- first-responder activation: **Runtime Positive**
-- covered `document.hasFocus=true`: **Runtime Positive**
-- page-owned continuation after focus: **Not observed in this run**
-- automatic final convergence: **Rejected in this run**; later explicit Sync was required
-- focus causality: **Inconclusive**
-- SPA/router causality: **Unverified**
-
-Reason for Inconclusive: the user reports the target was already at the final tool call, and the last authoritative proof of active generation at `14:44:36Z` preceded focus acquisition at `14:44:37Z` by only ~1 second. The response may have completed in that narrow interval, so this is not clean enough to reject focus as sufficient.
+`ChatGPTClient-Diagnostics-20260902-144605.json` proved `nativeFirstResponder=true` and `document.hasFocus=true`, but the last authoritative ACTIVE Detail was only ~1 second before focus and the user reported the turn was already on its final tool call. No continuation followed and final required explicit Sync, but focus sufficiency could not yet be rejected from that sample alone.
 
 Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b88-focus-positive-near-terminal-inconclusive-20260902.md`.
 
-## Next exact action — reuse exact b88
+## Second b88 Runtime sample — decisive focus-negative — 2026-09-02 22:58–23:01 local
 
-Do **not** allocate b89 and do not change product code.
+Uploaded diagnostics:
 
-Repeat exact canonical b88 with a deliberately long remote response and enter while it is clearly early or mid-generation:
+- `ChatGPTClient-Diagnostics-20260902-150016.json` — exported mid-run before final manual Sync.
+- `ChatGPTClient-Diagnostics-20260902-150109.json` — exported after final manual Sync materialized the completed assistant.
 
-1. Start a long response on another official client.
-2. Enter/select the target conversation while remote reasoning/tool work is visibly still far from completion.
-3. Press `同步最新消息` exactly once.
-4. Keep ChatGPTClient foregrounded for 30–60 seconds without a second Sync, ideally while the remote side visibly continues advancing.
-5. Export diagnostics before manually syncing again if possible.
+Exact package metadata again matches canonical b88: Release `0.1.0 (88)`, Candidate `DEV-send-stream-0.1.0-b88`, source `378811691ccb`, iPhone / iOS17.0.
 
-A decisive focus-negative sample requires `documentHasFocus=true` **and** independent evidence that the same remote generation remains active after focus acquisition while covered Web still produces zero continuation traffic. If so, reject focus as sufficient and investigate genuine official SPA/router conversation-entry transition. If official continuation starts, focus/activation is causal.
+Target conversation hash: `sha256:38ede68b30d8`.
 
-## Durable docs / PR sync completed this round
+### Timeline
 
-- Runtime checkpoint classification: committed.
-- Visible-Web A/B evidence: committed.
-- b88 Runtime evidence: committed.
-- `BUILD_TEST_INDEX.md`: b88 row added with Runtime Partial/Inconclusive classification.
-- `MODULE_STATUS.md`: b88 focus Runtime override added.
-- `TECHNICAL_DECISIONS.md`: b88 focus Runtime qualification added.
-- `WEB_SEND_ADAPTER.md`: b88 focus activation qualification added.
-- Docs-only recovery workflow `33645264795 / 100298240665`: passed and pushed durable docs at `a90844be98d3c1ebe564674e3c66903cc353f778`.
-- PR #29 metadata synced to `DEV-send-stream: b88 focus activation works — clean early-runtime A/B next`; PR remains open / mergeable / unmerged.
-- b88 product source/package/Artifact identities were not changed by docs recovery.
+1. `14:58:06Z` initial authoritative Detail was already active: visible messages `12`, mapping `479`, trailing timeline/tools `5/5`.
+2. User pressed explicit Sync at `14:58:14Z`; Detail returned at `14:58:16Z` with visible still `12`, mapping `481`, trailing timeline/tools `6/6`. Existing authoritative-Detail projection started response generation `1` with six tool items.
+3. Manual-Sync rearm completed and b88 focus activation succeeded: `14:58:17Z nativeFirstResponder=true`; `14:58:18Z documentHasFocus=true`, page visible/complete.
+4. From focus acquisition until first background at `14:59:10Z`, covered Web had about **52 seconds clean foreground with focus true**. No matching `externalStreamStatusRequest/Response`, `externalResumeRequest`, resume response, `externalStreamingObserved` or `externalSnapshot` occurred.
+5. The user directly observed on PC that the same remote response produced **multiple additional tool rounds after focus acquisition**, while ChatGPTClient remained on the six-tool authoritative snapshot and did not continue. This supplies the independent post-focus ACTIVE/progress evidence missing from the first sample.
+6. User-socket frames continued to be structural-only with `targetMatch=false`; no automatic acquisition trigger fired.
+7. The mid-run export at `15:00:16Z` still contained no page-owned continuation/SSE events. Returning to the target conversation restored the resident live row rather than newer remote blocks; no authoritative Detail refresh had occurred.
+8. At `15:01:04Z` the user finally pressed explicit Sync. `15:01:06Z` Detail returned visible `12 -> 13`, mapping `507`, trailing timeline/tools `0/0`; `liveResponse.externalDetailReconciled(reason=authoritative_assistant_materialized)` cleared response generation `1` and exposed the completed assistant.
+9. Final manual-Sync rearm again produced `nativeFirstResponder=true` and `documentHasFocus=true` at `15:01:07Z`; this is after final materialization and is not the acquisition source.
+
+### Runtime classification
+
+- b88 first-responder activation mechanism: **Runtime Positive**.
+- covered `document.hasFocus=true`: **Runtime Positive**.
+- focus as a sufficient condition for official cross-platform continuation: **Rejected**.
+- page-owned continuation after focus: **Rejected in the decisive sample**; remote generation visibly advanced by multiple tool rounds while covered page emitted zero status/resume/SSE/snapshot events.
+- automatic final convergence: **Rejected again**; completed assistant required final explicit Sync.
+- genuine official SPA/router conversation-entry transition: **next evidence target / causality Unverified**.
+- visible official Web server capability: still **Runtime Positive**; same-account visible page can acquire/live-continue an active cross-platform response.
+
+Important wording: this does **not** prove focus is irrelevant or unnecessary in every Web path. It proves focus alone, with the current programmatic full conversation load, is not sufficient.
+
+## Next exact action
+
+Do not change protocol ownership and do not guess `/resume` offsets. Focus has completed its causal A/B.
+
+Next investigate the remaining known-good differential: **genuine official SPA/router conversation entry** versus the covered executor's programmatic full `/c/<id>` load. Before product code, establish the smallest privacy-safe evidence needed to distinguish the official user-driven SPA transition from direct full navigation. Do not combine router investigation with polling, timers, retries, Native protocol synthesis, WebSocket body authority or a second response store.
+
+A future b89 may be allocated only after the router-entry experiment has one exact evidence-backed variable to test. Do not reuse b88 for a different product behavior.
+
+## Preserved boundaries
+
+- client-owned Send true same-response SSE preserved;
+- `ConversationRepository` sole Native response/content authority;
+- `AuthSessionStore` sole Native auth/account authority;
+- `WKWebsiteDataStore.default()` sole persistent auth-secret authority;
+- no polling/timer/watchdog/retry/fallback/duplicate Send;
+- no guessed Native resume offset;
+- hidden thoughts non-presentational;
+- b80 presentation/final boundaries preserved;
+- conversation-entry one-shot authoritative Sync remains later freshness scope, not a continuation substitute.
+
+## Batch recovery point — decisive b88 Runtime docs
+
+Known baseline before this chain: feature head `e74e79d642e20750012d72acd409a627167e2e9a`; b88 product/package identities above remain immutable.
+
+Intended docs-only batches:
+
+1. this checkpoint with decisive b88 focus-negative Runtime classification — **current write**;
+2. durable Runtime evidence for the two new diagnostic exports;
+3. update `BUILD_TEST_INDEX.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `WEB_SEND_ADAPTER.md`;
+4. update PR #29 title/body to focus-rejected / router-evidence-next state;
+5. close this recovery point after verifying actual feature head and PR state.
+
+Do not touch b88 product source, Xcode build/Candidate identity, canonical Artifact/IPA identity, or allocate b89 during docs recovery.
 
 ## Session round counter
 
-This user turn is **round 27**.
+This user turn is **round 28**.

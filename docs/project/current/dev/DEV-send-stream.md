@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified PR head before this checkpoint update: `da4bf533f6df4d0a4843af19bbee3748d30c4ca6`
+- Checkpoint 2×2 gate commit before PR metadata sync: `a0f6aaedc210cc6ad914c1fc6d98060809d8934d`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -16,6 +16,14 @@
 - b88 IPA SHA-256: `cb89cf51f451252087b2abdd6533407113614b2e9efa072ba84e4877f2d02298`
 - b39-b88 permanently reserved
 - Stable/Frozen Send: No
+
+## Batch recovery point — 2×2 evidence/docs sync
+
+- baseline verified before this docs chain: PR #29 head `da4bf533f6df4d0a4843af19bbee3748d30c4ca6`, base `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
+- completed: checkpoint updated with external comparison classification, confirmed scoped-identity source gap, and the 2×2 Human Runtime gate at `a0f6aaedc210cc6ad914c1fc6d98060809d8934d`;
+- pending: sync PR #29 title/body to the same 2×2 gate;
+- next exact action after PR sync: user runs Control A in visible Web Rule Lab; no product source/version/Candidate/Artifact changes;
+- recovery must not touch b88 product source/package identity or allocate b89.
 
 ## Closed b88 Runtime conclusion
 

@@ -51,16 +51,28 @@ From the same project conversation, a later probe saved the current project scop
 
 Therefore the rendered official page state possessed exactly one visible anchor for that same selected conversation using the exact expected canonical `/g/{scope}/c/{conversation}` href, even though the navigation had been deliberately initiated through the unscoped form.
 
-The probe's coarse current-route classifier returned `other` because it only labeled an exact `/c/{id}` path and did not classify the actual post-navigation path. This sample therefore does **not yet** prove whether official Web automatically canonicalized the browser location itself back to `/g/{scope}/c/{conversation}` or stayed on another route while exposing the canonical href. A one-step boolean route comparison is the next evidence action.
+## Exact post-navigation route check
+
+A follow-up boolean-only comparison used the internally saved scope/conversation and returned:
+
+- `currentKind = EXACT_SCOPED_CANONICAL`;
+- `currentIsExactScopedCanonical = true`;
+- `currentIsExactUnscoped = false`;
+- `currentIsProjectShape = true`;
+- `currentConversationMatchesSaved = true`.
+
+Therefore, in this **warm visible-Web session that had already visited the project conversation**, requesting `/c/{conversation}` ended with official Web at the exact scoped canonical `/g/{scope}/c/{conversation}` location.
+
+This is direct Runtime evidence that official Web has a canonicalization mechanism. It is **not** yet evidence that a fresh/root covered-Web document which has never entered this project route has enough state to perform the same canonicalization. The existing b88 project failures remain incompatible with assuming warm-session canonicalization always occurs in production covered execution.
 
 ## Interpretation
 
 1. The official visible Web possesses the project/GPT scoped canonical conversation route in an anchor href before successful target entry.
 2. A successful project SPA transition can immediately issue page-owned `stream_status` using that canonical route without first fetching a project Detail payload that exposes the scope.
-3. Even after deliberately requesting the same project conversation through `/c/{conversation}`, the rendered page state exposes the exact scoped canonical anchor for that conversation in this visible-Web session.
+3. In a warm visible-Web session, even a deliberate unscoped `/c/{conversation}` navigation is canonicalized back to exact `/g/{scope}/c/{conversation}`.
 4. `gizmo_id` remains external corroboration only, not a Runtime-confirmed route contract for ChatGPTClient.
 5. The prior Control B remains decisive: a fresh full navigation to the exact official `/g/{scope}/c/{conversation}` route with transient user activation false starts genuine official page-owned continuation.
-6. Before b89, resolve whether the wrong-route navigation itself was automatically canonicalized. If not, then verify that exact canonical-anchor resolution is deterministic in the covered production-like page state without manual sidebar/project expansion.
+6. Before b89, reproduce the production covered-Web starting condition more closely: start from a fresh root document and then navigate directly to the unscoped project conversation while an external response is active. This will distinguish warm official canonicalization from a canonical-route defect that only exists in the covered cold/root path.
 
 ## Preserved boundary
 

@@ -36,7 +36,7 @@ Rejected as primary blockers: Page Visibility hidden state, detached/off-window 
 Remaining evidence fork:
 
 1. focus/interactivity/Native occlusion is causally required; or
-2. the genuine visible official SPA/router conversation-entry transition is the trigger, rather than a programmatic full `/c/<id>` load.
+2. genuine visible official SPA/router conversation-entry transition is the trigger rather than programmatic full `/c/<id>` load.
 
 `document.hasFocus=false` is a strong observed differential, **not yet a proven cause**. `/resume` offset remains downstream and must not be guessed before page-owned `stream_status` begins.
 
@@ -49,7 +49,7 @@ No b88 and no new IPA yet.
 While another official client is generating a long response:
 
 1. open Settings -> Web Rule Lab;
-2. visibly enter/tap the same active conversation in the official Web UI;
+2. visibly enter/tap the same active conversation in official Web UI;
 3. return only these privacy-safe fields from that visible active page:
    - `document.visibilityState`
    - `document.hidden`
@@ -57,7 +57,7 @@ While another official client is generating a long response:
    - `document.readyState`
    - route shape `conversation/root/other`.
 
-If known-good visible Web has `hasFocus=true` while continuation starts, a focus/activation A/B is evidence-backed. If visible Web also has `hasFocus=false` while continuation starts, reject focus and investigate SPA/router entry transition.
+If known-good visible Web has `hasFocus=true` while continuation starts, focus/activation A/B is evidence-backed. If visible Web also has `hasFocus=false` while continuation starts, reject focus and investigate SPA/router entry transition.
 
 ## Preserved boundaries
 
@@ -78,7 +78,7 @@ If known-good visible Web has `hasFocus=true` while continuation starts, a focus
 - focus causality: **Unverified**
 - Stable/Frozen Send: **No**
 
-Durable Runtime evidence and `BUILD_TEST_INDEX.md` are updated; temporary docs tooling is removed. PR #29 metadata update is the final metadata-only action for this round.
+Durable Runtime evidence and `BUILD_TEST_INDEX.md` are updated; temporary docs tooling is removed. PR #29 metadata is maintained separately and does not alter branch/product identity.
 
 ## Session round counter
 

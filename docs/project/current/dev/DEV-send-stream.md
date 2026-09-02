@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Current checkpoint docs head before PR metadata sync: `488f42cac90e9936dc025cc69caeebbf3c69c418`
+- Latest known checkpoint write head before this recovery correction: `32098008e59e489f0e77671f3794dd07a5cec91d`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
 - b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
@@ -20,8 +20,9 @@
 ## Batch recovery point — 2×2 evidence/docs sync
 
 - baseline before docs chain: PR #29 head `da4bf533f6df4d0a4843af19bbee3748d30c4ca6`, base `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- completed: checkpoint updated with external comparison classification, confirmed scoped-identity source gap, and the 2×2 Human Runtime gate;
-- pending: PR #29 metadata sync may be completed independently; it does not block the Human Runtime gate;
+- completed: checkpoint content now records the external comparison classification, confirmed scoped-identity source gap, and 2×2 Human Runtime gate;
+- note: several docs-only checkpoint replacement commits were emitted while attempting the same sync; no product/config/version/Candidate/Artifact file changed in those writes;
+- pending: PR #29 metadata sync may be completed independently and is not a Runtime blocker;
 - next exact action: user runs Control A in visible Web Rule Lab; no product source/version/Candidate/Artifact changes;
 - recovery must not touch b88 product source/package identity or allocate b89.
 
@@ -42,7 +43,7 @@ Both independent project conversations reproduced:
 
 `/ -> trusted official anchor -> history.pushState -> /g/{x}/c/{x} -> plural snapshot + bootstrap -> stream_status -> /resume -> HTTP404 JSON -> repeated page-owned stream_status + plural snapshot`.
 
-The second sample continued paired status/snapshot requests through the ~45.6 second capture. Neither current project sample is HTTP200 resume-SSE; continuous-looking UI is official continuation but must not be labelled SSE without `Content-Type: text/event-stream` evidence.
+Neither current project sample is HTTP200 resume-SSE; continuous-looking UI is official continuation but must not be labelled SSE without `Content-Type: text/event-stream` evidence.
 
 ## Ordinary-vs-project scope correlation
 
@@ -99,7 +100,7 @@ Do not Send a new prompt and do not Native-construct status/resume.
 
 ### Control B — only after Control A result
 
-Use the official page's exact scoped href; do not guess the scope ID. Perform a true full document navigation to that exact `/g/.../c/...` URL for another external-active project response, then use a post-navigation privacy-safe resource/state probe to determine whether page-owned bootstrap/status/resume/snapshot traffic starts. This fills the route-vs-SPA control.
+Use the official page's exact scoped href; do not guess the scope ID. Perform a true full document navigation to that exact `/g/.../c/...` URL for another external-active project response, then use a post-navigation privacy-safe resource/state probe to determine whether page-owned bootstrap/status/resume/snapshot traffic starts.
 
 ## b89 gate
 

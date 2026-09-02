@@ -2,13 +2,14 @@
 
 ## Status
 
-**Active — exact b86 Runtime is Diagnostic Positive / continuation activation absent. b85 authoritative Detail block projection remains Runtime Positive. b87 is now allocated as diagnostics-only to compare covered-page activation/visibility/focus/readiness with the known-good visible official-Web entry path; no continuation behavior change is authorized yet. Stable/Frozen Send remains No.**
+**Active — b87 diagnostics-only package is now Code/PR-CI/Artifact verified and ready for real-device Runtime. b86 remains the decisive Runtime baseline: covered-page continuation activation was absent despite authoritative active reasoning. b87 changes diagnostics only; no continuation behavior fix is claimed. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified branch/PR head before b87 allocation: `7ead51842d3176ad8ceab3360bc8c940ffcb72b4`
+- b87 exact diagnostics product source: `6f98816f37c749c8d4cb8dfef4c4645df2c0f27a`
+- b87 clean feature/package head and PR #29 head before docs-only evidence sync: `49cf74f5f97e5afd3ad78aa59d3b9ad19673d488`
 - b85 exact product/config source: `ec64dd170a6386612af8cb68b394045ce3c85313`
 - b85 Runtime: **manual authoritative block projection Positive / automatic continuation Rejected**
 - b86 exact diagnostics product source: `dc77a94be5b2f7eecd822480f759358ad6a0ad25`
@@ -20,8 +21,15 @@
 - b86 ZIP: `sha256:cdccdcd034964b99e98e62c2e79a9bece96c190138c774e6f1590896d54fbacb`
 - b86 IPA: `sha256:25d483ac31473b124e6ad555b79c488e78da91ec1761ee8a40076b6e978bee6f`
 - b86 Runtime export: exact Candidate b86 / source `f90caca0419f` / iPhone / iOS17.0
-- b87 Candidate / Build: `DEV-send-stream-0.1.0-b87` / `0.1.0 (87)` — **allocated, not yet produced**
-- b39-b87 permanently reserved once b87 product identity is emitted; until then this checkpoint owns the allocation and no other task may use it
+- b87 Candidate / Build: `DEV-send-stream-0.1.0-b87` / `0.1.0 (87)`
+- b87 clean-head PR CI: `33607517120 / 100174803981` — passed
+- b87 exact feature-head packaging: `33607783508 / 100175624048` — passed
+- b87 canonical Artifact: `9837745187`
+- b87 ZIP: `sha256:5cf72023fdd7b309213da8d31e28e59907fae6e46b3c816230d93386b003dc3b`
+- b87 IPA: `sha256:02598b5325c65f2ae3402e97812eca5676debc56a475963c0e8e7a9127a2b1ba`
+- b87 built metadata: `0.1.0 (87)` / Candidate `DEV-send-stream-0.1.0-b87` / `DiagnosticsSourceCommit=49cf74f5f97e` / minimum iOS14 / arm64
+- b87 PR-triggered Artifact built from synthetic merge `93f1a827f938` is **non-canonical** and must not be used for Runtime evidence
+- b39-b87 permanently reserved
 - Stable/Frozen Send: No
 
 ## Send MVP contract
@@ -68,27 +76,27 @@ b87 may add only privacy-safe, event-driven diagnostics:
 
 b87 must **not** call `stream_status`, call `/resume`, choose/guess offset, add polling/timers/retries/watchdogs, front/focus/show the covered WebView, implement conversation-entry Sync, change response authority, or expose hidden reasoning.
 
-## Batch recovery point — b87 activation diagnostics
+## b87 canonical package evidence
 
-Known baseline before b87 writes:
+The b87 product/config change is diagnostics-only. Exact product commit `6f98816f37c749c8d4cb8dfef4c4645df2c0f27a` added page/WebView activation structure probes and build 87 identity. A later workflow-comment-only commit produced clean feature/package head `49cf74f5f97e5afd3ad78aa59d3b9ad19673d488`.
 
-- branch/PR head: `7ead51842d3176ad8ceab3360bc8c940ffcb72b4`;
-- main: `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- current product identity: b86 / build 86;
-- normal package workflow still names b86;
-- b87 allocation belongs only to `DEV-send-stream`.
+Normal PR CI for that clean head passed, but GitHub's `pull_request` checkout built synthetic merge source `93f1a827f938`; that Artifact is intentionally non-canonical for device evidence.
 
-Planned small write batches:
+Canonical b87 was therefore packaged in isolated run `33607783508 / 100175624048` after an explicit exact-source assertion and checkout of `49cf74f5f97e5afd3ad78aa59d3b9ad19673d488`. The resulting Artifact `9837745187` has ZIP digest `sha256:5cf72023fdd7b309213da8d31e28e59907fae6e46b3c816230d93386b003dc3b`. Extracted IPA SHA is `02598b5325c65f2ae3402e97812eca5676debc56a475963c0e8e7a9127a2b1ba`; its built Info.plist reports `0.1.0 (87)`, Candidate `DEV-send-stream-0.1.0-b87`, `DiagnosticsSourceCommit=49cf74f5f97e`, minimum iOS14.
 
-1. **Completed:** checkpoint allocation + recovery point.
-2. **Pending:** guarded product/config patch: `ChatGPTClient/RootViewController.swift` + `ChatGPTClient.xcodeproj/project.pbxproj` only.
-3. **Pending:** verify product commit and diff; update normal `.github/workflows/ios-foundation.yml` to b87 identity without Actions self-modifying workflow code.
-4. **Pending:** Push/PR CI, Artifact/package identity verification.
-5. **Pending:** durable b87 build evidence, `BUILD_TEST_INDEX.md`, PR #29 and final checkpoint synchronization; remove any temporary staging script/workflow.
+Evidence classification: Code written / exact staging guard passed / PR CI passed / Artifact produced and identity verified. **Runtime/manual/real-device remains Pending.**
 
-Next exact recovery action: if interrupted, re-read this checkpoint and actual branch head, then perform only the first still-pending deterministic batch. Do not replay completed writes and do not reuse b87 elsewhere.
+## Next exact action
 
-Must not touch during recovery: b85/b86 evidence identities, client-owned Send SSE, b80 Frozen presentation/final boundaries, response/auth state owners, or deferred automatic discovery scope.
+Install the canonical b87 IPA on the primary iPhone/iOS17 device. Start a sufficiently long response from another official client while the same conversation is selected in ChatGPTClient. During active generation press `同步最新消息` exactly once, then keep ChatGPTClient foregrounded without a second Sync. Export diagnostics after additional reasoning/tool progress or completion.
+
+Compare, in timestamp order:
+
+- `coveredExecutor.pageActivation`: `visibilityState`, `hidden`, `hasFocus`, `readyState`, `route`, `reason`;
+- `coveredExecutor.webViewActivation`: `windowAttached`, `windowIsKey`, `hidden`, `alphaZero`, `boundsEmpty`, `intersectsWindow`, `subviewIndex`, `siblingCount`, `visibleSiblingCountAbove`, `userInteractionEnabled`;
+- whether `externalStreamStatusRequest/Response`, `externalResumeRequest`, `resumeResponse`, `externalStreamingObserved`, external snapshots or DOM structure begin afterward.
+
+Do not allocate b88 or change continuation behavior until this b87 Runtime distinguishes page visibility/focus/attachment from router/navigation activation.
 
 ## Recorded later requirement
 
@@ -118,9 +126,10 @@ Entering/selecting a conversation should eventually perform exactly one authorit
 - b86 page-owned continuation activation: **Absent in exact run**
 - b86 automatic final convergence: **Absent in exact run; final materialized only after manual Sync**
 - b86 true cross-platform SSE: **Not acquired**
-- b87 Code/CI/Artifact/Runtime: **Pending**
+- b87 Code/PR CI/Artifact/package: **Verified**
+- b87 Runtime/manual/real-device: **Pending**
 - Stable/Frozen Send: **No**
 
 ## Session round counter
 
-This user turn is **round 20**.
+This user turn is **round 21**.

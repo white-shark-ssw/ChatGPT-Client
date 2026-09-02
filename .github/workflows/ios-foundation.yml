@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b87
-# Product source: 6f98816f37c749c8d4cb8dfef4c4645df2c0f27a
-name: iOS Send Page Activation Diagnostics b87
+# Candidate: DEV-send-stream-0.1.0-b88
+# Product source: 31d24e8b9ab4676effd757a793162abbdb0d7012
+name: iOS Send Focus Activation A-B b88
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b87
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b88
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

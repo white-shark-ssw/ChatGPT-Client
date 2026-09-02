@@ -2,58 +2,47 @@
 
 ## Status
 
-**Active — Control B remains Runtime Positive: fresh full navigation to exact official `/g/{scope}/c/{conversation}` starts official page-owned continuation with transient user activation false. New visible-Web trace proves the project scope is already encoded in the official sidebar conversation anchor href before project entry; trusted SPA entry from an ordinary `/c/{id}` conversation to that anchor immediately issues page-owned `stream_status`. The earlier `gizmo_id` payload hypothesis is not Runtime-confirmed and is no longer the only pre-b89 path. Next evidence decision is whether b89 can safely reuse/resolve the official canonical href without inventing service fields. Stable/Frozen Send remains No.**
+**Active — exact scoped full navigation `/g/{scope}/c/{conversation}` is Runtime Positive for official page-owned continuation, and the latest visible-Web trace proves that the official project conversation anchor already contains this scoped canonical href before entry. `gizmo_id` is not Runtime-confirmed. The remaining pre-b89 question is deterministic canonical-href resolution for a Native-selected conversation without manual sidebar/project expansion. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Latest feature/docs head before PR-summary synchronization: `591e4108d230af55ac5b6b230232f5e30873cf6c`
+- Latest feature/docs head: `c16dd44f5708e75766df2ef6c3ccbc44e79ef4c5`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
-- b88 exact product source: `31d24e8b9ab4676effd757a793162abbdb0d7012`
-- b88 clean package head: `378811691ccbd6f44b232d8cc5564628e9b021e1`
-- b88 canonical Artifact: `9848999246`
-- b88 IPA SHA-256: `cb89cf51f451252087b2abdd6533407113614b2e9efa072ba84e4877f2d02298`
-- b39-b88 permanently reserved
+- b88 product / Artifact / IPA identity unchanged
 - Stable/Frozen Send: No
 
-## Runtime conclusions
+## Runtime evidence
 
-- Control B: exact scoped fresh navigation `/g/{scope}/c/{conversation}` with transient activation false is Runtime Positive for official page-owned continuation (`stream_status + plural_snapshot`).
-- Canonical-href trace: when returning from an ordinary conversation to the project conversation, the trusted click target already contained the exact `/g/{scope}/c/{conversation}` href before navigation; project entry immediately issued page-owned `stream_status` and did not first require a project Detail fetch that exposed the scope.
-- Ordinary `GET /backend-api/conversations/{id}` in the comparison sample returned `gizmo_id=null`, `gizmo_type=null`, non-matching `memory_scope`, empty `context_scopes`; this does not identify the project scope source.
-- Therefore the official canonical href itself is current Runtime evidence; `gizmo_id` remains external corroboration only.
+Control B durable evidence: `docs/project/runtime-evidence/DEV-send-stream-scoped-full-navigation-continuation-positive-20260903.md`.
 
-Durable evidence:
+Canonical-href durable evidence: `docs/project/runtime-evidence/DEV-send-stream-official-project-canonical-anchor-20260903.md`.
 
-- `docs/project/runtime-evidence/DEV-send-stream-scoped-full-navigation-continuation-positive-20260903.md`
-- `docs/project/runtime-evidence/DEV-send-stream-official-project-canonical-anchor-20260903.md`
+Latest trace proves:
 
-## Confirmed source gap
+- ordinary anchor target `/c/{id}` -> ordinary `history.pushState` and ordinary Detail/status requests;
+- project anchor target was already `/g/{scope}/c/{conversation}` before click/navigation;
+- project `history.pushState` used that exact scoped href;
+- project entry immediately issued `POST /backend-api/conversation/init` and `GET /backend-api/conversation/{conversation}/stream_status`; status returned HTTP 200;
+- no project Detail fetch exposing the scope was required in this successful transition;
+- ordinary comparison Detail had `gizmo_id=null`; no current Runtime evidence identifies `gizmo_id` as the project scope source.
 
-Current Native model/cache does not preserve scoped canonical route identity and existing covered-Web observation/send hard-loads `https://chatgpt.com/c/<conversationID>`. Production cannot reproduce Control B's exact scoped full navigation.
+## Source gap / next exact action
 
-## Next exact action
+Current Native covered-Web path still hard-loads unscoped `/c/<conversationID>` and does not preserve canonical scoped route identity.
 
-Do **not** allocate b89 yet and do not guess `gizmo_id`.
+Do not allocate b89 yet. Inspect current covered-Web source/page state for a deterministic official canonical href keyed by Native-selected `conversationID`, independent of manual sidebar/project expansion. Prefer existing official href/page-state/response evidence; do not guess `gizmo_id`, project endpoints, router internals, polling or retries.
 
-Inspect current covered-Web source and existing Web-side state for a deterministic official canonical conversation href keyed by Native-selected `conversationID`, independent of manual sidebar/project expansion. Use only current official DOM/page state or an already-used official response. Do not add broad discovery, timers, retries, polling, router emulation or guessed project endpoints.
+If deterministic resolution exists, b89 may use exact fresh full navigation to the official canonical href for scoped conversations while ordinary `/c/<conversation>` remains unchanged.
 
-If deterministic canonical href resolution exists, b89 may be narrow: exact fresh full navigation to that official href for scoped conversations, ordinary `/c/<conversation>` unchanged.
+## Batch recovery state
 
-## Documentation batch recovery state
-
-Confirmed: recovery checkpoint, durable canonical-href evidence, and subsequent checkpoint synchronization through feature/docs head `591e4108d230af55ac5b6b230232f5e30873cf6c`.
-
-Still pending: PR #29 title/body synchronization, PR/head verification, final checkpoint identity close. Do not replay earlier writes. No product source, version/build, Candidate, Artifact or IPA may change in this docs-only batch.
+Docs-only canonical-href evidence writes are complete through head `c16dd44f5708e75766df2ef6c3ccbc44e79ef4c5`. The only remaining write in this batch is PR #29 title/body synchronization, followed by PR/head verification and one final checkpoint close. Do not replay prior docs writes and do not touch product source/version/Candidate/Artifact/IPA.
 
 ## Preserved boundaries
 
-- official page remains continuation executor;
-- `ConversationRepository` remains sole Native response/content authority;
-- no Native `stream_status`, `/resume`, guessed offset, polling, retry/watchdog, duplicate Send or WebSocket-body authority;
-- no new Candidate / CI / Artifact / IPA;
-- Stable/Frozen Send: No.
+Official page owns continuation; `ConversationRepository` owns Native response/content. No Native `stream_status`, `/resume`, guessed offset, polling, retry/watchdog, duplicate Send, WebSocket-body authority, or second response store.
 
 ## Session round counter
 

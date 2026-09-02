@@ -54,14 +54,12 @@ No guessed `gizmo_id`, project endpoint, router internals, Native `stream_status
 
 ## Batch recovery state
 
-Fresh-root positive evidence batch started from exact head `777d3182b12d09b6b1984dec89f22fb08e878d75`.
+Fresh-root positive evidence batch status:
 
-Planned writes:
-
-1. checkpoint recovery point — **confirmed by this write**;
-2. extend `docs/project/runtime-evidence/DEV-send-stream-official-project-canonical-anchor-20260903.md` with fresh-root positive result — pending;
-3. synchronize PR #29 title/body — pending;
-4. re-verify PR/head and close checkpoint identity — pending.
+1. checkpoint recovery point — confirmed;
+2. durable Runtime evidence extension — confirmed at commit `c89e87192235e7310b112281b61b7ca55278f43c`;
+3. PR #29 title/body synchronization — pending;
+4. PR/head verification and final checkpoint identity close — pending.
 
 Do not touch product source, version/build, Candidate, Artifact or IPA in this batch.
 

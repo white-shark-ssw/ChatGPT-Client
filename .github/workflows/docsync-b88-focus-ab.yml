@@ -35,12 +35,16 @@ jobs:
       - name: Apply durable evidence updates
         working-directory: target
         run: |
+          set -euxo pipefail
           python3 ../tools/scripts/docsync_b88_focus_ab.py
           git diff --check
-          test "$(git diff --name-only | sort)" = $'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/TECHNICAL_DECISIONS.md\ndocs/project/WEB_SEND_ADAPTER.md\ndocs/project/runtime-evidence/DEV-send-stream-b88-focus-positive-near-terminal-inconclusive-20260902.md\ndocs/project/runtime-evidence/DEV-send-stream-visible-web-focus-sse-ab-20260902.md'
-          grep -F 'DEV-send-stream-0.1.0-b88' docs/project/BUILD_TEST_INDEX.md >/dev/null
-          grep -F 'b88 focus activation Runtime qualification' docs/project/WEB_SEND_ADAPTER.md >/dev/null
-          grep -F 'Focus causality: **Inconclusive**' docs/project/runtime-evidence/DEV-send-stream-b88-focus-positive-near-terminal-inconclusive-20260902.md >/dev/null
+          git diff --name-only | sort
+          test -z "$(git diff --name-only | grep -Ev '^docs/project/' || true)"
+          test -f docs/project/runtime-evidence/DEV-send-stream-visible-web-focus-sse-ab-20260902.md
+          test -f docs/project/runtime-evidence/DEV-send-stream-b88-focus-positive-near-terminal-inconclusive-20260902.md
+          grep -F 'DEV-send-stream-0.1.0-b88' docs/project/BUILD_TEST_INDEX.md
+          grep -F 'b88 focus activation Runtime qualification' docs/project/WEB_SEND_ADAPTER.md
+          grep -F 'Focus causality: **Inconclusive**' docs/project/runtime-evidence/DEV-send-stream-b88-focus-positive-near-terminal-inconclusive-20260902.md
 
       - name: Commit and push docs only
         working-directory: target

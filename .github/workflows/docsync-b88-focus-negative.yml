@@ -1,0 +1,53 @@
+name: Sync b88 decisive focus-negative evidence
+
+on:
+  push:
+    branches:
+      - staging/send-stream-b88-docsync-20260902
+    paths:
+      - "scripts/docsync_b88_focus_negative.py"
+      - ".github/workflows/docsync-b88-focus-negative.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tooling
+        uses: actions/checkout@v4
+        with:
+          ref: staging/send-stream-b88-docsync-20260902
+          path: tools
+
+      - name: Checkout exact feature target
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+          path: target
+
+      - name: Guard exact feature head
+        working-directory: target
+        run: test "$(git rev-parse HEAD)" = "e0c7ecf6b83ff30242fed800709d14cd0dc64794"
+
+      - name: Apply durable Runtime evidence updates
+        working-directory: target
+        run: |
+          python3 ../tools/scripts/docsync_b88_focus_negative.py
+          git diff --check
+          test -f docs/project/runtime-evidence/DEV-send-stream-b88-focus-sufficient-rejected-20260902.md
+          test -z "$(git diff --name-only | grep -v '^docs/project/')"
+          grep -F 'focus alone rejected as sufficient' docs/project/BUILD_TEST_INDEX.md >/dev/null
+          grep -F 'b88 decisive focus-negative qualification' docs/project/TECHNICAL_DECISIONS.md >/dev/null
+
+      - name: Commit and push docs only
+        working-directory: target
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/WEB_SEND_ADAPTER.md docs/project/runtime-evidence/DEV-send-stream-b88-focus-sufficient-rejected-20260902.md
+          git diff --cached --check
+          git commit -m 'docs(send): record decisive b88 focus-negative Runtime'
+          git push origin HEAD:dev/send-stream-20260829

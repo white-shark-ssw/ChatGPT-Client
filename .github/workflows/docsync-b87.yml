@@ -12,15 +12,26 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout docsync tools
+        uses: actions/checkout@v4
+        with:
+          ref: staging/send-stream-b87-docsync-20260902
+          path: tools
+          fetch-depth: 1
+
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
         with:
           ref: dev/send-stream-20260829
+          path: work
           fetch-depth: 0
 
       - name: Patch evidence docs
-        run: python3 scripts/docsync_b87.py
+        working-directory: work
+        run: python3 ../tools/scripts/docsync_b87.py
 
       - name: Verify and push
+        working-directory: work
         run: |
           git diff --check
           grep -F 'DEV-send-stream-0.1.0-b87' docs/project/BUILD_TEST_INDEX.md >/dev/null

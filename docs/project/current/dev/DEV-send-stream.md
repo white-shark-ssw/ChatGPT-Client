@@ -84,6 +84,10 @@ Historical exact Runtime already proves official Web can perform cross-device:
 
 and other runs can use resume 404 followed by page-owned plural snapshots. Native must not synthesize either path.
 
+### Recorded working hypothesis — official Web SSE parity
+
+User observation/working hypothesis to preserve for post-b86 analysis: because official ChatGPT Web can stably attach to the same service-side SSE response, there is no current evidence that the server fundamentally prevents this client from receiving the same continuation. Treat the likely differential as the covered official page's **activation/page-state/request sequence** rather than server capability. This is a research heuristic, not Runtime proof that the current client can already receive the SSE. Do not change product behavior from this hypothesis alone; compare b86 structural logs against the known-good official Web sequence first.
+
 ## b86 diagnostics-only implementation
 
 Exact b86 product commit changes only `RootViewController.swift` diagnostics/bridge structure and build/Candidate identity. It adds:
@@ -158,4 +162,4 @@ Do not modify b86 behavior or allocate b87 before this Runtime evidence unless a
 
 ## Session round counter
 
-This user turn is **round 17**.
+This user turn is **round 18**.

@@ -45,6 +45,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private var activeEvents: ((CoveredWebSendEvent) -> Void)?
     private var responseActive = false
     private var observingExternalResponse = false
+    private var manualSyncFocusProbePending = false
 
     var isBusy: Bool { activeEvents != nil }
 
@@ -103,6 +104,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         guard !conversationID.isEmpty else { return }
         observationEvents = events
         observingExternalResponse = true
+        manualSyncFocusProbePending = forceReload
         if currentConversationID == conversationID, !forceReload {
             webView.evaluateJavaScript("window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.probeComposer(true);", completionHandler: nil)
             return
@@ -126,6 +128,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             events(.failed("executor_busy"))
             return
         }
+        manualSyncFocusProbePending = false
         observingExternalResponse = false
         pendingSend = PendingSend(conversationID: conversationID, text: trimmed, events: events)
         activeEvents = events
@@ -151,6 +154,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         activeEvents = nil
         responseActive = false
         observingExternalResponse = false
+        manualSyncFocusProbePending = false
         currentConversationID = nil
         composerReadyConversationID = nil
         events?(.failed("account_changed"))
@@ -161,6 +165,16 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         diagnostics.info(category: "webSend", name: "coveredExecutor.page", fields: ["state": "loaded", "target": currentConversationID == nil ? "root" : "existing_conversation"])
         logWebViewActivationState(stage: "did_finish")
+        if observingExternalResponse, manualSyncFocusProbePending {
+            manualSyncFocusProbePending = false
+            let nativeFirstResponder = webView.becomeFirstResponder()
+            diagnostics.info(category: "webSend", name: "coveredExecutor.focusActivationAttempt", fields: ["mode": "manual_sync_rearm", "nativeFirstResponder": nativeFirstResponder ? "true" : "false"])
+            webView.evaluateJavaScript("document.hasFocus()") { [weak self] result, error in
+                guard let self else { return }
+                let documentHasFocus = (result as? Bool) == true
+                self.diagnostics.info(category: "webSend", name: "coveredExecutor.focusActivationResult", fields: ["mode": "manual_sync_rearm", "nativeFirstResponder": nativeFirstResponder ? "true" : "false", "documentHasFocus": documentHasFocus ? "true" : "false", "evaluation": error == nil ? "succeeded" : "failed"])
+            }
+        }
         webView.evaluateJavaScript("window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.probeComposer(true);", completionHandler: nil)
     }
 
@@ -168,11 +182,13 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { navigationFailed(error) }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        manualSyncFocusProbePending = false
         diagnostics.error(category: "webSend", name: "coveredExecutor.webProcess", fields: ["state": "terminated"])
         failCurrent("web_process_terminated")
     }
 
     private func navigationFailed(_ error: Error) {
+        manualSyncFocusProbePending = false
         let nsError = error as NSError
         diagnostics.warning(category: "webSend", name: "coveredExecutor.page", fields: ["state": "failed", "errorDomain": Self.safeToken(nsError.domain), "errorCode": String(nsError.code)])
         failCurrent("navigation_failed")

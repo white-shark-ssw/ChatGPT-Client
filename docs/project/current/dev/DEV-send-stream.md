@@ -11,92 +11,67 @@
 - b87 exact diagnostics product source: `6f98816f37c749c8d4cb8dfef4c4645df2c0f27a`
 - b87 clean feature/package source: `49cf74f5f97e5afd3ad78aa59d3b9ad19673d488`
 - b87 Candidate / Build: `DEV-send-stream-0.1.0-b87` / `0.1.0 (87)`
-- b87 clean-head PR CI: `33607517120 / 100174803981` — passed
-- b87 exact feature-head package: `33607783508 / 100175624048` — passed
 - b87 canonical Artifact: `9837745187`
-- b87 ZIP: `sha256:5cf72023fdd7b309213da8d31e28e59907fae6e46b3c816230d93386b003dc3b`
 - b87 IPA: `sha256:02598b5325c65f2ae3402e97812eca5676debc56a475963c0e8e7a9127a2b1ba`
-- b87 built metadata: `0.1.0 (87)` / Candidate b87 / `DiagnosticsSourceCommit=49cf74f5f97e` / iOS17.0 real-device export
 - Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b87-visible-unfocused-no-continuation-20260902.md`
 - b39-b87 permanently reserved
 - Stable/Frozen Send: No
 
-## Send MVP contract
-
-Client-owned Send preserves true same-response SSE. Cross-platform MVP may use genuine page/Detail blocks, but one explicit Sync should become a stable acquisition boundary and later genuine blocks should continue without requiring Sync for every block when an official continuation attaches.
-
-Do not satisfy this with fake typewriter, periodic polling, timers, watchdogs, speculative retry/fallback, duplicate Send/resend, guessed Native `/resume` offsets, a second response store, WebSocket-body authority, or raw hidden-thought presentation.
-
 ## b87 exact Runtime — 2026-09-02
 
-Runtime export metadata is exact canonical b87: `0.1.0 (87)`, Candidate `DEV-send-stream-0.1.0-b87`, source `49cf74f5f97e`, iPhone / iOS17.0. Target privacy-safe conversation hash is `sha256:e1e56d1afe93`.
+Exact canonical b87 export: `0.1.0 (87)`, Candidate `DEV-send-stream-0.1.0-b87`, source `49cf74f5f97e`, iPhone / iOS17.0.
 
-- `09:40:36` initial authoritative Detail: visible `1`, mapping `168`, trailing timeline/tools `66`.
-- `09:40:44` one explicit Sync: visible `1`, mapping `170`, trailing timeline/tools `67`; Repository started `responseGeneration=1` from `external_authoritative_detail` and rendered one live row.
-- The evolving `168 -> 170` mapping and `66 -> 67` tail prove the external response was active.
-- After manual re-arm, target page reached route `conversation`, `readyState=complete`, `visibilityState=visible`, `document.hidden=false`.
-- Native WebView at `did_finish`: `windowAttached=true`, `windowIsKey=true`, `hidden=false`, `alphaZero=false`, `boundsEmpty=false`, `intersectsWindow=true`.
-- The WebView remained non-interactive, under one visible Native sibling, and every recorded page activation had `document.hasFocus=false`.
-- From re-arm load completion `09:40:45` to first `willResignActive` `09:43:26`, approximately **161 seconds** foregrounded with zero matching `stream_status`, `/resume`, page-owned snapshot, DOM continuation, or SSE events.
-- User WebSocket frames remained `hasConversationKey=false`, `targetMatch=false`.
-- `09:45:21` later explicit Sync fetched final authoritative state; `09:45:22` visible messages became `2`, trailing `0`, and `externalDetailReconciled(reason=authoritative_assistant_materialized)` correctly cleared the live row.
+- Initial Detail: visible `1`, mapping `168`, trailing timeline/tools `66`.
+- One explicit Sync: mapping `170`, trailing timeline/tools `67`; existing response generation started from authoritative Detail.
+- Manual-rearm page: `visibilityState=visible`, `document.hidden=false`, `readyState=complete`, route `conversation`.
+- Native WebView: attached to key window, non-empty, intersecting window, not hidden, but non-interactive and under one visible sibling.
+- Every recorded page activation: `document.hasFocus=false`.
+- Approximately **161 seconds** clean foreground after load with zero `stream_status`, `/resume`, page-owned snapshot, DOM continuation or SSE.
+- User WebSocket frames remained `targetMatch=false`.
+- Final assistant materialized only after a later explicit Sync; final reconciliation itself worked correctly once authoritative Detail was fetched.
 
 ## Current conclusion
 
-1. **Rejected as primary blocker:** Page Visibility hidden state, WebView detachment, zero/off-window geometry after load, incomplete readiness, wrong conversation route, or insufficient foreground wait.
-2. **Observed strong differential:** covered page is visible/ready but always `document.hasFocus=false`; underlying WKWebView is non-interactive and occluded by one visible Native sibling.
-3. **Causality remains Unverified:** focus/interactivity/occlusion may matter, but the real trigger could instead be the genuine official SPA/router conversation-entry transition created by visible user navigation rather than programmatic full `/c/<id>` load.
-4. `/resume` offset remains downstream; do not investigate/guess it until the page begins `stream_status`.
-5. Automatic final reconcile works after authoritative Detail fetch; automatic trigger/discovery remains absent.
+Rejected as primary blockers: page hidden state, detached/off-window WebView, incomplete readiness, wrong conversation route, insufficient wait.
 
-## Next exact action — visible Web Rule Lab A/B, no new IPA yet
+Observed but not yet causal: visible covered page remains unfocused (`document.hasFocus=false`), non-interactive and Native-occluded. The remaining fork is **focus/activation vs genuine SPA/router conversation-entry transition**.
 
-Use the existing visible Web Rule Lab with the same default persistent WebKit store:
+Do not investigate guessed `/resume` offset until page-owned `stream_status` actually starts. Automatic final convergence also remains absent because no reliable completion/acquisition trigger fired.
 
-1. Start a long response from another official client.
-2. Open Settings -> Web Rule Lab in ChatGPTClient.
-3. Visibly tap/enter the same active conversation in official Web UI.
-4. On the visible active page run only this privacy-safe state probe: `document.visibilityState`, `document.hidden`, `document.hasFocus()`, `document.readyState`, and coarse route shape `conversation/root/other`.
-5. Return the probe result; do not expose IDs, messages, cookies, storage or auth/challenge values.
+## Next exact action — visible Web Rule Lab A/B, no new IPA
 
-Decision gate:
+Start a long response from another official client, open Settings -> Web Rule Lab, visibly enter the same active conversation in official Web UI, and return only this privacy-safe state set from the visible active page:
 
-- visible known-good official Web `hasFocus=true` while it begins continuation -> focus/activation A/B is evidence-backed for next Candidate;
-- visible known-good official Web also `hasFocus=false` while it begins continuation -> reject focus as causal and investigate genuine SPA/router entry transition.
+- `document.visibilityState`
+- `document.hidden`
+- `document.hasFocus()`
+- `document.readyState`
+- route shape `conversation/root/other`
 
-Do **not** allocate b88 or change continuation behavior before this A/B result unless a new deterministic source defect is found.
+If known-good visible Web is `hasFocus=true` when continuation starts, focus/activation A/B becomes evidence-backed for the next Candidate. If visible Web is also `hasFocus=false` while continuation starts, reject focus and target genuine SPA/router entry transition.
 
-## Frozen / preserved boundaries
+Do **not** allocate b88 or change continuation behavior before this A/B result unless a new deterministic source defect appears.
 
-- b80 tool/timeline -> reasoning-divider spacing: Frozen.
-- external stopped-thinking semantics: Frozen.
-- b80 final-materialization gate: preserve.
-- b67 client-owned protected Send and b72 simultaneous ownership: preserve.
-- `ConversationRepository` remains sole Native response/content authority.
-- `AuthSessionStore` remains sole native auth/account authority.
-- default persistent WebKit store remains sole persistent auth-secret authority.
-- no raw hidden-thought presentation.
-- conversation-entry one-shot authoritative Sync remains a later freshness requirement, not a continuation substitute.
+## Preserved boundaries
 
-## Evidence ladder
+- client-owned Send remains true same-response SSE;
+- `ConversationRepository` remains sole Native response/content authority;
+- no polling/timer/watchdog/speculative retry/fallback;
+- no guessed Native resume offsets or duplicate Send;
+- hidden thoughts remain non-presentational;
+- b80 presentation/final boundaries remain Frozen/preserved;
+- conversation-entry one-shot authoritative Sync remains a later freshness requirement, not continuation.
 
-- b84 active authoritative trailing timeline: **Runtime Positive**
-- b85 explicit manual Detail projection/repeated same-generation Sync/final reconcile after fetch: **Runtime Positive**
-- b85 automatic continuation: **Rejected**
-- b86 continuation activation / automatic final convergence: **Absent**
-- b87 Code/PR CI/Artifact/package: **Verified**
-- b87 visibility/attachment diagnostics: **Runtime Positive**
-- b87 covered page visible/loaded but `hasFocus=false`: **Observed; causality Unverified**
-- b87 page-owned continuation: **Absent despite ~161s clean foreground**
-- b87 automatic final convergence: **Absent; final only after later explicit Sync**
-- true cross-platform SSE continuation: **Not acquired**
+## Evidence state
+
+- b87 Code/CI/Artifact/package: **Verified**
+- b87 Runtime activation diagnostics: **Diagnostic Positive**
+- b87 page-owned continuation: **Rejected in exact run**
+- b87 automatic final convergence: **Rejected in exact run**
+- focus causality: **Unverified**
 - Stable/Frozen Send: **No**
 
-## Documentation state
-
-- Runtime evidence file and `BUILD_TEST_INDEX.md` b87 classification are updated.
-- Temporary b87 Runtime docsync files were removed from staging.
-- PR #29 metadata is maintained separately; PR metadata does not alter branch product identity.
+`BUILD_TEST_INDEX.md` and durable Runtime evidence are updated. Temporary docs tooling is removed. PR metadata is the only metadata-only external record remaining in this round; it does not alter branch/product identity.
 
 ## Session round counter
 

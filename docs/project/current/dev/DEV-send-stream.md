@@ -8,7 +8,7 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Last verified PR head before this batch: `4ce3deec58fcfe03ce48bf86e96c0da7a26e3ae1`
+- Verified PR head after warm-canonicalization evidence + PR sync: `0ca095d74f38fcbc6f223cf2725a334482ea5d7d`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 product / Artifact / IPA identity unchanged
 - Stable/Frozen Send: No
@@ -23,14 +23,14 @@ Current exact facts:
 1. Control B: fresh full document navigation to exact official `/g/{scope}/c/{conversation}` with transient activation false starts page-owned `stream_status + plural_snapshot` continuation.
 2. Official trusted project re-entry: sidebar anchor already contains `/g/{scope}/c/{conversation}` before navigation; page immediately issues project `stream_status` without a project Detail response supplying the scope.
 3. Deliberate wrong-route probe in the same warm visible-Web session found exactly one visible exact scoped canonical anchor for the same conversation.
-4. Final boolean route check now proves the post-navigation location itself is `EXACT_SCOPED_CANONICAL`: `currentIsExactScopedCanonical=true`, `currentIsExactUnscoped=false`, `currentIsProjectShape=true`, and the current conversation matches the saved target.
+4. Final boolean route check proves the post-navigation location itself is `EXACT_SCOPED_CANONICAL`: `currentIsExactScopedCanonical=true`, `currentIsExactUnscoped=false`, `currentIsProjectShape=true`, and the current conversation matches the saved target.
 5. Therefore official Web can canonicalize `/c/{project-conversation}` back to `/g/{scope}/c/{conversation}` in this warm session.
 6. This does **not** yet prove the fresh/root production-like covered Web has enough state to canonicalize the same way. b88 project failures remain evidence that current covered execution did not reach working continuation from its existing `/c/<conversationID>` path.
 7. `gizmo_id` remains unverified as the route-source contract and must not be guessed.
 
 ## Next exact action
 
-Run one final production-like Web Rule Lab control from a **fresh root document**: preserve the target project conversation ID/scope only in `sessionStorage`, full-navigate to `/`, then from that fresh root full-navigate directly to the unscoped `/c/{conversation}` while transient activation is false. Observe only whether official Web (a) canonicalizes to exact `/g/{scope}/c/{conversation}` and (b) starts page-owned continuation (`stream_status` / official snapshots) while the remote response is still active.
+Run one final production-like Web Rule Lab control from a **fresh root document**: preserve the target project conversation ID/scope only in `sessionStorage`, full-navigate to `/`, then from that fresh root full-navigate directly to the unscoped `/c/{conversation}` while transient activation is false and the remote response is clearly active. Observe only whether official Web (a) canonicalizes to exact `/g/{scope}/c/{conversation}` and (b) starts page-owned continuation (`stream_status` / official snapshots).
 
 Decision:
 
@@ -41,14 +41,14 @@ Do not allocate b89 before this production-like control. No guessed project endp
 
 ## Batch recovery state
 
-New canonicalization-result docs batch started from verified PR head `4ce3deec58fcfe03ce48bf86e96c0da7a26e3ae1`.
+Warm-canonicalization evidence batch complete:
 
-- confirmed complete: this checkpoint recovery write;
-- pending: extend `DEV-send-stream-official-project-canonical-anchor-20260903.md` with exact canonicalization result;
-- pending: synchronize PR #29 title/body to the fresh-root final gate;
-- pending: re-verify PR/head and close this checkpoint batch identity.
+- checkpoint recovery point written;
+- durable canonical-anchor evidence updated with exact scoped-canonical result;
+- PR #29 title/body synchronized;
+- PR re-verified open / mergeable / unmerged at head `0ca095d74f38fcbc6f223cf2725a334482ea5d7d` before this close write.
 
-Do not touch product source, version/build, Candidate, Artifact or IPA in recovery.
+This close write changes docs only. Product source, version/build, Candidate, Artifact and IPA remain unchanged.
 
 ## Preserved boundaries
 

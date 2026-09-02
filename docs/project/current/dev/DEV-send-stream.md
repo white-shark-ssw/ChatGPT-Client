@@ -8,7 +8,6 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified pre-batch PR head: `777d3182b12d09b6b1984dec89f22fb08e878d75`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`
 - b88 product / Artifact / IPA identity unchanged
 - Stable/Frozen Send: No
@@ -54,14 +53,7 @@ No guessed `gizmo_id`, project endpoint, router internals, Native `stream_status
 
 ## Batch recovery state
 
-Fresh-root positive evidence batch status:
-
-1. checkpoint recovery point — confirmed;
-2. durable Runtime evidence extension — confirmed at commit `c89e87192235e7310b112281b61b7ca55278f43c`;
-3. PR #29 title/body synchronization — pending;
-4. PR/head verification and final checkpoint identity close — pending.
-
-Do not touch product source, version/build, Candidate, Artifact or IPA in this batch.
+Fresh-root positive evidence batch has checkpoint and durable Runtime evidence written. PR metadata synchronization and final head close remain pending; product source, version/build, Candidate, Artifact and IPA are untouched.
 
 ## Preserved boundaries
 

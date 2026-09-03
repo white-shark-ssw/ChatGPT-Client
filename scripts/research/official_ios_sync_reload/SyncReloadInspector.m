@@ -166,7 +166,7 @@ static void SRCollectController(UIViewController *controller, NSMutableArray<NSS
     if (controller.presentedViewController && !controller.presentedViewController.isBeingDismissed) SRCollectController(controller.presentedViewController, classes, depth + 1);
     if ([controller isKindOfClass:[UINavigationController class]]) SRCollectController(((UINavigationController *)controller).visibleViewController, classes, depth + 1);
     if ([controller isKindOfClass:[UITabBarController class]]) SRCollectController(((UITabBarController *)controller).selectedViewController, classes, depth + 1);
-    for (UIViewController *child in controller.children) SRCollectController(child, classes, depth + 1);
+    for (UIViewController *child in controller.childViewControllers) SRCollectController(child, classes, depth + 1);
 }
 
 static void SRCollectViewClasses(UIView *view, NSMutableArray<NSString *> *classes, NSUInteger *visited) {

@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "6af383ddadf2273242d2202f60bde3092111dd08"
+          test "$(git rev-parse HEAD^)" = "63ab51056dc738c27f38eb18f095edb9c604313e"
           grep -q 'CURRENT_PROJECT_VERSION = 90;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b90";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'name: iOS Send Frontmost Presentation A-B b90' .github/workflows/ios-foundation.yml
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          changed="$(git diff --name-only | sort)"
+          changed="$(printf '%s\n%s\n' "$(git diff --name-only)" "$(git ls-files --others --exclude-standard)" | sed '/^$/d' | sort -u)"
           expected="$(printf '%s\n' \
             'docs/project/BUILD_TEST_INDEX.md' \
             'docs/project/DEVELOPMENT_PLAN.md' \

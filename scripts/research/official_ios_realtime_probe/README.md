@@ -1,11 +1,14 @@
 # Official iOS Realtime Probe
 
+Current research revision: **Probe v0.2**.
+
 Research-only observer for the user-supplied TrollStore ChatGPT package. It is not linked into ChatGPTClient and is not a product Candidate.
 
 ## What it observes
 
 Only privacy-safe structure:
 
+- privacy-safe conversation/realtime HTTP path shape, method/status/MIME/JSON key names, including Detail/stream-status/resume/SSE candidates;
 - likely realtime registration HTTP method/path/status and JSON key names;
 - WebSocket host/path plus query presence/count, never query values;
 - outbound command/frame key names, command type, symbolic topic, offset value class;
@@ -28,7 +31,7 @@ The output is `ChatGPTRealtimeProbe.dylib` plus SHA-256 sidecar.
 
 Inject the built dylib into the supplied official ChatGPT TrollStore app with the same TrollFools-style mechanism already used by that package. Keep the existing `ChatGPTEnhancer` injection; this probe is an additional observer.
 
-After injection, fully terminate and relaunch ChatGPT. The probe writes `ChatGPTRealtimeProbe.jsonl` into the app Documents directory and mirrors only event names to unified logs.
+After injection, fully terminate and relaunch ChatGPT. The probe writes `ChatGPTRealtimeProbe.jsonl` into the app Documents directory and mirrors only event names to unified logs. The in-app `清空` control deletes prior JSONL content and writes a fresh `probe.log_cleared` marker before the next test.
 
 ## Decisive test
 

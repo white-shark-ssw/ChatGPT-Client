@@ -1,5 +1,13 @@
 # Project State
 
+## DEV-send-stream official-iOS Probe v0.1 Runtime / v0.2 observation override — 2026-09-04
+
+- User-exported Probe v0.1 JSONL (`sha256:c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093`) is valid Human Runtime research evidence: 29 events / zero parse errors.
+- Official user WebSocket observation is Runtime Positive, including reconnect after `NSPOSIXErrorDomain/53`, but the captured socket subscribed only to `app_notifications`, `calpico-chatgpt`, and `push_auth_challenge`; no conversation/per-turn subscribe or target conversation-update/add-messages/async-status/catchup/live frame was captured.
+- Therefore direct user-socket late-join is not supported by this sample. Overall late-join remains Inconclusive because Probe v0.1 excluded ordinary conversation HTTP/Detail/status/resume/SSE and delegate response lifecycle.
+- Probe v0.2 is research-only and expands privacy-safe HTTP/SSE structural observation, redacts opaque URL path parts, records direct presence state, and adds a confirmed in-app `清空` log control. ChatGPTClient product and b95 identity remain unchanged; b96 remains unallocated.
+- Next gate: build/package v0.2 against the exact supplied official package and collect one clean late-join JSONL starting from `probe.log_cleared`.
+
 ## DEV-send-stream cross-platform late-join priority override — 2026-09-04
 
 - Latest explicit priority is to solve cross-platform automatic continuation interruption first. User reports official ChatGPT iOS can continue an answer initiated on another platform; treat that as current highest-priority Runtime evidence of an official late-join capability.

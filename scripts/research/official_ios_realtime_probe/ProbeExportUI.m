@@ -2,6 +2,9 @@
 
 static NSString * const RPTUIProbeLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSInteger RPTUIProbeButtonTag = 0x52505431;
+static const NSInteger RPTUIClearButtonTag = 0x52505432;
+
+extern void RPTClearLog(void);
 
 static NSString *RPTUILogPath(void) {
     NSString *documents = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject ?: NSTemporaryDirectory();
@@ -31,6 +34,7 @@ static UIViewController *RPTUITopViewController(UIViewController *controller) {
 + (instancetype)shared;
 - (void)attachIfPossible;
 - (void)probeButtonTapped:(UIButton *)button;
+- (void)clearButtonTapped:(UIButton *)button;
 @end
 
 @implementation RPTProbeExportTarget
@@ -61,13 +65,31 @@ static UIViewController *RPTUITopViewController(UIViewController *controller) {
         button.layer.shadowRadius = 3.0;
         button.layer.shadowOffset = CGSizeMake(0.0, 1.0);
         [button addTarget:self action:@selector(probeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+
+        UIButton *clearButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        clearButton.tag = RPTUIClearButtonTag;
+        clearButton.translatesAutoresizingMaskIntoConstraints = NO;
+        clearButton.accessibilityIdentifier = @"ChatGPTRealtimeProbe.Clear";
+        [clearButton setTitle:@"清空" forState:UIControlStateNormal];
+        [clearButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+        clearButton.titleLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
+        clearButton.backgroundColor = UIColor.systemRedColor;
+        clearButton.layer.cornerRadius = 8.0;
+        [clearButton addTarget:self action:@selector(clearButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+
         [window addSubview:button];
+        [window addSubview:clearButton];
         [NSLayoutConstraint activateConstraints:@[
             [button.trailingAnchor constraintEqualToAnchor:window.safeAreaLayoutGuide.trailingAnchor constant:-8.0],
             [button.topAnchor constraintEqualToAnchor:window.safeAreaLayoutGuide.topAnchor constant:8.0],
             [button.widthAnchor constraintEqualToConstant:58.0],
-            [button.heightAnchor constraintEqualToConstant:34.0]
+            [button.heightAnchor constraintEqualToConstant:34.0],
+            [clearButton.trailingAnchor constraintEqualToAnchor:button.leadingAnchor constant:-6.0],
+            [clearButton.centerYAnchor constraintEqualToAnchor:button.centerYAnchor],
+            [clearButton.widthAnchor constraintEqualToConstant:58.0],
+            [clearButton.heightAnchor constraintEqualToConstant:34.0]
         ]];
+        [window bringSubviewToFront:clearButton];
         [window bringSubviewToFront:button];
         NSLog(@"[ChatGPTRealtimeProbe] export UI ready");
     });
@@ -90,6 +112,22 @@ static UIViewController *RPTUITopViewController(UIViewController *controller) {
     activity.popoverPresentationController.sourceView = button;
     activity.popoverPresentationController.sourceRect = button.bounds;
     [presenter presentViewController:activity animated:YES completion:nil];
+}
+
+- (void)clearButtonTapped:(UIButton *)button {
+    UIViewController *presenter = RPTUITopViewController(RPTUIActiveWindow().rootViewController);
+    if (!presenter) return;
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"清空 Probe 日志？" message:@"清空后只保留新的测试事件，便于下一轮对时。" preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"清空" style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *action) {
+        RPTClearLog();
+        UIAlertController *done = [UIAlertController alertControllerWithTitle:@"已清空" message:@"下一轮 Probe 日志已从新的起点开始。" preferredStyle:UIAlertControllerStyleAlert];
+        [done addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
+        [presenter presentViewController:done animated:YES completion:nil];
+    }]];
+    alert.popoverPresentationController.sourceView = button;
+    alert.popoverPresentationController.sourceRect = button.bounds;
+    [presenter presentViewController:alert animated:YES completion:nil];
 }
 
 @end

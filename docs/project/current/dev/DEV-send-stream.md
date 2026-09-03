@@ -1,5 +1,17 @@
 # DEV-send-stream
 
+## Official iOS Probe v0.1 Runtime / v0.2 research gate — 2026-09-04
+
+Human Runtime JSONL `sha256:c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093` parsed cleanly: 29 events / 7,166 bytes. Probe v0.1 was genuinely active and captured the official `ws.chatgpt.com` user WebSocket. The observed socket sent `connect` plus only three base subscriptions (`app_notifications`, `calpico-chatgpt`, `push_auth_challenge`). After `NSPOSIXErrorDomain/53` it recreated the socket and repeated the same base subscriptions. No conversation/per-turn subscribe, target conversation hash, conversation-update, add-messages, async-status, catchup or live target frame appears.
+
+This is **negative for the simple direct-user-WebSocket late-join hypothesis in this sample, but overall late-join remains Inconclusive** because Probe v0.1 filtered out ordinary conversation HTTP/Detail/stream-status/resume/SSE and did not observe delegate-based streaming response lifecycle. v0.1 also exposed an opaque user-specific WebSocket path segment; v0.2 must redact opaque path parts.
+
+Research-only v0.2 is authorized: privacy-safe HTTP conversation/realtime path observation, response status/MIME/structural key metadata, delegate response/completion hooks, direct presence-state logging, raw-path redaction, and a confirmed `清空` log control. No prompt/body/auth/signed-query capture. No ChatGPTClient product change and no b96 allocation.
+
+Batch recovery point: exact b95 product/package remain `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2` / `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`; `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`; PR #29 open. Temporary tooling commits beginning at `14bef4584efc1eb82375491d273f83f6da7d4548` have not modified product. This apply batch may modify only the three research Probe sources plus this checkpoint, PROJECT_STATE, and the new Runtime-evidence file. After source commit, require dedicated research Probe CI, independently package against exact `ChatGPT_Decrypted.zip` SHA `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, verify research IPA identity/diff, then remove temporary tooling. Product/config files must not change.
+
+**Next exact action:** build/package Probe v0.2, then run one clean cross-platform late-join test after pressing `清空` immediately before the remote turn. Analyze the earliest target-correlated HTTP/SSE/WebSocket acquisition event before any b96 decision.
+
 ## Status
 
 **Active — exact b95 hard Reload is Runtime Positive as a deliberate recovery path, but automatic external terminal/final convergence remains insufficient. Latest user priority is cross-platform late-join continuation first: official iOS is explicitly reported able to continue a response initiated on another platform, so the immediate gate is to observe and reproduce the official native late-join realtime registration/topic/update path. Client-owned Web->Native handoff remains recorded but is secondary until this cross-platform path is resolved. Stable/Frozen Send remains No.**

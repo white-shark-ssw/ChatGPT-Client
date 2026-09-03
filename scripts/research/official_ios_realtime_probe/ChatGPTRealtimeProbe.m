@@ -2,7 +2,7 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.1";
+static NSString * const RPTProbeVersion = @"0.2";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
@@ -90,21 +90,77 @@ static void RPTWriteEvent(NSString *name, NSDictionary *fields) {
     });
 }
 
+void RPTClearLog(void) {
+    if (!RPTLogQueue) return;
+    dispatch_sync(RPTLogQueue, ^{
+        [[NSFileManager defaultManager] removeItemAtPath:RPTLogPath() error:nil];
+    });
+    RPTWriteEvent(@"probe.log_cleared", @{});
+}
+
+static NSArray<NSString *> *RPTPathParts(NSString *path) {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (NSString *part in [path componentsSeparatedByString:@"/"]) if (part.length) [parts addObject:part];
+    return parts;
+}
+
+static BOOL RPTLooksOpaquePathPart(NSString *part) {
+    if (!part.length) return NO;
+    if (part.length > 32) return YES;
+    NSString *lower = part.lowercaseString;
+    if ([lower hasPrefix:@"user-"] && part.length > 12) return YES;
+    NSRegularExpression *uuidLike = [NSRegularExpression regularExpressionWithPattern:@"^[0-9a-f]{8}-[0-9a-f-]{20,}$" options:NSRegularExpressionCaseInsensitive error:nil];
+    if ([uuidLike firstMatchInString:part options:0 range:NSMakeRange(0, part.length)]) return YES;
+    return RPTSafeToken(part).length == 0;
+}
+
+static NSString *RPTSafePathShape(NSString *path) {
+    NSArray<NSString *> *parts = RPTPathParts(path ?: @"");
+    NSMutableArray<NSString *> *safe = [NSMutableArray arrayWithCapacity:parts.count];
+    for (NSString *part in parts) [safe addObject:RPTLooksOpaquePathPart(part) ? @"<opaque>" : part.lowercaseString];
+    return safe.count ? [@"/" stringByAppendingString:[safe componentsJoinedByString:@"/"]] : @"/";
+}
+
+static NSString *RPTPathKind(NSString *path) {
+    NSArray<NSString *> *parts = RPTPathParts(path ?: @"");
+    NSString *lower = path.lowercaseString;
+    if ([lower containsString:@"/ws/user/"] || [lower hasSuffix:@"/ws/user"]) return @"user_websocket";
+    if (parts.count >= 2 && [parts[0] isEqualToString:@"backend-api"]) {
+        if ([parts[1] isEqualToString:@"conversation"] && parts.count >= 3) {
+            if (parts.count >= 4 && [parts[3] isEqualToString:@"stream_status"]) return @"conversation_stream_status";
+            return @"conversation_detail";
+        }
+        if ([parts[1] isEqualToString:@"conversations"]) return @"conversations";
+        if ([parts[1] isEqualToString:@"f"] && parts.count >= 3 && [parts[2] isEqualToString:@"conversation"]) {
+            if (parts.count >= 4 && [parts[3] isEqualToString:@"resume"]) return @"conversation_resume";
+            return @"conversation_send";
+        }
+    }
+    if ([lower containsString:@"celsius"] || [lower containsString:@"websocket"] || [lower containsString:@"/ws/"]) return @"realtime_registration";
+    if ([lower containsString:@"conversation"]) return @"conversation_other";
+    if ([lower containsString:@"stream"] || [lower containsString:@"resume"]) return @"stream_other";
+    return @"other";
+}
+
 static NSDictionary *RPTURLShape(NSURL *url) {
     if (!url) return @{};
     NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
     return @{
         @"scheme": url.scheme ?: @"",
         @"host": url.host ?: @"",
-        @"path": url.path ?: @"",
+        @"pathShape": RPTSafePathShape(url.path ?: @""),
+        @"pathKind": RPTPathKind(url.path ?: @""),
         @"queryPresent": (components.percentEncodedQuery.length > 0) ? @YES : @NO,
         @"queryItemCount": @(components.queryItems.count)
     };
 }
 
-static BOOL RPTLikelyRealtimePath(NSString *path) {
-    NSString *lower = path.lowercaseString;
-    return [lower containsString:@"celsius"] || [lower containsString:@"websocket"] || [lower containsString:@"/ws/"] || [lower hasSuffix:@"/ws/user"];
+static BOOL RPTShouldObserveURL(NSURL *url) { return ![RPTPathKind(url.path ?: @"") isEqualToString:@"other"]; }
+
+static NSString *RPTConversationHashFromURL(NSURL *url) {
+    NSArray<NSString *> *parts = RPTPathParts(url.path ?: @"");
+    if (parts.count >= 3 && [parts[0] isEqualToString:@"backend-api"] && ([parts[1] isEqualToString:@"conversation"] || [parts[1] isEqualToString:@"conversations"])) return RPTHashString(parts[2]);
+    return @"";
 }
 
 static void RPTCollectNestedKeys(id object, NSUInteger depth, NSMutableSet<NSString *> *keys) {
@@ -124,6 +180,41 @@ static void RPTCollectNestedKeys(id object, NSUInteger depth, NSMutableSet<NSStr
 static id RPTJSONObjectFromData(NSData *data) {
     if (!data.length || data.length > RPTMaxInspectableJSONBytes) return nil;
     return [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+}
+
+static NSMutableDictionary *RPTRequestFields(NSURLRequest *request) {
+    NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(request.URL)];
+    fields[@"method"] = request.HTTPMethod ?: @"GET";
+    NSString *conversationHash = RPTConversationHashFromURL(request.URL);
+    if (conversationHash.length) fields[@"conversationHash"] = conversationHash;
+    id json = RPTJSONObjectFromData(request.HTTPBody);
+    if ([json isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dictionary = json;
+        fields[@"requestKeys"] = RPTSortedKeys(dictionary);
+        id conversation = dictionary[@"conversation_id"] ?: dictionary[@"conversationId"];
+        if ([conversation isKindOfClass:[NSString class]] && [(NSString *)conversation length]) fields[@"conversationHash"] = RPTHashString(conversation);
+        id offset = dictionary[@"offset"] ?: dictionary[@"last_offset"] ?: dictionary[@"lastOffset"];
+        if (offset) fields[@"offsetClass"] = RPTValueClass(offset);
+    }
+    return fields;
+}
+
+static NSMutableDictionary *RPTResponseFields(NSURLRequest *request, NSURLResponse *response, NSData *data, NSError *error) {
+    NSURL *url = response.URL ?: request.URL;
+    NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(url)];
+    fields[@"method"] = request.HTTPMethod ?: @"GET";
+    NSString *conversationHash = RPTConversationHashFromURL(url);
+    if (conversationHash.length) fields[@"conversationHash"] = conversationHash;
+    NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]] ? (id)response : nil;
+    if (http) fields[@"status"] = @(http.statusCode);
+    if (response.MIMEType.length) fields[@"mimeType"] = response.MIMEType.lowercaseString;
+    if (response.expectedContentLength >= 0) fields[@"expectedContentLength"] = @(response.expectedContentLength);
+    if (data) fields[@"bodyBytes"] = @(data.length);
+    id json = RPTJSONObjectFromData(data);
+    if ([json isKindOfClass:[NSDictionary class]]) fields[@"responseKeys"] = RPTSortedKeys(json);
+    fields[@"responseClass"] = RPTValueClass(json);
+    if (error) { fields[@"errorDomain"] = error.domain ?: @""; fields[@"errorCode"] = @(error.code); }
+    return fields;
 }
 
 static id RPTJSONObjectFromMessage(NSURLSessionWebSocketMessage *message) API_AVAILABLE(ios(13.0)) {
@@ -194,6 +285,8 @@ static NSDictionary *RPTFrameSummary(id frame) {
             NSString *state = RPTSafeToken(presence[@"state"]);
             if (state.length) summary[@"presenceState"] = state;
         }
+        NSString *commandState = RPTSafeToken(command[@"state"]);
+        if (commandState.length) summary[@"commandState"] = commandState;
     }
 
     id payloadValue = RPTDecodedJSONObject(dictionary[@"payload"]) ?: dictionary[@"payload"];
@@ -344,11 +437,7 @@ static NSURLSessionDataTask *RPTSessionDataRequest(id self, SEL _cmd, NSURLReque
     if (!original) return nil;
     NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *) = (void *)original;
     NSURLSessionDataTask *task = function(self, _cmd, request);
-    if (RPTLikelyRealtimePath(request.URL.path ?: @"")) {
-        NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(request.URL)];
-        fields[@"method"] = request.HTTPMethod ?: @"GET";
-        RPTWriteEvent(@"http.realtime.request", fields);
-    }
+    if (RPTShouldObserveURL(request.URL)) RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
     return task;
 }
 
@@ -356,14 +445,9 @@ static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, 
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return nil;
     NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *, void (^)(NSData *, NSURLResponse *, NSError *)) = (void *)original;
-    BOOL candidate = RPTLikelyRealtimePath(request.URL.path ?: @"");
-    if (candidate) {
-        NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(request.URL)];
-        fields[@"method"] = request.HTTPMethod ?: @"GET";
-        RPTWriteEvent(@"http.realtime.request", fields);
-    }
+    BOOL candidate = RPTShouldObserveURL(request.URL);
+    if (candidate) RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
     return function(self, _cmd, request, ^(NSData *data, NSURLResponse *response, NSError *error) {
-        NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]] ? (id)response : nil;
         id json = RPTJSONObjectFromData(data);
         NSArray *keys = [json isKindOfClass:[NSDictionary class]] ? RPTSortedKeys(json) : @[];
         BOOL websocketResponse = NO;
@@ -371,17 +455,27 @@ static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, 
             NSString *lower = key.lowercaseString;
             if ([lower containsString:@"websocket"] || [lower isEqualToString:@"ws_url"] || [lower isEqualToString:@"wsurl"]) { websocketResponse = YES; break; }
         }
-        if (candidate || websocketResponse) {
-            NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(response.URL ?: request.URL)];
-            fields[@"method"] = request.HTTPMethod ?: @"GET";
-            fields[@"status"] = @(http.statusCode);
-            fields[@"responseKeys"] = keys;
-            fields[@"responseClass"] = RPTValueClass(json);
-            if (error) { fields[@"errorDomain"] = error.domain ?: @""; fields[@"errorCode"] = @(error.code); }
-            RPTWriteEvent(@"http.realtime.response", fields);
-        }
+        if (candidate || websocketResponse) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, data, error));
         if (completionHandler) completionHandler(data, response, error);
     });
+}
+
+static void RPTDelegateDidReceiveResponse(id self, SEL _cmd, NSURLSession *session, NSURLSessionDataTask *dataTask, NSURLResponse *response, void (^completionHandler)(NSURLSessionResponseDisposition)) {
+    NSURLRequest *request = dataTask.currentRequest ?: dataTask.originalRequest;
+    if (RPTShouldObserveURL(request.URL ?: response.URL)) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, nil, nil));
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return;
+    void (*function)(id, SEL, NSURLSession *, NSURLSessionDataTask *, NSURLResponse *, void (^)(NSURLSessionResponseDisposition)) = (void *)original;
+    function(self, _cmd, session, dataTask, response, completionHandler);
+}
+
+static void RPTDelegateDidComplete(id self, SEL _cmd, NSURLSession *session, NSURLSessionTask *task, NSError *error) {
+    NSURLRequest *request = task.currentRequest ?: task.originalRequest;
+    if (RPTShouldObserveURL(request.URL)) RPTWriteEvent(@"http.observed.complete", RPTResponseFields(request, task.response, nil, error));
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return;
+    void (*function)(id, SEL, NSURLSession *, NSURLSessionTask *, NSError *) = (void *)original;
+    function(self, _cmd, session, task, error);
 }
 
 static BOOL RPTIsSubclassOfClass(Class cls, Class parent) {
@@ -425,15 +519,20 @@ static void RPTInstallSessionHooks(void) {
     Class *classes = (__unsafe_unretained Class *)calloc((size_t)count, sizeof(Class));
     count = objc_getClassList(classes, count);
     Class sessionClass = NSURLSession.class;
+    SEL responseSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveResponse:completionHandler:");
+    SEL completeSelector = NSSelectorFromString(@"URLSession:task:didCompleteWithError:");
     for (int i = 0; i < count; i++) {
         Class cls = classes[i];
-        if (!RPTIsSubclassOfClass(cls, sessionClass)) continue;
-        if (@available(iOS 13.0, *)) {
-            if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);
-            if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithURL:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithURL:), (IMP)RPTSessionWebSocketURL);
+        if (RPTIsSubclassOfClass(cls, sessionClass)) {
+            if (@available(iOS 13.0, *)) {
+                if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);
+                if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithURL:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithURL:), (IMP)RPTSessionWebSocketURL);
+            }
+            if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:), (IMP)RPTSessionDataRequest);
+            if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:completionHandler:), (IMP)RPTSessionDataRequestCompletion);
         }
-        if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:), (IMP)RPTSessionDataRequest);
-        if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:completionHandler:), (IMP)RPTSessionDataRequestCompletion);
+        if (RPTClassOwnsSelector(cls, responseSelector)) RPTInstallHookOnClass(cls, responseSelector, (IMP)RPTDelegateDidReceiveResponse);
+        if (RPTClassOwnsSelector(cls, completeSelector)) RPTInstallHookOnClass(cls, completeSelector, (IMP)RPTDelegateDidComplete);
     }
     free(classes);
 }

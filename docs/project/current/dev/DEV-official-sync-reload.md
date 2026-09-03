@@ -1,0 +1,24 @@
+# DEV-official-sync-reload
+
+## Status
+
+**Active — special isolated research task**
+
+- **Work ID**: `DEV-official-sync-reload`
+- **Routing aliases / keywords**: `官方App同步重载 / 官方App同步 / 官方App重载 / official sync reload / 同步重载研究`
+- **Task**: Independently research whether the modified official ChatGPT iOS app can expose user-triggered `同步当前会话` and `重载当前会话` controls, and determine the smallest evidence-backed injection path.
+- **User intent / acceptance criteria**: This task must remain fully isolated from every other Active development task. Do not modify, reuse, advance or depend on another task's checkpoint, branch, PR, Candidate, research Probe state owner or product files. Research from the supplied official-app sample itself. Distinguish static feasibility from real-device Runtime proof.
+- **Baseline**: `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`. Supplied local official-app archive `/mnt/data/ChatGPT_Decrypted.zip`, SHA-256 `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`; observed bundle identity `com.openai.chat`, version `1.2026.202`, build `30140022279`, MinimumOSVersion `17.0`.
+- **Working branch / PR / head commit**: branch `research/official-sync-reload-20260904`; no PR yet; branch created from exact main baseline above.
+- **Candidate identity**: Product Candidate **Not allocated**. If a modified official-app test package is later produced, use a task-specific research artifact identity only; do not consume/reuse ChatGPTClient product build numbers or another task's research artifact identity.
+- **Evidence**: Initial archive inspection confirms a 126 MB `ChatGPT.framework/ChatGPT` Mach-O and exposes conversation-related static strings including `ConversationPollingManager`, `RepositoryRefreshRequirement`, `TurnExchangeReloadTracker`, `RemoteConversationRefreshTaskKey`, `AsyncTaskConversationObserver`, and `TriggerAsyncStatusPollingConversationObserver`. This is static evidence only; exact callable entry points and semantics are not yet verified.
+- **Files / modules in scope**: This task's own checkpoint/docs; new task-specific research source/tooling under a unique path if needed; local inspection of the supplied official app archive. Any future injected dylib/package must be owned exclusively by this task.
+- **State owner / shared dependencies**: No ChatGPTClient product state owner is modified by this research. Official-app internal conversation state owner/callable refresh/reload API remains `Unknown / Unverified` pending binary inspection.
+- **Frozen / do-not-touch**: All other Active task checkpoints/branches/PRs/Candidates; especially `DEV-send-stream`, branch `dev/send-stream-20260829`, PR #29, its Probe source/artifacts and b95/b96 product identity. Do not modify ChatGPTClient product source unless the user explicitly changes this task's scope later.
+- **Parallel conflicts checked against**: An existing Active task also performs official-app instrumentation. Conflict is avoided by explicit user requirement: this Work may inspect the same supplied binary but must not read/modify/reuse that task's implementation state, branch, checkpoint, PR, Candidate or Probe files. Any injection code here must live at a unique path and use a distinct research identity.
+- **Completed**: Governance routing; independent Work ID; isolated branch creation; exact main/archive baseline verification; first static string scan.
+- **Validation state**: Branch isolation verified. Archive SHA and bundle metadata verified locally. Static binary evidence only. No injected code, CI, research IPA or Runtime test yet.
+- **Pending**: Identify exact official conversation screen/controller/store symbols and candidate refresh/reload call paths; determine whether direct method invocation is feasible or whether a UI-level action should trigger an existing official route/state refresh; design the smallest independent injection surface.
+- **Next exact action**: Deep-inspect the supplied `ChatGPT.framework` and existing app binary metadata for current-conversation ownership, refresh/reload methods, selectors, notifications/actions and UI attachment points. Record only directly evidenced candidates; do not implement until one minimal call path is supported by static evidence.
+- **Rejected / do-not-repeat**: Do not import another task's Probe or conclusions as implementation authority; do not allocate b96 or any ChatGPTClient product Candidate; do not invent polling cadence, retry/watchdog/timer/fallback behavior; do not treat strings alone as proof a method is safely callable.
+- **Open questions / risks**: Swift symbols may be stripped and require metadata/demangling or Runtime observation. `ChatGPT_Decrypted.zip` already contains TrollStore/injection-related modifications, so pristine-vs-modified provenance must be kept explicit. Static feasibility does not prove that invoking a discovered path preserves official app state invariants.

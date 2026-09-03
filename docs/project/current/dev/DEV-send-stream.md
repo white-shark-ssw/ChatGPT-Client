@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — b90 frontmost presentation is Runtime Positive as a mechanism, but project-specific source/Runtime correlation proves the old bridge loses conversation identity after official `/g/{scope}/c/{conversation}` canonicalization. Exact b91 fixes only that scoped-route identity parser and is Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified; Human Runtime is pending. Stable/Frozen Send remains No.**
+**Active — exact b91 project route identity and official page-owned live continuation are Runtime Positive on iPhone/iOS17. Web -> bridge -> `ConversationRepository` progressive projection works without a second Sync. The remaining visible Web-page trap is the intentionally retained b90 `bringSubviewToFront` diagnostic, not a transport failure. Automatic terminal/final convergence remains Unverified because the app was force-quit while still streaming. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -75,6 +75,16 @@ After b91 package verification, run the same project-conversation test while a r
 
 If b91 makes project continuation observable/functional, route parsing is Runtime Positive; then a later separate candidate may remove the b90 frontmost diagnostic to prove the final covered production form. If b91 still has no page-owned requests while the project page is correctly recognized and the remote response demonstrably advances, continue from that new evidence without speculative protocol work.
 
+## b91 Human Runtime result — 2026-09-03
+
+Exact b91 Runtime is decisive for live continuation. Metadata matches Candidate b91 / Build 91 / source `c5985f1e2e5d`. After one explicit Sync established response generation 1, the official project page remained `route=conversation`, issued matching page-owned `stream_status`, repeatedly returned HTTP200 `IS_STREAMING`, emitted `externalStreamingObserved`, and continued after its own `/resume` offset 0 returned HTTP404 through the already-observed page-owned `stream_status` + plural conversation read path.
+
+Native live state advanced automatically without another Sync: service messages/tools `6 / 2 -> 47 / 14`, reasoning characters `194 -> 909`, with repeated `externalSnapshot`, `liveResponse.externalSnapshot` and `liveResponse.presentationApplied`. Therefore the scoped-route parser and existing page-owned live continuation path are Runtime Positive.
+
+The user could not return from the visible official Web because b91 intentionally retains b90's `hostView.bringSubviewToFront(webView)` diagnostic. That line changes z-order and has no balancing send-to-back in the rearm path; it is now a confirmed diagnostic presentation artifact.
+
+The run does **not** validate automatic terminal/final convergence: the last pre-exit status was still `IS_STREAMING`, last snapshot had `finalCharacters=0`, then the app was force-quit/relaunched.
+
 ## Validation / identity state
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
@@ -83,7 +93,7 @@ b91 identity guard is clean at allocation: repository commit search found no b91
 
 ## Batch recovery state
 
-**Closed for b91 product/package/docs preparation. Next exact action:** install exact b91 and perform the project-scoped Human Runtime gate. No product/config change is permitted before that Runtime evidence.
+**Closed for b91 Runtime evidence. Next exact action:** allocate the next unique candidate for one isolated presentation cleanup only: retain b91 scoped-route parsing and page-owned continuation, remove b90 `bringSubviewToFront(webView)` so the executor stays covered, then run project live + natural terminal/final Runtime. No retry/polling/timer/watchdog/Native status or resume synthesis.
 
 ## Preserved boundaries
 

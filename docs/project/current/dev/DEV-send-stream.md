@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b94 proves foreground official-page rebootstrap can restart the page-owned continuation loop after background, but the same long-running project-conversation run later terminated the WKWebView WebContent process. Rebootstrap mechanism Runtime Positive; repeated/heavy covered-Web reliability Runtime Negative / not production-stable; OOM cause Unverified; external terminal/final still not achieved. Stable/Frozen Send remains No.**
+**Active — exact b94 rebootstrap is Runtime Positive but repeated/heavy covered-Web reliability is Runtime Negative. User has now restored the original hard-recovery invariant: `重载当前会话` must remain available whenever a conversation is selected, including active/stuck response and in-flight Sync/Reload states, and must reset the current conversation page/local response execution state before reloading authoritative server Detail. b95 is allocated only for this hard-reload invariant. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -238,3 +238,40 @@ Official page owns continuation transport; `ConversationRepository` owns Native 
 ## Session round counter
 
 This user turn is **round 60**.
+
+## b95 allocation — always-available hard Reload
+
+Latest explicit user requirement restores an original product invariant and outranks the older preflight allowance to disable Reload while a response is active:
+
+- `重载当前会话` is an exceptional recovery action and must never be disabled while a current conversation exists.
+- Reload means: invalidate the current conversation's covered executor/observation, reset its Repository live-response state, clear the current page presentation/resident Detail, then issue one fresh authoritative server Detail load.
+- Reload never resends/regenerates the prompt and does not claim to Stop the server generation.
+- If the new authoritative Detail still contains a trailing active response timeline, rebuild the external live projection from that server data and attach one fresh covered observer.
+- Repeated Reload while Sync/Reload is already in flight is allowed; existing `replacingCurrentRequest: true` generation ownership must supersede the older Detail operation rather than disabling the recovery action.
+- Keep response generation counters monotonic when clearing a snapshot so stale callbacks cannot revive the old generation.
+- No polling, retry, timer, watchdog, Native `stream_status`/`resume`, guessed offsets, duplicate Send, WebSocket-body authority, automatic server Stop, or second response store.
+
+Candidate / Build: `DEV-send-stream-0.1.0-b95` / `0.1.0 (95)` — allocated and reserved.
+
+### Intended minimum product scope
+
+- `ChatGPTClient/RootViewController.swift`: add conversation hard-reset orchestration, always keep the detail recovery menu reachable, release the selected conversation executor before Reload, and re-observe only after authoritative Reload applies.
+- `ChatGPTClient/Conversation/ConversationFeature.swift`: remove active/in-flight Reload disable/guards; keep the current page clear + replacement Detail load behavior; adopt authoritative trailing timeline after Reload success.
+- `ChatGPTClient.xcodeproj/project.pbxproj`: bump Build/Candidate only.
+- `.github/workflows/ios-foundation.yml`: bind exact b95 package identity only after guarded product compile passes.
+
+### Batch recovery point
+
+Known pre-allocation feature head: `b2cd6365c90decbc7f7e33958ef171076b52f8c4`; PR #29 open/unmerged; `main` `94f0c5777dad262cd1fb22be49082dbd92c962f2`; exact b94 package source remains `59894bd9ca7c293211cd856ecf33579f19ce4d84`.
+
+Confirmed before product writes: b95 absent from Build/Test Index and commit search; no second Active feature checkpoint/branch conflict; current Xcode Build/Candidate is b94; permanent package workflow is still b94.
+
+Write batches planned:
+
+1. record this checkpoint and remove the temporary checkpoint workflow;
+2. guarded staging applies only the b95 product files and runs Simulator compile without emitting an IPA;
+3. create exact product commit plus package-binding commit objects and advance the feature branch once so no intermediate b94/b95 identity can emit;
+4. require Push/PR CI, canonical Artifact and independent package inspection;
+5. update durable docs/PR and hand exact IPA to Human Runtime.
+
+Next exact action after checkpoint cleanup: run guarded b95 staging for the minimum hard-Reload patch. Do not modify b94 Runtime evidence or allocate b96 during recovery.

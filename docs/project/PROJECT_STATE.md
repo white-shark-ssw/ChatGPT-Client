@@ -1,5 +1,11 @@
 # Project State
 
+## 2026-09-04 — Probe v0.5 Runtime reconfirms Native Detail polling / v0.6 callback-surface gate
+
+- Exact v0.5 JSONL `sha256:26e8646945831764bf6317c99213ff8a9621d09942e642a19b4f15aa24c892ba`: 47,648 bytes / 146 events / zero parse errors / all v0.5. Target `0df178903e95` again issued repeated `__NSCFLocalDataTask` authoritative Conversation Detail GETs at about 9.3s median after reacquisition.
+- Zero `http.conversation_detail.async_status` events means the v0.5 public `URLSession:dataTask:didReceiveData:` hook did not cover the Swift-async Detail response path; it does **not** prove the field is absent. Native Detail polling remains Runtime Positive; exact async-status semantics remain Unverified.
+- Probe v0.6 is research-only and records one bounded callback-surface snapshot from the first target Detail task (relevant selector/ivar names and type signatures only). It installs no guessed private callback hook and reads no content/auth. Product remains b95; b96 remains unallocated.
+
 ## 2026-09-04 — Probe v0.5 packaged / Detail async-status Human Runtime gate
 
 - Cross-platform late-join remains primary. v0.4 Runtime observed same-target authoritative Conversation Detail GETs at ~9.7s median and user separately recalls official iOS updates arriving in blocks rather than SSE-like token flow.

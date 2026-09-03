@@ -2,7 +2,7 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.5";
+static NSString * const RPTProbeVersion = @"0.6";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
@@ -14,6 +14,7 @@ static char RPTTaskResumeLoggedKey;
 static char RPTDetailAsyncStatusLoggedKey;
 static char RPTDetailScanTailKey;
 static BOOL RPTLateSessionRefreshDone = NO;
+static BOOL RPTDetailCallbackSurfaceLogged = NO;
 
 static NSString *RPTTimestamp(void) {
     static NSISO8601DateFormatter *formatter;
@@ -618,13 +619,90 @@ static BOOL RPTShouldObserveTaskURL(NSURL *url) {
     return RPTShouldObserveURL(url);
 }
 
+static BOOL RPTCallbackSelectorRelevant(NSString *selectorName) {
+    NSString *lower = selectorName.lowercaseString ?: @"";
+    for (NSString *term in @[@"data", @"response", @"receive", @"complete", @"completion", @"finish", @"body", @"bytes"]) {
+        if ([lower containsString:term]) return YES;
+    }
+    return NO;
+}
+
+static BOOL RPTCallbackIvarRelevant(NSString *ivarName) {
+    NSString *lower = ivarName.lowercaseString ?: @"";
+    for (NSString *term in @[@"session", @"delegate", @"handler", @"data", @"response", @"protocol", @"connection", @"completion", @"body"]) {
+        if ([lower containsString:term]) return YES;
+    }
+    return NO;
+}
+
+static NSArray<NSDictionary *> *RPTDetailTaskMethodSurface(Class startClass) {
+    NSMutableArray<NSDictionary *> *items = [NSMutableArray array];
+    NSUInteger depth = 0;
+    for (Class cls = startClass; cls && depth < 8 && items.count < 80; cls = class_getSuperclass(cls), depth += 1) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(cls, &count);
+        for (unsigned int i = 0; i < count && items.count < 80; i++) {
+            SEL selector = method_getName(methods[i]);
+            NSString *name = NSStringFromSelector(selector) ?: @"";
+            if (!RPTCallbackSelectorRelevant(name)) continue;
+            const char *types = method_getTypeEncoding(methods[i]);
+            [items addObject:@{
+                @"class": NSStringFromClass(cls) ?: @"",
+                @"selector": name,
+                @"argumentCount": @(method_getNumberOfArguments(methods[i])),
+                @"typeEncoding": types ? [NSString stringWithUTF8String:types] ?: @"" : @""
+            }];
+        }
+        free(methods);
+    }
+    return items;
+}
+
+static NSArray<NSDictionary *> *RPTDetailTaskIvarSurface(Class startClass) {
+    NSMutableArray<NSDictionary *> *items = [NSMutableArray array];
+    NSUInteger depth = 0;
+    for (Class cls = startClass; cls && depth < 8 && items.count < 40; cls = class_getSuperclass(cls), depth += 1) {
+        unsigned int count = 0;
+        Ivar *ivars = class_copyIvarList(cls, &count);
+        for (unsigned int i = 0; i < count && items.count < 40; i++) {
+            const char *rawName = ivar_getName(ivars[i]);
+            NSString *name = rawName ? [NSString stringWithUTF8String:rawName] ?: @"" : @"";
+            if (!RPTCallbackIvarRelevant(name)) continue;
+            const char *types = ivar_getTypeEncoding(ivars[i]);
+            [items addObject:@{
+                @"class": NSStringFromClass(cls) ?: @"",
+                @"ivar": name,
+                @"typeEncoding": types ? [NSString stringWithUTF8String:types] ?: @"" : @""
+            }];
+        }
+        free(ivars);
+    }
+    return items;
+}
+
+static void RPTRecordDetailTaskCallbackSurface(NSURLSessionTask *task) {
+    if (!task) return;
+    @synchronized (RPTHookedKeys) {
+        if (RPTDetailCallbackSurfaceLogged) return;
+        RPTDetailCallbackSurfaceLogged = YES;
+    }
+    Class taskClass = object_getClass(task);
+    NSMutableDictionary *fields = [NSMutableDictionary dictionary];
+    fields[@"taskClass"] = NSStringFromClass(taskClass) ?: @"";
+    fields[@"methods"] = RPTDetailTaskMethodSurface(taskClass);
+    fields[@"ivars"] = RPTDetailTaskIvarSurface(taskClass);
+    RPTWriteEvent(@"probe.detail_task_callback_surface", fields);
+}
+
 static void RPTInstallSessionHooks(void);
 
 static void RPTTaskResume(id self, SEL _cmd) {
     NSURLSessionTask *task = (NSURLSessionTask *)self;
     NSURLRequest *request = task.currentRequest ?: task.originalRequest;
     BOOL refreshLateHooks = NO;
-    if ([[RPTPathKind(request.URL.path ?: @"") lowercaseString] isEqualToString:@"conversation_detail"]) {
+    BOOL isConversationDetail = [[RPTPathKind(request.URL.path ?: @"") lowercaseString] isEqualToString:@"conversation_detail"];
+    if (isConversationDetail) {
+        RPTRecordDetailTaskCallbackSurface(task);
         @synchronized (RPTHookedKeys) {
             if (!RPTLateSessionRefreshDone) { RPTLateSessionRefreshDone = YES; refreshLateHooks = YES; }
         }

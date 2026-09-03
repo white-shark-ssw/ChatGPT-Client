@@ -1,5 +1,21 @@
 # DEV-send-stream
 
+## Official iOS Probe v0.5 Runtime / v0.6 callback-surface gate — 2026-09-04
+
+Exact user-exported Probe v0.5 JSONL `sha256:26e8646945831764bf6317c99213ff8a9621d09942e642a19b4f15aa24c892ba` is clean Human Runtime evidence: 47,648 bytes / 146 valid events / zero parse errors / all `probeVersion=0.5`, beginning from a clean-log test window. Native task-level observation is Runtime Positive again.
+
+For target conversation hash `0df178903e95`, exact `__NSCFLocalDataTask` GET Detail requests occur at `20:57:28.958`, `20:57:56.962`, `20:58:07.117`, `20:58:16.235`, `20:58:25.668`, `20:58:35.051`, `20:58:44.323`, and `20:58:53.546Z`. After the first reacquisition gap, the repeated intervals are approximately `10.155 / 9.118 / 9.433 / 9.383 / 9.272 / 9.223s` (median `9.328s`). This independently reconfirms official Native authoritative Conversation Detail polling on the current account.
+
+There are **zero** `http.conversation_detail.async_status` events despite the target Detail tasks. This is not evidence that `conversation_async_status` is absent. Probe v0.5's public `URLSession:dataTask:didReceiveData:` observer is therefore **Runtime Negative as coverage for this Swift-async Detail response path**; the field/value and official active/terminal contract remain Unverified.
+
+Probe v0.6 is research-only and changes no ChatGPTClient product file. It keeps v0.5 observation but, on the first target Detail task only, records a bounded structural snapshot of the actual task class hierarchy: callback-relevant Objective-C selector names, argument counts/type encodings, plus callback/session/delegate-related ivar names/type encodings. It reads no ivar values, installs no guessed private callback hook, initiates no request, and logs no auth/content. The purpose is to identify one evidenced Swift-async response-delivery callback before any deeper observer.
+
+Governance recovery: an unrelated/accidental commit `a4d7f7337a4047e2f9525cc0cef131cd17a0a14d` replaced this checkpoint with `NO`. The exact pre-overwrite checkpoint blob `06d5ab77bfc2038153af5393bc0fb4789b6bd7c8` was uniquely recovered at commit `500a17baad18a2cf3713fe9edad2bcf41502cfe4`; a temporary recovery placeholder created during that correction was removed in the same final recovery tree. No ChatGPTClient product or Probe source changed in that recovery.
+
+Evidence ladder: **Probe v0.5 package verified / Native Detail polling Runtime Positive again / v0.5 async-status callback coverage Runtime Negative / async-status semantics Unverified / v0.6 research source next / product remains b95 / b96 unallocated / Stable-Frozen Send No.**
+
+**Next exact action:** build/package exact Probe v0.6 and run one clean long cross-platform response after `清空`. Decisive v0.6 evidence is `probe.detail_task_callback_surface`; use only an evidenced callback signature from that output for any later response-state observer. Do not allocate b96 yet, and do not add Native polling/resume/timer/retry/watchdog/duplicate Send or a second response store from the callback-coverage miss.
+
 ## Official iOS Probe v0.5 async-status response gate — 2026-09-04
 
 Exact resume guard before this research delta: branch `dev/send-stream-20260829` at `1074cabfb6afa31e0db37896bf606f25f2f7d685`; PR #29 open/unmerged; `main` `94f0c5777dad262cd1fb22be49082dbd92c962f2`; exact product remains b95 (`ac5e621aa69f5f27ef3167b4a951812be8b8e2c2` / package `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`); b96 remains unallocated.

@@ -396,7 +396,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       new MutationObserver(reportExternalAssistantDOM).observe(document.documentElement, { subtree: true, childList: true, characterData: true });
 
       const currentConversationID = () => {
-        const match = location.pathname.match(/^\/c\/([^/?#]+)/);
+        const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);
         return match ? decodeURIComponent(match[1]) : null;
       };
       const pageRouteShape = () => currentConversationID() ? 'conversation' : location.pathname === '/' ? 'root' : 'other';

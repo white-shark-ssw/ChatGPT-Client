@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b92
-# Product source: 96ea3e3d8c5cabf67ff33331d40c9dcc6c9f0850
-name: iOS Send Covered Continuation b92
+# Candidate: DEV-send-stream-0.1.0-b93
+# Product source: 556bd8886061f4126d11e4ac44f4e24ed580500c
+name: iOS Send External Reselection Focus b93
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b92
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b93
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

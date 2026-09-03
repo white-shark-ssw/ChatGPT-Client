@@ -1,5 +1,12 @@
 # Project State
 
+## 2026-09-04 — Probe v0.5 packaged / Detail async-status Human Runtime gate
+
+- Cross-platform late-join remains primary. v0.4 Runtime observed same-target authoritative Conversation Detail GETs at ~9.7s median and user separately recalls official iOS updates arriving in blocks rather than SSE-like token flow.
+- Probe v0.5 is research-only: it retains task-resume observation and adds privacy-safe observation of only the exact `conversation_async_status` enum from Conversation Detail response chunks via `URLSession:dataTask:didReceiveData:`. It logs no content/auth and initiates no network request.
+- Exact source `b5b48ac67c09f39b0a40666ad9574cfa389b900b`; research CI `33803516248 / 100808374551` success; Artifact `9911983067`; digest `sha256:97d7b854ceda48afaff8efaac387e72af56812a256d5e96477cbfc9b6dd413ce`; dylib SHA `731ebdf5716cb321fa0f0047fadbc6ccc1a628e4fb4b17d162613e156e75b92e`; research IPA SHA `f53dfc8532738dbccfe80e24dc62fe1728abe0dcd57ce6a3cd015655378da86d`; official identity unchanged and exact diff vs pristine source is three intended files.
+- Human Runtime must now prove Detail active/terminal state on the same target. Product remains exact b95; b96 remains unallocated; Stable/Frozen Send No.
+
 ## 2026-09-04 — Probe v0.4 Runtime observes Native Conversation Detail polling
 
 - Exact v0.4 JSONL `sha256:cd2b1693a423a37504d96e410c97c04a7987e76283c6458b90ff2db17dc09bd5`: 58,776 bytes / 185 events / zero parse errors / clean-log start. v0.4 task-resume observer is Runtime Positive; no v0.2-style log storm.

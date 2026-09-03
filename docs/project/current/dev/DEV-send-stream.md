@@ -130,4 +130,4 @@ Official page owns continuation transport; `ConversationRepository` owns Native 
 
 ## Session round counter
 
-This user turn is **round 61**.
+This user turn is **round 59**.

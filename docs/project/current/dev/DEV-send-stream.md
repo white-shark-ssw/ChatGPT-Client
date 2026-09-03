@@ -2,16 +2,18 @@
 
 ## Status
 
-**Active — fresh-root visible-Web `/c/{project-conversation}` control is Runtime Positive: with transient activation false, official Web canonicalized to exact `/g/{scope}/c/{conversation}` and started page-owned continuation. Scoped-route identity alone no longer explains b88. The follow-up Web Rule Lab `navigator.userActivation` read is not causal evidence because executing the probe itself can create/retain user activation and the page had already timed out. Next candidate is a diagnostics-focused b89 single-variable A/B on the remaining covered-WKWebView interactivity differential. Stable/Frozen Send remains No.**
+**Active — fresh-root visible-Web `/c/{project-conversation}` control is Runtime Positive: with transient activation false, official Web canonicalized to exact `/g/{scope}/c/{conversation}` and started page-owned continuation. Scoped-route identity alone no longer explains b88. The follow-up Web Rule Lab `navigator.userActivation` read is not causal evidence because executing the probe itself can create/retain user activation and the page had already timed out. b89 is now Code written + guarded Static/Simulator passed for the remaining covered-WKWebView interactivity differential; formal workflow identity / Push+PR CI / Artifact remain pending. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Verified pre-b89 product head: `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`
-- Recovery-point commit: `a1c4b579e3042c61fcfe21a332bdf90456c44541`
+- Original b89 recovery-point commit: `a1c4b579e3042c61fcfe21a332bdf90456c44541`
+- Current verified b89 product head: `f39bc9387575028d431b85409780a2f3670b3259`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)` permanently reserved
 - b89 Candidate / Build allocated: `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)`
+- b89 Artifact: **not emitted yet**
 - Stable/Frozen Send: No
 
 ## Latest Runtime result
@@ -42,37 +44,70 @@ Keep b88 behavior unchanged except for one native behavior variable:
 
 Acceptance gate: on a deliberately long remote response, one explicit Sync/rearm must establish the external generation; after covered load/focus, observe whether official page-owned `stream_status` / `/resume` / snapshot continuation begins while the remote generation remains active. Artifact/CI success is not Runtime proof.
 
+## b89 Code / staging evidence
+
+Current verified branch head `f39bc9387575028d431b85409780a2f3670b3259` is commit `b89: test covered Web interactivity`.
+
+Verified commit scope:
+
+- `ChatGPTClient/RootViewController.swift`: exactly `isUserInteractionEnabled=false -> true` plus automatic page-activation `navigator.userActivation` booleans;
+- `ChatGPTClient.xcodeproj/project.pbxproj`: Build `88 -> 89`, Candidate `b88 -> b89` in both target configurations;
+- temporary `.github/workflows/b89-apply.yml` removed in the same commit;
+- no route/status/resume/snapshot/Send/Repository behavior changed.
+
+Guarded staging facts:
+
+- run `33722176080`: exact product diff + Simulator build succeeded; bookkeeping failed before commit because the staged workflow deletion was checked with an unstaged-only file list;
+- run `33722473430`: exact product diff + Simulator build succeeded; bookkeeping failed before commit because the already-removed workflow path was passed explicitly to `git add`;
+- final corrected guarded run from staging commit `55648f61d97b1997c2f0058b10f9d274c1078106` used `git add -A` and produced current product head `f39bc9387575028d431b85409780a2f3670b3259`;
+- prior failed runs did not commit/push partial product files;
+- Xcode 16.4 Simulator gate emitted `** BUILD SUCCEEDED **` before the successful product commit.
+
+Evidence level: **Code written + guarded static/Simulator passed. Formal Push/PR CI, Artifact, package identity, Runtime remain pending.**
+
 ## Next exact action
 
-Use one temporary guarded GitHub Actions patch workflow because the available repository write API can only replace the very large `RootViewController.swift` as a whole. The temporary workflow must apply only exact-count string replacements, run `git diff --check` plus the existing Xcode Simulator compile gate, delete itself before committing, and push the resulting product/version/workflow commit to this same feature branch. Then verify the actual commit diff before any CI/package claim.
+The temporary guarded workflow is gone, but the permanent `.github/workflows/ios-foundation.yml` still carries b88 header/name/upload-Artifact identity. This is the only deterministic missing write from the recorded b89 batch and no b89 Artifact has been emitted yet.
 
-After the guarded product commit is verified, run normal Push/PR CI, obtain one canonical b89 Artifact/IPA, independently verify package version/build/candidate/source identity, then hand b89 to the user for the real-device A/B. No route/gizmo fix, Native `stream_status`/`resume`, guessed offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
+1. update only `.github/workflows/ios-foundation.yml` from b88 identity to b89 identity, with product-source comment bound to current verified product head `f39bc9387575028d431b85409780a2f3670b3259`;
+2. verify actual feature head/diff and that Build89/Candidate b89 + workflow b89 identity agree;
+3. let normal Push and PR CI run on the resulting exact product/config source;
+4. select one canonical **feature-head / Push** b89 Artifact, independently verify ZIP/IPA checksum and built `Info.plist` version/build/Candidate/source marker, MinimumOSVersion and arm64;
+5. update BUILD_TEST_INDEX / MODULE_STATUS / TECHNICAL_DECISIONS / WEB_SEND_ADAPTER / checkpoint and PR metadata with exact Code/CI/Artifact evidence;
+6. hand exact b89 IPA to the user for the real-device interactivity A/B.
+
+No route/gizmo fix, Native `stream_status`/`resume`, guessed offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
 
 ## Batch recovery state
 
 **Recovery point active for b89.**
 
-Baseline before product writes:
+Current verified baseline:
 
 - branch `dev/send-stream-20260829`;
 - PR #29 open / mergeable / unmerged;
 - actual main `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- product head before recovery docs `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`;
-- recovery-point commit `a1c4b579e3042c61fcfe21a332bdf90456c44541`;
+- current product head `f39bc9387575028d431b85409780a2f3670b3259`;
 - b88 identities untouched and permanently reserved;
-- b89 allocated as `0.1.0 (89)` / `DEV-send-stream-0.1.0-b89`.
+- b89 allocated as `0.1.0 (89)` / `DEV-send-stream-0.1.0-b89`;
+- b89 Artifact not emitted.
 
-Planned coherent batches:
+Confirmed complete:
 
-1. create temporary `.github/workflows/b89-apply.yml` only as a deterministic repository-edit transport;
-2. that workflow must assert and apply exactly: covered interactivity `false -> true`; automatic page user-activation diagnostic fields; project Build `88 -> 89` and Candidate `b88 -> b89`; normal `ios-foundation.yml` candidate/name/artifact identity `b88 -> b89`; then `git diff --check` + Simulator compile; finally remove itself and commit/push the real b89 changes;
-3. verify actual branch head/diff and confirm the temporary workflow is absent before depending on the product commit;
-4. verify normal Push/PR CI and produce/inspect one canonical b89 Artifact;
-5. update BUILD_TEST_INDEX / MODULE_STATUS / WEB_SEND_ADAPTER / checkpoint and PR metadata with exact Code/CI/Artifact evidence.
+1. temporary guarded patch transport created and corrected deterministically after two post-build bookkeeping failures;
+2. exact b89 product/version patch passed `git diff --check` + Xcode 16.4 Simulator build;
+3. temporary patch workflow deleted itself in final real product commit;
+4. actual product commit `f39bc9387575028d431b85409780a2f3670b3259` verified.
 
-Confirmed complete: recovery point and edit-transport plan.
-Pending: temporary guarded patch workflow, real product/version/workflow commit, verification, CI, Artifact, durable doc sync.
-Do not touch b88 product/Artifact/IPA identities, unrelated modules or another work checkpoint.
+Pending coherent batches:
+
+1. permanent `ios-foundation.yml` b89 identity update only;
+2. exact head/diff/identity verification;
+3. normal Push/PR CI;
+4. canonical Push Artifact/package verification;
+5. durable docs + PR metadata sync.
+
+Next exact action: update only `.github/workflows/ios-foundation.yml`; do not replay product patch or temporary workflow. Do not touch b88 product/Artifact/IPA identities, unrelated modules or another work checkpoint.
 
 ## Preserved boundaries
 
@@ -80,4 +115,4 @@ Official page owns continuation; `ConversationRepository` owns Native response/c
 
 ## Session round counter
 
-This user turn is **round 54**.
+This user turn is **round 55**.

@@ -1,6 +1,6 @@
 # Official iOS Realtime Probe
 
-Current research revision: **Probe v0.4**.
+Current research revision: **Probe v0.5**.
 
 Research-only observer for the user-supplied TrollStore ChatGPT package. It is not linked into ChatGPTClient and is not a product Candidate.
 
@@ -16,6 +16,7 @@ Only privacy-safe structure:
 - transport errors by domain/code; repeated receive failures on the same failed WebSocket task are emitted once until a real message arrives;
 - URLSession conversation/realtime observations cover both request-based and URL-based data-task constructors.
 - one privacy-safe `http.task.resume` event is emitted per observed NSURLSession task, including tasks created internally by Swift async `URLSession.data(for:)` / `bytes(for:)` paths; no task body or auth material is logged.
+- for authoritative Conversation Detail responses only, v0.5 observes `URLSession:dataTask:didReceiveData:` and emits only the safe enum value of the exact `conversation_async_status` field (for example `is_streaming` / `complete`); response content is never persisted or logged. A one-time late delegate-hook refresh occurs on the first Detail task so Swift-async delegate classes loaded after probe injection are covered.
 
 It does not log Cookie/Authorization headers, signed WebSocket query values, prompt/answer/reasoning/tool text, request/response bodies, or raw conversation IDs.
 
@@ -43,7 +44,7 @@ After injection, fully terminate and relaunch ChatGPT. The probe writes `ChatGPT
 4. Let the response complete without manually refreshing A on the official iOS app.
 5. Export/copy only `ChatGPTRealtimeProbe.jsonl` for analysis.
 
-The decisive question is which target-correlated acquisition event appears first before assistant completion: conversation HTTP/stream-status/resume/SSE, a conversation/per-turn WebSocket subscription/update, or another official route. Probe v0.4 keeps the v0.3 WebSocket error de-duplication and adds task-resume observation so Swift async URLSession acquisition cannot bypass the probe merely by avoiding public data-task constructors.
+The decisive v0.5 question is whether the same target Conversation Detail loop emits `conversation_async_status=is_streaming` while the remote answer is active and later `complete` when official polling stops. v0.5 keeps v0.4 task-resume observation and adds only privacy-safe status-field observation; it does not initiate requests or copy response content.
 
 ## Evidence boundary
 

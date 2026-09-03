@@ -2,7 +2,7 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.4";
+static NSString * const RPTProbeVersion = @"0.5";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
@@ -11,6 +11,9 @@ static NSMutableSet<NSString *> *RPTHookedKeys;
 static NSMutableDictionary<NSString *, NSValue *> *RPTOriginalIMPs;
 static char RPTWebSocketReceiveErrorLoggedKey;
 static char RPTTaskResumeLoggedKey;
+static char RPTDetailAsyncStatusLoggedKey;
+static char RPTDetailScanTailKey;
+static BOOL RPTLateSessionRefreshDone = NO;
 
 static NSString *RPTTimestamp(void) {
     static NSISO8601DateFormatter *formatter;
@@ -494,6 +497,66 @@ static NSURLSessionDataTask *RPTSessionDataURLCompletion(id self, SEL _cmd, NSUR
     });
 }
 
+static NSString *RPTConversationAsyncStatusToken(NSData *data, NSRange keyRange) {
+    if (!data.length || keyRange.location == NSNotFound || keyRange.location >= data.length) return @"";
+    NSUInteger length = MIN((NSUInteger)256, data.length - keyRange.location);
+    NSString *window = [[NSString alloc] initWithData:[data subdataWithRange:NSMakeRange(keyRange.location, length)] encoding:NSUTF8StringEncoding];
+    if (!window.length) return @"";
+    NSRange colon = [window rangeOfString:@":"];
+    if (colon.location == NSNotFound) return @"";
+    NSUInteger index = NSMaxRange(colon);
+    while (index < window.length && [[NSCharacterSet whitespaceAndNewlineCharacterSet] characterIsMember:[window characterAtIndex:index]]) index += 1;
+    if (index >= window.length) return @"";
+    if ([window characterAtIndex:index] == '"') {
+        NSUInteger start = index + 1;
+        NSRange end = [window rangeOfString:@"\"" options:0 range:NSMakeRange(start, window.length - start)];
+        if (end.location == NSNotFound) return @"";
+        return RPTSafeToken([window substringWithRange:NSMakeRange(start, end.location - start)]);
+    }
+    NSString *tail = [[window substringFromIndex:index] lowercaseString];
+    if ([tail hasPrefix:@"null"]) return @"null";
+    return @"";
+}
+
+static void RPTObserveConversationDetailData(NSURLSessionDataTask *task, NSData *data) {
+    if (!task || !data.length || objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey)) return;
+    NSURLRequest *request = task.currentRequest ?: task.originalRequest;
+    if (![[RPTPathKind(request.URL.path ?: @"") lowercaseString] isEqualToString:@"conversation_detail"]) return;
+    NSData *key = [@"\"conversation_async_status\"" dataUsingEncoding:NSUTF8StringEncoding];
+    NSRange keyRange = [data rangeOfData:key options:0 range:NSMakeRange(0, data.length)];
+    NSData *scan = data;
+    if (keyRange.location == NSNotFound) {
+        NSData *tail = objc_getAssociatedObject(task, &RPTDetailScanTailKey);
+        if (tail.length) {
+            NSUInteger prefixLength = MIN((NSUInteger)256, data.length);
+            NSMutableData *boundary = [tail mutableCopy];
+            [boundary appendData:[data subdataWithRange:NSMakeRange(0, prefixLength)]];
+            NSRange boundaryRange = [boundary rangeOfData:key options:0 range:NSMakeRange(0, boundary.length)];
+            if (boundaryRange.location != NSNotFound) { scan = boundary; keyRange = boundaryRange; }
+        }
+    }
+    if (keyRange.location != NSNotFound) {
+        NSString *status = RPTConversationAsyncStatusToken(scan, keyRange);
+        if (status.length) {
+            objc_setAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            NSMutableDictionary *fields = RPTRequestFields(request);
+            fields[@"asyncStatus"] = status;
+            fields[@"taskClass"] = NSStringFromClass(object_getClass(task)) ?: @"";
+            RPTWriteEvent(@"http.conversation_detail.async_status", fields);
+        }
+    }
+    NSUInteger tailLength = MIN((NSUInteger)128, data.length);
+    if (tailLength) objc_setAssociatedObject(task, &RPTDetailScanTailKey, [data subdataWithRange:NSMakeRange(data.length - tailLength, tailLength)], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+static void RPTDelegateDidReceiveData(id self, SEL _cmd, NSURLSession *session, NSURLSessionDataTask *dataTask, NSData *data) {
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return;
+    void (*function)(id, SEL, NSURLSession *, NSURLSessionDataTask *, NSData *) = (void *)original;
+    function(self, _cmd, session, dataTask, data);
+    RPTObserveConversationDetailData(dataTask, data);
+}
+
 static void RPTDelegateDidReceiveResponse(id self, SEL _cmd, NSURLSession *session, NSURLSessionDataTask *dataTask, NSURLResponse *response, void (^completionHandler)(NSURLSessionResponseDisposition)) {
     NSURLRequest *request = dataTask.currentRequest ?: dataTask.originalRequest;
     if (RPTShouldObserveURL(request.URL ?: response.URL)) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, nil, nil));
@@ -555,9 +618,21 @@ static BOOL RPTShouldObserveTaskURL(NSURL *url) {
     return RPTShouldObserveURL(url);
 }
 
+static void RPTInstallSessionHooks(void);
+
 static void RPTTaskResume(id self, SEL _cmd) {
     NSURLSessionTask *task = (NSURLSessionTask *)self;
     NSURLRequest *request = task.currentRequest ?: task.originalRequest;
+    BOOL refreshLateHooks = NO;
+    if ([[RPTPathKind(request.URL.path ?: @"") lowercaseString] isEqualToString:@"conversation_detail"]) {
+        @synchronized (RPTHookedKeys) {
+            if (!RPTLateSessionRefreshDone) { RPTLateSessionRefreshDone = YES; refreshLateHooks = YES; }
+        }
+    }
+    if (refreshLateHooks) {
+        RPTInstallSessionHooks();
+        RPTWriteEvent(@"probe.late_hooks_refreshed", @{ @"hookCount": @(RPTHookedKeys.count) });
+    }
     if (request.URL && RPTShouldObserveTaskURL(request.URL) && !objc_getAssociatedObject(self, &RPTTaskResumeLoggedKey)) {
         objc_setAssociatedObject(self, &RPTTaskResumeLoggedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         NSMutableDictionary *fields = RPTRequestFields(request);
@@ -577,6 +652,7 @@ static void RPTInstallSessionHooks(void) {
     count = objc_getClassList(classes, count);
     Class sessionClass = NSURLSession.class;
     Class taskClass = NSURLSessionTask.class;
+    SEL dataSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveData:");
     SEL responseSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveResponse:completionHandler:");
     SEL completeSelector = NSSelectorFromString(@"URLSession:task:didCompleteWithError:");
     for (int i = 0; i < count; i++) {
@@ -592,6 +668,7 @@ static void RPTInstallSessionHooks(void) {
             if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:), (IMP)RPTSessionDataRequest);
             if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:completionHandler:), (IMP)RPTSessionDataRequestCompletion);
         }
+        if (RPTClassOwnsSelector(cls, dataSelector)) RPTInstallHookOnClass(cls, dataSelector, (IMP)RPTDelegateDidReceiveData);
         if (RPTClassOwnsSelector(cls, responseSelector)) RPTInstallHookOnClass(cls, responseSelector, (IMP)RPTDelegateDidReceiveResponse);
         if (RPTClassOwnsSelector(cls, completeSelector)) RPTInstallHookOnClass(cls, completeSelector, (IMP)RPTDelegateDidComplete);
     }

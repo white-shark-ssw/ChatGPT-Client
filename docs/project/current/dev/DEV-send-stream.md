@@ -1,5 +1,17 @@
 # DEV-send-stream
 
+## Official iOS Probe v0.5 async-status response gate — 2026-09-04
+
+Exact resume guard before this research delta: branch `dev/send-stream-20260829` at `1074cabfb6afa31e0db37896bf606f25f2f7d685`; PR #29 open/unmerged; `main` `94f0c5777dad262cd1fb22be49082dbd92c962f2`; exact product remains b95 (`ac5e621aa69f5f27ef3167b4a951812be8b8e2c2` / package `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`); b96 remains unallocated.
+
+Probe v0.4 Human Runtime already observed the current-account target `GET /backend-api/conversation/<id>` loop at ~9.7s median while the ordinary user WebSocket failed. User separately recalls official iOS cross-platform continuation as batched/block refresh rather than SSE-like token flow; this is qualitative support only, not exact timestamp correlation. Exact official static evidence identifies `conversation_async_status`, `KnownConversationAsyncStatus`, `IS_STREAMING` / `COMPLETE`, `ConversationPollingManager`, and the stop-when-no-longer-streaming contract.
+
+Probe v0.5 is research-only and changes no ChatGPTClient product file. It retains v0.4 task-resume observation, hooks `URLSession:dataTask:didReceiveData:`, scans only the exact `conversation_async_status` field in authoritative Conversation Detail response chunks, and logs only its safe enum token plus existing privacy-safe request identity. It keeps only a 128-byte rolling boundary tail in memory to detect a field split across chunks and never persists/logs response content. On the first target Detail task it refreshes delegate hooks once so Swift-async delegate classes loaded after probe injection are included. No extra request, polling, timer, retry, resume, response store, or content authority is introduced.
+
+Evidence ladder after this source commit: **v0.5 research code written; dedicated research CI/Artifact/package pending; Human Runtime pending; product b95 unchanged; b96 unallocated; Stable/Frozen Send No.**
+
+**Next exact action:** run the existing dedicated research Probe CI for exact v0.5 source, package the verified dylib into the exact official source ZIP, independently verify IPA identity/diff/hash, then Human Runtime one long cross-platform response after `清空`. The decisive log is target-correlated `http.conversation_detail.async_status` transitioning from `is_streaming` to `complete` (or another explicitly observed safe enum). Do not allocate b96 before that result.
+
 ## Official iOS Probe v0.4 Runtime — Native Detail polling observed — 2026-09-04
 
 Exact user-exported Probe v0.4 JSONL `sha256:cd2b1693a423a37504d96e410c97c04a7987e76283c6458b90ff2db17dc09bd5` is a clean Human Runtime sample: 58,776 bytes / 185 events / zero parse errors / all `probeVersion=0.4`, beginning with `probe.log_cleared`. Probe v0.4 task-resume observation is therefore Runtime Positive and the v0.2 instrumentation-storm defect is absent.

@@ -1,0 +1,54 @@
+name: official iOS Probe v0.3 apply
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/official-ios-probe-v03-apply.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact research baseline
+        run: |
+          test "$(git rev-parse HEAD:scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m)" = "c479e3ec574e61603c64ff7411054d42b0f170b7"
+          test "$(git rev-parse HEAD:scripts/research/official_ios_realtime_probe/README.md)" = "93bdbf9056eca2bfd7ea423c37e5a26a26af5dc1"
+          grep -q 'Official iOS Probe v0.2 Runtime / v0.3 research gate' docs/project/current/dev/DEV-send-stream.md
+          grep -q 'b96 unallocated' docs/project/current/dev/DEV-send-stream.md
+
+      - name: Apply deterministic v0.3 research delta
+        run: |
+          python3 .github/probe_v03_apply.py
+          git diff --check
+
+      - name: Audit exact scope and invariants
+        run: |
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m scripts/research/official_ios_realtime_probe/README.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'RPTProbeVersion = @"0.3"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          test "$(grep -c 'ws.receive.arm' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m || true)" = "0"
+          grep -q 'RPTWebSocketReceiveErrorLoggedKey' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q '@selector(dataTaskWithURL:)' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q '@selector(dataTaskWithURL:completionHandler:)' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          test "$(git diff --name-only | grep -c '^ChatGPTClient/' || true)" = "0"
+          test "$(git diff --name-only | grep -c '^ChatGPTClient.xcodeproj/' || true)" = "0"
+          test "$(git diff --name-only | grep -c '^.github/workflows/ios-foundation.yml$' || true)" = "0"
+
+      - name: Commit research source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m scripts/research/official_ios_realtime_probe/README.md
+          git commit -m "research: expand official iOS Probe v0.3 observation"
+          git push origin HEAD:dev/send-stream-20260829

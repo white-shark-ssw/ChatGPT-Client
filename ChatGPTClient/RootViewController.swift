@@ -60,7 +60,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         super.init()
         handler.target = self
         webView.navigationDelegate = self
-        webView.isUserInteractionEnabled = false
+        webView.isUserInteractionEnabled = true
         webView.scrollView.isScrollEnabled = false
         webView.load(URLRequest(url: Self.chatURL))
     }
@@ -205,7 +205,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let route = Self.safeToken(body["route"] as? String ?? "unknown")
             let hidden = (body["hidden"] as? NSNumber)?.boolValue ?? false
             let hasFocus = (body["hasFocus"] as? NSNumber)?.boolValue ?? false
-            diagnostics.info(category: "webSend", name: "coveredExecutor.pageActivation", fields: ["reason": reason, "visibilityState": visibilityState, "hidden": hidden ? "true" : "false", "hasFocus": hasFocus ? "true" : "false", "readyState": readyState, "route": route])
+            let userActivationAvailable = (body["userActivationAvailable"] as? NSNumber)?.boolValue ?? false
+            let userActivationIsActive = (body["userActivationIsActive"] as? NSNumber)?.boolValue ?? false
+            let userActivationHasBeenActive = (body["userActivationHasBeenActive"] as? NSNumber)?.boolValue ?? false
+            diagnostics.info(category: "webSend", name: "coveredExecutor.pageActivation", fields: ["reason": reason, "visibilityState": visibilityState, "hidden": hidden ? "true" : "false", "hasFocus": hasFocus ? "true" : "false", "userActivationAvailable": userActivationAvailable ? "true" : "false", "userActivationIsActive": userActivationIsActive ? "true" : "false", "userActivationHasBeenActive": userActivationHasBeenActive ? "true" : "false", "readyState": readyState, "route": route])
         case "external_stream_status_request":
             guard observingExternalResponse else { return }
             diagnostics.info(category: "webSend", name: "coveredExecutor.externalStreamStatusRequest", fields: ["target": "existing_conversation"])
@@ -396,7 +399,8 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       const reportPageActivation = reason => {
         const visibilityState = ['visible', 'hidden', 'prerender'].includes(document.visibilityState) ? document.visibilityState : 'other';
         const readyState = ['loading', 'interactive', 'complete'].includes(document.readyState) ? document.readyState : 'other';
-        post({ kind: 'page_activation_state', reason, visibilityState, hidden: !!document.hidden, hasFocus: typeof document.hasFocus === 'function' ? document.hasFocus() : false, readyState, route: pageRouteShape() });
+        const userActivation = navigator.userActivation;
+        post({ kind: 'page_activation_state', reason, visibilityState, hidden: !!document.hidden, hasFocus: typeof document.hasFocus === 'function' ? document.hasFocus() : false, userActivationAvailable: !!userActivation, userActivationIsActive: userActivation ? !!userActivation.isActive : false, userActivationHasBeenActive: userActivation ? !!userActivation.hasBeenActive : false, readyState, route: pageRouteShape() });
       };
       document.addEventListener('readystatechange', () => reportPageActivation('readystatechange'));
       document.addEventListener('visibilitychange', () => reportPageActivation('visibilitychange'));

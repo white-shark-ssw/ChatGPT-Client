@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b90 auth/list prerequisite recovered and frontmost presentation itself is Runtime Positive, but the latest project-conversation evidence exposes a stronger code-level blocker: the covered-Web bridge recognizes only `/c/{conversation}` and loses the target conversation after official project canonicalization to `/g/{scope}/c/{conversation}`. b91 is allocated as the minimum project-scoped route-parser A/B. Stable/Frozen Send remains No.**
+**Active — b90 frontmost presentation is Runtime Positive as a mechanism, but project-specific source/Runtime correlation proves the old bridge loses conversation identity after official `/g/{scope}/c/{conversation}` canonicalization. Exact b91 fixes only that scoped-route identity parser and is Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified; Human Runtime is pending. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -12,7 +12,13 @@
 - b90 Candidate / Build: `DEV-send-stream-0.1.0-b90` / `0.1.0 (90)` permanently reserved
 - Exact b90 product commit: `5e9d735ddb2f7a2c46dbc43de2525980c86a1c1e`
 - Exact b90 product/config package source: `99f1aa15ce49b6abb0ff50e808bd889e381de917`
-- b91 Candidate / Build: `DEV-send-stream-0.1.0-b91` / `0.1.0 (91)` allocated; product/package not yet emitted at this checkpoint
+- b91 Candidate / Build: `DEV-send-stream-0.1.0-b91` / `0.1.0 (91)` permanently reserved
+- Exact b91 product commit: `cdab4e091683dc179753ed114c9ab5993a6c2d24`
+- Exact b91 product/config package source: `c5985f1e2e5daec7bbc0a011ed70a8dd80904f7c`
+- b91 Push CI: `33746881658 / 100621278207` — success
+- b91 PR CI: `33746886896 / 100621297087` — success
+- b91 canonical Push Artifact: `9890000591`
+- b91 IPA SHA-256: `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140`
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -51,6 +57,14 @@ Allocate b91 only for the bridge identity parser:
 - `pageRouteShape`, stream-status matching, resume matching, plural snapshot matching, WebSocket target matching and composer conversation identity then automatically consume the corrected identity through their existing shared helper;
 - do not add new route guesses, retry/fallback/timer/watchdog/polling, Native status/resume synthesis, duplicate Send, WebSocket-body authority or second response store.
 
+## b91 package / validation state
+
+The exact minimum parser change was committed as `cdab4e091683dc179753ed114c9ab5993a6c2d24`. Guarded staging `33746622538 / 100620460993` passed ancestry, exact replacement, exact two-product-file scope and Simulator compile. Formal Push CI `33746881658 / 100621278207` and PR CI `33746886896 / 100621297087` both passed on exact package source `c5985f1e2e5daec7bbc0a011ed70a8dd80904f7c`.
+
+Canonical Push Artifact `9890000591` has backend digest `sha256:6062b02f9f1332744816d01a58e13c1a8c82017ee50828051f014ef79b943350`. Independent unpacking verified IPA `ChatGPTClient-0.1.0-b91-dev-send-stream.ipa`, SHA `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140` matching sidecar, built `0.1.0 (91)`, Candidate b91, source `c5985f1e2e5d`, MinimumOS 14.0, iPhone/iPad family `[1,2]` and arm64.
+
+Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
 ## b91 Human Runtime gate
 
 After b91 package verification, run the same project-conversation test while a remote response is clearly active. Decisive evidence is no longer z-order itself; it is whether, after project canonicalization, the bridge continues to identify the target and reports the official page-owned path:
@@ -69,7 +83,7 @@ b91 identity guard is clean at allocation: repository commit search found no b91
 
 ## Batch recovery state
 
-**Open for b91 route-parser implementation/package. Next exact action:** apply only the evidenced scoped-route parser correction plus Build/Candidate 91, run guarded CI/package verification, then stop at Human Runtime.
+**Closed for b91 product/package/docs preparation. Next exact action:** install exact b91 and perform the project-scoped Human Runtime gate. No product/config change is permitted before that Runtime evidence.
 
 ## Preserved boundaries
 

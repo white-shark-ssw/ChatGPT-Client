@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b95 hard Reload is packaged and awaits Human Runtime. The primary unresolved Send/Stream defect remains automatic page-owned continuation interruption: b92/b93 prove the official page loop can stop after background or browsing-context handoff; b93 focus reacquisition is insufficient; b94 full-page foreground rebootstrap can restart the loop but repeated/heavy rebootstrap ended in WebContent-process termination. Stable/Frozen Send remains No.**
+**Active — exact b95 hard Reload is Runtime Positive as a deliberate recovery path, but automatic external terminal/final convergence remains insufficient. b95 again proves foreground full-page rebootstrap can restart page-owned continuation and did not reproduce WebContent termination, while prior b94 still prevents calling repeated/heavy full-page Web stable. The strongest next architecture hypothesis is a server-issued Web->Native continuation handoff for client-owned turns, with separate proof required for cross-device already-active turns. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -311,4 +311,25 @@ Current source plus b92-b94 Runtime narrows the primary defect to the lifetime o
 
 No b96 is allocated before b95 Human Runtime, per the artifact-to-runtime gate. Investigation may continue, but the next product candidate must remain event-driven and must not add polling, timers, retry/watchdog, Native `stream_status`/`resume`, guessed offsets, duplicate Send, WebSocket-body authority, or a second response store. The next change must reduce or replace repeated heavy page rebootstrap using evidence from an exact b95 interruption sample; do not simply add more reload triggers.
 
-**Next exact action:** Human Runtime exact b95, with one active/stuck Reload test and one fresh automatic-interruption trace. Do not modify product/config or allocate b96 before that evidence.
+**Next exact action:** keep b95 product fixed and perform a privacy-safe transport-handoff research gate. For one client-owned protected Send, prove or reject server-issued continuation identity (`resume_conversation_token`, `stream_handoff`, `turn_exchange_id`, `topic_id` or equivalent) and whether a Native continuation channel can be established before Web becomes disposable. Separately prove whether an already-active cross-device turn exposes an official realtime subscription/update path. Do not allocate production b96 from guessed transport or reproduce page polling cadence.
+
+
+## b95 Human Runtime result — 2026-09-04
+
+Exact b95 diagnostics match Candidate `DEV-send-stream-0.1.0-b95`, Build 95, source `a10320e589ac`, iPhone / iOS 17.0. Full evidence: `docs/project/runtime-evidence/DEV-send-stream-b95-hard-reload-and-handoff-hypothesis-20260904.md`.
+
+One explicit Sync exposed an active external tail and page-owned continuation then advanced automatically through repeated HTTP200 `IS_STREAMING` + plural snapshots. Before the first background, service/tools progressed `6/2 -> 14/6`; after foreground full-page rebootstrap the same response resumed, and a later rebootstrap caught up to phase `final`, reasoning `757`, service `103`, tools `30`, final characters `0`. Five foreground rebootstrap requests occurred in this run. Unlike b94, b95 emitted no `coveredExecutor.webProcess state=terminated` and no `coveredExecutor.failed`; therefore WebContent termination is not reproduced, but prior b94 still makes repeated/heavy full-page reliability non-stable and its cause remains Unverified.
+
+At `17:09:33Z` the user invoked `重载当前会话` while the Repository live snapshot remained active/stuck in final phase. b95 released the old executor, reset the live snapshot (`manualReload.hardReset executorReleased=true / liveSnapshotCleared=true`), and issued one replacement authoritative Detail load. HTTP200 Reload returned `6,235,224` bytes, mapping `1737`, visible messages `33`, with zero trailing reasoning/timeline/tools; `conversationReload.end` reported visible `32 -> 33`. The completed assistant was therefore already authoritative and Hard Reload materialized it successfully. **Hard Reload recovery is Runtime Positive.**
+
+The run still does not prove natural external terminal/final convergence: before manual Reload the official page kept reporting `IS_STREAMING` with static service `103` / tools `30` / final `0`, and there is no page-owned COMPLETE / natural terminal / automatic authoritative reconcile before Reload. Classification: **b95 Hard Reload Runtime Positive; full-page rebootstrap restart mechanism Runtime Positive again; WebContent termination not reproduced / cause Unverified; automatic external terminal/final convergence not achieved; Stable-Frozen No.**
+
+A narrower b95 orchestration mismatch is also proven: after authoritative Reload returned no active trailing timeline, Root still created a fresh covered executor/`mode=selection` observer. This conflicts with b95's intended post-Reload rule to re-observe only if authoritative Detail remains active. Record as a secondary cleanup item; do not let it displace the primary automatic-disconnect architecture.
+
+### Web -> Native transport handoff hypothesis
+
+User proposes making covered Web only the protected Send/bootstrap executor, then letting Native own continuation once a matching Native channel is confirmed, so later WebContent death becomes irrelevant. This is a coherent next research direction only as a **server-supported transport handoff**, not by attempting to inherit the exact JavaScript `ReadableStream` after WebContent dies. Existing historical first-party probes already observed early `resume_conversation_token` on our own protected Send; external comparison research reports current self-submitted-turn paths that can expose `stream_handoff` / `turn_exchange_id` / `topic_id` and then subscribe to shared realtime transport.
+
+For client-owned Send, the next research gate is therefore to prove those server-issued identities and an actual Native continuation subscription before releasing Web. For a cross-device already-active response, Sync/Detail alone does not prove possession of the original turn's handoff token/topic; that case requires separate first-party realtime evidence. Copying the official page's `stream_status` + plural-read cadence into Native remains rejected polling, not handoff.
+
+No production ownership rule changes yet. Until the research gate is positive, official page owns continuation transport, `ConversationRepository` owns Native response/content, and Native must not guess topic/offset/resume, duplicate Send, add polling/timers/retry/watchdog, or create a second response store.

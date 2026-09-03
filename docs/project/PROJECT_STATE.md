@@ -1,11 +1,15 @@
 # Project State
 
-## DEV-send-stream b95 hard-Reload package-ready / disconnect priority override — 2026-09-04
+## DEV-send-stream b95 Runtime / transport-handoff research override — 2026-09-04
 
-- Exact b95 is package-ready: product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`; package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`; Push/PR CI passed; canonical Artifact `9901461763`; IPA SHA `2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d`; Human Runtime pending; Stable/Frozen Send No.
-- b95 restores the user-required recovery invariant: `重载当前会话` remains available whenever a conversation is selected, including active/stuck live response and in-flight Sync/Reload states. It invalidates the current covered executor/live projection, clears the page presentation/resident Detail, then performs one authoritative server Detail reload; it does not resend/regenerate or claim to stop server generation.
-- Primary unresolved defect remains automatic page-owned continuation interruption. b92/b93 prove the official continuation loop can stop after background or browsing-context handoff; b93 focus restoration is insufficient. b94 full-page rebootstrap restarts the loop but repeated/heavy rebootstrap ended in WebContent-process termination.
-- No b96/product modification before exact b95 Human Runtime. Next evidence must distinguish the interruption boundary and recovery behavior without adding polling/timer/retry/watchdog/Native status-resume synthesis.
+- Exact b95 identity remains product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`, package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`, Artifact `9901461763`, IPA SHA `2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d`. Human Runtime is now Partial; Stable/Frozen Send No.
+- Hard Reload recovery is Runtime Positive: while an external live projection was active/stuck, b95 released the executor, reset the live snapshot, performed one authoritative Reload, and materialized the completed assistant (`visible 32 -> 33`, zero trailing active timeline).
+- Foreground full-page rebootstrap restarted page-owned continuation repeatedly in b95 and no WebContent termination was emitted in this run. Prior exact b94 termination still blocks treating repeated/heavy full-page Web as stable; cause remains Unverified.
+- Automatic external terminal/final convergence remains insufficient: prior to Hard Reload the page stayed HTTP200 `IS_STREAMING` with static service `103` / tools `30` / final `0`; final materialized only via authoritative Reload in this sample.
+- Secondary b95 defect: after Reload returned no active tail, Root still recreated a covered selection observer. Cleanup is warranted but is not the primary disconnect architecture.
+- Strongest next research hypothesis comes from the user's proposal: use Web only for one protected Send/bootstrap, then perform a server-issued transport handoff to Native once a matching Native continuation channel is confirmed. This is not a direct transfer of a WKWebView `ReadableStream`; it requires independently usable server continuation identity/channel.
+- Client-owned and cross-device cases must be proven separately. Historical self-send probes already expose `resume_conversation_token`; external comparison evidence suggests `stream_handoff`/`turn_exchange_id`/`topic_id` may support a realtime subscription for self-submitted turns. Cross-device active Sync does not yet prove access to equivalent handoff identity.
+- No production b96 or ownership-rule change from guessed transport. Next gate is privacy-safe structural proof of a server-issued Native continuation channel; page polling/cadence reproduction remains rejected.
 
 ## DEV-send-stream b93 selection-focus package-ready override — 2026-09-03
 

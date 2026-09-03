@@ -1,0 +1,14 @@
+diff --git a/scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m b/scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+--- a/scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
++++ b/scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+@@ -83,6 +83,10 @@ void RPTClearLog(void) {
+     RPTWriteEvent(@"probe.log_cleared", @{});
+ }
+ 
++static NSString *RPTSafePathShape(NSString *path);
++static NSString *RPTPathKind(NSString *path);
++static id RPTJSONObjectFromData(NSData *data);
++
+ static NSDictionary *RPTURLShape(NSURL *url) {
+     if (!url) return @{};
+     NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];

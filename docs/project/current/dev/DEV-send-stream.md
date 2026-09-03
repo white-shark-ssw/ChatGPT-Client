@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b95 hard Reload is Runtime Positive as a deliberate recovery path, but automatic external terminal/final convergence remains insufficient. b95 again proves foreground full-page rebootstrap can restart page-owned continuation and did not reproduce WebContent termination, while prior b94 still prevents calling repeated/heavy full-page Web stable. The strongest next architecture hypothesis is a server-issued Web->Native continuation handoff for client-owned turns, with separate proof required for cross-device already-active turns. Stable/Frozen Send remains No.**
+**Active — exact b95 hard Reload is Runtime Positive as a deliberate recovery path, but automatic external terminal/final convergence remains insufficient. Latest user priority is cross-platform late-join continuation first: official iOS is explicitly reported able to continue a response initiated on another platform, so the immediate gate is to observe and reproduce the official native late-join realtime registration/topic/update path. Client-owned Web->Native handoff remains recorded but is secondary until this cross-platform path is resolved. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -333,3 +333,14 @@ User proposes making covered Web only the protected Send/bootstrap executor, the
 For client-owned Send, the next research gate is therefore to prove those server-issued identities and an actual Native continuation subscription before releasing Web. For a cross-device already-active response, Sync/Detail alone does not prove possession of the original turn's handoff token/topic; that case requires separate first-party realtime evidence. Copying the official page's `stream_status` + plural-read cadence into Native remains rejected polling, not handoff.
 
 No production ownership rule changes yet. Until the research gate is positive, official page owns continuation transport, `ConversationRepository` owns Native response/content, and Native must not guess topic/offset/resume, duplicate Send, add polling/timers/retry/watchdog, or create a second response store.
+
+
+## Cross-platform late-join priority override — 2026-09-04
+
+Latest explicit user direction prioritizes the existing cross-platform automatic-disconnect defect over client-owned handoff research. Treat the user's current observation that official ChatGPT iOS can join/continue another platform's active response as the highest-priority Runtime fact. This proves a late-join capability exists somewhere in the official service/client stack; it does not yet identify its transport or authorize guessing it.
+
+Reuse the already-built privacy-safe official-iOS realtime Probe instead of modifying ChatGPTClient product code. The decisive observer and TrollStore packaging path already exist and statically match official native realtime types (`WebSocketConversationEventsService`, `WebSocketConversationObserver`, `WebSocketRegisterResponse.websocketURL`, `WebSocketTopic`, `SubscribePayload`, conversation-update/add-messages/async-status events).
+
+Re-materialized research package identity is recorded in `docs/project/runtime-evidence/DEV-send-stream-cross-platform-late-join-priority-20260904.md`: official source ZIP `sha256:bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`; chained Probe dylib `sha256:0d20cf4761a982612fab995ed8766a887064005a561726c603edceea6072285e`; research IPA `ChatGPT-Official-RealtimeProbe-TrollStore-20260904.ipa`, `sha256:dd40dd092853f1e4dd4e52c560df0f1b24df18ebd47ca44015065442864ba555`. This is research tooling, not a product Candidate; b96 remains unallocated.
+
+**Next exact action:** install/run the re-materialized official iOS realtime Probe, start a deliberately long response from another platform in the target project conversation, export `ChatGPTRealtimeProbe.jsonl`, and identify the first target-matching registration/subscribe/topic/update/catchup/live event before terminal. Analyze that evidence before allocating b96 or changing ChatGPTClient product code. No guessed topic/offset/resume, fixed polling, retry/watchdog/timer, duplicate Send, WebSocket-body authority or second response store.

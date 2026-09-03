@@ -1,5 +1,12 @@
 # Project State
 
+## DEV-send-stream cross-platform late-join priority override — 2026-09-04
+
+- Latest explicit priority is to solve cross-platform automatic continuation interruption first. User reports official ChatGPT iOS can continue an answer initiated on another platform; treat that as current highest-priority Runtime evidence of an official late-join capability.
+- Immediate gate is research-only observation of the official native realtime path, using the already-built privacy-safe injected Probe. Client-owned Web->Native handoff remains secondary until the cross-platform path is identified.
+- Re-materialized official research IPA: `ChatGPT-Official-RealtimeProbe-TrollStore-20260904.ipa`, SHA `dd40dd092853f1e4dd4e52c560df0f1b24df18ebd47ca44015065442864ba555`; source official ZIP SHA `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`; Probe dylib SHA `0d20cf4761a982612fab995ed8766a887064005a561726c603edceea6072285e`. Research tooling only; no b96 allocated.
+- Next evidence must reveal actual current-account registration/subscribe/topic/offset/conversation-update semantics before product implementation. `ConversationRepository` remains Native content authority.
+
 ## DEV-send-stream b95 Runtime / transport-handoff research override — 2026-09-04
 
 - Exact b95 identity remains product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`, package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`, Artifact `9901461763`, IPA SHA `2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d`. Human Runtime is now Partial; Stable/Frozen Send No.

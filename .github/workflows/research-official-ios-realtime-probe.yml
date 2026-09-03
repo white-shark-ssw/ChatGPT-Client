@@ -9,9 +9,6 @@ on:
       - ".github/workflows/research-official-ios-realtime-probe.yml"
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build-probe:
     runs-on: macos-15
@@ -19,10 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Toolchain
         run: xcodebuild -version
+
       - name: Build research dylib
         run: bash scripts/research/official_ios_realtime_probe/build_probe.sh build/research-probe
+
       - name: Validate research artifact
         run: |
           test -f build/research-probe/ChatGPTRealtimeProbe.dylib
@@ -30,6 +30,7 @@ jobs:
           otool -L build/research-probe/ChatGPTRealtimeProbe.dylib
           codesign -dv --verbose=2 build/research-probe/ChatGPTRealtimeProbe.dylib 2>&1 | head -n 30
           cat build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
+
       - name: Upload research probe
         uses: actions/upload-artifact@v4
         with:
@@ -39,132 +40,3 @@ jobs:
             build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
           if-no-files-found: error
           retention-days: 7
-
-  finalize-v04:
-    needs: build-probe
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: dev/send-stream-20260829
-          fetch-depth: 0
-      - name: Record v0.4 gate and clean temporary tooling
-        run: |
-          set -euo pipefail
-          grep -q 'RPTProbeVersion = @"0.4"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
-          python3 - <<'PY'
-          from pathlib import Path
-          cp = Path('docs/project/current/dev/DEV-send-stream.md')
-          s = cp.read_text()
-          title = '## Official iOS Probe v0.4 package-ready research override — 2026-09-04'
-          if title not in s:
-              block = '''## Official iOS Probe v0.4 package-ready research override — 2026-09-04
-
-Probe v0.2 Human Runtime is **Inconclusive, not a protocol negative**. Exact exported JSONL `sha256:f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513` contains 392,033 valid events / 76,447,285 bytes / zero parse errors and begins with `probe.log_cleared`. After one official user-WebSocket `NSPOSIXErrorDomain/53`, the app repeatedly invoked receive on the same failed task and v0.2 logged 195,999 identical receive errors plus 196,002 receive-arm events. That ~76 MB logging storm materially perturbed the tested process, so the absence of conversation HTTP/SSE/per-turn-WebSocket events after that boundary cannot reject official late-join.
-
-Exact official-binary static evidence now exposes `ConversationPollingManager`, `ConversationResumeFetchRecovery`, `recoverConversationWithNewPollingIfPossible`, `conversation_resuming.recover_with_new_polling*`, `ConversationStreamStatusResponse`, `KnownConversationStreamStatus`, `IS_STREAMING`, `ios.conversation_polling`, `chatgpt-ios-inline-polling`, `resumableStreamingConversation`, and inline stream-status/fetch recovery diagnostics. The same binary imports Swift Foundation async `URLSession.data(for:)` / `bytes(for:)`. This strongly supports observing native task-level polling/status/fetch, but does not yet prove the exact cross-platform Runtime URL, cadence or ownership.
-
-Probe v0.4 adds one privacy-safe `http.task.resume` event per observed `NSURLSessionTask`, including tasks internally created by Swift async URLSession. It preserves v0.3 failed-WebSocket error de-duplication and `清空`. It logs structural request metadata only, never auth/signed-query values or conversation content.
-
-Exact research source `db3f8a7d01f39f364f6166cf72245db426cadef1`; build trigger/head `ce43a7fc3fb4f581dd7614bac541c44dff8af512`; dedicated research CI `33795191324 / 100781074234` passed; canonical Artifact `9908872470`; Artifact digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`; independently verified Probe dylib `sha256:cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9` matching sidecar. Against official source ZIP `sha256:bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, repacked `ChatGPT-Official-RealtimeProbe-v04-TrollStore-20260904.ipa` is `sha256:b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`, preserves `com.openai.chat` / `1.2026.202` / `30140022279`, passes ZIP integrity, and differs from pristine source in exactly three intended files.
-
-Evidence ladder: **research code written / exact research scope guard passed / dedicated research CI passed / Artifact produced / dylib and research IPA independently verified / v0.4 Human Runtime pending.** Product remains exact b95; b96 remains unallocated; Stable/Frozen Send No.
-
-**Next exact action:** Human Runtime exact v0.4. Fully relaunch official research app, press `清空` immediately before one deliberately long cross-platform project response, reproduce the normal visible official-iOS late-join without extra refreshes, and export JSONL after visible in-progress join or terminal. Decisive evidence is the earliest target-correlated `http.task.resume`, conversation status/detail/resume task, or per-turn WebSocket event before terminal. Do not implement product polling/cadence or allocate b96 until that current-account Runtime path is observed.
-
-'''
-              s = s.replace('# DEV-send-stream\n\n', '# DEV-send-stream\n\n' + block, 1)
-              cp.write_text(s)
-
-          ps = Path('docs/project/PROJECT_STATE.md')
-          s = ps.read_text()
-          title = '## 2026-09-04 — official iOS Probe v0.4 package ready / task-resume late-join gate'
-          if title not in s:
-              block = '''## 2026-09-04 — official iOS Probe v0.4 package ready / task-resume late-join gate
-
-Cross-platform late-join remains primary. Probe v0.2 is Inconclusive because a failed user-WebSocket receive produced 392,033 events / ~76 MB of instrumentation traffic. Exact official static evidence now proves native `ConversationPollingManager` / resume-fetch recovery / stream-status polling strings plus Swift async URLSession `data(for:)` / `bytes(for:)`. Probe v0.4 therefore observes each relevant NSURLSession task at `resume`, including Swift-async-created tasks, without logging content/auth.
-
-Exact v0.4 source `db3f8a7d01f39f364f6166cf72245db426cadef1`; CI `33795191324 / 100781074234` success; Artifact `9908872470`; digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`; dylib SHA `cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9`; research IPA SHA `b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`. Human Runtime v0.4 pending. b95 remains product Candidate; b96 unallocated; Stable/Frozen Send No.
-
-'''
-              s = s.replace('# Project State\n\n', '# Project State\n\n' + block, 1)
-              ps.write_text(s)
-
-          ev = Path('docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v02-inconclusive-v04-task-resume-gate-20260904.md')
-          if not ev.exists():
-              ev.write_text('''# DEV-send-stream — official iOS Probe v0.2 Inconclusive / v0.4 task-resume gate — 2026-09-04
-
-## v0.2 Human Runtime
-
-JSONL `sha256:f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513`: 76,447,285 bytes, 392,033 valid events, zero parse errors, begins with `probe.log_cleared`. A user-WebSocket `NSPOSIXErrorDomain/53` was followed by repeated receive invocations on the failed task; v0.2 emitted 196,002 receive-arm and 195,999 receive-error records. The resulting ~76 MB logging storm materially perturbed the process. Overall late-join is Inconclusive; absence of target HTTP/SSE/per-turn-WebSocket events is not a protocol rejection.
-
-## Official static evidence
-
-The exact supplied official framework contains `ConversationPollingManager`, resume-fetch recovery, stream-status polling/fetch diagnostics, `ConversationStreamStatusResponse`, `KnownConversationStreamStatus`, `IS_STREAMING`, `ios.conversation_polling`, `chatgpt-ios-inline-polling`, and resumable streaming symbols. It imports Swift async URLSession `data(for:)` / `bytes(for:)`. This justifies task-level observation, not guessed polling cadence or product ownership.
-
-## Probe v0.4 identity
-
-- source `db3f8a7d01f39f364f6166cf72245db426cadef1`
-- trigger/head `ce43a7fc3fb4f581dd7614bac541c44dff8af512`
-- CI `33795191324 / 100781074234` success
-- Artifact `9908872470`
-- Artifact digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`
-- dylib SHA `cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9`
-- official source ZIP SHA `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`
-- research IPA SHA `b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`
-- official identity unchanged: `com.openai.chat` / `1.2026.202` / `30140022279`
-- extracted diff: exactly three intended files
-
-v0.4 emits one privacy-safe `http.task.resume` per observed NSURLSession task and keeps v0.3 failed-socket error de-duplication. Human Runtime pending; product/b96 blocked until a current-account target acquisition path is observed.
-''')
-          PY
-          rm -f .github/probe_v04_apply.py .github/workflows/official-ios-probe-v04-apply.yml .github/workflows/official-ios-probe-v04-finalize.yml
-          # Rewrite this permanent workflow back to the ordinary build-only form before commit.
-          cat > .github/workflows/research-official-ios-realtime-probe.yml <<'EOF'
-          name: Research Official iOS Realtime Probe
-
-          on:
-            push:
-              branches:
-                - dev/send-stream-20260829
-              paths:
-                - "scripts/research/official_ios_realtime_probe/**"
-                - ".github/workflows/research-official-ios-realtime-probe.yml"
-            workflow_dispatch:
-
-          jobs:
-            build-probe:
-              runs-on: macos-15
-              timeout-minutes: 10
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v4
-                - name: Toolchain
-                  run: xcodebuild -version
-                - name: Build research dylib
-                  run: bash scripts/research/official_ios_realtime_probe/build_probe.sh build/research-probe
-                - name: Validate research artifact
-                  run: |
-                    test -f build/research-probe/ChatGPTRealtimeProbe.dylib
-                    file build/research-probe/ChatGPTRealtimeProbe.dylib
-                    otool -L build/research-probe/ChatGPTRealtimeProbe.dylib
-                    codesign -dv --verbose=2 build/research-probe/ChatGPTRealtimeProbe.dylib 2>&1 | head -n 30
-                    cat build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
-                - name: Upload research probe
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: ChatGPTRealtimeProbe-${{ github.sha }}
-                    path: |
-                      build/research-probe/ChatGPTRealtimeProbe.dylib
-                      build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
-                    if-no-files-found: error
-                    retention-days: 7
-          EOF
-          sed -i 's/^          //' .github/workflows/research-official-ios-realtime-probe.yml
-          git diff --check
-          git status --short
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "docs: record Probe v0.4 gate and clean tooling [skip ci]"
-          git push origin HEAD:dev/send-stream-20260829

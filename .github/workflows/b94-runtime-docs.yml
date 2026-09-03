@@ -1,0 +1,41 @@
+name: b94 runtime docs sync
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b94-runtime-docs.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard b93 ancestry
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0 HEAD
+          test -f .github/b94_runtime_docs.py
+      - name: Apply runtime docs
+        run: |
+          set -euo pipefail
+          python3 .github/b94_runtime_docs.py
+          git diff --check
+          CHANGED="$(git diff --name-only | sort)"
+          printf '%s\n' "$CHANGED"
+          test -n "$CHANGED"
+          if printf '%s\n' "$CHANGED" | grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|scripts/build_ipa\.sh|\.github/workflows/ios-foundation\.yml)$'; then exit 1; fi
+      - name: Commit runtime docs
+        run: |
+          set -euo pipefail
+          git config user.name "OpenAI Runtime Docs"
+          git config user.email "runtime-docs@users.noreply.github.com"
+          git add docs/project
+          git commit -m "docs: classify b93 focus and isolate b94 foreground gate [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829

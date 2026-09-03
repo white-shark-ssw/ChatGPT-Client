@@ -1,5 +1,6 @@
 name: official iOS Probe v0.2 apply
 
+# Triggered for exact v0.1 Runtime evidence c74a6670… on 2026-09-04.
 on:
   push:
     branches:

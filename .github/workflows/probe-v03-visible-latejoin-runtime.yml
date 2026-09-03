@@ -1,0 +1,99 @@
+name: Probe v0.3 visible late-join Runtime
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/probe-v03-visible-latejoin-runtime.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+      - name: Record Runtime and clean workflow
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          cp = Path('docs/project/current/dev/DEV-send-stream.md')
+          s = cp.read_text()
+          title = '## Official iOS Probe v0.3 visible late-join Runtime Positive / acquisition still unseen — 2026-09-04'
+          if title not in s:
+              block = '''## Official iOS Probe v0.3 visible late-join Runtime Positive / acquisition still unseen — 2026-09-04
+
+User explicitly confirms the official iPhone **visibly joined and continued** the cross-platform response in the exact Probe v0.3 run. Exported JSONL `sha256:a9965b3a7a693bd6d1f6d9a62d55249b97275db9fd49f581008feefb3bd24047` is a clean 15-event / 3,465-byte / zero-parse-error sample beginning with `probe.log_cleared` and `probeVersion=0.3`.
+
+Despite the visibly successful late-join, v0.3 recorded zero conversation hashes, zero conversation/per-turn WebSocket subscribe/update frames, and zero conversation Detail/status/resume/SSE request/response events. The only observed HTTP lifecycle is the user WebSocket task itself. The socket carried presence only, hit `NSPOSIXErrorDomain/53`, then the probe/app later reinitialized and recreated the ordinary base user-WebSocket subscriptions. Therefore **official cross-platform late-join capability is Runtime Positive, while the acquisition transport remains unseen by v0.3 public URLSession-constructor/delegate and user-WebSocket hooks**. This is evidence of an observer gap, not evidence that late-join lacks a network acquisition path.
+
+The already-prepared research-only Probe v0.4 is now the exact next gate. It adds one privacy-safe `http.task.resume` event per relevant `NSURLSessionTask`, including tasks internally created by Swift async `URLSession.data(for:)` / `bytes(for:)`, while preserving v0.3 WebSocket error de-duplication and the `清空` control. v0.4 source/package identity remains: source `db3f8a7d01f39f364f6166cf72245db426cadef1`, build head `ce43a7fc3fb4f581dd7614bac541c44dff8af512`, CI `33795191324 / 100781074234` success, Artifact `9908872470`, dylib SHA `cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9`, research IPA SHA `b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`.
+
+**Next exact action:** Human Runtime exact v0.4. Clear log immediately before one cross-platform long response, visually confirm the official iPhone joins in-progress, export JSONL after visible join/terminal, and identify the earliest target-correlated `http.task.resume` / status-detail-resume task or per-turn WebSocket event. Product remains b95; b96 remains unallocated.
+
+'''
+              s = s.replace('# DEV-send-stream\n\n', '# DEV-send-stream\n\n' + block, 1)
+              cp.write_text(s)
+
+          ps = Path('docs/project/PROJECT_STATE.md')
+          s = ps.read_text()
+          title2 = '## 2026-09-04 — official iOS visible cross-platform late-join confirmed; v0.3 observer gap'
+          if title2 not in s:
+              block2 = '''## 2026-09-04 — official iOS visible cross-platform late-join confirmed; v0.3 observer gap
+
+- Exact Probe v0.3 Human Runtime JSONL `sha256:a9965b3a7a693bd6d1f6d9a62d55249b97275db9fd49f581008feefb3bd24047`: 15 events, 3,465 bytes, zero parse errors, clean-log start.
+- User explicitly confirms the official iPhone visibly joined and continued the cross-platform response. Therefore official cross-platform late-join capability is Runtime Positive.
+- In the same successful sample v0.3 observed no conversation hash, conversation/per-turn WebSocket event, or conversation HTTP/Detail/status/resume/SSE event. The acquisition path therefore bypasses v0.3's observed public URLSession constructors/delegates and ordinary user-WebSocket surface, or occurs below/around those hooks. This is an observer-gap result, not a protocol negative.
+- Exact next gate is research-only Probe v0.4 task-resume observation (`db3f8a7d...`, CI `33795191324/100781074234`, Artifact `9908872470`, IPA SHA `b4c0e53e...1d3d6e`). Product remains b95; b96 unallocated; Stable/Frozen Send No.
+
+'''
+              s = s.replace('# Project State\n\n', '# Project State\n\n' + block2, 1)
+              ps.write_text(s)
+
+          ev = Path('docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v03-visible-latejoin-observer-gap-20260904.md')
+          if not ev.exists():
+              ev.write_text('''# DEV-send-stream — official iOS Probe v0.3 visible late-join / observer gap — 2026-09-04
+
+## Human Runtime input
+
+- JSONL SHA-256: `a9965b3a7a693bd6d1f6d9a62d55249b97275db9fd49f581008feefb3bd24047`
+- Size: 3,465 bytes
+- Parsed events: 15
+- Parse errors: 0
+- Probe version: `0.3`
+- First event: `probe.log_cleared`
+- User statement: the official iPhone visibly joined and continued the cross-platform response.
+
+## Observed timeline
+
+After the clear marker, the existing official user WebSocket emitted background presence and received a reply. At `19:13:28.944Z` receive failed with `NSPOSIXErrorDomain / 53`; the corresponding WebSocket task completed with status 101/error 53. A foreground presence send immediately afterward also failed. At `19:16:02.044Z` the Probe loaded again, hooks reinstalled, and a new ordinary user WebSocket was created; it sent `connect` plus the same base subscriptions (`app_notifications`, `push_auth_challenge`, `calpico-chatgpt`) and received reply frames.
+
+Across the full clean sample there are zero target conversation hashes, zero conversation/per-turn WebSocket subscribe/update frames, and zero conversation Detail/status/resume/SSE HTTP events. Yet the user visibly observed successful cross-platform continuation.
+
+## Classification
+
+- Official iOS cross-platform late-join capability: **Runtime Positive**.
+- Direct ordinary user-WebSocket conversation subscription as observed by v0.3: **not supported by this sample**.
+- v0.3 public URLSession constructor/delegate coverage as sufficient to reveal acquisition: **Rejected**.
+- Exact acquisition transport/path: **Unverified / unseen**.
+
+This combination proves an observation gap. It does not justify guessing a polling cadence or promoting any WebSocket body to product content authority.
+
+## Next exact gate
+
+Use exact Probe v0.4, which adds one privacy-safe `http.task.resume` record per relevant NSURLSessionTask, including tasks internally created by Swift async URLSession. Repeat one visually confirmed cross-platform long-response join from a cleared log and identify the earliest target-correlated task/path before terminal. No ChatGPTClient b96/product change until that path is observed.
+''')
+          PY
+          rm -f .github/workflows/probe-v03-visible-latejoin-runtime.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: record visible official late-join and v0.3 observer gap [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829

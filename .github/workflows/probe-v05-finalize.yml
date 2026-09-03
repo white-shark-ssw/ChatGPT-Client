@@ -1,0 +1,49 @@
+name: Finalize Probe v0.5 package docs
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - '.github/workflows/probe-v05-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+      - name: Guard exact v0.5 packaged baseline
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "689230554240407cab878e5ffa70c5a4dad1b865"
+          test -f .github/probe_v05_finalize.py
+          grep -F '# Probe v0.5 source trigger: b5b48ac67c09f39b0a40666ad9574cfa389b900b' .github/workflows/research-official-ios-realtime-probe.yml
+      - name: Finalize durable research docs
+        run: |
+          set -euo pipefail
+          python3 .github/probe_v05_finalize.py
+          git show b5b48ac67c09f39b0a40666ad9574cfa389b900b:.github/workflows/research-official-ios-realtime-probe.yml > .github/workflows/research-official-ios-realtime-probe.yml
+          git diff --check
+          grep -F 'Exact v0.5 research identity: source `b5b48ac67c09f39b0a40666ad9574cfa389b900b`' docs/project/current/dev/DEV-send-stream.md
+          grep -F 'Probe v0.5 packaged / Detail async-status Human Runtime gate' docs/project/PROJECT_STATE.md
+          test "$(git hash-object .github/workflows/research-official-ios-realtime-probe.yml)" = "c12876f0f5bcce42c2f91a69868c55287f05aa1b"
+      - name: Audit and commit self-cleaned scope
+        run: |
+          set -euo pipefail
+          rm .github/probe_v05_finalize.py .github/workflows/probe-v05-finalize.yml
+          git add -A
+          CHANGED="$(git diff --cached --name-only | sort)"
+          EXPECTED=$'.github/probe_v05_finalize.py\n.github/workflows/probe-v05-finalize.yml\n.github/workflows/research-official-ios-realtime-probe.yml\ndocs/project/PROJECT_STATE.md\ndocs/project/current/dev/DEV-send-stream.md'
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+          if git diff --cached --name-only | grep -Eq '^ChatGPTClient/|^ChatGPTClient\.xcodeproj/|^\.github/workflows/ios-foundation\.yml$'; then exit 1; fi
+          git config user.name 'OpenAI Probe v0.5 Finalize'
+          git config user.email 'probe-v05-finalize@users.noreply.github.com'
+          git commit -m 'research: package Probe v0.5 async-status observer [skip ci]'
+          git push origin HEAD:dev/send-stream-20260829

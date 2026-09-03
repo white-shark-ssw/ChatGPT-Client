@@ -19,6 +19,7 @@
 - b91 PR CI: `33746886896 / 100621297087` — success
 - b91 canonical Push Artifact: `9890000591`
 - b91 IPA SHA-256: `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140`
+- b92 Candidate / Build: `DEV-send-stream-0.1.0-b92` / `0.1.0 (92)` permanently reserved; product/package not yet emitted at allocation checkpoint
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -93,7 +94,7 @@ b91 identity guard is clean at allocation: repository commit search found no b91
 
 ## Batch recovery state
 
-**Closed for b91 Runtime evidence. Next exact action:** allocate the next unique candidate for one isolated presentation cleanup only: retain b91 scoped-route parsing and page-owned continuation, remove b90 `bringSubviewToFront(webView)` so the executor stays covered, then run project live + natural terminal/final Runtime. No retry/polling/timer/watchdog/Native status or resume synthesis.
+**Open for b92 covered-form cleanup. Next exact action:** remove only the b90 frontmost z-order mutation while retaining b91 scoped-route identity, page-owned continuation and Repository ownership; validate exact two-file scope + Simulator, then package b92 and stop at Human Runtime for covered live progression + natural terminal/final completion.
 
 ## Preserved boundaries
 

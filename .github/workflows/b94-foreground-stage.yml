@@ -1,0 +1,57 @@
+name: b94 foreground page rebootstrap staging
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b94-foreground-stage.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard staging base
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 859827bdbaea86b950b1794b9928a63f1e75e6fc HEAD
+          test "$(grep -c 'DEV-send-stream-0.1.0-b94' docs/project/BUILD_TEST_INDEX.md || true)" = "0"
+          test -f .github/b94_stage.py
+      - name: Allocate b94 checkpoint
+        run: |
+          set -euo pipefail
+          python3 .github/b94_stage.py allocate
+          git diff --check
+          CHANGED="$(git diff --name-only)"
+          test "$CHANGED" = "docs/project/current/dev/DEV-send-stream.md"
+          git config user.name "OpenAI b94 Staging"
+          git config user.email "b94-staging@users.noreply.github.com"
+          git add docs/project/current/dev/DEV-send-stream.md
+          git commit -m "checkpoint: allocate b94 foreground page rebootstrap [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829
+      - name: Apply b94 product delta
+        run: |
+          set -euo pipefail
+          python3 .github/b94_stage.py product
+          git diff --check
+          CHANGED="$(git diff --name-only | sort)"
+          EXPECTED=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+      - name: Simulator compile
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
+      - name: Commit b94 product
+        run: |
+          set -euo pipefail
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m "b94: rebootstrap external page on foreground [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829

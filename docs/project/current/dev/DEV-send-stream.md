@@ -8,7 +8,8 @@
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / mergeable / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Verified pre-b89 PR head: `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`
+- Verified pre-b89 product head: `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`
+- Recovery-point commit: `a1c4b579e3042c61fcfe21a332bdf90456c44541`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)` permanently reserved
 - b89 Candidate / Build allocated: `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)`
 - Stable/Frozen Send: No
@@ -43,30 +44,35 @@ Acceptance gate: on a deliberately long remote response, one explicit Sync/rearm
 
 ## Next exact action
 
-Complete b89 product + version changes, run exact source/static/CI validation, produce one canonical b89 IPA, then hand it to the user for the real-device A/B. No route/gizmo fix, Native `stream_status`/`resume`, guessed offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
+Use one temporary guarded GitHub Actions patch workflow because the available repository write API can only replace the very large `RootViewController.swift` as a whole. The temporary workflow must apply only exact-count string replacements, run `git diff --check` plus the existing Xcode Simulator compile gate, delete itself before committing, and push the resulting product/version/workflow commit to this same feature branch. Then verify the actual commit diff before any CI/package claim.
+
+After the guarded product commit is verified, run normal Push/PR CI, obtain one canonical b89 Artifact/IPA, independently verify package version/build/candidate/source identity, then hand b89 to the user for the real-device A/B. No route/gizmo fix, Native `stream_status`/`resume`, guessed offset, polling, timer/retry/watchdog, WebSocket-body authority, duplicate Send or second response store.
 
 ## Batch recovery state
 
-**Recovery point opened for b89.**
+**Recovery point active for b89.**
 
-Baseline before writes:
+Baseline before product writes:
 
 - branch `dev/send-stream-20260829`;
 - PR #29 open / mergeable / unmerged;
-- head `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`;
+- actual main `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
+- product head before recovery docs `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`;
+- recovery-point commit `a1c4b579e3042c61fcfe21a332bdf90456c44541`;
 - b88 identities untouched and permanently reserved;
-- b89 newly allocated as `0.1.0 (89)` / `DEV-send-stream-0.1.0-b89`.
+- b89 allocated as `0.1.0 (89)` / `DEV-send-stream-0.1.0-b89`.
 
 Planned coherent batches:
 
-1. product source: `ChatGPTClient/RootViewController.swift` — interactivity single-variable A/B + user-activation diagnostics;
-2. version identity: `ChatGPTClient.xcodeproj/project.pbxproj` — build 89 / Candidate b89;
-3. verify exact branch head/diff, then CI/package identity;
-4. after Artifact identity is known, update BUILD_TEST_INDEX / MODULE_STATUS / WEB_SEND_ADAPTER / checkpoint and PR metadata.
+1. create temporary `.github/workflows/b89-apply.yml` only as a deterministic repository-edit transport;
+2. that workflow must assert and apply exactly: covered interactivity `false -> true`; automatic page user-activation diagnostic fields; project Build `88 -> 89` and Candidate `b88 -> b89`; normal `ios-foundation.yml` candidate/name/artifact identity `b88 -> b89`; then `git diff --check` + Simulator compile; finally remove itself and commit/push the real b89 changes;
+3. verify actual branch head/diff and confirm the temporary workflow is absent before depending on the product commit;
+4. verify normal Push/PR CI and produce/inspect one canonical b89 Artifact;
+5. update BUILD_TEST_INDEX / MODULE_STATUS / WEB_SEND_ADAPTER / checkpoint and PR metadata with exact Code/CI/Artifact evidence.
 
-Confirmed complete: recovery point only.
-Pending: all product/version/CI/Artifact/doc-sync batches above.
-Do not touch b88 product/Artifact/IPA identities, unrelated modules or other work checkpoints.
+Confirmed complete: recovery point and edit-transport plan.
+Pending: temporary guarded patch workflow, real product/version/workflow commit, verification, CI, Artifact, durable doc sync.
+Do not touch b88 product/Artifact/IPA identities, unrelated modules or another work checkpoint.
 
 ## Preserved boundaries
 
@@ -74,4 +80,4 @@ Official page owns continuation; `ConversationRepository` owns Native response/c
 
 ## Session round counter
 
-This user turn is **round 53**.
+This user turn is **round 54**.

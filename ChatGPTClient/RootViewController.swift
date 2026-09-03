@@ -113,6 +113,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         currentConversationID = conversationID
         guard let encoded = conversationID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed), let url = URL(string: "https://chatgpt.com/c/\(encoded)") else { return }
         logWebViewActivationState(stage: "before_observe_load")
+        if forceReload, let hostView = webView.superview {
+            hostView.bringSubviewToFront(webView)
+            logWebViewActivationState(stage: "manual_sync_frontmost_ab")
+        }
         webView.load(URLRequest(url: url))
         diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation", "mode": forceReload ? "manual_sync_rearm" : "selection"])
     }

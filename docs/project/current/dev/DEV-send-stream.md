@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — new exact b92 single-executor Runtime proves background lifecycle can stop the official page-owned continuation loop, and exact b93 proves selection focus reacquisition succeeds but is not sufficient to restart a stopped loop. b93 focus-sufficient is Rejected. The next isolated evidence target is official-page rebootstrap on foreground for one active external response; b94 is not yet allocated. Stable/Frozen Send remains No.**
+**Active — new exact b92 single-executor Runtime proves background lifecycle can stop the official page-owned continuation loop, and exact b93 proves selection focus reacquisition succeeds but is not sufficient to restart a stopped loop. b93 focus-sufficient is Rejected. The next isolated evidence target is exact b94 official-page rebootstrap on foreground for one active external response; b94 is allocated only for that A/B. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -37,6 +37,7 @@
 - b93 PR CI: `33755067202 / 100647418537` — success
 - b93 canonical Push Artifact: `9893141097`
 - b93 IPA SHA-256: `379218aa869b566c26e582a220be34a025a11517c8ebee1f9ce631140ea32a2d`
+- b94 Candidate / Build: `DEV-send-stream-0.1.0-b94` / `0.1.0 (94)` permanently reserved; product/package pending at allocation checkpoint
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -171,7 +172,7 @@ Exact b93 (`2d2cde58a7fb`) proves the added focus mechanism itself: reselection 
 
 Classification: **b93 focus reacquisition mechanism Runtime Positive; focus reacquisition as a sufficient restart condition Rejected.** The common failure is now the lifetime of the official page-owned continuation acquisition loop itself.
 
-## b94 exact minimum A/B — not yet allocated
+## b94 exact minimum A/B — allocated
 
 The next candidate, if allocated, must test the clean single-executor lifecycle case first. Keep b93 transport/ownership/route behavior, but when ChatGPTClient becomes active again and the selected Repository snapshot is still an active external response (`promptText` empty), rebootstrap that same existing official conversation page without a Native Detail Sync. Add a distinct foreground-rebootstrap diagnostic stage.
 
@@ -187,7 +188,7 @@ b91/b92 exact package identities remain permanently reserved. Exact b93 product 
 
 ## Batch recovery state
 
-**Closed for b93 Runtime classification. Next exact action:** perform a fresh resume/conflict guard, then allocate b94 only for foreground official-page rebootstrap of one already-active external response. Do not combine selection rebootstrap into b94 and do not modify continuation protocol.
+**Open for b94 foreground page-rebootstrap A/B. Next exact action:** apply only foreground rebootstrap of the selected already-active external executor, validate exact two-product-file scope + Simulator, package exact b94, then stop at Human Runtime. Selection-triggered page rebootstrap remains separate.
 
 ## Preserved boundaries
 

@@ -55,6 +55,8 @@ However the same log contains zero matching `externalStreamStatusRequest/Respons
 
 Qualification: **b90 frontmost mechanism Runtime Positive; frontmost/occlusion sufficiency for automatic continuation remains Inconclusive. Reuse exact b90; do not allocate b91 or change product code.**
 
+Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b90-frontmost-mechanism-positive-continuation-inconclusive-20260903.md`.
+
 ## Validation / package identity
 
 Corrected staging `33727956426 / 100561161422`, Push CI `33728071476 / 100561518990`, and PR CI `33728075476 / 100561530874` passed. Canonical Push Artifact is `9882770072`; exact package source remains `99f1aa15...`; later docs-only heads do not redefine the Runtime package.
@@ -80,7 +82,7 @@ Decision:
 
 ## Batch recovery state
 
-**Open — latest b90 frontmost Runtime documentation batch.** Baseline branch head before this batch: `8fc802e85888b81a8e5eed26aded398400832d2d`. Intended writes: (1) this selected checkpoint, (2) one new runtime-evidence file for the recovered-auth/frontmost-positive continuation-inconclusive sample, (3) final checkpoint closure. No product/config/version/Candidate/Artifact/PR identity may be changed by this batch. Next exact action if interrupted: create the runtime-evidence file only if absent, then close this batch in this checkpoint.
+**Closed.** The latest b90 recovered-auth/frontmost-positive/continuation-inconclusive Runtime evidence file and this checkpoint are synchronized. No product/config/version/Candidate/Artifact/PR identity changed in this batch. Exact b90 package source remains `99f1aa15ce49b6abb0ff50e808bd889e381de917`.
 
 ## Preserved boundaries
 

@@ -1,0 +1,119 @@
+name: b91 docs sync
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b91-docsync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Sync durable b91 state
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          block = '''## DEV-send-stream b91 project-scoped route identity package-ready override — 2026-09-03
+
+- User Runtime distinction is now material: ordinary non-project conversations do not show the same continuation failure, while the tested project conversation does and its visible official Web appears healthy.
+- Source inspection proves the injected bridge parsed conversation identity only from `/c/{conversation}`. Official project canonicalization uses the already-evidenced `/g/{scope}/c/{conversation}` form; after that transition the old parser returned `null`, classified the valid project page as `route=other`, and disabled the bridge's target-equality gates for page-owned `stream_status`, `/resume`, plural conversation snapshots, WebSocket target matching and composer identity.
+- Exact b91 changes only that shared identity parser so both ordinary `/c/{conversation}` and the evidenced project `/g/{scope}/c/{conversation}` are recognized. It preserves b90 frontmost diagnostics for causal isolation and adds no retry, polling, timer, watchdog, Native status/resume synthesis, duplicate Send or response-store authority.
+- Candidate / Build: `DEV-send-stream-0.1.0-b91` / `0.1.0 (91)`, permanently reserved.
+- Exact b91 product commit: `cdab4e091683dc179753ed114c9ab5993a6c2d24`; exact product/config package source: `c5985f1e2e5daec7bbc0a011ed70a8dd80904f7c`.
+- Guarded staging `33746622538 / 100620460993` passed ancestry guard, exact replacement, exact two-product-file scope audit and Xcode Simulator compile. Earlier run `33746541830 / 100620201072` failed at an over-strict base guard before product application and emitted no product commit.
+- Formal Push CI `33746881658 / 100621278207` and PR CI `33746886896 / 100621297087` both passed on exact package source `c5985f1e...`.
+- Canonical Push Artifact `9890000591`; Artifact digest `sha256:6062b02f9f1332744816d01a58e13c1a8c82017ee50828051f014ef79b943350`; IPA `ChatGPTClient-0.1.0-b91-dev-send-stream.ipa`, independently recomputed SHA-256 `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140`, matching its sidecar.
+- Independent package inspection confirms Release `0.1.0 (91)`, Candidate b91, source `c5985f1e2e5d`, MinimumOSVersion 14.0, iPhone/iPad family `[1,2]`, `iphoneos`, Mach-O arm64.
+- Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime Unverified / Stable-Frozen No.**
+- Human Runtime gate is project-specific: after project canonicalization the bridge must continue reporting `route=conversation` and then prove or disprove the existing official page-owned continuation path. Non-project conversations are regression coverage, not the primary target.
+
+'''
+
+          docs = [
+              'docs/project/PROJECT_PROFILE.md',
+              'docs/project/PROJECT_STATE.md',
+              'docs/project/MODULE_STATUS.md',
+              'docs/project/TECHNICAL_DECISIONS.md',
+              'docs/project/PROJECT_SPECIFIC_RULES.md',
+              'docs/project/WEB_SEND_ADAPTER.md',
+              'docs/project/DEVELOPMENT_PLAN.md',
+          ]
+          for name in docs:
+              p = Path(name)
+              text = p.read_text()
+              marker = block.splitlines()[0]
+              if marker in text:
+                  continue
+              pos = text.find('\n\n')
+              if pos < 0:
+                  raise SystemExit(f'no heading separator: {name}')
+              p.write_text(text[:pos+2] + block + text[pos+2:])
+
+          idx = Path('docs/project/BUILD_TEST_INDEX.md')
+          text = idx.read_text()
+          b91 = '| `DEV-send-stream-0.1.0-b91` | `DEV-send-stream` | `0.1.0 (91)` | exact scoped-route identity parser product `cdab4e091683dc179753ed114c9ab5993a6c2d24`; exact product/config package source `c5985f1e2e5daec7bbc0a011ed70a8dd80904f7c`; PR #29 | staging `33746622538/100620460993` exact guard+scope+Simulator passed; Push `33746881658/100621278207` passed; PR `33746886896/100621297087` passed; canonical Push Artifact `9890000591`; Artifact `sha256:6062b02f9f1332744816d01a58e13c1a8c82017ee50828051f014ef79b943350`; IPA `sha256:abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140`; package `0.1.0 (91)` / Candidate b91 / source `c5985f1e2e5d` / iOS14 / `[1,2]` / arm64 | Runtime pending: project `/g/{scope}/c/{id}` must remain target-recognized after canonicalization; test existing page-owned status/resume/snapshot continuation without changing transport ownership | **Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified; Runtime Unverified; Stable-Frozen No; permanently reserved** |\n'
+          if b91.strip() not in text:
+              anchor = '| `DEV-send-stream-0.1.0-b90` |'
+              pos = text.find(anchor)
+              if pos < 0:
+                  raise SystemExit('b90 index anchor missing')
+              text = text[:pos] + b91 + text[pos:]
+              idx.write_text(text)
+
+          cp = Path('docs/project/current/dev/DEV-send-stream.md')
+          text = cp.read_text()
+          old_status_start = text.index('**Active —')
+          old_status_end = text.index('**\n', old_status_start) + 3
+          status = '**Active — b90 frontmost presentation is Runtime Positive as a mechanism, but project-specific source/Runtime correlation now proves the old bridge loses conversation identity after official `/g/{scope}/c/{conversation}` canonicalization. Exact b91 fixes only that scoped-route identity parser and is Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified; Human Runtime is pending. Stable/Frozen Send remains No.**\n'
+          text = text[:old_status_start] + status + text[old_status_end:]
+          text = text.replace('- b91 Candidate / Build: `DEV-send-stream-0.1.0-b91` / `0.1.0 (91)` allocated; product/package not yet emitted at this checkpoint', '- b91 Candidate / Build: `DEV-send-stream-0.1.0-b91` / `0.1.0 (91)` permanently reserved\n- Exact b91 product commit: `cdab4e091683dc179753ed114c9ab5993a6c2d24`\n- Exact b91 product/config package source: `c5985f1e2e5daec7bbc0a011ed70a8dd80904f7c`\n- b91 Push CI: `33746881658 / 100621278207` — success\n- b91 PR CI: `33746886896 / 100621297087` — success\n- b91 canonical Push Artifact: `9890000591`\n- b91 IPA SHA-256: `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140`')
+          package_block = '''## b91 package / validation state
+
+The exact minimum parser change was committed as `cdab4e091683dc179753ed114c9ab5993a6c2d24`. Guarded staging `33746622538 / 100620460993` passed ancestry, exact replacement, exact two-product-file scope and Simulator compile. Formal Push CI `33746881658 / 100621278207` and PR CI `33746886896 / 100621297087` both passed on exact package source `c5985f1e2e5daec7bbc0a011ed70a8dd80904f7c`.
+
+Canonical Push Artifact `9890000591` has backend digest `sha256:6062b02f9f1332744816d01a58e13c1a8c82017ee50828051f014ef79b943350`. Independent unpacking verified IPA `ChatGPTClient-0.1.0-b91-dev-send-stream.ipa`, SHA `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140` matching sidecar, built `0.1.0 (91)`, Candidate b91, source `c5985f1e2e5d`, MinimumOS 14.0, iPhone/iPad family and arm64.
+
+Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+'''
+          anchor = '## b91 Human Runtime gate\n'
+          if package_block.splitlines()[0] not in text:
+              pos = text.find(anchor)
+              if pos < 0:
+                  raise SystemExit('checkpoint runtime anchor missing')
+              text = text[:pos] + package_block + text[pos:]
+          old_batch = '**Open for b91 route-parser implementation/package. Next exact action:** apply only the evidenced scoped-route parser correction plus Build/Candidate 91, run guarded CI/package verification, then stop at Human Runtime.'
+          new_batch = '**Closed for b91 product/package/docs preparation. Next exact action:** install exact b91 and perform the project-scoped Human Runtime gate. No product/config change is permitted before that Runtime evidence.'
+          if old_batch not in text:
+              raise SystemExit('checkpoint batch marker missing')
+          text = text.replace(old_batch, new_batch, 1)
+          cp.write_text(text)
+          PY
+
+          git diff --check
+          CHANGED=$(git diff --name-only | sort)
+          echo "$CHANGED"
+          test -n "$CHANGED"
+          if echo "$CHANGED" | grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|\.github/workflows/ios-foundation\.yml$|scripts/)'; then
+            echo 'unexpected product/config change in docs sync'
+            exit 1
+          fi
+
+      - name: Commit docs
+        run: |
+          git config user.name white-shark-ssw
+          git config user.email houstools@gmail.com
+          git add docs/project
+          git commit -m 'docs: package b91 project route identity gate'
+          git push origin HEAD:dev/send-stream-20260829

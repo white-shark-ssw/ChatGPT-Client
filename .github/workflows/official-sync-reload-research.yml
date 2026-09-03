@@ -1,0 +1,55 @@
+name: Official Sync Reload Research Probe
+
+on:
+  push:
+    branches:
+      - research/official-sync-reload-20260904
+    paths:
+      - "research/official-sync-reload/**"
+      - "docs/project/current/dev/DEV-official-sync-reload.md"
+      - ".github/workflows/official-sync-reload-research.yml"
+  workflow_dispatch:
+
+jobs:
+  build-probe:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify isolated research scope
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git diff --name-only origin/main...HEAD | tee /tmp/changed.txt
+          if grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|scripts/build_ipa\.sh$|\.github/workflows/ios-foundation\.yml$)' /tmp/changed.txt; then
+            echo "Research branch touched product/config scope" >&2
+            exit 1
+          fi
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Build ad-hoc research dylib
+        run: bash research/official-sync-reload/build_probe.sh
+
+      - name: Verify probe identity
+        run: |
+          set -euo pipefail
+          OUT=build/research/official-sync-reload/OfficialSyncReloadProbe-v01.dylib
+          test -f "$OUT"
+          otool -D "$OUT"
+          strings "$OUT" | grep -F '30140022279'
+          strings "$OUT" | grep -F 'DEV-official-sync-reload-v01.txt'
+          shasum -a 256 "$OUT"
+
+      - name: Upload research probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: DEV-official-sync-reload-runtime-metadata-v01
+          path: |
+            build/research/official-sync-reload/OfficialSyncReloadProbe-v01.dylib
+            build/research/official-sync-reload/OfficialSyncReloadProbe-v01.dylib.sha256
+          if-no-files-found: error
+          retention-days: 14

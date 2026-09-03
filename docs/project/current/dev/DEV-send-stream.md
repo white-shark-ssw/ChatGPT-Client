@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b91 project route identity and page-owned live continuation are Runtime Positive. Exact b92 removes only the frontmost Web diagnostic and is Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified. Human Runtime must now prove the same live path while covered and natural terminal/final convergence. Stable/Frozen Send remains No.**
+**Active — exact b92 proves the covered project page-owned continuation path and client-owned protected Send/SSE terminal path on iPhone/iOS17. A narrower overlap regression remains: after switching away from an externally streaming conversation and starting a client-owned Send in another executor, the first external page-owned loop stops advancing and does not reacquire automatically on reselection; final assistant materializes only after explicit Sync. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -27,6 +27,7 @@
 - b92 PR CI: `33750591494 / 100632998279` — success
 - b92 canonical Push Artifact: `9891430379`
 - b92 IPA SHA-256: `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514`
+- b92 Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b92-covered-overlap-focus-handoff-20260903.md`
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -101,28 +102,43 @@ Two early staging attempts (`33749925741`, `33750233706`) failed in guard-only t
 
 Exact product/config package source `54b5803a74a123431f0a2a8e662a1a2fe874b3ca` passed Push CI `33750585725 / 100632980237` and PR CI `33750591494 / 100632998279`. Canonical Push Artifact `9891430379` has digest `sha256:f3cb6291fabcb2cf48729750d23a4403607e8ac81dc4354749974e287412e970`. Independent unpacking verified IPA SHA `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514` matching sidecar, Release `0.1.0 (92)`, Candidate b92, source `54b5803a74a1`, MinimumOS 14.0, device family `[1,2]`, iphoneos and Mach-O arm64.
 
-Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+Evidence ladder before Runtime: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Stable-Frozen No.**
 
-## b92 Human Runtime gate
+## b92 Human Runtime result — 2026-09-03
 
-1. Install the exact canonical b92 IPA.
-2. In another official client start a long response in a **project conversation**.
-3. Open the same project conversation in b92 and press `同步最新消息` exactly once.
-4. Native UI must remain visible/usable; official Web must not cover/trap the Native UI.
-5. Diagnostics must show `coveredExecutor.webViewActivation` stage `manual_sync_covered`, with the executor still covered, and project page `route=conversation`.
-6. While the remote response continues, matching page-owned `externalStreamStatusRequest/Response`, `IS_STREAMING`, `externalStreamingObserved` and/or `externalSnapshot` must advance the existing Native live response without a second Sync.
-7. Do **not** force quit. Let the response finish naturally.
-8. Verify final assistant content materializes and live response terminalizes/clears automatically without a second Sync, then export diagnostics after completion.
+Exact diagnostics match Candidate b92 / Build 92 / source `54b5803a74a1` on iPhone / iOS 17.0.
+
+The first project conversation (`sha256:0df178903e95`) proves the covered production form can continue externally after one explicit Sync: `manual_sync_covered` remained `subviewIndex=0` with `visibleSiblingCountAbove=1`, route remained `conversation`, page-owned `stream_status` repeatedly returned HTTP200 `IS_STREAMING`, and Native external snapshots advanced without another Sync to service messages/tools `54 / 18` and reasoning 781 characters. Therefore b90/b91 frontmost presentation is not required once the corrected project route identity is present.
+
+A second conversation (`sha256:6f429823a988`) was then used for client-owned protected Send while the first external response remained active. The second executor produced HTTP200 `text/event-stream`, streamed reasoning/tools/final to `finalCharacters=6073`, reasoning 708, timeline 18/tools 14, emitted `terminal`, and automatically completed authoritative reconcile (`visible 15 -> 17`, `liveResponse.reconciled`, `liveSnapshotCleared=true`). Client-owned Send/SSE/natural terminal/final is Runtime Positive.
+
+The overlap exposes a narrower failure. `activeExecutorCount` reached 2. The first external conversation continued after the second executor was created, reaching service messages/tools `54/18` at 11:58:27Z. The second client-owned Send began at 11:58:29Z; a Web `blur` event followed around the handoff. There were no further external status responses after 11:58:25Z and no further first-conversation snapshots after 11:58:27Z. Selecting the first conversation again at 12:01:45Z produced only `composer_ready`; its live response stayed frozen at reasoning 781 / timeline 21 / tools 18 / final 0 through 12:05:52Z. Explicit Sync at 12:05:55Z fetched authoritative visible messages 25 with no trailing reasoning/tool timeline and added the final assistant; `liveResponse.externalDetailReconciled` then cleared the stale external live row.
+
+Source correlation is direct but not yet final proof of focus causality: executors are per-conversation; active external executors are deliberately retained by `releaseIdleExecutors`; protected Send focuses the second page composer; reselection of an already-active external executor with matching `currentConversationID` only probes the composer and does not restore first-responder/document focus. Bridge events do not currently include executor identity, so the observed `blur` cannot be conclusively assigned. **Strongest evidenced next differential: selection-time focus reacquisition for an already-active external response.**
+
+Current Runtime classification: **covered single-conversation page-owned continuation Runtime Positive; client-owned protected Send/SSE terminal+authoritative reconcile Runtime Positive; overlapping external continuation/reselection recovery Runtime Negative; automatic external terminal/final under overlap Unverified/Rejected for current behavior; Stable-Frozen No.**
+
+## b93 exact minimum A/B — not yet allocated
+
+Next candidate, if allocated, must change only selection-time reacquisition for an already-active external response:
+
+- when the user selects a conversation whose live snapshot is active and `promptText` is empty, reuse its existing executor;
+- reacquire that executor's Native/Web document focus without page reload;
+- log a distinct selection focus-rearm stage/result;
+- retain b92 covered z-order, b91 scoped route parser, page-owned continuation transport, protected Send transport and Repository ownership;
+- do not add background polling, retry/watchdog/timer, Native `stream_status`/`resume`, guessed offset, duplicate Send, WebSocket-body authority or a second response store.
+
+Decisive Runtime test: external project response -> one Sync -> switch to another conversation -> complete one client-owned Send -> select the original external-live conversation again **without manual Sync**. If page-owned `stream_status`/external snapshots resume and naturally materialize/reconcile the final assistant, selection-time focus reacquisition is Runtime Positive. If not, reject it as sufficient.
 
 ## Validation / identity state
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
 
-b91 identity guard is clean at allocation: repository commit search found no b91 identity, branch search found no b91 branch collision, and actual `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+b91/b92 exact package identities remain permanently reserved. b93 has not been allocated in this Runtime-recording checkpoint.
 
 ## Batch recovery state
 
-**Closed for b92 product/package/docs preparation. Next exact action:** install exact canonical b92 and execute the b92 Human Runtime gate through covered live progression and natural terminal/final completion. No product/config change is permitted before that Runtime evidence.
+**Closed for b92 Runtime classification. Next exact action:** perform a fresh resume/conflict guard, then allocate b93 only for the selection-time external-focus reacquisition A/B above. Do not modify continuation protocol or add speculative recovery logic.
 
 ## Preserved boundaries
 
@@ -130,4 +146,4 @@ Official page owns continuation transport; `ConversationRepository` owns Native 
 
 ## Session round counter
 
-This user turn is **round 59**.
+This user turn is **round 60**.

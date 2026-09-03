@@ -1,0 +1,130 @@
+name: official iOS Probe v0.4 finalize
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/official-ios-probe-v04-finalize.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+      - name: Record exact v0.4 research gate and clean temporary tooling
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor ce43a7fc3fb4f581dd7614bac541c44dff8af512 HEAD
+          grep -q 'RPTProbeVersion = @"0.4"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'http.task.resume' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          python3 - <<'PY'
+          from pathlib import Path
+
+          checkpoint = Path('docs/project/current/dev/DEV-send-stream.md')
+          s = checkpoint.read_text()
+          title = '## Official iOS Probe v0.4 package-ready research override — 2026-09-04'
+          if title not in s:
+              block = '''## Official iOS Probe v0.4 package-ready research override — 2026-09-04
+
+Probe v0.2 Human Runtime is **Inconclusive, not a protocol negative**. Exact exported JSONL `sha256:f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513` contains 392,033 valid events / 76,447,285 bytes / zero parse errors and begins with `probe.log_cleared`, so the clear control is Runtime Positive. After one official user-WebSocket `NSPOSIXErrorDomain/53`, the app repeatedly invoked receive on the same failed task and v0.2 logged 195,999 identical receive errors plus 196,002 receive-arm events. That ~76 MB logging storm materially perturbed the tested process. Therefore the absence of conversation HTTP/SSE/per-turn-WebSocket events after that boundary cannot reject the official late-join mechanism.
+
+Exact official-binary static evidence now narrows the next observation target: the supplied `ChatGPT.framework` exposes `ConversationPollingManager`, `ConversationResumeFetchRecovery`, `recoverConversationWithNewPollingIfPossible`, `conversation_resuming.recover_with_new_polling*`, `ConversationStreamStatusResponse`, `KnownConversationStreamStatus`, `IS_STREAMING`, `ios.conversation_polling`, `chatgpt-ios-inline-polling`, `resumableStreamingConversation`, and recovery diagnostics including `Failed to fetch conversation stream status during inline recovery polling` / `Inline polling reached complete status but conversation fetch failed`. The same binary imports Swift Foundation async `URLSession.data(for:)` / `bytes(for:)`. This is strong static evidence that official native recovery/late-join can use polling/status/fetch through Swift async URLSession rather than the public data-task constructors observed by v0.2/v0.3. It does **not** yet prove the exact cross-platform Runtime branch, URL, cadence or ownership.
+
+Probe v0.4 is research-only and adds one privacy-safe `http.task.resume` event per observed `NSURLSessionTask`, including tasks internally created by Swift async URLSession. It preserves v0.3 failed-WebSocket error de-duplication and the `清空` control. It records URL shape/path kind/method/task class and privacy-safe conversation hash when derivable; it does not record auth values, signed query values, prompt/answer/reasoning/tool text or response bodies.
+
+Exact v0.4 research source: `db3f8a7d01f39f364f6166cf72245db426cadef1`; research build trigger/head `ce43a7fc3fb4f581dd7614bac541c44dff8af512`; dedicated research CI `33795191324 / 100781074234` passed build, artifact validation and upload. Canonical research Artifact `9908872470`, ZIP digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`; independently verified Probe dylib `sha256:cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9` matching sidecar.
+
+Against exact official source ZIP `sha256:bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, independently repackaged `ChatGPT-Official-RealtimeProbe-v04-TrollStore-20260904.ipa` is `sha256:b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`, passes ZIP integrity, preserves official `com.openai.chat` / `1.2026.202` / `30140022279`, and differs from pristine source in exactly three intended files: Probe substituted at the already-loaded enhancer path, original enhancer preserved as `.original.dylib`, and research marker added.
+
+Evidence ladder for Probe v0.4: **research code written / exact research scope guard passed / dedicated research CI passed / Artifact produced / dylib and research IPA independently verified / v0.4 real-device Runtime pending.** Product remains exact b95; b96 remains unallocated; Stable/Frozen Send remains No.
+
+**Next exact action:** Human Runtime exact v0.4 only. Fully relaunch official research app, press `清空` immediately before one deliberately long cross-platform project response, reproduce the normal visible official-iOS late-join without extra refreshes, and export JSONL after visible in-progress join or terminal. Decisive evidence is the earliest target-correlated `http.task.resume` / conversation status-detail-resume task or per-turn WebSocket event before terminal. Do not implement product polling/cadence or allocate b96 until that current-account Runtime path is observed.
+
+'''
+              s = s.replace('# DEV-send-stream\n\n', '# DEV-send-stream\n\n' + block, 1)
+              checkpoint.write_text(s)
+
+          state = Path('docs/project/PROJECT_STATE.md')
+          s = state.read_text()
+          title2 = '## 2026-09-04 — official iOS Probe v0.4 package ready / task-resume late-join gate'
+          if title2 not in s:
+              block2 = '''## 2026-09-04 — official iOS Probe v0.4 package ready / task-resume late-join gate
+
+Cross-platform late-join remains the primary Send/Stream research gate. Probe v0.2 is Inconclusive because its failed-user-WebSocket receive logging generated 392,033 events / ~76 MB and materially perturbed observation; do not use its absence of target events as a protocol rejection. Static inspection of the exact supplied official iOS framework now proves native `ConversationPollingManager` / resume-fetch recovery / stream-status polling strings plus Swift async URLSession `data(for:)` / `bytes(for:)`, making those task paths the strongest current acquisition hypothesis without proving exact Runtime cadence or ownership.
+
+Probe v0.4 is research-only and package-verified. Exact source `db3f8a7d01f39f364f6166cf72245db426cadef1`; trigger/head `ce43a7fc3fb4f581dd7614bac541c44dff8af512`; research CI `33795191324 / 100781074234` success; Artifact `9908872470`; Artifact digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`; dylib SHA `cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9`; research IPA SHA `b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`. It emits one privacy-safe `http.task.resume` per observed NSURLSession task so Swift async URLSession cannot bypass observation merely by avoiding public data-task constructors. Human Runtime v0.4 pending. b95 remains the product Candidate; b96 unallocated; Stable/Frozen Send No.
+
+'''
+              s = s.replace('# Project State\n\n', '# Project State\n\n' + block2, 1)
+              state.write_text(s)
+
+          evidence = Path('docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v02-inconclusive-v04-task-resume-gate-20260904.md')
+          if not evidence.exists():
+              evidence.write_text('''# DEV-send-stream — official iOS Probe v0.2 Inconclusive / v0.4 task-resume gate — 2026-09-04
+
+## v0.2 Human Runtime input
+
+- JSONL SHA-256: `f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513`
+- Size: 76,447,285 bytes
+- Parsed events: 392,033
+- Parse errors: 0
+- Probe version: `0.2`
+- `probe.log_cleared` is the first event; clear control is Runtime Positive.
+
+## Runtime classification
+
+The sample is **Inconclusive for the official cross-platform late-join mechanism**. One official user-WebSocket receive failed with `NSPOSIXErrorDomain / 53`; the official app then repeatedly invoked receive on the same failed task. Probe v0.2 logged 196,002 receive-arm events and 195,999 receive-error events, inflating the log to ~76 MB. The instrumentation load materially perturbed the tested process. No conversation HTTP/SSE/per-turn WebSocket event was observed, but that absence is not promoted to a protocol negative.
+
+Probe source forwards the receive callback and does not explicitly schedule the next receive; causality of the official repeated receive loop remains Unverified. v0.3 removes per-arm logging and deduplicates repeated errors per failed task.
+
+## Exact official static evidence after v0.2
+
+The supplied official framework contains native recovery/polling symbols and diagnostics including `ConversationPollingManager`, `ConversationResumeFetchRecovery`, `recoverConversationWithNewPollingIfPossible`, `ConversationStreamStatusResponse`, `KnownConversationStreamStatus`, `IS_STREAMING`, `ios.conversation_polling`, `chatgpt-ios-inline-polling`, `resumableStreamingConversation`, and inline stream-status/fetch recovery diagnostics. It also imports Swift Foundation async URLSession `data(for:)` / `bytes(for:)`.
+
+This supports observing the actual NSURLSession task boundary. It does not prove that cross-platform late-join uses a particular URL, polling cadence, resume offset or content authority.
+
+## Probe v0.4 package identity
+
+- Research source: `db3f8a7d01f39f364f6166cf72245db426cadef1`
+- Research build trigger/head: `ce43a7fc3fb4f581dd7614bac541c44dff8af512`
+- Dedicated research CI: `33795191324 / 100781074234` — success
+- Artifact: `9908872470`
+- Artifact digest: `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`
+- Probe dylib SHA: `cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9`
+- Official source ZIP SHA: `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`
+- Repacked research IPA SHA: `b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`
+- Official identity preserved: `com.openai.chat` / `1.2026.202` / `30140022279`
+- Extracted diff versus pristine: exactly three intended files.
+
+v0.4 adds one privacy-safe `http.task.resume` event per observed NSURLSession task, including Swift async URLSession-created tasks. It preserves v0.3 failed-socket logging de-duplication and does not log auth/query values or conversation bodies.
+
+## Next decisive Runtime
+
+Clear the v0.4 log immediately before one known cross-platform long-response test. Separately note whether official iOS visibly joins the in-progress answer before terminal. Export JSONL after visible join or terminal. The decisive result is the earliest target-correlated task/path before terminal: stream status, conversation Detail, resume/SSE, another polling/fetch path, or a conversation/per-turn WebSocket event. No ChatGPTClient b96/product implementation is authorized until that path is observed.
+''')
+          PY
+
+          # Restore permanent research workflow to its ordinary trigger-only form.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/research-official-ios-realtime-probe.yml')
+          s = p.read_text()
+          s = s.replace('# Probe v0.4 source: db3f8a7d01f39f364f6166cf72245db426cadef1\n', '')
+          p.write_text(s)
+          PY
+
+          rm -f .github/probe_v04_apply.py .github/workflows/official-ios-probe-v04-apply.yml .github/workflows/official-ios-probe-v04-finalize.yml
+          git diff --check
+          git status --short
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: record Probe v0.4 late-join gate and clean tooling [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829

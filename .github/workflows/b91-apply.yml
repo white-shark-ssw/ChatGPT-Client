@@ -21,7 +21,10 @@ jobs:
 
       - name: Guard base
         run: |
-          test "$(git rev-parse HEAD)" = "fd43eee51cdf045253ca527204ff1e4d34abf216" || { echo "unexpected head $(git rev-parse HEAD)"; exit 1; }
+          git merge-base --is-ancestor fd43eee51cdf045253ca527204ff1e4d34abf216 HEAD
+          grep -F 'const match = location.pathname.match(/^\/c\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 90;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b90\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
 
       - name: Apply exact b91 delta
         run: |

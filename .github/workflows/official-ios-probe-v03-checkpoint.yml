@@ -1,0 +1,47 @@
+name: official iOS Probe v0.3 checkpoint
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/official-ios-probe-v03-checkpoint.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  checkpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard checkpoint baseline
+        run: |
+          test "$(git rev-parse HEAD:docs/project/current/dev/DEV-send-stream.md)" = "6f42e63fbdf5fb1b7b292f15fe49c373d77e0d64"
+          test -f docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v02-runtime-storm-v03-plan-20260904.md
+
+      - name: Prepend v0.2 Runtime recovery point
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/project/current/dev/DEV-send-stream.md')
+          old = p.read_text()
+          block = '''# DEV-send-stream\n\n## Official iOS Probe v0.2 Runtime / v0.3 research gate — 2026-09-04\n\nUser-exported Probe v0.2 JSONL `sha256:f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513` parsed cleanly: 392,033 events / 76,447,285 bytes / zero parse errors. `probe.log_cleared` is the first event, proving the new clear-log control works; opaque user-socket path redaction and direct presence-state logging also work.\n\nThis sample is **not a clean negative late-join result**. After `NSPOSIXErrorDomain/53` on the existing user WebSocket, the official app repeatedly invoked receive on the failed task and the Probe recorded 195,999 identical receive errors plus 196,002 receive-arm events. Two error storms span ~50.4 s and ~22.3 s, inflating the file to ~76 MB and materially perturbing observation. Source inspection shows the Probe logs/forwards the callback but does not itself schedule another receive, so causality of the official receive loop remains Unverified; regardless, per-arm/per-error logging must be removed/deduplicated before another decisive Runtime.\n\nAcross the entire file there are zero `conversationHash` events, zero conversation/per-turn WebSocket events and zero conversation HTTP/SSE events; the only `http.*` event is completion of the failed WebSocket task itself. Overall cross-platform late-join therefore remains **Inconclusive**, not Rejected. The JSONL does not encode whether the official iOS UI visibly joined the remote answer.\n\nStatic inspection of the exact supplied official framework independently exposes native `WebSocketConversationEventsService`, `stream_handoff`, `resume_conversation_token`, `turn_exchange_id`, `topic`, `resume_sse_endpoint`, and `ConversationResumeFetchRecovery.swift` strings including inline stream-status polling/fetch recovery. This proves official Native recovery machinery exists but does not prove which branch owns cross-platform late-join. The same binary exposes both `dataTaskWithRequest:` and `dataTaskWithURL:` forms; Probe v0.2 hooks only request forms.\n\n**v0.3 research-only scope:** retain the working `清空`/privacy-safe structure; stop logging `ws.receive.arm`; log only the first repeated receive error per failed socket until a real message arrives; add wrappers for `dataTaskWithURL:` and `dataTaskWithURL:completionHandler:`; do not yet add a global task-resume hook. No ChatGPTClient product change, no polling implementation, and no b96 allocation.\n\nBatch recovery: current feature head before this checkpoint workflow is the evidence commit `17cc302c40530067ed01be84547b8e2c2e81cc63`; PR #29 remains open/unmerged; `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`; b95 product/package remain `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2` / `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`; b96 unallocated. After this checkpoint commit, change only research Probe source/README, run dedicated research CI, package against official ZIP `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, verify exact research IPA diff/hash, update durable docs/PR, then delete temporary v0.2/v0.3 apply/finalize tooling.\n\n**Next exact action:** apply the minimal Probe v0.3 observation delta above. Product/config files must not change.\n\n'''
+          if not old.startswith('# DEV-send-stream\n'):
+              raise SystemExit('unexpected checkpoint header')
+          p.write_text(block + old[len('# DEV-send-stream\n\n'):])
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = "docs/project/current/dev/DEV-send-stream.md"
+
+      - name: Commit checkpoint
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/current/dev/DEV-send-stream.md
+          git commit -m "docs: checkpoint Probe v0.2 Runtime and v0.3 gate"
+          git push origin HEAD:dev/send-stream-20260829

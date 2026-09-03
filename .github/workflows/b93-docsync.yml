@@ -34,6 +34,8 @@ jobs:
       - name: Commit docs
         run: |
           set -euo pipefail
+          git config user.name "ChatGPT Client CI"
+          git config user.email "ci@chatgpt-client.local"
           git add docs/project
           git commit -m "docs: record b92 overlap and package b93 focus gate [skip ci]"
           git push origin HEAD:dev/send-stream-20260829

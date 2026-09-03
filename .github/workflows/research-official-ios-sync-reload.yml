@@ -1,0 +1,42 @@
+name: Research Official iOS Sync Reload Inspector
+
+on:
+  push:
+    branches:
+      - dev/official-sync-reload-20260904
+    paths:
+      - "scripts/research/official_ios_sync_reload/**"
+      - ".github/workflows/research-official-ios-sync-reload.yml"
+  workflow_dispatch:
+
+jobs:
+  build-inspector:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Build research dylib
+        run: bash scripts/research/official_ios_sync_reload/build_inspector.sh build/sync-reload-inspector
+
+      - name: Validate research artifact
+        run: |
+          test -f build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib
+          file build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib
+          otool -L build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib
+          codesign -dv --verbose=2 build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib 2>&1 | head -n 30
+          cat build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib.sha256
+
+      - name: Upload research inspector
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPTSyncReloadInspector-${{ github.sha }}
+          path: |
+            build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib
+            build/sync-reload-inspector/ChatGPTSyncReloadInspector.dylib.sha256
+          if-no-files-found: error
+          retention-days: 7

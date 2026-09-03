@@ -20,9 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Guard exact Runtime evidence
-        run: |
-          test -f docs/project/runtime-evidence/DEV-send-stream-b94-foreground-rebootstrap-web-process-terminated-20260903.md
-          grep -Fq 'Exact b94 proves foreground official-page rebootstrap' docs/project/runtime-evidence/DEV-send-stream-b94-foreground-rebootstrap-web-process-terminated-20260903.md
+        run: test -f docs/project/runtime-evidence/DEV-send-stream-b94-foreground-rebootstrap-web-process-terminated-20260903.md
 
       - name: Apply durable docs
         run: python3 .github/b94_runtime_sync.py

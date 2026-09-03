@@ -1,0 +1,61 @@
+name: Apply Probe v0.6 callback-surface research
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - '.github/workflows/probe-v06-apply.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact recovery baseline
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "6fd1249f579dfa1496472b3418c9585b44717450"
+          test "$(git rev-parse HEAD^^)" = "500a17baad18a2cf3713fe9edad2bcf41502cfe4"
+          CHANGED="$(git diff --name-only HEAD^^ HEAD | sort)"
+          EXPECTED=$'.github/probe_v06_apply.py\n.github/workflows/probe-v06-apply.yml'
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+          test "$(git show 500a17baad18a2cf3713fe9edad2bcf41502cfe4:docs/project/current/dev/DEV-send-stream.md | git hash-object --stdin)" = "06d5ab77bfc2038153af5393bc0fb4789b6bd7c8"
+
+      - name: Apply exact v0.6 research delta
+        run: |
+          set -euo pipefail
+          python3 .github/probe_v06_apply.py
+          git diff --check
+          grep -F 'static NSString * const RPTProbeVersion = @"0.6";' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -F 'probe.detail_task_callback_surface' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -F 'Current research revision: **Probe v0.6**.' scripts/research/official_ios_realtime_probe/README.md
+          grep -F 'Official iOS Probe v0.5 Runtime / v0.6 callback-surface gate' docs/project/current/dev/DEV-send-stream.md
+          grep -F '26e8646945831764bf6317c99213ff8a9621d09942e642a19b4f15aa24c892ba' docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v05-runtime-v06-callback-surface-20260904.md
+
+      - name: Audit research-only scope and commit
+        run: |
+          set -euo pipefail
+          rm .github/probe_v06_apply.py .github/workflows/probe-v06-apply.yml
+          git add -A
+          CHANGED="$(git diff --cached --name-only | sort)"
+          EXPECTED=$'.github/probe_v06_apply.py\n.github/workflows/probe-v06-apply.yml\ndocs/project/PROJECT_STATE.md\ndocs/project/current/dev/DEV-send-stream.md\ndocs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v05-runtime-v06-callback-surface-20260904.md\nscripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m\nscripts/research/official_ios_realtime_probe/README.md'
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+          if git diff --cached --name-only | grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|\.github/workflows/ios-foundation\.yml$)'; then
+            echo 'product scope violation' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'research: discover official Detail callback surface v0.6'
+          git push origin HEAD:dev/send-stream-20260829

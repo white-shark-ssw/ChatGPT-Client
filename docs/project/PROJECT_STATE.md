@@ -210,3 +210,7 @@ Exact b74 resident-geometry/tool-spacing/external-adoption Runtime, new-chat aut
 ## 2026-09-03 — b92/b93 page-owned continuation loop interruption
 
 Exact b92 single-executor Runtime proves that a background lifecycle transition can stop the official page-owned `stream_status`/snapshot loop even without another executor. Exact b93 proves successful first-responder/document-focus reacquisition does not necessarily restart a stopped loop. The next isolated candidate is foreground official-page rebootstrap without Native Detail Sync; selection rebootstrap remains separate. Stable/Frozen Send remains No.
+
+## 2026-09-03 b94 Runtime update
+
+`DEV-send-stream` remains Active / Stable-Frozen No. Exact b94 foreground official-page rebootstrap is Runtime Positive as a restart mechanism, but the same long-running project-conversation run later recorded covered WKWebView WebContent-process termination. The termination cause is Unverified. Late authoritative Sync remained HTTP200 yet server-owned trailing response and `IS_STREAMING` persisted without a final assistant. Next work is evidence-driven WebContent/rebootstrap reliability and user recovery design; no speculative polling/retry/timer workaround is approved.

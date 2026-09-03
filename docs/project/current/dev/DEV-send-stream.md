@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b92 single-executor Runtime proves background lifecycle can stop the official page-owned continuation loop, and exact b93 proves selection focus reacquisition succeeds but is not sufficient to restart a stopped loop. b93 focus-sufficient is Rejected. Exact b94 foreground official-page rebootstrap is Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified; Human Runtime pending. Stable/Frozen Send remains No.**
+**Active — exact b94 proves foreground official-page rebootstrap can restart the page-owned continuation loop after background, but the same long-running project-conversation run later terminated the WKWebView WebContent process. Rebootstrap mechanism Runtime Positive; repeated/heavy covered-Web reliability Runtime Negative / not production-stable; OOM cause Unverified; external terminal/final still not achieved. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -202,6 +202,24 @@ Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push 
 Use one project conversation/executor only. Start a deliberately long remote response, press `同步最新消息` once to establish advancing page-owned external snapshots, keep that same conversation selected, background ChatGPTClient while the remote response is still active, then return foreground **without pressing Sync**. Require `foregroundExternalRebootstrap.requested`, activation stage `foreground_external_page_rebootstrap`, `coveredExecutor.foregroundPageRebootstrap`, a completed official page load, then renewed matching `externalStreamStatusRequest/Response` and external snapshots. Let the remote response finish naturally and require final materialization/reconcile without Sync.
 
 If the remote answer is already terminal before foreground rebootstrap, classify the sample Inconclusive and reuse exact b94; do not allocate a new candidate. Selection-triggered page rebootstrap remains outside b94.
+
+## b94 Human Runtime result — 2026-09-03
+
+Exact b94 diagnostics match Candidate `DEV-send-stream-0.1.0-b94`, Build 94, source `59894bd9ca7c`, iPhone / iOS 17.0. Full evidence is recorded in `docs/project/runtime-evidence/DEV-send-stream-b94-foreground-rebootstrap-web-process-terminated-20260903.md`.
+
+The foreground-rebootstrap mechanism itself is Runtime Positive. After background at `14:25:44-14:25:46Z`, foreground at `14:25:52Z` emitted the b94 rebootstrap diagnostics, reloaded the same official conversation page, and page-owned HTTP200 `IS_STREAMING` plus external snapshots resumed without another Sync. The live projection advanced through `11/4`, `13/4`, `15/5` service/tool counts. A later foreground rebootstrap at `14:27:25Z` again restored the loop and snapshots advanced through `34/12`, `36/13`, `37/14`, `39/14`. Therefore full official-page rebootstrap is sufficient to restart at least these interrupted page-owned continuation loops; b93 focus-only recovery remains rejected as sufficient.
+
+The same exact run also exposes a new reliability failure. After several foreground/background transitions and repeated full conversation-page rebootstrap actions, foreground at `14:35:12Z` loaded the page, then at `14:35:17Z emitted `coveredExecutor.webProcess state=terminated` followed by `coveredExecutor.failed reason=web_process_terminated`; external generation 1 failed and the executor was released. This is direct Runtime evidence of WKWebView WebContent-process termination. The cause is Unverified: current diagnostics do not capture WebContent memory or jetsam reason, so do not call this proven OOM.
+
+The conversation is now very large. Late authoritative Detail is `5,491,909` bytes, mapping `1535`, recipient-message count `397`, visible-message count `28`; the successful late Syncs take about `4.77s` and `5.44s`. This makes the earlier Web Rule Lab timeout/resource concern a material hypothesis, not a proven root cause.
+
+Both late user Sync actions succeeded at the authoritative transport layer. At `14:36:15Z` and again `14:38:19Z`, HTTP200 Detail still contained trailing reasoning/timeline/tool counts `3 / 33 / 30` and no new visible final assistant. Repository therefore correctly rebuilt external generation 2, after which official `stream_status` continued returning `IS_STREAMING` and snapshots stayed around `service=109 / tools=30 / finalCharacters=0` through export. The final Sync did not fail; authoritative server state itself remained unfinished/stuck at export.
+
+Current UI intentionally disables `重载当前会话` whenever the selected live snapshot phase is active. Therefore after the authoritative Sync rebuilt an active external live response, Reload being grey is expected current policy, not an in-flight-operation leak. In combination with an indefinitely active external response, this creates a real user recovery dead-end.
+
+Classification: **foreground page rebootstrap mechanism Runtime Positive; repeated/heavy full-page covered-Web reliability Runtime Negative / not production-stable in this run; WebContent termination root cause Unverified; manual late Sync transport Runtime Positive; external terminal/final convergence Unverified/not achieved; manual Reload recovery blocked by current active-live UI policy; Stable/Frozen No.**
+
+Do not allocate a new candidate merely to add polling/retry/timers. Next work must first isolate a minimum event-driven response to the now-proven WebContent termination / repeated heavy reload problem and a deliberate user recovery path, while preserving official-page transport ownership and Repository content ownership.
 
 ## Validation / identity state
 

@@ -425,3 +425,11 @@ CI/Artifact/package verification does not prove this Runtime gate. Any code corr
 ## 2026-09-03 — b92/b93 page-owned continuation loop interruption
 
 Exact b92 single-executor Runtime proves that a background lifecycle transition can stop the official page-owned `stream_status`/snapshot loop even without another executor. Exact b93 proves successful first-responder/document-focus reacquisition does not necessarily restart a stopped loop. The next isolated candidate is foreground official-page rebootstrap without Native Detail Sync; selection rebootstrap remains separate. Stable/Frozen Send remains No.
+
+## b94 Runtime reliability finding — 2026-09-03
+
+Exact b94 proves foreground reload of the same official conversation page can restart page-owned continuation after lifecycle interruption. It also proves this cannot yet be treated as production-stable: after repeated foreground/background transitions and repeated full-page rebootstrap of a very large project conversation, `webViewWebContentProcessDidTerminate` fired and the executor failed. The cause is Unverified; do not label it OOM without WebContent/OS evidence.
+
+Late authoritative Detail had grown to about 5.49 MB / mapping 1535. Two late manual Syncs still returned HTTP200, but authoritative trailing response remained active (`reasoning/timeline/tools = 3/33/30`) and official `stream_status` remained `IS_STREAMING` with no final assistant before export. Current Reload UI is intentionally disabled while any live response phase is active, creating a manual recovery dead-end if the external response stays active indefinitely.
+
+Do not answer this with Native `stream_status`, Native `/resume`, guessed offsets, cadence polling, retry/watchdog timers, WebSocket-body authority, duplicate Send, or a second response store. Any next candidate must isolate an event-driven WebContent/rebootstrap reliability change or explicit user recovery path.

@@ -118,6 +118,19 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation", "mode": forceReload ? "manual_sync_rearm" : "selection"])
     }
 
+    func reactivateExternalObservationFocus() {
+        precondition(Thread.isMainThread)
+        guard observingExternalResponse else { return }
+        logWebViewActivationState(stage: "selection_external_focus_rearm")
+        let nativeFirstResponder = webView.becomeFirstResponder()
+        diagnostics.info(category: "webSend", name: "coveredExecutor.selectionFocusActivationAttempt", fields: ["nativeFirstResponder": nativeFirstResponder ? "true" : "false"])
+        webView.evaluateJavaScript("document.hasFocus()") { [weak self] result, error in
+            guard let self else { return }
+            let documentHasFocus = (result as? Bool) == true
+            self.diagnostics.info(category: "webSend", name: "coveredExecutor.selectionFocusActivationResult", fields: ["nativeFirstResponder": nativeFirstResponder ? "true" : "false", "documentHasFocus": documentHasFocus ? "true" : "false", "evaluation": error == nil ? "succeeded" : "failed"])
+        }
+    }
+
     func sendExistingConversation(text: String, conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {
         precondition(Thread.isMainThread)
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1518,6 +1531,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
             }
         }
+        if existingSnapshot?.phase.isActive == true, existingSnapshot?.promptText.isEmpty == true { sendExecutor.reactivateExternalObservationFocus() }
     }
 
     private func handleExternalAcquisitionHint(conversationID: String, sendExecutor: CoveredWebSendExecutor) {

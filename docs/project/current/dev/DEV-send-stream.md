@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b94 rebootstrap is Runtime Positive but repeated/heavy covered-Web reliability is Runtime Negative. User has now restored the original hard-recovery invariant: `重载当前会话` must remain available whenever a conversation is selected, including active/stuck response and in-flight Sync/Reload states, and must reset the current conversation page/local response execution state before reloading authoritative server Detail. b95 is allocated only for this hard-reload invariant. Stable/Frozen Send remains No.**
+**Active — exact b95 hard Reload is packaged and awaits Human Runtime. The primary unresolved Send/Stream defect remains automatic page-owned continuation interruption: b92/b93 prove the official page loop can stop after background or browsing-context handoff; b93 focus reacquisition is insufficient; b94 full-page foreground rebootstrap can restart the loop but repeated/heavy rebootstrap ended in WebContent-process termination. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -47,6 +47,15 @@
 - b94 canonical Push Artifact: `9895660898`
 - b94 Artifact digest: `sha256:65d29b08d10ef3c626f64a9fa16e574a53ab33aa0d7041fa53f9c094915b9b60`
 - b94 IPA SHA-256: `a0d3de344f18f75e0286f26c27b9ea0c89548bed6a75bff4bb3369ee7bcfaffb`
+- b95 Candidate / Build: `DEV-send-stream-0.1.0-b95` / `0.1.0 (95)` permanently reserved
+- Exact b95 product commit: `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`
+- Exact b95 product/config package source: `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`
+- b95 staging: `33775057479 / 100714562438` — success
+- b95 Push CI: `33775521398 / 100716116912` — success
+- b95 PR CI: `33775526525 / 100716136837` — success
+- b95 canonical Push Artifact: `9901461763`
+- b95 Artifact digest: `sha256:0378271690113e92849d87cec7bc32fa56d4ae8de4885e7003fc0ba69e26cb6a`
+- b95 IPA SHA-256: `2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d`
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -275,3 +284,31 @@ Write batches planned:
 5. update durable docs/PR and hand exact IPA to Human Runtime.
 
 Next exact action after checkpoint cleanup: run guarded b95 staging for the minimum hard-Reload patch. Do not modify b94 Runtime evidence or allocate b96 during recovery.
+
+
+## b95 package / validation state
+
+Exact b95 implements only the restored hard-Reload invariant. Product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`; exact product/config package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`. Isolated staging `33775057479 / 100714562438` passed exact three-product-file scope and Simulator compile. Formal Push CI `33775521398 / 100716116912` and PR CI `33775526525 / 100716136837` both passed. Canonical Push Artifact `9901461763` has digest `sha256:0378271690113e92849d87cec7bc32fa56d4ae8de4885e7003fc0ba69e26cb6a`. Independent unpacking verified `ChatGPTClient-0.1.0-b95-dev-send-stream.ipa`, SHA `2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d` matching sidecar, `0.1.0 (95)`, Candidate b95, source `a10320e589ac`, MinimumOS 14.0, device family `[1,2]`, `iphoneos`, arm64.
+
+Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+### b95 Human Runtime gate
+
+Use b95 primarily to validate recovery semantics while collecting a fresh exact log for the still-primary automatic-disconnect defect:
+
+1. Start a deliberately long project response remotely and use one explicit Sync to establish page-owned external progression.
+2. Let b95 advance automatically for several status/snapshot rounds.
+3. Trigger one already-proven interruption boundary (background/foreground, or switch away and reselect) and confirm whether page-owned `externalStreamStatusResponse` / `externalSnapshot` stops while the remote answer remains active.
+4. While the selected conversation is still active/stuck, verify `重载当前会话` remains enabled and invoke it once.
+5. Require `manualReload.hardReset`, old executor release/live snapshot reset, one replacement authoritative Detail load, then a fresh external observation only if authoritative trailing timeline is still active.
+6. Export diagnostics after observing whether automatic continuation resumes.
+
+Reload Runtime success is a recovery feature only; it must not be classified as solving automatic continuation interruption.
+
+## Automatic-disconnect source conclusion after b95 package
+
+Current source plus b92-b94 Runtime narrows the primary defect to the lifetime of the official page-owned continuation acquisition loop. The covered bridge does not create Native polling: it only observes the official page's matching `stream_status`, `/resume`, and plural-conversation reads. When that page loop stops after background or browsing-context handoff, Repository progression therefore stops even though the remote server can keep generating. b93 proves restoring first-responder/document focus alone does not reliably restart the loop. b94 proves reloading the same official conversation page can restart it, but repeated/heavy full-page rebootstrap later terminated the WebContent process.
+
+No b96 is allocated before b95 Human Runtime, per the artifact-to-runtime gate. Investigation may continue, but the next product candidate must remain event-driven and must not add polling, timers, retry/watchdog, Native `stream_status`/`resume`, guessed offsets, duplicate Send, WebSocket-body authority, or a second response store. The next change must reduce or replace repeated heavy page rebootstrap using evidence from an exact b95 interruption sample; do not simply add more reload triggers.
+
+**Next exact action:** Human Runtime exact b95, with one active/stuck Reload test and one fresh automatic-interruption trace. Do not modify product/config or allocate b96 before that evidence.

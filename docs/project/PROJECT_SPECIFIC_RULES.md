@@ -1,5 +1,13 @@
 # Project-Specific Rules
 
+## Hard Reload recovery invariant — 2026-09-04
+
+- `重载当前会话` is an exceptional recovery control and must remain enabled whenever a current conversation is selected. Active local/external response, stuck external state, or an in-flight Sync/Reload must not disable this action.
+- Reload semantics are a conversation hard reset: invalidate/release the current covered executor/observation, clear the current Repository live-response projection without rolling its generation counter backward, clear current page presentation/resident Detail, and start one replacement authoritative Detail load. Existing detail-operation replacement ownership supersedes the older request.
+- Reload is not Send, regenerate, retry, polling, watchdog, or server Stop. It must never duplicate the prompt or claim that remote generation was cancelled.
+- After authoritative Reload succeeds, only the returned server Detail may decide whether an external live projection is rebuilt and a fresh covered observer is attached.
+- This recovery invariant does not relax the Send/continuation architecture boundary: official page owns continuation transport; `ConversationRepository` remains the sole Native response/content owner.
+
 ## DEV-send-stream b91 project-scoped route identity package-ready override — 2026-09-03
 
 - User Runtime distinction is now material: ordinary non-project conversations do not show the same continuation failure, while the tested project conversation does and its visible official Web appears healthy.

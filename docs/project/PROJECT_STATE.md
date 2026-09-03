@@ -1,5 +1,12 @@
 # Project State
 
+## DEV-send-stream b95 hard-Reload package-ready / disconnect priority override — 2026-09-04
+
+- Exact b95 is package-ready: product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`; package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`; Push/PR CI passed; canonical Artifact `9901461763`; IPA SHA `2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d`; Human Runtime pending; Stable/Frozen Send No.
+- b95 restores the user-required recovery invariant: `重载当前会话` remains available whenever a conversation is selected, including active/stuck live response and in-flight Sync/Reload states. It invalidates the current covered executor/live projection, clears the page presentation/resident Detail, then performs one authoritative server Detail reload; it does not resend/regenerate or claim to stop server generation.
+- Primary unresolved defect remains automatic page-owned continuation interruption. b92/b93 prove the official continuation loop can stop after background or browsing-context handoff; b93 focus restoration is insufficient. b94 full-page rebootstrap restarts the loop but repeated/heavy rebootstrap ended in WebContent-process termination.
+- No b96/product modification before exact b95 Human Runtime. Next evidence must distinguish the interruption boundary and recovery behavior without adding polling/timer/retry/watchdog/Native status-resume synthesis.
+
 ## DEV-send-stream b93 selection-focus package-ready override — 2026-09-03
 
 - Exact b92 Runtime is Partial: covered external continuation works and client-owned protected Send/SSE natural terminal reconciliation works, but when an external live executor overlaps a second client-owned Send, the first stream can stop advancing and does not recover merely by reselection; explicit Sync later materialized the already-completed assistant.

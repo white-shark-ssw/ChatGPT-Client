@@ -4,7 +4,7 @@
 
 - Exact v0.5 JSONL `sha256:26e8646945831764bf6317c99213ff8a9621d09942e642a19b4f15aa24c892ba`: 47,648 bytes / 146 events / zero parse errors / all v0.5. Target `0df178903e95` again issued repeated `__NSCFLocalDataTask` authoritative Conversation Detail GETs at about 9.3s median after reacquisition.
 - Zero `http.conversation_detail.async_status` events means the v0.5 public `URLSession:dataTask:didReceiveData:` hook did not cover the Swift-async Detail response path; it does **not** prove the field is absent. Native Detail polling remains Runtime Positive; exact async-status semantics remain Unverified.
-- Probe v0.6 is research-only and records one bounded callback-surface snapshot from the first target Detail task (relevant selector/ivar names and type signatures only). It installs no guessed private callback hook and reads no content/auth. Product remains b95; b96 remains unallocated.
+- Probe v0.6 is research-only and records one bounded callback-surface snapshot from the first target Detail task (relevant selector/ivar names and type signatures only). It installs no guessed private callback hook and reads no content/auth. Dedicated research CI `33807128921 / 100820168958` passed; Artifact `9913354388`; dylib SHA `6c834d02d2e3a271be5b070a4e4d0027f8246237bc487cd2b24984f960a170cc`; repacked IPA SHA `d09160f1dce44ad7c1b8d9e4037ad4eaf2e29b68e73424eb2a81a78921a83681`; outer ZIP SHA `d63385fefd79c3d0c18c003a56025ce0dec517e81601ee1320675b433e2a945a`. Human Runtime pending. Product remains b95; b96 remains unallocated.
 
 ## 2026-09-04 — Probe v0.5 packaged / Detail async-status Human Runtime gate
 

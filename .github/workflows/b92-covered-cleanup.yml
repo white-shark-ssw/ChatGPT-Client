@@ -22,10 +22,10 @@ jobs:
       - name: Guard exact b91 state
         run: |
           git merge-base --is-ancestor 2c5074e567f3aeb929d9a9e254c1b72d0c12216a HEAD
-          test "$(grep -c 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift)" = "1"
-          test "$(grep -c 'const match = location.pathname.match(/^\\/(?:g\\/[^/?#]+\\/)?c\\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift)" = "1"
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 91;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b91\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -F -c 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift)" = "1"
+          test "$(grep -F -c 'const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift)" = "1"
+          test "$(grep -F -c 'CURRENT_PROJECT_VERSION = 91;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -F -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b91\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
 
       - name: Allocate b92 checkpoint
         run: |
@@ -79,9 +79,9 @@ jobs:
         run: |
           git diff --check
           test "$(git diff --name-only | sort)" = $'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift' || { git diff --name-only; exit 1; }
-          test "$(grep -c 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift)" = "0"
-          test "$(grep -c 'manual_sync_covered' ChatGPTClient/RootViewController.swift)" = "1"
-          test "$(grep -c 'const match = location.pathname.match(/^\\/(?:g\\/[^/?#]+\\/)?c\\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift)" = "1"
+          test "$(grep -F -c 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift)" = "0"
+          test "$(grep -F -c 'manual_sync_covered' ChatGPTClient/RootViewController.swift)" = "1"
+          test "$(grep -F -c 'const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift)" = "1"
           git diff -- ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
 
       - name: Simulator compile

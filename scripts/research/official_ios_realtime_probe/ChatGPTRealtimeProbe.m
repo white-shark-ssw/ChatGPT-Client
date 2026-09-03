@@ -2,13 +2,14 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.2";
+static NSString * const RPTProbeVersion = @"0.3";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
 static dispatch_queue_t RPTLogQueue;
 static NSMutableSet<NSString *> *RPTHookedKeys;
 static NSMutableDictionary<NSString *, NSValue *> *RPTOriginalIMPs;
+static char RPTWebSocketReceiveErrorLoggedKey;
 
 static NSString *RPTTimestamp(void) {
     static NSISO8601DateFormatter *formatter;
@@ -356,13 +357,18 @@ static void RPTWebSocketSend(id self, SEL _cmd, NSURLSessionWebSocketMessage *me
 }
 
 static void RPTWebSocketReceive(id self, SEL _cmd, void (^completionHandler)(NSURLSessionWebSocketMessage *, NSError *)) API_AVAILABLE(ios(13.0)) {
-    RPTRecordTaskURL(self, @"ws.receive.arm");
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return;
     void (*function)(id, SEL, void (^)(NSURLSessionWebSocketMessage *, NSError *)) = (void *)original;
     function(self, _cmd, ^(NSURLSessionWebSocketMessage *message, NSError *error) {
-        if (message) RPTWriteEvent(@"ws.inbound.frames", @{ @"frames": RPTMessageSummaries(message) });
-        if (error) RPTWriteEvent(@"ws.receive.error", @{ @"domain": error.domain ?: @"", @"code": @(error.code) });
+        if (message) {
+            objc_setAssociatedObject(self, &RPTWebSocketReceiveErrorLoggedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            RPTWriteEvent(@"ws.inbound.frames", @{ @"frames": RPTMessageSummaries(message) });
+        }
+        if (error && !objc_getAssociatedObject(self, &RPTWebSocketReceiveErrorLoggedKey)) {
+            objc_setAssociatedObject(self, &RPTWebSocketReceiveErrorLoggedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            RPTWriteEvent(@"ws.receive.error", @{ @"domain": error.domain ?: @"", @"code": @(error.code) });
+        }
         if (completionHandler) completionHandler(message, error);
     });
 }
@@ -460,6 +466,33 @@ static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, 
     });
 }
 
+static NSURLSessionDataTask *RPTSessionDataURL(id self, SEL _cmd, NSURL *url) {
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return nil;
+    NSURLSessionDataTask *(*function)(id, SEL, NSURL *) = (void *)original;
+    NSURLSessionDataTask *task = function(self, _cmd, url);
+    if (RPTShouldObserveURL(url)) {
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+        request.HTTPMethod = @"GET";
+        RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
+    }
+    return task;
+}
+
+static NSURLSessionDataTask *RPTSessionDataURLCompletion(id self, SEL _cmd, NSURL *url, void (^completionHandler)(NSData *, NSURLResponse *, NSError *)) {
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return nil;
+    NSURLSessionDataTask *(*function)(id, SEL, NSURL *, void (^)(NSData *, NSURLResponse *, NSError *)) = (void *)original;
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.HTTPMethod = @"GET";
+    BOOL candidate = RPTShouldObserveURL(url);
+    if (candidate) RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
+    return function(self, _cmd, url, ^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (candidate) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, data, error));
+        if (completionHandler) completionHandler(data, response, error);
+    });
+}
+
 static void RPTDelegateDidReceiveResponse(id self, SEL _cmd, NSURLSession *session, NSURLSessionDataTask *dataTask, NSURLResponse *response, void (^completionHandler)(NSURLSessionResponseDisposition)) {
     NSURLRequest *request = dataTask.currentRequest ?: dataTask.originalRequest;
     if (RPTShouldObserveURL(request.URL ?: response.URL)) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, nil, nil));
@@ -528,6 +561,8 @@ static void RPTInstallSessionHooks(void) {
                 if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);
                 if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithURL:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithURL:), (IMP)RPTSessionWebSocketURL);
             }
+            if (RPTClassOwnsSelector(cls, @selector(dataTaskWithURL:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithURL:), (IMP)RPTSessionDataURL);
+            if (RPTClassOwnsSelector(cls, @selector(dataTaskWithURL:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithURL:completionHandler:), (IMP)RPTSessionDataURLCompletion);
             if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:), (IMP)RPTSessionDataRequest);
             if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:completionHandler:), (IMP)RPTSessionDataRequestCompletion);
         }

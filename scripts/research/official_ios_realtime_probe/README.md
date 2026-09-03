@@ -1,6 +1,6 @@
 # Official iOS Realtime Probe
 
-Current research revision: **Probe v0.2**.
+Current research revision: **Probe v0.3**.
 
 Research-only observer for the user-supplied TrollStore ChatGPT package. It is not linked into ChatGPTClient and is not a product Candidate.
 
@@ -13,7 +13,8 @@ Only privacy-safe structure:
 - WebSocket host/path plus query presence/count, never query values;
 - outbound command/frame key names, command type, symbolic topic, offset value class;
 - inbound frame/payload key names, event/update type, message count, and a 12-hex SHA-256 prefix for conversation identity;
-- transport errors by domain/code.
+- transport errors by domain/code; repeated receive failures on the same failed WebSocket task are emitted once until a real message arrives;
+- URLSession conversation/realtime observations cover both request-based and URL-based data-task constructors.
 
 It does not log Cookie/Authorization headers, signed WebSocket query values, prompt/answer/reasoning/tool text, request/response bodies, or raw conversation IDs.
 
@@ -41,7 +42,7 @@ After injection, fully terminate and relaunch ChatGPT. The probe writes `ChatGPT
 4. Let the response complete without manually refreshing A on the official iOS app.
 5. Export/copy only `ChatGPTRealtimeProbe.jsonl` for analysis.
 
-The decisive question is whether a target conversation event (`conversation-update`, `add-messages`, async status, or a per-turn subscription) arrives before assistant completion.
+The decisive question is which target-correlated acquisition event appears first before assistant completion: conversation HTTP/stream-status/resume/SSE, a conversation/per-turn WebSocket subscription/update, or another official route. Probe v0.3 also verifies that a failed user socket no longer expands the research log into a per-receive error storm.
 
 ## Evidence boundary
 

@@ -1,0 +1,94 @@
+name: Guarded b89 interactivity patch
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b89-apply.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-b89:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact feature head
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Apply exact b89 product and identity replacements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("ChatGPTClient/RootViewController.swift")
+          text = root.read_text()
+
+          old = "webView.isUserInteractionEnabled = false"
+          new = "webView.isUserInteractionEnabled = true"
+          assert text.count(old) == 1, f"unexpected interactivity match count: {text.count(old)}"
+          text = text.replace(old, new)
+
+          old = '''            let hidden = (body["hidden"] as? NSNumber)?.boolValue ?? false
+            let hasFocus = (body["hasFocus"] as? NSNumber)?.boolValue ?? false
+            diagnostics.info(category: "webSend", name: "coveredExecutor.pageActivation", fields: ["reason": reason, "visibilityState": visibilityState, "hidden": hidden ? "true" : "false", "hasFocus": hasFocus ? "true" : "false", "readyState": readyState, "route": route])'''
+          new = '''            let hidden = (body["hidden"] as? NSNumber)?.boolValue ?? false
+            let hasFocus = (body["hasFocus"] as? NSNumber)?.boolValue ?? false
+            let userActivationAvailable = (body["userActivationAvailable"] as? NSNumber)?.boolValue ?? false
+            let userActivationIsActive = (body["userActivationIsActive"] as? NSNumber)?.boolValue ?? false
+            let userActivationHasBeenActive = (body["userActivationHasBeenActive"] as? NSNumber)?.boolValue ?? false
+            diagnostics.info(category: "webSend", name: "coveredExecutor.pageActivation", fields: ["reason": reason, "visibilityState": visibilityState, "hidden": hidden ? "true" : "false", "hasFocus": hasFocus ? "true" : "false", "userActivationAvailable": userActivationAvailable ? "true" : "false", "userActivationIsActive": userActivationIsActive ? "true" : "false", "userActivationHasBeenActive": userActivationHasBeenActive ? "true" : "false", "readyState": readyState, "route": route])'''
+          assert text.count(old) == 1, f"unexpected pageActivation handler match count: {text.count(old)}"
+          text = text.replace(old, new)
+
+          old = '''        const readyState = ['loading', 'interactive', 'complete'].includes(document.readyState) ? document.readyState : 'other';
+        post({ kind: 'page_activation_state', reason, visibilityState, hidden: !!document.hidden, hasFocus: typeof document.hasFocus === 'function' ? document.hasFocus() : false, readyState, route: pageRouteShape() });'''
+          new = '''        const readyState = ['loading', 'interactive', 'complete'].includes(document.readyState) ? document.readyState : 'other';
+        const userActivation = navigator.userActivation;
+        post({ kind: 'page_activation_state', reason, visibilityState, hidden: !!document.hidden, hasFocus: typeof document.hasFocus === 'function' ? document.hasFocus() : false, userActivationAvailable: !!userActivation, userActivationIsActive: userActivation ? !!userActivation.isActive : false, userActivationHasBeenActive: userActivation ? !!userActivation.hasBeenActive : false, readyState, route: pageRouteShape() });'''
+          assert text.count(old) == 1, f"unexpected pageActivation bridge match count: {text.count(old)}"
+          text = text.replace(old, new)
+          root.write_text(text)
+
+          project = Path("ChatGPTClient.xcodeproj/project.pbxproj")
+          text = project.read_text()
+          assert text.count("CURRENT_PROJECT_VERSION = 88;") == 2, "Build 88 count mismatch"
+          assert text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b88";') == 2, "b88 candidate count mismatch"
+          text = text.replace("CURRENT_PROJECT_VERSION = 88;", "CURRENT_PROJECT_VERSION = 89;")
+          text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b88";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b89";')
+          project.write_text(text)
+          PY
+
+          test "$(git diff --name-only | sort)" = $'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          git diff --check
+          git diff -- ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Simulator compile gate
+        run: |
+          xcodebuild -version
+          rm -rf build/DerivedData-b89-sim
+          xcodebuild \
+            -project ChatGPTClient.xcodeproj \
+            -scheme ChatGPTClient \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build/DerivedData-b89-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Commit verified b89 product patch and remove staging workflow
+        run: |
+          git rm .github/workflows/b89-apply.yml
+          test "$(git diff --name-only | sort)" = $'.github/workflows/b89-apply.yml\nChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/b89-apply.yml
+          git commit -m "b89: test covered Web interactivity"
+          git push origin HEAD:dev/send-stream-20260829

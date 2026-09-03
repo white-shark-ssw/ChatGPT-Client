@@ -1,0 +1,53 @@
+name: Finalize Probe v0.6 package docs
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - '.github/workflows/probe-v06-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+      - name: Guard exact package baseline
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "2f0a7b535a685c0ae563bcc66ac59aea1aac9c62"
+          test "$(git rev-parse HEAD^^)" = "3492e3b5e45cb8a7f3f1cb106b6af64b5b29b303"
+          CHANGED="$(git diff --name-only HEAD^^ HEAD | sort)"
+          EXPECTED=$'.github/probe_v06_finalize.py\n.github/workflows/probe-v06-finalize.yml'
+          test "$CHANGED" = "$EXPECTED"
+      - name: Apply package identities
+        run: |
+          set -euo pipefail
+          python3 .github/probe_v06_finalize.py
+          git diff --check
+          grep -F '9913354388' docs/project/current/dev/DEV-send-stream.md
+          grep -F 'd63385fefd79c3d0c18c003a56025ce0dec517e81601ee1320675b433e2a945a' docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v05-runtime-v06-callback-surface-20260904.md
+      - name: Audit docs-only finalize and commit
+        run: |
+          set -euo pipefail
+          rm .github/probe_v06_finalize.py .github/workflows/probe-v06-finalize.yml
+          git add -A
+          CHANGED="$(git diff --cached --name-only | sort)"
+          EXPECTED=$'.github/probe_v06_finalize.py\n.github/workflows/probe-v06-finalize.yml\ndocs/project/PROJECT_STATE.md\ndocs/project/current/dev/DEV-send-stream.md\ndocs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v05-runtime-v06-callback-surface-20260904.md'
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+          if git diff --cached --name-only | grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|scripts/research/official_ios_realtime_probe/|\.github/workflows/(ios-foundation|research-official-ios-realtime-probe)\.yml$)'; then
+            echo 'finalize scope violation' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: package Probe v0.6 callback-surface research'
+          git push origin HEAD:dev/send-stream-20260829

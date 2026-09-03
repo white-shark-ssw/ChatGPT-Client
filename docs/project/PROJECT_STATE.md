@@ -1,5 +1,13 @@
 # Project State
 
+## 2026-09-04 — Probe v0.4 Runtime observes Native Conversation Detail polling
+
+- Exact v0.4 JSONL `sha256:cd2b1693a423a37504d96e410c97c04a7987e76283c6458b90ff2db17dc09bd5`: 58,776 bytes / 185 events / zero parse errors / clean-log start. v0.4 task-resume observer is Runtime Positive; no v0.2-style log storm.
+- Target hash `0df178903e95` issued authoritative `GET /backend-api/conversation/<id>` tasks after foreground at `48.044 / 57.378 / 67.526 / 77.369 / 86.920s`, intervals ~`9.334 / 10.148 / 9.843 / 9.551s` (median ~`9.697s`). The user WebSocket concurrently failed with POSIX 53, so this HTTPS loop is independent of that socket.
+- Official binary independently contains `TriggerAsyncStatusPollingConversationObserver`, `ConversationPollingManager`, polling start/stop diagnostics, `default_interval`, `conversation_async_status`, and `backend_streaming_completed`. Runtime + static evidence strongly support Native Conversation Detail polling as the cross-platform acquisition/recovery mechanism. Exact response-state trigger/stop semantics remain Unverified.
+- Repeated `/f/conversation/prepare` is send/composer preparation (`MessageInputPrepareConversationViewModel`), not late-join polling. No target `stream_status`, `/resume`, or conversation WebSocket update was observed in this sample.
+- Existing product `ConversationRepository` already owns authoritative Conversation Detail GET and content projection, but currently ignores top-level `async_status`. Product stays b95; b96 remains unallocated pending authoritative active/terminal state correlation. Stable/Frozen Send No.
+
 ## 2026-09-04 — official iOS Probe v0.4 package ready / task-resume late-join gate
 
 Cross-platform late-join remains primary. Probe v0.2 is Inconclusive because a failed user-WebSocket receive produced 392,033 events / ~76 MB of instrumentation traffic. Exact official static evidence now proves native `ConversationPollingManager` / resume-fetch recovery / stream-status polling strings plus Swift async URLSession `data(for:)` / `bytes(for:)`. Probe v0.4 therefore observes each relevant NSURLSession task at `resume`, including Swift-async-created tasks, without logging content/auth.

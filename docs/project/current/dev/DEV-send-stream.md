@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b91 project route identity and official page-owned live continuation are Runtime Positive on iPhone/iOS17. Web -> bridge -> `ConversationRepository` progressive projection works without a second Sync. The remaining visible Web-page trap is the intentionally retained b90 `bringSubviewToFront` diagnostic, not a transport failure. Automatic terminal/final convergence remains Unverified because the app was force-quit while still streaming. Stable/Frozen Send remains No.**
+**Active — exact b91 project route identity and page-owned live continuation are Runtime Positive. Exact b92 removes only the frontmost Web diagnostic and is Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified. Human Runtime must now prove the same live path while covered and natural terminal/final convergence. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -19,7 +19,14 @@
 - b91 PR CI: `33746886896 / 100621297087` — success
 - b91 canonical Push Artifact: `9890000591`
 - b91 IPA SHA-256: `abbd27370665fb97dd1ee5edd239c0a5fa1ea0694cbb329a81c32ee86867c140`
-- b92 Candidate / Build: `DEV-send-stream-0.1.0-b92` / `0.1.0 (92)` permanently reserved; product/package not yet emitted at allocation checkpoint
+- b92 Candidate / Build: `DEV-send-stream-0.1.0-b92` / `0.1.0 (92)` permanently reserved
+- b92 allocation checkpoint: `296de318c20ccc32bfea1cb93246bd9d824d3403`
+- Exact b92 product commit: `96ea3e3d8c5cabf67ff33331d40c9dcc6c9f0850`
+- Exact b92 product/config package source: `54b5803a74a123431f0a2a8e662a1a2fe874b3ca`
+- b92 Push CI: `33750585725 / 100632980237` — success
+- b92 PR CI: `33750591494 / 100632998279` — success
+- b92 canonical Push Artifact: `9891430379`
+- b92 IPA SHA-256: `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514`
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -86,6 +93,27 @@ The user could not return from the visible official Web because b91 intentionall
 
 The run does **not** validate automatic terminal/final convergence: the last pre-exit status was still `IS_STREAMING`, last snapshot had `finalCharacters=0`, then the app was force-quit/relaunched.
 
+## b92 covered-form package / validation state
+
+b92 removes only the b90 frontmost z-order mutation. The executor remains inserted at index 0 and manual rearm now records `manual_sync_covered` without changing z-order; b91 scoped route identity and page-owned continuation logic are unchanged.
+
+Two early staging attempts (`33749925741`, `33750233706`) failed in guard-only tooling before product application. Successful staging `33750363774 / 100632281401` passed exact b91-state guard, exact two-product-file scope audit, and Simulator compile, then emitted product `96ea3e3d8c5cabf67ff33331d40c9dcc6c9f0850`.
+
+Exact product/config package source `54b5803a74a123431f0a2a8e662a1a2fe874b3ca` passed Push CI `33750585725 / 100632980237` and PR CI `33750591494 / 100632998279`. Canonical Push Artifact `9891430379` has digest `sha256:f3cb6291fabcb2cf48729750d23a4403607e8ac81dc4354749974e287412e970`. Independent unpacking verified IPA SHA `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514` matching sidecar, Release `0.1.0 (92)`, Candidate b92, source `54b5803a74a1`, MinimumOS 14.0, device family `[1,2]`, iphoneos and Mach-O arm64.
+
+Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+## b92 Human Runtime gate
+
+1. Install the exact canonical b92 IPA.
+2. In another official client start a long response in a **project conversation**.
+3. Open the same project conversation in b92 and press `同步最新消息` exactly once.
+4. Native UI must remain visible/usable; official Web must not cover/trap the Native UI.
+5. Diagnostics must show `coveredExecutor.webViewActivation` stage `manual_sync_covered`, with the executor still covered, and project page `route=conversation`.
+6. While the remote response continues, matching page-owned `externalStreamStatusRequest/Response`, `IS_STREAMING`, `externalStreamingObserved` and/or `externalSnapshot` must advance the existing Native live response without a second Sync.
+7. Do **not** force quit. Let the response finish naturally.
+8. Verify final assistant content materializes and live response terminalizes/clears automatically without a second Sync, then export diagnostics after completion.
+
 ## Validation / identity state
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
@@ -94,7 +122,7 @@ b91 identity guard is clean at allocation: repository commit search found no b91
 
 ## Batch recovery state
 
-**Open for b92 covered-form cleanup. Next exact action:** remove only the b90 frontmost z-order mutation while retaining b91 scoped-route identity, page-owned continuation and Repository ownership; validate exact two-file scope + Simulator, then package b92 and stop at Human Runtime for covered live progression + natural terminal/final completion.
+**Closed for b92 product/package/docs preparation. Next exact action:** install exact canonical b92 and execute the b92 Human Runtime gate through covered live progression and natural terminal/final completion. No product/config change is permitted before that Runtime evidence.
 
 ## Preserved boundaries
 

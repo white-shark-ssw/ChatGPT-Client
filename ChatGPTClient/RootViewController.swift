@@ -131,6 +131,16 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         }
     }
 
+    func rebootstrapExternalObservationPageOnForeground() {
+        precondition(Thread.isMainThread)
+        guard observingExternalResponse, let conversationID = currentConversationID, !conversationID.isEmpty else { return }
+        composerReadyConversationID = nil
+        guard let encoded = conversationID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed), let url = URL(string: "https://chatgpt.com/c/\(encoded)") else { return }
+        logWebViewActivationState(stage: "foreground_external_page_rebootstrap")
+        webView.load(URLRequest(url: url))
+        diagnostics.info(category: "webSend", name: "coveredExecutor.foregroundPageRebootstrap", fields: ["target": "existing_conversation"])
+    }
+
     func sendExistingConversation(text: String, conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {
         precondition(Thread.isMainThread)
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1390,7 +1400,10 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             if let snapshot = self.repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
             self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
         }
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillEnterForeground(_:)), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
+
+    deinit { NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil) }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -1404,6 +1417,12 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         detailNavigationController.setToolbarHidden(repository.selectedConversationID == nil, animated: false)
         updateLivePresentation()
         diagnostics.info(category: "ui", name: "nativeConversationShell.loaded")
+    }
+
+    @objc private func applicationWillEnterForeground(_ notification: Notification) {
+        guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty, let sendExecutor = sendExecutors[conversationID] else { return }
+        diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
+        sendExecutor.rebootstrapExternalObservationPageOnForeground()
     }
 
     func splitViewController(_ svc: UISplitViewController, topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {

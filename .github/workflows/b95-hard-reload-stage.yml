@@ -1,0 +1,60 @@
+name: b95 hard reload isolated staging
+
+on:
+  push:
+    branches:
+      - tmp/dev-send-stream-b95-stage
+    paths:
+      - ".github/workflows/b95-hard-reload-stage.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tmp/dev-send-stream-b95-stage
+          fetch-depth: 0
+
+      - name: Guard staging base
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 789fc4a28ea5a006be533450c8dd5811de756a92 HEAD
+          test -f .github/b95_stage.py
+          grep -Fq 'Candidate / Build: `DEV-send-stream-0.1.0-b95` / `0.1.0 (95)`' docs/project/current/dev/DEV-send-stream.md
+          test "$(grep -c 'DEV-send-stream-0.1.0-b95' docs/project/BUILD_TEST_INDEX.md || true)" = "0"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 94;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+
+      - name: Apply b95 product delta
+        run: |
+          set -euo pipefail
+          python3 .github/b95_stage.py
+          git diff --check
+          CHANGED="$(git diff --name-only | sort)"
+          EXPECTED=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift\nChatGPTClient/RootViewController.swift'
+          printf '%s\n' "$CHANGED"
+          test "$CHANGED" = "$EXPECTED"
+          grep -Fq 'let canReload = selectedID != nil' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'guard !repository.isLiveResponseActive(for: id)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'resetLiveResponseForManualReload' ChatGPTClient/RootViewController.swift
+          grep -Fq 'manualReload.hardReset' ChatGPTClient/RootViewController.swift
+          grep -Fq 'CURRENT_PROJECT_VERSION = 95;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -Fq 'DEV-send-stream-0.1.0-b95' ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Simulator compile
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit staged product
+        run: |
+          set -euo pipefail
+          git config user.name 'OpenAI b95 Staging'
+          git config user.email 'b95-staging@users.noreply.github.com'
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m 'b95-stage: hard reload recovery product [skip ci]'
+          git push origin HEAD:tmp/dev-send-stream-b95-stage

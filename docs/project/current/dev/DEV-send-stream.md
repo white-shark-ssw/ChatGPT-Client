@@ -6,14 +6,15 @@
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
-- PR: #29 — open / mergeable / unmerged
+- PR: #29 — open / mergeable / unmerged; title `DEV-send-stream: b89 interactivity A/B packaged — real-device gate`
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
 - Verified pre-b89 product head: `39d90dc7ae8a6bc10f15f665ef2c3f438643ab9b`
 - Original b89 recovery-point commit: `a1c4b579e3042c61fcfe21a332bdf90456c44541`
 - Exact b89 product commit: `f39bc9387575028d431b85409780a2f3670b3259`
 - Exact b89 product/config package source: `fe45aeadf7ae03bf09aff66a8a05aa2542959676`
+- Durable b89 package-doc commit before checkpoint close: `94e5708f97d2fc22f9f1951abb5feae53c06fcd1`
 - b88 Candidate / Build: `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)` permanently reserved
-- b89 Candidate / Build: `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)` permanently reserved once Artifact emitted
+- b89 Candidate / Build: `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)` permanently reserved
 - Canonical b89 Artifact: `9881665748`
 - Canonical Artifact ZIP digest: `sha256:2e383a6328f801dd754d6858c3b9a8b71be5d5765a9a612d497b18c91b73988f`
 - Canonical IPA: `ChatGPTClient-0.1.0-b89-dev-send-stream.ipa`
@@ -85,6 +86,14 @@ Evidence ladder: **Code written / guarded Static+Simulator passed / Push CI pass
 
 Any later docs-only commit may advance PR head; that does not change the canonical b89 Runtime package source above. Product/config changes after `fe45aead...` would require a new identity decision before claiming the same package covers them.
 
+## Durable documentation / PR sync
+
+- guarded docs-sync run `33725756198` succeeded;
+- docs commit `94e5708f97d2fc22f9f1951abb5feae53c06fcd1` records b89 in `BUILD_TEST_INDEX.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `PROJECT_SPECIFIC_RULES.md`, `TECHNICAL_DECISIONS.md` and `WEB_SEND_ADAPTER.md`;
+- temporary `.github/workflows/b89-docsync.yml` self-deleted in that commit;
+- PR #29 title/body now record exact b89 package identity, evidence ladder and Human Runtime gate;
+- docs-only head advancement does not alter the canonical Runtime package source `fe45aead...`.
+
 ## Human Runtime gate — next exact action
 
 Install exact b89 IPA and run one clean production A/B:
@@ -115,20 +124,20 @@ No route/gizmo fix, Native `stream_status`/`resume`, guessed offset, polling, ti
 
 ## Batch recovery state
 
-**b89 product/package batch complete. Durable docs/PR metadata sync is the only repository-write batch still in progress.**
+**Closed for b89 product/package/docs preparation. The next gate is human-only real-device Runtime.**
 
-Current verified package baseline:
+Verified immutable Runtime package identity:
 
 - product commit `f39bc9387575028d431b85409780a2f3670b3259`;
 - product/config package source `fe45aeadf7ae03bf09aff66a8a05aa2542959676`;
 - Push/PR CI both success;
 - canonical Push Artifact `9881665748`;
 - IPA SHA `c8ad5dcebbfde2131d3fc73c0309a47745f71527ad38b44c5fe3c5fbffe21a55`;
-- b88 identity untouched; b89 identity now emitted/reserved.
+- b88 identity untouched; b89 identity emitted/reserved.
 
-Confirmed complete: product patch, temporary workflow cleanup, permanent workflow b89 identity, exact identity guard, Push/PR CI, canonical Artifact, independent package verification.
+All repository-write batches for this candidate are complete: product patch, temporary workflow cleanup, permanent workflow identity, exact identity guard, Push/PR CI, canonical Artifact, independent package verification, durable docs and PR metadata. Do not modify product/config or allocate b90 before b89 Runtime evidence.
 
-Pending: durable BUILD_TEST_INDEX / MODULE_STATUS / TECHNICAL_DECISIONS / WEB_SEND_ADAPTER (and other directly affected current project-state summaries as appropriate) plus PR title/body. Next exact action is docs/PR metadata sync only. Do not modify product/config files or allocate b90 before Runtime evidence.
+Next exact action: install exact b89, run the clean early/mid-generation A/B above, and return diagnostics. No repository write is required before that human gate.
 
 ## Preserved boundaries
 

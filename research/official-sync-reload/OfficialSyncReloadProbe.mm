@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
@@ -10,10 +11,17 @@ static NSString * const OSRExpectedBuild = @"30140022279";
 static const char *OSRRootClassName = "_TtC23ChatGPTConversationRoot25ConversationRootViewModel";
 static const char *OSRConversationClassName = "_TtC19ChatGPTConversation21ConversationViewModel";
 
-static NSMutableString *OSRLogBuffer;
 static __weak id OSRRootViewModel;
 static __weak id OSRConversationViewModel;
 static UIButton *OSRButton;
+
+static void OSRRunInspection(void);
+static void OSRPresentResult(void);
+static void OSRInstallButton(void);
+
+@interface OSRProbeBootstrap : NSObject
++ (void)handleButtonTap:(id)sender;
+@end
 
 static NSString *OSRLogPath(void) {
     NSString *directory = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject ?: NSTemporaryDirectory();
@@ -26,17 +34,15 @@ static void OSRWriteLog(NSString *format, ...) {
     va_start(args, format);
     NSString *message = [[NSString alloc] initWithFormat:format arguments:args];
     va_end(args);
-    if (!OSRLogBuffer) OSRLogBuffer = [NSMutableString string];
     NSString *line = [NSString stringWithFormat:@"%@ %@\n", [NSDate date], message];
-    [OSRLogBuffer appendString:line];
-    [line writeToFile:OSRLogPath() atomically:NO encoding:NSUTF8StringEncoding error:nil];
-    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:OSRLogPath()];
+    NSString *path = OSRLogPath();
+    NSFileManager *manager = NSFileManager.defaultManager;
+    if (![manager fileExistsAtPath:path]) [manager createFileAtPath:path contents:nil attributes:nil];
+    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:path];
     if (handle) {
         [handle seekToEndOfFile];
         [handle writeData:[line dataUsingEncoding:NSUTF8StringEncoding]];
         [handle closeFile];
-    } else {
-        [OSRLogBuffer writeToFile:OSRLogPath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
     }
     NSLog(@"[OfficialSyncReload] %@", message);
 }
@@ -93,8 +99,7 @@ static void OSRDumpIvars(Class cls) {
 
 static BOOL OSRShouldSkipObject(id object) {
     if (!object) return YES;
-    if ([object isKindOfClass:UIView.class] || [object isKindOfClass:CALayer.class] || [object isKindOfClass:UIImage.class] || [object isKindOfClass:UIColor.class] || [object isKindOfClass:NSString.class] || [object isKindOfClass:NSNumber.class] || [object isKindOfClass:NSData.class]) return YES;
-    return NO;
+    return [object isKindOfClass:UIView.class] || [object isKindOfClass:CALayer.class] || [object isKindOfClass:UIImage.class] || [object isKindOfClass:UIColor.class] || [object isKindOfClass:NSString.class] || [object isKindOfClass:NSNumber.class] || [object isKindOfClass:NSData.class];
 }
 
 static void OSRScanObject(id object, NSUInteger depth, NSMutableSet<NSValue *> *visited, NSUInteger *visitedCount, Class rootClass, Class conversationClass) {
@@ -141,7 +146,7 @@ static void OSRScanObject(id object, NSUInteger depth, NSMutableSet<NSValue *> *
     }
 
     if ([object isKindOfClass:NSArray.class]) {
-        NSUInteger limit = MIN(((NSArray *)object).count, 100u);
+        NSUInteger limit = MIN(((NSArray *)object).count, (NSUInteger)100);
         for (NSUInteger i = 0; i < limit; i++) OSRScanObject(((NSArray *)object)[i], depth + 1, visited, visitedCount, rootClass, conversationClass);
         return;
     }
@@ -257,15 +262,12 @@ static void OSRInstallButton(void) {
         [OSRButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
         OSRButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
         OSRButton.accessibilityIdentifier = @"DEV-official-sync-reload-v01";
-        [OSRButton addTarget:[NSBlockOperation blockOperationWithBlock:^{ OSRRunInspection(); OSRPresentResult(); }] action:@selector(main) forControlEvents:UIControlEventTouchUpInside];
+        [OSRButton addTarget:OSRProbeBootstrap.class action:@selector(handleButtonTap:) forControlEvents:UIControlEventTouchUpInside];
     }
     [targetWindow addSubview:OSRButton];
     [targetWindow bringSubviewToFront:OSRButton];
     OSRWriteLog(@"SR button installed window=%p", targetWindow);
 }
-
-@interface OSRProbeBootstrap : NSObject
-@end
 
 @implementation OSRProbeBootstrap
 + (void)load {
@@ -274,5 +276,10 @@ static void OSRInstallButton(void) {
         [[NSNotificationCenter defaultCenter] addObserverForName:UIWindowDidBecomeKeyNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(__unused NSNotification *note) { OSRInstallButton(); }];
         OSRInstallButton();
     });
+}
+
++ (void)handleButtonTap:(__unused id)sender {
+    OSRRunInspection();
+    OSRPresentResult();
 }
 @end

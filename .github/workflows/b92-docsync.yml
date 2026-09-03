@@ -1,0 +1,39 @@
+name: b92 docs sync
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b92-docsync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+      - name: Apply durable b92 docs
+        run: python3 .github/b92_docsync.py
+      - name: Audit docs-only scope
+        run: |
+          git diff --check
+          CHANGED=$(git diff --name-only | sort)
+          echo "$CHANGED"
+          test -n "$CHANGED"
+          if echo "$CHANGED" | grep -Ev '^docs/project/'; then
+            echo 'unexpected non-doc change'
+            exit 1
+          fi
+      - name: Commit docs
+        run: |
+          git config user.name white-shark-ssw
+          git config user.email houstools@gmail.com
+          git add docs/project
+          git commit -m 'docs: package b92 covered continuation gate'
+          git push origin HEAD:dev/send-stream-20260829

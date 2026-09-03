@@ -9,7 +9,7 @@
 - **Task**: Determine whether the supplied modified/decrypted official ChatGPT iOS app can safely gain explicit `同步` and `重载` controls, and establish the smallest evidence-backed injection/call path.
 - **User intent / acceptance criteria**: Add user-triggered recovery controls to the official app if its existing conversation state owner can be invoked without duplicate Send, guessed polling/retry, or a second conversation/message authority. `同步` should reconcile the current conversation with server truth. `重载` should be a stronger explicit current-conversation rebuild/reload, not resend/regenerate/Stop.
 - **Baseline**: branch from `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`. Exact supplied official source ZIP SHA-256 `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`. Official identity remains `com.openai.chat` / `1.2026.202` / `30140022279`.
-- **Working branch / PR / head commit**: `dev/official-sync-reload-20260904`; PR pending creation; exact inspector source/CI head before this checkpoint update `448cecbcf760ab506a8f894b0d4817d177df5f28`.
+- **Working branch / PR / head commit**: `dev/official-sync-reload-20260904`; Draft PR #35. Exact research source/CI head `448cecbcf760ab506a8f894b0d4817d177df5f28`; package/checkpoint commit before this PR-identity refresh `10d86faeeb6a84a0a28b86df7b38dd421fd7471b`. For routing, treat PR #35's current head as the authoritative branch head because docs-only checkpoint commits may follow the frozen v0.1 research source.
 - **Candidate identity**: ChatGPTClient Product Candidate `Not allocated`; b96 remains owned/unallocated by parallel `DEV-send-stream`. Task-local research identity is `OfficialSyncReloadInspector-v0.1` only.
 
 ## Current evidence
@@ -36,7 +36,7 @@
 - **Files / modules in scope**: this checkpoint; `scripts/research/official_ios_sync_reload/**`; `.github/workflows/research-official-ios-sync-reload.yml`.
 - **State owner / shared dependencies**: official app's own conversation owner is the target; exact live owner/instance remains to be proven. The enhancer load slot is packaging infrastructure only.
 - **Frozen / do-not-touch**: `ChatGPTClient/**`, `ChatGPTClient.xcodeproj/**`, product `.github/workflows/ios-foundation.yml`, `scripts/research/official_ios_realtime_probe/**`, parallel `DEV-send-stream` checkpoint/branch/PR, and all b95/b96 product identities.
-- **Parallel conflicts checked against**: `DEV-send-stream` remains Active on `dev/send-stream-20260829`, PR #29, independently owning the official realtime Probe and product Send/Stream work. This task uses its own branch, checkpoint, source path, workflow and research artifact identity. Sharing the same user-supplied pristine official ZIP is allowed; emitted dylibs/IPAs must remain uniquely identified and must not overwrite each other's research artifacts.
+- **Parallel conflicts checked against**: `DEV-send-stream` remains Active on `dev/send-stream-20260829`, PR #29, independently owning product Send/Stream work and `scripts/research/official_ios_realtime_probe/**`. PR #29 and PR #35 changed-filename inventories have **zero exact path overlap**. PR #35 changes only its unique workflow, unique checkpoint and `scripts/research/official_ios_sync_reload/**`. Sharing the same pristine official source ZIP is allowed; emitted dylibs/IPAs must remain uniquely identified and never overwrite each other's research artifacts.
 
 ## Validation state
 
@@ -64,4 +64,4 @@ Install exact `ChatGPT-Official-SyncReloadInspector-v01-TrollStore-20260904.ipa`
 
 ## Batch recovery point — v0.1 source/CI/package
 
-**Closed.** All intended task-local source/workflow writes completed, corrected CI passed, Artifact `9910185423` was produced, and exact research IPA identity/diff were verified. Recovery must not replay the failed run or repackage under a different hash without recording a new task-local research identity.
+**Closed.** All intended task-local source/workflow writes completed, corrected CI passed, Artifact `9910185423` was produced, exact research IPA identity/diff were verified, Draft PR #35 exists, and PR #29/#35 changed-file scopes have zero exact path overlap. Recovery must not replay the failed run or repackage under a different hash without recording a new task-local research identity.

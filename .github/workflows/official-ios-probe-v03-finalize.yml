@@ -1,0 +1,59 @@
+name: official iOS Probe v0.3 finalize
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/official-ios-probe-v03-finalize.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact research/package state
+        run: |
+          grep -q 'RPTProbeVersion = @"0.3"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'RPTWebSocketReceiveErrorLoggedKey' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'Probe v0.3 source anchor: 91abb9ca95d80ea4ab646fc33effd55083e0d3ee' .github/workflows/research-official-ios-realtime-probe.yml
+          grep -q 'Official iOS Probe v0.2 Runtime / v0.3 research gate' docs/project/current/dev/DEV-send-stream.md
+          grep -q 'b96 unallocated' docs/project/current/dev/DEV-send-stream.md
+          test -f docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v02-runtime-storm-v03-plan-20260904.md
+          test -f .github/probe_v03_finalize.py
+
+      - name: Finalize docs and remove temporary tooling
+        run: |
+          python3 .github/probe_v03_finalize.py
+          git diff --check
+
+      - name: Audit final scope
+        run: |
+          test "$(git diff --name-only | grep -c '^ChatGPTClient/' || true)" = "0"
+          test "$(git diff --name-only | grep -c '^ChatGPTClient.xcodeproj/' || true)" = "0"
+          test "$(git diff --name-only | grep -c '^.github/workflows/ios-foundation.yml$' || true)" = "0"
+          grep -q 'Official iOS Probe v0.3 package-ready research override' docs/project/current/dev/DEV-send-stream.md
+          grep -q 'official iOS Probe v0.3 research package ready' docs/project/PROJECT_STATE.md
+          grep -q 'DEV-send-stream Probe v0.3 observation decision' docs/project/TECHNICAL_DECISIONS.md
+          grep -q '## Probe v0.3 build/package identity' docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v02-runtime-storm-v03-plan-20260904.md
+          test "$(grep -c 'Probe v0.3 source anchor' .github/workflows/research-official-ios-realtime-probe.yml || true)" = "0"
+          test ! -e .github/probe_v03_finalize.py
+          test ! -e .github/workflows/official-ios-probe-v03-finalize.yml
+          test ! -e .github/workflows/official-ios-probe-v02-finalize.yml
+          test ! -e .github/workflows/official-ios-probe-v03-apply.yml
+          test ! -e .github/workflows/official-ios-probe-v03-checkpoint.yml
+
+      - name: Commit durable research state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: finalize Probe v0.3 research package state"
+          git push origin HEAD:dev/send-stream-20260829

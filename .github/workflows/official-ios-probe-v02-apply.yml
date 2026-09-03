@@ -28,14 +28,9 @@ jobs:
           test "$(git rev-parse HEAD:docs/project/PROJECT_STATE.md)" = "1d262615539762d2b594d4d87d434e5d9b004c87"
           test ! -e docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v01-runtime-v02-plan-20260904.md
 
-      - name: Validate and apply v0.2 patches
+      - name: Apply deterministic v0.2 research batch
         run: |
-          git apply --check .github/official-ios-probe-v02.patch
-          git apply .github/official-ios-probe-v02.patch
-          git apply --check .github/official-ios-probe-v02-fixup.patch
-          git apply .github/official-ios-probe-v02-fixup.patch
-          git apply --check .github/official-ios-probe-v02-docs.patch
-          git apply .github/official-ios-probe-v02-docs.patch
+          python3 .github/probe_v02_apply.py
           git diff --check
 
       - name: Audit exact scope and invariants

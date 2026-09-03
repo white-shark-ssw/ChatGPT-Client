@@ -9,7 +9,7 @@
 - **Task**: Determine whether the supplied modified/decrypted official ChatGPT iOS app can safely gain explicit `同步` and `重载` controls, and establish the smallest evidence-backed injection/call path.
 - **User intent / acceptance criteria**: Add user-triggered recovery controls to the official app if its existing conversation state owner can be invoked without duplicate Send, guessed polling/retry, or a second conversation/message authority. `同步` should reconcile the current conversation with server truth. `重载` should be a stronger explicit current-conversation rebuild/reload, not resend/regenerate/Stop.
 - **Baseline**: branch from `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`. Exact supplied official source ZIP SHA-256 `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`. Official identity remains `com.openai.chat` / `1.2026.202` / `30140022279`.
-- **Working branch / PR / head commit**: `dev/official-sync-reload-20260904`; Draft PR #35. Exact research source/CI head `448cecbcf760ab506a8f894b0d4817d177df5f28`; package/checkpoint commit before this PR-identity refresh `10d86faeeb6a84a0a28b86df7b38dd421fd7471b`. For routing, treat PR #35's current head as the authoritative branch head because docs-only checkpoint commits may follow the frozen v0.1 research source.
+- **Working branch / PR / head commit**: `dev/official-sync-reload-20260904`; Draft PR #35. Exact research source/CI head `448cecbcf760ab506a8f894b0d4817d177df5f28`; package/checkpoint commit before PR metadata `10d86faeeb6a84a0a28b86df7b38dd421fd7471b`; PR-isolation checkpoint commit `01caca1546c3becffb60c53c0b05ecfbecb9b623`. For routing, use PR #35's current head because docs-only checkpoint commits may follow the frozen v0.1 research source.
 - **Candidate identity**: ChatGPTClient Product Candidate `Not allocated`; b96 remains owned/unallocated by parallel `DEV-send-stream`. Task-local research identity is `OfficialSyncReloadInspector-v0.1` only.
 
 ## Current evidence
@@ -36,7 +36,8 @@
 - **Files / modules in scope**: this checkpoint; `scripts/research/official_ios_sync_reload/**`; `.github/workflows/research-official-ios-sync-reload.yml`.
 - **State owner / shared dependencies**: official app's own conversation owner is the target; exact live owner/instance remains to be proven. The enhancer load slot is packaging infrastructure only.
 - **Frozen / do-not-touch**: `ChatGPTClient/**`, `ChatGPTClient.xcodeproj/**`, product `.github/workflows/ios-foundation.yml`, `scripts/research/official_ios_realtime_probe/**`, parallel `DEV-send-stream` checkpoint/branch/PR, and all b95/b96 product identities.
-- **Parallel conflicts checked against**: `DEV-send-stream` remains Active on `dev/send-stream-20260829`, PR #29, independently owning product Send/Stream work and `scripts/research/official_ios_realtime_probe/**`. PR #29 and PR #35 changed-filename inventories have **zero exact path overlap**. PR #35 changes only its unique workflow, unique checkpoint and `scripts/research/official_ios_sync_reload/**`. Sharing the same pristine official source ZIP is allowed; emitted dylibs/IPAs must remain uniquely identified and never overwrite each other's research artifacts.
+- **Repository conflict check**: `DEV-send-stream` remains Active on `dev/send-stream-20260829`, PR #29, independently owning product Send/Stream work and `scripts/research/official_ios_realtime_probe/**`. PR #29 and PR #35 changed-filename inventories have **zero exact path overlap**. PR #35 changes only its unique workflow, unique checkpoint and `scripts/research/official_ios_sync_reload/**`.
+- **Runtime install conflict**: both official research packages intentionally preserve the exact official bundle identity `com.openai.chat`; therefore they are not side-by-side install candidates on one device. Installing the v0.1 Sync/Reload Inspector over a device currently running the parallel realtime Probe would replace that app package and can contaminate/interruption its Human Runtime evidence chain. Do not change Bundle ID merely to force coexistence without evidence, because official login/Keychain/App Group/entitlement behavior may change. Do not merge both task probes into one IPA without an explicit cross-task dependency decision.
 
 ## Validation state
 
@@ -44,7 +45,7 @@
 
 ## Next exact action
 
-Install exact `ChatGPT-Official-SyncReloadInspector-v01-TrollStore-20260904.ipa` on the test device, fully launch official ChatGPT, open a normal existing conversation, tap `SR` -> `检查运行时` once, then `SR` -> `导出日志`. Analyze `ChatGPTSyncReloadInspector.jsonl` for the five candidate classes' exposed selectors/type encodings and the live conversation controller/view hierarchy. Do **not** add or invoke Sync/Reload until this Runtime snapshot identifies a real callable owner or rejects direct ObjC dispatch.
+Preserve the parallel `DEV-send-stream` Human Runtime session first if it is still using the official Probe on the same device. Once that session no longer needs the installed package, or on a separate test device with the same intended official-app environment, install exact `ChatGPT-Official-SyncReloadInspector-v01-TrollStore-20260904.ipa`, fully launch official ChatGPT, open a normal existing conversation, tap `SR` -> `检查运行时` once, then `SR` -> `导出日志`. Analyze `ChatGPTSyncReloadInspector.jsonl` for the five candidate classes' exposed selectors/type encodings and the live conversation controller/view hierarchy. Do **not** add or invoke Sync/Reload until this Runtime snapshot identifies a real callable owner or rejects direct ObjC dispatch.
 
 ## Rejected / do-not-repeat
 
@@ -54,6 +55,8 @@ Install exact `ChatGPT-Official-SyncReloadInspector-v01-TrollStore-20260904.ipa`
 - Calling human-readable Swift symbol strings as guessed Objective-C selectors.
 - Hard-coding stripped Swift function offsets before instance ownership and ABI are evidenced.
 - Modifying or repurposing the parallel `official_ios_realtime_probe` to carry this feature.
+- Changing the official Bundle ID only to make both research packages coexist before proving auth/entitlement equivalence.
+- Combining the parallel realtime Probe and this inspector without an explicit shared-runtime decision.
 - Treating CI/Artifact/package success as proof that Sync/Reload works at Runtime.
 
 ## Open questions / risks
@@ -61,7 +64,8 @@ Install exact `ChatGPT-Official-SyncReloadInspector-v01-TrollStore-20260904.ipa`
 - The refresh methods may remain Swift-direct even though their classes are ObjC-runtime registered.
 - The live owner may be an injected dependency hidden behind SwiftUI/Observation; if so, the next evidence step should observe a natural official refresh call rather than synthesize a second repository or guess an object graph.
 - Official version updates can invalidate any binary-offset technique; prefer runtime type/selector/state-owner evidence over hard-coded offsets.
+- Runtime package replacement on a single device is a test-order dependency even though repository scopes are isolated.
 
 ## Batch recovery point — v0.1 source/CI/package
 
-**Closed.** All intended task-local source/workflow writes completed, corrected CI passed, Artifact `9910185423` was produced, exact research IPA identity/diff were verified, Draft PR #35 exists, and PR #29/#35 changed-file scopes have zero exact path overlap. Recovery must not replay the failed run or repackage under a different hash without recording a new task-local research identity.
+**Closed.** All intended task-local source/workflow writes completed, corrected CI passed, Artifact `9910185423` was produced, exact research IPA identity/diff were verified, Draft PR #35 exists, PR #29/#35 changed-file scopes have zero exact path overlap, and the same-bundle runtime installation conflict is explicitly gated. Recovery must not replay the failed run, repackage under a different hash without a new task-local identity, or overwrite an in-progress parallel official-Probe runtime session.

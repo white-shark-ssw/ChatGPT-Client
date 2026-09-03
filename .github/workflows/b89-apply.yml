@@ -85,7 +85,8 @@ jobs:
       - name: Commit verified b89 product patch and remove staging workflow
         run: |
           git rm .github/workflows/b89-apply.yml
-          test "$(git diff --name-only | sort)" = $'.github/workflows/b89-apply.yml\nChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          changed="$({ git diff --name-only; git diff --cached --name-only; } | sort -u)"
+          test "$changed" = $'.github/workflows/b89-apply.yml\nChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

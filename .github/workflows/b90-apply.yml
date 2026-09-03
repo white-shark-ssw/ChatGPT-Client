@@ -25,13 +25,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "b90c3029e73d1fe14ffe2e3ba27659f497031993"
+          test "$(git rev-parse HEAD^)" = "974c71558c60964c482c5bfbb40a075c245fe380"
           grep -q 'CURRENT_PROJECT_VERSION = 89;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b89";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'hostView.insertSubview(webView, at: 0)' ChatGPTClient/RootViewController.swift
           grep -q 'name: iOS Send Covered Interactivity A-B b89' .github/workflows/ios-foundation.yml
 
-      - name: Apply exact b90 single-variable patch
+      - name: Apply exact b90 product patch
         shell: bash
         run: |
           set -euo pipefail
@@ -65,36 +65,21 @@ jobs:
           text = text.replace('CURRENT_PROJECT_VERSION = 89;', 'CURRENT_PROJECT_VERSION = 90;')
           text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b89";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b90";')
           pbx.write_text(text)
-
-          wf = Path('.github/workflows/ios-foundation.yml')
-          text = wf.read_text()
-          replacements = {
-              '# Candidate: DEV-send-stream-0.1.0-b89': '# Candidate: DEV-send-stream-0.1.0-b90',
-              '# Product source: f39bc9387575028d431b85409780a2f3670b3259': '# Scope: manual-Sync frontmost presentation A-B',
-              'name: iOS Send Covered Interactivity A-B b89': 'name: iOS Send Frontmost Presentation A-B b90',
-              'name: ChatGPTClient-DEV-send-stream-0.1.0-b89': 'name: ChatGPTClient-DEV-send-stream-0.1.0-b90',
-          }
-          for old, new in replacements.items():
-              if text.count(old) != 1:
-                  raise SystemExit(f'workflow anchor count for {old!r}={text.count(old)}')
-              text = text.replace(old, new)
-          wf.write_text(text)
           PY
-          rm .github/workflows/b90-apply.yml
 
-      - name: Audit exact scope
+      - name: Audit exact product scope
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
           changed="$(git diff --name-only | sort)"
-          expected="$(printf '%s\n' '.github/workflows/b90-apply.yml' '.github/workflows/ios-foundation.yml' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/RootViewController.swift' | sort)"
+          expected="$(printf '%s\n' 'ChatGPTClient.xcodeproj/project.pbxproj' 'ChatGPTClient/RootViewController.swift' | sort)"
           test "$changed" = "$expected"
           grep -q 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift
           grep -q 'logWebViewActivationState(stage: "manual_sync_frontmost_ab")' ChatGPTClient/RootViewController.swift
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 90;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b90";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          grep -q 'name: iOS Send Frontmost Presentation A-B b90' .github/workflows/ios-foundation.yml
+          grep -q 'name: iOS Send Covered Interactivity A-B b89' .github/workflows/ios-foundation.yml
 
       - name: Simulator compile
         shell: bash
@@ -102,14 +87,13 @@ jobs:
           set -euo pipefail
           xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 
-      - name: Commit and push exact b90 product/config
+      - name: Commit and push exact b90 product
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/ios-foundation.yml
-          git add -u .github/workflows/b90-apply.yml
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
           git diff --cached --check
           git commit -m "b90: test frontmost covered Web presentation"
           git push origin HEAD:dev/send-stream-20260829

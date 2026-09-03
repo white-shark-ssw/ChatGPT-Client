@@ -2,114 +2,76 @@
 
 ## Status
 
-**Active — exact b89 real-device Runtime rejects covered-Web interactivity as sufficient for automatic cross-platform continuation. The next evidence-backed single-variable A/B is frontmost presentation/occlusion: b90 will keep b89 route, focus, interactivity, page-owned continuation and Repository ownership unchanged, but after explicit manual-Sync rearm will bring the same executor WKWebView above the Native sibling so it is genuinely frontmost. Stable/Frozen Send remains No.**
+**Active — exact b89 Runtime decisively rejects covered-Web interactivity as sufficient. Exact b90 frontmost-presentation A/B is now Code/guarded scope+Simulator/Push+PR CI/Artifact/package verified and ready for Human Runtime. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
 - PR: #29 — open / unmerged
 - Actual `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- Pre-runtime feature head: `f9ea8da29dcd1f808f4533ed05fa97f1fb4eeb2b`
-- b89 Candidate / Build: `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)` permanently reserved
-- b89 product commit: `f39bc9387575028d431b85409780a2f3670b3259`
-- b89 exact package source: `fe45aeadf7ae03bf09aff66a8a05aa2542959676`
-- b89 Artifact: `9881665748`
-- b89 IPA SHA-256: `c8ad5dcebbfde2131d3fc73c0309a47745f71527ad38b44c5fe3c5fbffe21a55`
+- b89 Candidate: `DEV-send-stream-0.1.0-b89` permanently reserved; Runtime interactivity-sufficient Rejected
+- b90 Candidate / Build: `DEV-send-stream-0.1.0-b90` / `0.1.0 (90)` permanently reserved
+- Exact b90 product commit: `5e9d735ddb2f7a2c46dbc43de2525980c86a1c1e`
+- Exact b90 product/config package source: `99f1aa15ce49b6abb0ff50e808bd889e381de917`
+- Corrected b90 staging: `33727956426 / 100561161422` — success
+- Push CI: `33728071476 / 100561518990` — success
+- PR CI: `33728075476 / 100561530874` — success
+- Canonical Push Artifact: `9882770072`
+- Canonical Artifact ZIP: `sha256:363c6fdbade5d476eacdee064eec26ed3480c0e7ba1da3b5dcf6b8537af46f6e`
+- IPA: `ChatGPTClient-0.1.0-b90-dev-send-stream.ipa`
+- IPA SHA-256: `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`
 - Stable/Frozen Send: No
 
-## Exact b89 Runtime result — 2026-09-03
+## b89 Runtime conclusion
 
-User tested exact `DEV-send-stream-0.1.0-b89` / source marker `fe45aeadf7ae` on iPhone / iOS17 and reported that the project conversation still did not continue automatically; explicit `同步最新消息` remained necessary.
+Exact b89 on iPhone/iOS17 proved `isUserInteractionEnabled=true` and first-responder/document focus, yet emitted zero page-owned continuation while the same remote response later advanced only after explicit Sync from timeline `5 -> 28`, tools `4 -> 25`, reasoning `1 -> 3`. Therefore interactivity is rejected as a sufficient continuation condition. Manual authoritative Detail projection remains Runtime Positive. Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b89-interactivity-sufficient-rejected-20260903.md`.
 
-Diagnostics make this a decisive negative rather than an ambiguous near-terminal sample:
+## b90 exact single-variable A/B
 
-- initial authoritative Detail at `07:08:04Z`: timeline `4`, tools `3`, reasoning `1`;
-- first explicit Sync completed at `07:08:09Z`: timeline `5`, tools `4`, reasoning `1`; one external Repository response generation started from authoritative Detail;
-- rearmed target page completed with `userInteractionEnabled=true`, non-empty/intersecting bounds, key-window attachment and `visibleSiblingCountAbove=1`;
-- first-responder activation succeeded: `nativeFirstResponder=true`, `documentHasFocus=true`;
-- fresh target page user activation remained available but transient/sticky booleans were false at the focus sample;
-- after rearm there were zero matching page-owned `externalStreamStatus*`, `externalResume*`, `externalStreamingObserved` or external snapshot events;
-- observed user WebSocket frames remained structural and `targetMatch=false`;
-- second explicit Sync at `07:10:06Z` returned at `07:10:07Z` with the same response generation now exposing timeline `28`, tools `25`, reasoning `3`, mapping `64`;
-- therefore the same remote response advanced by at least `5 -> 28` timeline items / `4 -> 25` tools while the covered executor emitted no automatic continuation path. The newer content appeared only through explicit authoritative Detail Sync.
+Relative to b89, only explicit manual-Sync rearm changes z-order: before loading the same target, the existing executor WKWebView is brought to the front of its current Root host and logs `stage=manual_sync_frontmost_ab`. Existing interactivity=true, first-responder focus, target load, page-owned status/resume/snapshot observation, protected Send path and Repository ownership are unchanged. This is a diagnostic causal A/B, not acceptance of full official-Web daily-chat rendering.
 
-Classification:
+## Validation / package identity
 
-- b89 package identity: verified;
-- `isUserInteractionEnabled=true`: Runtime exercised;
-- first-responder / `document.hasFocus=true`: Runtime Positive;
-- authoritative manual Detail block projection: Runtime Positive;
-- automatic page-owned continuation after interactivity+focus: Runtime Negative;
-- interactivity as a sufficient condition: **Rejected**;
-- automatic final convergence: still Rejected / Unverified for reliability;
-- Stable/Frozen Send: No.
+The first staging attempt `33727587238 / 100560009446` passed patch/scope/Simulator but failed before any remote product commit only because the Actions token lacked workflow-file modification permission. The corrected product-only staging `33727956426 / 100561161422` passed guard, exact patch, exact two-product-file scope audit, Xcode Simulator compile, commit and push, producing product commit `5e9d735...`.
 
-Do not infer that user activation itself is universally required or impossible: the successful visible-Web fresh-root control already continued from unscoped full navigation with transient activation false, while the later manual Lab sticky-activation read was contaminated by the Execute action.
+Permanent workflow identity commit `99f1aa15...` is the exact package source. Push and PR CI both passed. Canonical Push Artifact `9882770072` was independently downloaded and inspected: ZIP digest matches backend, IPA sidecar and recomputed SHA agree, built Info.plist is `0.1.0 (90)` / Candidate b90 / source `99f1aa15ce49` / minimum iOS14, and executable is arm64.
 
-## Causal state after b89
+Evidence ladder: **Code written / guarded scope+Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Runtime pending / Stable-Frozen No.**
 
-Already rejected as sufficient or sole explanation:
+## Human Runtime gate — next exact action
 
-- hidden/detached/unready document state;
-- focus alone;
-- `WKWebView.isUserInteractionEnabled` alone;
-- transient activation at navigation;
-- trusted target click;
-- same-document SPA transition;
-- initial unscoped `/c/{conversation}` route alone, because visible official Web can canonicalize that route to `/g/{scope}/c/{conversation}` and begin continuation.
+Install exact b90 IPA and run one clean early/mid-generation production A/B:
 
-The remaining evidenced covered-vs-visible presentation difference is z-order/occlusion. Source attaches the production executor with `hostView.insertSubview(webView, at: 0)`; exact b89 Runtime reports `subviewIndex=0`, `visibleSiblingCountAbove=1`. The known-positive Web Rule Lab is genuinely frontmost/visible. This makes frontmost presentation the next smallest single-variable experiment.
+1. start a deliberately long response on another official client with multiple reasoning/tool steps still ahead;
+2. select the same target conversation in b90 while that remote generation is clearly still active;
+3. press `同步最新消息` exactly once;
+4. b90 intentionally brings the official executor WebView frontmost for this diagnostic A/B; keep ChatGPTClient foregrounded for 30–60 seconds without another Sync;
+5. independently confirm the other official client continues generating after frontmost activation;
+6. export diagnostics before doing a second manual Sync if possible.
 
-## b90 intended A/B
+Decisive fields/events:
 
-Candidate identity is reserved only by the batch below after final guard: `DEV-send-stream-0.1.0-b90` / `0.1.0 (90)`.
+- `coveredExecutor.webViewActivation` with `stage=manual_sync_frontmost_ab`, especially `visibleSiblingCountAbove=0`;
+- `coveredExecutor.focusActivationResult`;
+- any matching `coveredExecutor.externalStreamStatusRequest/Response`;
+- any matching `coveredExecutor.externalResumeRequest/Response`;
+- any `coveredExecutor.externalStreamingObserved` or page-owned snapshot;
+- Repository live-response progression without a second Sync.
 
-Planned behavior delta relative to b89:
+Decision:
 
-- only on explicit manual-Sync rearm, bring the existing executor `WKWebView` to the front of its current Root host before loading the same target conversation;
-- retain `isUserInteractionEnabled=true`;
-- retain b88/b89 first-responder focus activation;
-- retain the same unscoped target load and all existing page-owned status/resume/snapshot observation;
-- retain client-owned protected Send path and sole `ConversationRepository` response ownership;
-- add only privacy-safe z-order diagnostics needed to prove `visibleSiblingCountAbove=0` after the A/B activation.
-
-This is diagnostic Runtime scope only and does not reverse the product decision rejecting full official-Web conversation rendering as the daily-chat UI.
+- frontmost established + genuine page-owned continuation while remote generation remains active -> frontmost/occlusion differential Runtime Positive; retain only the minimum necessary consequence and separately redesign the final covered form without making full Web the daily-chat UI;
+- frontmost established + remote generation demonstrably advances but still zero page-owned continuation -> reject z-order/occlusion as sufficient and continue to the next evidenced WKWebView browsing-context differential;
+- remote response terminal before frontmost activation -> Inconclusive; reuse exact b90, do not allocate b91.
 
 ## Batch recovery state
 
-**Active recovery point — b89 Runtime sync + b90 frontmost A/B preparation.**
+**Closed for b90 product/package/docs preparation. The next gate is human-only real-device Runtime.**
 
-Known baseline before the batch:
-
-- branch head before this checkpoint update: `f9ea8da29dcd1f808f4533ed05fa97f1fb4eeb2b`;
-- `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`;
-- PR #29 only open development PR identified for this Work;
-- b90 commit search: no result;
-- branch scan: no b90 branch/candidate identity found;
-- BUILD_TEST_INDEX current top identity before allocation: b89.
-
-Intended write batches:
-
-1. **Completed by this checkpoint commit:** persist decisive b89 Runtime result and b90 exact intended single-variable scope.
-2. **Pending:** create exact b90 product/config/workflow change on the same feature branch: Root frontmost-on-manual-rearm A/B + Build/Candidate 90 + `ios-foundation.yml` b90 identity.
-3. **Pending:** run deterministic static/Simulator validation, then Push/PR CI and canonical package generation.
-4. **Pending:** record b89 Runtime and b90 Code/CI/Artifact/package evidence in `runtime-evidence`, `BUILD_TEST_INDEX.md`, `PROJECT_PROFILE.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, `WEB_SEND_ADAPTER.md`, PR metadata and this checkpoint.
-5. **Human Gate after package verification:** exact b90 real-device long-response A/B.
-
-Recovery rule: after any interruption, re-read this checkpoint and actual branch/PR/head/Candidate state, then perform only missing deterministic writes. Never replay b89, never reuse b89 identity, and never allocate another Candidate if b90 has already been emitted.
-
-## Next exact action
-
-Apply the b90 single-variable z-order patch, bump exact Candidate/Build to 90, update the permanent CI Artifact identity, run static/Simulator validation, Push/PR CI, verify the canonical IPA identity, synchronize durable docs/PR, then hand exact b90 to the user for Runtime.
-
-Runtime decision for b90:
-
-- `visibleSiblingCountAbove=0` followed by genuine page-owned `stream_status` / `/resume` / snapshot continuation while the remote answer remains active -> frontmost/occlusion differential Runtime Positive; retain only the minimum necessary consequence and then redesign the final covered production form without full-Web daily UI;
-- frontmost established but still zero page-owned continuation while remote generation demonstrably advances -> reject z-order/occlusion as sufficient and continue to the next evidenced WKWebView browsing-context differential;
-- remote answer terminal before frontmost activation -> Inconclusive; reuse exact b90, do not allocate b91.
+No product/config change is permitted before b90 Runtime evidence. b89 and b90 identities remain permanently reserved. Any later docs-only head advancement does not redefine exact b90 package source `99f1aa15...`.
 
 ## Preserved boundaries
 
-Official page owns continuation transport; `ConversationRepository` owns Native response/content. No Native `stream_status`, `/resume`, guessed offset, polling, cadence reproduction, retry/watchdog, duplicate Send, WebSocket-body authority, hidden-thought presentation or second response store.
+Official page owns continuation transport; `ConversationRepository` owns Native response/content. No Native `stream_status`, `/resume`, guessed offset, polling/cadence reproduction, retry/watchdog, duplicate Send, WebSocket-body authority, hidden-thought presentation or second response store.
 
 ## Session round counter
 

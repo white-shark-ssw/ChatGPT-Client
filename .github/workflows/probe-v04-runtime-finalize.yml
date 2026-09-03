@@ -1,0 +1,39 @@
+name: Probe v0.4 Runtime finalize
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/probe-v04-runtime-finalize.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+      - name: Record exact v0.4 Runtime evidence
+        run: |
+          set -euo pipefail
+          before="$(git rev-parse HEAD)"
+          python3 .github/probe_v04_runtime_finalize.py
+          rm -f .github/probe_v04_runtime_finalize.py .github/workflows/probe-v04-runtime-finalize.yml
+          git diff --check
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          test -n "$changed"
+          if printf '%s\n' "$changed" | grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|\.github/workflows/ios-foundation\.yml$)'; then
+            echo "unexpected product/config drift" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: record Probe v0.4 Native Detail polling Runtime [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829

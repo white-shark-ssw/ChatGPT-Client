@@ -37,7 +37,16 @@
 - b93 PR CI: `33755067202 / 100647418537` — success
 - b93 canonical Push Artifact: `9893141097`
 - b93 IPA SHA-256: `379218aa869b566c26e582a220be34a025a11517c8ebee1f9ce631140ea32a2d`
-- b94 Candidate / Build: `DEV-send-stream-0.1.0-b94` / `0.1.0 (94)` permanently reserved; product/package pending at allocation checkpoint
+- b94 Candidate / Build: `DEV-send-stream-0.1.0-b94` / `0.1.0 (94)` permanently reserved
+- b94 allocation checkpoint: `d957e29595e13fcb46da133d98eebaa716f93d25`
+- Exact b94 product commit: `95f0f99921ad9f41a40b7919162498b00138d5a4`
+- Exact b94 product/config package source: `59894bd9ca7c293211cd856ecf33579f19ce4d84`
+- b94 staging: `33761087305 / 100667284502` — success
+- b94 Push CI: `33761341528 / 100668157341` — success
+- b94 PR CI: `33761346240 / 100668174308` — success
+- b94 canonical Push Artifact: `9895660898`
+- b94 Artifact digest: `sha256:65d29b08d10ef3c626f64a9fa16e574a53ab33aa0d7041fa53f9c094915b9b60`
+- b94 IPA SHA-256: `a0d3de344f18f75e0286f26c27b9ea0c89548bed6a75bff4bb3369ee7bcfaffb`
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -180,6 +189,20 @@ This is an official-page lifecycle A/B only. Do not add Native `stream_status`, 
 
 Runtime gate: one external conversation/executor, one initial Sync to acquire continuation, background while the remote answer remains active, return foreground without Sync, then require page-owned status/snapshots to resume and the final assistant to reconcile naturally. Selection-triggered page rebootstrap remains a separate later A/B.
 
+## b94 package / validation state
+
+b94 changes only foreground lifecycle recovery for the selected already-active external response. On `UIApplication.willEnterForegroundNotification`, if the selected Repository live snapshot is active/external (`promptText` empty), the existing covered executor reloads the same official conversation page and logs `foreground_external_page_rebootstrap` / `coveredExecutor.foregroundPageRebootstrap`. It does not perform Native Detail Sync and does not synthesize `stream_status` or `/resume`.
+
+Allocation checkpoint `d957e29595e13fcb46da133d98eebaa716f93d25`; product `95f0f99921ad9f41a40b7919162498b00138d5a4`; exact product/config package source `59894bd9ca7c293211cd856ecf33579f19ce4d84`. Staging `33761087305 / 100667284502` passed exact two-file scope and Simulator compile. Push CI `33761341528 / 100668157341` and PR CI `33761346240 / 100668174308` passed. Canonical Push Artifact `9895660898` has digest `sha256:65d29b08d10ef3c626f64a9fa16e574a53ab33aa0d7041fa53f9c094915b9b60`. Independent unpacking verified IPA SHA `a0d3de344f18f75e0286f26c27b9ea0c89548bed6a75bff4bb3369ee7bcfaffb` matching sidecar, `0.1.0 (94)`, Candidate b94, source `59894bd9ca7c`, MinimumOS 14.0, device family `[1,2]`, `iphoneos`, arm64.
+
+Evidence ladder: **Code written / guarded exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+## b94 Human Runtime gate
+
+Use one project conversation/executor only. Start a deliberately long remote response, press `同步最新消息` once to establish advancing page-owned external snapshots, keep that same conversation selected, background ChatGPTClient while the remote response is still active, then return foreground **without pressing Sync**. Require `foregroundExternalRebootstrap.requested`, activation stage `foreground_external_page_rebootstrap`, `coveredExecutor.foregroundPageRebootstrap`, a completed official page load, then renewed matching `externalStreamStatusRequest/Response` and external snapshots. Let the remote response finish naturally and require final materialization/reconcile without Sync.
+
+If the remote answer is already terminal before foreground rebootstrap, classify the sample Inconclusive and reuse exact b94; do not allocate a new candidate. Selection-triggered page rebootstrap remains outside b94.
+
 ## Validation / identity state
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
@@ -188,7 +211,7 @@ b91/b92 exact package identities remain permanently reserved. Exact b93 product 
 
 ## Batch recovery state
 
-**Open for b94 foreground page-rebootstrap A/B. Next exact action:** apply only foreground rebootstrap of the selected already-active external executor, validate exact two-product-file scope + Simulator, package exact b94, then stop at Human Runtime. Selection-triggered page rebootstrap remains separate.
+**Closed at exact b94 Human Runtime gate. Next exact action:** install exact canonical b94 and run the single-executor foreground lifecycle test above. Do not modify product/config or allocate another candidate before Runtime evidence. Selection-triggered page rebootstrap remains separate.
 
 ## Preserved boundaries
 

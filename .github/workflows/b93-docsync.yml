@@ -1,0 +1,39 @@
+name: b93 docs sync
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b93-docsync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard exact package source ancestry
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0 HEAD
+          test -f .github/b93_docsync.py
+      - name: Apply durable docs
+        run: |
+          set -euo pipefail
+          python3 .github/b93_docsync.py
+          git diff --check
+          CHANGED="$(git diff --name-only | sort)"
+          printf '%s\n' "$CHANGED"
+          test -n "$CHANGED"
+          if printf '%s\n' "$CHANGED" | grep -E '^(ChatGPTClient/|ChatGPTClient\.xcodeproj/|scripts/build_ipa\.sh|\.github/workflows/ios-foundation\.yml)$'; then exit 1; fi
+      - name: Commit docs
+        run: |
+          set -euo pipefail
+          git add docs/project
+          git commit -m "docs: record b92 overlap and package b93 focus gate [skip ci]"
+          git push origin HEAD:dev/send-stream-20260829

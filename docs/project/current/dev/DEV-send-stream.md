@@ -28,6 +28,7 @@
 - b92 canonical Push Artifact: `9891430379`
 - b92 IPA SHA-256: `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514`
 - b92 Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b92-covered-overlap-focus-handoff-20260903.md`
+- b93 Candidate / Build: `DEV-send-stream-0.1.0-b93` / `0.1.0 (93)` permanently reserved; product/package pending at allocation checkpoint
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -118,7 +119,7 @@ Source correlation is direct but not yet final proof of focus causality: executo
 
 Current Runtime classification: **covered single-conversation page-owned continuation Runtime Positive; client-owned protected Send/SSE terminal+authoritative reconcile Runtime Positive; overlapping external continuation/reselection recovery Runtime Negative; automatic external terminal/final under overlap Unverified/Rejected for current behavior; Stable-Frozen No.**
 
-## b93 exact minimum A/B — not yet allocated
+## b93 exact minimum A/B — allocated
 
 Next candidate, if allocated, must change only selection-time reacquisition for an already-active external response:
 
@@ -134,11 +135,11 @@ Decisive Runtime test: external project response -> one Sync -> switch to anothe
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
 
-b91/b92 exact package identities remain permanently reserved. b93 has not been allocated in this Runtime-recording checkpoint.
+b91/b92 exact package identities remain permanently reserved. b93 is allocated only for selection-time external focus reacquisition; product/package is pending.
 
 ## Batch recovery state
 
-**Closed for b92 Runtime classification. Next exact action:** perform a fresh resume/conflict guard, then allocate b93 only for the selection-time external-focus reacquisition A/B above. Do not modify continuation protocol or add speculative recovery logic.
+**Open for b93 selection-focus A/B. Next exact action:** apply only selection-time focus reacquisition to the existing external-live executor, validate exact two-file product scope + Simulator, then package b93 and stop at Human Runtime. Do not modify continuation protocol or add speculative recovery logic.
 
 ## Preserved boundaries
 

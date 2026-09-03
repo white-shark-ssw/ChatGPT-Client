@@ -1,5 +1,9 @@
 # Project Profile
 
+## Latest DEV-send-stream candidate override — 2026-09-03
+
+- Latest test candidate: `DEV-send-stream-0.1.0-b93` / `0.1.0 (93)`; exact package source `2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0`; canonical Artifact `9893141097`; Runtime pending; Stable/Frozen No.
+
 ## DEV-send-stream b91 project-scoped route identity package-ready override — 2026-09-03
 
 - User Runtime distinction is now material: ordinary non-project conversations do not show the same continuation failure, while the tested project conversation does and its visible official Web appears healthy.

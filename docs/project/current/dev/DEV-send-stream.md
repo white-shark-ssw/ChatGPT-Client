@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b92 proves the covered project page-owned continuation path and client-owned protected Send/SSE terminal path on iPhone/iOS17. A narrower overlap regression remains: after switching away from an externally streaming conversation and starting a client-owned Send in another executor, the first external page-owned loop stops advancing and does not reacquire automatically on reselection; final assistant materializes only after explicit Sync. Stable/Frozen Send remains No.**
+**Active — exact b92 proves covered single-conversation external continuation and client-owned Send/SSE terminal reconciliation, but overlap/reselection recovery is Runtime Negative. Exact b93 is Code/guarded two-file scope+Simulator/Push+PR CI/Artifact/package verified and tests only selection-time focus reacquisition for an already-active external executor. Human Runtime pending. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -28,7 +28,15 @@
 - b92 canonical Push Artifact: `9891430379`
 - b92 IPA SHA-256: `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514`
 - b92 Runtime evidence: `docs/project/runtime-evidence/DEV-send-stream-b92-covered-overlap-focus-handoff-20260903.md`
-- b93 Candidate / Build: `DEV-send-stream-0.1.0-b93` / `0.1.0 (93)` permanently reserved; product/package pending at allocation checkpoint
+- b93 Candidate / Build: `DEV-send-stream-0.1.0-b93` / `0.1.0 (93)` permanently reserved
+- b93 allocation checkpoint: `b86c1a3ca94b215204b0cfb135fa0cd8b3603619`
+- Exact b93 product commit: `556bd8886061f4126d11e4ac44f4e24ed580500c`
+- Exact b93 product/config package source: `2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0`
+- b93 staging: `33754848709 / 100646690995` — success
+- b93 Push CI: `33755063112 / 100647405265` — success
+- b93 PR CI: `33755067202 / 100647418537` — success
+- b93 canonical Push Artifact: `9893141097`
+- b93 IPA SHA-256: `379218aa869b566c26e582a220be34a025a11517c8ebee1f9ce631140ea32a2d`
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
@@ -131,15 +139,37 @@ Next candidate, if allocated, must change only selection-time reacquisition for 
 
 Decisive Runtime test: external project response -> one Sync -> switch to another conversation -> complete one client-owned Send -> select the original external-live conversation again **without manual Sync**. If page-owned `stream_status`/external snapshots resume and naturally materialize/reconcile the final assistant, selection-time focus reacquisition is Runtime Positive. If not, reject it as sufficient.
 
+## b93 package / validation state
+
+b93 changes only reselection behavior for an already-active external live response. `reactivateExternalObservationFocus()` keeps the existing covered WebView and route, calls `becomeFirstResponder()`, samples `document.hasFocus()`, and logs `selection_external_focus_rearm` / `selectionFocusActivationAttempt` / `selectionFocusActivationResult`. No page reload, manual Sync, status/resume synthesis, timer, retry, polling, duplicate Send or response-store change was added.
+
+Allocation checkpoint `b86c1a3ca94b215204b0cfb135fa0cd8b3603619` precedes product `556bd8886061f4126d11e4ac44f4e24ed580500c`. Guarded staging `33754848709 / 100646690995` passed the exact b92 state guard, exact two-product-file audit and Simulator compile. Exact product/config package source `2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0` passed Push CI `33755063112 / 100647405265` and PR CI `33755067202 / 100647418537`.
+
+Canonical Push Artifact `9893141097` has backend digest `sha256:5a07512a1bf3becac3a8d2a7655c3d3f09caa150c1162b95327e40b3c8ed2ad5`. Independent unpacking verified `ChatGPTClient-0.1.0-b93-dev-send-stream.ipa`, SHA `379218aa869b566c26e582a220be34a025a11517c8ebee1f9ce631140ea32a2d` matching sidecar, Release `0.1.0 (93)`, Candidate b93, source `2d2cde58a7fb`, MinimumOS 14.0, device family `[1,2]`, `iphoneos`, and Mach-O arm64.
+
+Evidence ladder: **Code written / guarded exact two-file scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+## b93 Human Runtime gate
+
+1. Start a long response in a project conversation on another official client.
+2. In b93 select the same conversation and press `同步最新消息` exactly once; confirm covered external snapshots begin.
+3. Switch to a second conversation and send one message from ChatGPTClient; allow its local SSE response to finish naturally.
+4. Return to the original external-live conversation **without pressing Sync**.
+5. Diagnostics must show `selection_external_focus_rearm`, `selectionFocusActivationAttempt`, and `selectionFocusActivationResult`; the decisive focus result is `documentHasFocus=true`.
+6. After reselection, page-owned `externalStreamStatusRequest/Response` and external snapshots must resume for the original response without reload/Sync.
+7. Let the remote response finish naturally and verify the final assistant materializes/reconciles automatically. Export diagnostics after completion.
+
+If focus is reacquired and continuation resumes, selection-time focus reacquisition is Runtime Positive. If focus is reacquired but continuation remains frozen while the remote answer advances, reject focus reacquisition as sufficient and continue from that evidence without speculative protocol work.
+
 ## Validation / identity state
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
 
-b91/b92 exact package identities remain permanently reserved. b93 is allocated only for selection-time external focus reacquisition; product/package is pending.
+b91/b92 exact package identities remain permanently reserved. Exact b93 product `556bd8886061f4126d11e4ac44f4e24ed580500c` and package source `2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0` are fixed; later docs/tooling commits do not redefine that package identity.
 
 ## Batch recovery state
 
-**Open for b93 selection-focus A/B. Next exact action:** apply only selection-time focus reacquisition to the existing external-live executor, validate exact two-file product scope + Simulator, then package b93 and stop at Human Runtime. Do not modify continuation protocol or add speculative recovery logic.
+**Closed for b93 product/package/docs preparation. Next exact action:** install exact canonical b93 and execute the overlap/reselection Human Runtime gate. No product/config change is permitted before that Runtime evidence.
 
 ## Preserved boundaries
 

@@ -1,5 +1,21 @@
 # DEV-send-stream
 
+## Official iOS Probe v0.2 Runtime / v0.3 research gate — 2026-09-04
+
+User-exported Probe v0.2 JSONL `sha256:f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513` parsed cleanly: 392,033 events / 76,447,285 bytes / zero parse errors. `probe.log_cleared` is the first event, proving the new clear-log control works; opaque user-socket path redaction and direct presence-state logging also work.
+
+This sample is **not a clean negative late-join result**. After `NSPOSIXErrorDomain/53` on the existing user WebSocket, the official app repeatedly invoked receive on the failed task and the Probe recorded 195,999 identical receive errors plus 196,002 receive-arm events. Two error storms span ~50.4 s and ~22.3 s, inflating the file to ~76 MB and materially perturbing observation. Source inspection shows the Probe logs/forwards the callback but does not itself schedule another receive, so causality of the official receive loop remains Unverified; regardless, per-arm/per-error logging must be removed/deduplicated before another decisive Runtime.
+
+Across the entire file there are zero `conversationHash` events, zero conversation/per-turn WebSocket events and zero conversation HTTP/SSE events; the only `http.*` event is completion of the failed WebSocket task itself. Overall cross-platform late-join therefore remains **Inconclusive**, not Rejected. The JSONL does not encode whether the official iOS UI visibly joined the remote answer.
+
+Static inspection of the exact supplied official framework independently exposes native `WebSocketConversationEventsService`, `stream_handoff`, `resume_conversation_token`, `turn_exchange_id`, `topic`, `resume_sse_endpoint`, and `ConversationResumeFetchRecovery.swift` strings including inline stream-status polling/fetch recovery. This proves official Native recovery machinery exists but does not prove which branch owns cross-platform late-join. The same binary exposes both `dataTaskWithRequest:` and `dataTaskWithURL:` forms; Probe v0.2 hooks only request forms.
+
+**v0.3 research-only scope:** retain the working `清空`/privacy-safe structure; stop logging `ws.receive.arm`; log only the first repeated receive error per failed socket until a real message arrives; add wrappers for `dataTaskWithURL:` and `dataTaskWithURL:completionHandler:`; do not yet add a global task-resume hook. No ChatGPTClient product change, no polling implementation, and no b96 allocation.
+
+Batch recovery: current feature head before this checkpoint workflow is the evidence commit `17cc302c40530067ed01be84547b8e2c2e81cc63`; PR #29 remains open/unmerged; `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`; b95 product/package remain `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2` / `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`; b96 unallocated. After this checkpoint commit, change only research Probe source/README, run dedicated research CI, package against official ZIP `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, verify exact research IPA diff/hash, update durable docs/PR, then delete temporary v0.2/v0.3 apply/finalize tooling.
+
+**Next exact action:** apply the minimal Probe v0.3 observation delta above. Product/config files must not change.
+
 ## Official iOS Probe v0.1 Runtime / v0.2 research gate — 2026-09-04
 
 Human Runtime JSONL `sha256:c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093` parsed cleanly: 29 events / 7,166 bytes. Probe v0.1 was genuinely active and captured the official `ws.chatgpt.com` user WebSocket. The observed socket sent `connect` plus only three base subscriptions (`app_notifications`, `calpico-chatgpt`, `push_auth_challenge`). After `NSPOSIXErrorDomain/53` it recreated the socket and repeated the same base subscriptions. No conversation/per-turn subscribe, target conversation hash, conversation-update, add-messages, async-status, catchup or live target frame appears.

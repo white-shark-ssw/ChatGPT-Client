@@ -1615,6 +1615,8 @@ final class ConversationSidebarViewController: UITableViewController {
 
 final class ConversationDetailViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     var onManualLatestSyncApplied: ((String, Bool) -> Void)?
+    var onManualReloadRequested: ((String) -> Void)?
+    var onManualReloadApplied: ((String) -> Void)?
 
     private struct ScrollAnchor {
         let messageID: String
@@ -2344,7 +2346,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let responseActive = liveSnapshot?.phase.isActive == true
         let localResponseActive = responseActive && !(liveSnapshot?.promptText.isEmpty ?? true)
         let canSync = selectedID != nil && !recoveryInProgress && !localResponseActive
-        let canReload = selectedID != nil && !recoveryInProgress && !responseActive
+        let canReload = selectedID != nil
         let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
         let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
         let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
@@ -2616,9 +2618,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID else { return }
-        guard !repository.isLiveResponseActive(for: id) else { return }
-        if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         captureScrollAnchor(for: id)
+        onManualReloadRequested?(id)
         presentationGeneration += 1
         let currentPresentationGeneration = presentationGeneration
         hideSyncToast()
@@ -2635,7 +2636,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
             switch result {
-            case .success(let detail): self.apply(detail, captureCurrentAnchor: false)
+            case .success(let detail):
+                _ = self.repository.adoptExternalAuthoritativeDetailTimeline(conversationID: id, timeline: detail.trailingResponseTimeline, reasoningDurationSeconds: detail.trailingReasoningDurationSeconds, authoritativeVisibleMessageCount: detail.messages.count, latestVisibleRole: detail.messages.last?.role)
+                self.apply(detail, captureCurrentAnchor: false) { [weak self] in self?.onManualReloadApplied?(id) }
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.stateLabel.text = "读取失败\n\(error.localizedDescription)"

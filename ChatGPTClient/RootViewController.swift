@@ -1338,6 +1338,20 @@ extension ConversationRepository {
         return true
     }
 
+    @discardableResult
+    func resetLiveResponseForManualReload(conversationID: String) -> Bool {
+        precondition(Thread.isMainThread)
+        guard let snapshot = responseRuntime.snapshots.removeValue(forKey: conversationID) else { return false }
+        var fields = diagnosticsFields(for: conversationID)
+        fields["responseGeneration"] = String(snapshot.generation)
+        fields["phase"] = snapshot.phase.rawValue
+        fields["source"] = snapshot.promptText.isEmpty ? "external_page_owned" : "local_send"
+        fields["reason"] = "manual_reload"
+        DiagnosticsLogger.shared.info(category: "conversation", name: "liveResponse.reset", fields: fields)
+        responseRuntime.onChange?(conversationID)
+        return true
+    }
+
     func resetAllLiveResponsesForAccountChange() {
         precondition(Thread.isMainThread)
         let ids = Array(responseRuntime.snapshots.keys)
@@ -1399,6 +1413,28 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
             guard let self, self.repository.selectedConversationID == id else { return }
             if let snapshot = self.repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
             self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
+        }
+        detailViewController.onManualReloadRequested = { [weak self] id in
+            guard let self, self.repository.selectedConversationID == id else { return }
+            self.externalAcquisitionSyncs.remove(id)
+            let executorReleased: Bool
+            if let executor = self.sendExecutors[id] {
+                self.releaseExecutor(for: id, expected: executor)
+                executorReleased = true
+            } else {
+                executorReleased = false
+            }
+            let liveSnapshotCleared = self.repository.resetLiveResponseForManualReload(conversationID: id)
+            var fields = self.repository.diagnosticsFields(for: id)
+            fields["executorReleased"] = executorReleased ? "true" : "false"
+            fields["liveSnapshotCleared"] = liveSnapshotCleared ? "true" : "false"
+            self.diagnostics.info(category: "conversation", name: "manualReload.hardReset", fields: fields)
+            self.updateLivePresentation()
+        }
+        detailViewController.onManualReloadApplied = { [weak self] id in
+            guard let self, self.repository.selectedConversationID == id else { return }
+            self.updateLivePresentation()
+            self.observeExternalResponseIfNeeded(conversationID: id)
         }
         NotificationCenter.default.addObserver(self, selector: #selector(applicationWillEnterForeground(_:)), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
@@ -1653,10 +1689,9 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
         let snapshot = repository.liveResponse(for: conversationID)
         let selectedResponseActive = snapshot?.phase.isActive ?? false
-        let localResponseActive = selectedResponseActive && !(snapshot?.promptText.isEmpty ?? true)
         validationSendButton.isEnabled = !selectedResponseActive
         validationSendButton.setTitle(selectedResponseActive ? "回答中…" : "测试发送…", for: .normal)
-        detailViewController.navigationItem.rightBarButtonItem?.isEnabled = !localResponseActive
+        detailViewController.navigationItem.rightBarButtonItem?.isEnabled = true
     }
 
     private func showValidationError(_ message: String) {

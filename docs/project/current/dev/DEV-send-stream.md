@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b90 auth/list prerequisite has recovered. The b90 frontmost mechanism itself is now real-device Runtime Positive, while frontmost/occlusion sufficiency for automatic cross-platform continuation remains Inconclusive. Stable/Frozen Send remains No.**
+**Active — exact b90 auth/list prerequisite recovered and frontmost presentation itself is Runtime Positive, but the latest project-conversation evidence exposes a stronger code-level blocker: the covered-Web bridge recognizes only `/c/{conversation}` and loses the target conversation after official project canonicalization to `/g/{scope}/c/{conversation}`. b91 is allocated as the minimum project-scoped route-parser A/B. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -12,77 +12,64 @@
 - b90 Candidate / Build: `DEV-send-stream-0.1.0-b90` / `0.1.0 (90)` permanently reserved
 - Exact b90 product commit: `5e9d735ddb2f7a2c46dbc43de2525980c86a1c1e`
 - Exact b90 product/config package source: `99f1aa15ce49b6abb0ff50e808bd889e381de917`
-- Canonical Push Artifact: `9882770072`
-- IPA SHA-256: `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`
+- b91 Candidate / Build: `DEV-send-stream-0.1.0-b91` / `0.1.0 (91)` allocated; product/package not yet emitted at this checkpoint
 - Stable/Frozen Send: No
 
 ## b89 Runtime conclusion
 
 Exact b89 on iPhone/iOS17 proved `isUserInteractionEnabled=true` and first-responder/document focus, yet emitted zero page-owned continuation while the same remote response later advanced only after explicit Sync from timeline `5 -> 28`, tools `4 -> 25`, reasoning `1 -> 3`. Therefore interactivity is rejected as a sufficient continuation condition. Manual authoritative Detail projection remains Runtime Positive.
 
-## b90 exact single-variable A/B
+## b90 Runtime progression
 
-Relative to b89, only explicit manual-Sync rearm changes z-order: before loading the same target, the existing executor `WKWebView` is brought to the front of its current Root host and logs `stage=manual_sync_frontmost_ab`. Existing interactivity=true, first-responder focus, target load, page-owned status/resume/snapshot observation, protected Send path and Repository ownership are unchanged.
+The earlier Native auth `NSURLErrorDomain -1005` sample was transient/inconclusive. Later exact b90 Runtime restored `/api/auth/session`, accounts-check and conversation-list HTTP200; manual Sync then raised the executor from `visibleSiblingCountAbove=1` to `0`, loaded a visible complete page, and achieved `nativeFirstResponder=true` / `documentHasFocus=true`. Therefore the b90 frontmost mechanism itself is Runtime Positive.
 
-## b90 Runtime progression — 2026-09-03
+That sample still showed no bridge-reported matching `stream_status`, `/resume`, external streaming or project snapshot. This absence is no longer valid evidence against official project-Web continuation because a stronger bridge identity defect is now proven below.
 
-### Earlier prerequisite-blocked sample
+## Project-scoped route-parser root cause — 2026-09-03
 
-An earlier exact b90 sample repeatedly failed Native `/api/auth/session` with `NSURLErrorDomain -1005`, so the frontmost A/B was not reached. That sample remains valid as an Inconclusive prerequisite-blocked observation, not a b90 product regression.
+User Runtime observation: ordinary non-project conversations do not show the same continuation failure, while the current project conversation does; visible official Web itself appears healthy.
 
-### Latest sample — auth recovered / frontmost mechanism Positive / continuation Inconclusive
+Current source directly explains this split:
 
-Exact diagnostics remain `DEV-send-stream-0.1.0-b90`, Build90, source marker `99f1aa15ce49`, iPhone/iOS17.
+- every existing conversation is initially loaded through `https://chatgpt.com/c/{conversationID}`;
+- bridge `currentConversationID()` matches only `^/c/([^/?#]+)`;
+- known official project canonical form is `/g/{scope}/c/{conversation}`;
+- after canonicalization, the current bridge therefore returns `null` for a valid project conversation and classifies that page as `route=other`;
+- the bridge uses that parsed `pageConversationID` as a required equality gate for page-owned `stream_status`, `/resume`, plural conversation snapshots, WebSocket exact-target matching and composer conversation identity;
+- consequently, correct official project-Web requests can occur while the Native bridge silently treats them as non-target and emits none of the expected external continuation events.
 
-Auth/list recovery is directly proven:
+The latest b90 log is consistent with this exact transition: immediately after direct `/c/{id}` reload page diagnostics report `route=conversation`, while later page activation events report `route=other` although the visible official Web remains healthy.
 
-- `08:16:00Z` `/api/auth/session` HTTP200; accounts-check HTTP200/verified by `08:16:02Z`;
-- `08:16:03Z` real conversation-list response HTTP200, `28` page items / authoritative total `29`;
-- the same success repeated at `08:21:21Z` / `08:21:23Z`.
+Qualification: **project scoped-route identity parsing is now the strongest evidenced blocker. The b90 no-event interval cannot decide z-order sufficiency for project conversations because the observer can become blind after project canonicalization.**
 
-The manual Sync at `08:16:47Z` returned authoritative active Detail at `08:16:55Z` with visible messages `20 -> 21`, trailing timeline `2 = reasoning 1 + tool 1`; Repository external response generation 1 started from that authoritative Detail.
+## b91 exact minimum A/B
 
-The b90 mechanism then executed exactly as designed:
+Allocate b91 only for the bridge identity parser:
 
-- before raise: `subviewIndex=0`, `visibleSiblingCountAbove=1`;
-- `stage=manual_sync_frontmost_ab`: `subviewIndex=1`, `visibleSiblingCountAbove=0`, non-empty/intersecting key-window bounds, interaction enabled;
-- page load completed while route=`conversation`, `visibilityState=visible`;
-- `08:16:57Z` focus result: `nativeFirstResponder=true`, `documentHasFocus=true`.
+- preserve b90 transport, protected Send ownership, Repository ownership, observation protocol and diagnostic frontmost behavior for causal isolation;
+- change `currentConversationID()` so it recognizes both ordinary `/c/{conversation}` and exact evidenced project scoped `/g/{scope}/c/{conversation}`;
+- `pageRouteShape`, stream-status matching, resume matching, plural snapshot matching, WebSocket target matching and composer conversation identity then automatically consume the corrected identity through their existing shared helper;
+- do not add new route guesses, retry/fallback/timer/watchdog/polling, Native status/resume synthesis, duplicate Send, WebSocket-body authority or second response store.
 
-Therefore **frontmost presentation itself is Runtime Positive**.
+## b91 Human Runtime gate
 
-However the same log contains zero matching `externalStreamStatusRequest/Response`, zero matching `externalResumeRequest/Response`, zero `externalStreamingObserved`, and zero page-owned external snapshot after the frontmost activation. ChatGPTClient left foreground at `08:17:10Z`, only ~13 seconds after focus succeeded, and there is no later explicit Detail Sync proving how far the same remote generation advanced after activation. The user's observation that the visible Web looked normal is consistent with Web presentation/interaction viability, but does not by itself prove page-owned continuation or Native automatic convergence.
+After b91 package verification, run the same project-conversation test while a remote response is clearly active. Decisive evidence is no longer z-order itself; it is whether, after project canonicalization, the bridge continues to identify the target and reports the official page-owned path:
 
-Qualification: **b90 frontmost mechanism Runtime Positive; frontmost/occlusion sufficiency for automatic continuation remains Inconclusive. Reuse exact b90; do not allocate b91 or change product code.**
+- page remains classified as conversation after scoped canonicalization;
+- matching `coveredExecutor.externalStreamStatusRequest/Response` and/or `externalResumeRequest/Response` appears when official Web issues them;
+- `externalStreamingObserved` / page-owned snapshot can advance the existing Repository external generation without another manual Sync.
 
-Durable evidence: `docs/project/runtime-evidence/DEV-send-stream-b90-frontmost-mechanism-positive-continuation-inconclusive-20260903.md`.
+If b91 makes project continuation observable/functional, route parsing is Runtime Positive; then a later separate candidate may remove the b90 frontmost diagnostic to prove the final covered production form. If b91 still has no page-owned requests while the project page is correctly recognized and the remote response demonstrably advances, continue from that new evidence without speculative protocol work.
 
-## Validation / package identity
+## Validation / identity state
 
-Corrected staging `33727956426 / 100561161422`, Push CI `33728071476 / 100561518990`, and PR CI `33728075476 / 100561530874` passed. Canonical Push Artifact is `9882770072`; exact package source remains `99f1aa15...`; later docs-only heads do not redefine the Runtime package.
+b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
 
-Evidence ladder: **Code written / guarded scope+Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / auth prerequisite recovered / frontmost mechanism Runtime Positive / automatic-continuation causality Inconclusive / Stable-Frozen No.**
-
-## Human Runtime gate — next exact action
-
-**Reuse exact b90. Do not allocate b91.** Run one clean long-response continuation A/B:
-
-1. start a deliberately long response on another official client with multiple reasoning/tool steps still ahead;
-2. select the same target conversation in exact b90 while that remote generation is clearly still active;
-3. press `同步最新消息` exactly once;
-4. after the frontmost Web appears, keep ChatGPTClient continuously foregrounded for at least 30–60 seconds without another Sync;
-5. during that same interval independently verify the remote official client continues generating after frontmost activation;
-6. export diagnostics before any second manual Sync if possible; if Native still has not advanced, then perform one second Sync only after the first export so the remote advancement can be proven from authoritative Detail.
-
-Decision:
-
-- frontmost established + genuine page-owned continuation while remote generation remains active -> frontmost/occlusion differential Runtime Positive for continuation;
-- frontmost established + remote generation demonstrably advances but still zero page-owned continuation -> reject z-order/occlusion as sufficient;
-- remote response terminal too early or foreground interval is interrupted before sufficient evidence -> Inconclusive; reuse exact b90.
+b91 identity guard is clean at allocation: repository commit search found no b91 identity, branch search found no b91 branch collision, and actual `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
 
 ## Batch recovery state
 
-**Closed.** The latest b90 recovered-auth/frontmost-positive/continuation-inconclusive Runtime evidence file and this checkpoint are synchronized. No product/config/version/Candidate/Artifact/PR identity changed in this batch. Exact b90 package source remains `99f1aa15ce49b6abb0ff50e808bd889e381de917`.
+**Open for b91 route-parser implementation/package. Next exact action:** apply only the evidenced scoped-route parser correction plus Build/Candidate 91, run guarded CI/package verification, then stop at Human Runtime.
 
 ## Preserved boundaries
 
@@ -90,4 +77,4 @@ Official page owns continuation transport; `ConversationRepository` owns Native 
 
 ## Session round counter
 
-This user turn is **round 58**.
+This user turn is **round 59**.

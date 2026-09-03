@@ -1,0 +1,137 @@
+name: b93 selection focus A-B staging
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/b93-selection-focus.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard exact b92 Runtime head
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "78fa094e4a9d312589115545d5a0349582d9b4f7"
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('ChatGPTClient/RootViewController.swift').read_text()
+          pbx = Path('ChatGPTClient.xcodeproj/project.pbxproj').read_text()
+          checkpoint = Path('docs/project/current/dev/DEV-send-stream.md').read_text()
+          assert 'hostView.bringSubviewToFront(webView)' not in root
+          assert 'location.pathname.match(/^\\/(?:g\\/[^/?#]+\\/)?c\\/([^/?#]+)/)' in root
+          assert root.count('CURRENT_PROJECT_VERSION = 92;') == 0
+          assert pbx.count('CURRENT_PROJECT_VERSION = 92;') == 2
+          assert pbx.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b92";') == 2
+          assert '## b93 exact minimum A/B — not yet allocated' in checkpoint
+          PY
+
+      - name: Allocate b93 checkpoint
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/project/current/dev/DEV-send-stream.md')
+          s = p.read_text()
+          s = s.replace('- b92 IPA SHA-256: `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514`\n', '- b92 IPA SHA-256: `82d96d359767b72c623f367bf3cd2c5f3ae9d1d7411ad547c1ba3634341c3514`\n- b93 Candidate / Build: `DEV-send-stream-0.1.0-b93` / `0.1.0 (93)` permanently reserved; product/package pending at allocation checkpoint\n', 1)
+          s = s.replace('## b93 exact minimum A/B — not yet allocated', '## b93 exact minimum A/B — allocated', 1)
+          s = s.replace('b93 has not been allocated in this Runtime-recording checkpoint.', 'b93 is allocated only for selection-time external focus reacquisition; product/package is pending.', 1)
+          p.write_text(s)
+          PY
+          git diff --check
+          git add docs/project/current/dev/DEV-send-stream.md
+          git commit -m "checkpoint: allocate b93 selection focus A-B"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Apply exact b93 product delta
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('ChatGPTClient/RootViewController.swift')
+          s = p.read_text()
+          old = '''        diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation", "mode": forceReload ? "manual_sync_rearm" : "selection"])
+    }
+
+    func sendExistingConversation(text: String, conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {'''
+          new = '''        diagnostics.info(category: "webSend", name: "coveredExecutor.observing", fields: ["target": "existing_conversation", "mode": forceReload ? "manual_sync_rearm" : "selection"])
+    }
+
+    func reactivateExternalObservationFocus() {
+        precondition(Thread.isMainThread)
+        guard observingExternalResponse else { return }
+        logWebViewActivationState(stage: "selection_external_focus_rearm")
+        let nativeFirstResponder = webView.becomeFirstResponder()
+        diagnostics.info(category: "webSend", name: "coveredExecutor.selectionFocusActivationAttempt", fields: ["nativeFirstResponder": nativeFirstResponder ? "true" : "false"])
+        webView.evaluateJavaScript("document.hasFocus()") { [weak self] result, error in
+            guard let self else { return }
+            let documentHasFocus = (result as? Bool) == true
+            self.diagnostics.info(category: "webSend", name: "coveredExecutor.selectionFocusActivationResult", fields: ["nativeFirstResponder": nativeFirstResponder ? "true" : "false", "documentHasFocus": documentHasFocus ? "true" : "false", "evaluation": error == nil ? "succeeded" : "failed"])
+        }
+    }
+
+    func sendExistingConversation(text: String, conversationID: String, events: @escaping (CoveredWebSendEvent) -> Void) {'''
+          assert s.count(old) == 1
+          s = s.replace(old, new, 1)
+          old2 = '''            default:
+                guard let generation = externalGeneration else { return }
+                self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
+            }
+        }
+    }
+
+    private func handleExternalAcquisitionHint'''
+          new2 = '''            default:
+                guard let generation = externalGeneration else { return }
+                self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
+            }
+        }
+        if existingSnapshot?.phase.isActive == true, existingSnapshot?.promptText.isEmpty == true { sendExecutor.reactivateExternalObservationFocus() }
+    }
+
+    private func handleExternalAcquisitionHint'''
+          assert s.count(old2) == 1
+          s = s.replace(old2, new2, 1)
+          p.write_text(s)
+
+          pbx = Path('ChatGPTClient.xcodeproj/project.pbxproj')
+          t = pbx.read_text()
+          assert t.count('CURRENT_PROJECT_VERSION = 92;') == 2
+          assert t.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b92";') == 2
+          t = t.replace('CURRENT_PROJECT_VERSION = 92;', 'CURRENT_PROJECT_VERSION = 93;')
+          t = t.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b92";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b93";')
+          pbx.write_text(t)
+          PY
+
+      - name: Audit exact product scope
+        run: |
+          set -euo pipefail
+          git diff --check
+          printf '%s\n' "$(git diff --name-only | sort)"
+          test "$(git diff --name-only | sort)" = $'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          grep -Fq 'selection_external_focus_rearm' ChatGPTClient/RootViewController.swift
+          grep -Fq 'selectionFocusActivationResult' ChatGPTClient/RootViewController.swift
+          grep -Fq 'DEV-send-stream-0.1.0-b93' ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Simulator compile
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit b93 product
+        run: |
+          set -euo pipefail
+          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
+          git commit -m "b93: rearm external focus on reselection"
+          git push origin HEAD:dev/send-stream-20260829

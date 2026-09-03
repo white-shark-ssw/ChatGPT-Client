@@ -9,9 +9,6 @@ on:
       - ".github/workflows/research-official-ios-realtime-probe.yml"
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build-probe:
     runs-on: macos-15
@@ -19,10 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Toolchain
         run: xcodebuild -version
+
       - name: Build research dylib
         run: bash scripts/research/official_ios_realtime_probe/build_probe.sh build/research-probe
+
       - name: Validate research artifact
         run: |
           test -f build/research-probe/ChatGPTRealtimeProbe.dylib
@@ -30,6 +30,7 @@ jobs:
           otool -L build/research-probe/ChatGPTRealtimeProbe.dylib
           codesign -dv --verbose=2 build/research-probe/ChatGPTRealtimeProbe.dylib 2>&1 | head -n 30
           cat build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
+
       - name: Upload research probe
         uses: actions/upload-artifact@v4
         with:
@@ -39,23 +40,3 @@ jobs:
             build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
           if-no-files-found: error
           retention-days: 7
-
-  finalize-v04:
-    needs: build-probe
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: dev/send-stream-20260829
-          fetch-depth: 0
-      - name: Apply finalize helper
-        run: |
-          set -euo pipefail
-          python3 .github/probe_v04_finalize.py
-          git diff --check
-          git status --short
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "docs: record Probe v0.4 gate and clean tooling [skip ci]"
-          git push origin HEAD:dev/send-stream-20260829

@@ -1,5 +1,11 @@
 # Project State
 
+## 2026-09-04 — official iOS Probe v0.4 package ready / task-resume late-join gate
+
+Cross-platform late-join remains primary. Probe v0.2 is Inconclusive because a failed user-WebSocket receive produced 392,033 events / ~76 MB of instrumentation traffic. Exact official static evidence now proves native `ConversationPollingManager` / resume-fetch recovery / stream-status polling strings plus Swift async URLSession `data(for:)` / `bytes(for:)`. Probe v0.4 therefore observes each relevant NSURLSession task at `resume`, including Swift-async-created tasks, without logging content/auth.
+
+Exact v0.4 source `db3f8a7d01f39f364f6166cf72245db426cadef1`; CI `33795191324 / 100781074234` success; Artifact `9908872470`; digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`; dylib SHA `cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9`; research IPA SHA `b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`. Human Runtime v0.4 pending. b95 remains product Candidate; b96 unallocated; Stable/Frozen Send No.
+
 ## 2026-09-04 — official iOS Probe v0.3 research package ready
 
 Cross-platform late-join remains the primary Send/Stream research gate. Probe v0.2 Runtime is Inconclusive because an official user-WebSocket error produced a very large repeated-receive log storm; the absence of target events in that polluted sample is not a protocol rejection. Probe v0.3 is research-only and package-verified: source `91abb9ca95d80ea4ab646fc33effd55083e0d3ee`, research CI `33793891708 / 100776808437` success, Artifact `9908389485`, dylib SHA `cd4294d523054109886a5026bc0c3dabcc6309d8dbcfafe3d27e2c3adec14f85`, research IPA SHA `3ec2645c338f25d99c9ccf94c38190994cccd8153a0846a5d76a5ca755288d61`. It deduplicates failed-socket receive logging and adds URL-form URLSession observation only. Human Runtime v0.3 is pending. b95 remains the product Candidate; b96 is unallocated; Stable/Frozen Send No.

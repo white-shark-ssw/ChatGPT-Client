@@ -1,5 +1,19 @@
 # DEV-send-stream
 
+## Official iOS Probe v0.4 package-ready research override — 2026-09-04
+
+Probe v0.2 Human Runtime is **Inconclusive, not a protocol negative**. Exact exported JSONL `sha256:f4f7e6f897e73262473a296ecbccc012477c5e1b44bdfe5ca7e3a43006148513` contains 392,033 valid events / 76,447,285 bytes / zero parse errors and begins with `probe.log_cleared`. After one official user-WebSocket `NSPOSIXErrorDomain/53`, the app repeatedly invoked receive on the same failed task and v0.2 logged 195,999 identical receive errors plus 196,002 receive-arm events. That ~76 MB logging storm materially perturbed the tested process, so the absence of conversation HTTP/SSE/per-turn-WebSocket events after that boundary cannot reject official late-join.
+
+Exact official-binary static evidence now exposes `ConversationPollingManager`, `ConversationResumeFetchRecovery`, `recoverConversationWithNewPollingIfPossible`, `conversation_resuming.recover_with_new_polling*`, `ConversationStreamStatusResponse`, `KnownConversationStreamStatus`, `IS_STREAMING`, `ios.conversation_polling`, `chatgpt-ios-inline-polling`, `resumableStreamingConversation`, and inline stream-status/fetch recovery diagnostics. The same binary imports Swift Foundation async `URLSession.data(for:)` / `bytes(for:)`. This strongly supports observing native task-level polling/status/fetch, but does not yet prove the exact cross-platform Runtime URL, cadence or ownership.
+
+Probe v0.4 adds one privacy-safe `http.task.resume` event per observed `NSURLSessionTask`, including tasks internally created by Swift async URLSession. It preserves v0.3 failed-WebSocket error de-duplication and `清空`. It logs structural request metadata only, never auth/signed-query values or conversation content.
+
+Exact research source `db3f8a7d01f39f364f6166cf72245db426cadef1`; build trigger/head `ce43a7fc3fb4f581dd7614bac541c44dff8af512`; dedicated research CI `33795191324 / 100781074234` passed; canonical Artifact `9908872470`; Artifact digest `sha256:29675f185f8b0919821e6fdb44a3cc4ff3673187c346dd00e1f45fc3f47a8ccc`; independently verified Probe dylib `sha256:cc6a2b29b19441f56f214b199e5e7512c1739b3ae8563bc7968c0eb26779ecf9` matching sidecar. Against official source ZIP `sha256:bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, repacked `ChatGPT-Official-RealtimeProbe-v04-TrollStore-20260904.ipa` is `sha256:b4c0e53ea07bea92787ef7186b5ad79e1aa5f7bb52ebd2c2272e7060261d3d6e`, preserves `com.openai.chat` / `1.2026.202` / `30140022279`, passes ZIP integrity, and differs from pristine source in exactly three intended files.
+
+Evidence ladder: **research code written / exact research scope guard passed / dedicated research CI passed / Artifact produced / dylib and research IPA independently verified / v0.4 Human Runtime pending.** Product remains exact b95; b96 remains unallocated; Stable/Frozen Send No.
+
+**Next exact action:** Human Runtime exact v0.4. Fully relaunch official research app, press `清空` immediately before one deliberately long cross-platform project response, reproduce the normal visible official-iOS late-join without extra refreshes, and export JSONL after visible in-progress join or terminal. Decisive evidence is the earliest target-correlated `http.task.resume`, conversation status/detail/resume task, or per-turn WebSocket event before terminal. Do not implement product polling/cadence or allocate b96 until that current-account Runtime path is observed.
+
 ## Official iOS Probe v0.3 package-ready research override — 2026-09-04
 
 Probe v0.2 Human Runtime remains **Inconclusive for cross-platform late-join**: its clean-log/privacy changes worked, but one failed official user WebSocket produced 195,999 repeated `NSPOSIXErrorDomain/53` receive errors and a 76 MB JSONL, materially perturbing observation. No target conversation HTTP/SSE or conversation/per-turn WebSocket event was observed, so that absence is not promoted to a protocol rejection.

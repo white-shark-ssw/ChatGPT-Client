@@ -42,7 +42,7 @@ jobs:
           grep -q 'ChatGPTRealtimeProbe.Clear' scripts/research/official_ios_realtime_probe/ProbeExportUI.m
           grep -q 'pathShape' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
           test "$(grep -c '@"path": url.path' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m || true)" = "0"
-          changed="$(git diff --name-only | sort)"
+          changed="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
           expected="$(printf '%s\n' \
             docs/project/PROJECT_STATE.md \
             docs/project/current/dev/DEV-send-stream.md \

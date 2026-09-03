@@ -1,6 +1,6 @@
 # Official iOS Realtime Probe
 
-Current research revision: **Probe v0.3**.
+Current research revision: **Probe v0.4**.
 
 Research-only observer for the user-supplied TrollStore ChatGPT package. It is not linked into ChatGPTClient and is not a product Candidate.
 
@@ -15,6 +15,7 @@ Only privacy-safe structure:
 - inbound frame/payload key names, event/update type, message count, and a 12-hex SHA-256 prefix for conversation identity;
 - transport errors by domain/code; repeated receive failures on the same failed WebSocket task are emitted once until a real message arrives;
 - URLSession conversation/realtime observations cover both request-based and URL-based data-task constructors.
+- one privacy-safe `http.task.resume` event is emitted per observed NSURLSession task, including tasks created internally by Swift async `URLSession.data(for:)` / `bytes(for:)` paths; no task body or auth material is logged.
 
 It does not log Cookie/Authorization headers, signed WebSocket query values, prompt/answer/reasoning/tool text, request/response bodies, or raw conversation IDs.
 
@@ -42,7 +43,7 @@ After injection, fully terminate and relaunch ChatGPT. The probe writes `ChatGPT
 4. Let the response complete without manually refreshing A on the official iOS app.
 5. Export/copy only `ChatGPTRealtimeProbe.jsonl` for analysis.
 
-The decisive question is which target-correlated acquisition event appears first before assistant completion: conversation HTTP/stream-status/resume/SSE, a conversation/per-turn WebSocket subscription/update, or another official route. Probe v0.3 also verifies that a failed user socket no longer expands the research log into a per-receive error storm.
+The decisive question is which target-correlated acquisition event appears first before assistant completion: conversation HTTP/stream-status/resume/SSE, a conversation/per-turn WebSocket subscription/update, or another official route. Probe v0.4 keeps the v0.3 WebSocket error de-duplication and adds task-resume observation so Swift async URLSession acquisition cannot bypass the probe merely by avoiding public data-task constructors.
 
 ## Evidence boundary
 

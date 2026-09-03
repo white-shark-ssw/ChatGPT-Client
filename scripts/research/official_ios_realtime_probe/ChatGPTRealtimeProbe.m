@@ -2,7 +2,7 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.3";
+static NSString * const RPTProbeVersion = @"0.4";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
@@ -10,6 +10,7 @@ static dispatch_queue_t RPTLogQueue;
 static NSMutableSet<NSString *> *RPTHookedKeys;
 static NSMutableDictionary<NSString *, NSValue *> *RPTOriginalIMPs;
 static char RPTWebSocketReceiveErrorLoggedKey;
+static char RPTTaskResumeLoggedKey;
 
 static NSString *RPTTimestamp(void) {
     static NSISO8601DateFormatter *formatter;
@@ -546,16 +547,41 @@ static void RPTInstallHookOnClass(Class cls, SEL selector, IMP replacement) {
     }
 }
 
+static BOOL RPTShouldObserveTaskURL(NSURL *url) {
+    if (!url) return NO;
+    NSString *host = url.host.lowercaseString ?: @"";
+    if ([host isEqualToString:@"chatgpt.com"] || [host isEqualToString:@"chat.openai.com"] || [host isEqualToString:@"ios.chat.openai.com"] || [host isEqualToString:@"api.openai.com"]) return YES;
+    if ([host hasSuffix:@".chatgpt.com"] || [host hasSuffix:@".openai.com"]) return YES;
+    return RPTShouldObserveURL(url);
+}
+
+static void RPTTaskResume(id self, SEL _cmd) {
+    NSURLSessionTask *task = (NSURLSessionTask *)self;
+    NSURLRequest *request = task.currentRequest ?: task.originalRequest;
+    if (request.URL && RPTShouldObserveTaskURL(request.URL) && !objc_getAssociatedObject(self, &RPTTaskResumeLoggedKey)) {
+        objc_setAssociatedObject(self, &RPTTaskResumeLoggedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        NSMutableDictionary *fields = RPTRequestFields(request);
+        fields[@"taskClass"] = NSStringFromClass(object_getClass(self)) ?: @"";
+        RPTWriteEvent(@"http.task.resume", fields);
+    }
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return;
+    void (*function)(id, SEL) = (void *)original;
+    function(self, _cmd);
+}
+
 static void RPTInstallSessionHooks(void) {
     int count = objc_getClassList(NULL, 0);
     if (count <= 0) return;
     Class *classes = (__unsafe_unretained Class *)calloc((size_t)count, sizeof(Class));
     count = objc_getClassList(classes, count);
     Class sessionClass = NSURLSession.class;
+    Class taskClass = NSURLSessionTask.class;
     SEL responseSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveResponse:completionHandler:");
     SEL completeSelector = NSSelectorFromString(@"URLSession:task:didCompleteWithError:");
     for (int i = 0; i < count; i++) {
         Class cls = classes[i];
+        if (RPTIsSubclassOfClass(cls, taskClass) && RPTClassOwnsSelector(cls, @selector(resume))) RPTInstallHookOnClass(cls, @selector(resume), (IMP)RPTTaskResume);
         if (RPTIsSubclassOfClass(cls, sessionClass)) {
             if (@available(iOS 13.0, *)) {
                 if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);

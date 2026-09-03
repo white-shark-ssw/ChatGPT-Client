@@ -22,10 +22,20 @@ jobs:
       - name: Guard exact b91 state
         run: |
           git merge-base --is-ancestor 2c5074e567f3aeb929d9a9e254c1b72d0c12216a HEAD
-          test "$(grep -F -c 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift)" = "1"
-          test "$(grep -F -c 'const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift)" = "1"
-          test "$(grep -F -c 'CURRENT_PROJECT_VERSION = 91;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -F -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b91\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('ChatGPTClient/RootViewController.swift').read_text()
+          pbx = Path('ChatGPTClient.xcodeproj/project.pbxproj').read_text()
+          expected = {
+              'frontmost': root.count('hostView.bringSubviewToFront(webView)'),
+              'scoped_route': root.count(r'const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);'),
+              'build91': pbx.count('CURRENT_PROJECT_VERSION = 91;'),
+              'candidate91': pbx.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b91";'),
+          }
+          print(expected)
+          if expected != {'frontmost': 1, 'scoped_route': 1, 'build91': 2, 'candidate91': 2}:
+              raise SystemExit('unexpected b91 guarded state')
+          PY
 
       - name: Allocate b92 checkpoint
         run: |
@@ -41,8 +51,7 @@ jobs:
           insert = anchor + '- b92 Candidate / Build: `DEV-send-stream-0.1.0-b92` / `0.1.0 (92)` permanently reserved; product/package not yet emitted at allocation checkpoint\n'
           if text.count(anchor) != 1:
               raise SystemExit('checkpoint identity anchor mismatch')
-          text = text.replace(anchor, insert, 1).replace(old, new, 1)
-          p.write_text(text)
+          p.write_text(text.replace(anchor, insert, 1).replace(old, new, 1))
           PY
           git diff --check
           test "$(git diff --name-only)" = "docs/project/current/dev/DEV-send-stream.md"
@@ -79,9 +88,18 @@ jobs:
         run: |
           git diff --check
           test "$(git diff --name-only | sort)" = $'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift' || { git diff --name-only; exit 1; }
-          test "$(grep -F -c 'hostView.bringSubviewToFront(webView)' ChatGPTClient/RootViewController.swift)" = "0"
-          test "$(grep -F -c 'manual_sync_covered' ChatGPTClient/RootViewController.swift)" = "1"
-          test "$(grep -F -c 'const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);' ChatGPTClient/RootViewController.swift)" = "1"
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('ChatGPTClient/RootViewController.swift').read_text()
+          checks = {
+              'frontmost': root.count('hostView.bringSubviewToFront(webView)'),
+              'covered_marker': root.count('manual_sync_covered'),
+              'scoped_route': root.count(r'const match = location.pathname.match(/^\/(?:g\/[^/?#]+\/)?c\/([^/?#]+)/);'),
+          }
+          print(checks)
+          if checks != {'frontmost': 0, 'covered_marker': 1, 'scoped_route': 1}:
+              raise SystemExit('unexpected b92 product state')
+          PY
           git diff -- ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj
 
       - name: Simulator compile

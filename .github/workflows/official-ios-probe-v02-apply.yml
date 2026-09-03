@@ -1,0 +1,580 @@
+name: official iOS Probe v0.2 apply
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/official-ios-probe-v02-apply.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact research baseline
+        run: |
+          test "$(git rev-parse HEAD:scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m)" = "77da135feedeb3bf70f8c8695d738131b346d315"
+          test "$(git rev-parse HEAD:scripts/research/official_ios_realtime_probe/ProbeExportUI.m)" = "fe4a441c2fddcd00df831a806a46ef5f575c777f"
+          test "$(git rev-parse HEAD:scripts/research/official_ios_realtime_probe/README.md)" = "af019d260482f44f756fe42f5e63443ceacdd079"
+          test "$(git rev-parse HEAD:docs/project/current/dev/DEV-send-stream.md)" = "277baf03174e2de6270c1960bd8565e6eb340e01"
+          test "$(git rev-parse HEAD:docs/project/PROJECT_STATE.md)" = "1d262615539762d2b594d4d87d434e5d9b004c87"
+          test ! -e docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v01-runtime-v02-plan-20260904.md
+
+      - name: Apply evidence-backed Probe v0.2 patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              if text.count(old) != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, got {text.count(old)}")
+              return text.replace(old, new, 1)
+
+          probe_path = Path("scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m")
+          probe = probe_path.read_text()
+          probe = replace_once(probe, 'static NSString * const RPTProbeVersion = @"0.1";', 'static NSString * const RPTProbeVersion = @"0.2";', "probe version")
+
+          old_url = r'''static NSDictionary *RPTURLShape(NSURL *url) {
+              if (!url) return @{};
+              NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+              return @{
+                  @"scheme": url.scheme ?: @"",
+                  @"host": url.host ?: @"",
+                  @"path": url.path ?: @"",
+                  @"queryPresent": (components.percentEncodedQuery.length > 0) ? @YES : @NO,
+                  @"queryItemCount": @(components.queryItems.count)
+              };
+          }
+
+          static BOOL RPTLikelyRealtimePath(NSString *path) {
+              NSString *lower = path.lowercaseString;
+              return [lower containsString:@"celsius"] || [lower containsString:@"websocket"] || [lower containsString:@"/ws/"] || [lower hasSuffix:@"/ws/user"];
+          }
+          '''
+          new_url = r'''static NSArray<NSString *> *RPTPathParts(NSString *path) {
+              NSMutableArray<NSString *> *parts = [NSMutableArray array];
+              for (NSString *part in [path componentsSeparatedByString:@"/"]) if (part.length) [parts addObject:part];
+              return parts;
+          }
+
+          static BOOL RPTLooksOpaquePathPart(NSString *part) {
+              if (!part.length) return NO;
+              if (part.length > 32) return YES;
+              NSString *lower = part.lowercaseString;
+              if ([lower hasPrefix:@"user-"] && part.length > 12) return YES;
+              NSRegularExpression *uuidLike = [NSRegularExpression regularExpressionWithPattern:@"^[0-9a-f]{8}-[0-9a-f-]{20,}$" options:NSRegularExpressionCaseInsensitive error:nil];
+              if ([uuidLike firstMatchInString:part options:0 range:NSMakeRange(0, part.length)]) return YES;
+              return RPTSafeToken(part).length == 0;
+          }
+
+          static NSString *RPTSafePathShape(NSString *path) {
+              NSArray<NSString *> *parts = RPTPathParts(path ?: @"");
+              NSMutableArray<NSString *> *safe = [NSMutableArray arrayWithCapacity:parts.count];
+              for (NSString *part in parts) [safe addObject:RPTLooksOpaquePathPart(part) ? @"<opaque>" : part.lowercaseString];
+              return safe.count ? [@"/" stringByAppendingString:[safe componentsJoinedByString:@"/"]] : @"/";
+          }
+
+          static NSString *RPTPathKind(NSString *path) {
+              NSArray<NSString *> *parts = RPTPathParts(path ?: @"");
+              NSString *lower = path.lowercaseString;
+              if ([lower containsString:@"/ws/user/"] || [lower hasSuffix:@"/ws/user"]) return @"user_websocket";
+              if (parts.count >= 2 && [parts[0] isEqualToString:@"backend-api"]) {
+                  if ([parts[1] isEqualToString:@"conversation"] && parts.count >= 3) {
+                      if (parts.count >= 4 && [parts[3] isEqualToString:@"stream_status"]) return @"conversation_stream_status";
+                      return @"conversation_detail";
+                  }
+                  if ([parts[1] isEqualToString:@"conversations"]) return @"conversations";
+                  if ([parts[1] isEqualToString:@"f"] && parts.count >= 3 && [parts[2] isEqualToString:@"conversation"]) {
+                      if (parts.count >= 4 && [parts[3] isEqualToString:@"resume"]) return @"conversation_resume";
+                      return @"conversation_send";
+                  }
+              }
+              if ([lower containsString:@"celsius"] || [lower containsString:@"websocket"] || [lower containsString:@"/ws/"]) return @"realtime_registration";
+              if ([lower containsString:@"conversation"]) return @"conversation_other";
+              if ([lower containsString:@"stream"] || [lower containsString:@"resume"]) return @"stream_other";
+              return @"other";
+          }
+
+          static NSString *RPTConversationHashFromURL(NSURL *url) {
+              NSArray<NSString *> *parts = RPTPathParts(url.path ?: @"");
+              if (parts.count >= 3 && [parts[0] isEqualToString:@"backend-api"] && ([parts[1] isEqualToString:@"conversation"] || [parts[1] isEqualToString:@"conversations"])) return RPTHashString(parts[2]);
+              return @"";
+          }
+
+          static NSDictionary *RPTURLShape(NSURL *url) {
+              if (!url) return @{};
+              NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+              NSMutableDictionary *shape = [NSMutableDictionary dictionaryWithDictionary:@{
+                  @"scheme": url.scheme ?: @"",
+                  @"host": url.host ?: @"",
+                  @"pathKind": RPTPathKind(url.path ?: @""),
+                  @"pathShape": RPTSafePathShape(url.path ?: @""),
+                  @"queryPresent": (components.percentEncodedQuery.length > 0) ? @YES : @NO,
+                  @"queryItemCount": @(components.queryItems.count)
+              }];
+              NSString *conversationHash = RPTConversationHashFromURL(url);
+              if (conversationHash.length) shape[@"conversationHash"] = conversationHash;
+              return shape;
+          }
+
+          static BOOL RPTShouldObserveURL(NSURL *url) {
+              NSString *kind = RPTPathKind(url.path ?: @"");
+              return ![kind isEqualToString:@"other"];
+          }
+
+          static NSMutableDictionary *RPTRequestFields(NSURLRequest *request) {
+              NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(request.URL)];
+              fields[@"method"] = request.HTTPMethod ?: @"GET";
+              id json = RPTJSONObjectFromData(request.HTTPBody);
+              if ([json isKindOfClass:[NSDictionary class]]) {
+                  NSDictionary *dictionary = json;
+                  fields[@"requestKeys"] = RPTSortedKeys(dictionary);
+                  id conversation = dictionary[@"conversation_id"] ?: dictionary[@"conversationId"];
+                  if ([conversation isKindOfClass:[NSString class]] && [(NSString *)conversation length]) fields[@"conversationHash"] = RPTHashString(conversation);
+                  id offset = dictionary[@"offset"] ?: dictionary[@"last_offset"] ?: dictionary[@"lastOffset"];
+                  if (offset) fields[@"offsetClass"] = RPTValueClass(offset);
+              }
+              return fields;
+          }
+
+          static NSMutableDictionary *RPTResponseFields(NSURLRequest *request, NSURLResponse *response, NSData *data, NSError *error) {
+              NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(response.URL ?: request.URL)];
+              fields[@"method"] = request.HTTPMethod ?: @"GET";
+              NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]] ? (id)response : nil;
+              if (http) fields[@"status"] = @(http.statusCode);
+              if (response.MIMEType.length) fields[@"mimeType"] = response.MIMEType.lowercaseString;
+              if (response.expectedContentLength >= 0) fields[@"expectedContentLength"] = @(response.expectedContentLength);
+              if (data) fields[@"bodyBytes"] = @(data.length);
+              id json = RPTJSONObjectFromData(data);
+              if ([json isKindOfClass:[NSDictionary class]]) fields[@"responseKeys"] = RPTSortedKeys(json);
+              fields[@"responseClass"] = RPTValueClass(json);
+              if (error) { fields[@"errorDomain"] = error.domain ?: @""; fields[@"errorCode"] = @(error.code); }
+              return fields;
+          }
+          '''
+          probe = replace_once(probe, old_url, new_url, "safe URL/HTTP helpers")
+
+          old_write_end = r'''        NSLog(@"[ChatGPTRealtimeProbe] %@", name);
+              });
+          }
+          '''
+          new_write_end = r'''        NSLog(@"[ChatGPTRealtimeProbe] %@", name);
+              });
+          }
+
+          void RPTClearLog(void) {
+              if (!RPTLogQueue) return;
+              dispatch_sync(RPTLogQueue, ^{
+                  [[NSFileManager defaultManager] removeItemAtPath:RPTLogPath() error:nil];
+              });
+              RPTWriteEvent(@"probe.log_cleared", @{});
+          }
+          '''
+          probe = replace_once(probe, old_write_end, new_write_end, "clear log export")
+
+          old_presence = r'''        id presence = command[@"presence"];
+                  if ([presence isKindOfClass:[NSDictionary class]]) {
+                      NSString *state = RPTSafeToken(presence[@"state"]);
+                      if (state.length) summary[@"presenceState"] = state;
+                  }
+          '''
+          new_presence = r'''        id presence = command[@"presence"];
+                  if ([presence isKindOfClass:[NSDictionary class]]) {
+                      NSString *state = RPTSafeToken(presence[@"state"]);
+                      if (state.length) summary[@"presenceState"] = state;
+                  }
+                  NSString *commandState = RPTSafeToken(command[@"state"]);
+                  if (commandState.length) summary[@"commandState"] = commandState;
+          '''
+          probe = replace_once(probe, old_presence, new_presence, "presence state")
+
+          old_http = r'''static NSURLSessionDataTask *RPTSessionDataRequest(id self, SEL _cmd, NSURLRequest *request) {
+              IMP original = RPTOriginalIMP(self, _cmd);
+              if (!original) return nil;
+              NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *) = (void *)original;
+              NSURLSessionDataTask *task = function(self, _cmd, request);
+              if (RPTLikelyRealtimePath(request.URL.path ?: @"")) {
+                  NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(request.URL)];
+                  fields[@"method"] = request.HTTPMethod ?: @"GET";
+                  RPTWriteEvent(@"http.realtime.request", fields);
+              }
+              return task;
+          }
+
+          static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, NSURLRequest *request, void (^completionHandler)(NSData *, NSURLResponse *, NSError *)) {
+              IMP original = RPTOriginalIMP(self, _cmd);
+              if (!original) return nil;
+              NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *, void (^)(NSData *, NSURLResponse *, NSError *)) = (void *)original;
+              BOOL candidate = RPTLikelyRealtimePath(request.URL.path ?: @"");
+              if (candidate) {
+                  NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(request.URL)];
+                  fields[@"method"] = request.HTTPMethod ?: @"GET";
+                  RPTWriteEvent(@"http.realtime.request", fields);
+              }
+              return function(self, _cmd, request, ^(NSData *data, NSURLResponse *response, NSError *error) {
+                  NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]] ? (id)response : nil;
+                  id json = RPTJSONObjectFromData(data);
+                  NSArray *keys = [json isKindOfClass:[NSDictionary class]] ? RPTSortedKeys(json) : @[];
+                  BOOL websocketResponse = NO;
+                  for (NSString *key in keys) {
+                      NSString *lower = key.lowercaseString;
+                      if ([lower containsString:@"websocket"] || [lower isEqualToString:@"ws_url"] || [lower isEqualToString:@"wsurl"]) { websocketResponse = YES; break; }
+                  }
+                  if (candidate || websocketResponse) {
+                      NSMutableDictionary *fields = [NSMutableDictionary dictionaryWithDictionary:RPTURLShape(response.URL ?: request.URL)];
+                      fields[@"method"] = request.HTTPMethod ?: @"GET";
+                      fields[@"status"] = @(http.statusCode);
+                      fields[@"responseKeys"] = keys;
+                      fields[@"responseClass"] = RPTValueClass(json);
+                      if (error) { fields[@"errorDomain"] = error.domain ?: @""; fields[@"errorCode"] = @(error.code); }
+                      RPTWriteEvent(@"http.realtime.response", fields);
+                  }
+                  if (completionHandler) completionHandler(data, response, error);
+              });
+          }
+          '''
+          new_http = r'''static NSURLSessionDataTask *RPTSessionDataRequest(id self, SEL _cmd, NSURLRequest *request) {
+              IMP original = RPTOriginalIMP(self, _cmd);
+              if (!original) return nil;
+              NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *) = (void *)original;
+              NSURLSessionDataTask *task = function(self, _cmd, request);
+              if (RPTShouldObserveURL(request.URL)) RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
+              return task;
+          }
+
+          static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, NSURLRequest *request, void (^completionHandler)(NSData *, NSURLResponse *, NSError *)) {
+              IMP original = RPTOriginalIMP(self, _cmd);
+              if (!original) return nil;
+              NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *, void (^)(NSData *, NSURLResponse *, NSError *)) = (void *)original;
+              BOOL candidate = RPTShouldObserveURL(request.URL);
+              if (candidate) RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
+              return function(self, _cmd, request, ^(NSData *data, NSURLResponse *response, NSError *error) {
+                  id json = RPTJSONObjectFromData(data);
+                  NSArray *keys = [json isKindOfClass:[NSDictionary class]] ? RPTSortedKeys(json) : @[];
+                  BOOL websocketResponse = NO;
+                  for (NSString *key in keys) {
+                      NSString *lower = key.lowercaseString;
+                      if ([lower containsString:@"websocket"] || [lower isEqualToString:@"ws_url"] || [lower isEqualToString:@"wsurl"]) { websocketResponse = YES; break; }
+                  }
+                  if (candidate || websocketResponse) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, data, error));
+                  if (completionHandler) completionHandler(data, response, error);
+              });
+          }
+
+          static void RPTDelegateDidReceiveResponse(id self, SEL _cmd, NSURLSession *session, NSURLSessionDataTask *dataTask, NSURLResponse *response, void (^completionHandler)(NSURLSessionResponseDisposition)) {
+              NSURLRequest *request = dataTask.currentRequest ?: dataTask.originalRequest;
+              if (RPTShouldObserveURL(request.URL ?: response.URL)) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, nil, nil));
+              IMP original = RPTOriginalIMP(self, _cmd);
+              if (!original) return;
+              void (*function)(id, SEL, NSURLSession *, NSURLSessionDataTask *, NSURLResponse *, void (^)(NSURLSessionResponseDisposition)) = (void *)original;
+              function(self, _cmd, session, dataTask, response, completionHandler);
+          }
+
+          static void RPTDelegateDidComplete(id self, SEL _cmd, NSURLSession *session, NSURLSessionTask *task, NSError *error) {
+              NSURLRequest *request = task.currentRequest ?: task.originalRequest;
+              if (RPTShouldObserveURL(request.URL)) RPTWriteEvent(@"http.observed.complete", RPTResponseFields(request, task.response, nil, error));
+              IMP original = RPTOriginalIMP(self, _cmd);
+              if (!original) return;
+              void (*function)(id, SEL, NSURLSession *, NSURLSessionTask *, NSError *) = (void *)original;
+              function(self, _cmd, session, task, error);
+          }
+          '''
+          probe = replace_once(probe, old_http, new_http, "expanded HTTP observation")
+
+          old_install = r'''static void RPTInstallSessionHooks(void) {
+              int count = objc_getClassList(NULL, 0);
+              if (count <= 0) return;
+              Class *classes = (__unsafe_unretained Class *)calloc((size_t)count, sizeof(Class));
+              count = objc_getClassList(classes, count);
+              Class sessionClass = NSURLSession.class;
+              for (int i = 0; i < count; i++) {
+                  Class cls = classes[i];
+                  if (!RPTIsSubclassOfClass(cls, sessionClass)) continue;
+                  if (@available(iOS 13.0, *)) {
+                      if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);
+                      if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithURL:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithURL:), (IMP)RPTSessionWebSocketURL);
+                  }
+                  if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:), (IMP)RPTSessionDataRequest);
+                  if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:completionHandler:), (IMP)RPTSessionDataRequestCompletion);
+              }
+              free(classes);
+          }
+          '''
+          new_install = r'''static void RPTInstallSessionHooks(void) {
+              int count = objc_getClassList(NULL, 0);
+              if (count <= 0) return;
+              Class *classes = (__unsafe_unretained Class *)calloc((size_t)count, sizeof(Class));
+              count = objc_getClassList(classes, count);
+              Class sessionClass = NSURLSession.class;
+              SEL responseSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveResponse:completionHandler:");
+              SEL completeSelector = NSSelectorFromString(@"URLSession:task:didCompleteWithError:");
+              for (int i = 0; i < count; i++) {
+                  Class cls = classes[i];
+                  if (RPTIsSubclassOfClass(cls, sessionClass)) {
+                      if (@available(iOS 13.0, *)) {
+                          if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);
+                          if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithURL:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithURL:), (IMP)RPTSessionWebSocketURL);
+                      }
+                      if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:), (IMP)RPTSessionDataRequest);
+                      if (RPTClassOwnsSelector(cls, @selector(dataTaskWithRequest:completionHandler:))) RPTInstallHookOnClass(cls, @selector(dataTaskWithRequest:completionHandler:), (IMP)RPTSessionDataRequestCompletion);
+                  }
+                  if (RPTClassOwnsSelector(cls, responseSelector)) RPTInstallHookOnClass(cls, responseSelector, (IMP)RPTDelegateDidReceiveResponse);
+                  if (RPTClassOwnsSelector(cls, completeSelector)) RPTInstallHookOnClass(cls, completeSelector, (IMP)RPTDelegateDidComplete);
+              }
+              free(classes);
+          }
+          '''
+          probe = replace_once(probe, old_install, new_install, "delegate hooks")
+          probe_path.write_text(probe)
+
+          ui_path = Path("scripts/research/official_ios_realtime_probe/ProbeExportUI.m")
+          ui = ui_path.read_text()
+          ui = replace_once(ui, 'static const NSInteger RPTUIProbeButtonTag = 0x52505431;', 'static const NSInteger RPTUIProbeButtonTag = 0x52505431;\nstatic const NSInteger RPTUIClearButtonTag = 0x52505432;\n\nextern void RPTClearLog(void);', "clear tag")
+          ui = replace_once(ui, '- (void)probeButtonTapped:(UIButton *)button;\n@end', '- (void)probeButtonTapped:(UIButton *)button;\n- (void)clearButtonTapped:(UIButton *)button;\n@end', "clear selector")
+          old_attach = r'''        UIWindow *window = RPTUIActiveWindow();
+                  if (!window || [window viewWithTag:RPTUIProbeButtonTag]) return;
+
+                  UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+                  button.tag = RPTUIProbeButtonTag;
+                  button.translatesAutoresizingMaskIntoConstraints = NO;
+                  button.accessibilityIdentifier = @"ChatGPTRealtimeProbe.Export";
+                  [button setTitle:@"Probe" forState:UIControlStateNormal];
+                  [button setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+                  button.titleLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
+                  button.backgroundColor = UIColor.systemBlueColor;
+                  button.layer.cornerRadius = 8.0;
+                  button.layer.shadowColor = UIColor.blackColor.CGColor;
+                  button.layer.shadowOpacity = 0.18;
+                  button.layer.shadowRadius = 3.0;
+                  button.layer.shadowOffset = CGSizeMake(0.0, 1.0);
+                  [button addTarget:self action:@selector(probeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+                  [window addSubview:button];
+                  [NSLayoutConstraint activateConstraints:@[
+                      [button.trailingAnchor constraintEqualToAnchor:window.safeAreaLayoutGuide.trailingAnchor constant:-8.0],
+                      [button.topAnchor constraintEqualToAnchor:window.safeAreaLayoutGuide.topAnchor constant:8.0],
+                      [button.widthAnchor constraintEqualToConstant:58.0],
+                      [button.heightAnchor constraintEqualToConstant:34.0]
+                  ]];
+                  [window bringSubviewToFront:button];
+                  NSLog(@"[ChatGPTRealtimeProbe] export UI ready");
+          '''
+          new_attach = r'''        UIWindow *window = RPTUIActiveWindow();
+                  if (!window || [window viewWithTag:RPTUIProbeButtonTag]) return;
+
+                  UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+                  button.tag = RPTUIProbeButtonTag;
+                  button.translatesAutoresizingMaskIntoConstraints = NO;
+                  button.accessibilityIdentifier = @"ChatGPTRealtimeProbe.Export";
+                  [button setTitle:@"Probe" forState:UIControlStateNormal];
+                  [button setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+                  button.titleLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
+                  button.backgroundColor = UIColor.systemBlueColor;
+                  button.layer.cornerRadius = 8.0;
+                  button.layer.shadowColor = UIColor.blackColor.CGColor;
+                  button.layer.shadowOpacity = 0.18;
+                  button.layer.shadowRadius = 3.0;
+                  button.layer.shadowOffset = CGSizeMake(0.0, 1.0);
+                  [button addTarget:self action:@selector(probeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+
+                  UIButton *clearButton = [UIButton buttonWithType:UIButtonTypeSystem];
+                  clearButton.tag = RPTUIClearButtonTag;
+                  clearButton.translatesAutoresizingMaskIntoConstraints = NO;
+                  clearButton.accessibilityIdentifier = @"ChatGPTRealtimeProbe.Clear";
+                  [clearButton setTitle:@"清空" forState:UIControlStateNormal];
+                  [clearButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+                  clearButton.titleLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
+                  clearButton.backgroundColor = UIColor.systemRedColor;
+                  clearButton.layer.cornerRadius = 8.0;
+                  [clearButton addTarget:self action:@selector(clearButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+
+                  [window addSubview:button];
+                  [window addSubview:clearButton];
+                  [NSLayoutConstraint activateConstraints:@[
+                      [button.trailingAnchor constraintEqualToAnchor:window.safeAreaLayoutGuide.trailingAnchor constant:-8.0],
+                      [button.topAnchor constraintEqualToAnchor:window.safeAreaLayoutGuide.topAnchor constant:8.0],
+                      [button.widthAnchor constraintEqualToConstant:58.0],
+                      [button.heightAnchor constraintEqualToConstant:34.0],
+                      [clearButton.trailingAnchor constraintEqualToAnchor:button.leadingAnchor constant:-6.0],
+                      [clearButton.centerYAnchor constraintEqualToAnchor:button.centerYAnchor],
+                      [clearButton.widthAnchor constraintEqualToConstant:58.0],
+                      [clearButton.heightAnchor constraintEqualToConstant:34.0]
+                  ]];
+                  [window bringSubviewToFront:clearButton];
+                  [window bringSubviewToFront:button];
+                  NSLog(@"[ChatGPTRealtimeProbe] export UI ready");
+          '''
+          ui = replace_once(ui, old_attach, new_attach, "clear button UI")
+          insert_before = '\n@end\n\n__attribute__((constructor)) static void RPTUIInitialize(void) {'
+          clear_method = r'''
+          - (void)clearButtonTapped:(UIButton *)button {
+              UIViewController *presenter = RPTUITopViewController(RPTUIActiveWindow().rootViewController);
+              if (!presenter) return;
+              UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"清空 Probe 日志？" message:@"清空后只保留新的测试事件，便于下一轮对时。" preferredStyle:UIAlertControllerStyleAlert];
+              [alert addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+              [alert addAction:[UIAlertAction actionWithTitle:@"清空" style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *action) {
+                  RPTClearLog();
+                  UIAlertController *done = [UIAlertController alertControllerWithTitle:@"已清空" message:@"下一轮 Probe 日志已从新的起点开始。" preferredStyle:UIAlertControllerStyleAlert];
+                  [done addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
+                  [presenter presentViewController:done animated:YES completion:nil];
+              }]];
+              alert.popoverPresentationController.sourceView = button;
+              alert.popoverPresentationController.sourceRect = button.bounds;
+              [presenter presentViewController:alert animated:YES completion:nil];
+          }
+          '''
+          ui = replace_once(ui, insert_before, '\n' + clear_method + insert_before, "clear handler")
+          ui_path.write_text(ui)
+
+          readme_path = Path("scripts/research/official_ios_realtime_probe/README.md")
+          readme = readme_path.read_text()
+          readme = readme.replace("# Official iOS Realtime Probe", "# Official iOS Realtime Probe\n\nCurrent research revision: **Probe v0.2**.", 1)
+          readme = readme.replace("- likely realtime registration HTTP method/path/status and JSON key names;", "- privacy-safe conversation/realtime HTTP path shape, method/status/MIME/JSON key names, including Detail/stream-status/resume/SSE candidates;\n- likely realtime registration HTTP method/path/status and JSON key names;", 1)
+          readme = readme.replace("The probe writes `ChatGPTRealtimeProbe.jsonl` into the app Documents directory and mirrors only event names to unified logs.", "The probe writes `ChatGPTRealtimeProbe.jsonl` into the app Documents directory and mirrors only event names to unified logs. The in-app `清空` control deletes prior JSONL content and writes a fresh `probe.log_cleared` marker before the next test.", 1)
+          readme_path.write_text(readme)
+
+          evidence = Path("docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v01-runtime-v02-plan-20260904.md")
+          evidence.write_text(r'''# DEV-send-stream — official iOS Probe v0.1 Runtime / v0.2 observation expansion — 2026-09-04
+
+## Input identity
+
+- User-exported file: `ChatGPTRealtimeProbe.jsonl`
+- SHA-256: `c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093`
+- Size: 7,166 bytes
+- Parsed JSONL events: 29
+- Parse errors: 0
+- Probe version in file: `0.1`
+- Bundle ID: `com.openai.chat`
+
+This is Human Runtime evidence from the research-modified official iOS package. It is not ChatGPTClient product Runtime and does not allocate b96.
+
+## Runtime result
+
+The Probe loaded and installed four hooks. It observed a real official `NSURLSessionWebSocketTask` to `ws.chatgpt.com` under the privacy-sensitive user-socket path family `/p24/ws/user/<opaque>` with one query item.
+
+Initial outbound frames contained:
+
+- `connect`, presence `foreground`;
+- subscribe `app_notifications`;
+- subscribe `calpico-chatgpt`;
+- subscribe `push_auth_challenge` with a string offset.
+
+All four received reply frames. Later presence commands also received reply frames.
+
+At `2026-09-03T17:49:18.799Z` and `.810Z`, receive returned `NSPOSIXErrorDomain / 53`. At `17:49:20.010Z` the official app created a new user WebSocket and repeated the same connect + three base subscriptions. Therefore official user-socket reconnect behavior is Runtime Positive for this sample.
+
+Across the complete file there is **no** observed:
+
+- conversation-specific or per-turn topic subscription;
+- target `conversationHash` frame;
+- `conversation-update`;
+- `add-messages`;
+- async-status update;
+- catchup/live target event.
+
+Classification: **Negative for the simple hypothesis that this captured official user WebSocket directly exposed the target late-join response through an observed conversation/per-turn subscription in this sample. Inconclusive for the overall official late-join mechanism.**
+
+## Probe v0.1 blind spot
+
+The v0.1 HTTP hooks logged only paths containing celsius/websocket/ws. They intentionally ignored ordinary conversation Detail, plural conversations, `stream_status`, `/f/conversation/resume`, protected conversation routes, and delegate-based HTTP/SSE response lifecycle.
+
+Therefore this file cannot distinguish between:
+
+1. late-join acquisition through ordinary HTTP/Detail/status/resume/SSE plus the base user socket;
+2. a conversation-specific transport implemented through a URLSession delegate path that v0.1 did not report;
+3. another official mechanism outside the current observation surface.
+
+The user-visible exact moment/condition of late-join is also not encoded in the JSONL, so this evidence cannot claim that the official UI visibly joined at a particular log timestamp.
+
+## Privacy correction
+
+v0.1 `RPTURLShape` recorded the raw WebSocket path. In the supplied file that path contains an opaque user-specific segment. Do not repeat or promote that segment into durable docs/product logic.
+
+Probe v0.2 must replace raw path logging with a privacy-safe path shape that redacts opaque path components while preserving route family, and hash known conversation IDs only when needed for event correlation.
+
+## Probe v0.2 authorized research delta
+
+Research tooling only:
+
+- redact opaque URL path components;
+- observe privacy-safe conversation/realtime HTTP request path kind + path shape + method;
+- record response status/MIME/body-size class/JSON key names where available, without body text or headers;
+- hash known conversation IDs from URL/body for correlation, never export raw IDs;
+- hook URLSession delegate response/completion methods in addition to completion-handler tasks, so streaming response start/end is observable without reading payload text;
+- retain WebSocket structural observation;
+- record direct presence command state;
+- add an in-app `清空` log control with confirmation; clearing writes a fresh `probe.log_cleared` marker.
+
+Do not log Cookie/Authorization/signed query values/prompt/answer/reasoning/tool text. Do not modify ChatGPTClient product code or allocate b96 from this result.
+
+## Next decisive Runtime
+
+Use the v0.2 official research package. Clear the log immediately before the test, reproduce the known cross-platform late-join flow, then export JSONL after the answer finishes or after the late-join mechanism is visibly established.
+
+Decisive evidence is the earliest target-correlated acquisition path before terminal: conversation Detail/status/resume/SSE response, conversation/per-turn WebSocket subscribe/update, or another newly observed official route. Product implementation remains blocked until that current-account path is evidenced.
+''')
+
+          checkpoint_path = Path("docs/project/current/dev/DEV-send-stream.md")
+          checkpoint = checkpoint_path.read_text()
+          block = r'''
+          ## Official iOS Probe v0.1 Runtime / v0.2 research gate — 2026-09-04
+
+          Human Runtime JSONL `sha256:c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093` parsed cleanly: 29 events / 7,166 bytes. Probe v0.1 was genuinely active and captured the official `ws.chatgpt.com` user WebSocket. The observed socket sent `connect` plus only three base subscriptions (`app_notifications`, `calpico-chatgpt`, `push_auth_challenge`). After `NSPOSIXErrorDomain/53` it recreated the socket and repeated the same base subscriptions. No conversation/per-turn subscribe, target conversation hash, conversation-update, add-messages, async-status, catchup or live target frame appears.
+
+          This is **negative for the simple direct-user-WebSocket late-join hypothesis in this sample, but overall late-join remains Inconclusive** because Probe v0.1 filtered out ordinary conversation HTTP/Detail/stream-status/resume/SSE and did not observe delegate-based streaming response lifecycle. v0.1 also exposed an opaque user-specific WebSocket path segment; v0.2 must redact opaque path parts.
+
+          Research-only v0.2 is authorized: privacy-safe HTTP conversation/realtime path observation, response status/MIME/structural key metadata, delegate response/completion hooks, direct presence-state logging, raw-path redaction, and a confirmed `清空` log control. No prompt/body/auth/signed-query capture. No ChatGPTClient product change and no b96 allocation.
+
+          Batch recovery point: baseline feature head before temporary apply workflow `a8436f504b1b122ba316b83fe71ca4fb99ec6f44`; exact b95 product/package identities remain `ac5e621aa69f...` / `a10320e589ac...`; main remains `94f0c577...`; PR #29 open. This atomic apply batch modifies only research Probe sources/docs/checkpoint. After source commit, require the dedicated research Probe CI Artifact, independently package against exact `ChatGPT_Decrypted.zip` SHA `bb117344...`, verify the research IPA diff, then update evidence/checkpoint and remove temporary workflow. Product/config files must not change.
+
+          **Next exact action:** build/package Probe v0.2, then run one clean cross-platform late-join test after pressing `清空` immediately before the remote turn. Analyze the earliest target-correlated HTTP/SSE/WebSocket acquisition event before any b96 decision.
+
+          '''
+          checkpoint_path.write_text(checkpoint.replace("# DEV-send-stream\n", "# DEV-send-stream\n\n" + block.strip() + "\n\n", 1))
+
+          state_path = Path("docs/project/PROJECT_STATE.md")
+          state = state_path.read_text()
+          state_block = r'''## DEV-send-stream official-iOS Probe v0.1 Runtime / v0.2 observation override — 2026-09-04
+
+- User-exported Probe v0.1 JSONL (`sha256:c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093`) is valid Human Runtime research evidence: 29 events / zero parse errors.
+- Official user WebSocket observation is Runtime Positive, including reconnect after `NSPOSIXErrorDomain/53`, but the captured socket subscribed only to `app_notifications`, `calpico-chatgpt`, and `push_auth_challenge`; no conversation/per-turn subscribe or target conversation-update/add-messages/async-status/catchup/live frame was captured.
+- Therefore direct user-socket late-join is not supported by this sample. Overall late-join remains Inconclusive because Probe v0.1 excluded ordinary conversation HTTP/Detail/status/resume/SSE and delegate response lifecycle.
+- Probe v0.2 is research-only and expands privacy-safe HTTP/SSE structural observation, redacts opaque URL path parts, records direct presence state, and adds a confirmed in-app `清空` log control. ChatGPTClient product and b95 identity remain unchanged; b96 remains unallocated.
+- Next gate: build/package v0.2 against the exact supplied official package and collect one clean late-join JSONL starting from `probe.log_cleared`.
+
+'''
+          state_path.write_text(state.replace("# Project State\n\n", "# Project State\n\n" + state_block, 1))
+          PY
+
+      - name: Audit scope
+        run: |
+          git diff --check
+          test "$(grep -c 'RPTProbeVersion = @\"0.2\"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m)" = "1"
+          grep -q 'http.observed.request' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'http.observed.response' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'probe.log_cleared' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'ChatGPTRealtimeProbe.Clear' scripts/research/official_ios_realtime_probe/ProbeExportUI.m
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            docs/project/PROJECT_STATE.md \
+            docs/project/current/dev/DEV-send-stream.md \
+            docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v01-runtime-v02-plan-20260904.md \
+            scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m \
+            scripts/research/official_ios_realtime_probe/ProbeExportUI.m \
+            scripts/research/official_ios_realtime_probe/README.md | sort)"
+          test "$changed" = "$expected"
+
+      - name: Commit atomic research batch
+        run: |
+          git config user.name "white-shark-ssw"
+          git config user.email "houstools@gmail.com"
+          git add docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream.md docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v01-runtime-v02-plan-20260904.md scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m scripts/research/official_ios_realtime_probe/ProbeExportUI.m scripts/research/official_ios_realtime_probe/README.md
+          git commit -m "research: expand official iOS late-join probe v0.2"
+          git push origin HEAD:dev/send-stream-20260829

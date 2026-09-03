@@ -90,6 +90,6 @@ jobs:
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient/RootViewController.swift ChatGPTClient.xcodeproj/project.pbxproj .github/workflows/b89-apply.yml
+          git add -A
           git commit -m "b89: test covered Web interactivity"
           git push origin HEAD:dev/send-stream-20260829

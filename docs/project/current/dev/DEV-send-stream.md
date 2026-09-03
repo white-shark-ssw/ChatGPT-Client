@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active — exact b92 proves covered single-conversation external continuation and client-owned Send/SSE terminal reconciliation, but overlap/reselection recovery is Runtime Negative. Exact b93 is Code/guarded two-file scope+Simulator/Push+PR CI/Artifact/package verified and tests only selection-time focus reacquisition for an already-active external executor. Human Runtime pending. Stable/Frozen Send remains No.**
+**Active — new exact b92 single-executor Runtime proves background lifecycle can stop the official page-owned continuation loop, and exact b93 proves selection focus reacquisition succeeds but is not sufficient to restart a stopped loop. b93 focus-sufficient is Rejected. The next isolated evidence target is official-page rebootstrap on foreground for one active external response; b94 is not yet allocated. Stable/Frozen Send remains No.**
 
 - Work ID: `DEV-send-stream`
 - Branch: `dev/send-stream-20260829`
@@ -161,6 +161,24 @@ Evidence ladder: **Code written / guarded exact two-file scope + Simulator passe
 
 If focus is reacquired and continuation resumes, selection-time focus reacquisition is Runtime Positive. If focus is reacquired but continuation remains frozen while the remote answer advances, reject focus reacquisition as sufficient and continue from that evidence without speculative protocol work.
 
+## b93 Human Runtime result — 2026-09-03
+
+The user supplied exact b92 and b93 logs that materially revise the earlier focus hypothesis. Full evidence is in `docs/project/runtime-evidence/DEV-send-stream-b92-b93-page-loop-interruption-20260903.md`.
+
+Exact b92 (`54b5803a74a1`) reproduces the terminal freeze with a single external conversation and a single executor. Page-owned status/snapshot progression reached `service 88 / tools 33`; the last `stream_status` request/HTTP200 `IS_STREAMING` and last snapshot coincide with entry to background at `12:13:30-12:13:31Z`. After later foreground returns the page becomes visible and the user WebSocket can reconnect, but no further page-owned `stream_status` or external snapshot is emitted. Explicit Sync at `12:19:46Z` then materializes the completed assistant and clears the stale live response. Therefore a second executor is not necessary for the failure.
+
+Exact b93 (`2d2cde58a7fb`) proves the added focus mechanism itself: reselection repeatedly obtains `nativeFirstResponder=true` and `documentHasFocus=true`. At `13:07:31Z` that rearm is followed by another page-owned HTTP200 `IS_STREAMING` and snapshot `80 / 19`. After switching away at `13:07:38Z` and returning at `13:07:42Z`, focus rearm again succeeds (and repeats at `13:07:47Z`) but page-owned status requests never restart. Explicit Sync at `13:10:24Z` later adds the completed assistant (`visible 26 -> 27`) and performs `liveResponse.externalDetailReconciled`.
+
+Classification: **b93 focus reacquisition mechanism Runtime Positive; focus reacquisition as a sufficient restart condition Rejected.** The common failure is now the lifetime of the official page-owned continuation acquisition loop itself.
+
+## b94 exact minimum A/B — not yet allocated
+
+The next candidate, if allocated, must test the clean single-executor lifecycle case first. Keep b93 transport/ownership/route behavior, but when ChatGPTClient becomes active again and the selected Repository snapshot is still an active external response (`promptText` empty), rebootstrap that same existing official conversation page without a Native Detail Sync. Add a distinct foreground-rebootstrap diagnostic stage.
+
+This is an official-page lifecycle A/B only. Do not add Native `stream_status`, `/resume`, guessed offset, polling/cadence reproduction, retry/watchdog/timer, duplicate Send, WebSocket-body authority, or a second response store.
+
+Runtime gate: one external conversation/executor, one initial Sync to acquire continuation, background while the remote answer remains active, return foreground without Sync, then require page-owned status/snapshots to resume and the final assistant to reconcile naturally. Selection-triggered page rebootstrap remains a separate later A/B.
+
 ## Validation / identity state
 
 b90 package remains exact and unchanged: canonical Artifact `9882770072`, exact package source `99f1aa15...`, IPA SHA `e75fac1a0c935ddb577fe2361c3fc5add0164d2f555a4fe5e8d7975f5b9fe3ee`.
@@ -169,7 +187,7 @@ b91/b92 exact package identities remain permanently reserved. Exact b93 product 
 
 ## Batch recovery state
 
-**Closed for b93 product/package/docs preparation. Next exact action:** install exact canonical b93 and execute the overlap/reselection Human Runtime gate. No product/config change is permitted before that Runtime evidence.
+**Closed for b93 Runtime classification. Next exact action:** perform a fresh resume/conflict guard, then allocate b94 only for foreground official-page rebootstrap of one already-active external response. Do not combine selection rebootstrap into b94 and do not modify continuation protocol.
 
 ## Preserved boundaries
 

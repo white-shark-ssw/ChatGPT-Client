@@ -226,3 +226,7 @@ Conversation-list preview, Markdown export, long-conversation profiling beyond a
 ## Current next action
 
 Keep PR #29 open/unmerged and exact b75 as the current rejected Runtime package. Perform the privacy-safe Web Rule Lab continuation re-probe described above. Do not allocate b76 and do not change production continuation code until that Human Gate returns current page-owned transport evidence.
+
+## 2026-09-03 — b92/b93 page-owned continuation loop interruption
+
+Exact b92 single-executor Runtime proves that a background lifecycle transition can stop the official page-owned `stream_status`/snapshot loop even without another executor. Exact b93 proves successful first-responder/document-focus reacquisition does not necessarily restart a stopped loop. The next isolated candidate is foreground official-page rebootstrap without Native Detail Sync; selection rebootstrap remains separate. Stable/Frozen Send remains No.

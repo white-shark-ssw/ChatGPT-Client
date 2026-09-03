@@ -1,5 +1,11 @@
 # Project Profile
 
+## DEV-send-stream b89 package-ready override — 2026-09-03
+
+- Exact Runtime candidate is now `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)`. Product commit `f39bc9387575028d431b85409780a2f3670b3259`; exact product/config package source `fe45aeadf7ae03bf09aff66a8a05aa2542959676`.
+- Guarded staging `33722656297 / 100544857329` passed exact patch, `git diff --check` and Xcode 16.4 Simulator compile. Formal Push `33725042383 / 100552047445` and PR `33725044367 / 100552051932` both passed.
+- Canonical Push Artifact `9881665748`; Artifact ZIP `sha256:2e383a6328f801dd754d6858c3b9a8b71be5d5765a9a612d497b18c91b73988f`; IPA `sha256:c8ad5dcebbfde2131d3fc73c0309a47745f71527ad38b44c5fe3c5fbffe21a55`. Independent unpacking confirms Release `0.1.0 (89)`, Candidate b89, source `fe45aeadf7ae`, iOS14 minimum and Mach-O arm64.
+- b89 changes only covered `WKWebView.isUserInteractionEnabled=false -> true` plus privacy-safe automatic `navigator.userActivation` booleans; b88 focus/rearm, route, continuation protocol, Send and Repository ownership are unchanged. Runtime/manual remains Pending; Stable/Frozen Send remains No.
 ## DEV-send-stream b82 current Runtime override — 2026-09-02
 
 - Exact current tested package: `DEV-send-stream-0.1.0-b82` / `0.1.0 (82)`, product/config source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`.

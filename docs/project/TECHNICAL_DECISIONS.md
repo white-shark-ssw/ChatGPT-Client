@@ -1,5 +1,11 @@
 # Technical Decisions
 
+## b89 interactivity A/B package qualification — 2026-09-03
+
+- Fresh-root visible official Web already proved unscoped `/c/{conversation}` can canonicalize to exact scoped `/g/{scope}/c/{conversation}` and start page-owned continuation with transient user activation false, so scoped-route identity alone is no longer the remaining b88 explanation.
+- b89 therefore tests one remaining covered-WKWebView differential only: `isUserInteractionEnabled=true` instead of false, retaining the already-proven b88 first-responder focus/rearm behavior. Existing page-activation diagnostics additionally record privacy-safe `navigator.userActivation.isActive` / `hasBeenActive`; no user-triggered Web Rule Lab probe is needed.
+- b89 is Code/Simulator/Push+PR CI/Artifact/package verified but Runtime Pending. Do not treat interactivity or user activation as causal until a clean early/mid-generation real-device run observes page-owned `stream_status`/resume/snapshot continuation while the remote generation demonstrably remains active.
+- Existing prohibitions remain: no Native status/resume/offset synthesis, polling/timers/retries/watchdogs, router emulation, duplicate Send, WebSocket-body authority or second response store.
 ## b88 decisive focus-negative qualification — 2026-09-02
 
 - The clean second b88 Runtime sample closes the focus A/B. Covered first-responder activation and `document.hasFocus=true` are Runtime Positive, but focus alone is **not sufficient** for official cross-platform continuation with the current programmatic full `/c/<conversation>` load.

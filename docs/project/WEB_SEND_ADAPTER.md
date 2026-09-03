@@ -1,5 +1,12 @@
 # Web Send Adapter / Rule Update Playbook
 
+## b89 covered interactivity A/B package qualification — 2026-09-03
+
+Fresh-root visible-Web evidence now proves that official Web can canonicalize an unscoped `/c/{conversation}` navigation to the exact scoped `/g/{scope}/c/{conversation}` route and start genuine page-owned continuation even when transient activation at navigation is false. Therefore project/GPT scope recovery and transient activation alone do not explain the b88 covered-page failure.
+
+b89 changes only covered `WKWebView.isUserInteractionEnabled` from false to true and automatically records privacy-safe `navigator.userActivation` availability / `isActive` / `hasBeenActive` on the existing page-activation diagnostic path. b88 one-shot first-responder focus after explicit Sync rearm remains unchanged. No route construction, page-owned status/resume/snapshot observation, Send, Repository ownership, cadence or fallback behavior changes.
+
+Exact b89 package source `fe45aeadf7ae03bf09aff66a8a05aa2542959676` passed guarded Simulator plus Push/PR CI; canonical Push Artifact `9881665748` and IPA `sha256:c8ad5dcebbfde2131d3fc73c0309a47745f71527ad38b44c5fe3c5fbffe21a55` are package-verified. Runtime is Pending. A clean test must keep the remote generation active after covered load/focus/interactivity and then determine whether official page-owned `stream_status` / `/resume` / snapshots appear. A negative clean run rejects interactivity as sufficient and returns the evidence target to genuine official SPA/router conversation-entry state.
 ## b88 decisive focus-negative continuation qualification — 2026-09-02
 
 The second exact b88 real-device sample resolves the earlier near-terminal ambiguity. Manual-Sync rearm successfully made the covered WKWebView first responder and direct `document.hasFocus()` returned true. The same remote generation then visibly continued through multiple additional tool rounds on PC, but the covered page issued no matching `stream_status`, `/resume`, external SSE or page-owned snapshot and ChatGPTClient remained on the six-tool authoritative Detail snapshot.

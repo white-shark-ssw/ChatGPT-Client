@@ -1,5 +1,11 @@
 # Module Status
 
+## DEV-send-stream b89 package-ready override — 2026-09-03
+
+- Build/runtime metadata: exact b89 product `f39bc9387575028d431b85409780a2f3670b3259`, package source `fe45aeadf7ae03bf09aff66a8a05aa2542959676`, Candidate/Build `DEV-send-stream-0.1.0-b89` / `0.1.0 (89)`.
+- Guarded staging `33722656297/100544857329`, Push `33725042383/100552047445`, and PR `33725044367/100552051932` all passed. Canonical Push Artifact `9881665748`; ZIP `2e383a63...3988f`; IPA `c8ad5dce...21a55`; package independently verified as Release/source `fe45aeadf7ae`/iOS14/arm64.
+- Covered official-Web continuation: b89 enables only `WKWebView.isUserInteractionEnabled` and records automatic user-activation booleans while preserving b88 focus/rearm and all page-owned continuation rules. Runtime continuation remains Unverified.
+- Evidence ladder: Code/guarded Simulator/Push+PR CI/Artifact/package verified; Runtime Pending; Stable/Frozen Send No.
 ## DEV-send-stream b88 decisive focus-negative override — 2026-09-02
 
 - Exact b88 identity remains unchanged: product `31d24e8b9ab4676effd757a793162abbdb0d7012`, clean package head `378811691ccbd6f44b232d8cc5564628e9b021e1`, Candidate/Build `DEV-send-stream-0.1.0-b88` / `0.1.0 (88)`, Artifact `9848999246`, IPA `sha256:cb89cf51f451252087b2abdd6533407113614b2e9efa072ba84e4877f2d02298`.

@@ -1,5 +1,10 @@
 # Project-Specific Rules
 
+## b89 current package rule — 2026-09-03
+
+- Exact b89 is emitted and permanently reserved: `DEV-send-stream-0.1.0-b89`, Build89, product commit `f39bc9387575028d431b85409780a2f3670b3259`, exact package source `fe45aeadf7ae03bf09aff66a8a05aa2542959676`, canonical Push Artifact `9881665748`, IPA SHA `c8ad5dcebbfde2131d3fc73c0309a47745f71527ad38b44c5fe3c5fbffe21a55`.
+- b89 may change only covered Web interactivity plus privacy-safe automatic user-activation diagnostics relative to b88; it does not authorize route synthesis, Native status/resume/offset, polling, retry/watchdog, duplicate Send, WebSocket-body authority or another response owner.
+- CI/Artifact/package success is not Runtime proof. Retain b89 only if a clean long-response real-device A/B supports the interactivity differential; otherwise reject it as sufficient and return to SPA/router-entry evidence.
 ## b82 current Runtime override — 2026-09-02
 
 - Exact b82 is permanently reserved: source `c7a274786dfd175e8f476fc15c4964840e112a1d`, Artifact `9811406038`, IPA SHA `3ca1686783199a5c7224ce388c0dbbad490266e62c820f2408d14f5a59bdd6d2`.

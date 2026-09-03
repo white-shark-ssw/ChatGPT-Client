@@ -1,5 +1,13 @@
 # Technical Decisions
 
+## DEV-send-stream Probe v0.3 observation decision — 2026-09-04
+
+- Treat the v0.2 76 MB / 195,999-error sample as **observationally perturbed and overall Inconclusive**, not as evidence that official iOS late-join has no conversation transport.
+- The next research delta is deliberately narrow: remove per-receive-arm logging, deduplicate repeated receive errors on one failed WebSocket task, and add the two URL-form `NSURLSession` data-task constructors that the exact official binary exposes but Probe v0.2 did not hook.
+- Do **not** add a global task-resume hook yet. Escalate to that broader observer only if exact v0.3 visually confirms official iOS late-join while still recording no target-correlated HTTP/SSE/WebSocket acquisition event.
+- Static official-iOS strings for `stream_handoff`, `resume_conversation_token`, `turn_exchange_id`, `topic`, `resume_sse_endpoint`, `ConversationResumeFetchRecovery`, and inline stream-status/fetch recovery prove native continuation/recovery machinery exists, but do not prove the active late-join branch and do not authorize product polling/cadence reproduction.
+- This is research tooling only. Product ownership and b95 identity remain unchanged; b96 remains unallocated.
+
 ## DEV-send-stream b93 selection-focus A/B decision — 2026-09-03
 
 - Exact b92 Runtime is Partial: covered external continuation works and client-owned protected Send/SSE natural terminal reconciliation works, but when an external live executor overlaps a second client-owned Send, the first stream can stop advancing and does not recover merely by reselection; explicit Sync later materialized the already-completed assistant.

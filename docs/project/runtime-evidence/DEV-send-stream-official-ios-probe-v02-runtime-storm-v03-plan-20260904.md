@@ -79,3 +79,17 @@ Research tooling only; no ChatGPTClient product change and no b96 allocation:
 Current product identity remains b95: product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`, package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`, canonical Artifact `9901461763`; b96 remains unallocated. Current feature branch is `dev/send-stream-20260829`, PR #29 open/unmerged, and `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
 
 Before source writes, update the selected checkpoint with this exact v0.2 Runtime classification and v0.3 research-only scope. Then change only the research Probe source/README as needed, run the dedicated research Probe CI, independently package against the exact official source ZIP `sha256:bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`, verify the research IPA diff/identity, update checkpoint/PROJECT_STATE/PR, and remove all temporary v0.2/v0.3 apply/finalize tooling. Do not touch `ChatGPTClient/**`, `ChatGPTClient.xcodeproj/**`, or allocate a production Candidate from this research result.
+
+## Probe v0.3 build/package identity
+
+- Exact research source commit: `91abb9ca95d80ea4ab646fc33effd55083e0d3ee`.
+- Research build trigger/source head: `a80a9c287873bca8049c8b79a63c1005ca603369`.
+- Dedicated research CI: run/job `33793891708 / 100776808437` — success.
+- Canonical research Artifact: `9908389485`.
+- Artifact/ZIP SHA-256: `d649ff697023121fad2e8d6a59f1de53f7174a2ee6f1c1bce264c9fccb081e2d`.
+- Probe dylib SHA-256: `cd4294d523054109886a5026bc0c3dabcc6309d8dbcfafe3d27e2c3adec14f85`, matching sidecar; Mach-O arm64.
+- Official source ZIP SHA-256: `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`.
+- Research IPA: `ChatGPT-Official-RealtimeProbe-v03-TrollStore-20260904.ipa`, SHA-256 `3ec2645c338f25d99c9ccf94c38190994cccd8153a0846a5d76a5ca755288d61`.
+- Official app identity remains `com.openai.chat`, version `1.2026.202`, build `30140022279`.
+- Independent pristine-package comparison: exactly three intended differences — research marker added, original enhancer backed up unchanged, and v0.3 Probe dylib placed at the enhancer injection path; no removals.
+- Classification: research code/CI/Artifact/package verification Positive; v0.3 Human Runtime Pending; ChatGPTClient product unchanged; b96 unallocated.

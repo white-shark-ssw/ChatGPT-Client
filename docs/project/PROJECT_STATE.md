@@ -1,5 +1,9 @@
 # Project State
 
+## 2026-09-04 — official iOS Probe v0.3 research package ready
+
+Cross-platform late-join remains the primary Send/Stream research gate. Probe v0.2 Runtime is Inconclusive because an official user-WebSocket error produced a very large repeated-receive log storm; the absence of target events in that polluted sample is not a protocol rejection. Probe v0.3 is research-only and package-verified: source `91abb9ca95d80ea4ab646fc33effd55083e0d3ee`, research CI `33793891708 / 100776808437` success, Artifact `9908389485`, dylib SHA `cd4294d523054109886a5026bc0c3dabcc6309d8dbcfafe3d27e2c3adec14f85`, research IPA SHA `3ec2645c338f25d99c9ccf94c38190994cccd8153a0846a5d76a5ca755288d61`. It deduplicates failed-socket receive logging and adds URL-form URLSession observation only. Human Runtime v0.3 is pending. b95 remains the product Candidate; b96 is unallocated; Stable/Frozen Send No.
+
 ## DEV-send-stream official-iOS Probe v0.1 Runtime / v0.2 observation override — 2026-09-04
 
 - User-exported Probe v0.1 JSONL (`sha256:c74a66702bd670f81a393afea1c306d2a0cce415961c9fe11be15589eeb83093`) is valid Human Runtime research evidence: 29 events / zero parse errors.

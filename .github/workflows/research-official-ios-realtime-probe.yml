@@ -1,6 +1,5 @@
 name: Research Official iOS Realtime Probe
 
-# Probe v0.3 source anchor: 91abb9ca95d80ea4ab646fc33effd55083e0d3ee
 on:
   push:
     branches:

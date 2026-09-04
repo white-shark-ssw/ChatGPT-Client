@@ -21,13 +21,15 @@ Product delta:
 4. If that one-shot Detail contains the final assistant, existing Repository `authoritative_assistant_materialized` reconciliation clears the stale external projection; Root then refreshes selected Detail presentation and releases an idle covered executor.
 5. No background heartbeat, recurring polling, retry/watchdog/fallback, resend/regenerate, guessed `/resume`, challenge replay, or second response authority.
 
-Pre-allocation PR workflow failures on heads before Build97 and the bot-pushed product-head `action_required` run are invalid/non-evidence because no formal b97 package job executed there. Canonical Runtime identity is only Artifact `9940228423` / IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`.
+Pre-allocation PR workflow failures on heads before Build97 and the bot-pushed product-head `action_required` run are invalid/non-evidence because no formal b97 package job executed there. Any later docs/staging-maintenance PR Artifact is also non-canonical. Canonical Runtime identity is only Artifact `9940228423` / IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`.
 
 Evidence ladder: **b96 Runtime Negative for async-status automatic continuation/background-return convergence; manual authoritative Detail recovery Positive / b97 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen Send No.**
 
 **Next exact action:** install only canonical b97 IPA; start a long external response, enter it while active, background/suspend ChatGPTClient until the other platform finishes, return to foreground without manual Sync/Reload, and export diagnostics after observing whether `foregroundExternalDetailReconcile.requested` performs one authoritative Detail request and automatically materializes the final assistant. Do not allocate b98 before this Runtime gate.
 
 ## b96 background-return Runtime — decisive rejection / b97 recovery point 2026-09-04
+
+> Historical recovery section. The package-ready b97 section above supersedes all provisional wording here that says b97 is unallocated/not yet emitted. Keep this section only as the exact b96 Runtime evidence and interrupted-chain recovery record.
 
 Latest Human Runtime source: `ChatGPTClient-Diagnostics-20260904-135118.json` from canonical `DEV-send-stream-0.1.0-b96`.
 

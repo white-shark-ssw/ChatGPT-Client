@@ -1,5 +1,31 @@
 # DEV-send-stream round 7 Runtime addendum
 
+## Probe v0.8 launch-crash Runtime / v0.8.1 startup-safe batch package — 2026-09-04
+
+Exact user Human Runtime result for the first Probe v0.8 batch package is **launch crash immediately after entering the app**. Therefore the exact v0.8 IPA `sha256:d9072fad0e8bb020e8b9681d7d4e29e3bba473bb357af5197b5c90d259422970` is Runtime Negative as a usable research package and produces no protocol/response evidence. Do not ask the user to retry that exact IPA.
+
+Source differential identifies a strong, not yet crash-log-proven, startup-risk cause in `ProbeBatchHooks.m`: `constructor(200)` executed the batch far earlier than the previously stable v0.7 constructor, performed Foundation/NSURLSessionTask class work at that ultra-early stage, globally scanned task classes, and installed a second independent `resume` swizzle chain. Because no device crash report was captured, classify that exact causal attribution as **Inferred**, not proven.
+
+The replacement batch preserves the one-human-run diagnostic goal but removes those startup risks. `ProbeBatchHooksSafe.m` uses normal constructor priority, does not install any second `resume` hook, and targets only the exact Runtime-evidenced `__NSCFLocalDataTask` class. It installs the same four v0.6-evidenced private selectors only when their exact type encodings match. Each private callback now checks `conversation_detail` first; non-target tasks are forwarded immediately before any dispatch-data scan. The old `ProbeBatchHooks.m` remains in source as evidence but is no longer compiled.
+
+Exact startup-safe research source/package identity:
+
+- source head: `1fd92f19ad090ad86b55a3cec371864e18c86f58`
+- dedicated research run/job: `33851524572 / 100955187606` — success
+- regular PR CI on the same head: `33851528476` — success
+- canonical research Artifact: `9928515526`
+- Artifact digest / downloaded ZIP SHA-256: `3b3cf2d30c8701dc6c3601aede78d5a03d190140d13c65e66211b7f8289d93ca`
+- Probe dylib SHA-256: `6328c5b5897059890a7094caba7c8df96f2a6162b260d8fb7f1b6543a565bd2e`
+- pristine official source ZIP SHA-256: `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`
+- repacked startup-safe research IPA SHA-256: `69d4257fa6a514724b54a5c19e17803349ba459fef37f76ce4cb4435d3efa724`
+- outer delivery ZIP SHA-256: `dad9c4d1dac1a6e9cbe29d8535709f19d8dc0d014cb32c1c77d0bdf8f13b74e3`
+- official identity preserved: `com.openai.chat / 1.2026.202 / 30140022279`
+- exact content diff versus pristine source remains zero removed / two added (original enhancer backup + research marker) / one modified (enhancer load entry replaced by the startup-safe Probe).
+
+Evidence ladder: **v0.8 first batch Human Runtime launch-crash / v0.8 diagnostic evidence invalid / startup-risk cause inferred from source differential / startup-safe replacement code written / dedicated research CI passed / regular PR CI passed / Artifact produced / package identity independently verified / corrected package Human Runtime pending / ChatGPTClient product remains exact b95 / b96 unallocated / Stable-Frozen Send No.**
+
+**Next exact action:** use only the corrected startup-safe v0.8.1 batch package. First gate is simply that official ChatGPT launches and stays alive. If it launches, continue the same single comprehensive cross-platform active-to-terminal run and export both logs once. If it still launch-crashes, stop immediately; do not ask the user for another protocol reproduction and do not add more response surfaces. Product b96 remains unallocated.
+
 ## Probe v0.8 batch package / single Human Runtime gate — 2026-09-04
 
 User feedback changes the research optimization target: repeated one-small-delta official-app installs/tests are too expensive in human time. Probe v0.8 is therefore a **batched research diagnostic**, not another single-callback experiment. It still changes no ChatGPTClient product behavior and uses only response surfaces already Runtime-evidenced by Probe v0.6.
@@ -47,7 +73,7 @@ Product remains exact b95; b96 remains unallocated; Stable-Frozen Send remains N
 ## Probe v0.7 Human Runtime — 2026-09-04
 
 - Exact user-uploaded `ChatGPTRealtimeProbe(1)(1).jsonl` is clean Probe v0.7 Human Runtime evidence: `sha256:fa16a0d01366ea037fffa158c5e7f4a3818f1d97a3a2f8ee1ffa6a26d46fcda2`, 41,879 bytes / 122 valid JSONL events / zero parse errors / all `probeVersion=0.7`. The test window begins with `probe.log_cleared` at `2026-09-04T06:43:12.222Z` and contains no mixed Probe revision.
-- Target conversation hash `0df178903e95` issued 16 authoritative `GET /backend-api/conversation/<id>` Detail tasks at `06:43:51.475`, `06:44:14.463`, `06:44:24.677`, `06:44:34.822`, `06:44:44.429`, `06:44:54.675`, `06:45:04.911`, `06:45:21.523`, `06:45:32.525`, `06:45:43.393`, `06:45:54.931`, `06:46:05.461`, `06:46:15.053`, `06:46:25.518`, `06:46:35.301`, and `06:46:45.667Z`. Intervals are `22.988 / 10.214 / 10.145 / 9.607 / 10.246 / 10.236 / 16.612 / 11.002 / 10.868 / 11.538 / 10.530 / 9.592 / 10.465 / 9.783 / 10.366s`. Native authoritative Detail polling is Runtime Positive again.
+- Target conversation hash `0df178903e95` issued 16 authoritative `GET /backend-api/conversation/<id>` Detail tasks at `06:43:51.475`, `06:44:14.463`, `06:44:24.677`, `06:44:34.822`, `06:44:44.429`, `06:44:54.675`, `06:45:04.911`, `06:45:21.523`, `06:45:32.525`, `06:45:43.393`, `06:45:54.931`, `06:46:05.461`, `06:46:15.053`, `06:46:25.518`, `06:46:35.301`, and `06:46:45.667Z`. Intervals are `22.988 / 10.214 / 10.145 / 9.607 / 10.246 / 10.236 / 16.612 / 11.002 / 10.868 / 11.538 / 10.530 / 9.592 / 10.465 / 9.783 / 10.366s`. Native authoritative Detail polling is therefore Runtime Positive again.
 - The sample contains zero `conversation_stream_status`, zero `conversation_resume`, and no target conversation/per-turn WebSocket update. The only WebSocket frames are foreground/background `presence` commands plus their `reply` frames. This again does not support the ordinary user WebSocket as the current late-join response owner.
 - There are zero `http.conversation_detail.async_status` events despite the 16 target Detail GETs. This rejects only the proposition that Probe v0.7 already yields the desired async-status signal in this Runtime. It does **not** prove `conversation_async_status` is absent from authoritative Detail responses.
 - Important instrumentation boundary: Probe v0.7's `_task_onqueue_didReceiveDispatchData:completionHandler:` hook writes no standalone callback-invocation event. It only emits `http.conversation_detail.async_status` after the exact field scanner succeeds. Therefore v0.7 cannot distinguish `private callback not invoked` from `callback invoked but scanner saw no usable field/value`.

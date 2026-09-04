@@ -1,3 +1,49 @@
+## b100 Human Runtime — Native transient transport failure / b101 allocation 2026-09-05
+
+Exact tested evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`; Release / iPhone / iOS17.0; source marker `e88a50ad9c20`; diagnostics `ChatGPTClient-Diagnostics-20260904-174041.json`, `sha256:515c60b59d969ee1f33d76fec097d6163450058c5ef3fa9ccd551b2439f03818`, 77816 bytes / 146 events.
+- Before the long background interval, authoritative Detail was healthy at HTTP200 / 10 visible messages. The app entered background at `17:26:58Z` and returned at `17:39:35Z` after about 12m37s.
+- b100 foreground discovery itself fired correctly: `foregroundConversationDiscovery.requested` immediately started authoritative Detail generation 7. That GET failed after ~5s with exact `NSURLErrorDomain -1005` (`network connection lost`).
+- This is **not evidence of hard WKWebView WebContent-process death**. The diagnostic contains zero `coveredExecutor.webProcess` and zero `coveredExecutor.externalWebProcessRecovery` events. On the same foreground return, covered Web created a user WebSocket at `17:39:35Z`, then opened and received a message at `17:39:36Z`.
+- The failure persisted specifically across Native reads: foreground Detail generation 8 again failed `-1005`; two manual conversation-list GETs failed `-1005`; manual Sync Detail generation 9 also failed `-1005`. Meanwhile the covered Web user socket still emitted messages and later created/opened again at `17:40:13-14Z`.
+- Current source explains the persistence. `ConversationRepository` caches one `AuthTransientSession` and `withTransientSession` reuses it indefinitely while account scope matches. The current transport is retired only for HTTP401/403; `normalizedTransportError` leaves `NSURLErrorNetworkConnectionLost` unchanged. Therefore a stale/broken ephemeral Native `URLSession` after suspension can be reused by Detail, list and manual Sync even while WebKit networking has independently recovered.
+
+Runtime classification:
+
+- b100 dormant foreground-discovery trigger: **still Runtime Positive as a lifecycle mechanism**;
+- Native authoritative read transport after long suspension in this sample: **Runtime Negative** — repeated `NSURLErrorDomain -1005` across Detail/list/manual Sync with no successful Native HTTP recovery before export;
+- b98 hard WebContent termination recovery: **still Unexercised / Unverified** because the hard termination callback did not occur;
+- overall `DEV-send-stream`: **Runtime Partial / Stable-Frozen No**.
+
+### b101 allocation / batch recovery point
+
+- Work `DEV-send-stream` remains selected; branch `dev/send-stream-20260829`; PR #29 is open/unmerged/mergeable.
+- Verified pre-allocation branch head `ff204bdd5874862e5b250f39bc0762bc1b94056f`; `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Parallel PR #35 / `DEV-official-sync-reload` remains draft/open at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`; it is research-only and has no `ChatGPTClient/**` product overlap.
+- `BUILD_TEST_INDEX.md` has no b101 identity. `DEV-send-stream-0.1.0-b101` / `0.1.0 (101)` is now permanently allocated/reserved.
+
+Evidence-backed minimum b101 product boundary:
+
+1. Change only the Native read transport owner. Protected Web Send, covered-Web observation/rebootstrap, Repository content/response authority and b100 foreground-discovery conditions remain unchanged.
+2. On the **first exact** `NSURLErrorDomain / NSURLErrorNetworkConnectionLost (-1005)` from an idempotent Native Conversation Detail or conversation-list GET, retire only the matching cached `AuthTransientSession` with existing in-flight tasks allowed to finish, then obtain one fresh transient session through the existing `withTransientSession` / default-WebKit-auth path.
+3. Retry that same read operation **at most once** with the fresh transport. The retry stays under the same Detail/list operation generation and must re-check account scope and operation freshness before issuing the replacement GET.
+4. A second `-1005`, any other network error, auth failure, HTTP failure, supersession or scope change terminates normally. No timer, cadence, retry loop, reachability watcher, background heartbeat, Send replay, guessed resume or second state authority.
+5. Add privacy-safe diagnostics proving transport retirement, one fresh-session acquisition/recovery attempt, and whether that bounded attempt succeeds or fails.
+
+Intended product scope:
+
+- `ChatGPTClient.xcodeproj/project.pbxproj` — Build101 / Candidate b101 only;
+- `ChatGPTClient/Conversation/ConversationFeature.swift` — exact `-1005` stale-transient retirement plus one bounded read recovery for list/Detail only.
+
+Batch state:
+
+- confirmed complete: new b100 diagnostics analyzed; Web-process-death hypothesis rejected for this sample; exact Native `-1005` persistence tied to current `AuthTransientSession` reuse; branch/base/PR29 verified; PR35 product-overlap checked; b101 uniqueness checked and allocated by this checkpoint;
+- pending: apply exact two-product-file b101 delta; run exact-scope + `git diff --check` + Debug iphonesimulator compile; bind formal Push/PR package CI to the exact product head; verify canonical Artifact/IPA identity; update durable project docs and PR #29 metadata;
+- do not touch PR #35, protected-Send/challenge transport, Web process-recovery semantics, b100 canonical Artifact/IPA identity, or any earlier reserved candidate identity.
+
+**Next exact action:** implement only the two-file b101 bounded Native-read transport renewal above and validate it before packaging.
+
 ## b100 Human Runtime — dormant foreground discovery Positive 2026-09-05
 
 Exact tested evidence:
@@ -80,7 +126,7 @@ Evidence-backed b100 product boundary:
 5. Do not poll. Do not add a timer, cadence, retry, watchdog, background heartbeat, guessed `/resume`, WebSocket-body authority, duplicate Send, challenge replay, response cache or second response owner.
 6. Preserve b99 UIKit coalescing, b98 hard WebContent recovery, b97 authoritative reconcile, TD-029 protected Send ownership and Sync/Reload semantics.
 
-Intended b100 product scope:
+Intended product scope:
 
 - `ChatGPTClient.xcodeproj/project.pbxproj` — Build100 / Candidate b100 only;
 - `ChatGPTClient/RootViewController.swift` — foreground one-shot authoritative discovery/rearm only.

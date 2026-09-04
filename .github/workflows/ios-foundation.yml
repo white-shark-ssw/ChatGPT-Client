@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b97
-# Product source: 12fc1d1f5020d76d1892c25a0ced94323d5a0142
-name: iOS Foreground External Reconcile b97
+# Candidate: DEV-send-stream-0.1.0-b98
+# Product source: 2edd55febe2005071722ddcb9989151b427165d8
+name: iOS Hard WebContent Recovery b98
 
 on:
   push:
@@ -31,10 +31,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b97 identity
+      - name: Guard b98 identity
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 97;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b97";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 98;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b98";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
 
       - name: Toolchain
         run: xcodebuild -version
@@ -50,7 +51,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b97
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b98
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

@@ -1,0 +1,158 @@
+name: Stage b100 Foreground Discovery
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - .github/workflows/stage-b100-foreground-discovery.yml
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b100 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "1e6be5c83a55a2b6886c0e25791dc0879c3f30a6"
+          grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }' ChatGPTClient/RootViewController.swift
+          grep -q 'private var liveResponsePresentationUpdateScheduled = false' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Apply exact b100 product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          project = Path('ChatGPTClient.xcodeproj/project.pbxproj')
+          text = project.read_text()
+          old_build = 'CURRENT_PROJECT_VERSION = 99;'
+          old_candidate = 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";'
+          if text.count(old_build) != 2 or text.count(old_candidate) != 2:
+              raise SystemExit('unexpected b99 project identity count')
+          text = text.replace(old_build, 'CURRENT_PROJECT_VERSION = 100;')
+          text = text.replace(old_candidate, 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";')
+          project.write_text(text)
+
+          source = Path('ChatGPTClient/RootViewController.swift')
+          text = source.read_text()
+          old = '''    @objc private func applicationWillEnterForeground(_ notification: Notification) {
+        guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }
+        if repository.detailOperationSnapshot(for: conversationID) == nil {
+            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.requested", fields: repository.diagnosticsFields(for: conversationID))
+            repository.syncLatestMessages(id: conversationID) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let detail):
+                    var fields = self.repository.diagnosticsFields(for: conversationID)
+                    fields["visibleMessageCount"] = String(detail.messages.count)
+                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"
+                    self.diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.completed", fields: fields)
+                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
+                    if !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
+                case .failure(let error):
+                    self.diagnostics.error(category: "conversation", name: "foregroundExternalDetailReconcile.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
+                }
+                self.updateLivePresentation()
+            }
+        } else {
+            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.skipped", fields: ["reason": "detail_operation_in_flight"])
+        }
+        if let sendExecutor = sendExecutors[conversationID] {
+            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
+            sendExecutor.rebootstrapExternalObservationPageOnForeground()
+        }
+    }
+'''
+          new = '''    @objc private func applicationWillEnterForeground(_ notification: Notification) {
+        guard let conversationID = repository.selectedConversationID else { return }
+        let snapshot = repository.liveResponse(for: conversationID)
+        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
+        let hadActiveExternalResponse = snapshot?.phase.isActive == true && snapshot?.promptText.isEmpty == true
+        let eventPrefix = hadActiveExternalResponse ? "foregroundExternalDetailReconcile" : "foregroundConversationDiscovery"
+        let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id
+        if repository.detailOperationSnapshot(for: conversationID) == nil {
+            diagnostics.info(category: "conversation", name: "\\(eventPrefix).requested", fields: repository.diagnosticsFields(for: conversationID))
+            repository.syncLatestMessages(id: conversationID) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let detail):
+                    let latestUserID = detail.messages.last(where: { $0.role == .user })?.id
+                    let latestUserChanged = latestUserID != nil && latestUserID != previousLatestUserID
+                    let currentSnapshot = self.repository.liveResponse(for: conversationID)
+                    let activeExternalAfterSync = currentSnapshot?.phase.isActive == true && currentSnapshot?.promptText.isEmpty == true
+                    let shouldRearmDiscoveredRemoteTurn = !hadActiveExternalResponse && (activeExternalAfterSync || (latestUserChanged && detail.messages.last?.role == .user))
+                    var fields = self.repository.diagnosticsFields(for: conversationID)
+                    fields["visibleMessageCount"] = String(detail.messages.count)
+                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"
+                    fields["latestUserChanged"] = latestUserChanged ? "true" : "false"
+                    fields["activeExternalAfterSync"] = activeExternalAfterSync ? "true" : "false"
+                    fields["rearmDiscoveredRemoteTurn"] = shouldRearmDiscoveredRemoteTurn ? "true" : "false"
+                    self.diagnostics.info(category: "conversation", name: "\\(eventPrefix).completed", fields: fields)
+                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
+                    if hadActiveExternalResponse, !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
+                    if shouldRearmDiscoveredRemoteTurn, self.repository.selectedConversationID == conversationID { self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true) }
+                case .failure(let error):
+                    self.diagnostics.error(category: "conversation", name: "\\(eventPrefix).failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
+                }
+                self.updateLivePresentation()
+            }
+        } else {
+            diagnostics.info(category: "conversation", name: "\\(eventPrefix).skipped", fields: ["reason": "detail_operation_in_flight"])
+        }
+        if hadActiveExternalResponse, let sendExecutor = sendExecutors[conversationID] {
+            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
+            sendExecutor.rebootstrapExternalObservationPageOnForeground()
+        }
+    }
+'''
+          if text.count(old) != 1:
+              raise SystemExit('unexpected foreground function baseline count')
+          source.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Validate exact product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed = subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines()
+          expected = ['ChatGPTClient.xcodeproj/project.pbxproj', 'ChatGPTClient/RootViewController.swift']
+          if len(changed) != 2 or set(changed) != set(expected):
+              raise SystemExit(f'unexpected changed files: {changed}')
+          PY
+          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'let eventPrefix = hadActiveExternalResponse ? "foregroundExternalDetailReconcile" : "foregroundConversationDiscovery"' ChatGPTClient/RootViewController.swift
+          grep -q 'shouldRearmDiscoveredRemoteTurn' ChatGPTClient/RootViewController.swift
+
+      - name: Build Debug iphonesimulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b100 product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/RootViewController.swift
+          git commit -m "fix: discover remote changes on foreground for b100"
+          git push origin HEAD:dev/send-stream-20260829

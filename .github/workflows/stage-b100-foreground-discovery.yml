@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "1e6be5c83a55a2b6886c0e25791dc0879c3f30a6"
+          test "$(git rev-parse HEAD^)" = "a5d92e860993d0c69a014a640f090f40962c8500"
           grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }' ChatGPTClient/RootViewController.swift
@@ -49,79 +49,56 @@ jobs:
 
           source = Path('ChatGPTClient/RootViewController.swift')
           text = source.read_text()
-          old = '''    @objc private func applicationWillEnterForeground(_ notification: Notification) {
-        guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }
-        if repository.detailOperationSnapshot(for: conversationID) == nil {
-            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.requested", fields: repository.diagnosticsFields(for: conversationID))
-            repository.syncLatestMessages(id: conversationID) { [weak self] result in
-                guard let self else { return }
-                switch result {
-                case .success(let detail):
-                    var fields = self.repository.diagnosticsFields(for: conversationID)
-                    fields["visibleMessageCount"] = String(detail.messages.count)
-                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"
-                    self.diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.completed", fields: fields)
-                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
-                    if !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
-                case .failure(let error):
-                    self.diagnostics.error(category: "conversation", name: "foregroundExternalDetailReconcile.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
-                }
-                self.updateLivePresentation()
-            }
-        } else {
-            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.skipped", fields: ["reason": "detail_operation_in_flight"])
-        }
-        if let sendExecutor = sendExecutors[conversationID] {
-            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
-            sendExecutor.rebootstrapExternalObservationPageOnForeground()
-        }
-    }
-'''
-          new = '''    @objc private func applicationWillEnterForeground(_ notification: Notification) {
-        guard let conversationID = repository.selectedConversationID else { return }
-        let snapshot = repository.liveResponse(for: conversationID)
-        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
-        let hadActiveExternalResponse = snapshot?.phase.isActive == true && snapshot?.promptText.isEmpty == true
-        let eventPrefix = hadActiveExternalResponse ? "foregroundExternalDetailReconcile" : "foregroundConversationDiscovery"
-        let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id
-        if repository.detailOperationSnapshot(for: conversationID) == nil {
-            diagnostics.info(category: "conversation", name: "\\(eventPrefix).requested", fields: repository.diagnosticsFields(for: conversationID))
-            repository.syncLatestMessages(id: conversationID) { [weak self] result in
-                guard let self else { return }
-                switch result {
-                case .success(let detail):
-                    let latestUserID = detail.messages.last(where: { $0.role == .user })?.id
-                    let latestUserChanged = latestUserID != nil && latestUserID != previousLatestUserID
-                    let currentSnapshot = self.repository.liveResponse(for: conversationID)
-                    let activeExternalAfterSync = currentSnapshot?.phase.isActive == true && currentSnapshot?.promptText.isEmpty == true
-                    let shouldRearmDiscoveredRemoteTurn = !hadActiveExternalResponse && (activeExternalAfterSync || (latestUserChanged && detail.messages.last?.role == .user))
-                    var fields = self.repository.diagnosticsFields(for: conversationID)
-                    fields["visibleMessageCount"] = String(detail.messages.count)
-                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"
-                    fields["latestUserChanged"] = latestUserChanged ? "true" : "false"
-                    fields["activeExternalAfterSync"] = activeExternalAfterSync ? "true" : "false"
-                    fields["rearmDiscoveredRemoteTurn"] = shouldRearmDiscoveredRemoteTurn ? "true" : "false"
-                    self.diagnostics.info(category: "conversation", name: "\\(eventPrefix).completed", fields: fields)
-                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
-                    if hadActiveExternalResponse, !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
-                    if shouldRearmDiscoveredRemoteTurn, self.repository.selectedConversationID == conversationID { self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true) }
-                case .failure(let error):
-                    self.diagnostics.error(category: "conversation", name: "\\(eventPrefix).failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
-                }
-                self.updateLivePresentation()
-            }
-        } else {
-            diagnostics.info(category: "conversation", name: "\\(eventPrefix).skipped", fields: ["reason": "detail_operation_in_flight"])
-        }
-        if hadActiveExternalResponse, let sendExecutor = sendExecutors[conversationID] {
-            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
-            sendExecutor.rebootstrapExternalObservationPageOnForeground()
-        }
-    }
-'''
-          if text.count(old) != 1:
-              raise SystemExit('unexpected foreground function baseline count')
-          source.write_text(text.replace(old, new, 1))
+          start_marker = '    @objc private func applicationWillEnterForeground(_ notification: Notification) {\n'
+          end_marker = '    func splitViewController(_ svc: UISplitViewController, topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {\n'
+          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
+              raise SystemExit('unexpected foreground function markers')
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          new_lines = [
+              '    @objc private func applicationWillEnterForeground(_ notification: Notification) {',
+              '        guard let conversationID = repository.selectedConversationID else { return }',
+              '        let snapshot = repository.liveResponse(for: conversationID)',
+              '        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }',
+              '        let hadActiveExternalResponse = snapshot?.phase.isActive == true && snapshot?.promptText.isEmpty == true',
+              '        let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id',
+              '        if repository.detailOperationSnapshot(for: conversationID) == nil {',
+              '            diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.requested" : "foregroundConversationDiscovery.requested", fields: repository.diagnosticsFields(for: conversationID))',
+              '            repository.syncLatestMessages(id: conversationID) { [weak self] result in',
+              '                guard let self else { return }',
+              '                switch result {',
+              '                case .success(let detail):',
+              '                    let latestUserID = detail.messages.last(where: { $0.role == .user })?.id',
+              '                    let latestUserChanged = latestUserID != nil && latestUserID != previousLatestUserID',
+              '                    let currentSnapshot = self.repository.liveResponse(for: conversationID)',
+              '                    let activeExternalAfterSync = currentSnapshot?.phase.isActive == true && currentSnapshot?.promptText.isEmpty == true',
+              '                    let shouldRearmDiscoveredRemoteTurn = !hadActiveExternalResponse && (activeExternalAfterSync || (latestUserChanged && detail.messages.last?.role == .user))',
+              '                    var fields = self.repository.diagnosticsFields(for: conversationID)',
+              '                    fields["visibleMessageCount"] = String(detail.messages.count)',
+              '                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"',
+              '                    fields["latestUserChanged"] = latestUserChanged ? "true" : "false"',
+              '                    fields["activeExternalAfterSync"] = activeExternalAfterSync ? "true" : "false"',
+              '                    fields["rearmDiscoveredRemoteTurn"] = shouldRearmDiscoveredRemoteTurn ? "true" : "false"',
+              '                    self.diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.completed" : "foregroundConversationDiscovery.completed", fields: fields)',
+              '                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }',
+              '                    if hadActiveExternalResponse, !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }',
+              '                    if shouldRearmDiscoveredRemoteTurn, self.repository.selectedConversationID == conversationID { self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true) }',
+              '                case .failure(let error):',
+              '                    self.diagnostics.error(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.failed" : "foregroundConversationDiscovery.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))',
+              '                }',
+              '                self.updateLivePresentation()',
+              '            }',
+              '        } else {',
+              '            diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.skipped" : "foregroundConversationDiscovery.skipped", fields: ["reason": "detail_operation_in_flight"])',
+              '        }',
+              '        if hadActiveExternalResponse, let sendExecutor = sendExecutors[conversationID] {',
+              '            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))',
+              '            sendExecutor.rebootstrapExternalObservationPageOnForeground()',
+              '        }',
+              '    }',
+              '',
+          ]
+          source.write_text(text[:start] + '\n'.join(new_lines) + text[end:])
           PY
 
       - name: Validate exact product scope
@@ -138,7 +115,7 @@ jobs:
           PY
           grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'let eventPrefix = hadActiveExternalResponse ? "foregroundExternalDetailReconcile" : "foregroundConversationDiscovery"' ChatGPTClient/RootViewController.swift
+          grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
           grep -q 'shouldRearmDiscoveredRemoteTurn' ChatGPTClient/RootViewController.swift
 
       - name: Build Debug iphonesimulator

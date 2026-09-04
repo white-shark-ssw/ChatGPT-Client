@@ -1,3 +1,26 @@
+## b104 normal no-probe accepted-client recovery — package ready 2026-09-05
+
+Exact Runtime / package evidence:
+
+- b103 Human Runtime diagnostics `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` is decisive for the accepted-client hard-Web recovery gate. The exact run had one protected Send, explicit HTTP200 `text/event-stream` acceptance, deterministic hard WebContent death, immediate `acceptedClientWebProcessRecovery` / `acceptedClientRecovery.started` on the same `responseGeneration=1`, no lifecycle nudge, HTTP200 `IS_STREAMING`, matching external snapshot, HTTP200 SSE resume, natural terminal, and automatic authoritative Detail `19 -> 21` reconciliation with live state cleared. There was no second protected Send.
+- `DEV-send-stream-0.1.0-b104` / `0.1.0 (104)` is permanently reserved as the first normal candidate after that deterministic test. Exact product `4aebb546f3be6b71de0a67f466e6557a357dbfdc`; canonical package source `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`.
+- b104 product delta from the b103 Runtime checkpoint is exactly three product paths: Build/Candidate 103 -> 104 plus removal of kill-probe Xcode membership, one AppDelegate installer line removal, and deletion of `CoveredWebProcessKillProbe.swift`. `RootViewController.swift` accepted-client recovery logic is unchanged.
+- Staging `33917182143 / 101166941594` passed exact three-product-path audit and Debug Simulator compile before committing product `4aebb546f3be6b71de0a67f466e6557a357dbfdc`.
+- Formal Push `33917342654 / 101167460031` and PR `33917346052 / 101167471587` both passed on exact package source `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`.
+- Canonical Push Artifact `9953695815`; downloaded Artifact ZIP independently recomputed `sha256:2ef6278a72fd46e86cb279a97e0e84b2228b5c78eb390cdc7582229b84e3d82e`, matching GitHub's Artifact digest.
+- Canonical IPA `ChatGPTClient-0.1.0-b104-dev-send-stream.ipa`; independently recomputed `sha256:9c35141e9877621d3a7e39245982cba6722acbb17a19f5ebabd8734d2b94df04`, matching the emitted sidecar.
+- Independent package inspection confirms `com.whitesharkssw.chatgptclient`, `0.1.0 (104)`, Candidate b104, source marker `08fab73ab9a6`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS, Mach-O 64-bit arm64. Binary contains the accepted-client recovery diagnostics and contains no `_killWebContentProcessAndResetState`, `coveredExecutor.killProbe`, `CoveredWebProcessKillProbe`, or b103 swizzle method.
+
+Evidence boundary:
+
+- b103 accepted-client hard-Web recovery is **Human Runtime Positive for the tested foreground iPhone/iOS17 path**. This does not prove true execution while iOS suspends the app, pre-acceptance Web death recovery, silent-but-alive Web stalls, generic navigation failure recovery, or the separate b101 exact `-1005` branch.
+- b104 contains no deterministic kill instrumentation. Its Human Runtime gate is an ordinary no-probe Send regression only; do not expect or force a 120-second Web kill.
+- No resend/replay/regenerate, timer/watchdog, polling, heartbeat, challenge replay, guessed Native resume, or second response/content authority is added.
+
+Evidence ladder: **b103 recovery Runtime Positive / b104 Code written / exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / b104 ordinary Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** install only canonical b104 and run an ordinary existing-conversation Native Send. Confirm there is no `coveredExecutor.killProbe`, protected Send is HTTP200 SSE accepted once, normal reasoning/tools/final reaches terminal and automatic authoritative reconcile, with no artificial WebContent death. Export diagnostics. Do not allocate b105 unless b104 Runtime exposes new evidence.
+
 ## b103 accepted-client hard-Web recovery Runtime Positive + b104 probe-removal allocation — 2026-09-05
 
 Exact b103 Human Runtime evidence:

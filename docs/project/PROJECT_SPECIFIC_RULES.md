@@ -1,3 +1,11 @@
+## Accepted client Send hard-Web recovery — Runtime accepted / b104 normal rule 2026-09-05
+
+- b103 Human Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` supersedes the earlier test-pending wording: for the tested foreground iPhone/iOS17 path, a protected Send that has already returned HTTP200 `text/event-stream` may survive hard covered-WebContent death and must retain the same prompt-owned `ConversationRepository` generation rather than being marked failed solely because the transport process died.
+- On that exact post-acceptance hard termination signal, release only the dead executor transport and attach one fresh covered observer to the same conversation/generation while active; if inactive, do not start background network work and defer the fresh observer to foreground. Never resend/replay/regenerate the prompt.
+- Before explicit Send acceptance, hard WebContent death remains failure/no-resend. Generic navigation failure, silence, elapsed time, missing snapshots, route state and focus state are not equivalent hard-disconnect evidence.
+- The b102/b103 deterministic 120-second kill probe is retired after this Runtime proof. Normal candidates from b104 forward must not contain its timer, JavaScript swizzle or `_killWebContentProcessAndResetState` test SPI unless a future explicitly scoped diagnostic experiment is separately justified and allocated.
+- `ConversationRepository` remains the sole response/content authority; this rule authorizes no polling, heartbeat, retry loop, challenge replay, guessed Native resume, duplicate Send, second live-response store or claim of true background execution.
+
 ## Accepted client Send hard-Web recovery — b103 test candidate 2026-09-05
 
 - b102 Runtime proved that a client-owned protected Send with explicit HTTP200 `text/event-stream` acceptance can survive hard `WKWebView` WebContent death server-side and later be reacquired through the already-evidenced covered observation + authoritative Detail chain without a second Send.

@@ -1,3 +1,9 @@
+## Latest DEV-send-stream candidate override — b104 2026-09-05
+
+- Latest Human Runtime candidate is `DEV-send-stream-0.1.0-b104` / `0.1.0 (104)`, permanently reserved. Exact product `4aebb546f3be6b71de0a67f466e6557a357dbfdc`; package source `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`. b104 preserves b103 accepted-client hard-Web same-generation recovery unchanged and removes only deterministic kill instrumentation.
+- Staging `33917182143/101166941594`, Push `33917342654/101167460031` and PR `33917346052/101167471587` passed. Canonical Artifact `9953695815`; ZIP `sha256:2ef6278a72fd46e86cb279a97e0e84b2228b5c78eb390cdc7582229b84e3d82e`; IPA `sha256:9c35141e9877621d3a7e39245982cba6722acbb17a19f5ebabd8734d2b94df04`; independent package identity verifies Release b104/source `08fab73ab9a6`/iOS14+/`[1,2]`/arm64 and no kill-probe/private-SPI strings.
+- b103 Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` is Positive for accepted-client hard-Web recovery on the tested foreground iPhone/iOS17 path: one accepted protected Send, same-generation automatic reattach with no lifecycle nudge or resend, live continuation, terminal and authoritative convergence. b104 ordinary no-probe Runtime remains pending; Stable/Frozen No.
+
 ## Latest DEV-send-stream candidate override — b103 2026-09-05
 
 - Latest Human Runtime candidate is now `DEV-send-stream-0.1.0-b103` / `0.1.0 (103)`, permanently reserved. b103 converts only explicitly accepted client-owned hard WebContent death into same-generation covered-observer handoff; it never resends the prompt. Exact product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; package source `e1cca160e9c466ab98a2aeffc038e94f58335cab`.

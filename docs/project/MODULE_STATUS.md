@@ -1,3 +1,9 @@
+## DEV-send-stream b104 no-probe accepted-client recovery — 2026-09-05
+
+- `ConversationRepository` remains sole Native response/content/lifecycle authority. b103 Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` proves the accepted-client hard-Web handoff keeps one prompt-owned generation through death, fresh covered observation, resume/live terminal and authoritative reconcile with no second protected Send.
+- b104 keeps that recovery implementation unchanged and removes the deterministic kill instrumentation completely. No test timer/private WebKit kill SPI ships in this normal candidate.
+- Exact product/package `4aebb546f3be6b71de0a67f466e6557a357dbfdc` / `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`; staging + Push + PR CI passed; Artifact `9953695815`; IPA `sha256:9c35141e9877621d3a7e39245982cba6722acbb17a19f5ebabd8734d2b94df04`; package identity independently verified. b104 ordinary Runtime pending; module remains Active / Runtime Partial overall / Stable-Frozen No because separate background/silent-stall and other open gates are not collapsed into this result.
+
 ## DEV-send-stream b103 accepted-client hard-Web recovery — 2026-09-05
 
 - `ConversationRepository` remains sole Native response/content/lifecycle authority. b103 does not create a second response object when the covered WebContent process dies after Send acceptance; the existing prompt-owned generation remains active and receives the fresh covered observer's already-evidenced external continuation events.

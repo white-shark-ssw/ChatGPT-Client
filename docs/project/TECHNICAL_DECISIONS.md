@@ -1,3 +1,10 @@
+## DEV-send-stream b103 Runtime acceptance / b104 probe-retirement decision — 2026-09-05
+
+- Exact b103 Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` validates the decision made from b102: once one protected Send has explicit HTTP200 `text/event-stream` acceptance, hard `webViewWebContentProcessDidTerminate` may be treated as receive-transport interruption for the tested foreground path. Preserve the same prompt-owned Repository generation, release the dead executor, attach one fresh covered observer, and never resend the prompt.
+- The recovery qualifies without lifecycle assistance: no post-kill foreground/background event occurred before the fresh observer obtained HTTP200 `IS_STREAMING`, matching snapshot and HTTP200 SSE resume; generation 1 then reached terminal and authoritative Detail reconciliation.
+- The deterministic 120-second kill has fulfilled its diagnostic purpose and is retired in b104. No timer, swizzle, `_killWebContentProcessAndResetState`, watchdog, retry loop or replacement synthetic disconnect detector is authorized for normal product behavior.
+- Pre-acceptance hard Web death remains normal failure/no-resend. Silence, elapsed time, route/focus state, generic navigation error and missing snapshot remain insufficient hard-disconnect evidence. True background execution remains separately unproven.
+
 ## DEV-send-stream b103 accepted-client hard-Web recovery decision — 2026-09-05
 
 - b102 Runtime changes the evidence boundary: after one exact protected Send returned HTTP200 `text/event-stream`, deterministic `webViewWebContentProcessDidTerminate` caused only local transport/lifecycle failure; the server turn stayed alive and the existing covered observation/Detail path later reacquired and completed it with no second Send. Hard death after explicit acceptance is therefore a recoverable receive-transport interruption for this tested scenario, not proof that the server response failed.

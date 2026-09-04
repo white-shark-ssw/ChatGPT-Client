@@ -1,3 +1,10 @@
+## DEV-send-stream b104 normal no-probe recovery package ready — 2026-09-05
+
+- b103 Human Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` closes the accepted-client hard-Web foreground recovery gate as Runtime Positive: exactly one HTTP200 SSE accepted protected Send survived hard WebContent death, the same Repository generation automatically attached one fresh covered observer without a lifecycle nudge or resend, page-owned status/snapshot/resume continued, and terminal authoritative Detail converged `19 -> 21` and cleared live state.
+- b104 removes only the deterministic b102/b103 test surface: no `CoveredWebProcessKillProbe`, no AppDelegate installer, no `_killWebContentProcessAndResetState`, no 120-second test timer. Accepted-client recovery in Root is unchanged. Product `4aebb546f3be6b71de0a67f466e6557a357dbfdc`; package `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`.
+- Staging `33917182143/101166941594`, Push `33917342654/101167460031`, PR `33917346052/101167471587` passed; Artifact `9953695815`; ZIP `sha256:2ef6278a72fd46e86cb279a97e0e84b2228b5c78eb390cdc7582229b84e3d82e`; IPA `sha256:9c35141e9877621d3a7e39245982cba6722acbb17a19f5ebabd8734d2b94df04`; package independently verified b104/source `08fab73ab9a6`/Release/iOS14+/arm64.
+- Human Runtime for b104 is pending ordinary no-probe Send regression. No true-background/silent-stall/pre-acceptance recovery claim; Stable-Frozen No.
+
 ## DEV-send-stream b103 accepted-client hard-Web recovery package ready — 2026-09-05
 
 - b102 Human Runtime `sha256:6d2fde277427d3bbad6549946855c68b8df7e0433389b2d5c9e7d98212a3a6a6` proves an explicitly accepted client-owned protected Send can survive hard WebContent death server-side and later finish through the existing covered observation + authoritative Detail chain without a second Send. The remaining defect was local: b102 marked the prompt-owned generation failed and required a lifecycle nudge to rediscover it.

@@ -1,3 +1,59 @@
+## b99 Human Runtime — dormant foreground discovery gap / b100 allocation 2026-09-05
+
+Exact tested b99 evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b99` / `0.1.0 (99)`, canonical package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`, canonical IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`.
+- Human Runtime diagnostics `ChatGPTClient-Diagnostics-20260904-161157.json`, `sha256:4a0d3925a4abf6ef24dc6743f9efb63a4dffcd049f3e41eb7a547f2b1d33d271`, 74674 bytes / 149 events / Release / iPhone / iOS17.0.
+- First external response was acquired at `15:50:36Z`; app backgrounded at `15:50:38Z` and returned at `15:58:10Z` after 452s (~7m32s). Because an active external live snapshot still existed, b97-style foreground authoritative reconciliation ran automatically; Detail changed visible messages `5 -> 6`, emitted `liveResponse.externalDetailReconciled(reason=authoritative_assistant_materialized)`, cleared the live response and released the covered executor. This path is Runtime Positive.
+- App backgrounded again at `15:58:25Z`, now with **no active live response and no covered executor**, and returned at `16:11:19Z` after 774s (~12m54s). No `foregroundExternalDetailReconcile` and no covered rebootstrap occurred because current `applicationWillEnterForeground` requires a pre-existing active external snapshot.
+- Manual `同步最新消息` at `16:11:43Z` immediately found authoritative server change: visible messages `6 -> 8` (`addedVisibleMessageCount=2`). This proves the server state advanced while the client had no active receive owner, and the existing authoritative Detail request is sufficient to discover it once invoked.
+- This sample contains zero `coveredExecutor.webProcess` / `externalWebProcessRecovery` events. b98 hard WebContent termination recovery remains Unexercised / Unverified.
+- This sample contains only one `liveResponse.event` and one `liveResponse.presentationApplied`; therefore the b99 backlog-coalescing performance fix is not meaningfully exercised by this run. No freeze/crash was observed, but coalescing is not accepted from this sample.
+
+Runtime classification:
+
+- known-active external foreground final convergence: **Runtime Positive**, including ~7m32s background;
+- b99 live-presentation backlog coalescing: **Unexercised / Inconclusive** in this sample;
+- remote changes that begin/occur while the selected conversation has no active external snapshot/executor: **Runtime Negative for automatic foreground discovery**; manual one-shot Detail recovery Positive;
+- b98 hard WebContent termination recovery: **Unexercised / Unverified**;
+- overall b99: **Runtime Partial / Stable-Frozen No**.
+
+Exact source explanation:
+
+- `RootViewController.applicationWillEnterForeground` currently starts with `guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }`.
+- Therefore a completed/released external response leaves no foreground discovery trigger for later cross-platform server changes.
+- `ConversationDetailViewController` manual Sync already proves the normal authoritative `ConversationRepository.syncLatestMessages` request can recover those changes, and its existing Root callback can rearm covered observation when needed.
+
+b100 allocation / batch recovery point:
+
+- Work `DEV-send-stream` remains selected; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable.
+- Verified pre-allocation branch head `6d8d99166d4e36c1b27ca84c842df3be84de21a1`; `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Product files remain exact b99 package product relative to `313c4c3...`; intervening branch commits are workflow/docs only.
+- Parallel PR #35 / `DEV-official-sync-reload` remains draft/open at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`; its seven changed paths remain research/workflow/checkpoint only, with zero `ChatGPTClient/**` or product Xcode overlap.
+- `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)` is the next unique product candidate and is now permanently allocated/reserved.
+
+Evidence-backed b100 product boundary:
+
+1. Keep client-owned active protected Send behavior unchanged: an active local response is not auto-Synced/replayed on foreground.
+2. For a selected conversation with no client-owned active response, foreground entry may issue exactly one existing authoritative `ConversationRepository.syncLatestMessages` when no Detail operation is already in flight, even if no external live snapshot currently exists.
+3. Preserve the existing b97 path and diagnostics when an external live snapshot already exists.
+4. For the new no-snapshot discovery path, compare the authoritative latest-user identity before/after the one-shot Detail. If the server exposes a newly added latest user whose visible tail still ends in `.user`, or authoritative Detail itself recreates an active external live projection, reuse the existing covered observer with one force page reload so an in-progress remote response can continue. If the final assistant is already materialized, Detail alone is sufficient and no observer is required.
+5. Do not poll. Do not add a timer, cadence, retry, watchdog, background heartbeat, guessed `/resume`, WebSocket-body authority, duplicate Send, challenge replay, response cache or second response owner.
+6. Preserve b99 UIKit coalescing, b98 hard WebContent recovery, b97 authoritative reconcile, TD-029 protected Send ownership and Sync/Reload semantics.
+
+Intended b100 product scope:
+
+- `ChatGPTClient.xcodeproj/project.pbxproj` — Build100 / Candidate b100 only;
+- `ChatGPTClient/RootViewController.swift` — foreground one-shot authoritative discovery/rearm only.
+
+Batch state:
+
+- confirmed complete: b99 diagnostics analyzed; exact failure mechanism tied to source; branch/PR/base verified; PR #35 overlap checked; b100 candidate uniqueness checked and allocated here;
+- pending: apply exact two-product-file delta; exact-scope + `git diff --check` + Debug iphonesimulator compile; bind formal b100 Push/PR package CI to exact product head; verify canonical Artifact/IPA identity; update durable project docs and PR #29 metadata;
+- do not touch PR #35, protected-Send transport/challenge logic, Repository response authority, b99 canonical Artifact, or b98/b99 reserved candidate identities.
+
+**Next exact action:** apply only the two-file b100 foreground-discovery delta above and validate it before packaging.
+
 ## b99 live-presentation coalescing — package-ready 2026-09-04
 
 - Candidate `DEV-send-stream-0.1.0-b99` / `0.1.0 (99)`, permanently reserved.

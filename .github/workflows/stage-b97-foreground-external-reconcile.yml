@@ -1,0 +1,48 @@
+name: Stage b97 Foreground External Reconcile
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b97-foreground-external-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 1
+
+      - name: Apply exact b97 product delta
+        run: python3 scripts/staging/b97_foreground_external_reconcile.py
+
+      - name: Validate exact scope
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/Conversation/NativeConversationContinuation.swift ChatGPTClient/RootViewController.swift | sort)"
+          grep -q 'CURRENT_PROJECT_VERSION = 97;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b97";' ChatGPTClient.xcodeproj/project.pbxproj
+          ! grep -q 'nativeConversationContinuationInterval' ChatGPTClient/Conversation/NativeConversationContinuation.swift
+          ! grep -q 'DispatchWorkItem' ChatGPTClient/Conversation/NativeConversationContinuation.swift
+          grep -q 'foregroundExternalDetailReconcile.requested' ChatGPTClient/RootViewController.swift
+          grep -q 'repository.syncLatestMessages(id: conversationID)' ChatGPTClient/RootViewController.swift
+          git status --short
+
+      - name: Simulator compile
+        run: xcodebuild -project ChatGPTClient.xcodeproj -target ChatGPTClient -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+      - name: Commit exact b97 product delta
+        run: |
+          git config user.name "white-shark-ssw"
+          git config user.email "houstools@gmail.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/Conversation/NativeConversationContinuation.swift ChatGPTClient/RootViewController.swift
+          git commit -m "DEV-send-stream: reconcile external final on foreground b97"
+          git push origin HEAD:dev/send-stream-20260829

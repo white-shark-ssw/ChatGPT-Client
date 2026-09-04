@@ -1,3 +1,32 @@
+## b102 Human Runtime decisive + b103 accepted-client hard-Web recovery allocation — 2026-09-05
+
+Exact b102 Human Runtime evidence:
+
+- Canonical Candidate `DEV-send-stream-0.1.0-b102` / Build102, source marker `78bd3d2f3e45`; diagnostics `ChatGPTClient-Diagnostics-20260904-193801.json`, exact `sha256:6d2fde277427d3bbad6549946855c68b8df7e0433389b2d5c9e7d98212a3a6a6`, 460465 bytes, iPhone / iOS17.0 / Release.
+- One Native protected Send started at `19:33:48Z`; exact counts are one `coveredExecutor.requested`, one `submitResult`, one `sendObserved`, one `sendResponse`. `sendResponse` was HTTP200 `text/event-stream`, so server acceptance is explicit before transport death.
+- The deterministic probe fired at `19:35:54Z` while the response was still active: `coveredExecutor.webProcess state=terminated mode=client_send_or_idle`. Legacy behavior then marked the client-owned generation failed and released the executor.
+- The server-side turn survived. After the user briefly backgrounded/foregrounded, existing b100 foreground discovery issued one authoritative Detail HTTP200, changed visible messages `17 -> 18`, observed `latestUserChanged=true` / `rearmDiscoveredRemoteTurn=true`, and created an external authoritative projection.
+- A fresh covered observer then returned HTTP200 `IS_STREAMING`; `/resume` returned HTTP200 `text/event-stream`; reasoning/tool/final events continued to terminal with final 6079 chars, reasoning 2924 chars and 31 tools. Automatic terminal reconcile then changed authoritative visible messages `18 -> 19` and cleared the live projection.
+- There was no second protected Send. Therefore hard WebContent death after explicit Send acceptance is now **Runtime proven to be transport loss, not server-turn failure** for this scenario. The remaining product defect is that current b102 requires a lifecycle nudge because it converts the client-owned generation to failed/released at the kill.
+
+b103 allocation / minimal product direction:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b103` / `0.1.0 (103)`. b103 is a recovery test candidate, not Stable/Frozen.
+- Only exact client Send HTTP200 `text/event-stream` acceptance may arm automatic hard-Web recovery. WebContent death before explicit acceptance remains failure and must never auto-resend/replay/regenerate.
+- On accepted-client `webViewWebContentProcessDidTerminate`, preserve the existing Repository generation and prompt-owned live response; emit a transport-interruption event instead of `.failed`, release the dead executor, and when active create one fresh covered observer for the same conversation using the same Repository generation. No second Send occurs.
+- If the app is inactive when the hard death callback arrives, do no background network work. The live client-owned snapshot remains active with no executor; on the next foreground lifecycle, one fresh covered observer is attached to that same generation.
+- Reuse the already-proven external observation parsing path for `IS_STREAMING`, snapshot, `/resume`, reasoning/tool/final/terminal. `ConversationRepository` remains the sole response/content authority and the existing terminal authoritative Detail reconcile remains final authority.
+- b103 may reuse the already-proven one-shot 120-second kill probe, Candidate-gated to exact b103, only to deterministically validate this new recovery path. It remains diagnostic instrumentation, not product timeout/watchdog policy, and must be removed/disabled before any later normal/Stable candidate.
+- No timer beyond that explicit test probe, no polling, retry loop, heartbeat, duplicate Send, challenge replay, guessed resume, second response store or Native protected-Send implementation is authorized.
+
+Resume/conflict guard before product write:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable; verified pre-allocation head `8081203d587d04e058d91e7985c45f36a361a99d`; base `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Parallel PR #35 / `DEV-official-sync-reload` remains draft research-only at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, with no `ChatGPTClient/**` product overlap or Candidate ownership conflict.
+- `BUILD_TEST_INDEX.md` has no b103 identity before this allocation.
+
+**Next exact action:** apply only Build/Candidate 103, exact b103 Candidate gate for the already-proven kill probe, and accepted-client hard-Web transport handoff in `RootViewController.swift`; run exact-scope audit + Simulator compile before formal packaging.
+
 ## b102 deterministic client-owned WebContent-death probe — package-ready 2026-09-05
 
 Exact evidence:

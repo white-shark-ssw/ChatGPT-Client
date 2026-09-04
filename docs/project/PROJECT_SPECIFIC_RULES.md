@@ -1,3 +1,12 @@
+## Accepted client Send hard-Web recovery — b103 test candidate 2026-09-05
+
+- b102 Runtime proved that a client-owned protected Send with explicit HTTP200 `text/event-stream` acceptance can survive hard `WKWebView` WebContent death server-side and later be reacquired through the already-evidenced covered observation + authoritative Detail chain without a second Send.
+- b103 may treat hard WebContent death as a recoverable receive-transport interruption **only after** exact client Send acceptance has been observed. Before explicit acceptance, existing failure semantics remain mandatory and the prompt must never be replayed/resubmitted automatically.
+- Accepted-client recovery must preserve the same `ConversationRepository` generation and prompt-owned live snapshot. Recovery may attach one fresh covered observer for the same conversation and feed evidenced external snapshot/resume/live events into that same generation; it must not create a second response/content authority.
+- If the app is inactive when WebContent dies, do not start background network work. Leave the accepted client generation active and reattach one fresh covered observer on the next foreground lifecycle.
+- The one-shot 120-second forced kill may be Candidate-gated to exact b103 solely as deterministic Human Runtime instrumentation because the b102 trigger itself is Runtime proven. It is not a response timeout, watchdog, keepalive or production scheduler and must not survive into a later normal/Stable candidate.
+- Navigation failure, silence, missing snapshots, route/focus state and elapsed time are not generalized disconnect signals. b103 adds no polling, heartbeat, retry loop, duplicate Send, regenerate, challenge replay or guessed Native resume.
+
 ## Deterministic covered-Web kill probe — b102 test-only 2026-09-05
 
 - The b102 120-second `WKWebView` kill is allowed **only** as Candidate-gated Human Runtime instrumentation for the explicit client-owned WebContent-death test. Never carry this timer into a later normal product candidate or treat elapsed time as disconnect evidence.

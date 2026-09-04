@@ -1,3 +1,10 @@
+## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05
+
+- b99 Runtime: known-active external response auto-reconciled authoritative Detail `5->6` after ~7m32s background. After that response/executor was released, a later ~12m54s background interval had no automatic foreground discovery; manual Sync recovered `6->8`. b99 is Runtime Partial; its backlog-coalescing stress is Inconclusive in this sample; hard WebContent-death recovery remains Unverified.
+- b100 changes only foreground discovery: selected conversation + no client-owned active response + no Detail operation => exactly one existing `ConversationRepository.syncLatestMessages`, even without a pre-existing external snapshot. Completed server state materializes directly; a newly discovered unfinished remote user turn may rearm the existing covered observer once.
+- No polling/timer/retry/watchdog/background heartbeat/resend/guessed resume/second response authority.
+- Exact product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; staging `33895020559/101095508915`, Push `33895244146/101096229135`, PR `33895249810/101096247432` passed; Artifact `9945483725`; IPA `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`; Human Runtime pending; Stable-Frozen No.
+
 ## 2026-09-04 — b99 live-presentation coalescing package ready
 
 - b98 Human Runtime exact diagnostics `sha256:e0a0bd2c42168d0c3f8a6dd681bbad1bb571d4061b0f2958131cae5f8e059105`: no hard WebContent termination event occurred, so that new b98 branch remains Unverified. The included foreground authoritative Detail reconcile is Runtime Positive, but a later client-owned response replayed 170 buffered live events after ~5m background and drove 169 synchronous full presentation applications; user observed freeze/crash and a fresh `launch.start` followed 3s after the last live event.

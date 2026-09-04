@@ -1,3 +1,10 @@
+## DEV-send-stream b100 lifecycle-triggered dormant discovery — 2026-09-05
+
+- Authorize one authoritative Detail on foreground for the selected conversation when no client-owned response is active and no Detail operation is in flight, even when no external live snapshot exists. This is lifecycle-triggered discovery, not polling.
+- Preserve the existing active-external b97 reconcile/rebootstrap. Rearm covered observation only when Detail proves a newly changed latest user ending in `.user`, or restores an active external projection; an already-materialized assistant needs no observer.
+- No cadence/retry/watchdog/background heartbeat/duplicate Send/guessed resume/WebSocket-body authority/challenge replay/second response owner.
+- Exact b100 product/package `70c7dc052865ef80ca7bdec083d7621c1a297eab` / `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; Runtime pending.
+
 ## DEV-send-stream b99 live-presentation coalescing decision — 2026-09-04
 
 - Runtime evidence establishes a foreground backlog consumer problem, not a need for a new transport protocol: after ~5m background the existing covered response delivered 170 live events while the selected Detail synchronously rebuilt/reloaded/la[id] out the table 169 times before freeze/crash.

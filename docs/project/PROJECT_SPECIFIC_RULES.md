@@ -1,3 +1,10 @@
+## Foreground dormant cross-platform discovery — b100 2026-09-05
+
+- Foreground recovery must not require a pre-existing external live snapshot. With a selected conversation, no client-owned active response and no Detail operation, one lifecycle transition may issue exactly one existing authoritative `ConversationRepository.syncLatestMessages`.
+- If final assistant is already materialized, use Detail directly. Rearm the existing covered observer only for a newly discovered unfinished remote user turn or active external projection.
+- Never turn this into polling, retry, timer, keepalive, resend/regenerate, guessed resume, or a second response store.
+- TD-029 protected Send ownership, b99 UI coalescing, b98 WebContent recovery, b97 active-external reconcile and Sync/Reload semantics remain unchanged.
+
 ## Live-response presentation coalescing — b99 2026-09-04
 
 - Repository live-response events must remain lossless and ordered. Do not reduce transport/state event granularity to fix UIKit performance.

@@ -1,3 +1,17 @@
+## b100 foreground dormant discovery — package-ready 2026-09-05
+
+- Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`, permanently reserved.
+- Product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; exact delta: Xcode Build/Candidate + `ChatGPTClient/RootViewController.swift` only. Canonical package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`.
+- Initial staging `33894741044` was YAML parse failure with zero jobs/product writes and is invalid evidence. Corrected staging `33895020559/101095508915` passed exact scope, `git diff --check`, Simulator and product commit.
+- Push `33895244146/101096229135` and PR `33895249810/101096247432` passed. Canonical Push Artifact `9945483725`, ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`; IPA `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`.
+- Package inspection: `com.whitesharkssw.chatgptclient`, `0.1.0 (100)`, Candidate b100, source `e88a50ad9c20`, iOS14+, `[1,2]`, arm64.
+- b99 Runtime `sha256:4a0d3925a4abf6ef24dc6743f9efb63a4dffcd049f3e41eb7a547f2b1d33d271`: known-active ~7m32s automatic Detail `5->6` Positive; later no-active-snapshot ~12m54s remote changes required manual Sync `6->8`, so dormant discovery Negative. b99 backlog coalescing Inconclusive in this sample; hard WebContent death Unverified.
+- b100 adds exactly one foreground authoritative discovery without an active-snapshot precondition. It may rearm one existing covered observer only for an unfinished newly discovered remote turn. No polling/timer/retry/watchdog/background heartbeat/resend/second authority.
+
+Evidence ladder: **b99 Runtime Partial / b100 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Human Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** test canonical b100. Keep a selected completed conversation idle, background app, create a new remote turn elsewhere, then foreground without Sync/Reload. Expect `foregroundConversationDiscovery.requested` + exactly one Detail; complete response should materialize, unfinished remote turn should set `rearmDiscoveredRemoteTurn=true` and rearm once. Regression-check known-active `foregroundExternalDetailReconcile` too.
+
 ## b99 Human Runtime — dormant foreground discovery gap / b100 allocation 2026-09-05
 
 Exact tested b99 evidence:

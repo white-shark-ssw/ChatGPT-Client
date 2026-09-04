@@ -1456,9 +1456,31 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     @objc private func applicationWillEnterForeground(_ notification: Notification) {
-        guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty, let sendExecutor = sendExecutors[conversationID] else { return }
-        diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
-        sendExecutor.rebootstrapExternalObservationPageOnForeground()
+        guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }
+        if repository.detailOperationSnapshot(for: conversationID) == nil {
+            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.requested", fields: repository.diagnosticsFields(for: conversationID))
+            repository.syncLatestMessages(id: conversationID) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let detail):
+                    var fields = self.repository.diagnosticsFields(for: conversationID)
+                    fields["visibleMessageCount"] = String(detail.messages.count)
+                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"
+                    self.diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.completed", fields: fields)
+                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
+                    if !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
+                case .failure(let error):
+                    self.diagnostics.error(category: "conversation", name: "foregroundExternalDetailReconcile.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
+                }
+                self.updateLivePresentation()
+            }
+        } else {
+            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.skipped", fields: ["reason": "detail_operation_in_flight"])
+        }
+        if let sendExecutor = sendExecutors[conversationID] {
+            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
+            sendExecutor.rebootstrapExternalObservationPageOnForeground()
+        }
     }
 
     func splitViewController(_ svc: UISplitViewController, topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {

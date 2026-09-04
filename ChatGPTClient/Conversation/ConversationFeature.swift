@@ -1190,7 +1190,6 @@ final class ConversationRepository {
         let removedResidentCount = residentStates.count
         let cancelledOperations = Array(detailOperations.values)
         listOperationGeneration += 1
-        cancelAllNativeConversationContinuations(reason: "account_scope_reset")
         for operation in cancelledOperations { operation.task?.cancel() }
         detailOperations.removeAll()
         detailOperationGenerations.removeAll()

@@ -21,6 +21,7 @@
 		A00000000000000000000012 /* NativeResumeParityProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* NativeResumeParityProbe.swift */; };
 		A00000000000000000000013 /* NativeWebSendEngineProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* NativeWebSendEngineProbe.swift */; };
 		A00000000000000000000014 /* NativeConversationContinuation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* NativeConversationContinuation.swift */; };
+		A00000000000000000000015 /* CoveredWebProcessKillProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* CoveredWebProcessKillProbe.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		B00000000000000000000014 /* NativeResumeParityProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeResumeParityProbe.swift; sourceTree = "<group>"; };
 		B00000000000000000000015 /* NativeWebSendEngineProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWebSendEngineProbe.swift; sourceTree = "<group>"; };
 		B00000000000000000000016 /* NativeConversationContinuation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeConversationContinuation.swift; sourceTree = "<group>"; };
+		B00000000000000000000017 /* CoveredWebProcessKillProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoveredWebProcessKillProbe.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +120,7 @@
 				B00000000000000000000013 /* ProtocolHandoffProbe.swift */,
 				B00000000000000000000014 /* NativeResumeParityProbe.swift */,
 				B00000000000000000000015 /* NativeWebSendEngineProbe.swift */,
+				B00000000000000000000017 /* CoveredWebProcessKillProbe.swift */,
 			);
 			path = Protocol;
 			sourceTree = "<group>";
@@ -213,6 +216,7 @@
 				A00000000000000000000012 /* NativeResumeParityProbe.swift in Sources */,
 				A00000000000000000000013 /* NativeWebSendEngineProbe.swift in Sources */,
 				A00000000000000000000014 /* NativeConversationContinuation.swift in Sources */,
+				A00000000000000000000015 /* CoveredWebProcessKillProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,8 +264,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 101;
-				DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b101";
+				CURRENT_PROJECT_VERSION = 102;
+				DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b102";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -285,8 +289,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 101;
-				DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b101";
+				CURRENT_PROJECT_VERSION = 102;
+				DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b102";
 				INFOPLIST_FILE = ChatGPTClient/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "7a83abd465edc04e9987e3ab798fd19066f97823"
+          test "$(git rev-parse HEAD^)" = "db81d0766a640899509326b07c20f4f198a3baee"
           grep -q 'CURRENT_PROJECT_VERSION = 98;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b98";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'private var livePresentationContentHeight: CGFloat = 0' ChatGPTClient/Conversation/ConversationFeature.swift
@@ -60,40 +60,41 @@ jobs:
               raise SystemExit('unexpected liveResponseDidChange markers')
           start = text.index(start_marker)
           end = text.index(end_marker, start)
-          replacement = '''    func liveResponseDidChange(id: String) {
-        guard displayedConversationID == id, repository.selectedConversationID == id else { return }
-        guard !liveResponsePresentationUpdateScheduled else { return }
-        liveResponsePresentationUpdateScheduled = true
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.liveResponsePresentationUpdateScheduled = false
-            guard self.displayedConversationID == id, self.repository.selectedConversationID == id else { return }
-            self.applyLiveResponsePresentationChange(id: id)
-        }
-    }
-
-    private func applyLiveResponsePresentationChange(id: String) {
-        if repository.liveResponse(for: id) == nil, let detail = repository.selectedConversation, detail.id == id, detail.currentNodeID != displayedCurrentNodeID || hasVisibleMessageChanges(from: messages, to: detail.messages) {
-            apply(detail)
-            return
-        }
-        let boundsBefore = answerJumpScrollBounds()
-        let wasAtPhysicalBottom = tableView.contentOffset.y >= boundsBefore.maximumY - 0.5
-        rebuildLiveResponsePresentation(width: effectivePresentationWidth())
-        tableView.reloadData()
-        tableView.layoutIfNeeded()
-        if wasAtPhysicalBottom { setScrollOffsetY(answerJumpScrollBounds().maximumY) }
-        updateAnswerJumpButton()
-        var fields = repository.diagnosticsFields(for: id)
-        fields["livePresentationRowCount"] = String(liveMessagePresentation.rows.count)
-        fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)
-        fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
-        diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
-        updateConversationMenu()
-    }
-
-'''
-          text = text[:start] + replacement + text[end:]
+          lines = [
+              '    func liveResponseDidChange(id: String) {',
+              '        guard displayedConversationID == id, repository.selectedConversationID == id else { return }',
+              '        guard !liveResponsePresentationUpdateScheduled else { return }',
+              '        liveResponsePresentationUpdateScheduled = true',
+              '        DispatchQueue.main.async { [weak self] in',
+              '            guard let self else { return }',
+              '            self.liveResponsePresentationUpdateScheduled = false',
+              '            guard self.displayedConversationID == id, self.repository.selectedConversationID == id else { return }',
+              '            self.applyLiveResponsePresentationChange(id: id)',
+              '        }',
+              '    }',
+              '',
+              '    private func applyLiveResponsePresentationChange(id: String) {',
+              '        if repository.liveResponse(for: id) == nil, let detail = repository.selectedConversation, detail.id == id, detail.currentNodeID != displayedCurrentNodeID || hasVisibleMessageChanges(from: messages, to: detail.messages) {',
+              '            apply(detail)',
+              '            return',
+              '        }',
+              '        let boundsBefore = answerJumpScrollBounds()',
+              '        let wasAtPhysicalBottom = tableView.contentOffset.y >= boundsBefore.maximumY - 0.5',
+              '        rebuildLiveResponsePresentation(width: effectivePresentationWidth())',
+              '        tableView.reloadData()',
+              '        tableView.layoutIfNeeded()',
+              '        if wasAtPhysicalBottom { setScrollOffsetY(answerJumpScrollBounds().maximumY) }',
+              '        updateAnswerJumpButton()',
+              '        var fields = repository.diagnosticsFields(for: id)',
+              '        fields["livePresentationRowCount"] = String(liveMessagePresentation.rows.count)',
+              '        fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)',
+              '        fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"',
+              '        diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)',
+              '        updateConversationMenu()',
+              '    }',
+              '',
+          ]
+          text = text[:start] + '\n'.join(lines) + '\n' + text[end:]
           source.write_text(text)
           PY
 
@@ -102,11 +103,9 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          mapfile -t changed < <(git diff --name-only)
-          printf '%s\n' "${changed[@]}"
-          test "${#changed[@]}" -eq 2
-          test "${changed[0]}" = "ChatGPTClient.xcodeproj/project.pbxproj"
-          test "${changed[1]}" = "ChatGPTClient/Conversation/ConversationFeature.swift"
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          test "$changed" = $'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift'
           grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'private var liveResponsePresentationUpdateScheduled = false' ChatGPTClient/Conversation/ConversationFeature.swift

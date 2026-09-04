@@ -1673,6 +1673,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var liveMessagePresentation = ConversationMessagePresentationProjection.empty
     private var livePresentationRowMetrics: [ConversationMessageCell.Metrics] = []
     private var livePresentationContentHeight: CGFloat = 0
+    private var liveResponsePresentationUpdateScheduled = false
     private var presentationRowMetrics: [ConversationMessageCell.Metrics] = []
     private var presentationRowOffsets: [CGFloat] = []
     private var presentationContentHeight: CGFloat = 0
@@ -2124,25 +2125,36 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 }
 
     func liveResponseDidChange(id: String) {
-    guard displayedConversationID == id, repository.selectedConversationID == id else { return }
-    if repository.liveResponse(for: id) == nil, let detail = repository.selectedConversation, detail.id == id, detail.currentNodeID != displayedCurrentNodeID || hasVisibleMessageChanges(from: messages, to: detail.messages) {
-        apply(detail)
-        return
+        guard displayedConversationID == id, repository.selectedConversationID == id else { return }
+        guard !liveResponsePresentationUpdateScheduled else { return }
+        liveResponsePresentationUpdateScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.liveResponsePresentationUpdateScheduled = false
+            guard self.displayedConversationID == id, self.repository.selectedConversationID == id else { return }
+            self.applyLiveResponsePresentationChange(id: id)
+        }
     }
-    let boundsBefore = answerJumpScrollBounds()
-    let wasAtPhysicalBottom = tableView.contentOffset.y >= boundsBefore.maximumY - 0.5
-    rebuildLiveResponsePresentation(width: effectivePresentationWidth())
-    tableView.reloadData()
-    tableView.layoutIfNeeded()
-    if wasAtPhysicalBottom { setScrollOffsetY(answerJumpScrollBounds().maximumY) }
-    updateAnswerJumpButton()
-    var fields = repository.diagnosticsFields(for: id)
-    fields["livePresentationRowCount"] = String(liveMessagePresentation.rows.count)
-    fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)
-    fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
-    diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
-    updateConversationMenu()
-}
+
+    private func applyLiveResponsePresentationChange(id: String) {
+        if repository.liveResponse(for: id) == nil, let detail = repository.selectedConversation, detail.id == id, detail.currentNodeID != displayedCurrentNodeID || hasVisibleMessageChanges(from: messages, to: detail.messages) {
+            apply(detail)
+            return
+        }
+        let boundsBefore = answerJumpScrollBounds()
+        let wasAtPhysicalBottom = tableView.contentOffset.y >= boundsBefore.maximumY - 0.5
+        rebuildLiveResponsePresentation(width: effectivePresentationWidth())
+        tableView.reloadData()
+        tableView.layoutIfNeeded()
+        if wasAtPhysicalBottom { setScrollOffsetY(answerJumpScrollBounds().maximumY) }
+        updateAnswerJumpButton()
+        var fields = repository.diagnosticsFields(for: id)
+        fields["livePresentationRowCount"] = String(liveMessagePresentation.rows.count)
+        fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)
+        fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
+        diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
+        updateConversationMenu()
+    }
 
     private func synchronizeLiveReasoningDisclosure(snapshot: ConversationLiveResponseSnapshot, messageID: String, conversationID: String) {
         guard !snapshot.timeline.isEmpty else { return }

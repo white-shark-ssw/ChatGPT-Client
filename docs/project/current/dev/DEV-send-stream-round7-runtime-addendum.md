@@ -1,5 +1,36 @@
 # DEV-send-stream round 7 Runtime addendum
 
+## b98 hard WebContent termination recovery — checkpoint 2026-09-04
+
+User explicitly chose not to run the b97 Human Runtime gate and asked to advance directly to b98. b97 remains a valid, permanently reserved package identity, but its Human Runtime result is **Not Executed**, not Positive or Negative.
+
+Exact baseline before b98 product writes:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable.
+- branch head before this checkpoint staging: `beba08deb0f0803f74417bd6026dd11ec8f4fa38`; base `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- parallel PR #35 / `DEV-official-sync-reload` remains draft research-only, head `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, with no product `ChatGPTClient/**` ownership or candidate-number conflict.
+- b97 canonical product/package/Artifact remain `12fc1d1f5020d76d1892c25a0ced94323d5a0142` / `5e43c398b52a62de9f9a6e6546de7312ba5eb1df` / `9940228423`; never reuse or overwrite.
+- `DEV-send-stream-0.1.0-b98` / Build98 is not yet allocated at this checkpoint and is the next unique candidate.
+
+Evidence-backed defect and recovery boundary:
+
+1. Current `CoveredWebSendExecutor.webViewWebContentProcessDidTerminate` is an explicit hard WebContent-death signal, but it currently calls `failCurrent("web_process_terminated")`; `failCurrent` clears `observingExternalResponse`/active events and Root then treats `.failed` as response failure and releases the executor.
+2. For an **external/cross-platform observation only**, WebContent death is a transport interruption, not evidence that the server-side response failed. Existing Repository external live state must remain authoritative.
+3. b94 Runtime already observed real covered-Web WebContent termination. b95 Runtime separately proved full-page existing-conversation rebootstrap can restart page-owned continuation. b96 Runtime proved one authoritative Detail request can materialize an already-finished final assistant; b97 preserves that foreground Detail reconcile.
+4. For a **client-owned protected Send**, WebContent termination remains a failure. b98 must never automatically resend/replay a Send.
+
+Intended minimal b98 product delta:
+
+- allocate Build98 / Candidate `DEV-send-stream-0.1.0-b98`;
+- only when `observingExternalResponse == true`, intercept `webViewWebContentProcessDidTerminate` before `failCurrent`;
+- preserve external observation callbacks, current conversation identity and Repository live response;
+- if the app is active, immediately issue exactly one existing full-page external-observation rebootstrap for that hard termination event;
+- if the app is background/inactive, do not start background network work; defer to the existing foreground path, which already performs b97 authoritative Detail reconcile plus one external page rebootstrap;
+- leave ordinary navigation failure semantics unchanged in b98; do not infer a disconnect from silence, elapsed time, focus state or missing snapshots;
+- no timer/watchdog, retry loop, duplicate Send, resend/regenerate, guessed `/resume`, challenge replay, second response store or Native background heartbeat.
+
+**Next exact action:** allocate `DEV-send-stream-0.1.0-b98`, apply only the two-file product delta above, run exact-scope checks + Debug Simulator compile, then bind formal b98 Push/PR package CI to the exact product head. Human Runtime should force/observe a real WebContent process termination while a cross-platform response is active and verify the same external live response survives and resumes, without a second Send.
+
 ## b97 foreground authoritative Detail reconcile — package-ready 2026-09-04
 
 Exact identity:

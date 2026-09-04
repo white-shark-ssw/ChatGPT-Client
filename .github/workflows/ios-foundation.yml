@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b99
-# Product source: ec05c284010cb0f2de066bd1cfc3968e07730779
-name: iOS Live Presentation Coalescing b99
+# Candidate: DEV-send-stream-0.1.0-b100
+# Product source: 70c7dc052865ef80ca7bdec083d7621c1a297eab
+name: iOS Foreground Conversation Discovery b100
 
 on:
   push:
@@ -31,12 +31,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b99 identity
+      - name: Guard b100 identity
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
+          grep -q 'shouldRearmDiscoveredRemoteTurn' ChatGPTClient/RootViewController.swift
           grep -q 'liveResponsePresentationUpdateScheduled' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'applyLiveResponsePresentationChange' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
 
       - name: Toolchain
@@ -53,7 +54,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b99
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b100
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

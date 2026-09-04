@@ -1,5 +1,32 @@
 # DEV-send-stream round 7 Runtime addendum
 
+## Probe crash pattern / official-App callback research retired — 2026-09-04
+
+Latest explicit Human Runtime: exact startup-safe Probe v0.8.1 package (`sha256:69d4257fa6a514724b54a5c19e17803349ba459fef37f76ce4cb4435d3efa724`) no longer dies at the earliest launch boundary, but shows a white screen for roughly 10 seconds and then crashes. Therefore v0.8.1 is also **Runtime Negative as a usable official-App research package**. Do not ask the user to repeat protocol reproduction with v0.8.1.
+
+The user additionally reports that earlier injected Probe packages also had an intermittent mid-run crash problem, including the last otherwise usable Probe package. Exact per-version crash attribution is not reconstructed from a crash report, so do not claim one selector as the proven cause. The durable conclusion is narrower: private response-callback swizzling in the injected official process is now observably destabilizing enough that continuing the v0.7/v0.8 callback/buffer hook ladder is not an acceptable research method.
+
+A separate Runtime observation is strongly useful for product architecture: after such a mid-run crash, reopening the official app and re-entering the conversation showed the **complete assistant answer already refreshed**. This proves that terminal recovery does not require preserving the previously hooked callback chain or the pre-crash Web/process state; a fresh authoritative conversation re-entry can materialize the completed server state. It does not by itself prove the exact active polling start trigger.
+
+Re-analysis of the exact pristine official package (`ChatGPT_Decrypted.zip` `sha256:bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`) identifies the relevant static evidence inside `Payload/ChatGPT.app/Frameworks/ChatGPT.framework/ChatGPT` (`sha256:80e19700e42f7181bd2e307f1dd007a12b3e77feaec6d2a4326f1419e490bc9f`):
+
+- `conversation_async_status`
+- `KnownConversationAsyncStatus` adjacent to exact enum tokens `IS_STREAMING` and `COMPLETE`
+- `ConversationPollingManager.swift`, `poll(conversationID:...)`, `localPoll(conversationID:terminatingCondition:...)`
+- `Starting polling for conversation:`
+- `Conversation async status '...' is no longer streaming, stopping polling for conversation:`
+- `backend_streaming_completed`
+- polling-state metrics `ios.conversation_polling.is_streaming_message`, `chat_has_active_async_tasks`, `is_waiting_for_server_streaming`
+- configuration keys `default_interval` and `model_slug_intervals`
+
+This static contract aligns with repeated Human Runtime from Probe v0.4-v0.7 showing authoritative `GET /backend-api/conversation/<id>` at about 9-12 second intervals. The product already owns that exact Detail GET in `ConversationRepository` and already parses `mapping/current_node`, but currently ignores top-level `conversation_async_status`.
+
+**Research direction change:** stop adding private response callback hooks to the official app. The next implementation gate moves into ChatGPTClient itself: keep `ConversationRepository` as the sole Native content/response owner, parse only the exact evidenced top-level `conversation_async_status` values, and permit Native continuation refresh only after an authoritative Detail response itself reports `IS_STREAMING`; stop when the authoritative Detail reports `COMPLETE` / no longer streaming. Do not globally poll idle conversations and do not create a second response store. The exact refresh interval must remain tied to the repeated official Runtime evidence/config contract rather than an unrelated fast timer.
+
+Evidence ladder: **official Native Detail polling Runtime Positive / terminal re-entry recovery Runtime Positive / private injected callback research method Runtime Negative for stability / exact async-status enum + polling stop contract Static Positive / ChatGPTClient product still exact b95 / b96 not yet allocated at this checkpoint / Stable-Frozen Send No.**
+
+**Next exact action:** run product-change conflict/candidate guard, then implement the smallest Repository-owned async-status continuation slice in ChatGPTClient and validate it as one coherent product Candidate instead of producing another injected official-App Probe.
+
 ## Probe v0.8 launch-crash Runtime / v0.8.1 startup-safe batch package — 2026-09-04
 
 Exact user Human Runtime result for the first Probe v0.8 batch package is **launch crash immediately after entering the app**. Therefore the exact v0.8 IPA `sha256:d9072fad0e8bb020e8b9681d7d4e29e3bba473bb357af5197b5c90d259422970` is Runtime Negative as a usable research package and produces no protocol/response evidence. Do not ask the user to retry that exact IPA.

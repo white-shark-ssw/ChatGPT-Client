@@ -1,3 +1,41 @@
+## b102 deterministic client-owned WebContent-death diagnostic allocation — 2026-09-05
+
+User explicitly pivots the next `DEV-send-stream` gate from waiting for another naturally occurring b101 `-1005` sample to a deterministic client-owned WebContent-process-death test. The 120-second termination is **diagnostic instrumentation only**, not production recovery policy.
+
+Resume / conflict guard:
+
+- Work `DEV-send-stream` remains selected; branch `dev/send-stream-20260829`; PR #29 is open / unmerged / mergeable.
+- Verified pre-allocation branch head `18c1ff13c2ae3c3191414afc89e86ff73b5b78ac`; current target `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Canonical b101 remains permanently reserved: product `54a9fa52a7b44a1b7418a39e4b0f7493989f999d`, package `da103452236e31e070eae68b9e7979a832662fc1`, Artifact `9948780963`, IPA `sha256:463bafd4daea37a429088e670d32474cdd9f429347d1fba336d8a091b1f31df3`. Its exact `-1005` recovery branch remains Unexercised; b102 does not replace or rewrite that evidence.
+- Parallel PR #35 / `DEV-official-sync-reload` remains draft/open at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, research-only, with no `ChatGPTClient/**` product overlap or Candidate-number ownership conflict.
+- Repository search found no existing `DEV-send-stream-0.1.0-b102`; `DEV-send-stream-0.1.0-b102` / `0.1.0 (102)` is now allocated and permanently reserved.
+
+Evidence-backed diagnostic boundary:
+
+1. Do **not** add client-owned recovery behavior yet. Current b98 rule intentionally still treats client-owned protected-Send WebContent death as failure; b102 exists to force that exact Runtime path before deciding the smallest recovery change.
+2. Add one Candidate-gated Runtime probe that observes only the existing `CoveredWebSendExecutor` JavaScript submit invocation. The probe must not inspect/log prompt text; it only recognizes the fixed bridge call prefix.
+3. On the first matching covered protected-Send submit for one `WKWebView`, schedule exactly one main-queue action 120 seconds later. This explicit timer exists only because the user requested a deterministic forced-death test; it is not a timeout, watchdog, keepalive, retry or production lifecycle signal.
+4. At fire time, call the WebKit SPI selector `_killWebContentProcessAndResetState` on that exact `WKWebView` only when `responds(to:)` is true. Use Objective-C runtime dispatch so the app does not hard-link a private symbol. WebKit upstream exposes `_killWebContentProcess` / `_killWebContentProcessAndResetState` specifically as Web-process termination SPI/test surface.
+5. Expected diagnostic chain if the answer is still active: `coveredExecutor.killProbe state=firing` -> `coveredExecutor.webProcess state=terminated mode=client_send_or_idle` -> existing client-owned `.failed(web_process_terminated)` / executor release. No prompt resend/regenerate, no duplicate protected Send, no Native guessed resume, no polling and no second response authority.
+6. If the response naturally finishes before 120 seconds, a later forced idle Web kill does **not** qualify the client-owned active-response gate; repeat with a deliberately >2-minute response. Keep the app foreground for the deterministic first test so iOS suspension does not postpone the diagnostic timer.
+7. b102 Runtime evidence decides the next product action. If server generation survives while Native marks the response failed, the next candidate may test no-resend conversion to page-owned observation / authoritative Detail reconciliation using only already-evidenced mechanisms. Do not implement that recovery in the same diagnostic candidate.
+
+Intended b102 source scope:
+
+- `ChatGPTClient.xcodeproj/project.pbxproj` — Build102 / Candidate b102 and compile membership for one diagnostic source;
+- `ChatGPTClient/AppDelegate.swift` — install the probe once at launch; exact b102 Candidate guard remains inside the probe;
+- `ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift` — one-shot submit-observer + 120-second WebContent termination instrumentation.
+
+Batch recovery point:
+
+- confirmed complete: task routing; AGENTS/START_HERE and required Send/background plans re-read; branch/PR/base/b101 identity verified; PR #35 conflict checked; b102 uniqueness checked; user explicitly authorized the 120-second forced-Web test; WebKit SPI existence verified from current upstream source/header;
+- pending batch A: create the new diagnostic Swift file, wire AppDelegate + Xcode Build102 membership, verify exact three-product-file scope and Swift/Xcode compile;
+- pending batch B: formal Push/PR CI and canonical b102 Artifact/IPA identity verification;
+- pending batch C: update BUILD_TEST_INDEX / PROJECT_STATE / MODULE_STATUS / relevant rule/decision docs and PR #29 metadata, then hand exact IPA to Human Runtime;
+- recovery must not touch PR #35, canonical b101 product/package/Artifact, earlier reserved Candidates, protected-Send/challenge rules, or `ConversationRepository` response ownership.
+
+**Next exact action:** implement only the three-file b102 deterministic kill probe described above; compile before packaging. Human Runtime must launch b102 fresh, start exactly one deliberately >2-minute Native `测试发送…` response, keep the app foreground, do not press Sync/Reload/Stop, wait for the automatic 120-second WebContent kill, then let the server-side answer finish and export diagnostics.
+
 ## b101 Human Runtime — healthy long-suspension path; b100 rearm/reconcile gates Positive — 2026-09-05
 
 Exact tested evidence:
@@ -27,7 +65,7 @@ Runtime classification:
 Exact evidence:
 
 - Candidate `DEV-send-stream-0.1.0-b101` / `0.1.0 (101)`, permanently reserved.
-- Triggering Runtime evidence remains exact b100 diagnostics `ChatGPTClient-Diagnostics-20260904-174041.json`, `sha256:515c60b59d969ee1f33d76fec097d6163450058c5ef3fa9ccd551b2439f03818`: after ~12m37s background, foreground discovery fired but authoritative Detail, later Detail, two list GETs and manual Sync all failed `NSURLErrorDomain -1005` while covered WebSocket independently reopened; no hard WebContent-process termination signal occurred.
+- Triggering Runtime evidence remains exact b100 diagnostics `ChatGPTClient-Diagnostics-20260904-174041.json`, `sha256:515c60b59d969ee1f33d76fec097d6163450058c5ef3fa9ccd551b2439f03818`: after ~12m37s background, foreground discovery fired but authoritative Detail, later Detail, two conversation-list GETs and manual Sync all failed `NSURLErrorDomain -1005` while covered WebSocket independently reopened; no hard WebContent-process termination signal occurred.
 - Exact b101 product commit `54a9fa52a7b44a1b7418a39e4b0f7493989f999d`; exact product delta is only `ChatGPTClient.xcodeproj/project.pbxproj` plus `ChatGPTClient/Conversation/ConversationFeature.swift`.
 - Product behavior: only idempotent Native conversation-list / Conversation Detail GETs gain bounded recovery. On the first exact `NSURLErrorNetworkConnectionLost (-1005)`, retire the matching cached `AuthTransientSession`, reacquire one fresh transient session from the existing default-WebKit-auth path, re-check account/operation freshness, then retry that same GET once. A second failure terminates normally. Protected Web Send, covered Web observation, b100 foreground discovery, Repository content authority and client-owned response ownership are unchanged.
 - Initial staging workflow run `33903494492` had zero jobs due workflow parse failure and is invalid evidence; it emitted no product change. Corrected staging `33903822115 / 101123907440` passed exact two-product-file scope, `git diff --check` and Debug iphonesimulator compile, then committed product `54a9fa52...`.
@@ -181,7 +219,7 @@ Intended product scope:
 
 Batch state:
 
-- confirmed complete: b99 diagnostics analyzed; exact failure mechanism tied to source; branch/PR/base verified; PR #35 overlap checked; b100 candidate uniqueness checked and allocated here;
+- confirmed complete: b99 diagnostics analyzed; exact failure mechanism tied to source; branch/base/PR #29 verified; PR #35 overlap checked; b100 candidate uniqueness checked; this checkpoint written;
 - pending: apply exact two-product-file delta; exact-scope + `git diff --check` + Debug iphonesimulator compile; bind formal b100 Push/PR package CI to exact product head; verify canonical Artifact/IPA identity; update durable project docs and PR #29 metadata;
 - do not touch PR #35, protected-Send transport/challenge logic, Repository response authority, b99 canonical Artifact, or b98/b99 reserved candidate identities.
 

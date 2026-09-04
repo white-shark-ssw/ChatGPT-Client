@@ -1,0 +1,40 @@
+name: Stage b96 Terminal UI Reconcile
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b96-terminal-ui-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 1
+
+      - name: Apply exact terminal UI reconcile
+        run: python3 scripts/staging/b96_terminal_ui_reconcile.py
+
+      - name: Validate staged diff
+        run: |
+          git diff --check
+          git status --short
+          grep -q 'repository.liveResponse(for: id) == nil' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'hasVisibleMessageChanges(from: messages, to: detail.messages)' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Commit guarded UI batch
+        run: |
+          git config user.name "white-shark-ssw"
+          git config user.email "houstools@gmail.com"
+          git add -A
+          git commit -m "DEV-send-stream: reconcile native terminal detail in b96"
+          git push origin HEAD:dev/send-stream-20260829

@@ -154,6 +154,7 @@ struct ConversationDetail {
     let messages: [ConversationMessage]
     let trailingResponseTimeline: [ConversationResponseTimelineItem]
     let trailingReasoningDurationSeconds: Int?
+    let asyncStatus: ConversationAsyncStatus?
 }
 
 enum ConversationRepositoryError: LocalizedError, Equatable {
@@ -1069,7 +1070,9 @@ final class ConversationRepository {
             let projection = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
             let messages = projection.messages
             let title = Self.normalizedTitle(payload["title"] as? String)
-            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages, trailingResponseTimeline: projection.trailingResponseTimeline, trailingReasoningDurationSeconds: projection.trailingReasoningDurationSeconds)
+            let rawAsyncStatus = payload["conversation_async_status"] as? String
+            let asyncStatus = rawAsyncStatus.flatMap(ConversationAsyncStatus.init(rawValue:))
+            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages, trailingResponseTimeline: projection.trailingResponseTimeline, trailingReasoningDurationSeconds: projection.trailingReasoningDurationSeconds, asyncStatus: asyncStatus)
             var fields = callbackFields
             fields["httpStatus"] = String(response.statusCode)
             fields["byteCount"] = String(data.count)
@@ -1083,6 +1086,7 @@ final class ConversationRepository {
             fields["ignoredThoughtsMessageCount"] = String(projection.ignoredThoughtsMessageCount)
             fields["ignoredInlineCotMessageCount"] = String(projection.ignoredInlineCotMessageCount)
             fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)
+            fields["conversationAsyncStatus"] = asyncStatus?.rawValue ?? (rawAsyncStatus == nil ? "missing" : "unknown")
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
             self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .success(detail))
@@ -1121,6 +1125,7 @@ final class ConversationRepository {
             switch result {
             case .success(let detail):
                 self.residentStates[key] = .loaded(detail)
+                self.handleNativeConversationAuthoritativeDetail(detail)
                 var fields = self.residentDiagnosticsFields(for: key.conversationID)
                 fields["residentApproximateTextBytes"] = String(Self.approximateTextBytes(detail))
                 fields["residentTotalApproximateTextBytes"] = String(self.residentStates.values.reduce(0) { $0 + Self.approximateTextBytes($1) })
@@ -1185,6 +1190,7 @@ final class ConversationRepository {
         let removedResidentCount = residentStates.count
         let cancelledOperations = Array(detailOperations.values)
         listOperationGeneration += 1
+        cancelAllNativeConversationContinuations(reason: "account_scope_reset")
         for operation in cancelledOperations { operation.task?.cancel() }
         detailOperations.removeAll()
         detailOperationGenerations.removeAll()

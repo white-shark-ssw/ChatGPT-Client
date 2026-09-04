@@ -1,5 +1,5 @@
 # Candidate: DEV-send-stream-0.1.0-b97
-# Product source: assigned by guarded b97 product commit
+# Product source: 12fc1d1f5020d76d1892c25a0ced94323d5a0142
 name: iOS Foreground External Reconcile b97
 
 on:
@@ -12,6 +12,7 @@ on:
       - "scripts/build_ipa.sh"
       - "scripts/reconstruct_app_icon.sh"
       - "scripts/assets/**"
+      - ".github/workflows/ios-foundation.yml"
   pull_request:
     paths:
       - "ChatGPTClient/**"
@@ -19,6 +20,7 @@ on:
       - "scripts/build_ipa.sh"
       - "scripts/reconstruct_app_icon.sh"
       - "scripts/assets/**"
+      - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
 jobs:

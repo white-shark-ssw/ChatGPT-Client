@@ -40,3 +40,5 @@ jobs:
             build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
           if-no-files-found: error
           retention-days: 7
+
+# Probe v0.7 dispatch-data observer build trigger.

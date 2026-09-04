@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b101
-# Product source: 54a9fa52a7b44a1b7418a39e4b0f7493989f999d
-name: iOS Native Read Transport Recovery b101
+# Candidate: DEV-send-stream-0.1.0-b102
+# Diagnostic scope: deterministic covered-Web WebContent-process death after one client-owned submit
+name: iOS Covered Web Process Kill Probe b102
 
 on:
   push:
@@ -31,16 +31,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b101 identity and preserved send-stream invariants
+      - name: Guard b102 identity and diagnostic boundary
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 101;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b101";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 102;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b102";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CoveredWebProcessKillProbe.install()' ChatGPTClient/AppDelegate.swift
+          grep -q 'delaySeconds: TimeInterval = 120' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q '_killWebContentProcessAndResetState' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'window.__coveredWebSendExecutor.submit(' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
           grep -q 'network_connection_lost_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'transportRecoveryAttempted' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
-          grep -q 'shouldRearmDiscoveredRemoteTurn' ChatGPTClient/RootViewController.swift
-          grep -q 'liveResponsePresentationUpdateScheduled' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
+          ! grep -q 'sendExistingConversation' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
 
       - name: Toolchain
         run: xcodebuild -version
@@ -56,7 +58,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b101
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b102
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

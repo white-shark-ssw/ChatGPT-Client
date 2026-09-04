@@ -1,5 +1,11 @@
 # Project State
 
+## 2026-09-04 — Probe v0.6 exposes Swift-async dispatch-data callback surface / v0.7 gate
+
+- Exact v0.6 Runtime `sha256:1cb6eb096c5748e7f781afbd761906bda39d55227a115a4e2dcea8c240de7a43`: 78,828 bytes / 207 events / zero parse errors / all v0.6.
+- `probe.detail_task_callback_surface` Runtime-proves `__NSCFLocalSessionTask` exposes `connection:didReceiveData:completion:`, `_task_onqueue_didReceiveDispatchData:completionHandler:`, `_onqueue_didReceiveDispatchData:completion:`, plus `OS_dispatch_data` buffering ivars `_dataTaskData` / `_pendingResponseBytes` and completion block `_dataTaskCompletion`. Exact invocation order remains Unverified until the next observer.
+- Same target Conversation Detail polling remains Runtime Positive after relaunch at ~10–12s intervals. Probe v0.7 is research-only and hooks only `_task_onqueue_didReceiveDispatchData:completionHandler:` to run the existing exact `conversation_async_status` scanner; no product network behavior changes. Product remains b95; b96 unallocated.
+
 ## 2026-09-04 — Probe v0.5 Runtime reconfirms Native Detail polling / v0.6 callback-surface gate
 
 - Exact v0.5 JSONL `sha256:26e8646945831764bf6317c99213ff8a9621d09942e642a19b4f15aa24c892ba`: 47,648 bytes / 146 events / zero parse errors / all v0.5. Target `0df178903e95` again issued repeated `__NSCFLocalDataTask` authoritative Conversation Detail GETs at about 9.3s median after reacquisition.

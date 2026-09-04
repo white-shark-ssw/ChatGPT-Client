@@ -1,8 +1,10 @@
 # Official iOS Realtime Probe
 
-Current research revision: **Probe v0.6**.
+Current research revision: **Probe v0.7**.
 
 Research-only observer for the user-supplied TrollStore ChatGPT package. It is not linked into ChatGPTClient and is not a product Candidate.
+
+v0.7 hooks only the Runtime-evidenced private selector `_task_onqueue_didReceiveDispatchData:completionHandler:` on NSURLSession task subclasses. It scans dispatch-data bytes only for authoritative Conversation Detail and emits only the safe `conversation_async_status` enum through the existing observer. It does not initiate requests, polling, timers, retries, resume calls, or content logging.
 
 ## What it observes
 

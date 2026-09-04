@@ -1,8 +1,9 @@
 #import <Foundation/Foundation.h>
+#import <dispatch/dispatch.h>
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.6";
+static NSString * const RPTProbeVersion = @"0.7";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
@@ -619,6 +620,27 @@ static BOOL RPTShouldObserveTaskURL(NSURL *url) {
     return RPTShouldObserveURL(url);
 }
 
+static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task, id value) {
+    if (!task || !value || objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey)) return;
+    NSString *className = NSStringFromClass(object_getClass(value)) ?: @"";
+    if (![className.lowercaseString containsString:@"dispatch_data"]) return;
+    dispatch_data_t dispatchData = (__bridge dispatch_data_t)value;
+    dispatch_data_apply(dispatchData, ^bool(__unused dispatch_data_t region, __unused size_t offset, const void *buffer, size_t size) {
+        if (!buffer || size == 0) return true;
+        NSData *chunk = [NSData dataWithBytesNoCopy:(void *)buffer length:size freeWhenDone:NO];
+        RPTObserveConversationDetailData(task, chunk);
+        return objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey) == nil;
+    });
+}
+
+static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, id dispatchData, id completionHandler) {
+    RPTObserveConversationDetailDispatchData((NSURLSessionDataTask *)self, dispatchData);
+    IMP original = RPTOriginalIMP(self, _cmd);
+    if (!original) return;
+    void (*function)(id, SEL, id, id) = (void *)original;
+    function(self, _cmd, dispatchData, completionHandler);
+}
+
 static BOOL RPTCallbackSelectorRelevant(NSString *selectorName) {
     NSString *lower = selectorName.lowercaseString ?: @"";
     for (NSString *term in @[@"data", @"response", @"receive", @"complete", @"completion", @"finish", @"body", @"bytes"]) {
@@ -733,9 +755,11 @@ static void RPTInstallSessionHooks(void) {
     SEL dataSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveData:");
     SEL responseSelector = NSSelectorFromString(@"URLSession:dataTask:didReceiveResponse:completionHandler:");
     SEL completeSelector = NSSelectorFromString(@"URLSession:task:didCompleteWithError:");
+    SEL dispatchDataSelector = NSSelectorFromString(@"_task_onqueue_didReceiveDispatchData:completionHandler:");
     for (int i = 0; i < count; i++) {
         Class cls = classes[i];
         if (RPTIsSubclassOfClass(cls, taskClass) && RPTClassOwnsSelector(cls, @selector(resume))) RPTInstallHookOnClass(cls, @selector(resume), (IMP)RPTTaskResume);
+        if (RPTIsSubclassOfClass(cls, taskClass) && RPTClassOwnsSelector(cls, dispatchDataSelector)) RPTInstallHookOnClass(cls, dispatchDataSelector, (IMP)RPTTaskDidReceiveDispatchData);
         if (RPTIsSubclassOfClass(cls, sessionClass)) {
             if (@available(iOS 13.0, *)) {
                 if (RPTClassOwnsSelector(cls, @selector(webSocketTaskWithRequest:))) RPTInstallHookOnClass(cls, @selector(webSocketTaskWithRequest:), (IMP)RPTSessionWebSocketRequest);

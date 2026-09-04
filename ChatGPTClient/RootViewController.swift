@@ -1466,33 +1466,45 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     @objc private func applicationWillEnterForeground(_ notification: Notification) {
-        guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }
+        guard let conversationID = repository.selectedConversationID else { return }
+        let snapshot = repository.liveResponse(for: conversationID)
+        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
+        let hadActiveExternalResponse = snapshot?.phase.isActive == true && snapshot?.promptText.isEmpty == true
+        let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id
         if repository.detailOperationSnapshot(for: conversationID) == nil {
-            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.requested", fields: repository.diagnosticsFields(for: conversationID))
+            diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.requested" : "foregroundConversationDiscovery.requested", fields: repository.diagnosticsFields(for: conversationID))
             repository.syncLatestMessages(id: conversationID) { [weak self] result in
                 guard let self else { return }
                 switch result {
                 case .success(let detail):
+                    let latestUserID = detail.messages.last(where: { $0.role == .user })?.id
+                    let latestUserChanged = latestUserID != nil && latestUserID != previousLatestUserID
+                    let currentSnapshot = self.repository.liveResponse(for: conversationID)
+                    let activeExternalAfterSync = currentSnapshot?.phase.isActive == true && currentSnapshot?.promptText.isEmpty == true
+                    let shouldRearmDiscoveredRemoteTurn = !hadActiveExternalResponse && (activeExternalAfterSync || (latestUserChanged && detail.messages.last?.role == .user))
                     var fields = self.repository.diagnosticsFields(for: conversationID)
                     fields["visibleMessageCount"] = String(detail.messages.count)
                     fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"
-                    self.diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.completed", fields: fields)
+                    fields["latestUserChanged"] = latestUserChanged ? "true" : "false"
+                    fields["activeExternalAfterSync"] = activeExternalAfterSync ? "true" : "false"
+                    fields["rearmDiscoveredRemoteTurn"] = shouldRearmDiscoveredRemoteTurn ? "true" : "false"
+                    self.diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.completed" : "foregroundConversationDiscovery.completed", fields: fields)
                     if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
-                    if !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
+                    if hadActiveExternalResponse, !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }
+                    if shouldRearmDiscoveredRemoteTurn, self.repository.selectedConversationID == conversationID { self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true) }
                 case .failure(let error):
-                    self.diagnostics.error(category: "conversation", name: "foregroundExternalDetailReconcile.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
+                    self.diagnostics.error(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.failed" : "foregroundConversationDiscovery.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
                 }
                 self.updateLivePresentation()
             }
         } else {
-            diagnostics.info(category: "conversation", name: "foregroundExternalDetailReconcile.skipped", fields: ["reason": "detail_operation_in_flight"])
+            diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.skipped" : "foregroundConversationDiscovery.skipped", fields: ["reason": "detail_operation_in_flight"])
         }
-        if let sendExecutor = sendExecutors[conversationID] {
+        if hadActiveExternalResponse, let sendExecutor = sendExecutors[conversationID] {
             diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))
             sendExecutor.rebootstrapExternalObservationPageOnForeground()
         }
     }
-
     func splitViewController(_ svc: UISplitViewController, topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {
         repository.selectedConversationID == nil ? .primary : .secondary
     }

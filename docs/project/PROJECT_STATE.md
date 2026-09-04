@@ -1,3 +1,10 @@
+## DEV-send-stream b105 authoritative new-chat first Send package ready — 2026-09-05
+
+- b105 fills the missing new-conversation first-Send path without changing TD-029 ownership: official Web still owns protected Send/challenge; `ConversationRepository` remains sole Native response/content authority. Native creates no fake server conversation ID.
+- Product `6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59` is exact three-product-path scope. Corrected staging `33923512745/101186860450`, Push `33923732331/101187538891` and PR `33923735651/101187548902` passed. Canonical Artifact `9956018294`, ZIP `sha256:ba53bc8e50e1b89056565e3a557e196ef6b9c5db76e3b40dd28a0536e81d6921`, IPA `sha256:d162a7132ff830d3a2f6eb85a2b4a5b4ebc2d9f84531b01418912c99109e5095`; package independently verified Build105/Candidate b105/source `93ab92a9a4a7`/Release/iOS14+/arm64.
+- First new-chat protected fetch is gated on a real official-page route conversation identity. Missing identity blocks the fetch with `new_conversation_identity_missing`; successful identity handoff re-keys the same executor and starts one Repository generation. Terminal Detail then performs one list refresh for sidebar convergence.
+- Human Runtime pending. Stop remains unimplemented pending exact route/target/ack evidence; true background execution and b101 exact `-1005` branch remain separate evidence boundaries. Stable-Frozen No.
+
 ## DEV-send-stream b104 background-return Runtime Positive — 2026-09-05
 
 - Exact b104 diagnostics `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` closes the normal no-probe Send regression as Runtime Positive: one accepted HTTP200 SSE Send, no kill probe, no duplicate Send, same generation through terminal, then automatic authoritative Detail `21 -> 23` and live-state clear.

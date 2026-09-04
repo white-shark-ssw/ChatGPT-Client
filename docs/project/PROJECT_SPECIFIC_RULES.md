@@ -1,3 +1,13 @@
+## New-chat first Send authoritative identity — b105 package rule 2026-09-05
+
+- A Native New Chat draft has no server conversation identity and must not synthesize, persist or route on a fake ID.
+- The first protected Send remains page-owned. Before the official `/backend-api/f/conversation` fetch is allowed to proceed for a new-chat Send, the official page itself must expose a concrete conversation ID through the already-evidenced conversation route parser (`/c/{id}` or scoped `/g/{scope}/c/{id}`).
+- If the official identity is absent at that protected-fetch boundary, block that fetch and fail visibly with the symbolic `new_conversation_identity_missing`; do not send first and recover/guess identity later.
+- Once the official ID is observed, re-key the same covered executor exactly once and create exactly one `ConversationRepository` live response generation for the real ID. Do not start a second protected Send or second response owner during handoff.
+- If the user left the draft before identity adoption, the new server turn may continue hidden under its real ID; do not force visible selection back. A successful terminal authoritative Detail may trigger one conversation-list refresh to reconcile the real server conversation into the sidebar.
+- Existing accepted-client hard-Web no-resend recovery applies after explicit HTTP200 SSE acceptance. No polling, timer/watchdog, guessed Native resume/status, challenge replay, duplicate Send/regenerate or second response/content store is authorized.
+- Stop remains evidence-gated and is not part of b105.
+
 ## Accepted client Send hard-Web recovery — Runtime accepted / b104 normal rule 2026-09-05
 
 - b103 Human Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` supersedes the earlier test-pending wording: for the tested foreground iPhone/iOS17 path, a protected Send that has already returned HTTP200 `text/event-stream` may survive hard covered-WebContent death and must retain the same prompt-owned `ConversationRepository` generation rather than being marked failed solely because the transport process died.

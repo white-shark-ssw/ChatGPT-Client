@@ -1,5 +1,14 @@
 # Web Send Adapter / Rule Update Playbook
 
+## DEV-send-stream b105 authoritative new-chat first Send — package-ready override 2026-09-05
+
+- Historical b62 Runtime is the identity evidence: an official root/new-chat page transitioned to an existing-conversation route before the first protected `/backend-api/f/conversation` fetch and then returned HTTP200 `text/event-stream`. b105 consumes that official route identity; Native does not invent one.
+- Exact product `6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59`; canonical package source `93ab92a9a4a7b8a020ac209f6a82088dc77acbce`; corrected staging `33923512745/101186860450`, Push `33923732331/101187538891`, PR `33923735651/101187548902` all passed. Canonical Artifact `9956018294`, ZIP `ba53bc8e50e1b89056565e3a557e196ef6b9c5db76e3b40dd28a0536e81d6921`, IPA `d162a7132ff830d3a2f6eb85a2b4a5b4ebc2d9f84531b01418912c99109e5095`; Build105/Candidate b105/source `93ab92a9a4a7`/Release/iOS14+/arm64 independently verified.
+- New-chat bridge rule: when `submit(text, newConversation=true)` reaches the protected fetch interception, `currentConversationID()` must already resolve from the official route. If absent, clear the local submit marker, emit only symbolic `new_conversation_identity_missing`, throw before `originalFetch`, and never create an untracked protected turn.
+- When present, emit `send_observed` with that official conversation ID before forwarding the one real protected fetch. Native `.conversationCreated(realID)` re-keys the same executor and starts one Repository generation; normal protected-Send SSE filtering and b103/b104 post-acceptance hard-Web recovery remain unchanged.
+- Do not infer new-chat identity from title text, DOM message text, list position, generated UUID, guessed route, WebSocket body, elapsed time or a second request. No retry/poll/watchdog/resend/challenge replay.
+- Human Runtime pending; Stop is outside this override and remains evidence-gated.
+
 ## DEV-send-stream b93 external reselection focus A/B — 2026-09-03
 
 - Exact b92 Runtime is Partial: covered external continuation works and client-owned protected Send/SSE natural terminal reconciliation works, but when an external live executor overlaps a second client-owned Send, the first stream can stop advancing and does not recover merely by reselection; explicit Sync later materialized the already-completed assistant.

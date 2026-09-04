@@ -1,3 +1,28 @@
+## b105 authoritative new-chat first-Send — package ready 2026-09-05
+
+Exact product/package evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b105` / `0.1.0 (105)`, permanently reserved. Exact product `6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59`; canonical package source `93ab92a9a4a7b8a020ac209f6a82088dc77acbce`.
+- b105 product delta is exactly three product paths: `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Conversation/ConversationFeature.swift`, `ChatGPTClient/RootViewController.swift`.
+- Corrected staging `33923512745/101186860450` passed exact three-product-path audit, `git diff --check` and Debug Simulator compile before committing/pushing the product. Earlier run `33922377182` was a zero-job YAML parse failure and run `33923319785/101186252076` stopped at a deterministic patch-guard ambiguity after Batch A; neither wrote b105 product code and neither is product/Simulator failure evidence.
+- Formal Push `33923732331/101187538891` and PR `33923735651/101187548902` both passed on exact package source `93ab92a9a4a7b8a020ac209f6a82088dc77acbce`.
+- Canonical Push Artifact `9956018294`; GitHub Artifact digest and independently recomputed ZIP SHA-256 both equal `ba53bc8e50e1b89056565e3a557e196ef6b9c5db76e3b40dd28a0536e81d6921`.
+- Canonical IPA `ChatGPTClient-0.1.0-b105-dev-send-stream.ipa`; independent SHA-256 `d162a7132ff830d3a2f6eb85a2b4a5b4ebc2d9f84531b01418912c99109e5095`, matching sidecar. Package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (105)`, Candidate b105, source `93ab92a9a4a7`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS, Mach-O 64-bit arm64.
+
+Behavior / evidence boundary:
+
+- New Chat opens a Native draft with no fake server conversation ID. One covered official root-page executor owns the first protected Send/challenge flow.
+- For that first Send, the bridge permits the real protected `/backend-api/f/conversation` fetch only after the official page route exposes a concrete authoritative conversation ID. Missing identity emits `new_conversation_identity_missing` and blocks the protected fetch rather than creating an untrackable server turn.
+- `.conversationCreated(realID)` re-keys the same covered executor to the real server ID, selects it only if the draft is still the visible surface, and starts exactly one `ConversationRepository` live generation for that ID. Existing b103/b104 accepted-client hard-Web recovery and terminal authoritative Detail reconciliation remain unchanged.
+- After successful terminal Detail for a newly created conversation, exactly one forced conversation-list refresh reconciles the server conversation into the sidebar. No polling, retry loop, timer/watchdog, resend/regenerate, challenge replay, guessed Native resume, fake persisted ID or second response/content store is added.
+- Stop is not implemented by b105; exact response-scoped Stop route/target/ack evidence remains required before a later change.
+- b105 is package-qualified only. Human Runtime is Pending; Stable/Frozen remains No.
+- Any later docs/staging commit or Artifact does not replace canonical b105 package source `93ab92a9a4a7b8a020ac209f6a82088dc77acbce`, Artifact `9956018294` or IPA SHA `d162a7132ff830d3a2f6eb85a2b4a5b4ebc2d9f84531b01418912c99109e5095`.
+
+Evidence ladder: **Code written / exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** install only canonical b105 and run one new-conversation first Send from the Native draft. Require one official authoritative-ID handoff before protected fetch, exactly one HTTP200 SSE protected Send, one Repository generation through terminal + authoritative Detail, and one sidebar list reconciliation. Export diagnostics. Do not test/claim Stop in this candidate.
+
 ## b105 new-chat first-Send authoritative handoff allocation — 2026-09-05
 
 User requested autonomous continuation toward completing `DEV-send-stream`. Exact b104 normal/background-return Runtime remains Positive and canonical b104 is unchanged; b105 is a new isolated gate for the genuinely missing new-conversation first Send path.

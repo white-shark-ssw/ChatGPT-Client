@@ -1,3 +1,9 @@
+## DEV-send-stream b105 new-chat authoritative identity handoff — 2026-09-05
+
+- `ConversationRepository` remains sole Native conversation/response/content authority; `CoveredWebSendExecutor` remains official-page protected-Send transport. b105 adds no second store and no fake persisted conversation identity.
+- New Chat draft starts with no selected server ID. The official root page may submit only after its own route yields the real conversation ID; then the same executor is re-keyed and exactly one Repository live generation is created for that real ID. Successful terminal Detail triggers one authoritative list refresh so the server-created conversation enters the sidebar.
+- Exact product/package `6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59` / `93ab92a9a4a7b8a020ac209f6a82088dc77acbce`; staging + Push + PR CI passed; Artifact `9956018294`; IPA `sha256:d162a7132ff830d3a2f6eb85a2b4a5b4ebc2d9f84531b01418912c99109e5095` independently verified. Human Runtime pending; module remains Active / Runtime Partial overall / Stable-Frozen No.
+
 ## DEV-send-stream b104 ordinary/background-return Runtime Positive — 2026-09-05
 
 - `ConversationRepository` remains the sole Native response/content/reconciliation authority. Exact b104 Runtime `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` has one accepted protected Send, no test kill instrumentation, no duplicate Send, and one generation through terminal + authoritative Detail `21 -> 23` reconciliation.

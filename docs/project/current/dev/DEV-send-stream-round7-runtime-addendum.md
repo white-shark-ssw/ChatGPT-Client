@@ -1,3 +1,18 @@
+## b102 deterministic client-owned WebContent-death probe — package-ready 2026-09-05
+
+Exact evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b102` / `0.1.0 (102)`, permanently reserved. This is a **diagnostic-only** candidate requested to make hard covered-Web death reproducible; it does not add client-owned response recovery.
+- Exact product head `670310b4e8b15176f721291f4f96e46feadec46a`; canonical package source `78bd3d2f3e45c8e0061865d3133b92a274139110`. Relative to the verified pre-allocation head, product scope is exactly Xcode Build/Candidate + `AppDelegate.swift` installer + new `Protocol/CoveredWebProcessKillProbe.swift`; the package-source child changes only `ios-foundation.yml`.
+- Probe behavior: only exact b102 installs a runtime interception of `WKWebView.evaluateJavaScript`; the first script containing the fixed `window.__coveredWebSendExecutor.submit(` marker arms one 120-second main-queue diagnostic action without logging prompt/script content. At fire it invokes `_killWebContentProcessAndResetState` only when that exact `WKWebView` responds to the selector. No Send/retry/resume API exists in the probe.
+- Push `33910845721 / 101146639944` and PR `33910858535 / 101146674919` passed guard + unsigned TrollStore build. Canonical Push Artifact `9951331101`, ZIP `sha256:2da6bb66d0c5eba55d93463881e0ff5d0d55a9d7844f068d024e5cee31dff24a`. Same-source PR Artifact `9951329921` is CI corroboration only.
+- Canonical IPA `ChatGPTClient-0.1.0-b102-dev-send-stream.ipa`, independently recomputed `sha256:53eb1845a3fbd4543ebdb5e9a69e078b3f07866c2c395a666dca9b2928ecd8af`, matching sidecar.
+- Independent package inspection confirms `com.whitesharkssw.chatgptclient`, `0.1.0 (102)`, Candidate b102, source marker `78bd3d2f3e45`, Release, iOS14 minimum, UIDeviceFamily `[1,2]`, iPhoneOS, Mach-O arm64. Binary strings contain the exact b102 Candidate, `coveredExecutor.killProbe` and `_killWebContentProcessAndResetState`.
+
+Evidence ladder: **Code written / exact diagnostic scope audited / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** install only canonical b102. Fresh-launch the app, choose an existing conversation, start exactly one deliberately >2-minute Native `测试发送…` response and keep the app foreground. Do not press Sync/Reload/Stop and do not send a second prompt. Expect `coveredExecutor.killProbe` `installed -> armed -> firing` at ~120s, followed by `coveredExecutor.webProcess state=terminated mode=client_send_or_idle` while the response is still active. Current product behavior is expected to mark that client-owned live response failed and release the executor; let the server-side generation finish, then export diagnostics. If the response finishes before `firing`, the run does not qualify and must be repeated with a longer response. Do not interpret this diagnostic timer as production timeout/retry policy.
+
 ## b102 deterministic client-owned WebContent-death diagnostic allocation — 2026-09-05
 
 User explicitly pivots the next `DEV-send-stream` gate from waiting for another naturally occurring b101 `-1005` sample to a deterministic client-owned WebContent-process-death test. The 120-second termination is **diagnostic instrumentation only**, not production recovery policy.

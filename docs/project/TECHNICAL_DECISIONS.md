@@ -1,3 +1,10 @@
+## DEV-send-stream b102 deterministic WebContent-death diagnostic decision — 2026-09-05
+
+- Natural hard WebContent death is too intermittent to be an efficient acceptance gate, while exact `webViewWebContentProcessDidTerminate` remains the only approved hard-disconnect signal. The user explicitly authorizes one deterministic 120-second forced-kill diagnostic candidate to exercise that signal.
+- The timer is an instrumentation trigger only: exact b102 arms once from the existing covered protected-Send submit invocation and kills that exact `WKWebView` through runtime-dispatched WebKit `_killWebContentProcessAndResetState`. It is not a response timeout, watchdog, retry, keepalive or production scheduler.
+- b102 intentionally does **not** change client-owned recovery. A hard death while client-owned Send/response is active still follows the existing `.failed(web_process_terminated)` path and never resends/replays/regenerates. Runtime must first establish whether server generation continues and which existing authoritative/page-owned recovery primitive is sufficient.
+- b101 Native `-1005` read renewal, b100/b97 foreground Detail convergence, b98 external-observation hard-death recovery, TD-029 protected-Send ownership and one-Send invariants remain unchanged.
+
 ## DEV-send-stream b101 exact `-1005` Native read recovery decision — 2026-09-05
 
 - Exact b100 Human Runtime demonstrates a concrete normal-path insufficiency: after long suspension, the Repository's cached ephemeral Native `AuthTransientSession` can repeatedly return `NSURLErrorNetworkConnectionLost (-1005)` for Detail, list and manual Sync while account scope is still valid and WebKit networking has independently recovered.

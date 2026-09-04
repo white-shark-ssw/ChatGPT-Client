@@ -1,3 +1,9 @@
+## DEV-send-stream b102 deterministic client-owned WebContent-death probe — 2026-09-05
+
+- `ConversationRepository` remains sole Native response/content owner and `CoveredWebSendExecutor` remains the protected-Send Web transport. b102 adds no recovery owner or alternate transport.
+- Exact b102 installs one Candidate-gated diagnostic probe: first covered submit arms one 120-second main-queue action and then requests WebKit to kill/reset only that covered WebContent process. Current `webViewWebContentProcessDidTerminate` handling is intentionally unchanged: external observation may rebootstrap under b98, while client-owned Send still fails and is never replayed.
+- Push+PR CI passed; canonical Artifact `9951331101`; IPA `sha256:53eb1845a3fbd4543ebdb5e9a69e078b3f07866c2c395a666dca9b2928ecd8af`; Human Runtime pending. Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b101 Runtime qualification update — 2026-09-05
 
 - `ConversationRepository` remains sole Native conversation/list/detail/recovery/response-lifecycle authority. Exact b101 Runtime `sha256:f7209546f3f2d1dd8ad08458b0dea8adbef522af100deb2f5de90cbe26180b9d` keeps the new `-1005` transport-renewal branch Unexercised because every authoritative Detail in the sample returned HTTP200 and no transport-recovery diagnostic occurred.

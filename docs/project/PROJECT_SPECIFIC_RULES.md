@@ -1,3 +1,10 @@
+## Deterministic covered-Web kill probe — b102 test-only 2026-09-05
+
+- The b102 120-second `WKWebView` kill is allowed **only** as Candidate-gated Human Runtime instrumentation for the explicit client-owned WebContent-death test. Never carry this timer into a later normal product candidate or treat elapsed time as disconnect evidence.
+- Arm once from the existing covered protected-Send submit marker; do not read/log prompt or script body. Kill only the exact observed `WKWebView`, only through `_killWebContentProcessAndResetState` when `responds(to:)` succeeds.
+- The probe must not call protected Send, resume, status, Sync, Reload, retry, regenerate or any response API. Current client-owned death failure semantics remain unchanged during b102 so Runtime evidence is causal.
+- A qualifying run requires the client-owned response still active when `coveredExecutor.killProbe state=firing` occurs. If the answer already completed, an idle Web kill is not evidence for active-response death recovery.
+
 ## Native read transport loss recovery — b101 2026-09-05
 
 - The only automatic Native transport retry authorized by b101 is for the first exact `NSURLErrorDomain / NSURLErrorNetworkConnectionLost (-1005)` from an idempotent conversation-list or Conversation Detail GET using the current account-scoped cached transient session.

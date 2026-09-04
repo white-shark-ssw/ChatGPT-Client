@@ -1,3 +1,9 @@
+## Latest DEV-send-stream candidate override — b102 2026-09-05
+
+- Latest Human Runtime candidate: `DEV-send-stream-0.1.0-b102` / `0.1.0 (102)`, permanently reserved. It is a test-only deterministic WebContent-death probe, not a production recovery change.
+- One exact b102 covered protected-Send submit arms one 120-second action that kills only that covered `WKWebView` WebContent process through runtime-dispatched `_killWebContentProcessAndResetState`; prompt/script content is not logged. Existing client-owned Web death still fails normally and never resends.
+- Exact product `670310b4e8b15176f721291f4f96e46feadec46a`; package source `78bd3d2f3e45c8e0061865d3133b92a274139110`; Artifact `9951331101`; IPA `sha256:53eb1845a3fbd4543ebdb5e9a69e078b3f07866c2c395a666dca9b2928ecd8af`; package identity verified; Human Runtime pending; Stable/Frozen No.
+
 ## Latest DEV-send-stream candidate override — b101 2026-09-05
 
 - Latest Human Runtime candidate: `DEV-send-stream-0.1.0-b101` / `0.1.0 (101)`, permanently reserved. It addresses the exact b100 long-suspension Native read failure where Detail/list/manual Sync repeatedly returned `NSURLErrorDomain -1005` while WebKit networking reopened independently.

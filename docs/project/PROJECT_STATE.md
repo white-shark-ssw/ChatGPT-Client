@@ -1,3 +1,10 @@
+## DEV-send-stream b102 deterministic hard-Web kill probe package ready — 2026-09-05
+
+- User explicitly authorized a deterministic two-minute forced-Web test because natural `WKWebView` WebContent termination is difficult to reproduce. b102 is diagnostic instrumentation only; current client-owned WebContent-death failure semantics are intentionally unchanged until Runtime proves the server/Native outcome.
+- Exact product `670310b4e8b15176f721291f4f96e46feadec46a`; package source `78bd3d2f3e45c8e0061865d3133b92a274139110`; Push `33910845721/101146639944`; PR `33910858535/101146674919`; canonical Artifact `9951331101`; ZIP `sha256:2da6bb66d0c5eba55d93463881e0ff5d0d55a9d7844f068d024e5cee31dff24a`; IPA `sha256:53eb1845a3fbd4543ebdb5e9a69e078b3f07866c2c395a666dca9b2928ecd8af`.
+- The first covered protected-Send submit in exact b102 arms one 120s action on that `WKWebView`; it calls WebKit `_killWebContentProcessAndResetState` only if available. It adds no resend/regenerate, no retry, no Native resume/status, no background keepalive and no second response/content authority.
+- Human Runtime pending. b101 exact `-1005` transport renewal remains separately Unexercised; b102 does not supersede or claim it. Stable-Frozen No.
+
 ## DEV-send-stream b101 Human Runtime normal-path/regression update — 2026-09-05
 
 - Exact b101 diagnostics `sha256:f7209546f3f2d1dd8ad08458b0dea8adbef522af100deb2f5de90cbe26180b9d` / 95964 bytes / 182 events / Release / iPhone / iOS17.0 / source `da103452236e` contains no `-1005` and no b101 transport-recovery diagnostic, so the bounded Native read recovery remains Unexercised rather than accepted.

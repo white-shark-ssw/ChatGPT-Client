@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b103
-# Product source: d514e9a5bde01bf3243d81016bf8cbda533fd5bf
-# Test-only kill probe remains Candidate-gated to b103 for this Runtime gate.
-name: iOS Accepted Client Web Recovery b103
+# Candidate: DEV-send-stream-0.1.0-b104
+# Product source: 4aebb546f3be6b71de0a67f466e6557a357dbfdc
+# b103 accepted-client hard-Web recovery is Runtime Positive; b104 removes only deterministic kill instrumentation.
+name: iOS Accepted Client Web Recovery b104
 
 on:
   push:
@@ -32,13 +32,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b103 identity and recovery boundary
+      - name: Guard b104 identity and no-probe recovery boundary
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 103;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b103";' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'private static let candidate = "DEV-send-stream-0.1.0-b103"' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
-          grep -q 'delaySeconds: TimeInterval = 120' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
-          grep -q '_killWebContentProcessAndResetState' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b104";' ChatGPTClient.xcodeproj/project.pbxproj
+          test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient/AppDelegate.swift
+          ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
           grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
           grep -q 'preservedClientGeneration' ChatGPTClient/RootViewController.swift
@@ -46,7 +46,7 @@ jobs:
           grep -q 'network_connection_lost_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
           grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
-          ! grep -q 'sendExistingConversation' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
 
       - name: Toolchain
         run: xcodebuild -version
@@ -62,7 +62,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b103
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b104
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

@@ -24,11 +24,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "e88a50ad9c2098449b43fb0fce2c441a50cd20ac"
+          test "$(git rev-parse HEAD^)" = "8b966e259217e7e5dbdf8cbe0b72143150a35502"
           grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
-          grep -q 'liveResponsePresentationUpdateScheduled' ChatGPTClient/Conversation/ConversationFeature.swift
 
       - name: Record durable evidence
         shell: bash
@@ -36,85 +35,31 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-
+          import base64
+          S = base64.b64decode('IyMgREVWLXNlbmQtc3RyZWFtIGIxMDAgZm9yZWdyb3VuZCBkb3JtYW50LWRpc2NvdmVyeSBvdmVycmlkZSDigJQgMjAyNi0wOS0wNQoKLSBiOTkgUnVudGltZToga25vd24tYWN0aXZlIGV4dGVybmFsIHJlc3BvbnNlIGF1dG8tcmVjb25jaWxlZCBhdXRob3JpdGF0aXZlIERldGFpbCBgNS0+NmAgYWZ0ZXIgfjdtMzJzIGJhY2tncm91bmQuIEFmdGVyIHRoYXQgcmVzcG9uc2UvZXhlY3V0b3Igd2FzIHJlbGVhc2VkLCBhIGxhdGVyIH4xMm01NHMgYmFja2dyb3VuZCBpbnRlcnZhbCBoYWQgbm8gYXV0b21hdGljIGZvcmVncm91bmQgZGlzY292ZXJ5OyBtYW51YWwgU3luYyByZWNvdmVyZWQgYDYtPjhgLiBiOTkgaXMgUnVudGltZSBQYXJ0aWFsOyBpdHMgYmFja2xvZy1jb2FsZXNjaW5nIHN0cmVzcyBpcyBJbmNvbmNsdXNpdmUgaW4gdGhpcyBzYW1wbGU7IGhhcmQgV2ViQ29udGVudC1kZWF0aCByZWNvdmVyeSByZW1haW5zIFVudmVyaWZpZWQuCi0gYjEwMCBjaGFuZ2VzIG9ubHkgZm9yZWdyb3VuZCBkaXNjb3Zlcnk6IHNlbGVjdGVkIGNvbnZlcnNhdGlvbiArIG5vIGNsaWVudC1vd25lZCBhY3RpdmUgcmVzcG9uc2UgKyBubyBEZXRhaWwgb3BlcmF0aW9uID0+IGV4YWN0bHkgb25lIGV4aXN0aW5nIGBDb252ZXJzYXRpb25SZXBvc2l0b3J5LnN5bmNMYXRlc3RNZXNzYWdlc2AsIGV2ZW4gd2l0aG91dCBhIHByZS1leGlzdGluZyBleHRlcm5hbCBzbmFwc2hvdC4gQ29tcGxldGVkIHNlcnZlciBzdGF0ZSBtYXRlcmlhbGl6ZXMgZGlyZWN0bHk7IGEgbmV3bHkgZGlzY292ZXJlZCB1bmZpbmlzaGVkIHJlbW90ZSB1c2VyIHR1cm4gbWF5IHJlYXJtIHRoZSBleGlzdGluZyBjb3ZlcmVkIG9ic2VydmVyIG9uY2UuCi0gTm8gcG9sbGluZy90aW1lci9yZXRyeS93YXRjaGRvZy9iYWNrZ3JvdW5kIGhlYXJ0YmVhdC9yZXNlbmQvZ3Vlc3NlZCByZXN1bWUvc2Vjb25kIHJlc3BvbnNlIGF1dGhvcml0eS4KLSBFeGFjdCBwcm9kdWN0IGA3MGM3ZGMwNTI4NjVlZjgwY2E3YmRlYzA4M2Q3NjIxYzFhMjk3ZWFiYDsgcGFja2FnZSBzb3VyY2UgYGU4OGE1MGFkOWMyMDk4NDQ5YjQzZmIwZmNlMmM0NDFhNTBjZDIwYWNgOyBzdGFnaW5nIGAzMzg5NTAyMDU1OS8xMDEwOTU1MDg5MTVgLCBQdXNoIGAzMzg5NTI0NDE0Ni8xMDEwOTYyMjkxMzVgLCBQUiBgMzM4OTUyNDk4MTAvMTAxMDk2MjQ3NDMyYCBwYXNzZWQ7IEFydGlmYWN0IGA5OTQ1NDgzNzI1YDsgSVBBIGBzaGEyNTY6NTYyOWRlZWRjYTY2NWI3YTVjZmE3ZTM2YjQ5OTZiN2IxZTRiN2ExNjBjYTVjYjM1YTQ2NWFiZmJkOTdmYmM2OWA7IEh1bWFuIFJ1bnRpbWUgcGVuZGluZzsgU3RhYmxlLUZyb3plbiBOby4=').decode()
+          D = base64.b64decode('IyMgREVWLXNlbmQtc3RyZWFtIGIxMDAgbGlmZWN5Y2xlLXRyaWdnZXJlZCBkb3JtYW50IGRpc2NvdmVyeSDigJQgMjAyNi0wOS0wNQoKLSBBdXRob3JpemUgb25lIGF1dGhvcml0YXRpdmUgRGV0YWlsIG9uIGZvcmVncm91bmQgZm9yIHRoZSBzZWxlY3RlZCBjb252ZXJzYXRpb24gd2hlbiBubyBjbGllbnQtb3duZWQgcmVzcG9uc2UgaXMgYWN0aXZlIGFuZCBubyBEZXRhaWwgb3BlcmF0aW9uIGlzIGluIGZsaWdodCwgZXZlbiB3aGVuIG5vIGV4dGVybmFsIGxpdmUgc25hcHNob3QgZXhpc3RzLiBUaGlzIGlzIGxpZmVjeWNsZS10cmlnZ2VyZWQgZGlzY292ZXJ5LCBub3QgcG9sbGluZy4KLSBQcmVzZXJ2ZSB0aGUgZXhpc3RpbmcgYWN0aXZlLWV4dGVybmFsIGI5NyByZWNvbmNpbGUvcmVib290c3RyYXAuIFJlYXJtIGNvdmVyZWQgb2JzZXJ2YXRpb24gb25seSB3aGVuIERldGFpbCBwcm92ZXMgYSBuZXdseSBjaGFuZ2VkIGxhdGVzdCB1c2VyIGVuZGluZyBpbiBgLnVzZXJgLCBvciByZXN0b3JlcyBhbiBhY3RpdmUgZXh0ZXJuYWwgcHJvamVjdGlvbjsgYW4gYWxyZWFkeS1tYXRlcmlhbGl6ZWQgYXNzaXN0YW50IG5lZWRzIG5vIG9ic2VydmVyLgotIE5vIGNhZGVuY2UvcmV0cnkvd2F0Y2hkb2cvYmFja2dyb3VuZCBoZWFydGJlYXQvZHVwbGljYXRlIFNlbmQvZ3Vlc3NlZCByZXN1bWUvV2ViU29ja2V0LWJvZHkgYXV0aG9yaXR5L2NoYWxsZW5nZSByZXBsYXkvc2Vjb25kIHJlc3BvbnNlIG93bmVyLgotIEV4YWN0IGIxMDAgcHJvZHVjdC9wYWNrYWdlIGA3MGM3ZGMwNTI4NjVlZjgwY2E3YmRlYzA4M2Q3NjIxYzFhMjk3ZWFiYCAvIGBlODhhNTBhZDljMjA5ODQ0OWI0M2ZiMGZjZTJjNDQxYTUwY2QyMGFjYDsgUnVudGltZSBwZW5kaW5nLg==').decode()
+          R = base64.b64decode('IyMgRm9yZWdyb3VuZCBkb3JtYW50IGNyb3NzLXBsYXRmb3JtIGRpc2NvdmVyeSDigJQgYjEwMCAyMDI2LTA5LTA1CgotIEZvcmVncm91bmQgcmVjb3ZlcnkgbXVzdCBub3QgcmVxdWlyZSBhIHByZS1leGlzdGluZyBleHRlcm5hbCBsaXZlIHNuYXBzaG90LiBXaXRoIGEgc2VsZWN0ZWQgY29udmVyc2F0aW9uLCBubyBjbGllbnQtb3duZWQgYWN0aXZlIHJlc3BvbnNlIGFuZCBubyBEZXRhaWwgb3BlcmF0aW9uLCBvbmUgbGlmZWN5Y2xlIHRyYW5zaXRpb24gbWF5IGlzc3VlIGV4YWN0bHkgb25lIGV4aXN0aW5nIGF1dGhvcml0YXRpdmUgYENvbnZlcnNhdGlvblJlcG9zaXRvcnkuc3luY0xhdGVzdE1lc3NhZ2VzYC4KLSBJZiBmaW5hbCBhc3Npc3RhbnQgaXMgYWxyZWFkeSBtYXRlcmlhbGl6ZWQsIHVzZSBEZXRhaWwgZGlyZWN0bHkuIFJlYXJtIHRoZSBleGlzdGluZyBjb3ZlcmVkIG9ic2VydmVyIG9ubHkgZm9yIGEgbmV3bHkgZGlzY292ZXJlZCB1bmZpbmlzaGVkIHJlbW90ZSB1c2VyIHR1cm4gb3IgYWN0aXZlIGV4dGVybmFsIHByb2plY3Rpb24uCi0gTmV2ZXIgdHVybiB0aGlzIGludG8gcG9sbGluZywgcmV0cnksIHRpbWVyLCBrZWVwYWxpdmUsIHJlc2VuZC9yZWdlbmVyYXRlLCBndWVzc2VkIHJlc3VtZSwgb3IgYSBzZWNvbmQgcmVzcG9uc2Ugc3RvcmUuCi0gVEQtMDI5IHByb3RlY3RlZCBTZW5kIG93bmVyc2hpcCwgYjk5IFVJIGNvYWxlc2NpbmcsIGI5OCBXZWJDb250ZW50IHJlY292ZXJ5LCBiOTcgYWN0aXZlLWV4dGVybmFsIHJlY29uY2lsZSBhbmQgU3luYy9SZWxvYWQgc2VtYW50aWNzIHJlbWFpbiB1bmNoYW5nZWQu').decode()
+          C = base64.b64decode('IyMgYjEwMCBmb3JlZ3JvdW5kIGRvcm1hbnQgZGlzY292ZXJ5IOKAlCBwYWNrYWdlLXJlYWR5IDIwMjYtMDktMDUKCi0gQ2FuZGlkYXRlIGBERVYtc2VuZC1zdHJlYW0tMC4xLjAtYjEwMGAgLyBgMC4xLjAgKDEwMClgLCBwZXJtYW5lbnRseSByZXNlcnZlZC4KLSBQcm9kdWN0IGA3MGM3ZGMwNTI4NjVlZjgwY2E3YmRlYzA4M2Q3NjIxYzFhMjk3ZWFiYDsgZXhhY3QgZGVsdGE6IFhjb2RlIEJ1aWxkL0NhbmRpZGF0ZSArIGBDaGF0R1BUQ2xpZW50L1Jvb3RWaWV3Q29udHJvbGxlci5zd2lmdGAgb25seS4gQ2Fub25pY2FsIHBhY2thZ2Ugc291cmNlIGBlODhhNTBhZDljMjA5ODQ0OWI0M2ZiMGZjZTJjNDQxYTUwY2QyMGFjYC4KLSBJbml0aWFsIHN0YWdpbmcgYDMzODk0NzQxMDQ0YCB3YXMgWUFNTCBwYXJzZSBmYWlsdXJlIHdpdGggemVybyBqb2JzL3Byb2R1Y3Qgd3JpdGVzIGFuZCBpcyBpbnZhbGlkIGV2aWRlbmNlLiBDb3JyZWN0ZWQgc3RhZ2luZyBgMzM4OTUwMjA1NTkvMTAxMDk1NTA4OTE1YCBwYXNzZWQgZXhhY3Qgc2NvcGUsIGBnaXQgZGlmZiAtLWNoZWNrYCwgU2ltdWxhdG9yIGFuZCBwcm9kdWN0IGNvbW1pdC4KLSBQdXNoIGAzMzg5NTI0NDE0Ni8xMDEwOTYyMjkxMzVgIGFuZCBQUiBgMzM4OTUyNDk4MTAvMTAxMDk2MjQ3NDMyYCBwYXNzZWQuIENhbm9uaWNhbCBQdXNoIEFydGlmYWN0IGA5OTQ1NDgzNzI1YCwgWklQIGBzaGEyNTY6YmFiYjIzYzg0NWM0ZGE5NzFiNDg4YjQ4NjBjMDQzZmU4NDcxYWRmODMwNjg4OTIwMTQ5ZGYyNTRjZWU3MGZkNmA7IElQQSBgc2hhMjU2OjU2MjlkZWVkY2E2NjViN2E1Y2ZhN2UzNmI0OTk2YjdiMWU0YjdhMTYwY2E1Y2IzNWE0NjVhYmZiZDk3ZmJjNjlgLgotIFBhY2thZ2UgaW5zcGVjdGlvbjogYGNvbS53aGl0ZXNoYXJrc3N3LmNoYXRncHRjbGllbnRgLCBgMC4xLjAgKDEwMClgLCBDYW5kaWRhdGUgYjEwMCwgc291cmNlIGBlODhhNTBhZDljMjBgLCBpT1MxNCssIGBbMSwyXWAsIGFybTY0LgotIGI5OSBSdW50aW1lIGBzaGEyNTY6NGEwZDM5MjVhNGFiZjZlZjI0ZGM2NzQzZjllZmI2M2E0ZGZmY2QwNDlmM2U0MWViN2E1NDdmMmIxZDMzZDI3MWA6IGtub3duLWFjdGl2ZSB+N20zMnMgYXV0b21hdGljIERldGFpbCBgNS0+NmAgUG9zaXRpdmU7IGxhdGVyIG5vLWFjdGl2ZS1zbmFwc2hvdCB+MTJtNTRzIHJlbW90ZSBjaGFuZ2VzIHJlcXVpcmVkIG1hbnVhbCBTeW5jIGA2LT44YCwgc28gZG9ybWFudCBkaXNjb3ZlcnkgTmVnYXRpdmUuIGI5OSBiYWNrbG9nIGNvYWxlc2NpbmcgSW5jb25jbHVzaXZlIGluIHRoaXMgc2FtcGxlOyBoYXJkIFdlYkNvbnRlbnQgZGVhdGggVW52ZXJpZmllZC4KLSBiMTAwIGFkZHMgZXhhY3RseSBvbmUgZm9yZWdyb3VuZCBhdXRob3JpdGF0aXZlIGRpc2NvdmVyeSB3aXRob3V0IGFuIGFjdGl2ZS1zbmFwc2hvdCBwcmVjb25kaXRpb24uIEl0IG1heSByZWFybSBvbmUgZXhpc3RpbmcgY292ZXJlZCBvYnNlcnZlciBvbmx5IGZvciBhbiB1bmZpbmlzaGVkIG5ld2x5IGRpc2NvdmVyZWQgcmVtb3RlIHR1cm4uIE5vIHBvbGxpbmcvdGltZXIvcmV0cnkvd2F0Y2hkb2cvYmFja2dyb3VuZCBoZWFydGJlYXQvcmVzZW5kL3NlY29uZCBhdXRob3JpdHkuCgpFdmlkZW5jZSBsYWRkZXI6ICoqYjk5IFJ1bnRpbWUgUGFydGlhbCAvIGIxMDAgQ29kZSB3cml0dGVuIC8gZXhhY3Qgc2NvcGUrU2ltdWxhdG9yIHBhc3NlZCAvIFB1c2grUFIgQ0kgcGFzc2VkIC8gQXJ0aWZhY3QgcHJvZHVjZWQgLyBwYWNrYWdlIGlkZW50aXR5IHZlcmlmaWVkIC8gSHVtYW4gUnVudGltZSBwZW5kaW5nIC8gU3RhYmxlLUZyb3plbiBOby4qKgoKKipOZXh0IGV4YWN0IGFjdGlvbjoqKiB0ZXN0IGNhbm9uaWNhbCBiMTAwLiBLZWVwIGEgc2VsZWN0ZWQgY29tcGxldGVkIGNvbnZlcnNhdGlvbiBpZGxlLCBiYWNrZ3JvdW5kIGFwcCwgY3JlYXRlIGEgbmV3IHJlbW90ZSB0dXJuIGVsc2V3aGVyZSwgdGhlbiBmb3JlZ3JvdW5kIHdpdGhvdXQgU3luYy9SZWxvYWQuIEV4cGVjdCBgZm9yZWdyb3VuZENvbnZlcnNhdGlvbkRpc2NvdmVyeS5yZXF1ZXN0ZWRgICsgZXhhY3RseSBvbmUgRGV0YWlsOyBjb21wbGV0ZSByZXNwb25zZSBzaG91bGQgbWF0ZXJpYWxpemUsIHVuZmluaXNoZWQgcmVtb3RlIHR1cm4gc2hvdWxkIHNldCBgcmVhcm1EaXNjb3ZlcmVkUmVtb3RlVHVybj10cnVlYCBhbmQgcmVhcm0gb25jZS4gUmVncmVzc2lvbi1jaGVjayBrbm93bi1hY3RpdmUgYGZvcmVncm91bmRFeHRlcm5hbERldGFpbFJlY29uY2lsZWAgdG9vLg==').decode()
+          R100 = base64.b64decode('fCBgREVWLXNlbmQtc3RyZWFtLTAuMS4wLWIxMDBgIHwgYERFVi1zZW5kLXN0cmVhbWAgfCBgMC4xLjAgKDEwMClgIHwgZm9yZWdyb3VuZCBkb3JtYW50IGRpc2NvdmVyeSBwcm9kdWN0IGA3MGM3ZGMwNTI4NjVlZjgwY2E3YmRlYzA4M2Q3NjIxYzFhMjk3ZWFiYDsgcGFja2FnZSBgZTg4YTUwYWQ5YzIwOTg0NDliNDNmYjBmY2UyYzQ0MWE1MGNkMjBhY2A7IFBSICMyOSB8IHN0YWdpbmcgYDMzODk1MDIwNTU5LzEwMTA5NTUwODkxNWA7IFB1c2ggYDMzODk1MjQ0MTQ2LzEwMTA5NjIyOTEzNWA7IFBSIGAzMzg5NTI0OTgxMC8xMDEwOTYyNDc0MzJgOyBBcnRpZmFjdCBgOTk0NTQ4MzcyNWA7IFpJUCBgYmFiYjIzYzg0NWM0ZGE5NzFiNDg4YjQ4NjBjMDQzZmU4NDcxYWRmODMwNjg4OTIwMTQ5ZGYyNTRjZWU3MGZkNmA7IElQQSBgNTYyOWRlZWRjYTY2NWI3YTVjZmE3ZTM2YjQ5OTZiN2IxZTRiN2ExNjBjYTVjYjM1YTQ2NWFiZmJkOTdmYmM2OWA7IGIxMDAvc291cmNlL2lPUzE0L1sxLDJdL2FybTY0IHZlcmlmaWVkIHwgUnVudGltZSBwZW5kaW5nOiBmb3JlZ3JvdW5kIHdpdGggbm8gYWN0aXZlIHNuYXBzaG90IG11c3Qgb25lLXNob3QgRGV0YWlsIHJlbW90ZSBjaGFuZ2VzIHdpdGhvdXQgbWFudWFsIFN5bmMgYW5kIHJlYXJtIGNvdmVyZWQgb2JzZXJ2ZXIgb25seSBpZiBuZXdseSBkaXNjb3ZlcmVkIHJlbW90ZSB0dXJuIGlzIHVuZmluaXNoZWQgfCAqKkNvZGUgd3JpdHRlbiAvIGV4YWN0IHNjb3BlK1NpbXVsYXRvciAvIFB1c2grUFIgQ0kgLyBBcnRpZmFjdCAvIGlkZW50aXR5IHZlcmlmaWVkIC8gUnVudGltZSBwZW5kaW5nIC8gU3RhYmxlLUZyb3plbiBObzsgcGVybWFuZW50bHkgcmVzZXJ2ZWQqKiB8').decode()
+          R99 = base64.b64decode('fCBgREVWLXNlbmQtc3RyZWFtLTAuMS4wLWI5OWAgfCBgREVWLXNlbmQtc3RyZWFtYCB8IGAwLjEuMCAoOTkpYCB8IFVJIGNvYWxlc2NpbmcgcHJvZHVjdCBgZWMwNWMyODQwMTBjYjBmMmRlMDY2YmQxY2ZjMzk2OGUwNzczMDc3OWA7IHBhY2thZ2UgYDMxM2M0YzNiZjJhYzBkYzcyOWQ0NzkzMTk4ZmU0NjJhZGE1YTE0ZWJgOyBQUiAjMjkgfCBzdGFnaW5nIGAzMzg5MDY3ODU2NC8xMDEwODEyODkyMjBgOyBQdXNoIGAzMzg5MDgwOTI3NS8xMDEwODE3MjA3NTBgOyBQUiBgMzM4OTA4MTIzNDUvMTAxMDgxNzMwMjU4YDsgQXJ0aWZhY3QgYDk5NDM3OTg4ODVgOyBJUEEgYDY4YjdmOTllYWM4ZmQxZDNhYjE0YzYwODVhYmQ0YTA4NGYyYjQ3NTlkYzYzMGY5NDA0NDAxN2M5YTRhZWNmMDJgIHwgUnVudGltZSBgNGEwZDM5MjVhNGFiZjZlZjI0ZGM2NzQzZjllZmI2M2E0ZGZmY2QwNDlmM2U0MWViN2E1NDdmMmIxZDMzZDI3MWA6IGtub3duLWFjdGl2ZSB+N20zMnMgYXV0byBEZXRhaWwgYDUtPjZgIFBvc2l0aXZlOyBsYXRlciB+MTJtNTRzIHdpdGggbm8gYWN0aXZlIHNuYXBzaG90L2V4ZWN1dG9yIGhhZCBubyBhdXRvIGRpc2NvdmVyeSBhbmQgbWFudWFsIFN5bmMgcmVjb3ZlcmVkIGA2LT44YDsgYmFja2xvZyBjb2FsZXNjaW5nIEluY29uY2x1c2l2ZSBpbiB0aGlzIHNhbXBsZSB8ICoqUnVudGltZSBQYXJ0aWFsIC8gZG9ybWFudCBkaXNjb3ZlcnkgTmVnYXRpdmUgLyBzdXBlcnNlZGVkIGJ5IGIxMDAgZGlzY292ZXJ5IGdhdGUgLyBTdGFibGUtRnJvemVuIE5vOyBwZXJtYW5lbnRseSByZXNlcnZlZCoqIHw=').decode()
           def prepend(path, marker, block):
-              p = Path(path)
-              text = p.read_text()
-              if marker in text:
-                  return
-              p.write_text(block.rstrip() + '\n\n' + text)
-
-          b100_summary = '''## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05
-
-- b99 Human Runtime `sha256:4a0d3925a4abf6ef24dc6743f9efb63a4dffcd049f3e41eb7a547f2b1d33d271` proves two distinct foreground-return cases. A known-active external response survived ~7m32s background and automatically reconciled authoritative Detail `5 -> 6`; later, after that response had completed and its covered executor/live snapshot were released, ~12m54s background allowed server state to advance but foreground return performed no discovery. Manual Sync immediately recovered authoritative Detail `6 -> 8`.
-- Therefore b99 is Runtime Partial: known-active foreground convergence Positive; dormant/late remote-change automatic discovery Negative; b99 backlog coalescing Unexercised/Inconclusive in this sample; b98 hard WebContent termination recovery still Unexercised/Unverified.
-- b100 removes only the dormant foreground discovery precondition. On foreground with a selected conversation and no client-owned active response, Root issues exactly one existing authoritative `ConversationRepository.syncLatestMessages` if no Detail operation is in flight. Existing active-external b97 reconcile/rebootstrap remains unchanged.
-- If that one-shot Detail discovers a new latest remote user turn that still ends in `.user`, or Detail itself restores an active external projection, Root reuses the existing covered observer with one force page reload. If the final assistant is already materialized, Detail alone is sufficient. No polling, timer, retry, watchdog, background heartbeat, duplicate Send, guessed `/resume`, WebSocket-body authority, challenge replay or second response store is added.
-- b100 exact product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; canonical package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; corrected guarded staging `33895020559/101095508915`; initial zero-job YAML parse failure `33894741044` is invalid evidence; Push `33895244146/101096229135` and PR `33895249810/101096247432` passed.
-- Canonical Push Artifact `9945483725`; ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`; IPA `ChatGPTClient-0.1.0-b100-dev-send-stream.ipa`, `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`. Independent package inspection confirms bundle `com.whitesharkssw.chatgptclient`, `0.1.0 (100)`, Candidate b100, source `e88a50ad9c20`, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, Mach-O arm64.
-- Evidence ladder: **b99 Runtime Partial; b100 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Human Runtime pending / Stable-Frozen No.**'''
-
-          prepend('docs/project/PROJECT_STATE.md', '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', b100_summary)
-          prepend('docs/project/PROJECT_PROFILE.md', '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', b100_summary)
-          prepend('docs/project/MODULE_STATUS.md', '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', b100_summary)
-
-          decision = '''## DEV-send-stream b100 lifecycle-triggered dormant discovery decision — 2026-09-05
-
-- b99 Runtime proves the selected conversation can change remotely while the client has neither an active external live snapshot nor a covered executor. Current foreground logic then returns without issuing any authoritative read; manual one-shot Detail immediately recovers the change.
-- Authorize exactly one existing authoritative `ConversationRepository.syncLatestMessages` on foreground entry for the selected conversation when there is no active client-owned response and no Detail operation already in flight. This is lifecycle-triggered discovery, not polling.
-- Preserve b97 behavior for a pre-existing active external response. For a dormant-discovery result, rearm the existing covered observer only when the authoritative Detail proves a newly changed latest user whose visible tail still ends in `.user`, or Detail itself restores an active external projection. A materialized final assistant requires no observer.
-- Do not add cadence, retry, watchdog, background heartbeat, duplicate Send, guessed resume/offset, WebSocket-body authority, challenge replay, second response cache or second response owner.
-- Exact b100 product/package: `70c7dc052865ef80ca7bdec083d7621c1a297eab` / `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; Artifact `9945483725`; IPA `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`; Human Runtime pending.'''
-          prepend('docs/project/TECHNICAL_DECISIONS.md', '## DEV-send-stream b100 lifecycle-triggered dormant discovery decision — 2026-09-05', decision)
-
-          rule = '''## Foreground dormant cross-platform discovery — b100 2026-09-05
-
-- Foreground recovery must not require a pre-existing external live snapshot. When a conversation is selected, no client-owned response is active, and no Detail operation is in flight, one foreground lifecycle transition may issue exactly one existing authoritative `ConversationRepository.syncLatestMessages`.
-- This request is a one-shot discovery/reconciliation action only. It must not schedule itself again, poll, retry, keep the app alive in background, or create another response store.
-- If authoritative Detail already materializes the final assistant, use that server state directly. Rearm the existing covered observer only when Detail proves a new latest remote user turn still ending in `.user`, or restores an active external live projection.
-- A client-owned active protected Send is excluded from this foreground discovery and remains TD-029 covered-Web owned. Never resend/regenerate automatically.
-- b99 UI event coalescing, b98 hard WebContent recovery, b97 active-external foreground reconcile, Sync/Reload semantics and `ConversationRepository` authority remain unchanged.'''
-          prepend('docs/project/PROJECT_SPECIFIC_RULES.md', '## Foreground dormant cross-platform discovery — b100 2026-09-05', rule)
-
-          checkpoint = '''## b100 foreground dormant discovery — package-ready 2026-09-05
-
-- Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`, permanently reserved.
-- Exact product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; product delta is exactly `ChatGPTClient.xcodeproj/project.pbxproj` + `ChatGPTClient/RootViewController.swift`.
-- Exact canonical package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`.
-- Initial staging `33894741044` failed at YAML parsing with zero jobs/product writes and is invalid evidence. Corrected guarded staging `33895020559/101095508915` passed baseline guard, exact two-product-file scope, `git diff --check`, Debug iphonesimulator compile and product commit.
-- Formal Push `33895244146/101096229135` and PR `33895249810/101096247432` both passed.
-- Canonical Push Artifact `9945483725`, ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`.
-- Canonical IPA `ChatGPTClient-0.1.0-b100-dev-send-stream.ipa`, `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`.
-- Independent inspection: `com.whitesharkssw.chatgptclient`, `0.1.0 (100)`, Candidate b100, source `e88a50ad9c20`, iOS14+, `[1,2]`, arm64.
-- b100 adds one foreground authoritative discovery when no client-owned response is active, without requiring a pre-existing external snapshot. A newly discovered unfinished remote user turn may rearm the existing covered observer once; a materialized final assistant needs only Detail. No polling/timer/retry/watchdog/background heartbeat/resend/second authority.
-- b99 exact Runtime remains Partial: known-active ~7m32s foreground convergence Positive; no-active-snapshot ~12m54s remote-change discovery Negative until manual Sync `6 -> 8`; b99 backlog UI coalescing not exercised by that sample; hard WebContent-death recovery still Unverified.
-
-Evidence ladder: **b99 Runtime Partial / b100 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Human Runtime pending / Stable-Frozen No.**
-
-**Next exact action:** Human Runtime with canonical b100 only. Keep a selected completed conversation with no active local/external response, background the app, create a new turn on another platform while it remains backgrounded, then return without Sync/Reload. Expect `foregroundConversationDiscovery.requested`, exactly one authoritative Detail, automatic final materialization if complete, or `rearmDiscoveredRemoteTurn=true` plus one covered observer rearm if still active. Also regression-check the existing `foregroundExternalDetailReconcile` path for a response already known active before background. Do not allocate b101 before this evidence unless a distinct proven defect appears.'''
-          prepend('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md', '## b100 foreground dormant discovery — package-ready 2026-09-05', checkpoint)
-
-          index = Path('docs/project/BUILD_TEST_INDEX.md')
-          text = index.read_text()
-          b100_marker = '| `DEV-send-stream-0.1.0-b100` |'
-          b100_row = '| `DEV-send-stream-0.1.0-b100` | `DEV-send-stream` | `0.1.0 (100)` | foreground dormant cross-platform discovery product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; exact package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; PR #29 | corrected guarded staging `33895020559/101095508915` exact two-product-file scope + `git diff --check` + Simulator passed; initial zero-job YAML parse failure `33894741044` invalid; Push `33895244146/101096229135` passed; PR `33895249810/101096247432` passed; canonical Artifact `9945483725`; ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`; IPA `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`; package verified Candidate b100 / source `e88a50ad9c20` / iOS14 / `[1,2]` / arm64 | Human Runtime pending: selected completed conversation may change remotely while app is backgrounded; foreground must issue one `foregroundConversationDiscovery` Detail without manual Sync and either materialize completed server state or rearm one covered observer for a newly discovered unfinished remote turn | **Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No; permanently reserved** |'
-          b99_row = '| `DEV-send-stream-0.1.0-b99` | `DEV-send-stream` | `0.1.0 (99)` | live-presentation main-queue coalescing product `ec05c284010cb0f2de066bd1cfc3968e07730779`; exact package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; PR #29 | corrected guarded staging `33890678564/101081289220` exact two-product-file scope + Simulator passed; initial no-job workflow parse failure `33890559324` invalid; Push `33890809275/101081720750` passed; PR `33890812345/101081730258` passed; canonical Artifact `9943798885`; ZIP `sha256:303bad6e93b8dfdc48ecd77559ed42d6a03058e5d6db676dcd24c65c537df8b5`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; package verified Candidate b99 / source `313c4c3bf2ac` / iOS14 / `[1,2]` / arm64 | Human Runtime `sha256:4a0d3925a4abf6ef24dc6743f9efb63a4dffcd049f3e41eb7a547f2b1d33d271`: known-active external response auto-reconciled `5->6` after ~7m32s background; after live snapshot/executor release, a later ~12m54s background interval produced no automatic foreground discovery and manual Sync recovered `6->8`; only 1 live event/presentation so b99 backlog-coalescing stress remains Inconclusive | **Runtime Partial / known-active foreground convergence Positive / dormant remote-change discovery Negative / b99 backlog coalescing Unexercised in this sample / superseded by b100 discovery gate / Stable-Frozen No; permanently reserved** |'
-          lines = text.splitlines()
-          out = []
-          inserted = b100_marker in text
-          replaced_b99 = False
+              p = Path(path); text = p.read_text()
+              if marker not in text: p.write_text(block.rstrip() + '\n\n' + text)
+          for path in ['docs/project/PROJECT_STATE.md','docs/project/PROJECT_PROFILE.md','docs/project/MODULE_STATUS.md']:
+              prepend(path, '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', S)
+          prepend('docs/project/TECHNICAL_DECISIONS.md', '## DEV-send-stream b100 lifecycle-triggered dormant discovery — 2026-09-05', D)
+          prepend('docs/project/PROJECT_SPECIFIC_RULES.md', '## Foreground dormant cross-platform discovery — b100 2026-09-05', R)
+          prepend('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md', '## b100 foreground dormant discovery — package-ready 2026-09-05', C)
+          p = Path('docs/project/BUILD_TEST_INDEX.md'); lines = p.read_text().splitlines(); out=[]; inserted=False; found=False
           for line in lines:
-              if line.startswith('| `DEV-send-stream-0.1.0-b99` |'):
-                  if not inserted:
-                      out.append(b100_row)
-                      inserted = True
-                  out.append(b99_row)
-                  replaced_b99 = True
-              else:
-                  out.append(line)
-          if not replaced_b99:
-              raise SystemExit('b99 index row not found')
-          index.write_text('\n'.join(out) + '\n')
+              if line.startswith('| `DEV-send-stream-0.1.0-b100` |'):
+                  if not inserted: out.append(R100); inserted=True
+              elif line.startswith('| `DEV-send-stream-0.1.0-b99` |'):
+                  if not inserted: out.append(R100); inserted=True
+                  out.append(R99); found=True
+              else: out.append(line)
+          if not found: raise SystemExit('b99 row not found')
+          p.write_text('\n'.join(out) + '\n')
           PY
 
       - name: Validate docs-only scope
@@ -124,18 +69,9 @@ Evidence ladder: **b99 Runtime Partial / b100 Code written / exact scope+Simulat
           git diff --check
           python3 - <<'PY'
           import subprocess
-          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
-          expected = {
-              'docs/project/BUILD_TEST_INDEX.md',
-              'docs/project/PROJECT_STATE.md',
-              'docs/project/PROJECT_PROFILE.md',
-              'docs/project/MODULE_STATUS.md',
-              'docs/project/TECHNICAL_DECISIONS.md',
-              'docs/project/PROJECT_SPECIFIC_RULES.md',
-              'docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md',
-          }
-          if changed != expected:
-              raise SystemExit(f'unexpected docs scope: {sorted(changed)}')
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          expected={'docs/project/BUILD_TEST_INDEX.md','docs/project/PROJECT_STATE.md','docs/project/PROJECT_PROFILE.md','docs/project/MODULE_STATUS.md','docs/project/TECHNICAL_DECISIONS.md','docs/project/PROJECT_SPECIFIC_RULES.md','docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'}
+          if changed != expected: raise SystemExit(f'unexpected docs scope: {sorted(changed)}')
           PY
 
       - name: Commit durable b100 evidence

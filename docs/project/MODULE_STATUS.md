@@ -1,3 +1,10 @@
+## DEV-send-stream b100 dormant foreground discovery Runtime Positive — 2026-09-05
+
+- `ConversationRepository.syncLatestMessages` remains the sole authoritative foreground discovery primitive. Exact b100 Human Runtime `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696` proves the no-active-snapshot lifecycle path after ~19m31s background: one automatic Detail changed visible messages `8 -> 10` with no manual Sync/Reload and no second response authority.
+- Completed remote state did not rearm Covered Web (`rearmDiscoveredRemoteTurn=false`). A later no-change foreground cycle also issued one Detail and remained `10 -> 10`.
+- A user WebSocket `error/close(1006)` occurred on foreground and later reopened; the authoritative Detail path still converged first. No hard WebContent-process termination event occurred, so b98 hard-process recovery remains Unverified.
+- Runtime acceptance is scoped to dormant foreground discovery. Unfinished remote-turn rearm, exact-b100 known-active reconcile regression and b99 backlog-coalescing stress remain Unverified; module is not Stable/Frozen.
+
 ## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05
 
 - b99 Runtime: known-active external response auto-reconciled authoritative Detail `5->6` after ~7m32s background. After that response/executor was released, a later ~12m54s background interval had no automatic foreground discovery; manual Sync recovered `6->8`. b99 is Runtime Partial; its backlog-coalescing stress is Inconclusive in this sample; hard WebContent-death recovery remains Unverified.

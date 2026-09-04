@@ -1,3 +1,28 @@
+## b100 Human Runtime — dormant foreground discovery Positive 2026-09-05
+
+Exact tested evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`; Release / iPhone / iOS17.0; source marker `e88a50ad9c20`; diagnostics `ChatGPTClient-Diagnostics-20260904-171109.json`, `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696`, 72063 bytes / 127 events.
+- The selected conversation was complete/idle at authoritative visible message count `8`. App entered background at `16:45:36Z` with no active external live response and returned at `17:05:07Z` after 1171s (~19m31s).
+- On foreground, without any preceding `conversation.latestSync.requested`, b100 emitted `foregroundConversationDiscovery.requested` and exactly one automatic authoritative Detail operation (`operationGeneration=2`). HTTP200 Detail changed visible messages `8 -> 10`; `latestSync.end` recorded `addedVisibleMessageCount=2`.
+- `foregroundConversationDiscovery.completed` reported `latestUserChanged=true`, `activeExternalAfterSync=false`, `liveResponseActive=false`, `rearmDiscoveredRemoteTurn=false`, `visibleMessageCount=10`. This is the expected completed-remote-turn branch: the assistant was already authoritative, so no covered observer rearm was required.
+- A second background interval lasted 327s (~5m27s). Foreground again issued exactly one dormant discovery and converged `10 -> 10` with `latestUserChanged=false` / `rearmDiscoveredRemoteTurn=false`. A later explicit manual Sync at `17:10:59Z` also remained `10 -> 10`, so it was not required for convergence.
+- The user WebSocket produced `error` + `close` code `1006` on the long foreground return, then a new socket was `created/open` within seconds. No `coveredExecutor.webProcess` / `externalWebProcessRecovery` event occurred. This proves dormant authoritative discovery works despite a stale/broken WebSocket, but does not exercise hard WKWebView WebContent-process termination recovery.
+- One iOS memory warning occurred on the long foreground return; the protected resident was retained and the app continued normally with no crash/relaunch in this diagnostic. This is sample-local stability evidence only.
+- This run contains zero `liveResponse.event` / `liveResponse.presentationApplied`, so b99 backlog-coalescing stress is still Unexercised here. It also does not exercise `rearmDiscoveredRemoteTurn=true` for an unfinished newly discovered remote turn, nor the exact-b100 known-active `foregroundExternalDetailReconcile` branch.
+
+Runtime classification:
+
+- b100 primary dormant cross-platform foreground discovery: **Runtime Positive**, including ~19m31s background and automatic authoritative materialization `8 -> 10` with no manual Sync/Reload;
+- no-change foreground discovery: **Runtime Positive / one-shot no-op**;
+- unfinished remote-turn rearm: **Unexercised / Unverified**;
+- exact-b100 known-active external reconcile regression: **Unexercised in this sample**;
+- b99 backlog coalescing: **Unexercised / Unverified in this sample**;
+- b98 hard WebContent termination recovery: **Unexercised / Unverified**;
+- overall `DEV-send-stream`: **Runtime Partial / Stable-Frozen No**.
+
+**Next exact action:** no product change or b101 is justified by this sample. Keep canonical b100. If further qualification is desired, return foreground while a newly created remote turn is still unfinished and verify `rearmDiscoveredRemoteTurn=true` + one covered rearm; separately regression-check exact-b100 known-active `foregroundExternalDetailReconcile`. Do not add polling/timers/heartbeat/retries.
+
 ## b100 foreground dormant discovery — package-ready 2026-09-05
 
 - Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`, permanently reserved.

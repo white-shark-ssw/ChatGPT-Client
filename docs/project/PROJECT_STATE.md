@@ -1,3 +1,11 @@
+## DEV-send-stream b100 Human Runtime dormant-discovery Positive — 2026-09-05
+
+- Exact b100 diagnostics `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696` / 72063 bytes / 127 events / Release / iPhone / iOS17.0 / source `e88a50ad9c20`.
+- With the selected conversation idle at 8 visible messages, the app stayed backgrounded 1171s (~19m31s). Foreground automatically emitted `foregroundConversationDiscovery.requested`, issued exactly one authoritative Detail, and materialized `8 -> 10` (`addedVisibleMessageCount=2`, `latestUserChanged=true`) without manual Sync/Reload. Completed remote state required no covered rearm (`rearmDiscoveredRemoteTurn=false`).
+- A second 327s (~5m27s) background return issued one automatic discovery and remained `10 -> 10`; a later manual Sync also remained `10 -> 10`, confirming the automatic path had already converged.
+- The existing user WebSocket errored/closed with code 1006 on the long return and then reopened; no `webViewWebContentProcessDidTerminate` signal occurred. Dormant authoritative discovery is Runtime Positive even with a broken/stale user WebSocket, but hard WebContent recovery remains Unverified.
+- No b101/product change is justified. Unfinished remote-turn rearm, exact-b100 known-active reconcile regression, b99 backlog coalescing stress and b98 hard WebContent termination recovery remain separate unverified gates. Stable-Frozen No.
+
 ## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05
 
 - b99 Runtime: known-active external response auto-reconciled authoritative Detail `5->6` after ~7m32s background. After that response/executor was released, a later ~12m54s background interval had no automatic foreground discovery; manual Sync recovered `6->8`. b99 is Runtime Partial; its backlog-coalescing stress is Inconclusive in this sample; hard WebContent-death recovery remains Unverified.

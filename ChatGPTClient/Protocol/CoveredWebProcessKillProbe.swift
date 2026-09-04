@@ -2,7 +2,7 @@ import Foundation
 import ObjectiveC.runtime
 import WebKit
 
-private enum CoveredWebProcessKillProbe {
+enum CoveredWebProcessKillProbe {
     private static let candidate = "DEV-send-stream-0.1.0-b102"
     private static let delaySeconds: TimeInterval = 120
     private static let submitMarker = "window.__coveredWebSendExecutor.submit("

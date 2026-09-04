@@ -1,3 +1,9 @@
+## Latest DEV-send-stream candidate override — b103 2026-09-05
+
+- Latest Human Runtime candidate is now `DEV-send-stream-0.1.0-b103` / `0.1.0 (103)`, permanently reserved. b103 converts only explicitly accepted client-owned hard WebContent death into same-generation covered-observer handoff; it never resends the prompt. Exact product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; package source `e1cca160e9c466ab98a2aeffc038e94f58335cab`.
+- Corrected staging `33913972639/101156743875`, Push `33914210593/101157497020` and PR `33914214638/101157509705` passed. Canonical Artifact `9952548424`; ZIP `sha256:27fc23f1cb48d585ab3ffc0b181ec0dffafc42ccb3069fd72cbf5a0ba647f77a`; IPA `sha256:f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3`; package identity independently verified as Release b103/source `e1cca160e9c4`/iOS14+/`[1,2]`/arm64.
+- b102 Runtime `sha256:6d2fde277427d3bbad6549946855c68b8df7e0433389b2d5c9e7d98212a3a6a6` is decisive for the causal premise: exact client Send was accepted once, WebContent death did not kill the server turn, and existing covered/Detail reacquisition completed the same turn without a second Send. b103 recovery itself remains Human Runtime pending; Stable/Frozen No.
+
 ## Latest DEV-send-stream candidate override — b102 2026-09-05
 
 - Latest Human Runtime candidate: `DEV-send-stream-0.1.0-b102` / `0.1.0 (102)`, permanently reserved. It is a test-only deterministic WebContent-death probe, not a production recovery change.

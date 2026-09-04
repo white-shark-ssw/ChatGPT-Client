@@ -1,3 +1,10 @@
+## DEV-send-stream b103 accepted-client hard-Web recovery decision — 2026-09-05
+
+- b102 Runtime changes the evidence boundary: after one exact protected Send returned HTTP200 `text/event-stream`, deterministic `webViewWebContentProcessDidTerminate` caused only local transport/lifecycle failure; the server turn stayed alive and the existing covered observation/Detail path later reacquired and completed it with no second Send. Hard death after explicit acceptance is therefore a recoverable receive-transport interruption for this tested scenario, not proof that the server response failed.
+- Authorize b103 to preserve the same prompt-owned `ConversationRepository` generation on that exact hard signal **only when client Send acceptance has already been observed**. Release the dead executor and attach one fresh covered observer for the same conversation/generation immediately if active or on next foreground if inactive. Feed only the existing evidenced external streaming/snapshot/resume/terminal events back into the same Repository owner.
+- Before Send acceptance, existing failure semantics remain. Navigation errors, silence, focus/route state and elapsed time are not promoted to disconnect signals. No resend/regenerate, retry loop, polling, heartbeat, challenge replay, guessed Native resume or second response/content authority is authorized.
+- The b103 120-second kill remains Candidate-gated test instrumentation, not product timeout policy, and must not continue into a later normal/Stable candidate after this Runtime gate is closed.
+
 ## DEV-send-stream b102 deterministic WebContent-death diagnostic decision — 2026-09-05
 
 - Natural hard WebContent death is too intermittent to be an efficient acceptance gate, while exact `webViewWebContentProcessDidTerminate` remains the only approved hard-disconnect signal. The user explicitly authorizes one deterministic 120-second forced-kill diagnostic candidate to exercise that signal.

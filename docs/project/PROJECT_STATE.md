@@ -1,3 +1,10 @@
+## DEV-send-stream b103 accepted-client hard-Web recovery package ready — 2026-09-05
+
+- b102 Human Runtime `sha256:6d2fde277427d3bbad6549946855c68b8df7e0433389b2d5c9e7d98212a3a6a6` proves an explicitly accepted client-owned protected Send can survive hard WebContent death server-side and later finish through the existing covered observation + authoritative Detail chain without a second Send. The remaining defect was local: b102 marked the prompt-owned generation failed and required a lifecycle nudge to rediscover it.
+- b103 preserves that same Repository generation after hard WebContent death **only after** HTTP200 `text/event-stream` Send acceptance. While active it immediately releases the dead executor and attaches one fresh covered observer; while inactive it defers the reattach until foreground. Pre-acceptance death remains failure. No prompt replay/regenerate, retry loop, polling, heartbeat, guessed resume or second response store is added.
+- Exact product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; package `e1cca160e9c466ab98a2aeffc038e94f58335cab`; corrected staging `33913972639/101156743875`; Push `33914210593/101157497020`; PR `33914214638/101157509705`; canonical Artifact `9952548424`; ZIP `sha256:27fc23f1cb48d585ab3ffc0b181ec0dffafc42ccb3069fd72cbf5a0ba647f77a`; IPA `sha256:f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3`. Independent package inspection verifies b103/source `e1cca160e9c4`/Release/iOS14+/arm64.
+- Human Runtime pending. The b103 120-second kill is still explicit test instrumentation only; no true background-execution claim. Stable-Frozen No.
+
 ## DEV-send-stream b102 deterministic hard-Web kill probe package ready — 2026-09-05
 
 - User explicitly authorized a deterministic two-minute forced-Web test because natural `WKWebView` WebContent termination is difficult to reproduce. b102 is diagnostic instrumentation only; current client-owned WebContent-death failure semantics are intentionally unchanged until Runtime proves the server/Native outcome.

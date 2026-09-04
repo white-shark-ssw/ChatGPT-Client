@@ -1,3 +1,9 @@
+## DEV-send-stream b103 accepted-client hard-Web recovery — 2026-09-05
+
+- `ConversationRepository` remains sole Native response/content/lifecycle authority. b103 does not create a second response object when the covered WebContent process dies after Send acceptance; the existing prompt-owned generation remains active and receives the fresh covered observer's already-evidenced external continuation events.
+- `CoveredWebSendExecutor` now distinguishes explicit accepted-client transport death from pre-acceptance failure. Accepted-client death emits `acceptedClientWebProcessInterrupted`, clears only the dead executor transport state, and Root replaces it with one observer for the same conversation/generation. No protected Send is repeated.
+- b102 Runtime proves the server-turn survival/no-second-Send premise. b103 exact product/package `d514e9a5bde01bf3243d81016bf8cbda533fd5bf` / `e1cca160e9c466ab98a2aeffc038e94f58335cab`; staging + Push + PR CI passed; Artifact `9952548424`; IPA `sha256:f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3`; package identity verified. Recovery Runtime pending; module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b102 deterministic client-owned WebContent-death probe — 2026-09-05
 
 - `ConversationRepository` remains sole Native response/content owner and `CoveredWebSendExecutor` remains the protected-Send Web transport. b102 adds no recovery owner or alternate transport.

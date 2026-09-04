@@ -1,12 +1,23 @@
-## b103 package-evidence batch recovery point — 2026-09-05
+## b103 accepted-client hard-Web recovery — package ready 2026-09-05
 
-- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29; canonical product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; canonical package source `e1cca160e9c466ab98a2aeffc038e94f58335cab`; Candidate `DEV-send-stream-0.1.0-b103` / Build103.
-- Canonical Push `33914210593 / 101157497020` and PR `33914214638 / 101157509705` are success. Canonical Push Artifact `9952548424`; ZIP `sha256:27fc23f1cb48d585ab3ffc0b181ec0dffafc42ccb3069fd72cbf5a0ba647f77a`; IPA `sha256:f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3` independently matches sidecar and package metadata.
-- Intended write batches: (A) this checkpoint recovery point; (B) update this checkpoint plus BUILD_TEST_INDEX / PROJECT_PROFILE / PROJECT_STATE / MODULE_STATUS / TECHNICAL_DECISIONS with b102 Runtime + b103 package evidence; (C) update PR #29 metadata after GitHub state is re-read.
-- Confirmed before batch A: product/package/CI/Artifact/package identity are verified; main remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`; parallel PR #35 remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142` with no product/candidate conflict.
-- Recovery must not alter b103 product/package identity, rebuild/repackage the canonical Artifact, allocate b104, touch PR #35, or rewrite earlier reserved Candidate identities.
+Exact package evidence:
 
-**Next exact action:** finish docs batch B only, verify branch state, then update PR #29 metadata as batch C and hand canonical b103 IPA to Human Runtime.
+- Candidate `DEV-send-stream-0.1.0-b103` / `0.1.0 (103)`, permanently reserved. Exact product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; canonical package source `e1cca160e9c466ab98a2aeffc038e94f58335cab`. b103 is a Runtime recovery test candidate, not Stable/Frozen.
+- Corrected guarded staging `33913972639 / 101156743875` passed b102 Runtime/checkpoint allocation, exact three-product-file scope audit and Debug Simulator compile, then committed product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`. Earlier staging `33913633892 / 101155651591` stopped before product write while matching the docs allocation marker and emitted no b103 product commit.
+- Formal Push `33914210593 / 101157497020` and PR `33914214638 / 101157509705` both passed on exact package source `e1cca160e9c466ab98a2aeffc038e94f58335cab`.
+- Canonical Push Artifact `9952548424`; downloaded Artifact ZIP independently recomputed `sha256:27fc23f1cb48d585ab3ffc0b181ec0dffafc42ccb3069fd72cbf5a0ba647f77a`, matching GitHub's Artifact digest.
+- Canonical IPA `ChatGPTClient-0.1.0-b103-dev-send-stream.ipa`; independently recomputed `sha256:f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3`, matching the emitted sidecar.
+- Independent package inspection confirms `com.whitesharkssw.chatgptclient`, `0.1.0 (103)`, Candidate b103, source marker `e1cca160e9c4`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, `iPhoneOS`, Mach-O 64-bit arm64. Binary strings include the exact b103 Candidate, `coveredExecutor.acceptedClientWebProcessRecovery`, `acceptedClientRecovery.started`, and `_killWebContentProcessAndResetState`.
+
+Behavior / evidence boundary:
+
+- b102 Human Runtime `sha256:6d2fde277427d3bbad6549946855c68b8df7e0433389b2d5c9e7d98212a3a6a6` proved the original client Send had exactly one protected Send and explicit HTTP200 SSE acceptance before deterministic WebContent death; server generation survived, and the same turn later resumed through existing covered observation/Detail with no second Send and reached terminal/final convergence.
+- b103 therefore changes hard WebContent death only after exact client SSE acceptance: preserve the same prompt-owned Repository generation, emit `acceptedClientWebProcessInterrupted` instead of `.failed`, release the dead executor, and attach one fresh covered observer to the same generation immediately while active or on next foreground when inactive. It never resends/replays/regenerates the prompt.
+- The one-shot 120-second kill remains Candidate-gated deterministic Human Runtime instrumentation only. It is not a production timeout/watchdog and must be removed/disabled before a later normal/Stable candidate.
+
+Evidence ladder: **Code written / exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / b102 causal Runtime Positive / b103 recovery Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** install only canonical b103. Fresh-launch, open an existing conversation, start one deliberately >2-minute Native Send, keep the app foreground, and do not touch Sync/Reload/Stop or background the app. At ~120s expect `killProbe firing -> webProcess terminated -> acceptedClientWebProcessRecovery state=handoff_requested -> acceptedClientRecovery.started` with the same `responseGeneration`, followed by covered `IS_STREAMING`/snapshot/resume/live continuation and final terminal reconcile. There must be exactly one protected Send and no lifecycle nudge.
 
 ## b102 Human Runtime decisive + b103 accepted-client hard-Web recovery allocation — 2026-09-05
 

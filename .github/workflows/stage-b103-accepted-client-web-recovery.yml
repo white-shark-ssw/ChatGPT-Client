@@ -1,0 +1,87 @@
+name: Stage b103 Accepted Client Web Recovery
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b103-accepted-client-web-recovery.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact pre-b103 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "f6538917f9e417b3138092a1a2d5517d53173c69"
+          grep -q 'CURRENT_PROJECT_VERSION = 102;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b102";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'private static let candidate = "DEV-send-stream-0.1.0-b102"' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'failCurrent("web_process_terminated")' ChatGPTClient/RootViewController.swift
+          test -f scripts/staging/b103_allocate_runtime.py
+          test -f scripts/staging/b103_accepted_client_web_recovery.py
+
+      - name: Record b102 Runtime and allocate b103 before product write
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b103_allocate_runtime.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/PROJECT_SPECIFIC_RULES.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b103' docs/project/BUILD_TEST_INDEX.md
+          grep -q '6d2fde277427d3bbad6549946855c68b8df7e0433389b2d5c9e7d98212a3a6a6' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b102 runtime and allocate b103"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Apply exact b103 product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b103_accepted_client_web_recovery.py
+
+      - name: Validate exact b103 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift\nChatGPTClient/RootViewController.swift'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 103;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b103";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'private static let candidate = "DEV-send-stream-0.1.0-b103"' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
+          grep -q 'preservedClientGeneration' ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b103 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift ChatGPTClient/RootViewController.swift
+          git commit -m "fix: recover accepted client response after WebContent death"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift ChatGPTClient/RootViewController.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

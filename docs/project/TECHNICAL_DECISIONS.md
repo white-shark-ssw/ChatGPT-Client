@@ -1,5 +1,12 @@
 # Technical Decisions
 
+## DEV-send-stream b97 foreground authoritative reconcile decision — 2026-09-04
+
+- Human Runtime supersedes the b96 Native polling decision for ordinary Conversation Detail: the tested target returned no top-level `conversation_async_status`, so the b96 10-second scheduler never became active and must not remain as a speculative product mechanism.
+- The evidenced recovery primitive is the already-existing authoritative `ConversationRepository.syncLatestMessages`: after background interruption, one manual call materialized the completed assistant immediately. Therefore b97 authorizes exactly one automatic call on foreground entry when the selected conversation already has an active external live response and no Detail operation is in flight.
+- Existing covered-Web foreground rebootstrap remains independent and may continue live transport if the one-shot Detail is not terminal. Existing Repository Detail reconciliation remains the sole owner of terminal materialization/clearing.
+- This decision does not authorize background heartbeat, recurring foreground polling, retry/watchdog/fallback, guessed `/resume`, duplicate Send, WebSocket-body authority, challenge replay, or a second response store. It does not claim iOS can execute the request while the app is suspended.
+
 ## DEV-send-stream b96 Native authoritative Detail continuation decision — 2026-09-04
 
 - Retire further private response-callback swizzling inside the official iOS app for the current late-join gate; repeated injected-package crashes make that research method observably destabilizing.

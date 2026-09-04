@@ -1,5 +1,13 @@
 # Project State
 
+## 2026-09-04 — b97 foreground authoritative Detail reconcile package ready
+
+- b96 Human Runtime disproved its ordinary-Detail async-status trigger as sufficient: target Detail returned `conversation_async_status` missing both before and after completion. Background return performed covered-Web rebootstrap but no automatic Native Detail; a later manual one-shot `syncLatestMessages` changed visible messages `46->47` and immediately reconciled the final assistant.
+- `DEV-send-stream-0.1.0-b97` / `0.1.0 (97)` is now permanently reserved. Exact product `12fc1d1f5020d76d1892c25a0ced94323d5a0142`; package source `5e43c398b52a62de9f9a6e6546de7312ba5eb1df`; PR #29 remains open/unmerged.
+- b97 removes the b96 10-second Native `DispatchWorkItem` continuation scheduler. When the selected conversation already owns an active external live response and the app enters foreground, Root requests exactly one existing Repository `syncLatestMessages` if no Detail operation is in flight, while preserving the existing covered-Web foreground rebootstrap. If authoritative Detail already contains the final assistant, existing Repository reconciliation clears the external live projection and Root releases the idle executor.
+- Guarded staging `33881577700/101051252468` passed exact four-product-file scope + Simulator. Push `33881896437/101052287658` and PR `33881905960/101052320038` passed. Canonical Artifact `9940228423`; Artifact ZIP `sha256:af05e9d0a522fb53c3e453bedcf9b49e44781158d7f7d8798ad1426b4c57b388`; IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`; package identity independently verified as b97/source `5e43c398b52a`/iOS14/arm64.
+- Human Runtime is Pending. This does not claim execution while iOS keeps the app suspended in background; the gate is automatic authoritative convergence when the app returns to foreground. Stable/Frozen No.
+
 ## 2026-09-04 — b96 Native async-status continuation package ready
 
 - `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)` is permanently reserved. Exact product head `9e50943de39dc304ab31904cbad8596d4ffddc14`; exact package source `cd6268540e4f5a815829f26a713b10e8d1957239`; PR #29 remains open/unmerged.

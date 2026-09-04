@@ -1,5 +1,13 @@
 # Project-Specific Rules
 
+## Foreground external-response authoritative reconcile — b97 2026-09-04
+
+- This section **supersedes** the earlier b96 `Native cross-platform Detail continuation exception` below. Do not use the b96 10-second `DispatchWorkItem`/async-status-driven Native polling path; Human Runtime showed ordinary authoritative Detail may omit `conversation_async_status` entirely.
+- When `UIApplication.willEnterForegroundNotification` fires and the currently selected conversation already has an active external live response (`phase.isActive` with empty Native prompt), Root may issue exactly one existing `ConversationRepository.syncLatestMessages` request if no Detail operation is already in flight.
+- This is lifecycle-triggered authoritative reconciliation, not polling. There is no recurring schedule, retry, fallback or background keepalive. Covered-Web foreground rebootstrap may still run for the same external response if authoritative Detail has not materialized terminal state.
+- If the one-shot Detail contains a newly materialized final assistant, existing Repository reconciliation must remain the sole owner that removes the external live projection; Root may then release the idle covered executor. TD-029 protected Send ownership is unchanged.
+- Do not describe b97 as true background completion. iOS suspension behavior remains authoritative; b97 validates convergence after return to foreground.
+
 ## Native cross-platform Detail continuation exception — b96 2026-09-04
 
 - The prior general prohibition on Native polling remains in force except for this evidence-scoped b96 path: an authoritative `GET /backend-api/conversation/{id}` response that itself reports exact `conversation_async_status=IS_STREAMING` may schedule the next request of that same already-existing Detail route under the sole `ConversationRepository` authority.

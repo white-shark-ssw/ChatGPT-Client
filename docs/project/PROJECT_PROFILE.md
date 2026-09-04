@@ -1,5 +1,10 @@
 # Project Profile
 
+## Latest DEV-send-stream candidate override — b97 2026-09-04
+
+- Latest test candidate: `DEV-send-stream-0.1.0-b97` / `0.1.0 (97)`; exact product `12fc1d1f5020d76d1892c25a0ced94323d5a0142`; package source `5e43c398b52a62de9f9a6e6546de7312ba5eb1df`; canonical Artifact `9940228423`; IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`; Human Runtime pending; Stable/Frozen No.
+- b97 supersedes b96's rejected async-status/timer continuation experiment with one lifecycle-triggered authoritative Conversation Detail reconcile on foreground return for an already-active external response. Protected Send remains TD-029 covered official-Web owned.
+
 ## Latest DEV-send-stream candidate override — b96 2026-09-04
 
 - Latest test candidate: `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)`; exact product `9e50943de39dc304ab31904cbad8596d4ffddc14`; package source `cd6268540e4f5a815829f26a713b10e8d1957239`; canonical Artifact `9938422716`; IPA `sha256:a635903898324bdf0e59cf8712a2ebd5924def0da591d555fb25d2f62dabc361`; Human Runtime pending; Stable/Frozen No.

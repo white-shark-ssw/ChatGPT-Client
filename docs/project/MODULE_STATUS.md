@@ -1,5 +1,12 @@
 # Module Status
 
+## DEV-send-stream b97 foreground reconcile package-ready override — 2026-09-04
+
+- `ConversationRepository` remains sole Native conversation/content/response-lifecycle authority. b97 removes the b96 recurring Native Detail scheduler; the only new lifecycle action is one existing `syncLatestMessages` request when returning foreground with a selected active external live response and no Detail operation already in flight.
+- Covered Web retains its foreground rebootstrap role if the one-shot authoritative Detail does not yet contain the final assistant. Existing Repository terminal reconciliation owns final projection removal; no second response store or Send path was added.
+- Exact product `12fc1d1f5020d76d1892c25a0ced94323d5a0142`; package source `5e43c398b52a62de9f9a6e6546de7312ba5eb1df`; guarded staging/Simulator + Push+PR CI passed; Artifact `9940228423`; IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`; Human Runtime Pending; Stable/Frozen No.
+- True background execution/notification remains separate future scope; b97 only targets foreground-return convergence.
+
 ## DEV-send-stream b96 Native continuation package-ready override — 2026-09-04
 
 - `ConversationRepository` remains sole Native conversation/content/response lifecycle authority. b96 adds one evidence-scoped external continuation loop only after authoritative Detail reports exact `IS_STREAMING`; exact `COMPLETE`/non-streaming terminates it, account reset cancels it, and client-owned response authority wins.

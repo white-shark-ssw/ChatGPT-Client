@@ -1,5 +1,32 @@
 # DEV-send-stream round 7 Runtime addendum
 
+## b97 foreground authoritative Detail reconcile — package-ready 2026-09-04
+
+Exact identity:
+
+- product code `12fc1d1f5020d76d1892c25a0ced94323d5a0142` — only `ChatGPTClient.xcodeproj/project.pbxproj`, `ChatGPTClient/Conversation/ConversationFeature.swift`, `ChatGPTClient/Conversation/NativeConversationContinuation.swift`, and `ChatGPTClient/RootViewController.swift` changed in the guarded product commit;
+- Candidate `DEV-send-stream-0.1.0-b97` / `0.1.0 (97)`, permanently reserved;
+- package source `5e43c398b52a62de9f9a6e6546de7312ba5eb1df`;
+- staging `33881577700/101051252468` success including exact scope, `git diff --check`, and Debug iphonesimulator compile;
+- Push `33881896437/101052287658` success; PR `33881905960/101052320038` success;
+- canonical Push Artifact `9940228423` / ZIP `sha256:af05e9d0a522fb53c3e453bedcf9b49e44781158d7f7d8798ad1426b4c57b388`;
+- IPA `ChatGPTClient-0.1.0-b97-dev-send-stream.ipa` / `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`;
+- independent unpacking: bundle `com.whitesharkssw.chatgptclient`, version/build `0.1.0 (97)`, Candidate b97, source `5e43c398b52a`, iOS14+, UIDeviceFamily `[1,2]`, Mach-O arm64.
+
+Product delta:
+
+1. b96 10-second `DispatchWorkItem` Native continuation scheduling and account-reset cancellation hook are removed; authoritative Detail status remains diagnostic-only and existing Detail-to-live reconciliation is retained.
+2. On foreground entry, a selected active external live response triggers exactly one existing authoritative `repository.syncLatestMessages(id:)` when no Detail operation is already running.
+3. Existing covered-Web foreground page rebootstrap remains available in parallel for nonterminal live continuation.
+4. If that one-shot Detail contains the final assistant, existing Repository `authoritative_assistant_materialized` reconciliation clears the stale external projection; Root then refreshes selected Detail presentation and releases an idle covered executor.
+5. No background heartbeat, recurring polling, retry/watchdog/fallback, resend/regenerate, guessed `/resume`, challenge replay, or second response authority.
+
+Pre-allocation PR workflow failures on heads before Build97 and the bot-pushed product-head `action_required` run are invalid/non-evidence because no formal b97 package job executed there. Canonical Runtime identity is only Artifact `9940228423` / IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`.
+
+Evidence ladder: **b96 Runtime Negative for async-status automatic continuation/background-return convergence; manual authoritative Detail recovery Positive / b97 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen Send No.**
+
+**Next exact action:** install only canonical b97 IPA; start a long external response, enter it while active, background/suspend ChatGPTClient until the other platform finishes, return to foreground without manual Sync/Reload, and export diagnostics after observing whether `foregroundExternalDetailReconcile.requested` performs one authoritative Detail request and automatically materializes the final assistant. Do not allocate b98 before this Runtime gate.
+
 ## b96 background-return Runtime — decisive rejection / b97 recovery point 2026-09-04
 
 Latest Human Runtime source: `ChatGPTClient-Diagnostics-20260904-135118.json` from canonical `DEV-send-stream-0.1.0-b96`.

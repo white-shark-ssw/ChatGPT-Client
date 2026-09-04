@@ -1,49 +1,53 @@
 # DEV-send-stream round 7 Runtime addendum
 
-## b96 Native async-status continuation — recovered live state 2026-09-04
+## b96 Native async-status continuation — package-ready 2026-09-04
 
-Resume identity guard after the interrupted/long-running write chain:
+Current exact identity:
 
 - Work: `DEV-send-stream`
 - branch: `dev/send-stream-20260829`
 - PR: #29 open / unmerged / mergeable
 - base `main`: `94f0c5777dad262cd1fb22be49082dbd92c962f2`
-- recovered branch head: `9e50943de39dc304ab31904cbad8596d4ffddc14`
-- prior accepted product remains b95 only for Runtime evidence: product `ac5e621aa69f5f27ef3167b4a951812be8b8e2c2`, package source `a10320e589acd551a8dc53f56aaf28a0a08f5b4a`, Artifact `9901461763`, IPA `sha256:2fd213a1dd692202b496adabd393c4130080607384e3d6c0f84cd3f975a8840d`
-- `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)` is now **allocated and permanently reserved**. Do not reuse b96.
-- parallel PR #35 remains repository-isolated from the b96 product scope and has no exact changed-file overlap with `ChatGPTClient/**`, `ChatGPTClient.xcodeproj/**`, or this checkpoint; same official bundle-ID research-package contamination rule remains separate.
+- exact b96 product code head: `9e50943de39dc304ab31904cbad8596d4ffddc14`
+- exact b96 package source: `cd6268540e4f5a815829f26a713b10e8d1957239`
+- Candidate / Build: `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)`, permanently reserved
+- prior b95 remains historical Runtime evidence only; do not reuse b95 or b96
+- parallel PR #35 remains repository-isolated from the b96 product scope; same official bundle-ID research-package contamination warning is separate from this ChatGPTClient IPA
 
-### Recovered write-chain facts
+### Product behavior
 
-The interrupted chain did in fact advance beyond the older checkpoint wording:
+b96 is the first Repository-owned Native cross-platform continuation candidate:
 
-1. `06e905977c51aaa46d7cb98509dda9813617853c` recorded the Probe crash pattern and pivot away from private official-App response callback hooks.
-2. `c181def786868bed7b912ffcfb98bb17646f5cb3` allocated b96.
-3. `a8ab29fd17ac5baed61e8994bcf26f74da45ccdb` wrote the first b96 product slice: parse top-level `conversation_async_status`, exact known tokens `IS_STREAMING` / `COMPLETE`, and Repository-owned Native continuation using the already-existing authoritative Conversation Detail GET.
-4. `9e50943de39dc304ab31904cbad8596d4ffddc14` added the terminal-detail presentation reconcile so that when authoritative Detail removes the external live projection, the selected Native detail can immediately apply the newly stored terminal server Detail.
-5. Xcode Debug/Release now both identify Build 96 / Candidate `DEV-send-stream-0.1.0-b96`.
-6. `.github/workflows/ios-foundation.yml` is switched to the b96 package workflow, but its current product-source comment still names `a8ab29f...` and must be corrected to the latest product head before the canonical package run.
+1. authoritative `GET /backend-api/conversation/{id}` Detail parses exact top-level `conversation_async_status` tokens `IS_STREAMING` / `COMPLETE`; missing or unknown values are non-authoritative and do not start continuation;
+2. exact `IS_STREAMING` may create/continue one external live response in the existing `ConversationRepository` authority and schedule the next existing Detail GET;
+3. current interval is a 10-second **candidate approximation** backed by repeated official iOS Human Runtime Detail intervals (~9-12s) plus static official `default_interval` / `model_slug_intervals` evidence; it is not claimed as the exact compiled official default;
+4. the first authoritative Detail that is not exact `IS_STREAMING` stops scheduling; exact `COMPLETE` is the evidenced expected terminal token;
+5. account-scope reset cancels all Native continuations; a client-owned response with nonempty prompt remains authoritative and stops external Native continuation;
+6. terminal authoritative Detail is stored first, then removal of the external live projection notifies the selected Detail VC, which applies the newly stored server Detail when current-node/messages changed;
+7. no idle/global polling, guessed `/resume`, guessed offset, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or second response store;
+8. protected Send remains TD-029 covered official-Web owned.
 
-### b96 behavioral boundary
+### Validation / Artifact
 
-- `ConversationRepository` remains the sole Native conversation/content/response-lifecycle authority.
-- Protected Send remains TD-029 covered official-Web owned.
-- Native continuation starts only after an authoritative Detail itself reports exact `IS_STREAMING`.
-- The refresh loop issues only the already-existing `GET /backend-api/conversation/{id}` path and projects through the same Repository resident/live-response state.
-- The current b96 interval is a 10-second **candidate approximation** backed by repeated official iOS Human Runtime Detail intervals (~9-12s) plus static official `default_interval` / `model_slug_intervals` evidence. It is not claimed to be the exact compiled official default.
-- Any authoritative Detail that is not exact `IS_STREAMING` stops scheduling; exact `COMPLETE` is the evidenced expected terminal token.
-- account-scope reset cancels all Native continuations; a client-owned response remains authoritative and stops external Native continuation.
-- no idle/global polling, guessed `/resume`, guessed offset, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or second response store.
+Earlier PR run `33856226503` on `9e50943...` was `action_required` with zero jobs; it remains invalid as CI evidence.
 
-### Current validation state
+Canonical package-source correction `cd6268540e4f5a815829f26a713b10e8d1957239` produced real CI:
 
-A PR workflow run exists for recovered head `9e50943...`: run `33856226503`, but GitHub concluded `action_required` with **zero jobs executed**. Therefore this is not CI evidence and emitted no Artifact.
+- Push run/job: `33877378585 / 101037475567` — **success**
+- PR run/job: `33877383271 / 101037490825` — **success**
+- toolchain: Xcode 16.4 / iphoneos18.5 / arm64
+- canonical Push Artifact: `9938422716`
+- Artifact ZIP digest and independently recomputed ZIP SHA-256: `5ea65cfb07c1c15dfc939646bbe7a2600825ba3ca1dab9ed100803037df3bd67`
+- IPA: `ChatGPTClient-0.1.0-b96-dev-send-stream.ipa`
+- IPA SHA-256: `a635903898324bdf0e59cf8712a2ebd5924def0da591d555fb25d2f62dabc361`
+- sidecar SHA matches the independently recomputed IPA SHA
+- independent unpacking confirms `CFBundleShortVersionString=0.1.0`, `CFBundleVersion=96`, `DiagnosticsCandidate=DEV-send-stream-0.1.0-b96`, `DiagnosticsSourceCommit=cd6268540e4f`, `MinimumOSVersion=14.0`, `UIDeviceFamily=[1,2]`, `iPhoneOS`, and Mach-O 64-bit arm64
 
-Evidence ladder: **b96 Candidate allocated / product code written / terminal UI reconcile written / static-local compile not yet proven on exact recovered head / CI not run (action_required, zero jobs) / Artifact not produced / Human Runtime pending / Stable-Frozen Send No.**
+Evidence ladder: **Candidate allocated / Code written / exact Push build passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen Send No.**
 
-Batch recovery point now: product batches are confirmed written through `9e50943...`; remaining deterministic work is (A) correct the b96 workflow product-source marker to the current product head and trigger a real Push CI from a direct repository write, (B) verify CI + Artifact/package identity, (C) update `BUILD_TEST_INDEX.md`, durable project state and PR #29, then (D) hand exact b96 IPA to the user for one real-device cross-platform active-to-terminal run. Recovery must not replay the old staging workflows or touch PR #35.
+Batch recovery point: product and package work are complete through canonical package source `cd626854...`. The only remaining deterministic repository writes before handoff are durable evidence indexing (`BUILD_TEST_INDEX.md`, current project state/profile/module status) and PR #29 metadata. These are docs-only and must not change the canonical b96 product/package identity. After that, the next gate is Human Runtime on the exact IPA above.
 
-**Next exact action:** update only `.github/workflows/ios-foundation.yml` product-source marker from `a8ab29f...` to `9e50943...`; this is a real identity correction and should provide a direct push event for the canonical b96 CI/package path.
+**Next exact action:** record b96 package evidence in durable project docs and PR #29, then hand exact canonical IPA to the user for one cross-platform active-to-terminal real-device run.
 
 ## Official-App Probe stability conclusion / research pivot
 

@@ -27,9 +27,7 @@ Evidence ladder: **b96 Runtime Negative for async-status automatic continuation/
 
 **Next exact action:** install only canonical b97 IPA; start a long external response, enter it while active, background/suspend ChatGPTClient until the other platform finishes, return to foreground without manual Sync/Reload, and export diagnostics after observing whether `foregroundExternalDetailReconcile.requested` performs one authoritative Detail request and automatically materializes the final assistant. Do not allocate b98 before this Runtime gate.
 
-## b96 background-return Runtime — decisive rejection / b97 recovery point 2026-09-04
-
-> Historical recovery section. The package-ready b97 section above supersedes all provisional wording here that says b97 is unallocated/not yet emitted. Keep this section only as the exact b96 Runtime evidence and interrupted-chain recovery record.
+## b96 background-return Runtime — decisive rejection 2026-09-04
 
 Latest Human Runtime source: `ChatGPTClient-Diagnostics-20260904-135118.json` from canonical `DEV-send-stream-0.1.0-b96`.
 
@@ -50,39 +48,11 @@ Runtime conclusions:
 
 Evidence ladder for b96 is now: **Code written / Push+PR CI passed / Artifact produced / package verified / Human Runtime Negative for async-status-driven automatic continuation and background-return final convergence / manual authoritative Detail recovery Positive / Stable-Frozen Send No.** b96 remains permanently reserved.
 
-### b97 intended minimal delta
+### Historical b97 recovery plan — completed by package-ready section above
 
-Candidate `DEV-send-stream-0.1.0-b97` is not yet emitted and must be allocated before packaging. The evidence-backed product delta is:
+The exact interrupted-chain plan was: retire the b96 10-second Native scheduler, allocate b97, add one authoritative foreground Detail reconcile around existing covered-Web rebootstrap, run exact scope + Simulator + Push/PR CI, verify one canonical package, then update durable docs. That plan is now fully executed by the package-ready section above. Do not replay its staging steps or allocate b98 before b97 Human Runtime.
 
-- retire the b96 10-second Native `DispatchWorkItem` polling/scheduling path; retain only harmless authoritative Detail status observation and existing Repository Detail-to-live reconciliation;
-- on `UIApplication.willEnterForegroundNotification`, when the selected conversation already owns an active external live response (`phase.isActive && promptText.isEmpty`), issue exactly one existing `repository.syncLatestMessages(id:)` if no Detail operation is already in flight;
-- keep the existing covered Web foreground rebootstrap as the live transport recovery when the authoritative Detail still does not contain a final assistant;
-- if the one-shot authoritative Detail already materializes the final assistant, existing Repository reconciliation removes the external live projection and Root releases the now-idle external executor;
-- no background heartbeat, no recurring foreground polling, no retry/fallback, no second Send, no Native status/resume synthesis.
-
-### Batch recovery point
-
-Known baseline before b97 writes:
-
-- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable.
-- base `main` `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
-- feature head before this checkpoint write `3455486f56099d7b45c659e1974903f4c1bf6a87`.
-- b96 canonical product/package/Artifact remain `9e50943de39dc304ab31904cbad8596d4ffddc14` / `cd6268540e4f5a815829f26a713b10e8d1957239` / `9938422716`; never reuse or overwrite.
-- Xcode currently still says Build96 / Candidate b96; `BUILD_TEST_INDEX.md` has no b97 row. Parallel PR #35 remains research-only and does not touch `ChatGPTClient/**` or product Candidate numbering.
-
-Planned coherent write batches:
-
-A. **Confirmed by this commit:** record exact b96 Runtime rejection and b97 recovery direction in this checkpoint.
-B. Allocate b97 in Xcode build/Candidate identity only after rechecking current head.
-C. Product code: retire b96 timer scheduling; remove its account-reset cancellation call; add one-shot foreground Detail reconciliation around the existing Root foreground Web rebootstrap.
-D. Point `.github/workflows/ios-foundation.yml` at exact b97 product head/Candidate and run formal Push+PR CI/package.
-E. Verify Artifact/IPA identity, then update `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `PROJECT_PROFILE.md`, `MODULE_STATUS.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, this checkpoint and PR #29 with b96 Runtime rejection + b97 exact evidence.
-
-Recovery must not touch PR #35, b96 canonical Artifact identity, or allocate b98. If interrupted, re-read actual branch head and perform only the missing batch.
-
-**Next exact action:** allocate `DEV-send-stream-0.1.0-b97` in Debug/Release Xcode settings, then apply only the three evidence-backed product edits above.
-
-## b96 Native async-status continuation — package-ready 2026-09-04
+## b96 Native async-status continuation — historical package record
 
 Current exact identity:
 
@@ -96,18 +66,9 @@ Current exact identity:
 - prior b95 remains historical Runtime evidence only; do not reuse b95 or b96
 - parallel PR #35 remains repository-isolated from the b96 product scope; same official bundle-ID research-package contamination warning is separate from this ChatGPTClient IPA
 
-### Product behavior
+### Product behavior at b96 package time
 
-b96 is the first Repository-owned Native cross-platform continuation candidate:
-
-1. authoritative `GET /backend-api/conversation/{id}` Detail parses exact top-level `conversation_async_status` tokens `IS_STREAMING` / `COMPLETE`; missing or unknown values are non-authoritative and do not start continuation;
-2. exact `IS_STREAMING` may create/continue one external live response in the existing `ConversationRepository` authority and schedule the next existing Detail GET;
-3. current interval is a 10-second **candidate approximation** backed by repeated official iOS Human Runtime Detail intervals (~9-12s) plus static official `default_interval` / `model_slug_intervals` evidence; it is not claimed as the exact compiled official default;
-4. the first authoritative Detail that is not exact `IS_STREAMING` stops scheduling; exact `COMPLETE` is the evidenced expected terminal token;
-5. account-scope reset cancels all Native continuations; a client-owned response with nonempty prompt remains authoritative and stops external Native continuation;
-6. terminal authoritative Detail is stored first, then removal of the external live projection notifies the selected Detail VC, which applies the newly stored server Detail when current-node/messages changed;
-7. no idle/global polling, guessed `/resume`, guessed offset, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or second response store;
-8. protected Send remains TD-029 covered official-Web owned.
+b96 was the first Repository-owned Native cross-platform continuation candidate. It parsed top-level `conversation_async_status`, attempted a 10-second Detail scheduler only for exact `IS_STREAMING`, and retained existing Repository Detail-to-live reconciliation. The newer b96 Runtime section above supersedes that product hypothesis: ordinary authoritative Detail in the tested conversation omitted the field entirely, so the scheduler did not start and is removed in b97.
 
 ### Validation / Artifact
 

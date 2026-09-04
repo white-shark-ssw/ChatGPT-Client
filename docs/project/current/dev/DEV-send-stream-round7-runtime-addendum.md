@@ -74,7 +74,7 @@ Intended product scope:
 Batch recovery state:
 
 - confirmed complete: b98 diagnostics analyzed; branch/base/PR #29 verified; PR #35 conflict check verified; b99 candidate uniqueness checked; this checkpoint written;
-- pending: apply exact two-file b99 product delta; exact-scope + `git diff --check` + Debug iphonesimulator compile; bind formal b99 Push/PR package CI to exact product head; verify canonical Artifact/IPA identity; update durable project docs and PR #29 metadata;
+- pending: historical pre-package note; superseded by the b99 package-ready section at the top of this checkpoint.
 - do not touch PR #35, official research package identities, b98 canonical package, protected-Send transport rules, or Repository response authority during recovery.
 
-**Next exact action:** apply only the two-file b99 delta above, validate exact scope + Simulator, then package the exact product head. Human Runtime must reproduce a long active response with a multi-minute background interval and verify that a foreground event backlog may still produce many `liveResponse.event` records but far fewer `liveResponse.presentationApplied` rebuilds, without UI freeze/crash, duplicate Send, or loss of terminal/final response state.
+**Next exact action:** use the package-ready b99 Human Runtime gate at the top of this checkpoint.

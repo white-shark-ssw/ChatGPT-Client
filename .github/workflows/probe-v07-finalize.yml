@@ -1,0 +1,37 @@
+name: Finalize Probe v0.7 research package
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/probe-v07-finalize.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+      - name: Guard package source
+        run: |
+          grep -F 'static NSString * const RPTProbeVersion = @"0.7";' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -F 'static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, dispatch_data_t dispatchData, id completionHandler)' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+      - name: Finalize Runtime/package docs
+        run: python3 .github/scripts/probe_v07_finalize.py
+      - name: Validate scope
+        run: |
+          git diff --check
+          if git diff --name-only | grep -E '^(ChatGPTClient/|ChatGPTClient.xcodeproj/|scripts/research/official_ios_realtime_probe/)'; then exit 1; fi
+      - name: Commit and self-remove
+        run: |
+          git rm .github/workflows/probe-v07-finalize.yml .github/scripts/probe_v07_finalize.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream.md docs/project/runtime-evidence/DEV-send-stream-official-ios-probe-v06-runtime-v07-dispatch-data-20260904.md .github/workflows/research-official-ios-realtime-probe.yml
+          git commit -m 'docs: record Probe v0.7 package gate'
+          git push origin HEAD:dev/send-stream-20260829

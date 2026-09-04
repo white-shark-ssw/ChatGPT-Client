@@ -1,3 +1,39 @@
+## b103 accepted-client hard-Web recovery Runtime Positive + b104 probe-removal allocation — 2026-09-05
+
+Exact b103 Human Runtime evidence:
+
+- Canonical Candidate `DEV-send-stream-0.1.0-b103` / Build103, source marker `e1cca160e9c4`; diagnostics `ChatGPTClient-Diagnostics-20260904-202930.json`, exact `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51`, 405144 bytes, iPhone / iOS17.0 / Release.
+- The tested Native Send produced exactly one `coveredExecutor.requested`, one `submitResult`, one `sendObserved`, and one `sendResponse`. Send acceptance was explicit HTTP200 `text/event-stream` at `20:26:24Z`; there was no second protected Send anywhere in the export.
+- The b103 probe fired at `20:28:23Z` while generation `1` remained active. In the same second Runtime recorded `webProcess terminated mode=client_send_or_idle`, `acceptedClientWebProcessRecovery state=handoff_requested policy=no_resend_same_generation`, executor release, and `acceptedClientRecovery.started trigger=web_process_terminated responseGeneration=1`.
+- There was no `willResignActive`, `didEnterBackground`, `willEnterForeground`, or `didBecomeActive` event after the kill. Recovery therefore required no lifecycle nudge.
+- The fresh observer returned HTTP200 `IS_STREAMING` at `20:28:26Z`, an external snapshot at `20:28:27Z` with the exact pre-kill continuity point `reasoningCharacters=884 / toolCount=21 / responseGeneration=1`, and `/resume` HTTP200 `text/event-stream` at `20:28:32Z`.
+- Every post-kill event carrying a response generation used generation `1`. The same generation advanced to `reasoningCharacters=1768`, `toolCount=24`, `finalCharacters=7649`, then natural `terminal phase=completed` at `20:29:26Z`.
+- Automatic authoritative reconcile immediately followed: one Detail HTTP200 changed authoritative visible messages `19 -> 21`; `liveResponse.reconciled responseGeneration=1` and `authoritativeReconcile.completed liveSnapshotCleared=true` occurred at `20:29:28Z`.
+- Therefore b103 accepted-client hard-Web recovery is **Human Runtime Positive** for the tested foreground iPhone/iOS17 path: explicit accepted Send survives hard WebContent death, the same Repository generation automatically reattaches without resend or lifecycle nudge, live reasoning/tools/final continue, and terminal authoritative convergence clears the live projection.
+
+b104 allocation / minimal next product action:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b104` / `0.1.0 (104)`. b104 is the first normal candidate after the deterministic b102/b103 kill experiment; Stable/Frozen remains No.
+- Preserve the exact b103 accepted-client recovery logic in `RootViewController.swift` unchanged.
+- Remove only the test instrumentation: delete `CoveredWebProcessKillProbe.swift`, remove its AppDelegate installer and Xcode file/build membership, then advance Build/Candidate 103 -> 104.
+- Do not retain `_killWebContentProcessAndResetState`, the 120-second timer, swizzling or any probe-only behavior in b104. Do not add replacement timers, retries, polling, watchdogs, resend, challenge replay, guessed Native resume or a second response owner.
+- Human Runtime for b104 should be an ordinary no-probe Send regression, not another forced-kill test. Hard-death recovery mechanism itself is already Runtime Positive on exact b103.
+
+Resume/conflict guard before b104 product write:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains open/unmerged/mergeable at pre-stage head `964143043fa12e7902008bc6ef57a98e8c658393`; base `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Parallel PR #35 / `DEV-official-sync-reload` remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, research-only, with no product/Candidate conflict.
+- `BUILD_TEST_INDEX.md` contains no b104 before this allocation.
+
+Batch recovery point:
+
+- batch A in this staging run: record this b103 Runtime result + b104 allocation in checkpoint/index and push it before product changes;
+- batch B: remove only the b103 kill probe, advance Build/Candidate to b104, run exact-scope audit + Simulator compile, then commit/push product;
+- after batch B, formal packaging must bind `ios-foundation.yml` to the exact b104 product commit, then Push/PR CI + canonical Artifact/package verification must complete before Human Runtime;
+- recovery must not alter b103 canonical product/package/Artifact, PR #35, accepted-client recovery logic, TD-029 one-Send ownership, or earlier reserved Candidate identities.
+
+**Next exact action:** complete batch B only: remove the diagnostic kill probe and advance Build/Candidate to b104 without touching accepted-client recovery; exact-scope audit + Simulator compile before product commit.
+
 ## b103 accepted-client hard-Web recovery — package ready 2026-09-05
 
 Exact package evidence:

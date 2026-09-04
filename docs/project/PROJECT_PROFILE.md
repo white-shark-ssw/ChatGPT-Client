@@ -1,5 +1,10 @@
 # Project Profile
 
+## Latest DEV-send-stream candidate override — b96 2026-09-04
+
+- Latest test candidate: `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)`; exact product `9e50943de39dc304ab31904cbad8596d4ffddc14`; package source `cd6268540e4f5a815829f26a713b10e8d1957239`; canonical Artifact `9938422716`; IPA `sha256:a635903898324bdf0e59cf8712a2ebd5924def0da591d555fb25d2f62dabc361`; Human Runtime pending; Stable/Frozen No.
+- b96 is the first Native cross-platform continuation candidate gated by authoritative Conversation Detail `conversation_async_status`; it does not replace TD-029 protected Web Send.
+
 ## Latest DEV-send-stream candidate override — 2026-09-03
 
 - Latest test candidate: `DEV-send-stream-0.1.0-b93` / `0.1.0 (93)`; exact package source `2d2cde58a7fbc7e6bdc1cd32fd52e73fc6ed1fb0`; canonical Artifact `9893141097`; Runtime pending; Stable/Frozen No.

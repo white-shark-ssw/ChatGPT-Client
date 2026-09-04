@@ -1,5 +1,12 @@
 # Project-Specific Rules
 
+## Native cross-platform Detail continuation exception — b96 2026-09-04
+
+- The prior general prohibition on Native polling remains in force except for this evidence-scoped b96 path: an authoritative `GET /backend-api/conversation/{id}` response that itself reports exact `conversation_async_status=IS_STREAMING` may schedule the next request of that same already-existing Detail route under the sole `ConversationRepository` authority.
+- Missing/unknown status must not start the loop. Any authoritative non-`IS_STREAMING` result stops it; exact `COMPLETE` is the expected evidenced terminal token. Client-owned response authority and account-scope reset terminate external Native continuation.
+- The current 10-second cadence is a test-candidate approximation, not a frozen service constant. Do not generalize it to idle/global polling, `/stream_status`, `/resume`, retries, watchdogs or fallback loops.
+- This exception is cross-platform/read continuation only. TD-029 covered official-Web protected Send/challenge ownership is unchanged.
+
 ## Hard Reload recovery invariant — 2026-09-04
 
 - `重载当前会话` is an exceptional recovery control and must remain enabled whenever a current conversation is selected. Active local/external response, stuck external state, or an in-flight Sync/Reload must not disable this action.

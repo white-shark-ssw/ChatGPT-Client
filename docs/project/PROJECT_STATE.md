@@ -1,5 +1,12 @@
 # Project State
 
+## 2026-09-04 — b96 Native async-status continuation package ready
+
+- `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)` is permanently reserved. Exact product head `9e50943de39dc304ab31904cbad8596d4ffddc14`; exact package source `cd6268540e4f5a815829f26a713b10e8d1957239`; PR #29 remains open/unmerged.
+- Native `ConversationRepository` now parses authoritative Detail `conversation_async_status` only for exact evidenced `IS_STREAMING` / `COMPLETE`. Exact `IS_STREAMING` may schedule the existing Conversation Detail GET at the current 10s candidate approximation; non-streaming/missing/unknown stops or does not start. Protected Send remains TD-029 Web-owned and client-owned responses take precedence.
+- Push CI `33877378585/101037475567` and PR CI `33877383271/101037490825` passed. Canonical Artifact `9938422716`; Artifact ZIP `sha256:5ea65cfb07c1c15dfc939646bbe7a2600825ba3ca1dab9ed100803037df3bd67`; IPA `sha256:a635903898324bdf0e59cf8712a2ebd5924def0da591d555fb25d2f62dabc361`; package identity independently verified as b96/source `cd6268540e4f`/iOS14/arm64.
+- Human Runtime remains Pending. This is not Stable/Frozen proof.
+
 ## 2026-09-04 — Probe v0.6 exposes Swift-async dispatch-data callback surface / v0.7 gate
 
 - Exact v0.6 Runtime `sha256:1cb6eb096c5748e7f781afbd761906bda39d55227a115a4e2dcea8c240de7a43`: 78,828 bytes / 207 events / zero parse errors / all v0.6.

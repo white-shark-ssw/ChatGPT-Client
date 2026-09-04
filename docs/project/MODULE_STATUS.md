@@ -1,5 +1,11 @@
 # Module Status
 
+## DEV-send-stream b96 Native continuation package-ready override — 2026-09-04
+
+- `ConversationRepository` remains sole Native conversation/content/response lifecycle authority. b96 adds one evidence-scoped external continuation loop only after authoritative Detail reports exact `IS_STREAMING`; exact `COMPLETE`/non-streaming terminates it, account reset cancels it, and client-owned response authority wins.
+- Exact product `9e50943de39dc304ab31904cbad8596d4ffddc14`; package source `cd6268540e4f5a815829f26a713b10e8d1957239`; Push+PR CI passed; Artifact `9938422716`; IPA `sha256:a635903898324bdf0e59cf8712a2ebd5924def0da591d555fb25d2f62dabc361`; Human Runtime Pending; Stable/Frozen No.
+- Official-App private callback Probe ladder is retired for this gate because injected packages are Runtime unstable; terminal re-entry recovery in official app is Runtime Positive.
+
 ## DEV-send-stream b93 selection-focus package-ready override — 2026-09-03
 
 - Exact b92 Runtime is Partial: covered external continuation works and client-owned protected Send/SSE natural terminal reconciliation works, but when an external live executor overlaps a second client-owned Send, the first stream can stop advancing and does not recover merely by reselection; explicit Sync later materialized the already-completed assistant.

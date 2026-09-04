@@ -1,5 +1,12 @@
 # Technical Decisions
 
+## DEV-send-stream b96 Native authoritative Detail continuation decision — 2026-09-04
+
+- Retire further private response-callback swizzling inside the official iOS app for the current late-join gate; repeated injected-package crashes make that research method observably destabilizing.
+- Accept one narrow Native continuation experiment in `ConversationRepository`: only an already-authoritative Conversation Detail response with exact `conversation_async_status=IS_STREAMING` may start/continue refresh of that same existing Detail route. Exact `COMPLETE` or any non-`IS_STREAMING` authoritative result terminates; missing/unknown does not start.
+- The 10-second b96 interval is a Runtime-backed candidate approximation from repeated official ~9-12s Detail requests plus static `default_interval` / `model_slug_intervals`; it is not asserted as the exact compiled official value and remains subject to Human Runtime validation.
+- This decision does not authorize idle/global polling, Native `/resume`, guessed offsets, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or a second response store. TD-029 protected Send remains unchanged.
+
 ## DEV-send-stream Probe v0.3 observation decision — 2026-09-04
 
 - Treat the v0.2 76 MB / 195,999-error sample as **observationally perturbed and overall Inconclusive**, not as evidence that official iOS late-join has no conversation transport.

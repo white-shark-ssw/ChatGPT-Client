@@ -1,3 +1,9 @@
+## Latest DEV-send-stream candidate override — b99 2026-09-04
+
+- b98 Human Runtime exact diagnostics `sha256:e0a0bd2c42168d0c3f8a6dd681bbad1bb571d4061b0f2958131cae5f8e059105`: no hard WebContent termination event occurred, so that new b98 branch remains Unverified. The included foreground authoritative Detail reconcile is Runtime Positive, but a later client-owned response replayed 170 buffered live events after ~5m background and drove 169 synchronous full presentation applications; user observed freeze/crash and a fresh `launch.start` followed 3s after the last live event.
+- b99 is the evidence-scoped stability correction: preserve every Repository event/state transition, but coalesce only the expensive selected Detail UIKit presentation onto one pending main-queue application using the latest Repository snapshot. No timer, retry, watchdog, polling, transport mutation, Send replay or second response authority.
+- b99 exact product `ec05c284010cb0f2de066bd1cfc3968e07730779`; package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; staging `33890678564/101081289220`; Push `33890809275/101081720750`; PR `33890812345/101081730258`; Artifact `9943798885`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; Human Runtime pending; Stable/Frozen No.
+
 # Project Profile
 
 ## Latest DEV-send-stream candidate override — b98 2026-09-04

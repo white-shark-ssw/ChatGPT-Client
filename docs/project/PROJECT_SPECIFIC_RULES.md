@@ -1,3 +1,11 @@
+## Live-response presentation coalescing — b99 2026-09-04
+
+- Repository live-response events must remain lossless and ordered. Do not reduce transport/state event granularity to fix UIKit performance.
+- The selected `ConversationDetailViewController` may coalesce multiple pending Repository change notifications into one main-queue presentation rebuild using the latest snapshot. The coalescing state is UI-only and must not become response authority.
+- Do not add a timer, display cadence, retry, watchdog, polling loop, background heartbeat, resend/regenerate path or second response cache for this optimization.
+- On execution, re-check displayed/selected conversation identity and preserve the existing authoritative-Detail replacement path when the live projection has already disappeared.
+- b98 hard WebContent termination recovery and b97 foreground Detail reconcile remain unchanged and separately gated by their own Runtime evidence.
+
 # Project-Specific Rules
 
 ## Hard covered-Web process recovery for external observation — b98 2026-09-04

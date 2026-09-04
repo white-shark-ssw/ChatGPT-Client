@@ -1,3 +1,10 @@
+## DEV-send-stream b99 live-presentation coalescing decision — 2026-09-04
+
+- Runtime evidence establishes a foreground backlog consumer problem, not a need for a new transport protocol: after ~5m background the existing covered response delivered 170 live events while the selected Detail synchronously rebuilt/reloaded/la[id] out the table 169 times before freeze/crash.
+- Preserve `ConversationRepository` as exact per-event response authority. Coalesce only UIKit presentation notification in `ConversationDetailViewController`; the scheduled main-queue block renders the latest Repository snapshot and revalidates the selected conversation.
+- This decision authorizes no timer/cadence, retry, watchdog, polling, background keepalive, Send replay, transport mutation or second response store. b98 hard WebContent termination recovery remains separately Unverified because this Runtime sample emitted no termination callback.
+- b99 package/evidence identity: product `ec05c284010cb0f2de066bd1cfc3968e07730779`; package `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; Artifact `9943798885`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; Human Runtime pending.
+
 # Technical Decisions
 
 ## DEV-send-stream b98 explicit WebContent-death recovery decision — 2026-09-04

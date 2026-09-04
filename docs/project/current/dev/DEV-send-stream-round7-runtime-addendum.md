@@ -1,3 +1,20 @@
+## b99 live-presentation coalescing — package-ready 2026-09-04
+
+- Candidate `DEV-send-stream-0.1.0-b99` / `0.1.0 (99)`, permanently reserved.
+- Exact product `ec05c284010cb0f2de066bd1cfc3968e07730779`; product commit changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- Exact canonical package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`.
+- Initial staging workflow run `33890559324` parsed invalidly and created zero jobs/product changes; it is invalid evidence. Corrected guarded staging `33890678564/101081289220` passed baseline guard, exact two-product-file scope, `git diff --check`, and Debug iphonesimulator compile.
+- Formal Push `33890809275/101081720750` and PR `33890812345/101081730258` both passed.
+- Canonical Push Artifact `9943798885`; Artifact ZIP `sha256:303bad6e93b8dfdc48ecd77559ed42d6a03058e5d6db676dcd24c65c537df8b5`.
+- Canonical IPA `ChatGPTClient-0.1.0-b99-dev-send-stream.ipa`, `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`.
+- Independent package inspection confirms `com.whitesharkssw.chatgptclient`, `0.1.0 (99)`, Candidate b99, source `313c4c3bf2ac`, iOS14+, UIDeviceFamily `[1,2]`, `iphoneos`, Mach-O arm64.
+
+b99 changes only the selected-conversation UIKit consumer: Repository still accepts/logs every live event, while `ConversationDetailViewController.liveResponseDidChange` schedules at most one pending main-queue presentation application and rebuilds from the latest Repository snapshot when that block runs. No timer/cadence, retry, watchdog, polling, Send replay, transport mutation or second response store is added. b98 WebContent recovery and b97 foreground Detail reconcile remain unchanged.
+
+Evidence ladder: **b98 Runtime Partial / stability rejected; b99 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen Send No.**
+
+**Next exact action:** use only canonical b99 IPA. Start one client-owned response, background for several minutes while it remains active, then foreground. Many `liveResponse.event` records may arrive, but `liveResponse.presentationApplied` must be materially coalesced and the app must remain responsive through terminal/final completion. Verify no second Send and no response-state loss. A separate real `webViewWebContentProcessDidTerminate` sample is still required before accepting b98 hard-process recovery.
+
 # DEV-send-stream round 7 Runtime addendum
 
 ## b98 Human Runtime — foreground backlog freeze/crash 2026-09-04

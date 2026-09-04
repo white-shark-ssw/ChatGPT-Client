@@ -1,3 +1,27 @@
+## b101 Human Runtime — healthy long-suspension path; b100 rearm/reconcile gates Positive — 2026-09-05
+
+Exact tested evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b101` / `0.1.0 (101)`; source marker `da103452236e`; Release / iPhone / iOS17.0; diagnostics `ChatGPTClient-Diagnostics-20260904-185039.json`, `sha256:f7209546f3f2d1dd8ad08458b0dea8adbef522af100deb2f5de90cbe26180b9d`, 95964 bytes / 182 events.
+- This sample contains zero exact `NSURLErrorDomain -1005`, zero `detail.transportRecovery` / `list.transportRecovery`, zero `authTransport.retired` / `authTransport.recoveryReady`, zero `coveredExecutor.webProcess`, and zero client-owned protected-Send evidence (`sendObserved`). Therefore the b101 bounded `-1005` recovery branch is **Unexercised / Unverified**, hard WebContent-process death is **Unexercised**, and this is **not** a client-owned accepted-Send death-recovery test.
+- Dormant unfinished-turn discovery/rearm is Runtime Positive. App backgrounded `18:27:51Z -> 18:30:30Z` (~2m39s). Automatic `foregroundConversationDiscovery` issued one authoritative Detail, HTTP200 changed visible messages `13 -> 14`, and completed with `latestUserChanged=true` / `rearmDiscoveredRemoteTurn=true`. Covered observation then rearmed; a new user WebSocket opened, `externalStreamStatusResponse` returned HTTP200 `IS_STREAMING`, and Repository started `source=external_page_owned`; the next snapshot reached reasoning 112 chars / service messages 6 / tools 2.
+- Known-active external foreground reconcile is Runtime Positive. While that external response was active, app backgrounded `18:30:44Z -> 18:32:40Z` (~1m56s). Foreground automatically emitted `foregroundExternalDetailReconcile.requested` plus Web page rebootstrap. Authoritative Detail HTTP200 changed `14 -> 15`, emitted `liveResponse.externalDetailReconciled(reason=authoritative_assistant_materialized)`, cleared the live projection and released the executor.
+- WebSocket transport interruption was real but distinct from WebContent death: on both `18:30:30Z` and `18:32:40Z` the user socket emitted `error` + `close(1006)`. The first was followed by a new socket `created/open/message` and live continuation; the second coincided with Native authoritative final convergence. No `webViewWebContentProcessDidTerminate` callback occurred.
+- Long dormant foreground discovery remained healthy after `18:32:48Z -> 18:50:23Z` (~17m35s): one automatic Detail returned HTTP200 and materialized `15 -> 17` (`addedVisibleMessageCount=2`, `latestUserChanged=true`, `rearmDiscoveredRemoteTurn=false`). This is normal-path long-suspension regression evidence only; because no `-1005` occurred, it does not accept the new b101 recovery branch.
+
+Runtime classification:
+
+- b101 bounded Native `-1005` recovery: **Unexercised / Unverified**;
+- b100 unfinished remote-turn discovery + one covered rearm: **Runtime Positive**;
+- b100 known-active external foreground Detail reconcile: **Runtime Positive**;
+- b100 long dormant foreground discovery: **Runtime Positive again**, including ~17m35s in this sample;
+- WebSocket `1006` interruption tolerance for the tested external flow: **Runtime Positive** via observer rearm / authoritative Detail convergence;
+- b98 hard WebContent-process recovery: **Unexercised / Unverified**;
+- client-owned accepted protected-Send recovery after Web/WebContent death: **Unexercised / future gate**;
+- overall `DEV-send-stream`: **Runtime Partial / Stable-Frozen No**.
+
+**Next exact action:** keep canonical b101 unchanged; no b102/product change is justified by this sample. Continue b101 only until an exact `-1005` sample exercises its bounded recovery branch, or explicitly pivot to the separately scoped client-owned accepted-Send transport-death gate. Never treat WebSocket code1006 as proof of `WKWebView` WebContent-process death and never auto-resend a protected Send.
+
 ## b101 Native read transport renewal — package-ready 2026-09-05
 
 Exact evidence:

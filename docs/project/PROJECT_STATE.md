@@ -1,3 +1,10 @@
+## DEV-send-stream b101 Human Runtime normal-path/regression update — 2026-09-05
+
+- Exact b101 diagnostics `sha256:f7209546f3f2d1dd8ad08458b0dea8adbef522af100deb2f5de90cbe26180b9d` / 95964 bytes / 182 events / Release / iPhone / iOS17.0 / source `da103452236e` contains no `-1005` and no b101 transport-recovery diagnostic, so the bounded Native read recovery remains Unexercised rather than accepted.
+- Previously-open b100 gates are now Runtime Positive: dormant unfinished remote turn auto-discovered `13 -> 14` with `rearmDiscoveredRemoteTurn=true`, then covered observation reacquired HTTP200 `IS_STREAMING` and a reasoning/tool snapshot; a later known-active foreground return auto-reconciled `14 -> 15` with `authoritative_assistant_materialized`.
+- A later ~17m35s dormant interval auto-discovered authoritative `15 -> 17` via HTTP200 with no manual Sync/Reload. Two user-WebSocket `error/close(1006)` events occurred during earlier foreground returns, but no hard WebContent-process termination callback occurred.
+- This sample has zero client-owned protected-Send evidence, so it does not qualify accepted-Send recovery after Web/WebContent death. No product/b102 change is justified; canonical b101 remains the Runtime candidate, overall Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b101 Native read transport recovery package ready — 2026-09-05
 
 - Exact b100 Runtime `sha256:515c60b59d969ee1f33d76fec097d6163450058c5ef3fa9ccd551b2439f03818` adds a new failure classification: after ~12m37s suspension, b100 foreground discovery still triggered, but Native Detail/list/manual Sync repeatedly failed exact `NSURLErrorDomain -1005` while covered Web networking independently reopened. This rejects the hard-WebContent-death hypothesis for that sample and exposes stale cached `AuthTransientSession` reuse as the Native read recovery gap.

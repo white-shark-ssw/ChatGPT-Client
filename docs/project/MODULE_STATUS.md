@@ -1,3 +1,10 @@
+## DEV-send-stream b101 Runtime qualification update — 2026-09-05
+
+- `ConversationRepository` remains sole Native conversation/list/detail/recovery/response-lifecycle authority. Exact b101 Runtime `sha256:f7209546f3f2d1dd8ad08458b0dea8adbef522af100deb2f5de90cbe26180b9d` keeps the new `-1005` transport-renewal branch Unexercised because every authoritative Detail in the sample returned HTTP200 and no transport-recovery diagnostic occurred.
+- The same sample closes two external-flow module gates as Runtime Positive: no-active unfinished remote discovery (`13 -> 14`, `rearmDiscoveredRemoteTurn=true`, covered `IS_STREAMING` + reasoning/tool snapshot) and known-active foreground final reconcile (`14 -> 15`, `authoritative_assistant_materialized`). A later ~17m35s dormant discovery also converged `15 -> 17` automatically.
+- User WebSocket `close(1006)` occurred twice, but no `webViewWebContentProcessDidTerminate` signal occurred. Hard WebContent recovery and client-owned accepted-Send transport-death recovery remain separate Unverified gates; this sample contains no client-owned Send.
+- Module remains Active / Runtime Partial / Stable-Frozen No. No b102 or product delta is authorized from this evidence alone.
+
 ## DEV-send-stream b101 Native read transport recovery override — 2026-09-05
 
 - `ConversationRepository` remains sole Native conversation/list/detail/recovery/response-lifecycle authority. `AuthSessionStore` remains account authority and default persistent WebKit storage remains persistent auth-secret authority.

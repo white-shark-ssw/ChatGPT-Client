@@ -1,5 +1,24 @@
 # DEV-send-stream round 7 Runtime addendum
 
+## b96 Native async-status continuation allocation / batch recovery point — 2026-09-04
+
+Conflict/candidate guard passed before allocation: PR #29 is open/unmerged on `dev/send-stream-20260829`; guarded baseline head was `06e905977c51aaa46d7cb98509dda9813617853c`; `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`; exact product is still b95; `BUILD_TEST_INDEX.md` contains no b96; Xcode Debug/Release both remain Build 95 / Candidate `DEV-send-stream-0.1.0-b95`. Parallel PR #35 changes only its dedicated research workflow/checkpoint/scripts and has zero exact overlap with `ChatGPTClient/**`, `ChatGPTClient.xcodeproj/**`, or the b96 product scope.
+
+**Candidate allocation:** `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)` is now permanently reserved for the first Repository-owned Native `conversation_async_status` continuation candidate. Do not reuse b96 for any other change.
+
+Evidence-backed scope only:
+
+1. `ConversationRepository` parses the exact top-level `conversation_async_status` tokens statically evidenced in the official app: `IS_STREAMING` and `COMPLETE`; unknown/missing values are non-authoritative and must not start continuation polling.
+2. An authoritative Detail response reporting `IS_STREAMING` may start/continue one Repository-owned refresh loop for that exact conversation. This loop issues only the already-existing authoritative Conversation Detail GET, updates the same resident/response authority, and does not create a second message/response store.
+3. The first subsequent authoritative Detail that is not exact `IS_STREAMING` stops the loop; exact `COMPLETE` is the expected terminal token. The loop must also stop on account-scope reset, replacement/supersession, or a client-owned response taking authority.
+4. Refresh cadence for b96 is an evidence-backed **10-second candidate approximation**, derived from repeated official Human Runtime (~9-12s) and official static `default_interval`/`model_slug_intervals` configuration evidence. It is not claimed to be the exact compiled official default.
+5. No idle/global polling, guessed `/resume`, offset, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or second state owner.
+6. Protected Send remains TD-029 covered-Web owned. b96 changes only cross-platform/read continuation after authoritative async-status acquisition.
+
+Non-atomic write-chain recovery point: baseline `06e905977c51aaa46d7cb98509dda9813617853c`. Intended batches are (A) product source `ChatGPTClient/Conversation/ConversationFeature.swift` + minimal orchestration in `ChatGPTClient/RootViewController.swift`; (B) candidate identity in `ChatGPTClient.xcodeproj/project.pbxproj` + `.github/workflows/ios-foundation.yml`; (C) guarded build/CI/Artifact/package verification; (D) checkpoint/index/PR maintenance. At creation of this recovery point, **none of A-D is yet complete** and b96 is only allocated. Recovery must never touch PR #35 files or reuse b95/b96 identity for a different scope.
+
+**Next exact action:** apply batch A from current exact source, compile/check before candidate packaging, then advance this recovery record with exact commit identities.
+
 ## Probe crash pattern / official-App callback research retired — 2026-09-04
 
 Latest explicit Human Runtime: exact startup-safe Probe v0.8.1 package (`sha256:69d4257fa6a514724b54a5c19e17803349ba459fef37f76ce4cb4435d3efa724`) no longer dies at the earliest launch boundary, but shows a white screen for roughly 10 seconds and then crashes. Therefore v0.8.1 is also **Runtime Negative as a usable official-App research package**. Do not ask the user to repeat protocol reproduction with v0.8.1.

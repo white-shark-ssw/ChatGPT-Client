@@ -1,0 +1,37 @@
+name: Fix Probe v0.7 dispatch-data type
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/probe-v07-cast-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+      - name: Guard exact v0.7 source
+        run: |
+          grep -F 'dispatch_data_t dispatchData = (__bridge dispatch_data_t)value;' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -F 'static NSString * const RPTProbeVersion = @"0.7";' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+      - name: Apply exact compiler fix
+        run: |
+          python3 -c 'from pathlib import Path; p=Path("scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m"); s=p.read_text(); s=s.replace("static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task, id value) {\n    if (!task || !value || objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey)) return;\n    NSString *className = NSStringFromClass(object_getClass(value)) ?: @\"\";\n    if (![className.lowercaseString containsString:@\"dispatch_data\"]) return;\n    dispatch_data_t dispatchData = (__bridge dispatch_data_t)value;", "static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task, dispatch_data_t dispatchData) {\n    if (!task || !dispatchData || objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey)) return;"); s=s.replace("static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, id dispatchData, id completionHandler) {", "static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, dispatch_data_t dispatchData, id completionHandler) {"); s=s.replace("void (*function)(id, SEL, id, id) = (void *)original;", "void (*function)(id, SEL, dispatch_data_t, id) = (void *)original;", 1); p.write_text(s)'
+          git diff --check
+          grep -F 'static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, dispatch_data_t dispatchData, id completionHandler)' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          ! grep -F '__bridge dispatch_data_t' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+      - name: Commit and self-remove
+        run: |
+          git rm .github/workflows/probe-v07-cast-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          git commit -m 'research: fix Probe v0.7 dispatch-data type'
+          git push origin HEAD:dev/send-stream-20260829

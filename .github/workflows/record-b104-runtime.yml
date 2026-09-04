@@ -7,6 +7,9 @@ on:
     paths:
       - ".github/workflows/record-b104-runtime.yml"
 
+permissions:
+  contents: write
+
 jobs:
   record:
     runs-on: ubuntu-latest
@@ -18,7 +21,7 @@ jobs:
           fetch-depth: 2
       - name: Guard exact b104 baseline
         run: |
-          test "$(git rev-parse HEAD^)" = "1e22e6b7e633432af7325a21ec1b47f012e0b977"
+          test "$(git rev-parse HEAD^)" = "e34e85a553ba60ba23670fb69d3ebf60be22032f"
           grep -q 'DEV-send-stream-0.1.0-b104' docs/project/BUILD_TEST_INDEX.md
           grep -q 'b104 ordinary Runtime pending' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
           grep -q 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj

@@ -15,6 +15,7 @@ enum CoveredWebSendEvent {
     case composerReady
     case sendObserved
     case responseAccepted
+    case acceptedClientWebProcessInterrupted
     case thinkingActive
     case reasoningPreamble(String, segmentStart: Bool)
     case reasoningDelta(String)
@@ -44,6 +45,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private var observationEvents: ((CoveredWebSendEvent) -> Void)?
     private var activeEvents: ((CoveredWebSendEvent) -> Void)?
     private var responseActive = false
+    private var clientSendAccepted = false
     private var observingExternalResponse = false
     private var manualSyncFocusProbePending = false
 
@@ -154,6 +156,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         }
         manualSyncFocusProbePending = false
         observingExternalResponse = false
+        clientSendAccepted = false
         pendingSend = PendingSend(conversationID: conversationID, text: trimmed, events: events)
         activeEvents = events
         diagnostics.info(category: "webSend", name: "coveredExecutor.requested", fields: ["promptCharacters": String(trimmed.count), "target": "existing_conversation"])
@@ -177,6 +180,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         observationEvents = nil
         activeEvents = nil
         responseActive = false
+        clientSendAccepted = false
         observingExternalResponse = false
         manualSyncFocusProbePending = false
         currentConversationID = nil
@@ -216,6 +220,17 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             } else {
                 diagnostics.warning(category: "webSend", name: "coveredExecutor.externalWebProcessRecovery", fields: ["state": "deferred_to_foreground"])
             }
+            return
+        }
+        if clientSendAccepted, responseActive, let interruptedEvents = activeEvents {
+            pendingSend = nil
+            responseActive = false
+            clientSendAccepted = false
+            activeEvents = nil
+            composerReadyConversationID = nil
+            let state = UIApplication.shared.applicationState == .active ? "handoff_requested" : "deferred_to_foreground"
+            diagnostics.warning(category: "webSend", name: "coveredExecutor.acceptedClientWebProcessRecovery", fields: ["state": state, "policy": "no_resend_same_generation"])
+            interruptedEvents(.acceptedClientWebProcessInterrupted)
             return
         }
         failCurrent("web_process_terminated")
@@ -332,8 +347,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let status = (body["status"] as? NSNumber)?.intValue ?? 0
             let contentType = body["contentType"] as? String ?? ""
             diagnostics.info(category: "webSend", name: "coveredExecutor.sendResponse", fields: ["httpStatus": String(status), "contentType": Self.safeToken(contentType)])
-            if status == 200 && contentType == "text/event-stream" { activeEvents?(.responseAccepted) }
-            else { failCurrent("send_not_sse") }
+            if status == 200 && contentType == "text/event-stream" {
+                clientSendAccepted = true
+                activeEvents?(.responseAccepted)
+            } else { failCurrent("send_not_sse") }
         case "thinking_active": activeEvents?(.thinkingActive)
         case "reasoning_preamble":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
@@ -356,6 +373,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         case "terminal":
             let terminalEvents = activeEvents
             responseActive = false
+            clientSendAccepted = false
             pendingSend = nil
             activeEvents = nil
             composerReadyConversationID = nil
@@ -389,6 +407,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         let events = activeEvents ?? pendingSend?.events
         pendingSend = nil
         responseActive = false
+        clientSendAccepted = false
         observingExternalResponse = false
         activeEvents = nil
         composerReadyConversationID = nil
@@ -1261,6 +1280,7 @@ extension ConversationRepository {
     case .responseAccepted:
         snapshot.phase = .thinking
         eventName = "response_accepted"
+    case .acceptedClientWebProcessInterrupted: eventName = "accepted_client_web_process_interrupted"
     case .thinkingActive:
         if snapshot.phase != .final { snapshot.phase = .thinking }
         eventName = "thinking_active"
@@ -1468,7 +1488,13 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     @objc private func applicationWillEnterForeground(_ notification: Notification) {
         guard let conversationID = repository.selectedConversationID else { return }
         let snapshot = repository.liveResponse(for: conversationID)
-        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
+        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty {
+            if sendExecutors[conversationID] == nil {
+                diagnostics.info(category: "webSend", name: "foregroundAcceptedClientRecovery.requested", fields: repository.diagnosticsFields(for: conversationID))
+                recoverAcceptedClientResponse(conversationID: conversationID, generation: snapshot.generation, trigger: "foreground")
+            }
+            return
+        }
         let hadActiveExternalResponse = snapshot?.phase.isActive == true && snapshot?.promptText.isEmpty == true
         let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id
         if repository.detailOperationSnapshot(for: conversationID) == nil {
@@ -1561,12 +1587,16 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         for (id, executor) in idle { releaseExecutor(for: id, expected: executor) }
     }
 
-    private func observeExternalResponseIfNeeded(conversationID: String, forcePageReload: Bool = false) {
+    private func observeExternalResponseIfNeeded(conversationID: String, forcePageReload: Bool = false, preservedClientGeneration: Int? = nil) {
         guard repository.selectedConversationID == conversationID else { return }
         let existingSnapshot = repository.liveResponse(for: conversationID)
-        guard existingSnapshot?.phase.isActive != true || existingSnapshot?.promptText.isEmpty == true else { return }
+        if let preservedClientGeneration {
+            guard let existingSnapshot, existingSnapshot.phase.isActive, !existingSnapshot.promptText.isEmpty, existingSnapshot.generation == preservedClientGeneration else { return }
+        } else {
+            guard existingSnapshot?.phase.isActive != true || existingSnapshot?.promptText.isEmpty == true else { return }
+        }
         let sendExecutor = executor(for: conversationID)
-        var externalGeneration: Int? = existingSnapshot?.phase.isActive == true ? existingSnapshot?.generation : nil
+        var externalGeneration: Int? = preservedClientGeneration ?? (existingSnapshot?.phase.isActive == true ? existingSnapshot?.generation : nil)
         sendExecutor.observeExistingConversation(conversationID: conversationID, forceReload: forcePageReload) { [weak self, weak sendExecutor] event in
             guard let self, let sendExecutor else { return }
             func ensureGeneration() -> Int? {
@@ -1676,6 +1706,23 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
     }
 
+    private func recoverAcceptedClientResponse(conversationID: String, generation: Int, trigger: String) {
+        guard repository.selectedConversationID == conversationID, sendExecutors[conversationID] == nil else {
+            diagnostics.info(category: "webSend", name: "acceptedClientRecovery.skipped", fields: ["reason": "selection_or_executor_state", "trigger": trigger])
+            return
+        }
+        guard let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, !snapshot.promptText.isEmpty, snapshot.generation == generation else {
+            diagnostics.info(category: "webSend", name: "acceptedClientRecovery.skipped", fields: ["reason": "live_generation_not_active", "trigger": trigger])
+            return
+        }
+        var fields = repository.diagnosticsFields(for: conversationID)
+        fields["responseGeneration"] = String(generation)
+        fields["trigger"] = trigger
+        fields["policy"] = "fresh_observer_no_resend"
+        diagnostics.info(category: "webSend", name: "acceptedClientRecovery.started", fields: fields)
+        observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true, preservedClientGeneration: generation)
+    }
+
     private func startValidationSend(text: String, conversationID: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, repository.selectedConversationID == conversationID else { return }
@@ -1690,6 +1737,15 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         let sendExecutor = executor(for: conversationID)
         sendExecutor.sendExistingConversation(text: trimmed, conversationID: conversationID) { [weak self, weak sendExecutor] event in
             guard let self, let sendExecutor else { return }
+            if case .acceptedClientWebProcessInterrupted = event {
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                var fields = self.repository.diagnosticsFields(for: conversationID)
+                fields["responseGeneration"] = String(generation)
+                fields["applicationState"] = UIApplication.shared.applicationState == .active ? "active" : "inactive_or_background"
+                self.diagnostics.warning(category: "webSend", name: "acceptedClientRecovery.interrupted", fields: fields)
+                if UIApplication.shared.applicationState == .active { self.recoverAcceptedClientResponse(conversationID: conversationID, generation: generation, trigger: "web_process_terminated") }
+                return
+            }
             self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
             switch event {
             case .terminal:

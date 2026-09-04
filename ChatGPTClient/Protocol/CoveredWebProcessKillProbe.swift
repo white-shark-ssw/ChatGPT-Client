@@ -3,7 +3,7 @@ import ObjectiveC.runtime
 import WebKit
 
 enum CoveredWebProcessKillProbe {
-    private static let candidate = "DEV-send-stream-0.1.0-b102"
+    private static let candidate = "DEV-send-stream-0.1.0-b103"
     private static let delaySeconds: TimeInterval = 120
     private static let submitMarker = "window.__coveredWebSendExecutor.submit("
     private static var installed = false
@@ -13,7 +13,7 @@ enum CoveredWebProcessKillProbe {
         precondition(Thread.isMainThread)
         guard AppBuildInfo.current.candidate == candidate, !installed else { return }
         let originalSelector = #selector(WKWebView.evaluateJavaScript(_:completionHandler:))
-        let probeSelector = #selector(WKWebView.b102_evaluateJavaScript(_:completionHandler:))
+        let probeSelector = #selector(WKWebView.b103_evaluateJavaScript(_:completionHandler:))
         guard let originalMethod = class_getInstanceMethod(WKWebView.self, originalSelector), let probeMethod = class_getInstanceMethod(WKWebView.self, probeSelector) else {
             DiagnosticsLogger.shared.error(category: "webSend", name: "coveredExecutor.killProbe", fields: ["state": "install_failed"])
             return
@@ -45,8 +45,8 @@ enum CoveredWebProcessKillProbe {
 }
 
 private extension WKWebView {
-    @objc func b102_evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
+    @objc func b103_evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
         CoveredWebProcessKillProbe.observe(script: javaScriptString, webView: self)
-        b102_evaluateJavaScript(javaScriptString, completionHandler: completionHandler)
+        b103_evaluateJavaScript(javaScriptString, completionHandler: completionHandler)
     }
 }

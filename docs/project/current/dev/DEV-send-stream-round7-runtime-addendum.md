@@ -1,3 +1,27 @@
+## b101 Native read transport renewal — package-ready 2026-09-05
+
+Exact evidence:
+
+- Candidate `DEV-send-stream-0.1.0-b101` / `0.1.0 (101)`, permanently reserved.
+- Triggering Runtime evidence remains exact b100 diagnostics `ChatGPTClient-Diagnostics-20260904-174041.json`, `sha256:515c60b59d969ee1f33d76fec097d6163450058c5ef3fa9ccd551b2439f03818`: after ~12m37s background, foreground discovery fired but authoritative Detail, later Detail, two list GETs and manual Sync all failed `NSURLErrorDomain -1005` while covered WebSocket independently reopened; no hard WebContent-process termination signal occurred.
+- Exact b101 product commit `54a9fa52a7b44a1b7418a39e4b0f7493989f999d`; exact product delta is only `ChatGPTClient.xcodeproj/project.pbxproj` plus `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- Product behavior: only idempotent Native conversation-list / Conversation Detail GETs gain bounded recovery. On the first exact `NSURLErrorNetworkConnectionLost (-1005)`, retire the matching cached `AuthTransientSession`, reacquire one fresh transient session from the existing default-WebKit-auth path, re-check account/operation freshness, then retry that same GET once. A second failure terminates normally. Protected Web Send, covered Web observation, b100 foreground discovery, Repository content authority and client-owned response ownership are unchanged.
+- Initial staging workflow run `33903494492` had zero jobs due workflow parse failure and is invalid evidence; it emitted no product change. Corrected staging `33903822115 / 101123907440` passed exact two-product-file scope, `git diff --check` and Debug iphonesimulator compile, then committed product `54a9fa52...`.
+- Exact canonical package source `da103452236e31e070eae68b9e7979a832662fc1` changes only `ios-foundation.yml` after the product commit. Formal Push `33904070096 / 101124706091` and same-source PR `33904076581 / 101124726725` both passed.
+- Canonical Push Artifact `9948780963`, Artifact ZIP `sha256:df5e95d273c0a4f977b47ac7b64eb654daea99e3b797c3c54924b820fd165e64`. Same-source PR Artifact `9948785659` is CI corroboration only and is not the Human Runtime package authority.
+- Canonical IPA `ChatGPTClient-0.1.0-b101-dev-send-stream.ipa`, independently recomputed `sha256:463bafd4daea37a429088e670d32474cdd9f429347d1fba336d8a091b1f31df3`, matching the package sidecar.
+- Independent package inspection confirms `com.whitesharkssw.chatgptclient`, `0.1.0 (101)`, Candidate b101, source marker `da103452236e`, Release, iOS14 minimum, UIDeviceFamily `[1,2]`, iPhoneOS and Mach-O 64-bit arm64.
+
+Evidence ladder: **Code written / exact scope + Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+
+Batch recovery state:
+
+- confirmed complete: b100 `-1005` Runtime evidence classified; b101 allocated; exact two-file product committed; corrected staging passed; canonical package source fixed; Push+PR package CI passed; canonical Artifact/IPA identity independently verified;
+- this recorder batch owns only checkpoint + durable project docs. Product code, b101 package source/Artifact/IPA, PR #35 and prior candidates must not be changed by recovery;
+- after this docs batch, only PR #29 metadata update and Human Runtime handoff remain.
+
+**Next exact action:** use only canonical b101 IPA. Reproduce the long-suspension scenario that produced `-1005`; on foreground do not press Sync/Reload first. If the first authoritative Detail reports `-1005`, diagnostics must show exactly one `detail.transportRecovery` request, retirement of the current transient session, one fresh auth transport acquisition, one `transportAttempt=2`, then HTTP200/convergence or a normal terminal failure with no third attempt. Also verify conversation-list refresh remains functional after the same recovery. If the first GET is already healthy, the b101 recovery branch is Unexercised rather than accepted. Export diagnostics.
+
 ## b100 Human Runtime — Native transient transport failure / b101 allocation 2026-09-05
 
 Exact tested evidence:

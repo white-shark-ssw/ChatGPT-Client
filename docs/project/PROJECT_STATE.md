@@ -1,3 +1,10 @@
+## DEV-send-stream b101 Native read transport recovery package ready — 2026-09-05
+
+- Exact b100 Runtime `sha256:515c60b59d969ee1f33d76fec097d6163450058c5ef3fa9ccd551b2439f03818` adds a new failure classification: after ~12m37s suspension, b100 foreground discovery still triggered, but Native Detail/list/manual Sync repeatedly failed exact `NSURLErrorDomain -1005` while covered Web networking independently reopened. This rejects the hard-WebContent-death hypothesis for that sample and exposes stale cached `AuthTransientSession` reuse as the Native read recovery gap.
+- b101 is the evidence-scoped correction: first exact `-1005` from conversation-list or Detail GET retires only the matching cached transient session, reacquires one fresh transient session through existing WebKit auth, and retries the same idempotent read at most once under the same operation generation/account scope. No timer, cadence, reachability watcher, retry loop, background heartbeat, Send replay or second authority is added.
+- Product `54a9fa52a7b44a1b7418a39e4b0f7493989f999d`; package source `da103452236e31e070eae68b9e7979a832662fc1`; staging `33903822115/101123907440`; Push `33904070096/101124706091`; PR `33904076581/101124726725`; canonical Artifact `9948780963`; ZIP `sha256:df5e95d273c0a4f977b47ac7b64eb654daea99e3b797c3c54924b820fd165e64`; IPA `sha256:463bafd4daea37a429088e670d32474cdd9f429347d1fba336d8a091b1f31df3`.
+- Package identity independently verified as `com.whitesharkssw.chatgptclient`, `0.1.0 (101)`, Candidate b101, source `da103452236e`, Release/iOS14+/`[1,2]`/arm64. Human Runtime pending; Stable-Frozen No.
+
 ## DEV-send-stream b100 Human Runtime dormant-discovery Positive — 2026-09-05
 
 - Exact b100 diagnostics `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696` / 72063 bytes / 127 events / Release / iPhone / iOS17.0 / source `e88a50ad9c20`.

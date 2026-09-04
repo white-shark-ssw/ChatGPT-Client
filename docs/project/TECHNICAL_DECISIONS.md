@@ -1,3 +1,10 @@
+## DEV-send-stream b101 exact `-1005` Native read recovery decision — 2026-09-05
+
+- Exact b100 Human Runtime demonstrates a concrete normal-path insufficiency: after long suspension, the Repository's cached ephemeral Native `AuthTransientSession` can repeatedly return `NSURLErrorNetworkConnectionLost (-1005)` for Detail, list and manual Sync while account scope is still valid and WebKit networking has independently recovered.
+- Authorize one bounded recovery only for idempotent Conversation Detail and conversation-list GETs. On the first exact `-1005`, retire only the matching cached transient session, reacquire through existing `withTransientSession` / default-WebKit auth, revalidate account scope + operation generation, and retry that same GET once.
+- Termination is deterministic: `transportRecoveryAttempted=true` prevents a second recovery. A second `-1005`, any different network error, auth failure, HTTP failure, operation supersession or account-scope change follows the existing normal failure path. This is not a general retry policy.
+- This decision does not authorize timers, polling, reachability watchers, fallback loops, background heartbeat, protected-Send replay, guessed resume, challenge replay, WebSocket-body authority or a second response/content store. TD-029 and b97-b100 ownership/lifecycle rules remain unchanged.
+
 ## DEV-send-stream b100 lifecycle-triggered dormant discovery — 2026-09-05
 
 - Authorize one authoritative Detail on foreground for the selected conversation when no client-owned response is active and no Detail operation is in flight, even when no external live snapshot exists. This is lifecycle-triggered discovery, not polling.

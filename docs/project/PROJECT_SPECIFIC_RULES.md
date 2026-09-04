@@ -1,3 +1,10 @@
+## Native read transport loss recovery — b101 2026-09-05
+
+- The only automatic Native transport retry authorized by b101 is for the first exact `NSURLErrorDomain / NSURLErrorNetworkConnectionLost (-1005)` from an idempotent conversation-list or Conversation Detail GET using the current account-scoped cached transient session.
+- Recovery must retire only the matching cached transient session, reacquire one fresh transient session through the existing default-WebKit-auth path, preserve the existing account scope and operation generation, then retry the same read once. There must be no third attempt.
+- A second `-1005`, any other network error, auth/HTTP failure, supersession or account change terminates normally. Do not generalize b101 into a retry framework, timer, watchdog, reachability monitor, polling loop or background keepalive.
+- Protected covered-Web Send is excluded. Never resend/replay/regenerate a prompt because Native list/Detail transport was renewed. `ConversationRepository` remains content/response authority; `AuthSessionStore` remains account authority.
+
 ## Foreground dormant cross-platform discovery — b100 2026-09-05
 
 - Foreground recovery must not require a pre-existing external live snapshot. With a selected conversation, no client-owned active response and no Detail operation, one lifecycle transition may issue exactly one existing authoritative `ConversationRepository.syncLatestMessages`.

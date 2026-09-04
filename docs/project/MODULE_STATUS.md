@@ -1,3 +1,10 @@
+## DEV-send-stream b101 Native read transport recovery override — 2026-09-05
+
+- `ConversationRepository` remains sole Native conversation/list/detail/recovery/response-lifecycle authority. `AuthSessionStore` remains account authority and default persistent WebKit storage remains persistent auth-secret authority.
+- Exact b100 Runtime proves the cached transient Native transport can remain stale after long suspension and repeatedly return `NSURLErrorNetworkConnectionLost (-1005)` even while covered Web networking reconnects. b101 fixes this at the transport owner rather than adding a second reader or lifecycle store.
+- For conversation-list and Detail GET only, first exact `-1005` may retire the matching cached `AuthTransientSession`, reacquire one transient session through the existing auth path, and retry the same read once after scope/generation freshness checks. Any second error/failure terminates normally. Client-owned protected Send is untouched and never automatically replayed.
+- Product/package `54a9fa52...` / `da103452...`; staging + Push + PR CI passed; Artifact `9948780963`; IPA `sha256:463bafd4daea37a429088e670d32474cdd9f429347d1fba336d8a091b1f31df3`; Human Runtime pending; module not Stable/Frozen.
+
 ## DEV-send-stream b100 dormant foreground discovery Runtime Positive — 2026-09-05
 
 - `ConversationRepository.syncLatestMessages` remains the sole authoritative foreground discovery primitive. Exact b100 Human Runtime `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696` proves the no-active-snapshot lifecycle path after ~19m31s background: one automatic Detail changed visible messages `8 -> 10` with no manual Sync/Reload and no second response authority.

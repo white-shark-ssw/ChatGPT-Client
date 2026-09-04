@@ -1,3 +1,9 @@
+## Latest DEV-send-stream candidate override — b101 2026-09-05
+
+- Latest Human Runtime candidate: `DEV-send-stream-0.1.0-b101` / `0.1.0 (101)`, permanently reserved. It addresses the exact b100 long-suspension Native read failure where Detail/list/manual Sync repeatedly returned `NSURLErrorDomain -1005` while WebKit networking reopened independently.
+- b101 changes only Native idempotent conversation-list/Detail transport recovery: retire the matching cached transient session on the first exact `-1005`, reacquire through existing default-WebKit auth, retry the same read once, then terminate normally on any further failure. Protected Web Send and response/content authority are unchanged.
+- Exact product `54a9fa52a7b44a1b7418a39e4b0f7493989f999d`; package source `da103452236e31e070eae68b9e7979a832662fc1`; Artifact `9948780963`; IPA `sha256:463bafd4daea37a429088e670d32474cdd9f429347d1fba336d8a091b1f31df3`; package identity verified; Human Runtime pending; Stable/Frozen No.
+
 ## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05
 
 - b99 Runtime: known-active external response auto-reconciled authoritative Detail `5->6` after ~7m32s background. After that response/executor was released, a later ~12m54s background interval had no automatic foreground discovery; manual Sync recovered `6->8`. b99 is Runtime Partial; its backlog-coalescing stress is Inconclusive in this sample; hard WebContent-death recovery remains Unverified.

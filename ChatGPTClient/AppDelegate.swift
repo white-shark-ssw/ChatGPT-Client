@@ -8,6 +8,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         let launchSpan = diagnostics.startSpan(category: "app", name: "launch", fields: ["launchOptionsPresent": launchOptions == nil ? "false" : "true"])
+        CoveredWebProcessKillProbe.install()
         let window = UIWindow(frame: UIScreen.main.bounds)
         let startupViewController = UIViewController()
         startupViewController.view.backgroundColor = .systemBackground

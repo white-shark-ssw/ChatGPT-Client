@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b95
-# Product source: ac5e621aa69f5f27ef3167b4a951812be8b8e2c2
-name: iOS Send Hard Reload Recovery b95
+# Candidate: DEV-send-stream-0.1.0-b96
+# Product source: a8ab29fd17ac5baed61e8994bcf26f74da45ccdb
+name: iOS Native Async Status Continuation b96
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b95
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b96
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

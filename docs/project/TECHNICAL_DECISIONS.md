@@ -1,5 +1,13 @@
 # Technical Decisions
 
+## DEV-send-stream b98 explicit WebContent-death recovery decision — 2026-09-04
+
+- Treat `WKNavigationDelegate.webViewWebContentProcessDidTerminate` as authoritative evidence that the covered Web transport process died. For an already-established external/cross-platform observation, this is a transport interruption and is not evidence that the server-side response failed.
+- Only this hard termination signal gains automatic recovery in b98. Do not infer disconnect from elapsed silence, missing snapshots, focus state, route state or ordinary navigation failure.
+- Preserve external Repository live-response authority across the termination. If the app is active, perform exactly one existing full-page external-observation rebootstrap for that event; if inactive/background, defer to the existing foreground lifecycle recovery instead of initiating background work.
+- This exception does not apply to client-owned protected Send. WebContent death during protected Send remains failure and must never cause automatic resend/replay.
+- b97's one-shot foreground authoritative Detail reconcile remains valid and composes with b98. This decision authorizes no timers, watchdogs, retry loops, duplicate Send, guessed `/resume`, challenge replay, second response store or Native background heartbeat.
+
 ## DEV-send-stream b97 foreground authoritative reconcile decision — 2026-09-04
 
 - Human Runtime supersedes the b96 Native polling decision for ordinary Conversation Detail: the tested target returned no top-level `conversation_async_status`, so the b96 10-second scheduler never became active and must not remain as a speculative product mechanism.

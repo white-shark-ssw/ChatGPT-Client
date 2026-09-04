@@ -1,5 +1,11 @@
 # Project Profile
 
+## Latest DEV-send-stream candidate override — b98 2026-09-04
+
+- Latest test candidate: `DEV-send-stream-0.1.0-b98` / `0.1.0 (98)`; exact product `2edd55febe2005071722ddcb9989151b427165d8`; package source `17c65a390f2724a55cd29d466e01eaab988dcbfe`; canonical Artifact `9942092070`; IPA `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67`; Human Runtime pending; Stable/Frozen No.
+- b98 preserves b97 foreground authoritative Detail reconcile and adds only explicit hard `WKWebView` WebContent-process-death recovery for external observation. Protected Send remains TD-029 covered official-Web owned and is never automatically resent.
+- b97 Human Runtime was not executed by user; its package identity remains permanently reserved.
+
 ## Latest DEV-send-stream candidate override — b97 2026-09-04
 
 - Latest test candidate: `DEV-send-stream-0.1.0-b97` / `0.1.0 (97)`; exact product `12fc1d1f5020d76d1892c25a0ced94323d5a0142`; package source `5e43c398b52a62de9f9a6e6546de7312ba5eb1df`; canonical Artifact `9940228423`; IPA `sha256:49f8d9a8ef425409923bf904a3134265ddfa6d90597d72e04a1e976a5a8a90c7`; Human Runtime pending; Stable/Frozen No.

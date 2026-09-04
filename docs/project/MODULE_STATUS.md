@@ -1,5 +1,12 @@
 # Module Status
 
+## DEV-send-stream b98 hard WebContent recovery package-ready override — 2026-09-04
+
+- `ConversationRepository` remains sole Native conversation/content/response-lifecycle authority. b98 does not create another response owner or Native continuation protocol.
+- Covered Web now distinguishes a hard WebContent-process death during external observation from client-owned Send failure. External observation preserves its callbacks/current conversation/Repository live projection and reboots the same existing page once when active; inactive/background termination is deferred to existing foreground b97 Detail reconcile + page rebootstrap.
+- Client-owned protected Send still fails on WebContent termination; no automatic resend/replay. Navigation failure semantics are unchanged. No silence timer/watchdog/retry loop was added.
+- Exact product `2edd55febe2005071722ddcb9989151b427165d8`; package `17c65a390f2724a55cd29d466e01eaab988dcbfe`; staging `33886277311/101066715850` + Push `33886537405/101067576599` + PR `33886540813/101067587985` passed; Artifact `9942092070`; IPA `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67`; Human Runtime Pending; Stable/Frozen No.
+
 ## DEV-send-stream b97 foreground reconcile package-ready override — 2026-09-04
 
 - `ConversationRepository` remains sole Native conversation/content/response-lifecycle authority. b97 removes the b96 recurring Native Detail scheduler; the only new lifecycle action is one existing `syncLatestMessages` request when returning foreground with a selected active external live response and no Detail operation already in flight.

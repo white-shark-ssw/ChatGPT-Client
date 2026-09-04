@@ -1,5 +1,13 @@
 # Project State
 
+## 2026-09-04 — b98 hard WebContent external-observation recovery package ready
+
+- User explicitly skipped b97 Human Runtime; b97 is recorded as Runtime Not Executed and remains permanently reserved. b98 is the next unique Runtime candidate.
+- `DEV-send-stream-0.1.0-b98` / `0.1.0 (98)` exact product `2edd55febe2005071722ddcb9989151b427165d8`, package source `17c65a390f2724a55cd29d466e01eaab988dcbfe`, PR #29 open/unmerged.
+- b98 changes hard covered-Web process death for external/cross-platform observation from response failure into transport interruption: preserve the existing external Repository live response and callbacks; immediately full-page rebootstrap once if foreground, otherwise defer to the existing foreground recovery path. Client-owned protected Send still fails on WebContent death and is never resent automatically.
+- Guarded staging `33886277311/101066715850` passed exact two-product-file scope + Simulator. Push `33886537405/101067576599` and PR `33886540813/101067587985` passed. Canonical Artifact `9942092070`; ZIP `sha256:f290b8a4d871016ce93a186b15c10e505a2a1d41b4adce4d19859d92fb65b3ae`; IPA `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67`; independent package identity verified as b98/source `17c65a390f27`/Release/iOS14/arm64.
+- Human Runtime Pending. This does not claim silent page-loop stall detection or true background execution; Stable/Frozen No.
+
 ## 2026-09-04 — b97 foreground authoritative Detail reconcile package ready
 
 - b96 Human Runtime disproved its ordinary-Detail async-status trigger as sufficient: target Detail returned `conversation_async_status` missing both before and after completion. Background return performed covered-Web rebootstrap but no automatic Native Detail; a later manual one-shot `syncLatestMessages` changed visible messages `46->47` and immediately reconciled the final assistant.

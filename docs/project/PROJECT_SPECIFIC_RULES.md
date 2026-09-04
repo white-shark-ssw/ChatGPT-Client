@@ -1,5 +1,13 @@
 # Project-Specific Rules
 
+## Hard covered-Web process recovery for external observation — b98 2026-09-04
+
+- `webViewWebContentProcessDidTerminate` is the only new automatic recovery trigger authorized by b98. Do not use silence duration, lack of snapshots, focus state, route state or generic navigation failure as a substitute disconnect detector.
+- When the executor is observing an external/cross-platform response, hard WebContent termination must preserve the current conversation identity, external observation callback and `ConversationRepository` live-response projection. It must not emit response `.failed` solely because WebContent died.
+- If the app is active, issue exactly one existing full-page external-observation rebootstrap for that termination event. If inactive/background, do not start background network work; the existing foreground path owns later one-shot authoritative Detail reconcile and Web rebootstrap.
+- Client-owned protected Send is excluded from this recovery rule: WebContent death remains failure and must never automatically resend, replay or regenerate the user prompt.
+- b98 adds no recurring retry, timer, watchdog, Native status/resume synthesis, challenge replay, background heartbeat or second response store. TD-029 and the b97 foreground authoritative reconcile rule remain in force.
+
 ## Foreground external-response authoritative reconcile — b97 2026-09-04
 
 - This section **supersedes** the earlier b96 `Native cross-platform Detail continuation exception` below. Do not use the b96 10-second `DispatchWorkItem`/async-status-driven Native polling path; Human Runtime showed ordinary authoritative Detail may omit `conversation_async_status` entirely.

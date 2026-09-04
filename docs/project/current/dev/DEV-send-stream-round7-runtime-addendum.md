@@ -1,5 +1,35 @@
 # DEV-send-stream round 7 Runtime addendum
 
+## b98 hard WebContent termination recovery — package-ready 2026-09-04
+
+Exact identity:
+
+- Candidate `DEV-send-stream-0.1.0-b98` / `0.1.0 (98)`, permanently reserved;
+- product code `2edd55febe2005071722ddcb9989151b427165d8` — guarded product delta only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/RootViewController.swift`;
+- exact package source `17c65a390f2724a55cd29d466e01eaab988dcbfe`;
+- guarded staging `33886277311/101066715850` success including durable pre-write checkpoint, exact two-product-file scope, `git diff --check`, and Debug iphonesimulator compile;
+- Push `33886537405/101067576599` success; PR `33886540813/101067587985` success;
+- canonical Push Artifact `9942092070` / ZIP `sha256:f290b8a4d871016ce93a186b15c10e505a2a1d41b4adce4d19859d92fb65b3ae`;
+- IPA `ChatGPTClient-0.1.0-b98-dev-send-stream.ipa` / `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67`;
+- independent unpacking: bundle `com.whitesharkssw.chatgptclient`, version/build `0.1.0 (98)`, Candidate b98, source `17c65a390f27`, Release, iOS14+, UIDeviceFamily `[1,2]`, Mach-O arm64.
+
+Product boundary:
+
+1. `webViewWebContentProcessDidTerminate` remains the only new recovery trigger. Silence, elapsed time, focus state, missing snapshots and ordinary navigation failures are not treated as disconnect evidence.
+2. When `observingExternalResponse == true`, hard WebContent termination no longer calls `failCurrent`; external observation callbacks, current conversation identity and Repository live response remain intact.
+3. If app state is active, the same executor performs exactly one existing full-page external-observation rebootstrap for that termination event. If inactive/background, no background network work is started; recovery is deferred to the existing foreground path.
+4. Foreground recovery still runs b97's one authoritative `syncLatestMessages` reconcile plus one existing covered-Web page rebootstrap if the external response remains active.
+5. Client-owned protected Send still treats WebContent termination as failure. No automatic resend/replay is authorized.
+6. No timer, silence watchdog, retry loop, duplicate Send, regenerate, guessed `/resume`, challenge replay, Native background heartbeat or second response store.
+
+b97 Human Runtime was explicitly **Not Executed** by user and remains permanently reserved. b98 supersedes only its test priority; b97's foreground authoritative Detail reconcile remains part of the b98 product behavior.
+
+All later b98-named Artifacts caused only by docs/staging maintenance are **non-canonical for Human Runtime**. Canonical identity is only Push Artifact `9942092070` / IPA `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67` from package source `17c65a390f2724a55cd29d466e01eaab988dcbfe`.
+
+Evidence ladder: **b97 Runtime Not Executed / b98 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen Send No.**
+
+**Next exact action:** install only canonical b98 IPA and collect one real hard WebContent-termination sample while a cross-platform external response is active. Verify `coveredExecutor.webProcess(state=terminated, mode=external_observation)` followed by `coveredExecutor.externalWebProcessRecovery(immediate_rebootstrap)` when foreground, or `deferred_to_foreground` followed by the existing foreground Detail reconcile + Web rebootstrap after return. The same Repository generation must survive and there must be no second Send. Do not allocate b99 before this Runtime gate.
+
 ## b98 hard WebContent termination recovery — checkpoint 2026-09-04
 
 User explicitly chose not to run the b97 Human Runtime gate and asked to advance directly to b98. b97 remains a valid, permanently reserved package identity, but its Human Runtime result is **Not Executed**, not Positive or Negative.

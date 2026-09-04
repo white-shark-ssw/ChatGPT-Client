@@ -21,42 +21,24 @@ jobs:
           ref: dev/send-stream-20260829
           fetch-depth: 0
 
-      - name: Guard exact b104 runtime baseline and b105 uniqueness
+      - name: Guard exact allocated b105 baseline
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "1d46bff75706e1c911f86ca6ec940cec6e7a8113"
-          test "$(git rev-parse HEAD^^)" = "558d1490cecf6d7cdf44a7cde382ca2d8d5c3d6b"
+          test "$(git rev-parse HEAD^)" = "46ae1479f9614de493a9f8a0e2509264f7115804"
+          test "$(git rev-parse HEAD^^)" = "d201b9998ab7e3002b1027ac9578e37fc63be073"
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b104\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          grep -q 'b104 background-return ordinary Send Runtime Positive' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          ! grep -q 'DEV-send-stream-0.1.0-b105' docs/project/BUILD_TEST_INDEX.md
-          test -f scripts/staging/b105_allocate_new_chat.py
-          test -f scripts/staging/b105_new_chat_first_send.py
-
-      - name: Batch A — reserve b105 and checkpoint handoff scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/staging/b105_allocate_new_chat.py
-          git diff --check
-          for file in docs/project/BUILD_TEST_INDEX.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md; do
-            git diff --quiet -- "$file" && { echo "expected allocation change missing: $file"; exit 1; }
-          done
           grep -q 'DEV-send-stream-0.1.0-b105' docs/project/BUILD_TEST_INDEX.md
           grep -q 'b105 new-chat first-Send authoritative handoff allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/project/BUILD_TEST_INDEX.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          git diff --cached --check
-          git commit -m "docs: allocate b105 new-chat handoff"
-          git push origin HEAD:dev/send-stream-20260829
+          test -f scripts/staging/b105_new_chat_first_send.py
+          test -f scripts/staging/b105_new_chat_first_send_runner.py
 
-      - name: Batch B — apply exact b105 product delta
+      - name: Apply exact b105 product delta
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/staging/b105_new_chat_first_send.py
+          python3 scripts/staging/b105_new_chat_first_send_runner.py
 
       - name: Validate exact b105 product scope
         shell: bash

@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b96
-# Product source: 9e50943de39dc304ab31904cbad8596d4ffddc14
-name: iOS Native Async Status Continuation b96
+# Candidate: DEV-send-stream-0.1.0-b97
+# Product source: assigned by guarded b97 product commit
+name: iOS Foreground External Reconcile b97
 
 on:
   push:
@@ -12,7 +12,6 @@ on:
       - "scripts/build_ipa.sh"
       - "scripts/reconstruct_app_icon.sh"
       - "scripts/assets/**"
-      - ".github/workflows/ios-foundation.yml"
   pull_request:
     paths:
       - "ChatGPTClient/**"
@@ -20,7 +19,6 @@ on:
       - "scripts/build_ipa.sh"
       - "scripts/reconstruct_app_icon.sh"
       - "scripts/assets/**"
-      - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
 jobs:
@@ -30,6 +28,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Guard b97 identity
+        run: |
+          grep -q 'CURRENT_PROJECT_VERSION = 97;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b97";' ChatGPTClient.xcodeproj/project.pbxproj
 
       - name: Toolchain
         run: xcodebuild -version
@@ -45,7 +48,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b96
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b97
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

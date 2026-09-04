@@ -1,0 +1,101 @@
+name: Record b104 Background Return Runtime
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b104-runtime.yml"
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 2
+      - name: Guard exact b104 baseline
+        run: |
+          test "$(git rev-parse HEAD^)" = "65c1413f6a9bf7434c82bd5499ea9a47df7ea0b4"
+          grep -q 'DEV-send-stream-0.1.0-b104' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b104 ordinary Runtime pending' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b104";' ChatGPTClient.xcodeproj/project.pbxproj
+      - name: Record exact Runtime evidence
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          checkpoint = Path('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md')
+          cp = checkpoint.read_text()
+          marker = '## b104 background-return ordinary Send Runtime Positive — 2026-09-05\n'
+          assert marker not in cp
+          section = '''## b104 background-return ordinary Send Runtime Positive — 2026-09-05
+
+Exact Human Runtime evidence:
+
+- Canonical Candidate `DEV-send-stream-0.1.0-b104` / Build104 / source marker `08fab73ab9a6`; diagnostics `ChatGPTClient-Diagnostics-20260904-205521.json`, exact `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216`, 136663 bytes, iPhone / iOS17.0 / Release.
+- No `coveredExecutor.killProbe` event exists. The run contains exactly one `coveredExecutor.requested`, one `submitResult`, one `sendObserved`, and one `sendResponse`; protected Send was explicitly accepted as HTTP200 `text/event-stream` and there was no duplicate Send.
+- The response was active on `responseGeneration=1` before `willResignActive` at `20:53:33Z` and `didEnterBackground` at `20:53:39Z`. One final background-side tool event was logged at `20:53:41Z`; then there are no response events until foreground at `20:55:15Z`, so this sample does not prove continuous app/WebKit execution while iOS was suspended.
+- On `willEnterForeground` / `didBecomeActive` at `20:55:15Z`, the same generation immediately delivered a 123-event backlog in that timestamp: remaining tool/reasoning events, 94 final deltas, `finalCharacters=3333`, then `terminal phase=completed`. This explains why the completed answer was already visible immediately on return before the authoritative sync finished.
+- Terminal automatically emitted `authoritativeReconcile.requested` and exactly one `latestSync.start` in the same second. The authoritative Detail GET returned HTTP200 at `20:55:17Z`, changed visible messages `21 -> 23` (`addedVisibleMessageCount=2`), then `liveResponse.reconciled responseGeneration=1` and `authoritativeReconcile.completed liveSnapshotCleared=true` completed automatically.
+- Therefore the user's observed post-return loading indicator is consistent with the automatic authoritative Detail reconciliation that follows the already-present live/backlog answer. The live backlog supplies immediate visible content; the one-shot Native Detail sync then replaces/confirms it with server-backed authoritative state.
+- A covered observer was recreated after reconciliation and its status returned HTTP200 `COMPLETE` at `20:55:20Z`. This is a redundant post-return observation in this sample, but it caused no second Send and no incorrect content/state result; do not allocate b105 or change product solely from this observation without a demonstrated user-impacting defect.
+
+Evidence boundary:
+
+- b104 ordinary no-probe Send regression is **Human Runtime Positive**, including foreground return after ~96s background and automatic terminal authoritative convergence.
+- This result does not prove true response execution while the iOS app is suspended; the absence of response events during most of the background interval is consistent with suspension and later backlog delivery on foreground.
+- b103 hard-Web accepted-client recovery remains separately Runtime Positive. The b101 exact `-1005` recovery remains Unexercised. Stable-Frozen remains No.
+
+Evidence ladder: **b103 hard-Web recovery Runtime Positive / b104 ordinary no-probe + background-return Runtime Positive / CI+Artifact/package identity already verified / Stable-Frozen No.**
+
+**Next exact action:** no product change and no b105 allocation from this sample. Preserve canonical b104. If a future Runtime sample shows the post-return loading/redundant observer causes a concrete UX or correctness failure, scope that exact defect from new evidence; otherwise keep the current automatic authoritative convergence path.
+
+'''
+          checkpoint.write_text(section + cp)
+
+          index = Path('docs/project/BUILD_TEST_INDEX.md')
+          lines = index.read_text().splitlines()
+          prefix = '| `DEV-send-stream-0.1.0-b104` |'
+          hits = [i for i, line in enumerate(lines) if line.startswith(prefix)]
+          assert len(hits) == 1
+          lines[hits[0]] = '| `DEV-send-stream-0.1.0-b104` | `DEV-send-stream` | `0.1.0 (104)` | normal no-probe accepted-client recovery product `4aebb546f3be6b71de0a67f466e6557a357dbfdc`; package `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`; PR #29 | staging `33917182143/101166941594` exact three-product-path scope + Simulator passed; Push `33917342654/101167460031` passed; PR `33917346052/101167471587` passed; canonical Artifact `9953695815`; ZIP `2ef6278a72fd46e86cb279a97e0e84b2228b5c78eb390cdc7582229b84e3d82e`; IPA `9c35141e9877621d3a7e39245982cba6722acbb17a19f5ebabd8734d2b94df04`; b104/source `08fab73ab9a6`/Release/iOS14/[1,2]/arm64 verified; deterministic kill probe/private SPI absent | Runtime `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` Positive: one HTTP200 SSE protected Send, no killProbe and no duplicate Send; after ~96s background the same generation flushed queued reasoning/tools/final on foreground and reached terminal, then one automatic authoritative Detail changed `21->23`, reconciled generation 1 and cleared live state. This proves foreground-return convergence, not continuous execution while suspended | **Ordinary no-probe Send + background-return authoritative convergence Human Runtime Positive / b103 hard-Web recovery Positive / Stable-Frozen No; permanently reserved** |'
+          index.write_text('\n'.join(lines) + '\n')
+
+          state = Path('docs/project/PROJECT_STATE.md')
+          st = state.read_text()
+          state_marker = '## DEV-send-stream b104 background-return Runtime Positive — 2026-09-05\n'
+          assert state_marker not in st
+          state.write_text('''## DEV-send-stream b104 background-return Runtime Positive — 2026-09-05
+
+- Exact b104 diagnostics `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` closes the normal no-probe Send regression as Runtime Positive: one accepted HTTP200 SSE Send, no kill probe, no duplicate Send, same generation through terminal, then automatic authoritative Detail `21 -> 23` and live-state clear.
+- The app entered background for ~96s. Most response events were not processed until the foreground timestamp, where 123 queued live events including 94 final deltas arrived immediately before terminal. This supports foreground backlog replay + authoritative convergence, not a claim of continuous WebKit execution while iOS was suspended.
+- User-visible sequence “answer already visible, then loading” matches this architecture: queued live content is presented first; terminal immediately starts one authoritative Detail sync which confirms/replaces it with server-backed state about 2.25s later.
+- No product/b105 change is justified from this successful sample. Stable-Frozen remains No because broader unresolved/unexercised gates remain separate.
+
+''' + st)
+
+          module = Path('docs/project/MODULE_STATUS.md')
+          ms = module.read_text()
+          module_marker = '## DEV-send-stream b104 ordinary/background-return Runtime Positive — 2026-09-05\n'
+          assert module_marker not in ms
+          module.write_text('''## DEV-send-stream b104 ordinary/background-return Runtime Positive — 2026-09-05
+
+- `ConversationRepository` remains the sole Native response/content/reconciliation authority. Exact b104 Runtime `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` has one accepted protected Send, no test kill instrumentation, no duplicate Send, and one generation through terminal + authoritative Detail `21 -> 23` reconciliation.
+- After ~96s background, queued covered-response events were delivered on foreground and the completed live answer appeared before the one-shot authoritative sync completed. The subsequent loading indication is consistent with that automatic reconciliation, not a second generation or resend.
+- Background execution itself is not proven: there is a long interval with no response events while suspended. Module remains Active / Runtime Partial overall / Stable-Frozen No because separate background-execution and b101 `-1005` evidence boundaries remain open.
+
+''' + ms)
+          PY
+      - name: Remove one-shot recorder and commit docs
+        run: |
+          git rm .github/workflows/record-b104-runtime.yml
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: record b104 background-return runtime"
+          git push origin HEAD:dev/send-stream-20260829

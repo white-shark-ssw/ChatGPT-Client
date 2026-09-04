@@ -13,6 +13,7 @@ enum CoveredWebSendEvent {
     case externalAcquisitionHint
     case externalConversationSnapshot(messages: [[String: Any]], complete: Bool)
     case composerReady
+    case conversationCreated(String)
     case sendObserved
     case responseAccepted
     case acceptedClientWebProcessInterrupted
@@ -31,7 +32,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private static let chatURL = URL(string: "https://chatgpt.com/")!
 
     private struct PendingSend {
-        let conversationID: String
+        let conversationID: String?
         let text: String
         let events: (CoveredWebSendEvent) -> Void
     }
@@ -41,6 +42,8 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private let webView: WKWebView
     private var currentConversationID: String?
     private var composerReadyConversationID: String?
+    private var rootComposerReady = false
+    private var sendingNewConversation = false
     private var pendingSend: PendingSend?
     private var observationEvents: ((CoveredWebSendEvent) -> Void)?
     private var activeEvents: ((CoveredWebSendEvent) -> Void)?
@@ -112,6 +115,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             return
         }
         composerReadyConversationID = nil
+        rootComposerReady = false
         currentConversationID = conversationID
         guard let encoded = conversationID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed), let url = URL(string: "https://chatgpt.com/c/\(encoded)") else { return }
         logWebViewActivationState(stage: "before_observe_load")
@@ -157,6 +161,8 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         manualSyncFocusProbePending = false
         observingExternalResponse = false
         clientSendAccepted = false
+        sendingNewConversation = false
+        rootComposerReady = false
         pendingSend = PendingSend(conversationID: conversationID, text: trimmed, events: events)
         activeEvents = events
         diagnostics.info(category: "webSend", name: "coveredExecutor.requested", fields: ["promptCharacters": String(trimmed.count), "target": "existing_conversation"])
@@ -173,6 +179,34 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         webView.load(URLRequest(url: url))
     }
 
+    func sendNewConversation(text: String, events: @escaping (CoveredWebSendEvent) -> Void) {
+        precondition(Thread.isMainThread)
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            events(.failed("invalid_input"))
+            return
+        }
+        guard !isBusy else {
+            events(.failed("executor_busy"))
+            return
+        }
+        manualSyncFocusProbePending = false
+        observingExternalResponse = false
+        clientSendAccepted = false
+        sendingNewConversation = true
+        pendingSend = PendingSend(conversationID: nil, text: trimmed, events: events)
+        activeEvents = events
+        diagnostics.info(category: "webSend", name: "coveredExecutor.requested", fields: ["promptCharacters": String(trimmed.count), "target": "new_conversation"])
+        if rootComposerReady, currentConversationID == nil {
+            submitPendingSendIfReady()
+            return
+        }
+        composerReadyConversationID = nil
+        rootComposerReady = false
+        currentConversationID = nil
+        webView.load(URLRequest(url: Self.chatURL))
+    }
+
     func resetForAccountChange() {
         precondition(Thread.isMainThread)
         let events = activeEvents ?? pendingSend?.events
@@ -183,8 +217,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         clientSendAccepted = false
         observingExternalResponse = false
         manualSyncFocusProbePending = false
+        sendingNewConversation = false
         currentConversationID = nil
         composerReadyConversationID = nil
+        rootComposerReady = false
         events?(.failed("account_changed"))
         webView.load(URLRequest(url: Self.chatURL))
         diagnostics.info(category: "webSend", name: "coveredExecutor.reset", fields: ["reason": "account_changed"])
@@ -329,7 +365,14 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             }
         case "composer_state":
             let ready = (body["ready"] as? NSNumber)?.boolValue ?? false
+            let route = body["route"] as? String ?? "other"
             let pageConversationID = body["conversationID"] as? String
+            if route == "root" {
+                rootComposerReady = ready
+                if ready { submitPendingSendIfReady() }
+                return
+            }
+            rootComposerReady = false
             guard ready, let pageConversationID, pageConversationID == currentConversationID else { return }
             composerReadyConversationID = pageConversationID
             activeEvents?(.composerReady)
@@ -339,10 +382,22 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             diagnostics.info(category: "webSend", name: "coveredExecutor.submitResult", fields: ["state": Self.safeToken(state)])
             if state != "submitted" { failCurrent(state) }
         case "send_observed":
+            let wasNewConversation = sendingNewConversation
+            if wasNewConversation {
+                guard let createdConversationID = body["conversationID"] as? String, !createdConversationID.isEmpty else {
+                    failCurrent("new_conversation_identity_missing")
+                    return
+                }
+                currentConversationID = createdConversationID
+                composerReadyConversationID = nil
+                rootComposerReady = false
+                sendingNewConversation = false
+                activeEvents?(.conversationCreated(createdConversationID))
+            }
             responseActive = true
             pendingSend = nil
             activeEvents?(.sendObserved)
-            diagnostics.info(category: "webSend", name: "coveredExecutor.sendObserved", fields: ["target": "existing_conversation"])
+            diagnostics.info(category: "webSend", name: "coveredExecutor.sendObserved", fields: ["target": wasNewConversation ? "new_conversation" : "existing_conversation"])
         case "send_response":
             let status = (body["status"] as? NSNumber)?.intValue ?? 0
             let contentType = body["contentType"] as? String ?? ""
@@ -386,13 +441,19 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     }
 
     private func submitPendingSendIfReady() {
-        guard let pendingSend, composerReadyConversationID == pendingSend.conversationID, currentConversationID == pendingSend.conversationID else { return }
+        guard let pendingSend else { return }
+        let isNewConversation = pendingSend.conversationID == nil
+        if isNewConversation {
+            guard rootComposerReady, currentConversationID == nil else { return }
+        } else {
+            guard composerReadyConversationID == pendingSend.conversationID, currentConversationID == pendingSend.conversationID else { return }
+        }
         guard let data = try? JSONSerialization.data(withJSONObject: pendingSend.text, options: [.fragmentsAllowed]), let literal = String(data: data, encoding: .utf8) else {
             failCurrent("text_encoding_failed")
             return
         }
         self.pendingSend = nil
-        let script = "window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.submit(\(literal));"
+        let script = "window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.submit(\(literal), \(isNewConversation ? "true" : "false"));"
         webView.evaluateJavaScript(script) { [weak self] _, error in
             guard let self else { return }
             self.webView.endEditing(true)
@@ -409,8 +470,10 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         responseActive = false
         clientSendAccepted = false
         observingExternalResponse = false
+        sendingNewConversation = false
         activeEvents = nil
         composerReadyConversationID = nil
+        rootComposerReady = false
         diagnostics.warning(category: "webSend", name: "coveredExecutor.failed", fields: ["reason": Self.safeToken(reason)])
         events?(.failed(reason))
     }
@@ -429,6 +492,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
       let activeSend = false;
+      let newConversationSend = false;
       let lastComposer = null;
       const externalStreamingState = { active: false, completePending: false, resumeSSE: false };
       let lastExternalAssistantTextCharacters = -1;
@@ -550,7 +614,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       const probeComposer = (force = false) => {
         installRenderSuppression();
         const composer = findComposer();
-        if (force || composer !== lastComposer) post({ kind: 'composer_state', ready: !!composer && !activeSend, conversationID: currentConversationID() });
+        if (force || composer !== lastComposer) post({ kind: 'composer_state', ready: !!composer && !activeSend, conversationID: currentConversationID(), route: pageRouteShape() });
         lastComposer = composer || null;
         return composer;
       };
@@ -594,11 +658,12 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           }
         }
       };
-      const submit = text => {
+      const submit = (text, newConversation = false) => {
         const composer = probeComposer(true);
         if (!composer || typeof text !== 'string' || !text.trim()) { post({ kind: 'submit_result', state: 'composer_not_ready' }); return; }
         if (!setComposerText(composer, text)) { post({ kind: 'submit_result', state: 'input_state_failed' }); return; }
         activeSend = true;
+        newConversationSend = !!newConversation;
         probeComposer(true);
         queueMicrotask(() => {
           const form = composer.closest('form');
@@ -609,6 +674,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           const sendButton = document.querySelector('button[data-testid="send-button"]:not([disabled])');
           if (sendButton) { sendButton.click(); post({ kind: 'submit_result', state: 'submitted' }); return; }
           activeSend = false;
+          newConversationSend = false;
           post({ kind: 'submit_result', state: 'submit_control_missing' });
           probeComposer(true);
         });
@@ -722,6 +788,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           state.terminal = true;
           state.textContinuationActive = false;
           activeSend = false;
+          newConversationSend = false;
           queueMicrotask(() => { probeComposer(true); post({ kind: 'terminal' }); });
           return frame + '\n\n';
         }
@@ -933,7 +1000,14 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           return response;
         }
         if (!isSend || !activeSend) return originalFetch(input, init);
-        post({ kind: 'send_observed' });
+        if (newConversationSend && !pageConversationID) {
+          activeSend = false;
+          newConversationSend = false;
+          probeComposer(true);
+          post({ kind: 'stream_error', state: 'new_conversation_identity_missing' });
+          throw new Error('new_conversation_identity_missing');
+        }
+        post({ kind: 'send_observed', conversationID: pageConversationID, newConversation: newConversationSend });
         probeComposer(true);
         try {
           const response = await originalFetch(input, init);
@@ -941,6 +1015,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           post({ kind: 'send_response', status: response.status, contentType });
           if (response.status !== 200 || contentType !== 'text/event-stream') {
             activeSend = false;
+            newConversationSend = false;
             probeComposer(true);
             post({ kind: 'stream_error', state: 'send_not_sse' });
             return response;
@@ -948,6 +1023,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           return filteredResponse(response);
         } catch (error) {
           activeSend = false;
+          newConversationSend = false;
           probeComposer(true);
           post({ kind: 'stream_error', state: 'send_transport_error' });
           throw error;
@@ -1276,6 +1352,7 @@ extension ConversationRepository {
     case .externalAcquisitionHint: eventName = "external_acquisition_hint"
     case .externalConversationSnapshot(_, _): eventName = "external_conversation_snapshot"
     case .composerReady: eventName = "composer_ready"
+    case .conversationCreated: eventName = "conversation_created"
     case .sendObserved: eventName = "send_observed"
     case .responseAccepted:
         snapshot.phase = .thinking
@@ -1396,6 +1473,9 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     private let diagnostics = DiagnosticsLogger.shared
     private let repository = ConversationRepository()
     private var sendExecutors: [String: CoveredWebSendExecutor] = [:]
+    private var pendingNewConversationExecutor: CoveredWebSendExecutor?
+    private var newConversationDraftActive = false
+    private var newConversationIDsPendingListReconciliation = Set<String>()
     private var externalAcquisitionSyncs: Set<String> = []
     private let validationSendButton = UIButton(type: .system)
     private let sidebarViewController: ConversationSidebarViewController
@@ -1415,12 +1495,18 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         configureValidationSendToolbar()
 
         repository.onLiveResponseChanged = { [weak self] id in self?.liveResponseDidChange(id: id) }
+        sidebarViewController.onNewConversation = { [weak self] in self?.beginNewConversationDraft() }
         repository.onAccountScopeReset = { [weak self] in
             guard let self else { return }
             let executors = Array(self.sendExecutors.values)
+            let pendingNewExecutor = self.pendingNewConversationExecutor
             self.sendExecutors.removeAll()
+            self.pendingNewConversationExecutor = nil
+            self.newConversationDraftActive = false
+            self.newConversationIDsPendingListReconciliation.removeAll()
             self.externalAcquisitionSyncs.removeAll()
             for executor in executors { executor.resetForAccountChange() }
+            pendingNewExecutor?.resetForAccountChange()
             self.repository.resetAllLiveResponsesForAccountChange()
             self.sidebarViewController.resetForAccountScopeChange()
             self.detailViewController.resetForAccountScopeChange()
@@ -1429,6 +1515,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
         sidebarViewController.onSelectConversation = { [weak self] id in
             guard let self else { return }
+            self.newConversationDraftActive = false
             self.releaseIdleExecutors(except: id)
             self.repository.selectConversation(id: id)
             self.detailViewController.loadViewIfNeeded()
@@ -1535,6 +1622,20 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         repository.selectedConversationID == nil ? .primary : .secondary
     }
 
+    private func beginNewConversationDraft() {
+        guard pendingNewConversationExecutor == nil else { return }
+        newConversationDraftActive = true
+        releaseIdleExecutors(except: "")
+        repository.clearConversationSelection()
+        sidebarViewController.tableView.reloadData()
+        detailViewController.loadViewIfNeeded()
+        detailViewController.showNewConversationDraft()
+        detailNavigationController.setToolbarHidden(false, animated: false)
+        diagnostics.info(category: "conversation", name: "newConversation.draftOpened")
+        updateLivePresentation()
+        show(.secondary)
+    }
+
     private func configureValidationSendToolbar() {
         validationSendButton.setTitle("测试发送…", for: .normal)
         validationSendButton.setImage(UIImage(systemName: "paperplane"), for: .normal)
@@ -1552,7 +1653,12 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     @objc private func openValidationSendPrompt() {
-        guard let conversationID = repository.selectedConversationID, !repository.isLiveResponseActive(for: conversationID) else { return }
+        let conversationID = repository.selectedConversationID
+        if let conversationID {
+            guard !repository.isLiveResponseActive(for: conversationID) else { return }
+        } else {
+            guard newConversationDraftActive, pendingNewConversationExecutor == nil else { return }
+        }
         let alert = UIAlertController(title: "Send/Stream 验证", message: "临时验证入口；最终输入框由 DEV-composer-parity 实现。", preferredStyle: .alert)
         alert.addTextField { textField in
             textField.placeholder = "输入本轮测试消息"
@@ -1562,15 +1668,21 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "发送", style: .default) { [weak self, weak alert] _ in
             guard let self, let text = alert?.textFields?.first?.text else { return }
-            self.startValidationSend(text: text, conversationID: conversationID)
+            if let conversationID { self.startValidationSend(text: text, conversationID: conversationID) }
+            else { self.startNewConversationSend(text: text) }
         })
         present(alert, animated: true)
     }
 
-    private func executor(for conversationID: String) -> CoveredWebSendExecutor {
-        if let executor = sendExecutors[conversationID] { return executor }
+    private func makeCoveredExecutor() -> CoveredWebSendExecutor {
         let executor = CoveredWebSendExecutor()
         executor.attachCoveredWebView(to: view)
+        return executor
+    }
+
+    private func executor(for conversationID: String) -> CoveredWebSendExecutor {
+        if let executor = sendExecutors[conversationID] { return executor }
+        let executor = makeCoveredExecutor()
         sendExecutors[conversationID] = executor
         diagnostics.info(category: "webSend", name: "coveredExecutor.created", fields: ["activeExecutorCount": String(sendExecutors.count)])
         return executor
@@ -1585,6 +1697,12 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     private func releaseIdleExecutors(except conversationID: String) {
         let idle = sendExecutors.filter { $0.key != conversationID && !$0.value.isBusy }
         for (id, executor) in idle { releaseExecutor(for: id, expected: executor) }
+    }
+
+    private func releasePendingNewConversationExecutor(expected: CoveredWebSendExecutor) {
+        guard pendingNewConversationExecutor === expected else { return }
+        pendingNewConversationExecutor = nil
+        diagnostics.info(category: "webSend", name: "coveredExecutor.pendingNewReleased")
     }
 
     private func observeExternalResponseIfNeeded(conversationID: String, forcePageReload: Bool = false, preservedClientGeneration: Int? = nil) {
@@ -1723,6 +1841,75 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true, preservedClientGeneration: generation)
     }
 
+    private func startNewConversationSend(text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, newConversationDraftActive, pendingNewConversationExecutor == nil else { return }
+        let sendExecutor = makeCoveredExecutor()
+        pendingNewConversationExecutor = sendExecutor
+        var authoritativeConversationID: String?
+        var generation: Int?
+        updateLivePresentation()
+        sendExecutor.sendNewConversation(text: trimmed) { [weak self, weak sendExecutor] event in
+            guard let self, let sendExecutor else { return }
+            switch event {
+            case .conversationCreated(let conversationID):
+                guard authoritativeConversationID == nil else { return }
+                authoritativeConversationID = conversationID
+                self.releasePendingNewConversationExecutor(expected: sendExecutor)
+                guard self.sendExecutors[conversationID] == nil else {
+                    self.diagnostics.error(category: "webSend", name: "newConversation.handoffFailed", fields: ["reason": "executor_identity_collision"])
+                    return
+                }
+                self.sendExecutors[conversationID] = sendExecutor
+                let shouldPresent = self.newConversationDraftActive && self.repository.selectedConversationID == nil
+                if shouldPresent { self.repository.selectConversation(id: conversationID) }
+                switch self.repository.beginLiveResponse(conversationID: conversationID, promptText: trimmed) {
+                case .success(let value): generation = value
+                case .failure(let error):
+                    self.diagnostics.error(category: "webSend", name: "newConversation.handoffFailed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))
+                    return
+                }
+                self.newConversationIDsPendingListReconciliation.insert(conversationID)
+                self.newConversationDraftActive = false
+                if shouldPresent {
+                    self.sidebarViewController.tableView.reloadData()
+                    self.detailViewController.showNewConversationIdentity(id: conversationID)
+                }
+                var fields = self.repository.diagnosticsFields(for: conversationID)
+                fields["responseGeneration"] = generation.map(String.init) ?? "none"
+                fields["presented"] = shouldPresent ? "true" : "false"
+                fields["source"] = "official_page_route_before_protected_send"
+                self.diagnostics.info(category: "conversation", name: "newConversation.authoritativeHandoff", fields: fields)
+                self.updateLivePresentation()
+            case .acceptedClientWebProcessInterrupted:
+                guard let conversationID = authoritativeConversationID, let generation else { return }
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                var fields = self.repository.diagnosticsFields(for: conversationID)
+                fields["responseGeneration"] = String(generation)
+                fields["applicationState"] = UIApplication.shared.applicationState == .active ? "active" : "inactive_or_background"
+                self.diagnostics.warning(category: "webSend", name: "acceptedClientRecovery.interrupted", fields: fields)
+                if UIApplication.shared.applicationState == .active { self.recoverAcceptedClientResponse(conversationID: conversationID, generation: generation, trigger: "web_process_terminated") }
+            case .failed(let reason):
+                if let conversationID = authoritativeConversationID, let generation {
+                    self.repository.consumeLiveResponseEvent(.failed(reason), conversationID: conversationID, generation: generation)
+                    self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                } else {
+                    self.releasePendingNewConversationExecutor(expected: sendExecutor)
+                    self.diagnostics.warning(category: "webSend", name: "newConversation.preHandoffFailed", fields: ["reason": reason])
+                    self.showValidationError("新会话发送失败，请重试。")
+                }
+                self.updateLivePresentation()
+            default:
+                guard let conversationID = authoritativeConversationID, let generation else { return }
+                self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)
+                if case .terminal = event {
+                    self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                    self.reconcileTerminalResponse(conversationID: conversationID, generation: generation)
+                }
+            }
+        }
+    }
+
     private func startValidationSend(text: String, conversationID: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, repository.selectedConversationID == conversationID else { return }
@@ -1767,6 +1954,14 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 let cleared = self.repository.clearLiveResponseAfterAuthoritativeReconcile(conversationID: conversationID, generation: generation, authoritativeVisibleMessageCount: detail.messages.count)
                 self.diagnostics.info(category: "webSend", name: "authoritativeReconcile.completed", fields: ["liveSnapshotCleared": cleared ? "true" : "false", "authoritativeVisibleMessageCount": String(detail.messages.count)])
                 if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }
+                if self.newConversationIDsPendingListReconciliation.remove(conversationID) != nil {
+                    self.repository.loadConversations(forceRefresh: true) { result in
+                        switch result {
+                        case .success(let summaries): self.diagnostics.info(category: "conversation", name: "newConversation.listReconciled", fields: ["itemCount": String(summaries.count)])
+                        case .failure(let error): self.diagnostics.error(category: "conversation", name: "newConversation.listReconcileFailed", error: error)
+                        }
+                    }
+                }
             case .failure(let error):
                 self.diagnostics.error(category: "webSend", name: "authoritativeReconcile.failed", error: error)
             }
@@ -1783,7 +1978,9 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
 
     private func updateLivePresentation() {
         guard let conversationID = repository.selectedConversationID else {
-            validationSendButton.isEnabled = false
+            let newConversationReady = newConversationDraftActive && pendingNewConversationExecutor == nil
+            validationSendButton.isEnabled = newConversationReady
+            validationSendButton.setTitle(pendingNewConversationExecutor == nil ? "测试发送…" : "创建中…", for: .normal)
             detailViewController.navigationItem.rightBarButtonItem?.isEnabled = false
             return
         }

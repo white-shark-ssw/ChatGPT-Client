@@ -441,6 +441,13 @@ final class ConversationRepository {
         transientSession?.finishTasksAndInvalidate()
     }
 
+    func clearConversationSelection() {
+        requireMainThread()
+        guard let previousID = selectedConversationID else { return }
+        selectedConversationID = nil
+        diagnostics.info(category: "navigation", name: "conversation.selectionCleared", fields: ["previousConversationHash": Self.shortHash(previousID)])
+    }
+
     func selectConversation(id: String) {
         requireMainThread()
         let previousID = selectedConversationID
@@ -1560,6 +1567,7 @@ final class ConversationRepository {
 
 final class ConversationSidebarViewController: UITableViewController {
     var onSelectConversation: ((String) -> Void)?
+    var onNewConversation: (() -> Void)?
 
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
@@ -1583,7 +1591,9 @@ final class ConversationSidebarViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ConversationCell")
         tableView.rowHeight = 58
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "设置", style: .plain, target: self, action: #selector(openSettings))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversationsFromButton))
+        let refreshButton = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversationsFromButton))
+        let newConversationButton = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(newConversationRequested))
+        navigationItem.rightBarButtonItems = [newConversationButton, refreshButton]
         refreshControl = UIRefreshControl()
         refreshControl?.tintColor = .secondaryLabel
         refreshControl?.addTarget(self, action: #selector(refreshControlChanged), for: .valueChanged)
@@ -1630,6 +1640,11 @@ final class ConversationSidebarViewController: UITableViewController {
         errorView?.removeFromSuperview()
         errorView = nil
         tableView.reloadData()
+    }
+
+    @objc private func newConversationRequested() {
+        diagnostics.info(category: "navigation", name: "conversation.new.requested")
+        onNewConversation?()
     }
 
     @objc private func reloadConversationsFromButton() {
@@ -1988,6 +2003,49 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             guard let self, self.repository.selectedConversationID == id, self.presentationGeneration == currentPresentationGeneration else { return }
             self.finishVisibleOperation(id: id, kind: observedKind, previousMessages: previousMessages, result: result)
         }
+    }
+
+    func showNewConversationDraft() {
+        presentationGeneration += 1
+        historicalGeometryBuildGeneration += 1
+        stopAnswerJumpAnimation(clearTarget: true)
+        hideSyncToast()
+        loadingConversationID = nil
+        displayedConversationID = nil
+        displayedCurrentNodeID = nil
+        activityIndicator.stopAnimating()
+        title = "新对话"
+        clearVisibleMessagePresentation()
+        resetScrollPositionToTop()
+        stateLabel.text = "开始一个新对话"
+        stateLabel.isHidden = false
+        retryButton.isHidden = true
+        updateHeaderMetadata()
+        updateConversationMenu()
+    }
+
+    func showNewConversationIdentity(id: String) {
+        guard repository.selectedConversationID == id else { return }
+        presentationGeneration += 1
+        historicalGeometryBuildGeneration += 1
+        stopAnswerJumpAnimation(clearTarget: true)
+        hideSyncToast()
+        loadingConversationID = nil
+        displayedConversationID = id
+        displayedCurrentNodeID = nil
+        activityIndicator.stopAnimating()
+        title = "新对话"
+        clearVisibleMessagePresentation()
+        displayedConversationID = id
+        stateLabel.text = nil
+        stateLabel.isHidden = true
+        retryButton.isHidden = true
+        rebuildLiveResponsePresentation(width: effectivePresentationWidth())
+        tableView.reloadData()
+        tableView.layoutIfNeeded()
+        updateHeaderMetadata()
+        updateAnswerJumpButton()
+        updateConversationMenu()
     }
 
     func resetForAccountScopeChange() {

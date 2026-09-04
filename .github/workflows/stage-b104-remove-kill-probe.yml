@@ -1,0 +1,179 @@
+name: Stage b104 Remove Diagnostic Kill Probe
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b104-remove-kill-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard b103 Runtime baseline and b104 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "964143043fa12e7902008bc6ef57a98e8c658393"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "94f0c5777dad262cd1fb22be49082dbd92c962f2"
+          grep -q 'CURRENT_PROJECT_VERSION = 103;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b103";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CoveredWebProcessKillProbe.install()' ChatGPTClient/AppDelegate.swift
+          grep -q 'private static let candidate = "DEV-send-stream-0.1.0-b103"' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
+          ! grep -q 'DEV-send-stream-0.1.0-b104' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record b103 Runtime and allocate b104 checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_sha = '99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51'
+          checkpoint = Path('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md')
+          text = checkpoint.read_text()
+          heading = '## b103 accepted-client hard-Web recovery Runtime Positive + b104 probe-removal allocation — 2026-09-05'
+          if heading not in text:
+              section = f'''{heading}
+
+          Exact b103 Human Runtime evidence:
+
+          - Canonical Candidate `DEV-send-stream-0.1.0-b103` / Build103, source marker `e1cca160e9c4`; diagnostics `ChatGPTClient-Diagnostics-20260904-202930.json`, exact `sha256:{runtime_sha}`, 405144 bytes, iPhone / iOS17.0 / Release.
+          - The tested Native Send produced exactly one `coveredExecutor.requested`, one `submitResult`, one `sendObserved`, and one `sendResponse`. Send acceptance was explicit HTTP200 `text/event-stream` at `20:26:24Z`; there was no second protected Send anywhere in the export.
+          - The b103 probe fired at `20:28:23Z` while generation `1` remained active. In the same second Runtime recorded `webProcess terminated mode=client_send_or_idle`, `acceptedClientWebProcessRecovery state=handoff_requested policy=no_resend_same_generation`, executor release, and `acceptedClientRecovery.started trigger=web_process_terminated responseGeneration=1`.
+          - There was no `willResignActive`, `didEnterBackground`, `willEnterForeground`, or `didBecomeActive` event after the kill. Recovery therefore required no lifecycle nudge.
+          - The fresh observer returned HTTP200 `IS_STREAMING` at `20:28:26Z`, an external snapshot at `20:28:27Z` with the exact pre-kill continuity point `reasoningCharacters=884 / toolCount=21 / responseGeneration=1`, and `/resume` HTTP200 `text/event-stream` at `20:28:32Z`.
+          - Every post-kill event carrying a response generation used generation `1`. The same generation advanced to `reasoningCharacters=1768`, `toolCount=24`, `finalCharacters=7649`, then natural `terminal phase=completed` at `20:29:26Z`.
+          - Automatic authoritative reconcile immediately followed: one Detail HTTP200 changed authoritative visible messages `19 -> 21`; `liveResponse.reconciled responseGeneration=1` and `authoritativeReconcile.completed liveSnapshotCleared=true` occurred at `20:29:28Z`.
+          - Therefore b103 accepted-client hard-Web recovery is **Human Runtime Positive** for the tested foreground iPhone/iOS17 path: explicit accepted Send survives hard WebContent death, the same Repository generation automatically reattaches without resend or lifecycle nudge, live reasoning/tools/final continue, and terminal authoritative convergence clears the live projection.
+
+          b104 allocation / minimal next product action:
+
+          - Allocate and permanently reserve `DEV-send-stream-0.1.0-b104` / `0.1.0 (104)`. b104 is the first normal candidate after the deterministic b102/b103 kill experiment; Stable/Frozen remains No.
+          - Preserve the exact b103 accepted-client recovery logic in `RootViewController.swift` unchanged.
+          - Remove only the test instrumentation: delete `CoveredWebProcessKillProbe.swift`, remove its AppDelegate installer and Xcode file/build membership, then advance Build/Candidate 103 -> 104.
+          - Do not retain `_killWebContentProcessAndResetState`, the 120-second timer, swizzling or any probe-only behavior in b104. Do not add replacement timers, retries, polling, watchdogs, resend, challenge replay, guessed Native resume or a second response owner.
+          - Human Runtime for b104 should be an ordinary no-probe Send regression, not another forced-kill test. Hard-death recovery mechanism itself is already Runtime Positive on exact b103.
+
+          Resume/conflict guard before b104 product write:
+
+          - Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains open/unmerged/mergeable at pre-stage head `964143043fa12e7902008bc6ef57a98e8c658393`; base `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+          - Parallel PR #35 / `DEV-official-sync-reload` remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, research-only, with no product/Candidate conflict.
+          - `BUILD_TEST_INDEX.md` contains no b104 before this allocation.
+
+          Batch recovery point:
+
+          - batch A in this staging run: record this b103 Runtime result + b104 allocation in checkpoint/index and push it before product changes;
+          - batch B: remove only the b103 kill probe, advance Build/Candidate to b104, run exact-scope audit + Simulator compile, then commit/push product;
+          - after batch B, formal packaging must bind `ios-foundation.yml` to the exact b104 product commit, then Push/PR CI + canonical Artifact/package verification must complete before Human Runtime;
+          - recovery must not alter b103 canonical product/package/Artifact, PR #35, accepted-client recovery logic, TD-029 one-Send ownership, or earlier reserved Candidate identities.
+
+          **Next exact action:** complete batch B only: remove the diagnostic kill probe and advance Build/Candidate to b104 without touching accepted-client recovery; exact-scope audit + Simulator compile before product commit.
+
+          '''
+              checkpoint.write_text(section + text)
+
+          index = Path('docs/project/BUILD_TEST_INDEX.md')
+          lines = index.read_text().splitlines()
+          b103 = f'| `DEV-send-stream-0.1.0-b103` | `DEV-send-stream` | `0.1.0 (103)` | accepted-client hard-Web recovery product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; package `e1cca160e9c466ab98a2aeffc038e94f58335cab`; PR #29 | corrected staging `33913972639/101156743875` exact three-product-file scope + Simulator passed; Push `33914210593/101157497020` passed; PR `33914214638/101157509705` passed; canonical Artifact `9952548424`; ZIP `27fc23f1cb48d585ab3ffc0b181ec0dffafc42ccb3069fd72cbf5a0ba647f77a`; IPA `f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3`; b103/source/iOS14/[1,2]/arm64 verified | Runtime `sha256:{runtime_sha}` decisive: one HTTP200 SSE accepted protected Send; forced WebContent death triggered same-generation no-resend handoff with no lifecycle nudge; fresh observer returned `IS_STREAMING`, matching snapshot and HTTP200 SSE resume; generation 1 reached terminal with reasoning 1768 / tools 24 / final 7649, then authoritative Detail `19->21` reconciled and cleared live state; exactly one protected Send | **Accepted-client hard-Web recovery Runtime Positive for tested foreground iPhone/iOS17 path / diagnostic kill probe must not ship in normal candidate / Stable-Frozen No; permanently reserved** |'
+          replaced = False
+          for i, line in enumerate(lines):
+              if line.startswith('| `DEV-send-stream-0.1.0-b103` |'):
+                  lines[i] = b103
+                  replaced = True
+                  break
+          if not replaced:
+              raise SystemExit('b103 row missing')
+          table_header = '|---|---|---|---|---|---|---|'
+          header_i = lines.index(table_header)
+          b104 = '| `DEV-send-stream-0.1.0-b104` | `DEV-send-stream` | `0.1.0 (104)` | allocated from b103 Runtime Positive; product pending; PR #29 | b103 Runtime diagnostics sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51; exact product/CI/Artifact pending | Product direction fixed: remove only b103 deterministic kill instrumentation; preserve accepted-client same-generation recovery unchanged; ordinary no-probe Send Runtime pending | **Allocated / product pending / Runtime pending / Stable-Frozen No; permanently reserved** |'
+          lines.insert(header_i + 1, b104)
+          index.write_text('\n'.join(lines) + '\n')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md docs/project/BUILD_TEST_INDEX.md
+          git commit -m "docs: record b103 runtime and allocate b104"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Remove diagnostic probe and advance b104
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          pbx = Path('ChatGPTClient.xcodeproj/project.pbxproj')
+          text = pbx.read_text()
+          removals = [
+              '\t\tA00000000000000000000015 /* CoveredWebProcessKillProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* CoveredWebProcessKillProbe.swift */; };\n',
+              '\t\tB00000000000000000000017 /* CoveredWebProcessKillProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoveredWebProcessKillProbe.swift; sourceTree = "<group>"; };\n',
+              '\t\t\t\tB00000000000000000000017 /* CoveredWebProcessKillProbe.swift */,\n',
+              '\t\t\t\tA00000000000000000000015 /* CoveredWebProcessKillProbe.swift in Sources */,\n',
+          ]
+          for old in removals:
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected one pbx probe entry: {old!r}')
+              text = text.replace(old, '')
+          if text.count('CURRENT_PROJECT_VERSION = 103;') != 2:
+              raise SystemExit('unexpected Build103 count')
+          if text.count('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b103";') != 2:
+              raise SystemExit('unexpected b103 candidate count')
+          text = text.replace('CURRENT_PROJECT_VERSION = 103;', 'CURRENT_PROJECT_VERSION = 104;')
+          text = text.replace('DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b103";', 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b104";')
+          pbx.write_text(text)
+
+          app = Path('ChatGPTClient/AppDelegate.swift')
+          app_text = app.read_text()
+          old = '        CoveredWebProcessKillProbe.install()\n'
+          if app_text.count(old) != 1:
+              raise SystemExit('probe installer not unique')
+          app.write_text(app_text.replace(old, ''))
+
+          Path('ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift').unlink()
+          PY
+          test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient/AppDelegate.swift
+          ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b104";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
+          grep -q 'policy.*no_resend_same_generation' ChatGPTClient/RootViewController.swift
+          test "$(git diff --name-only HEAD | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/AppDelegate.swift ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift | sort)"
+          git diff --check
+
+      - name: Compile b104 on Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b104 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/AppDelegate.swift ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          git commit -m "feat: remove diagnostic WebContent kill probe for b104"
+          git push origin HEAD:dev/send-stream-20260829
+          echo "B104_PRODUCT_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report product identity
+        shell: bash
+        run: |
+          echo "b104 product commit: $B104_PRODUCT_COMMIT"

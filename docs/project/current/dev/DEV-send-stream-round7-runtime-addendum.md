@@ -1,3 +1,13 @@
+## b103 package-evidence batch recovery point — 2026-09-05
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29; canonical product `d514e9a5bde01bf3243d81016bf8cbda533fd5bf`; canonical package source `e1cca160e9c466ab98a2aeffc038e94f58335cab`; Candidate `DEV-send-stream-0.1.0-b103` / Build103.
+- Canonical Push `33914210593 / 101157497020` and PR `33914214638 / 101157509705` are success. Canonical Push Artifact `9952548424`; ZIP `sha256:27fc23f1cb48d585ab3ffc0b181ec0dffafc42ccb3069fd72cbf5a0ba647f77a`; IPA `sha256:f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3` independently matches sidecar and package metadata.
+- Intended write batches: (A) this checkpoint recovery point; (B) update this checkpoint plus BUILD_TEST_INDEX / PROJECT_PROFILE / PROJECT_STATE / MODULE_STATUS / TECHNICAL_DECISIONS with b102 Runtime + b103 package evidence; (C) update PR #29 metadata after GitHub state is re-read.
+- Confirmed before batch A: product/package/CI/Artifact/package identity are verified; main remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`; parallel PR #35 remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142` with no product/candidate conflict.
+- Recovery must not alter b103 product/package identity, rebuild/repackage the canonical Artifact, allocate b104, touch PR #35, or rewrite earlier reserved Candidate identities.
+
+**Next exact action:** finish docs batch B only, verify branch state, then update PR #29 metadata as batch C and hand canonical b103 IPA to Human Runtime.
+
 ## b102 Human Runtime decisive + b103 accepted-client hard-Web recovery allocation — 2026-09-05
 
 Exact b102 Human Runtime evidence:

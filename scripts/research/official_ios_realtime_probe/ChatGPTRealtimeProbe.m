@@ -620,11 +620,8 @@ static BOOL RPTShouldObserveTaskURL(NSURL *url) {
     return RPTShouldObserveURL(url);
 }
 
-static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task, id value) {
-    if (!task || !value || objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey)) return;
-    NSString *className = NSStringFromClass(object_getClass(value)) ?: @"";
-    if (![className.lowercaseString containsString:@"dispatch_data"]) return;
-    dispatch_data_t dispatchData = (__bridge dispatch_data_t)value;
+static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task, dispatch_data_t dispatchData) {
+    if (!task || !dispatchData || objc_getAssociatedObject(task, &RPTDetailAsyncStatusLoggedKey)) return;
     dispatch_data_apply(dispatchData, ^bool(__unused dispatch_data_t region, __unused size_t offset, const void *buffer, size_t size) {
         if (!buffer || size == 0) return true;
         NSData *chunk = [NSData dataWithBytesNoCopy:(void *)buffer length:size freeWhenDone:NO];
@@ -633,11 +630,11 @@ static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task,
     });
 }
 
-static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, id dispatchData, id completionHandler) {
+static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, dispatch_data_t dispatchData, id completionHandler) {
     RPTObserveConversationDetailDispatchData((NSURLSessionDataTask *)self, dispatchData);
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return;
-    void (*function)(id, SEL, id, id) = (void *)original;
+    void (*function)(id, SEL, dispatch_data_t, id) = (void *)original;
     function(self, _cmd, dispatchData, completionHandler);
 }
 

@@ -1,4 +1,4 @@
-name: Stage b100 Foreground Discovery
+name: Record b99 Runtime and b100 Package Evidence
 
 on:
   push:
@@ -11,8 +11,8 @@ permissions:
   contents: write
 
 jobs:
-  stage:
-    runs-on: macos-15
+  record:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout guarded branch
         uses: actions/checkout@v4
@@ -20,116 +20,130 @@ jobs:
           ref: dev/send-stream-20260829
           fetch-depth: 0
 
-      - name: Guard exact b100 baseline
+      - name: Guard exact b100 package baseline
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "a5d92e860993d0c69a014a640f090f40962c8500"
-          grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'guard let conversationID = repository.selectedConversationID, let snapshot = repository.liveResponse(for: conversationID), snapshot.phase.isActive, snapshot.promptText.isEmpty else { return }' ChatGPTClient/RootViewController.swift
-          grep -q 'private var liveResponsePresentationUpdateScheduled = false' ChatGPTClient/Conversation/ConversationFeature.swift
+          test "$(git rev-parse HEAD^)" = "e88a50ad9c2098449b43fb0fce2c441a50cd20ac"
+          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
+          grep -q 'liveResponsePresentationUpdateScheduled' ChatGPTClient/Conversation/ConversationFeature.swift
 
-      - name: Apply exact b100 product delta
+      - name: Record durable evidence
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
 
-          project = Path('ChatGPTClient.xcodeproj/project.pbxproj')
-          text = project.read_text()
-          old_build = 'CURRENT_PROJECT_VERSION = 99;'
-          old_candidate = 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";'
-          if text.count(old_build) != 2 or text.count(old_candidate) != 2:
-              raise SystemExit('unexpected b99 project identity count')
-          text = text.replace(old_build, 'CURRENT_PROJECT_VERSION = 100;')
-          text = text.replace(old_candidate, 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";')
-          project.write_text(text)
+          def prepend(path, marker, block):
+              p = Path(path)
+              text = p.read_text()
+              if marker in text:
+                  return
+              p.write_text(block.rstrip() + '\n\n' + text)
 
-          source = Path('ChatGPTClient/RootViewController.swift')
-          text = source.read_text()
-          start_marker = '    @objc private func applicationWillEnterForeground(_ notification: Notification) {\n'
-          end_marker = '    func splitViewController(_ svc: UISplitViewController, topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {\n'
-          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
-              raise SystemExit('unexpected foreground function markers')
-          start = text.index(start_marker)
-          end = text.index(end_marker, start)
-          new_lines = [
-              '    @objc private func applicationWillEnterForeground(_ notification: Notification) {',
-              '        guard let conversationID = repository.selectedConversationID else { return }',
-              '        let snapshot = repository.liveResponse(for: conversationID)',
-              '        if let snapshot, snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }',
-              '        let hadActiveExternalResponse = snapshot?.phase.isActive == true && snapshot?.promptText.isEmpty == true',
-              '        let previousLatestUserID = repository.selectedConversation?.messages.last(where: { $0.role == .user })?.id',
-              '        if repository.detailOperationSnapshot(for: conversationID) == nil {',
-              '            diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.requested" : "foregroundConversationDiscovery.requested", fields: repository.diagnosticsFields(for: conversationID))',
-              '            repository.syncLatestMessages(id: conversationID) { [weak self] result in',
-              '                guard let self else { return }',
-              '                switch result {',
-              '                case .success(let detail):',
-              '                    let latestUserID = detail.messages.last(where: { $0.role == .user })?.id',
-              '                    let latestUserChanged = latestUserID != nil && latestUserID != previousLatestUserID',
-              '                    let currentSnapshot = self.repository.liveResponse(for: conversationID)',
-              '                    let activeExternalAfterSync = currentSnapshot?.phase.isActive == true && currentSnapshot?.promptText.isEmpty == true',
-              '                    let shouldRearmDiscoveredRemoteTurn = !hadActiveExternalResponse && (activeExternalAfterSync || (latestUserChanged && detail.messages.last?.role == .user))',
-              '                    var fields = self.repository.diagnosticsFields(for: conversationID)',
-              '                    fields["visibleMessageCount"] = String(detail.messages.count)',
-              '                    fields["liveResponseActive"] = self.repository.isLiveResponseActive(for: conversationID) ? "true" : "false"',
-              '                    fields["latestUserChanged"] = latestUserChanged ? "true" : "false"',
-              '                    fields["activeExternalAfterSync"] = activeExternalAfterSync ? "true" : "false"',
-              '                    fields["rearmDiscoveredRemoteTurn"] = shouldRearmDiscoveredRemoteTurn ? "true" : "false"',
-              '                    self.diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.completed" : "foregroundConversationDiscovery.completed", fields: fields)',
-              '                    if self.repository.selectedConversationID == conversationID { self.detailViewController.showConversation(id: conversationID) }',
-              '                    if hadActiveExternalResponse, !self.repository.isLiveResponseActive(for: conversationID), let executor = self.sendExecutors[conversationID] { self.releaseExecutor(for: conversationID, expected: executor) }',
-              '                    if shouldRearmDiscoveredRemoteTurn, self.repository.selectedConversationID == conversationID { self.observeExternalResponseIfNeeded(conversationID: conversationID, forcePageReload: true) }',
-              '                case .failure(let error):',
-              '                    self.diagnostics.error(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.failed" : "foregroundConversationDiscovery.failed", error: error, fields: self.repository.diagnosticsFields(for: conversationID))',
-              '                }',
-              '                self.updateLivePresentation()',
-              '            }',
-              '        } else {',
-              '            diagnostics.info(category: "conversation", name: hadActiveExternalResponse ? "foregroundExternalDetailReconcile.skipped" : "foregroundConversationDiscovery.skipped", fields: ["reason": "detail_operation_in_flight"])',
-              '        }',
-              '        if hadActiveExternalResponse, let sendExecutor = sendExecutors[conversationID] {',
-              '            diagnostics.info(category: "webSend", name: "foregroundExternalRebootstrap.requested", fields: repository.diagnosticsFields(for: conversationID))',
-              '            sendExecutor.rebootstrapExternalObservationPageOnForeground()',
-              '        }',
-              '    }',
-              '',
-          ]
-          source.write_text(text[:start] + '\n'.join(new_lines) + text[end:])
+          b100_summary = '''## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05
+
+- b99 Human Runtime `sha256:4a0d3925a4abf6ef24dc6743f9efb63a4dffcd049f3e41eb7a547f2b1d33d271` proves two distinct foreground-return cases. A known-active external response survived ~7m32s background and automatically reconciled authoritative Detail `5 -> 6`; later, after that response had completed and its covered executor/live snapshot were released, ~12m54s background allowed server state to advance but foreground return performed no discovery. Manual Sync immediately recovered authoritative Detail `6 -> 8`.
+- Therefore b99 is Runtime Partial: known-active foreground convergence Positive; dormant/late remote-change automatic discovery Negative; b99 backlog coalescing Unexercised/Inconclusive in this sample; b98 hard WebContent termination recovery still Unexercised/Unverified.
+- b100 removes only the dormant foreground discovery precondition. On foreground with a selected conversation and no client-owned active response, Root issues exactly one existing authoritative `ConversationRepository.syncLatestMessages` if no Detail operation is in flight. Existing active-external b97 reconcile/rebootstrap remains unchanged.
+- If that one-shot Detail discovers a new latest remote user turn that still ends in `.user`, or Detail itself restores an active external projection, Root reuses the existing covered observer with one force page reload. If the final assistant is already materialized, Detail alone is sufficient. No polling, timer, retry, watchdog, background heartbeat, duplicate Send, guessed `/resume`, WebSocket-body authority, challenge replay or second response store is added.
+- b100 exact product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; canonical package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; corrected guarded staging `33895020559/101095508915`; initial zero-job YAML parse failure `33894741044` is invalid evidence; Push `33895244146/101096229135` and PR `33895249810/101096247432` passed.
+- Canonical Push Artifact `9945483725`; ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`; IPA `ChatGPTClient-0.1.0-b100-dev-send-stream.ipa`, `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`. Independent package inspection confirms bundle `com.whitesharkssw.chatgptclient`, `0.1.0 (100)`, Candidate b100, source `e88a50ad9c20`, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, Mach-O arm64.
+- Evidence ladder: **b99 Runtime Partial; b100 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Human Runtime pending / Stable-Frozen No.**'''
+
+          prepend('docs/project/PROJECT_STATE.md', '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', b100_summary)
+          prepend('docs/project/PROJECT_PROFILE.md', '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', b100_summary)
+          prepend('docs/project/MODULE_STATUS.md', '## DEV-send-stream b100 foreground dormant-discovery override — 2026-09-05', b100_summary)
+
+          decision = '''## DEV-send-stream b100 lifecycle-triggered dormant discovery decision — 2026-09-05
+
+- b99 Runtime proves the selected conversation can change remotely while the client has neither an active external live snapshot nor a covered executor. Current foreground logic then returns without issuing any authoritative read; manual one-shot Detail immediately recovers the change.
+- Authorize exactly one existing authoritative `ConversationRepository.syncLatestMessages` on foreground entry for the selected conversation when there is no active client-owned response and no Detail operation already in flight. This is lifecycle-triggered discovery, not polling.
+- Preserve b97 behavior for a pre-existing active external response. For a dormant-discovery result, rearm the existing covered observer only when the authoritative Detail proves a newly changed latest user whose visible tail still ends in `.user`, or Detail itself restores an active external projection. A materialized final assistant requires no observer.
+- Do not add cadence, retry, watchdog, background heartbeat, duplicate Send, guessed resume/offset, WebSocket-body authority, challenge replay, second response cache or second response owner.
+- Exact b100 product/package: `70c7dc052865ef80ca7bdec083d7621c1a297eab` / `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; Artifact `9945483725`; IPA `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`; Human Runtime pending.'''
+          prepend('docs/project/TECHNICAL_DECISIONS.md', '## DEV-send-stream b100 lifecycle-triggered dormant discovery decision — 2026-09-05', decision)
+
+          rule = '''## Foreground dormant cross-platform discovery — b100 2026-09-05
+
+- Foreground recovery must not require a pre-existing external live snapshot. When a conversation is selected, no client-owned response is active, and no Detail operation is in flight, one foreground lifecycle transition may issue exactly one existing authoritative `ConversationRepository.syncLatestMessages`.
+- This request is a one-shot discovery/reconciliation action only. It must not schedule itself again, poll, retry, keep the app alive in background, or create another response store.
+- If authoritative Detail already materializes the final assistant, use that server state directly. Rearm the existing covered observer only when Detail proves a new latest remote user turn still ending in `.user`, or restores an active external live projection.
+- A client-owned active protected Send is excluded from this foreground discovery and remains TD-029 covered-Web owned. Never resend/regenerate automatically.
+- b99 UI event coalescing, b98 hard WebContent recovery, b97 active-external foreground reconcile, Sync/Reload semantics and `ConversationRepository` authority remain unchanged.'''
+          prepend('docs/project/PROJECT_SPECIFIC_RULES.md', '## Foreground dormant cross-platform discovery — b100 2026-09-05', rule)
+
+          checkpoint = '''## b100 foreground dormant discovery — package-ready 2026-09-05
+
+- Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`, permanently reserved.
+- Exact product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; product delta is exactly `ChatGPTClient.xcodeproj/project.pbxproj` + `ChatGPTClient/RootViewController.swift`.
+- Exact canonical package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`.
+- Initial staging `33894741044` failed at YAML parsing with zero jobs/product writes and is invalid evidence. Corrected guarded staging `33895020559/101095508915` passed baseline guard, exact two-product-file scope, `git diff --check`, Debug iphonesimulator compile and product commit.
+- Formal Push `33895244146/101096229135` and PR `33895249810/101096247432` both passed.
+- Canonical Push Artifact `9945483725`, ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`.
+- Canonical IPA `ChatGPTClient-0.1.0-b100-dev-send-stream.ipa`, `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`.
+- Independent inspection: `com.whitesharkssw.chatgptclient`, `0.1.0 (100)`, Candidate b100, source `e88a50ad9c20`, iOS14+, `[1,2]`, arm64.
+- b100 adds one foreground authoritative discovery when no client-owned response is active, without requiring a pre-existing external snapshot. A newly discovered unfinished remote user turn may rearm the existing covered observer once; a materialized final assistant needs only Detail. No polling/timer/retry/watchdog/background heartbeat/resend/second authority.
+- b99 exact Runtime remains Partial: known-active ~7m32s foreground convergence Positive; no-active-snapshot ~12m54s remote-change discovery Negative until manual Sync `6 -> 8`; b99 backlog UI coalescing not exercised by that sample; hard WebContent-death recovery still Unverified.
+
+Evidence ladder: **b99 Runtime Partial / b100 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Human Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** Human Runtime with canonical b100 only. Keep a selected completed conversation with no active local/external response, background the app, create a new turn on another platform while it remains backgrounded, then return without Sync/Reload. Expect `foregroundConversationDiscovery.requested`, exactly one authoritative Detail, automatic final materialization if complete, or `rearmDiscoveredRemoteTurn=true` plus one covered observer rearm if still active. Also regression-check the existing `foregroundExternalDetailReconcile` path for a response already known active before background. Do not allocate b101 before this evidence unless a distinct proven defect appears.'''
+          prepend('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md', '## b100 foreground dormant discovery — package-ready 2026-09-05', checkpoint)
+
+          index = Path('docs/project/BUILD_TEST_INDEX.md')
+          text = index.read_text()
+          b100_marker = '| `DEV-send-stream-0.1.0-b100` |'
+          b100_row = '| `DEV-send-stream-0.1.0-b100` | `DEV-send-stream` | `0.1.0 (100)` | foreground dormant cross-platform discovery product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; exact package source `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; PR #29 | corrected guarded staging `33895020559/101095508915` exact two-product-file scope + `git diff --check` + Simulator passed; initial zero-job YAML parse failure `33894741044` invalid; Push `33895244146/101096229135` passed; PR `33895249810/101096247432` passed; canonical Artifact `9945483725`; ZIP `sha256:babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`; IPA `sha256:5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`; package verified Candidate b100 / source `e88a50ad9c20` / iOS14 / `[1,2]` / arm64 | Human Runtime pending: selected completed conversation may change remotely while app is backgrounded; foreground must issue one `foregroundConversationDiscovery` Detail without manual Sync and either materialize completed server state or rearm one covered observer for a newly discovered unfinished remote turn | **Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No; permanently reserved** |'
+          b99_row = '| `DEV-send-stream-0.1.0-b99` | `DEV-send-stream` | `0.1.0 (99)` | live-presentation main-queue coalescing product `ec05c284010cb0f2de066bd1cfc3968e07730779`; exact package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; PR #29 | corrected guarded staging `33890678564/101081289220` exact two-product-file scope + Simulator passed; initial no-job workflow parse failure `33890559324` invalid; Push `33890809275/101081720750` passed; PR `33890812345/101081730258` passed; canonical Artifact `9943798885`; ZIP `sha256:303bad6e93b8dfdc48ecd77559ed42d6a03058e5d6db676dcd24c65c537df8b5`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; package verified Candidate b99 / source `313c4c3bf2ac` / iOS14 / `[1,2]` / arm64 | Human Runtime `sha256:4a0d3925a4abf6ef24dc6743f9efb63a4dffcd049f3e41eb7a547f2b1d33d271`: known-active external response auto-reconciled `5->6` after ~7m32s background; after live snapshot/executor release, a later ~12m54s background interval produced no automatic foreground discovery and manual Sync recovered `6->8`; only 1 live event/presentation so b99 backlog-coalescing stress remains Inconclusive | **Runtime Partial / known-active foreground convergence Positive / dormant remote-change discovery Negative / b99 backlog coalescing Unexercised in this sample / superseded by b100 discovery gate / Stable-Frozen No; permanently reserved** |'
+          lines = text.splitlines()
+          out = []
+          inserted = b100_marker in text
+          replaced_b99 = False
+          for line in lines:
+              if line.startswith('| `DEV-send-stream-0.1.0-b99` |'):
+                  if not inserted:
+                      out.append(b100_row)
+                      inserted = True
+                  out.append(b99_row)
+                  replaced_b99 = True
+              else:
+                  out.append(line)
+          if not replaced_b99:
+              raise SystemExit('b99 index row not found')
+          index.write_text('\n'.join(out) + '\n')
           PY
 
-      - name: Validate exact product scope
+      - name: Validate docs-only scope
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
           python3 - <<'PY'
           import subprocess
-          changed = subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines()
-          expected = ['ChatGPTClient.xcodeproj/project.pbxproj', 'ChatGPTClient/RootViewController.swift']
-          if len(changed) != 2 or set(changed) != set(expected):
-              raise SystemExit(f'unexpected changed files: {changed}')
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          expected = {
+              'docs/project/BUILD_TEST_INDEX.md',
+              'docs/project/PROJECT_STATE.md',
+              'docs/project/PROJECT_PROFILE.md',
+              'docs/project/MODULE_STATUS.md',
+              'docs/project/TECHNICAL_DECISIONS.md',
+              'docs/project/PROJECT_SPECIFIC_RULES.md',
+              'docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md',
+          }
+          if changed != expected:
+              raise SystemExit(f'unexpected docs scope: {sorted(changed)}')
           PY
-          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
-          grep -q 'shouldRearmDiscoveredRemoteTurn' ChatGPTClient/RootViewController.swift
 
-      - name: Build Debug iphonesimulator
-        shell: bash
-        run: |
-          set -euo pipefail
-          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
-
-      - name: Commit exact b100 product delta
+      - name: Commit durable b100 evidence
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/RootViewController.swift
-          git commit -m "fix: discover remote changes on foreground for b100"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/PROJECT_STATE.md docs/project/PROJECT_PROFILE.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b99 runtime and b100 package evidence"
           git push origin HEAD:dev/send-stream-20260829

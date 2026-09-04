@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b104
-# Product source: 4aebb546f3be6b71de0a67f466e6557a357dbfdc
-# b103 accepted-client hard-Web recovery is Runtime Positive; b104 removes only deterministic kill instrumentation.
-name: iOS Accepted Client Web Recovery b104
+# Candidate: DEV-send-stream-0.1.0-b105
+# Product source: 6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59
+# b105 adds only the authoritative official-page new-chat first-Send handoff on top of b104 Runtime-positive recovery.
+name: iOS New Chat First Send b105
 
 on:
   push:
@@ -32,13 +32,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b104 identity and no-probe recovery boundary
+      - name: Guard b105 authoritative new-chat boundary
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b104";' ChatGPTClient.xcodeproj/project.pbxproj
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 105;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b105\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
           ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient/AppDelegate.swift
           ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
+          grep -q 'newConversation.authoritativeHandoff' ChatGPTClient/RootViewController.swift
+          grep -q 'new_conversation_identity_missing' ChatGPTClient/RootViewController.swift
+          grep -q 'func clearConversationSelection' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'func showNewConversationDraft' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
           grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
           grep -q 'preservedClientGeneration' ChatGPTClient/RootViewController.swift
@@ -62,7 +67,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b104
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b105
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

@@ -2126,6 +2126,10 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func liveResponseDidChange(id: String) {
     guard displayedConversationID == id, repository.selectedConversationID == id else { return }
+    if repository.liveResponse(for: id) == nil, let detail = repository.selectedConversation, detail.id == id, detail.currentNodeID != displayedCurrentNodeID || hasVisibleMessageChanges(from: messages, to: detail.messages) {
+        apply(detail)
+        return
+    }
     let boundsBefore = answerJumpScrollBounds()
     let wasAtPhysicalBottom = tableView.contentOffset.y >= boundsBefore.maximumY - 0.5
     rebuildLiveResponsePresentation(width: effectivePresentationWidth())

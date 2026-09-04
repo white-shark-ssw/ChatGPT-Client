@@ -1,14 +1,16 @@
 #import <UIKit/UIKit.h>
 
 static NSString * const RPTUIProbeLogName = @"ChatGPTRealtimeProbe.jsonl";
+static NSString * const RPTUIBatchLogName = @"ChatGPTRealtimeProbeBatch.jsonl";
 static const NSInteger RPTUIProbeButtonTag = 0x52505431;
 static const NSInteger RPTUIClearButtonTag = 0x52505432;
 
 extern void RPTClearLog(void);
+extern void RPTBatchClearLog(void);
 
-static NSString *RPTUILogPath(void) {
+static NSString *RPTUILogPath(NSString *name) {
     NSString *documents = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject ?: NSTemporaryDirectory();
-    return [documents stringByAppendingPathComponent:RPTUIProbeLogName];
+    return [documents stringByAppendingPathComponent:name];
 }
 
 static UIWindow *RPTUIActiveWindow(void) {
@@ -96,19 +98,21 @@ static UIViewController *RPTUITopViewController(UIViewController *controller) {
 }
 
 - (void)probeButtonTapped:(UIButton *)button {
-    NSString *path = RPTUILogPath();
     UIViewController *presenter = RPTUITopViewController(RPTUIActiveWindow().rootViewController);
     if (!presenter) return;
-
-    if (![NSFileManager.defaultManager fileExistsAtPath:path]) {
+    NSFileManager *manager = NSFileManager.defaultManager;
+    NSMutableArray<NSURL *> *urls = [NSMutableArray array];
+    NSString *basePath = RPTUILogPath(RPTUIProbeLogName);
+    NSString *batchPath = RPTUILogPath(RPTUIBatchLogName);
+    if ([manager fileExistsAtPath:basePath]) [urls addObject:[NSURL fileURLWithPath:basePath]];
+    if ([manager fileExistsAtPath:batchPath]) [urls addObject:[NSURL fileURLWithPath:batchPath]];
+    if (!urls.count) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Probe 日志尚未生成" message:@"请确认 Probe 已成功注入并完全重启 ChatGPT。" preferredStyle:UIAlertControllerStyleAlert];
         [alert addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
         [presenter presentViewController:alert animated:YES completion:nil];
         return;
     }
-
-    NSURL *url = [NSURL fileURLWithPath:path];
-    UIActivityViewController *activity = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
+    UIActivityViewController *activity = [[UIActivityViewController alloc] initWithActivityItems:urls applicationActivities:nil];
     activity.popoverPresentationController.sourceView = button;
     activity.popoverPresentationController.sourceRect = button.bounds;
     [presenter presentViewController:activity animated:YES completion:nil];
@@ -117,11 +121,12 @@ static UIViewController *RPTUITopViewController(UIViewController *controller) {
 - (void)clearButtonTapped:(UIButton *)button {
     UIViewController *presenter = RPTUITopViewController(RPTUIActiveWindow().rootViewController);
     if (!presenter) return;
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"清空 Probe 日志？" message:@"清空后只保留新的测试事件，便于下一轮对时。" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"清空 Probe 日志？" message:@"会同时清空基础日志和综合诊断日志，只保留下一轮测试事件。" preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
     [alert addAction:[UIAlertAction actionWithTitle:@"清空" style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *action) {
         RPTClearLog();
-        UIAlertController *done = [UIAlertController alertControllerWithTitle:@"已清空" message:@"下一轮 Probe 日志已从新的起点开始。" preferredStyle:UIAlertControllerStyleAlert];
+        RPTBatchClearLog();
+        UIAlertController *done = [UIAlertController alertControllerWithTitle:@"已清空" message:@"下一轮两份 Probe 日志都已从新的起点开始。" preferredStyle:UIAlertControllerStyleAlert];
         [done addAction:[UIAlertAction actionWithTitle:@"好" style:UIAlertActionStyleDefault handler:nil]];
         [presenter presentViewController:done animated:YES completion:nil];
     }]];

@@ -1,3 +1,9 @@
+## DEV-send-stream b104 ordinary/background-return Runtime Positive — 2026-09-05
+
+- `ConversationRepository` remains the sole Native response/content/reconciliation authority. Exact b104 Runtime `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` has one accepted protected Send, no test kill instrumentation, no duplicate Send, and one generation through terminal + authoritative Detail `21 -> 23` reconciliation.
+- After ~96s background, queued covered-response events were delivered on foreground and the completed live answer appeared before the one-shot authoritative sync completed. The subsequent loading indication is consistent with that automatic reconciliation, not a second generation or resend.
+- Background execution itself is not proven: there is a long interval with no response events while suspended. Module remains Active / Runtime Partial overall / Stable-Frozen No because separate background-execution and b101 `-1005` evidence boundaries remain open.
+
 ## DEV-send-stream b104 no-probe accepted-client recovery — 2026-09-05
 
 - `ConversationRepository` remains sole Native response/content/lifecycle authority. b103 Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` proves the accepted-client hard-Web handoff keeps one prompt-owned generation through death, fresh covered observation, resume/live terminal and authoritative reconcile with no second protected Send.

@@ -1,3 +1,10 @@
+## DEV-send-stream b104 background-return Runtime Positive — 2026-09-05
+
+- Exact b104 diagnostics `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216` closes the normal no-probe Send regression as Runtime Positive: one accepted HTTP200 SSE Send, no kill probe, no duplicate Send, same generation through terminal, then automatic authoritative Detail `21 -> 23` and live-state clear.
+- The app entered background for ~96s. Most response events were not processed until the foreground timestamp, where 123 queued live events including 94 final deltas arrived immediately before terminal. This supports foreground backlog replay + authoritative convergence, not a claim of continuous WebKit execution while iOS was suspended.
+- User-visible sequence “answer already visible, then loading” matches this architecture: queued live content is presented first; terminal immediately starts one authoritative Detail sync which confirms/replaces it with server-backed state about 2.25s later.
+- No product/b105 change is justified from this successful sample. Stable-Frozen remains No because broader unresolved/unexercised gates remain separate.
+
 ## DEV-send-stream b104 normal no-probe recovery package ready — 2026-09-05
 
 - b103 Human Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` closes the accepted-client hard-Web foreground recovery gate as Runtime Positive: exactly one HTTP200 SSE accepted protected Send survived hard WebContent death, the same Repository generation automatically attached one fresh covered observer without a lifecycle nudge or resend, page-owned status/snapshot/resume continued, and terminal authoritative Detail converged `19 -> 21` and cleared live state.

@@ -1,3 +1,25 @@
+## b104 background-return ordinary Send Runtime Positive — 2026-09-05
+
+Exact Human Runtime evidence:
+
+- Canonical Candidate `DEV-send-stream-0.1.0-b104` / Build104 / source marker `08fab73ab9a6`; diagnostics `ChatGPTClient-Diagnostics-20260904-205521.json`, exact `sha256:3789dc478c0bdf46c0f2ca2f572ebc618b4f53299e39fe68086e6dc936387216`, 136663 bytes, iPhone / iOS17.0 / Release.
+- No `coveredExecutor.killProbe` event exists. The run contains exactly one `coveredExecutor.requested`, one `submitResult`, one `sendObserved`, and one `sendResponse`; protected Send was explicitly accepted as HTTP200 `text/event-stream` and there was no duplicate Send.
+- The response was active on `responseGeneration=1` before `willResignActive` at `20:53:33Z` and `didEnterBackground` at `20:53:39Z`. One final background-side tool event was logged at `20:53:41Z`; then there are no response events until foreground at `20:55:15Z`, so this sample does not prove continuous app/WebKit execution while iOS was suspended.
+- On `willEnterForeground` / `didBecomeActive` at `20:55:15Z`, the same generation immediately delivered a 123-event backlog in that timestamp: remaining tool/reasoning events, 94 final deltas, `finalCharacters=3333`, then `terminal phase=completed`. This explains why the completed answer was already visible immediately on return before the authoritative sync finished.
+- Terminal automatically emitted `authoritativeReconcile.requested` and exactly one `latestSync.start` in the same second. The authoritative Detail GET returned HTTP200 at `20:55:17Z`, changed visible messages `21 -> 23` (`addedVisibleMessageCount=2`), then `liveResponse.reconciled responseGeneration=1` and `authoritativeReconcile.completed liveSnapshotCleared=true` completed automatically.
+- Therefore the user's observed post-return loading indicator is consistent with the automatic authoritative Detail reconciliation that follows the already-present live/backlog answer. The live backlog supplies immediate visible content; the one-shot Native Detail sync then replaces/confirms it with server-backed authoritative state.
+- A covered observer was recreated after reconciliation and its status returned HTTP200 `COMPLETE` at `20:55:20Z`. This is a redundant post-return observation in this sample, but it caused no second Send and no incorrect content/state result; do not allocate b105 or change product solely from this observation without a demonstrated user-impacting defect.
+
+Evidence boundary:
+
+- b104 ordinary no-probe Send regression is **Human Runtime Positive**, including foreground return after ~96s background and automatic terminal authoritative convergence.
+- This result does not prove true response execution while the iOS app is suspended; the absence of response events during most of the background interval is consistent with suspension and later backlog delivery on foreground.
+- b103 hard-Web accepted-client recovery remains separately Runtime Positive. The b101 exact `-1005` recovery remains Unexercised. Stable-Frozen remains No.
+
+Evidence ladder: **b103 hard-Web recovery Runtime Positive / b104 ordinary no-probe + background-return Runtime Positive / CI+Artifact/package identity already verified / Stable-Frozen No.**
+
+**Next exact action:** no product change and no b105 allocation from this sample. Preserve canonical b104. If a future Runtime sample shows the post-return loading/redundant observer causes a concrete UX or correctness failure, scope that exact defect from new evidence; otherwise keep the current automatic authoritative convergence path.
+
 ## b104 normal no-probe accepted-client recovery — package ready 2026-09-05
 
 Exact Runtime / package evidence:

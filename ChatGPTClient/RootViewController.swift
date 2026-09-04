@@ -207,7 +207,17 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         manualSyncFocusProbePending = false
-        diagnostics.error(category: "webSend", name: "coveredExecutor.webProcess", fields: ["state": "terminated"])
+        diagnostics.error(category: "webSend", name: "coveredExecutor.webProcess", fields: ["state": "terminated", "mode": observingExternalResponse ? "external_observation" : "client_send_or_idle"])
+        if observingExternalResponse {
+            composerReadyConversationID = nil
+            if UIApplication.shared.applicationState == .active {
+                diagnostics.warning(category: "webSend", name: "coveredExecutor.externalWebProcessRecovery", fields: ["state": "immediate_rebootstrap"])
+                rebootstrapExternalObservationPageOnForeground()
+            } else {
+                diagnostics.warning(category: "webSend", name: "coveredExecutor.externalWebProcessRecovery", fields: ["state": "deferred_to_foreground"])
+            }
+            return
+        }
         failCurrent("web_process_terminated")
     }
 

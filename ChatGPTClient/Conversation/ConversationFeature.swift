@@ -699,6 +699,41 @@ final class ConversationRepository {
         for completion in completions { completion(result) }
     }
 
+    private func recoverTransientSessionAfterNetworkConnectionLost(_ context: ConversationTransportContext, route: String, completion: @escaping (Result<ConversationTransportContext, Error>) -> Void) {
+        requireMainThread()
+        guard activeAccountScope == context.scope else {
+            completion(.failure(ConversationRepositoryError.accountContextChanged))
+            return
+        }
+        let retiredCurrent: Bool
+        if let transientSession, transientSession === context.session, transientSessionScope == context.scope {
+            transientSession.finishTasksAndInvalidate()
+            self.transientSession = nil
+            transientSessionScope = nil
+            retiredCurrent = true
+            diagnostics.warning(category: "conversation", name: "authTransport.retired", fields: ["route": route, "reason": "network_connection_lost_current_transient", "inFlightPolicy": "finish"])
+        } else {
+            retiredCurrent = false
+        }
+        diagnostics.info(category: "conversation", name: "authTransport.recoveryRequested", fields: ["route": route, "retiredCurrent": retiredCurrent ? "true" : "false"])
+        withTransientSession { [weak self] result in
+            guard let self else { return }
+            self.requireMainThread()
+            switch result {
+            case .success(let recoveredContext):
+                guard self.activeAccountScope == context.scope, recoveredContext.scope == context.scope else {
+                    completion(.failure(ConversationRepositoryError.accountContextChanged))
+                    return
+                }
+                self.diagnostics.info(category: "conversation", name: "authTransport.recoveryReady", fields: ["route": route])
+                completion(.success(recoveredContext))
+            case .failure(let error):
+                self.diagnostics.error(category: "conversation", name: "authTransport.recoveryFailed", error: error, fields: ["route": route])
+                completion(.failure(error))
+            }
+        }
+    }
+
     private func invalidateTransientSessionIfCurrent(_ context: ConversationTransportContext, httpStatus: Int, route: String) {
         requireMainThread()
         guard Self.isUnauthorizedStatus(httpStatus), let transientSession, transientSession === context.session, transientSessionScope == context.scope else { return }
@@ -706,6 +741,11 @@ final class ConversationRepository {
         self.transientSession = nil
         transientSessionScope = nil
         diagnostics.info(category: "conversation", name: "authTransport.retired", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient", "inFlightPolicy": "finish"])
+    }
+
+    private static func isNetworkConnectionLost(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorNetworkConnectionLost
     }
 
     private static func isUnauthorizedStatus(_ status: Int) -> Bool { status == 401 || status == 403 }
@@ -867,7 +907,7 @@ final class ConversationRepository {
         }
     }
 
-    private func requestConversationList(using context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+    private func requestConversationList(using context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, transportRecoveryAttempted: Bool = false, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         requireMainThread()
         let requestFields = ["method": "GET", "route": "conversation_list", "offset": "0", "limit": "28", "order": "updated", "operationGeneration": String(operationGeneration)]
         diagnostics.info(category: "conversation", name: "list.request", traceID: span.traceID, fields: requestFields)
@@ -876,7 +916,45 @@ final class ConversationRepository {
         context.session.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             if let error {
-                self.diagnostics.error(category: "conversation", name: "list.failed", traceID: span.traceID, error: error)
+                if !transportRecoveryAttempted && Self.isNetworkConnectionLost(error) {
+                    let recoveryFields = ["operationGeneration": String(operationGeneration), "route": "conversation_list", "state": "requested", "transportAttempt": "1"]
+                    self.diagnostics.warning(category: "conversation", name: "list.transportRecovery", traceID: span.traceID, fields: recoveryFields)
+                    DispatchQueue.main.async {
+                        self.requireMainThread()
+                        guard self.listOperationGeneration == operationGeneration else {
+                            var fields = recoveryFields
+                            fields["reason"] = "operation_superseded"
+                            span.end(status: "discarded", fields: fields)
+                            completion(.failure(ConversationRepositoryError.operationSuperseded))
+                            return
+                        }
+                        self.recoverTransientSessionAfterNetworkConnectionLost(context, route: "conversation_list") { result in
+                            self.requireMainThread()
+                            guard self.listOperationGeneration == operationGeneration else {
+                                var fields = recoveryFields
+                                fields["reason"] = "operation_superseded_after_recovery"
+                                span.end(status: "discarded", fields: fields)
+                                completion(.failure(ConversationRepositoryError.operationSuperseded))
+                                return
+                            }
+                            switch result {
+                            case .success(let recoveredContext):
+                                var fields = recoveryFields
+                                fields["state"] = "retrying"
+                                fields["transportAttempt"] = "2"
+                                self.diagnostics.info(category: "conversation", name: "list.transportRecovery", traceID: span.traceID, fields: fields)
+                                self.requestConversationList(using: recoveredContext, operationGeneration: operationGeneration, span: span, transportRecoveryAttempted: true, completion: completion)
+                            case .failure(let recoveryError):
+                                self.diagnostics.error(category: "conversation", name: "list.transportRecovery", traceID: span.traceID, error: recoveryError, fields: ["operationGeneration": String(operationGeneration), "route": "conversation_list", "state": "failed"])
+                                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "transport_recovery"], result: .failure(Self.normalizedTransportError(recoveryError)), completion: completion)
+                            }
+                        }
+                    }
+                    return
+                }
+                var failureFields = ["transportAttempt": transportRecoveryAttempted ? "2" : "1"]
+                if transportRecoveryAttempted { failureFields["transportRecoveryExhausted"] = "true" }
+                self.diagnostics.error(category: "conversation", name: "list.failed", traceID: span.traceID, error: error, fields: failureFields)
                 self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "network"], result: .failure(Self.normalizedTransportError(error)), completion: completion)
                 return
             }
@@ -1015,7 +1093,7 @@ final class ConversationRepository {
         return (reconciled, fields)
     }
 
-    private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan) {
+    private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan, transportRecoveryAttempted: Bool = false) {
         requireMainThread()
         let id = key.conversationID
         let detailURL = URL(string: "https://chatgpt.com/backend-api/conversation")!.appendingPathComponent(id)
@@ -1038,7 +1116,47 @@ final class ConversationRepository {
                     self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
                     return
                 }
-                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: callbackFields)
+                if !transportRecoveryAttempted && Self.isNetworkConnectionLost(error) {
+                    var recoveryFields = callbackFields
+                    recoveryFields["state"] = "requested"
+                    recoveryFields["transportAttempt"] = "1"
+                    self.diagnostics.warning(category: "conversation", name: "detail.transportRecovery", traceID: span.traceID, fields: recoveryFields)
+                    DispatchQueue.main.async {
+                        self.requireMainThread()
+                        guard self.detailOperations[key]?.generation == operationGeneration else {
+                            var fields = recoveryFields
+                            fields["reason"] = "operation_superseded"
+                            span.end(status: "discarded", fields: fields)
+                            return
+                        }
+                        self.recoverTransientSessionAfterNetworkConnectionLost(context, route: "conversation_detail") { result in
+                            self.requireMainThread()
+                            guard self.detailOperations[key]?.generation == operationGeneration else {
+                                var fields = recoveryFields
+                                fields["reason"] = "operation_superseded_after_recovery"
+                                span.end(status: "discarded", fields: fields)
+                                return
+                            }
+                            switch result {
+                            case .success(let recoveredContext):
+                                var fields = recoveryFields
+                                fields["state"] = "retrying"
+                                fields["transportAttempt"] = "2"
+                                self.diagnostics.info(category: "conversation", name: "detail.transportRecovery", traceID: span.traceID, fields: fields)
+                                self.requestConversationDetail(key: key, operationGeneration: operationGeneration, using: recoveredContext, span: span, transportRecoveryAttempted: true)
+                            case .failure(let recoveryError):
+                                self.diagnostics.error(category: "conversation", name: "detail.transportRecovery", traceID: span.traceID, error: recoveryError, fields: ["operationGeneration": String(operationGeneration), "route": "conversation_detail", "state": "failed"])
+                                span.end(status: "failed", fields: ["stage": "transport_recovery"])
+                                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(Self.normalizedTransportError(recoveryError)))
+                            }
+                        }
+                    }
+                    return
+                }
+                var failureFields = callbackFields
+                failureFields["transportAttempt"] = transportRecoveryAttempted ? "2" : "1"
+                if transportRecoveryAttempted { failureFields["transportRecoveryExhausted"] = "true" }
+                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: failureFields)
                 span.end(status: "failed", fields: ["stage": "network"])
                 self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(Self.normalizedTransportError(error)))
                 return

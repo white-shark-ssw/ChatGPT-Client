@@ -17,7 +17,7 @@ xcrun --sdk iphoneos clang \
   -framework UIKit \
   -o "$TARGET" \
   "$ROOT/ChatGPTRealtimeProbe.m" \
-  "$ROOT/ProbeBatchHooks.m" \
+  "$ROOT/ProbeBatchHooksSafe.m" \
   "$ROOT/ProbeExportUI.m" \
   "$ROOT/ProbeEnhancerChain.m" \
   -Wl,-install_name,@rpath/ChatGPTRealtimeProbe.dylib \

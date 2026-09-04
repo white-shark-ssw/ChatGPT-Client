@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b98
-# Product source: 2edd55febe2005071722ddcb9989151b427165d8
-name: iOS Hard WebContent Recovery b98
+# Candidate: DEV-send-stream-0.1.0-b99
+# Product source: ec05c284010cb0f2de066bd1cfc3968e07730779
+name: iOS Live Presentation Coalescing b99
 
 on:
   push:
@@ -31,10 +31,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b98 identity
+      - name: Guard b99 identity
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 98;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b98";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'liveResponsePresentationUpdateScheduled' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'applyLiveResponsePresentationChange' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
 
       - name: Toolchain
@@ -51,7 +53,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b98
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b99
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

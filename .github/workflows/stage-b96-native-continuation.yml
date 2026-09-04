@@ -1,0 +1,42 @@
+name: Stage b96 Native Continuation
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b96-native-continuation.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 1
+
+      - name: Apply exact b96 source patch
+        run: python3 scripts/staging/b96_native_continuation.py
+
+      - name: Validate staged diff
+        run: |
+          git diff --check
+          git status --short
+          test -f ChatGPTClient/Conversation/NativeConversationContinuation.swift
+          grep -q 'CURRENT_PROJECT_VERSION = 96;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DEV-send-stream-0.1.0-b96' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'conversation_async_status' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Commit guarded product batch
+        run: |
+          git config user.name "white-shark-ssw"
+          git config user.email "houstools@gmail.com"
+          git add -A
+          git commit -m "DEV-send-stream: native async-status continuation b96"
+          git push origin HEAD:dev/send-stream-20260829

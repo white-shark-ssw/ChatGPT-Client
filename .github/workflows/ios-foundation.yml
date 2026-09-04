@@ -1,6 +1,6 @@
-# Candidate: DEV-send-stream-0.1.0-b100
-# Product source: 70c7dc052865ef80ca7bdec083d7621c1a297eab
-name: iOS Foreground Conversation Discovery b100
+# Candidate: DEV-send-stream-0.1.0-b101
+# Product source: 54a9fa52a7b44a1b7418a39e4b0f7493989f999d
+name: iOS Native Read Transport Recovery b101
 
 on:
   push:
@@ -31,10 +31,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b100 identity
+      - name: Guard b101 identity and preserved send-stream invariants
         run: |
-          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CURRENT_PROJECT_VERSION = 101;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b101";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'network_connection_lost_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'transportRecoveryAttempted' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
           grep -q 'shouldRearmDiscoveredRemoteTurn' ChatGPTClient/RootViewController.swift
           grep -q 'liveResponsePresentationUpdateScheduled' ChatGPTClient/Conversation/ConversationFeature.swift
@@ -54,7 +56,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b100
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b101
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

@@ -25,94 +25,64 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           product = "9e50943de39dc304ab31904cbad8596d4ffddc14"
           package = "cd6268540e4f5a815829f26a713b10e8d1957239"
           ipa = "a635903898324bdf0e59cf8712a2ebd5924def0da591d555fb25d2f62dabc361"
           artifact_digest = "5ea65cfb07c1c15dfc939646bbe7a2600825ba3ca1dab9ed100803037df3bd67"
-
-          def prepend_after_title(path, marker, section):
+          def prepend_after_title(path, marker, lines):
               p = Path(path)
               text = p.read_text()
-              if marker in text:
-                  return
+              if marker in text: return
               first_nl = text.find("\n")
-              if first_nl < 0:
-                  raise SystemExit(f"missing title newline: {path}")
-              text = text[:first_nl + 1] + "\n" + section.rstrip() + "\n\n" + text[first_nl + 1:].lstrip("\n")
-              p.write_text(text)
-
+              if first_nl < 0: raise SystemExit(f"missing title newline: {path}")
+              section = "\n".join(lines)
+              p.write_text(text[:first_nl + 1] + "\n" + section + "\n\n" + text[first_nl + 1:].lstrip("\n"))
           index = Path("docs/project/BUILD_TEST_INDEX.md")
           text = index.read_text()
           if "DEV-send-stream-0.1.0-b96" not in text:
               divider = "|---|---|---|---|---|---|---|\n"
               pos = text.find(divider)
-              if pos < 0:
-                  raise SystemExit("candidate table divider not found")
+              if pos < 0: raise SystemExit("candidate table divider not found")
               pos += len(divider)
-              row = (
-                  "| `DEV-send-stream-0.1.0-b96` | `DEV-send-stream` | `0.1.0 (96)` | "
-                  f"Native async-status continuation product `{product}`; exact package source `{package}`; PR #29 | "
-                  "Push `33877378585/101037475567` passed; PR `33877383271/101037490825` passed; "
-                  f"canonical Artifact `9938422716`; Artifact ZIP `sha256:{artifact_digest}`; IPA `sha256:{ipa}`; "
-                  "independent package inspection: Candidate b96 / source `cd6268540e4f` / iOS14 / `[1,2]` / iphoneos / arm64 | "
-                  "Human Runtime pending: cross-platform active conversation must acquire exact authoritative `IS_STREAMING`, advance via Repository-owned Detail refresh, naturally stop on terminal/non-streaming status, and materialize final assistant without Web rearm/manual Sync | "
-                  "**Code written / Push+PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No; permanently reserved** |\n"
-              )
-              text = text[:pos] + row + text[pos:]
-              index.write_text(text)
-
-          prepend_after_title(
-              "docs/project/PROJECT_STATE.md",
+              row = f"| `DEV-send-stream-0.1.0-b96` | `DEV-send-stream` | `0.1.0 (96)` | Native async-status continuation product `{product}`; exact package source `{package}`; PR #29 | Push `33877378585/101037475567` passed; PR `33877383271/101037490825` passed; canonical Artifact `9938422716`; Artifact ZIP `sha256:{artifact_digest}`; IPA `sha256:{ipa}`; independent package inspection: Candidate b96 / source `cd6268540e4f` / iOS14 / `[1,2]` / iphoneos / arm64 | Human Runtime pending: cross-platform active conversation must acquire exact authoritative `IS_STREAMING`, advance via Repository-owned Detail refresh, naturally stop on terminal/non-streaming status, and materialize final assistant without Web rearm/manual Sync | **Code written / Push+PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No; permanently reserved** |\n"
+              index.write_text(text[:pos] + row + text[pos:])
+          prepend_after_title("docs/project/PROJECT_STATE.md", "## 2026-09-04 — b96 Native async-status continuation package ready", [
               "## 2026-09-04 — b96 Native async-status continuation package ready",
-              f"""## 2026-09-04 — b96 Native async-status continuation package ready
-
-- `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)` is permanently reserved. Exact product head `{product}`; exact package source `{package}`; PR #29 remains open/unmerged.
-- Native `ConversationRepository` now parses authoritative Detail `conversation_async_status` only for exact evidenced `IS_STREAMING` / `COMPLETE`. Exact `IS_STREAMING` may schedule the existing Conversation Detail GET at the current 10s candidate approximation; non-streaming/missing/unknown stops or does not start. Protected Send remains TD-029 Web-owned and client-owned responses take precedence.
-- Push CI `33877378585/101037475567` and PR CI `33877383271/101037490825` passed. Canonical Artifact `9938422716`; Artifact ZIP `sha256:{artifact_digest}`; IPA `sha256:{ipa}`; package identity independently verified as b96/source `cd6268540e4f`/iOS14/arm64.
-- Human Runtime remains Pending. This is not Stable/Frozen proof."""
-          )
-
-          prepend_after_title(
-              "docs/project/PROJECT_PROFILE.md",
+              "",
+              f"- `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)` is permanently reserved. Exact product head `{product}`; exact package source `{package}`; PR #29 remains open/unmerged.",
+              "- Native `ConversationRepository` now parses authoritative Detail `conversation_async_status` only for exact evidenced `IS_STREAMING` / `COMPLETE`. Exact `IS_STREAMING` may schedule the existing Conversation Detail GET at the current 10s candidate approximation; non-streaming/missing/unknown stops or does not start. Protected Send remains TD-029 Web-owned and client-owned responses take precedence.",
+              f"- Push CI `33877378585/101037475567` and PR CI `33877383271/101037490825` passed. Canonical Artifact `9938422716`; Artifact ZIP `sha256:{artifact_digest}`; IPA `sha256:{ipa}`; package identity independently verified as b96/source `cd6268540e4f`/iOS14/arm64.",
+              "- Human Runtime remains Pending. This is not Stable/Frozen proof."
+          ])
+          prepend_after_title("docs/project/PROJECT_PROFILE.md", "## Latest DEV-send-stream candidate override — b96 2026-09-04", [
               "## Latest DEV-send-stream candidate override — b96 2026-09-04",
-              f"""## Latest DEV-send-stream candidate override — b96 2026-09-04
-
-- Latest test candidate: `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)`; exact product `{product}`; package source `{package}`; canonical Artifact `9938422716`; IPA `sha256:{ipa}`; Human Runtime pending; Stable/Frozen No.
-- b96 is the first Native cross-platform continuation candidate gated by authoritative Conversation Detail `conversation_async_status`; it does not replace TD-029 protected Web Send."""
-          )
-
-          prepend_after_title(
-              "docs/project/MODULE_STATUS.md",
+              "",
+              f"- Latest test candidate: `DEV-send-stream-0.1.0-b96` / `0.1.0 (96)`; exact product `{product}`; package source `{package}`; canonical Artifact `9938422716`; IPA `sha256:{ipa}`; Human Runtime pending; Stable/Frozen No.",
+              "- b96 is the first Native cross-platform continuation candidate gated by authoritative Conversation Detail `conversation_async_status`; it does not replace TD-029 protected Web Send."
+          ])
+          prepend_after_title("docs/project/MODULE_STATUS.md", "## DEV-send-stream b96 Native continuation package-ready override — 2026-09-04", [
               "## DEV-send-stream b96 Native continuation package-ready override — 2026-09-04",
-              f"""## DEV-send-stream b96 Native continuation package-ready override — 2026-09-04
-
-- `ConversationRepository` remains sole Native conversation/content/response lifecycle authority. b96 adds one evidence-scoped external continuation loop only after authoritative Detail reports exact `IS_STREAMING`; exact `COMPLETE`/non-streaming terminates it, account reset cancels it, and client-owned response authority wins.
-- Exact product `{product}`; package source `{package}`; Push+PR CI passed; Artifact `9938422716`; IPA `sha256:{ipa}`; Human Runtime Pending; Stable/Frozen No.
-- Official-App private callback Probe ladder is retired for this gate because injected packages are Runtime unstable; terminal re-entry recovery in official app is Runtime Positive."""
-          )
-
-          prepend_after_title(
-              "docs/project/TECHNICAL_DECISIONS.md",
+              "",
+              "- `ConversationRepository` remains sole Native conversation/content/response lifecycle authority. b96 adds one evidence-scoped external continuation loop only after authoritative Detail reports exact `IS_STREAMING`; exact `COMPLETE`/non-streaming terminates it, account reset cancels it, and client-owned response authority wins.",
+              f"- Exact product `{product}`; package source `{package}`; Push+PR CI passed; Artifact `9938422716`; IPA `sha256:{ipa}`; Human Runtime Pending; Stable/Frozen No.",
+              "- Official-App private callback Probe ladder is retired for this gate because injected packages are Runtime unstable; terminal re-entry recovery in official app is Runtime Positive."
+          ])
+          prepend_after_title("docs/project/TECHNICAL_DECISIONS.md", "## DEV-send-stream b96 Native authoritative Detail continuation decision — 2026-09-04", [
               "## DEV-send-stream b96 Native authoritative Detail continuation decision — 2026-09-04",
-              """## DEV-send-stream b96 Native authoritative Detail continuation decision — 2026-09-04
-
-- Retire further private response-callback swizzling inside the official iOS app for the current late-join gate; repeated injected-package crashes make that research method observably destabilizing.
-- Accept one narrow Native continuation experiment in `ConversationRepository`: only an already-authoritative Conversation Detail response with exact `conversation_async_status=IS_STREAMING` may start/continue refresh of that same existing Detail route. Exact `COMPLETE` or any non-`IS_STREAMING` authoritative result terminates; missing/unknown does not start.
-- The 10-second b96 interval is a Runtime-backed candidate approximation from repeated official ~9-12s Detail requests plus static `default_interval` / `model_slug_intervals`; it is not asserted as the exact compiled official value and remains subject to Human Runtime validation.
-- This decision does not authorize idle/global polling, Native `/resume`, guessed offsets, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or a second response store. TD-029 protected Send remains unchanged."""
-          )
-
-          prepend_after_title(
-              "docs/project/PROJECT_SPECIFIC_RULES.md",
+              "",
+              "- Retire further private response-callback swizzling inside the official iOS app for the current late-join gate; repeated injected-package crashes make that research method observably destabilizing.",
+              "- Accept one narrow Native continuation experiment in `ConversationRepository`: only an already-authoritative Conversation Detail response with exact `conversation_async_status=IS_STREAMING` may start/continue refresh of that same existing Detail route. Exact `COMPLETE` or any non-`IS_STREAMING` authoritative result terminates; missing/unknown does not start.",
+              "- The 10-second b96 interval is a Runtime-backed candidate approximation from repeated official ~9-12s Detail requests plus static `default_interval` / `model_slug_intervals`; it is not asserted as the exact compiled official value and remains subject to Human Runtime validation.",
+              "- This decision does not authorize idle/global polling, Native `/resume`, guessed offsets, retry/watchdog/fallback, duplicate Send, WebSocket-body authority, challenge replay, or a second response store. TD-029 protected Send remains unchanged."
+          ])
+          prepend_after_title("docs/project/PROJECT_SPECIFIC_RULES.md", "## Native cross-platform Detail continuation exception — b96 2026-09-04", [
               "## Native cross-platform Detail continuation exception — b96 2026-09-04",
-              """## Native cross-platform Detail continuation exception — b96 2026-09-04
-
-- The prior general prohibition on Native polling remains in force except for this evidence-scoped b96 path: an authoritative `GET /backend-api/conversation/{id}` response that itself reports exact `conversation_async_status=IS_STREAMING` may schedule the next request of that same already-existing Detail route under the sole `ConversationRepository` authority.
-- Missing/unknown status must not start the loop. Any authoritative non-`IS_STREAMING` result stops it; exact `COMPLETE` is the expected evidenced terminal token. Client-owned response authority and account-scope reset terminate external Native continuation.
-- The current 10-second cadence is a test-candidate approximation, not a frozen service constant. Do not generalize it to idle/global polling, `/stream_status`, `/resume`, retries, watchdogs or fallback loops.
-- This exception is cross-platform/read continuation only. TD-029 covered official-Web protected Send/challenge ownership is unchanged."""
-          )
+              "",
+              "- The prior general prohibition on Native polling remains in force except for this evidence-scoped b96 path: an authoritative `GET /backend-api/conversation/{id}` response that itself reports exact `conversation_async_status=IS_STREAMING` may schedule the next request of that same already-existing Detail route under the sole `ConversationRepository` authority.",
+              "- Missing/unknown status must not start the loop. Any authoritative non-`IS_STREAMING` result stops it; exact `COMPLETE` is the expected evidenced terminal token. Client-owned response authority and account-scope reset terminate external Native continuation.",
+              "- The current 10-second cadence is a test-candidate approximation, not a frozen service constant. Do not generalize it to idle/global polling, `/stream_status`, `/resume`, retries, watchdogs or fallback loops.",
+              "- This exception is cross-platform/read continuation only. TD-029 covered official-Web protected Send/challenge ownership is unchanged."
+          ])
           PY
 
       - name: Validate durable evidence diff

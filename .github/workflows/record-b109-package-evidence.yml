@@ -52,7 +52,7 @@ jobs:
           grep -q '9974791883' docs/project/BUILD_TEST_INDEX.md
           grep -q '743e61fc4f20670d8a6cc5d5afd42f8942e40f2943abe1f9b23e4ca621b43956' docs/project/BUILD_TEST_INDEX.md
           grep -q '6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          grep -q 'b109 is diagnostic-only' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b109 does not claim a color fix' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
 
       - name: Commit durable evidence
         shell: bash

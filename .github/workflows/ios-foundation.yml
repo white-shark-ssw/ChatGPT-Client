@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b109
-# Product source: 11e7ec536b986c45811dc449cd2c4f6e442c28df
-# b109 is diagnostic-only: it records per-chunk assistant UILabel color state at willDisplay and preserves b108 rendering plus inherited Send/SSE/recovery behavior.
-name: iOS Chunk Color Diagnostics b109
+# Candidate: DEV-send-stream-0.1.0-b110
+# Product source: 55184f057d3303a266146ab6a76be019bf3f1c00
+# b110 is diagnostic-only: it preserves b109 model-state logging and adds privacy-safe after-display rendered-pixel aggregates for assistant chunks without changing visible rendering.
+name: iOS Rendered Color Diagnostics b110
 
 on:
   push:
@@ -34,12 +34,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Guard b109 diagnostic-only chunk color audit and inherited behavior
+      - name: Guard b110 rendered-color diagnostics and inherited behavior
         run: |
-          git merge-base --is-ancestor 11e7ec536b986c45811dc449cd2c4f6e442c28df HEAD
-          git diff --quiet 11e7ec536b986c45811dc449cd2c4f6e442c28df HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 109;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b109\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          git merge-base --is-ancestor 55184f057d3303a266146ab6a76be019bf3f1c00 HEAD
+          git diff --quiet 55184f057d3303a266146ab6a76be019bf3f1c00 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 110;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b110\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
           ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
           grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
@@ -48,12 +48,17 @@ jobs:
           grep -Fq 'reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.secondaryLabel]' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'func bodyColorDiagnostics() -> \[String: String\]' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'assistantChunkColor.willDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'fields\["surface"\] = "authoritative"' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'fields\["surface"\] = "live"' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'attributedForegroundColor' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'labelHighlightedTextColor' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'cellIsHighlighted' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'cellIsSelected' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'func bodyRenderedColorDiagnostics() -> \[String: String\]' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'renderedLabelImage' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'renderedHierarchyCropImage' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'NearWhiteFraction' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'BlueDominantFraction' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'tableView.indexPath(for: messageCell) == indexPath' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'labelPresentationOpacity' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'UIImageWriteToSavedPhotosAlbum' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'pngData()' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'jpegData' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
           grep -q 'protected_send_sse_conversation_id' ChatGPTClient/RootViewController.swift
           grep -q 'pendingNewConversationEvents' ChatGPTClient/RootViewController.swift
@@ -87,7 +92,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b109
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b110
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

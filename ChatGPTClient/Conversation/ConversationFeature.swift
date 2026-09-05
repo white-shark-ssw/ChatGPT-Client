@@ -9,6 +9,43 @@ struct ConversationSummary {
     let updateTime: TimeInterval?
 }
 
+enum ConversationToolIconKind: String, Equatable {
+    case generic
+    case connector
+    case code
+    case github
+}
+
+enum ConversationToolDetailSection {
+    case input
+    case output
+}
+
+struct ConversationToolDisclosureState {
+    static let empty = ConversationToolDisclosureState(expandedInputSlots: [], expandedOutputSlots: [])
+    let expandedInputSlots: Set<Int>
+    let expandedOutputSlots: Set<Int>
+    var hasExpandedDetail: Bool { !expandedInputSlots.isEmpty || !expandedOutputSlots.isEmpty }
+}
+
+struct ConversationResponseTimelineItem: Equatable {
+    enum Kind: String {
+        case reasoning
+        case tool
+    }
+
+    let kind: Kind
+    var text: String
+    let toolSlot: Int?
+    var completed: Bool
+    var toolInputJSON: String
+    var toolOutputJSON: String
+    var toolIconKind: ConversationToolIconKind
+
+    static func reasoning(_ text: String) -> ConversationResponseTimelineItem { ConversationResponseTimelineItem(kind: .reasoning, text: text, toolSlot: nil, completed: false, toolInputJSON: "", toolOutputJSON: "", toolIconKind: .generic) }
+    static func tool(slot: Int, title: String, completed: Bool, inputJSON: String = "", outputJSON: String = "", iconKind: ConversationToolIconKind = .generic) -> ConversationResponseTimelineItem { ConversationResponseTimelineItem(kind: .tool, text: title, toolSlot: slot, completed: completed, toolInputJSON: inputJSON, toolOutputJSON: outputJSON, toolIconKind: iconKind) }
+}
+
 struct ConversationMessage {
     enum Role: String {
         case user
@@ -18,6 +55,8 @@ struct ConversationMessage {
     let id: String
     let role: Role
     let text: String
+    let responseTimeline: [ConversationResponseTimelineItem]
+    let reasoningDurationSeconds: Int?
     let createTime: TimeInterval?
 }
 
@@ -113,11 +152,15 @@ struct ConversationDetail {
     let title: String
     let currentNodeID: String
     let messages: [ConversationMessage]
+    let trailingResponseTimeline: [ConversationResponseTimelineItem]
+    let trailingReasoningDurationSeconds: Int?
+    let asyncStatus: ConversationAsyncStatus?
 }
 
 enum ConversationRepositoryError: LocalizedError, Equatable {
     case authenticationNotAvailable
     case authenticationTemporarilyUnavailable
+    case secureConnectionUnavailable
     case missingTransientSession
     case invalidResponse
     case httpStatus(Int)
@@ -131,6 +174,7 @@ enum ConversationRepositoryError: LocalizedError, Equatable {
         switch self {
         case .authenticationNotAvailable: return "当前登录会话不可用，请先完成登录或账户验证。"
         case .authenticationTemporarilyUnavailable: return "暂时无法验证账户，请检查网络连接。"
+        case .secureConnectionUnavailable: return "安全连接失败，请检查网络、VPN 或证书环境；当前登录数据未被判定失效。"
         case .missingTransientSession: return "未建立可用的原生读取会话。"
         case .invalidResponse: return "服务器返回了无法识别的响应。"
         case .httpStatus(let status): return "服务器请求失败（HTTP \(status)）。"
@@ -397,6 +441,13 @@ final class ConversationRepository {
         transientSession?.finishTasksAndInvalidate()
     }
 
+    func clearConversationSelection() {
+        requireMainThread()
+        guard let previousID = selectedConversationID else { return }
+        selectedConversationID = nil
+        diagnostics.info(category: "navigation", name: "conversation.selectionCleared", fields: ["previousConversationHash": Self.shortHash(previousID)])
+    }
+
     func selectConversation(id: String) {
         requireMainThread()
         let previousID = selectedConversationID
@@ -655,6 +706,62 @@ final class ConversationRepository {
         for completion in completions { completion(result) }
     }
 
+    private func recoverTransientSessionAfterNetworkConnectionLost(_ context: ConversationTransportContext, route: String, completion: @escaping (Result<ConversationTransportContext, Error>) -> Void) {
+        requireMainThread()
+        guard activeAccountScope == context.scope else {
+            completion(.failure(ConversationRepositoryError.accountContextChanged))
+            return
+        }
+        let retiredCurrent: Bool
+        if let transientSession, transientSession === context.session, transientSessionScope == context.scope {
+            transientSession.finishTasksAndInvalidate()
+            self.transientSession = nil
+            transientSessionScope = nil
+            retiredCurrent = true
+            diagnostics.warning(category: "conversation", name: "authTransport.retired", fields: ["route": route, "reason": "network_connection_lost_current_transient", "inFlightPolicy": "finish"])
+        } else {
+            retiredCurrent = false
+        }
+        diagnostics.info(category: "conversation", name: "authTransport.recoveryRequested", fields: ["route": route, "retiredCurrent": retiredCurrent ? "true" : "false"])
+        withTransientSession { [weak self] result in
+            guard let self else { return }
+            self.requireMainThread()
+            switch result {
+            case .success(let recoveredContext):
+                guard self.activeAccountScope == context.scope, recoveredContext.scope == context.scope else {
+                    completion(.failure(ConversationRepositoryError.accountContextChanged))
+                    return
+                }
+                self.diagnostics.info(category: "conversation", name: "authTransport.recoveryReady", fields: ["route": route])
+                completion(.success(recoveredContext))
+            case .failure(let error):
+                self.diagnostics.error(category: "conversation", name: "authTransport.recoveryFailed", error: error, fields: ["route": route])
+                completion(.failure(error))
+            }
+        }
+    }
+
+    private func invalidateTransientSessionIfCurrent(_ context: ConversationTransportContext, httpStatus: Int, route: String) {
+        requireMainThread()
+        guard Self.isUnauthorizedStatus(httpStatus), let transientSession, transientSession === context.session, transientSessionScope == context.scope else { return }
+        transientSession.finishTasksAndInvalidate()
+        self.transientSession = nil
+        transientSessionScope = nil
+        diagnostics.info(category: "conversation", name: "authTransport.retired", fields: ["route": route, "httpStatus": String(httpStatus), "reason": "unauthorized_current_transient", "inFlightPolicy": "finish"])
+    }
+
+    private static func isNetworkConnectionLost(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorNetworkConnectionLost
+    }
+
+    private static func isUnauthorizedStatus(_ status: Int) -> Bool { status == 401 || status == 403 }
+
+    private static func isUnauthorizedError(_ error: Error) -> Bool {
+        guard let repositoryError = error as? ConversationRepositoryError, case .httpStatus(let status) = repositoryError else { return false }
+        return isUnauthorizedStatus(status)
+    }
+
     private func prepareProvisionalConversationListCache(operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<Void, Error>) -> Void) {
         requireMainThread()
         guard activeAccountScope == nil, conversations.isEmpty else {
@@ -807,7 +914,7 @@ final class ConversationRepository {
         }
     }
 
-    private func requestConversationList(using context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
+    private func requestConversationList(using context: ConversationTransportContext, operationGeneration: Int, span: DiagnosticsSpan, transportRecoveryAttempted: Bool = false, completion: @escaping (Result<[ConversationSummary], Error>) -> Void) {
         requireMainThread()
         let requestFields = ["method": "GET", "route": "conversation_list", "offset": "0", "limit": "28", "order": "updated", "operationGeneration": String(operationGeneration)]
         diagnostics.info(category: "conversation", name: "list.request", traceID: span.traceID, fields: requestFields)
@@ -816,8 +923,46 @@ final class ConversationRepository {
         context.session.dataTask(with: request) { [weak self] data, response, error in
             guard let self else { return }
             if let error {
-                self.diagnostics.error(category: "conversation", name: "list.failed", traceID: span.traceID, error: error)
-                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "network"], result: .failure(error), completion: completion)
+                if !transportRecoveryAttempted && Self.isNetworkConnectionLost(error) {
+                    let recoveryFields = ["operationGeneration": String(operationGeneration), "route": "conversation_list", "state": "requested", "transportAttempt": "1"]
+                    self.diagnostics.warning(category: "conversation", name: "list.transportRecovery", traceID: span.traceID, fields: recoveryFields)
+                    DispatchQueue.main.async {
+                        self.requireMainThread()
+                        guard self.listOperationGeneration == operationGeneration else {
+                            var fields = recoveryFields
+                            fields["reason"] = "operation_superseded"
+                            span.end(status: "discarded", fields: fields)
+                            completion(.failure(ConversationRepositoryError.operationSuperseded))
+                            return
+                        }
+                        self.recoverTransientSessionAfterNetworkConnectionLost(context, route: "conversation_list") { result in
+                            self.requireMainThread()
+                            guard self.listOperationGeneration == operationGeneration else {
+                                var fields = recoveryFields
+                                fields["reason"] = "operation_superseded_after_recovery"
+                                span.end(status: "discarded", fields: fields)
+                                completion(.failure(ConversationRepositoryError.operationSuperseded))
+                                return
+                            }
+                            switch result {
+                            case .success(let recoveredContext):
+                                var fields = recoveryFields
+                                fields["state"] = "retrying"
+                                fields["transportAttempt"] = "2"
+                                self.diagnostics.info(category: "conversation", name: "list.transportRecovery", traceID: span.traceID, fields: fields)
+                                self.requestConversationList(using: recoveredContext, operationGeneration: operationGeneration, span: span, transportRecoveryAttempted: true, completion: completion)
+                            case .failure(let recoveryError):
+                                self.diagnostics.error(category: "conversation", name: "list.transportRecovery", traceID: span.traceID, error: recoveryError, fields: ["operationGeneration": String(operationGeneration), "route": "conversation_list", "state": "failed"])
+                                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "transport_recovery"], result: .failure(Self.normalizedTransportError(recoveryError)), completion: completion)
+                            }
+                        }
+                    }
+                    return
+                }
+                var failureFields = ["transportAttempt": transportRecoveryAttempted ? "2" : "1"]
+                if transportRecoveryAttempted { failureFields["transportRecoveryExhausted"] = "true" }
+                self.diagnostics.error(category: "conversation", name: "list.failed", traceID: span.traceID, error: error, fields: failureFields)
+                self.finishListOperation(context: context, operationGeneration: operationGeneration, span: span, statusFields: ["stage": "network"], result: .failure(Self.normalizedTransportError(error)), completion: completion)
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
@@ -857,6 +1002,7 @@ final class ConversationRepository {
                 completion(.failure(ConversationRepositoryError.operationSuperseded))
                 return
             }
+            if let statusString = statusFields["httpStatus"], let status = Int(statusString), Self.isUnauthorizedStatus(status) { self.invalidateTransientSessionIfCurrent(context, httpStatus: status, route: "conversation_list") }
             switch result {
             case .success(let items):
                 let reconciliation = self.reconcileConversationPage(items, totalCount: totalCount)
@@ -954,7 +1100,7 @@ final class ConversationRepository {
         return (reconciled, fields)
     }
 
-    private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan) {
+    private func requestConversationDetail(key: ConversationResidentKey, operationGeneration: Int, using context: ConversationTransportContext, span: DiagnosticsSpan, transportRecoveryAttempted: Bool = false) {
         requireMainThread()
         let id = key.conversationID
         let detailURL = URL(string: "https://chatgpt.com/backend-api/conversation")!.appendingPathComponent(id)
@@ -974,11 +1120,52 @@ final class ConversationRepository {
                 if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
                     self.diagnostics.info(category: "conversation", name: "detail.cancelled", traceID: span.traceID, fields: callbackFields)
                     span.end(status: "cancelled", fields: callbackFields)
+                    self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
                     return
                 }
-                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: callbackFields)
+                if !transportRecoveryAttempted && Self.isNetworkConnectionLost(error) {
+                    var recoveryFields = callbackFields
+                    recoveryFields["state"] = "requested"
+                    recoveryFields["transportAttempt"] = "1"
+                    self.diagnostics.warning(category: "conversation", name: "detail.transportRecovery", traceID: span.traceID, fields: recoveryFields)
+                    DispatchQueue.main.async {
+                        self.requireMainThread()
+                        guard self.detailOperations[key]?.generation == operationGeneration else {
+                            var fields = recoveryFields
+                            fields["reason"] = "operation_superseded"
+                            span.end(status: "discarded", fields: fields)
+                            return
+                        }
+                        self.recoverTransientSessionAfterNetworkConnectionLost(context, route: "conversation_detail") { result in
+                            self.requireMainThread()
+                            guard self.detailOperations[key]?.generation == operationGeneration else {
+                                var fields = recoveryFields
+                                fields["reason"] = "operation_superseded_after_recovery"
+                                span.end(status: "discarded", fields: fields)
+                                return
+                            }
+                            switch result {
+                            case .success(let recoveredContext):
+                                var fields = recoveryFields
+                                fields["state"] = "retrying"
+                                fields["transportAttempt"] = "2"
+                                self.diagnostics.info(category: "conversation", name: "detail.transportRecovery", traceID: span.traceID, fields: fields)
+                                self.requestConversationDetail(key: key, operationGeneration: operationGeneration, using: recoveredContext, span: span, transportRecoveryAttempted: true)
+                            case .failure(let recoveryError):
+                                self.diagnostics.error(category: "conversation", name: "detail.transportRecovery", traceID: span.traceID, error: recoveryError, fields: ["operationGeneration": String(operationGeneration), "route": "conversation_detail", "state": "failed"])
+                                span.end(status: "failed", fields: ["stage": "transport_recovery"])
+                                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(Self.normalizedTransportError(recoveryError)))
+                            }
+                        }
+                    }
+                    return
+                }
+                var failureFields = callbackFields
+                failureFields["transportAttempt"] = transportRecoveryAttempted ? "2" : "1"
+                if transportRecoveryAttempted { failureFields["transportRecoveryExhausted"] = "true" }
+                self.diagnostics.error(category: "conversation", name: "detail.failed", traceID: span.traceID, error: error, fields: failureFields)
                 span.end(status: "failed", fields: ["stage": "network"])
-                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(error))
+                self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(Self.normalizedTransportError(error)))
                 return
             }
             guard let response = response as? HTTPURLResponse, let data else {
@@ -987,6 +1174,9 @@ final class ConversationRepository {
                 return
             }
             guard (200..<300).contains(response.statusCode) else {
+                if Self.isUnauthorizedStatus(response.statusCode) {
+                    DispatchQueue.main.async { self.invalidateTransientSessionIfCurrent(context, httpStatus: response.statusCode, route: "conversation_detail") }
+                }
                 span.end(status: "failed", fields: ["stage": "response", "httpStatus": String(response.statusCode)])
                 self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .failure(ConversationRepositoryError.httpStatus(response.statusCode)))
                 return
@@ -1005,13 +1195,23 @@ final class ConversationRepository {
             let projection = Self.parseCurrentBranch(mapping: mapping, currentNode: currentNode)
             let messages = projection.messages
             let title = Self.normalizedTitle(payload["title"] as? String)
-            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages)
+            let rawAsyncStatus = payload["conversation_async_status"] as? String
+            let asyncStatus = rawAsyncStatus.flatMap(ConversationAsyncStatus.init(rawValue:))
+            let detail = ConversationDetail(id: id, title: title, currentNodeID: currentNode, messages: messages, trailingResponseTimeline: projection.trailingResponseTimeline, trailingReasoningDurationSeconds: projection.trailingReasoningDurationSeconds, asyncStatus: asyncStatus)
             var fields = callbackFields
             fields["httpStatus"] = String(response.statusCode)
             fields["byteCount"] = String(data.count)
             fields["mappingCount"] = String(mapping.count)
             fields["visibleMessageCount"] = String(messages.count)
             fields["filteredRecipientMessageCount"] = String(projection.filteredRecipientMessageCount)
+            fields["trailingTimelineItemCount"] = String(projection.trailingTimelineItemCount)
+            fields["trailingReasoningItemCount"] = String(projection.trailingReasoningItemCount)
+            fields["trailingToolItemCount"] = String(projection.trailingToolItemCount)
+            fields["thinkingPreambleMessageCount"] = String(projection.thinkingPreambleMessageCount)
+            fields["ignoredThoughtsMessageCount"] = String(projection.ignoredThoughtsMessageCount)
+            fields["ignoredInlineCotMessageCount"] = String(projection.ignoredInlineCotMessageCount)
+            fields["latestUserCharacters"] = String(messages.last(where: { $0.role == .user })?.text.count ?? 0)
+            fields["conversationAsyncStatus"] = asyncStatus?.rawValue ?? (rawAsyncStatus == nil ? "missing" : "unknown")
             self.diagnostics.info(category: "conversation", name: "detail.response", traceID: span.traceID, fields: fields)
             span.end(status: "ok", fields: fields)
             self.finishDetailOperation(key: key, operationGeneration: operationGeneration, result: .success(detail))
@@ -1050,6 +1250,7 @@ final class ConversationRepository {
             switch result {
             case .success(let detail):
                 self.residentStates[key] = .loaded(detail)
+                self.handleNativeConversationAuthoritativeDetail(detail)
                 var fields = self.residentDiagnosticsFields(for: key.conversationID)
                 fields["residentApproximateTextBytes"] = String(Self.approximateTextBytes(detail))
                 fields["residentTotalApproximateTextBytes"] = String(self.residentStates.values.reduce(0) { $0 + Self.approximateTextBytes($1) })
@@ -1060,9 +1261,12 @@ final class ConversationRepository {
             case .failure(let error):
                 let hasLoadedResident: Bool
                 if let existingState = self.residentStates[key], case .loaded = existingState { hasLoadedResident = true } else { hasLoadedResident = false }
-                if !operation.preserveLoadedResidentOnFailure || !hasLoadedResident { self.residentStates[key] = .failed(error) }
+                let authorizationFailure = Self.isUnauthorizedError(error)
+                if authorizationFailure, !hasLoadedResident { self.residentStates.removeValue(forKey: key) }
+                else if !operation.preserveLoadedResidentOnFailure || !hasLoadedResident { self.residentStates[key] = .failed(error) }
                 var fields = self.residentDiagnosticsFields(for: key.conversationID)
-                fields["state"] = operation.preserveLoadedResidentOnFailure && hasLoadedResident ? "loaded_preserved" : "failed"
+                if authorizationFailure, !hasLoadedResident { fields["state"] = "authorization_failed_not_resident" }
+                else { fields["state"] = operation.preserveLoadedResidentOnFailure && hasLoadedResident ? "loaded_preserved" : "failed" }
                 fields["operationKind"] = operation.kind.rawValue
                 self.diagnostics.info(category: "conversation", name: "resident.terminal", fields: fields)
             }
@@ -1177,7 +1381,7 @@ final class ConversationRepository {
         let removedCount = previousByID.keys.reduce(0) { $0 + (currentByID[$1] == nil ? 1 : 0) }
         let changedCount = current.messages.reduce(0) { count, message in
             guard let old = previousByID[message.id] else { return count }
-            return count + ((old.role != message.role || old.text != message.text || old.createTime != message.createTime) ? 1 : 0)
+            return count + ((old.role != message.role || old.text != message.text || old.responseTimeline != message.responseTimeline || old.createTime != message.createTime) ? 1 : 0)
         }
         return ["previousVisibleMessageCount": String(previousMessages.count), "currentVisibleMessageCount": String(current.messages.count), "addedVisibleMessageCount": String(addedCount), "removedVisibleMessageCount": String(removedCount), "changedVisibleMessageCount": String(changedCount)]
     }
@@ -1214,7 +1418,7 @@ final class ConversationRepository {
         }
     }
 
-    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int { detail.messages.reduce(0) { $0 + $1.text.utf8.count } }
+    private static func approximateTextBytes(_ detail: ConversationDetail) -> Int { detail.messages.reduce(0) { $0 + $1.text.utf8.count + $1.responseTimeline.reduce(0) { $0 + $1.text.utf8.count } } }
 
     private static func approximateTextBytes(_ state: ConversationResidentState) -> Int {
         if case .loaded(let detail) = state { return approximateTextBytes(detail) }
@@ -1229,35 +1433,124 @@ final class ConversationRepository {
         }
     }
 
-    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int) {
-        var nodeIDs: [String] = []
-        var visited = Set<String>()
-        var nodeID: String? = currentNode
-        while let currentID = nodeID, !currentID.isEmpty, visited.insert(currentID).inserted {
-            nodeIDs.append(currentID)
-            guard let node = mapping[currentID] as? [String: Any] else { break }
-            nodeID = node["parent"] as? String
-        }
+    static func normalizedTransportError(_ error: Error) -> Error {
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorSecureConnectionFailed { return ConversationRepositoryError.secureConnectionUnavailable }
+        return error
+    }
 
-        var messages: [ConversationMessage] = []
-        var filteredRecipientMessageCount = 0
-        for id in nodeIDs.reversed() {
-            guard let node = mapping[id] as? [String: Any], let message = node["message"] as? [String: Any], let author = message["author"] as? [String: Any], let rawRole = author["role"] as? String, let role = ConversationMessage.Role(rawValue: rawRole) else { continue }
-            if role == .assistant, let recipient = message["recipient"] as? String {
-                let normalizedRecipient = recipient.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !normalizedRecipient.isEmpty, normalizedRecipient != "all" {
-                    filteredRecipientMessageCount += 1
-                    continue
+    private static func parseCurrentBranch(mapping: [String: Any], currentNode: String) -> (messages: [ConversationMessage], filteredRecipientMessageCount: Int, trailingResponseTimeline: [ConversationResponseTimelineItem], trailingReasoningDurationSeconds: Int?, trailingTimelineItemCount: Int, trailingReasoningItemCount: Int, trailingToolItemCount: Int, thinkingPreambleMessageCount: Int, ignoredThoughtsMessageCount: Int, ignoredInlineCotMessageCount: Int) {
+    var nodeIDs: [String] = []
+    var visited = Set<String>()
+    var nodeID: String? = currentNode
+    while let currentID = nodeID, !currentID.isEmpty, visited.insert(currentID).inserted {
+        nodeIDs.append(currentID)
+        guard let node = mapping[currentID] as? [String: Any] else { break }
+        nodeID = node["parent"] as? String
+    }
+
+    var messages: [ConversationMessage] = []
+    var filteredRecipientMessageCount = 0
+    var thinkingPreambleMessageCount = 0
+    var ignoredThoughtsMessageCount = 0
+    var ignoredInlineCotMessageCount = 0
+    var pendingTimeline: [ConversationResponseTimelineItem] = []
+    var pendingReasoningDurationSeconds: Int?
+    var pendingToolIndexByServiceID: [String: Int] = [:]
+    var pendingToolRecipientByServiceID: [String: String] = [:]
+    var pendingToolInputByServiceID: [String: String] = [:]
+    for id in nodeIDs.reversed() {
+        guard let node = mapping[id] as? [String: Any], let message = node["message"] as? [String: Any], let author = message["author"] as? [String: Any], let rawRole = author["role"] as? String else { continue }
+        let metadata = message["metadata"] as? [String: Any]
+        if rawRole == "tool" {
+            if message["status"] as? String == "finished_successfully", message["recipient"] as? String == "all", let parentID = metadata?["parent_id"] as? String, let index = pendingToolIndexByServiceID[parentID], pendingTimeline.indices.contains(index), pendingTimeline[index].kind == .tool {
+                pendingTimeline[index].completed = true
+                if pendingToolRecipientByServiceID[parentID] == "api_tool.call_tool", let inputJSON = pendingToolInputByServiceID[parentID], !inputJSON.isEmpty, let invokedResource = metadata?["invoked_resource"] as? [String: Any], invokedResource["app_name"] as? String == "GitHub", let resultContent = message["content"] as? [String: Any], JSONSerialization.isValidJSONObject(resultContent), let data = try? JSONSerialization.data(withJSONObject: resultContent), let outputJSON = String(data: data, encoding: .utf8) {
+                    pendingTimeline[index].toolInputJSON = inputJSON
+                    pendingTimeline[index].toolOutputJSON = outputJSON
+                    pendingTimeline[index].toolIconKind = .github
                 }
             }
-            guard let content = message["content"] as? [String: Any] else { continue }
-            let text = visibleText(from: content)
-            guard !text.isEmpty else { continue }
-            let messageID = (message["id"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? id
-            messages.append(ConversationMessage(id: messageID, role: role, text: text, createTime: (message["create_time"] as? NSNumber)?.doubleValue))
+            continue
         }
-        return (messages, filteredRecipientMessageCount)
+        guard let role = ConversationMessage.Role(rawValue: rawRole), let content = message["content"] as? [String: Any] else { continue }
+        if role == .assistant, let recipient = message["recipient"] as? String {
+            let normalizedRecipient = recipient.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !normalizedRecipient.isEmpty, normalizedRecipient != "all" {
+                filteredRecipientMessageCount += 1
+                if message["status"] as? String == "finished_successfully", content["content_type"] as? String == "code", (metadata?["is_complete"] as? Bool) == true {
+                    let rawTitle = (metadata?["reasoning_title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    let title = rawTitle.isEmpty ? "工具调用" : String(rawTitle.prefix(160))
+                    let serviceID = (message["id"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? id
+                    pendingToolIndexByServiceID[serviceID] = pendingTimeline.count
+                    pendingToolRecipientByServiceID[serviceID] = normalizedRecipient
+                    if normalizedRecipient == "api_tool.call_tool", let connectorPayload = metadata?["connector_tool_payload"] as? String, !connectorPayload.isEmpty { pendingToolInputByServiceID[serviceID] = connectorPayload }
+                    let iconKind: ConversationToolIconKind = normalizedRecipient == "api_tool.call_tool" ? .connector : .code
+                    pendingTimeline.append(.tool(slot: pendingTimeline.count, title: title, completed: false, iconKind: iconKind))
+                }
+                continue
+            }
+        }
+        if role == .assistant, let summary = collapsedReasoningSummary(from: message, content: content) {
+        if !pendingTimeline.contains(where: { $0.kind == .reasoning }) { pendingTimeline.append(.reasoning(summary)) }
+        pendingReasoningDurationSeconds = reasoningDurationSeconds(from: message)
+        continue
     }
+        let isThinkingPreamble = role == .assistant && (metadata?["is_thinking_preamble_message"] as? Bool) == true
+        if isThinkingPreamble {
+            thinkingPreambleMessageCount += 1
+            let reasoning = visibleText(from: content)
+            if !reasoning.isEmpty { pendingTimeline.append(.reasoning(reasoning)) }
+            continue
+        }
+        if role == .assistant, let contentType = content["content_type"] as? String {
+            if contentType == "thoughts" {
+                ignoredThoughtsMessageCount += 1
+                continue
+            }
+            if contentType == "inline_cot_expandable_content" {
+                ignoredInlineCotMessageCount += 1
+                continue
+            }
+        }
+        let visible = visibleText(from: content)
+        guard !visible.isEmpty else { continue }
+        if role == .user {
+        pendingTimeline.removeAll()
+        pendingReasoningDurationSeconds = nil
+        pendingToolIndexByServiceID.removeAll()
+            pendingToolRecipientByServiceID.removeAll()
+            pendingToolInputByServiceID.removeAll()
+        }
+        let timeline = role == .assistant ? pendingTimeline : []
+    let durationSeconds = role == .assistant ? pendingReasoningDurationSeconds : nil
+    let messageID = (message["id"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? id
+    messages.append(ConversationMessage(id: messageID, role: role, text: visible, responseTimeline: timeline, reasoningDurationSeconds: durationSeconds, createTime: (message["create_time"] as? NSNumber)?.doubleValue))
+    if role == .assistant {
+        pendingTimeline.removeAll()
+        pendingReasoningDurationSeconds = nil
+            pendingToolIndexByServiceID.removeAll()
+            pendingToolRecipientByServiceID.removeAll()
+            pendingToolInputByServiceID.removeAll()
+        }
+    }
+    let trailingReasoningItemCount = pendingTimeline.filter { $0.kind == .reasoning }.count
+    let trailingToolItemCount = pendingTimeline.filter { $0.kind == .tool }.count
+    return (messages, filteredRecipientMessageCount, pendingTimeline, pendingReasoningDurationSeconds, pendingTimeline.count, trailingReasoningItemCount, trailingToolItemCount, thinkingPreambleMessageCount, ignoredThoughtsMessageCount, ignoredInlineCotMessageCount)
+}
+
+    private static func collapsedReasoningSummary(from message: [String: Any], content: [String: Any]) -> String? {
+    guard message["status"] as? String == "finished_successfully", message["recipient"] as? String == "all", content["content_type"] as? String == "reasoning_recap", let rawSummary = content["content"] as? String else { return nil }
+    let summary = rawSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !summary.isEmpty, let metadata = message["metadata"] as? [String: Any], metadata["reasoning_status"] as? String == "reasoning_ended", metadata["reasoning_recap_type"] as? String == "collapse" else { return nil }
+    return summary
+}
+
+    private static func reasoningDurationSeconds(from message: [String: Any]) -> Int? {
+    guard let metadata = message["metadata"] as? [String: Any], let value = metadata["finished_duration_sec"] as? NSNumber else { return nil }
+    let seconds = Int(value.doubleValue.rounded())
+    return seconds >= 0 ? seconds : nil
+}
 
     private static func visibleText(from content: [String: Any]) -> String {
         var textParts: [String] = []
@@ -1274,12 +1567,14 @@ final class ConversationRepository {
 
 final class ConversationSidebarViewController: UITableViewController {
     var onSelectConversation: ((String) -> Void)?
+    var onNewConversation: (() -> Void)?
 
     private let repository: ConversationRepository
     private let diagnostics = DiagnosticsLogger.shared
     private var loading = false
     private var loadPresentationGeneration = 0
     private var errorView: UIView?
+    private var refreshAfterLoginReturn = false
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -1296,11 +1591,21 @@ final class ConversationSidebarViewController: UITableViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ConversationCell")
         tableView.rowHeight = 58
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "设置", style: .plain, target: self, action: #selector(openSettings))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversationsFromButton))
+        let refreshButton = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadConversationsFromButton))
+        let newConversationButton = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(newConversationRequested))
+        navigationItem.rightBarButtonItems = [newConversationButton, refreshButton]
         refreshControl = UIRefreshControl()
         refreshControl?.tintColor = .secondaryLabel
         refreshControl?.addTarget(self, action: #selector(refreshControlChanged), for: .valueChanged)
         loadConversations(forceRefresh: false)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        guard refreshAfterLoginReturn else { return }
+        refreshAfterLoginReturn = false
+        diagnostics.info(category: "navigation", name: "nativeRead.login.returnRefresh")
+        loadConversations(forceRefresh: true)
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { repository.conversations.count }
@@ -1335,6 +1640,11 @@ final class ConversationSidebarViewController: UITableViewController {
         errorView?.removeFromSuperview()
         errorView = nil
         tableView.reloadData()
+    }
+
+    @objc private func newConversationRequested() {
+        diagnostics.info(category: "navigation", name: "conversation.new.requested")
+        onNewConversation?()
     }
 
     @objc private func reloadConversationsFromButton() {
@@ -1431,6 +1741,7 @@ final class ConversationSidebarViewController: UITableViewController {
 
     @objc private func openLogin() {
         diagnostics.info(category: "navigation", name: "nativeRead.login.open")
+        refreshAfterLoginReturn = true
         navigationController?.pushViewController(AuthWebViewController(mode: .authentication), animated: true)
     }
 
@@ -1441,10 +1752,29 @@ final class ConversationSidebarViewController: UITableViewController {
 }
 
 final class ConversationDetailViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    var onManualLatestSyncApplied: ((String, Bool) -> Void)?
+    var onManualReloadRequested: ((String) -> Void)?
+    var onManualReloadApplied: ((String) -> Void)?
+
     private struct ScrollAnchor {
         let messageID: String
         let chunkIndex: Int
         let relativeOffset: CGFloat
+    }
+
+    private struct HistoricalPresentationGeometryCacheEntry {
+        let currentNodeID: String
+        let authoritativeMessageCount: Int
+        let rowCount: Int
+        let chunkedMessageCount: Int
+        let maxChunkCharacterCount: Int
+        let roundCount: Int
+        let layoutWidth: CGFloat
+        let showsMessageTimestamps: Bool
+        let expandedReasoningMessageIDs: Set<String>
+        let rowMetrics: [ConversationMessageCell.Metrics]
+        let rowOffsets: [CGFloat]
+        let contentHeight: CGFloat
     }
 
     private enum AnswerJumpDirection: String {
@@ -1472,6 +1802,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var messages: [ConversationMessage] = []
     private var roundProjection = ConversationRoundProjection(rounds: [])
     private var messagePresentation = ConversationMessagePresentationProjection.empty
+    private var livePresentationMessages: [ConversationMessage] = []
+    private var liveMessagePresentation = ConversationMessagePresentationProjection.empty
+    private var livePresentationRowMetrics: [ConversationMessageCell.Metrics] = []
+    private var livePresentationContentHeight: CGFloat = 0
+    private var liveResponsePresentationUpdateScheduled = false
     private var presentationRowMetrics: [ConversationMessageCell.Metrics] = []
     private var presentationRowOffsets: [CGFloat] = []
     private var presentationContentHeight: CGFloat = 0
@@ -1484,8 +1819,14 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     private var previousContentOffsetY: CGFloat = 0
     private var loadingConversationID: String?
     private var presentationGeneration = 0
+    private var historicalGeometryBuildGeneration = 0
     private var displayedConversationID: String?
+    private var displayedCurrentNodeID: String?
     private var scrollAnchorsByConversationID: [String: ScrollAnchor] = [:]
+    private var historicalPresentationGeometryCacheByConversationID: [String: HistoricalPresentationGeometryCacheEntry] = [:]
+    private var expandedReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
+    private var autoOpenedLiveReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
+    private var autoCollapsedLiveReasoningMessageIDsByConversationID: [String: Set<String>] = [:]
 
     init(repository: ConversationRepository) {
         self.repository = repository
@@ -1528,7 +1869,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         tableView.keyboardDismissMode = .interactive
         tableView.rowHeight = 44
         tableView.estimatedRowHeight = 44
-        tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.reuseIdentifier)
+        tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.userReuseIdentifier)
+        tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.assistantReuseIdentifier)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
 
@@ -1610,10 +1952,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let width = tableView.bounds.width
-        if !messagePresentation.rows.isEmpty, width > 1, abs(width - presentationLayoutWidth) > 0.5 {
+        if (!messagePresentation.rows.isEmpty || !liveMessagePresentation.rows.isEmpty), width > 1, abs(width - presentationLayoutWidth) > 0.5 {
             let id = displayedConversationID
             if let id { captureScrollAnchor(for: id) }
             let durationMs = rebuildPresentationGeometry(width: width)
+            rebuildLiveResponsePresentation(width: width)
             reloadMessageTable(reason: "width_change", restoreConversationID: id)
             diagnostics.info(category: "ui", name: "messagePresentation.geometryRebuilt", fields: ["reason": "width_change", "durationMs": String(format: "%.2f", durationMs), "presentationRowCount": String(messagePresentation.rows.count), "layoutWidthPoints": String(format: "%.2f", width), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
         }
@@ -1624,7 +1967,6 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         guard repository.selectedConversationID == id else { return }
         stopAnswerJumpAnimation(clearTarget: true)
         captureScrollAnchorForDisplayedConversation()
-        displayedConversationID = id
         lastUserDragDirection = .previous
         previousContentOffsetY = tableView.contentOffset.y
         presentationGeneration += 1
@@ -1638,10 +1980,12 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         if let detail = existingDetail {
             loadingConversationID = operationSnapshot == nil ? nil : id
             activityIndicator.stopAnimating()
-            apply(detail, captureCurrentAnchor: false)
-            logResidentFirstVisible(id: id, startedAt: presentationStart, operationKind: operationSnapshot?.kind)
+            apply(detail, captureCurrentAnchor: false) { [weak self] in
+                self?.logResidentFirstVisible(id: id, startedAt: presentationStart, operationKind: operationSnapshot?.kind)
+            }
         } else {
             loadingConversationID = id
+            displayedConversationID = id
             clearVisibleMessagePresentation()
             resetScrollPositionToTop()
             stateLabel.text = operationSnapshot?.kind == .reload ? "正在重新加载会话…" : "正在读取会话…"
@@ -1662,13 +2006,62 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         }
     }
 
-    func resetForAccountScopeChange() {
+    func showNewConversationDraft() {
         presentationGeneration += 1
+        historicalGeometryBuildGeneration += 1
         stopAnswerJumpAnimation(clearTarget: true)
         hideSyncToast()
         loadingConversationID = nil
         displayedConversationID = nil
+        displayedCurrentNodeID = nil
+        activityIndicator.stopAnimating()
+        title = "新对话"
+        clearVisibleMessagePresentation()
+        resetScrollPositionToTop()
+        stateLabel.text = "开始一个新对话"
+        stateLabel.isHidden = false
+        retryButton.isHidden = true
+        updateHeaderMetadata()
+        updateConversationMenu()
+    }
+
+    func showNewConversationIdentity(id: String) {
+        guard repository.selectedConversationID == id else { return }
+        presentationGeneration += 1
+        historicalGeometryBuildGeneration += 1
+        stopAnswerJumpAnimation(clearTarget: true)
+        hideSyncToast()
+        loadingConversationID = nil
+        displayedConversationID = id
+        displayedCurrentNodeID = nil
+        activityIndicator.stopAnimating()
+        title = "新对话"
+        clearVisibleMessagePresentation()
+        displayedConversationID = id
+        stateLabel.text = nil
+        stateLabel.isHidden = true
+        retryButton.isHidden = true
+        rebuildLiveResponsePresentation(width: effectivePresentationWidth())
+        tableView.reloadData()
+        tableView.layoutIfNeeded()
+        updateHeaderMetadata()
+        updateAnswerJumpButton()
+        updateConversationMenu()
+    }
+
+    func resetForAccountScopeChange() {
+        presentationGeneration += 1
+        historicalGeometryBuildGeneration += 1
+        stopAnswerJumpAnimation(clearTarget: true)
+        hideSyncToast()
+        loadingConversationID = nil
+        displayedConversationID = nil
+        displayedCurrentNodeID = nil
         scrollAnchorsByConversationID.removeAll()
+        historicalPresentationGeometryCacheByConversationID.removeAll()
+        expandedReasoningMessageIDsByConversationID.removeAll()
+        autoOpenedLiveReasoningMessageIDsByConversationID.removeAll()
+        autoCollapsedLiveReasoningMessageIDsByConversationID.removeAll()
         activityIndicator.stopAnimating()
         title = "新对话"
         clearVisibleMessagePresentation()
@@ -1680,25 +2073,50 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         updateConversationMenu()
     }
 
-    private func apply(_ detail: ConversationDetail, captureCurrentAnchor: Bool = true) {
+    private func apply(_ detail: ConversationDetail, captureCurrentAnchor: Bool = true, completion: (() -> Void)? = nil) {
         if captureCurrentAnchor, displayedConversationID == detail.id, !messages.isEmpty { captureScrollAnchor(for: detail.id) }
+        stopAnswerJumpAnimation(clearTarget: true)
+        historicalGeometryBuildGeneration += 1
+        let geometryBuildGeneration = historicalGeometryBuildGeneration
+        let currentPresentationGeneration = presentationGeneration
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        let nextRoundProjection = ConversationRoundProjection.derive(from: detail.messages)
+        let nextMessagePresentation = ConversationMessagePresentationProjection.derive(from: detail.messages)
+        let width = effectivePresentationWidth()
+        let geometryStartedAt = ProcessInfo.processInfo.systemUptime
+        let previousDisplayedConversationID = displayedConversationID
+
+        if let cached = cachedHistoricalPresentationGeometry(for: detail, roundProjection: nextRoundProjection, messagePresentation: nextMessagePresentation, width: width) {
+            let geometryDurationMs = (ProcessInfo.processInfo.systemUptime - geometryStartedAt) * 1000
+            installDetailPresentation(detail, roundProjection: nextRoundProjection, messagePresentation: nextMessagePresentation, width: max(1, width), rowMetrics: cached.rowMetrics, rowOffsets: cached.rowOffsets, contentHeight: cached.contentHeight, geometryReused: true, geometryDurationMs: geometryDurationMs, startedAt: startedAt, completion: completion)
+            return
+        }
+
         displayedConversationID = detail.id
         title = detail.title
-        messages = detail.messages
-        rebuildRoundProjection()
-        stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
-        stateLabel.isHidden = !detail.messages.isEmpty
+        if previousDisplayedConversationID != detail.id {
+            clearVisibleMessagePresentation()
+            displayedConversationID = detail.id
+            title = detail.title
+        }
+        stateLabel.text = "正在准备会话…"
+        stateLabel.isHidden = false
         retryButton.isHidden = true
-        reloadMessageTable(reason: "detail_apply", restoreConversationID: detail.id)
+        activityIndicator.startAnimating()
         updateHeaderMetadata()
-        updateAnswerJumpButton()
+        buildHistoricalPresentationGeometryCooperatively(detail: detail, roundProjection: nextRoundProjection, messagePresentation: nextMessagePresentation, width: width, presentationGeneration: currentPresentationGeneration, geometryBuildGeneration: geometryBuildGeneration, geometryStartedAt: geometryStartedAt, startedAt: startedAt, completion: completion)
     }
 
     private func clearVisibleMessagePresentation() {
         stopAnswerJumpAnimation(clearTarget: true)
+        displayedCurrentNodeID = nil
         messages = []
         roundProjection = ConversationRoundProjection(rounds: [])
         messagePresentation = .empty
+        livePresentationMessages = []
+        liveMessagePresentation = .empty
+        livePresentationRowMetrics = []
+        livePresentationContentHeight = 0
         presentationRowMetrics = []
         presentationRowOffsets = []
         presentationContentHeight = 0
@@ -1711,21 +2129,33 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         updateHeaderMetadata()
     }
 
-    private func rebuildRoundProjection() {
-        stopAnswerJumpAnimation(clearTarget: true)
-        let startedAt = ProcessInfo.processInfo.systemUptime
-        roundProjection = ConversationRoundProjection.derive(from: messages)
-        messagePresentation = ConversationMessagePresentationProjection.derive(from: messages)
-        let geometryDurationMs = rebuildPresentationGeometry(width: effectivePresentationWidth())
-        answerRows = roundProjection.rounds.compactMap { messagePresentation.firstRowByMessageID[$0.userMessageID] }
-        let totalDurationMs = (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
-        diagnostics.info(category: "ui", name: "messagePresentation.rebuilt", fields: ["authoritativeMessageCount": String(messages.count), "presentationRowCount": String(messagePresentation.rows.count), "chunkedMessageCount": String(messagePresentation.chunkedMessageCount), "chunkCharacterLimit": String(ConversationMessagePresentationProjection.chunkCharacterLimit), "maxChunkCharacterCount": String(messagePresentation.maxChunkCharacterCount), "geometryDurationMs": String(format: "%.2f", geometryDurationMs), "durationMs": String(format: "%.2f", totalDurationMs), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
-    }
-
     private func effectivePresentationWidth() -> CGFloat {
         if tableView.bounds.width > 1 { return tableView.bounds.width }
         if view.bounds.width > 1 { return view.bounds.width }
         return UIScreen.main.bounds.width
+    }
+
+    private func cachedHistoricalPresentationGeometry(for detail: ConversationDetail, roundProjection: ConversationRoundProjection, messagePresentation: ConversationMessagePresentationProjection, width: CGFloat) -> HistoricalPresentationGeometryCacheEntry? {
+        guard let cached = historicalPresentationGeometryCacheByConversationID[detail.id] else { return nil }
+        let resolvedWidth = max(1, width)
+        let expandedReasoningMessageIDs = expandedReasoningMessageIDsByConversationID[detail.id] ?? []
+        guard cached.currentNodeID == detail.currentNodeID,
+              cached.authoritativeMessageCount == detail.messages.count,
+              cached.rowCount == messagePresentation.rows.count,
+              cached.chunkedMessageCount == messagePresentation.chunkedMessageCount,
+              cached.maxChunkCharacterCount == messagePresentation.maxChunkCharacterCount,
+              cached.roundCount == roundProjection.rounds.count,
+              abs(cached.layoutWidth - resolvedWidth) <= 0.5,
+              cached.showsMessageTimestamps == preferences.showsMessageTimestamps,
+              cached.expandedReasoningMessageIDs == expandedReasoningMessageIDs,
+              cached.rowMetrics.count == messagePresentation.rows.count,
+              cached.rowOffsets.count == messagePresentation.rows.count else { return nil }
+        return cached
+    }
+
+    private func storeHistoricalPresentationGeometryIfPossible() {
+        guard let conversationID = displayedConversationID, let currentNodeID = displayedCurrentNodeID, presentationRowMetrics.count == messagePresentation.rows.count, presentationRowOffsets.count == messagePresentation.rows.count else { return }
+        historicalPresentationGeometryCacheByConversationID[conversationID] = HistoricalPresentationGeometryCacheEntry(currentNodeID: currentNodeID, authoritativeMessageCount: messages.count, rowCount: messagePresentation.rows.count, chunkedMessageCount: messagePresentation.chunkedMessageCount, maxChunkCharacterCount: messagePresentation.maxChunkCharacterCount, roundCount: roundProjection.rounds.count, layoutWidth: presentationLayoutWidth, showsMessageTimestamps: preferences.showsMessageTimestamps, expandedReasoningMessageIDs: expandedReasoningMessageIDsByConversationID[conversationID] ?? [], rowMetrics: presentationRowMetrics, rowOffsets: presentationRowOffsets, contentHeight: presentationContentHeight)
     }
 
     @discardableResult
@@ -1743,13 +2173,254 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             let message = messages[row.messageIndex]
             let showsTimestamp = row.isFirstChunk && preferences.showsMessageTimestamps && (message.createTime ?? 0) > 0
             let showsCopy = message.role == .assistant && row.isLastChunk
-            let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1)
+            let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+            let reasoningExpanded = displayedConversationID.map { isReasoningExpanded(messageID: message.id, conversationID: $0) } ?? false
+            let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !row.text.isEmpty)
             presentationRowOffsets.append(offset)
             presentationRowMetrics.append(metrics)
             offset += metrics.rowHeight
         }
         presentationContentHeight = offset
+        storeHistoricalPresentationGeometryIfPossible()
         return (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
+    }
+
+    private func buildHistoricalPresentationGeometryCooperatively(detail: ConversationDetail, roundProjection: ConversationRoundProjection, messagePresentation: ConversationMessagePresentationProjection, width: CGFloat, presentationGeneration: Int, geometryBuildGeneration: Int, geometryStartedAt: TimeInterval, startedAt: TimeInterval, completion: (() -> Void)?) {
+        let resolvedWidth = max(1, width)
+        let showsMessageTimestamps = preferences.showsMessageTimestamps
+        let expandedReasoningMessageIDs = expandedReasoningMessageIDsByConversationID[detail.id] ?? []
+        var rowMetrics: [ConversationMessageCell.Metrics] = []
+        var rowOffsets: [CGFloat] = []
+        rowMetrics.reserveCapacity(messagePresentation.rows.count)
+        rowOffsets.reserveCapacity(messagePresentation.rows.count)
+        var offset: CGFloat = 0
+
+        func processBatch(startingAt startIndex: Int) {
+            guard self.repository.selectedConversationID == detail.id,
+                  self.presentationGeneration == presentationGeneration,
+                  self.historicalGeometryBuildGeneration == geometryBuildGeneration else {
+                var fields = self.repository.diagnosticsFields(for: detail.id)
+                fields["reason"] = "presentation_superseded"
+                fields["completedRowCount"] = String(rowMetrics.count)
+                self.diagnostics.info(category: "ui", name: "messagePresentation.geometryBuildDiscarded", fields: fields)
+                return
+            }
+            let endIndex = min(startIndex + 1, messagePresentation.rows.count)
+            if startIndex < endIndex {
+                for rowIndex in startIndex..<endIndex {
+                    let row = messagePresentation.rows[rowIndex]
+                    guard detail.messages.indices.contains(row.messageIndex) else { continue }
+                    let message = detail.messages[row.messageIndex]
+                    let showsTimestamp = row.isFirstChunk && showsMessageTimestamps && (message.createTime ?? 0) > 0
+                    let showsCopy = message.role == .assistant && row.isLastChunk
+                    let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+                    let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: expandedReasoningMessageIDs.contains(message.id), toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !row.text.isEmpty)
+                    rowOffsets.append(offset)
+                    rowMetrics.append(metrics)
+                    offset += metrics.rowHeight
+                }
+            }
+            if endIndex < messagePresentation.rows.count {
+                DispatchQueue.main.async { processBatch(startingAt: endIndex) }
+                return
+            }
+            let geometryDurationMs = (ProcessInfo.processInfo.systemUptime - geometryStartedAt) * 1000
+            self.installDetailPresentation(detail, roundProjection: roundProjection, messagePresentation: messagePresentation, width: resolvedWidth, rowMetrics: rowMetrics, rowOffsets: rowOffsets, contentHeight: offset, geometryReused: false, geometryDurationMs: geometryDurationMs, startedAt: startedAt, completion: completion)
+        }
+
+        DispatchQueue.main.async { processBatch(startingAt: 0) }
+    }
+
+    private func installDetailPresentation(_ detail: ConversationDetail, roundProjection: ConversationRoundProjection, messagePresentation: ConversationMessagePresentationProjection, width: CGFloat, rowMetrics: [ConversationMessageCell.Metrics], rowOffsets: [CGFloat], contentHeight: CGFloat, geometryReused: Bool, geometryDurationMs: Double, startedAt: TimeInterval, completion: (() -> Void)?) {
+        guard repository.selectedConversationID == detail.id else { return }
+        displayedConversationID = detail.id
+        displayedCurrentNodeID = detail.currentNodeID
+        title = detail.title
+        messages = detail.messages
+        self.roundProjection = roundProjection
+        self.messagePresentation = messagePresentation
+        presentationLayoutWidth = width
+        presentationRowMetrics = rowMetrics
+        presentationRowOffsets = rowOffsets
+        presentationContentHeight = contentHeight
+        answerRows = roundProjection.rounds.compactMap { messagePresentation.firstRowByMessageID[$0.userMessageID] }
+        if !geometryReused { storeHistoricalPresentationGeometryIfPossible() }
+        rebuildLiveResponsePresentation(width: width)
+        stateLabel.text = detail.messages.isEmpty ? "当前分支没有可显示的用户或助手文本消息" : nil
+        stateLabel.isHidden = !detail.messages.isEmpty
+        retryButton.isHidden = true
+        loadingConversationID = nil
+        activityIndicator.stopAnimating()
+        reloadMessageTable(reason: "detail_apply", restoreConversationID: detail.id)
+        updateHeaderMetadata()
+        updateAnswerJumpButton()
+        let totalDurationMs = (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
+        diagnostics.info(category: "ui", name: "messagePresentation.rebuilt", fields: ["authoritativeMessageCount": String(messages.count), "presentationRowCount": String(messagePresentation.rows.count), "chunkedMessageCount": String(messagePresentation.chunkedMessageCount), "chunkCharacterLimit": String(ConversationMessagePresentationProjection.chunkCharacterLimit), "maxChunkCharacterCount": String(messagePresentation.maxChunkCharacterCount), "geometryReused": geometryReused ? "true" : "false", "geometryMode": geometryReused ? "resident_cache" : "cooperative_main_queue", "geometryDurationMs": String(format: "%.2f", geometryDurationMs), "durationMs": String(format: "%.2f", totalDurationMs), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
+        completion?()
+    }
+
+    private func rebuildLiveResponsePresentation(width: CGFloat) {
+    let resolvedWidth = max(1, width)
+    guard let id = displayedConversationID, let snapshot = repository.liveResponse(for: id) else {
+        livePresentationMessages = []
+        liveMessagePresentation = .empty
+        livePresentationRowMetrics = []
+        livePresentationContentHeight = 0
+        return
+    }
+    let bodyText: String
+    if snapshot.isExternalStoppedWithoutFinal { bodyText = "" }
+    else if !snapshot.finalText.isEmpty { bodyText = snapshot.finalText }
+    else {
+        switch snapshot.phase {
+        case .preparing: bodyText = "正在发送…"
+        case .thinking, .reasoning: bodyText = "正在思考…"
+        case .final: bodyText = "正在生成回答…"
+        case .completed: bodyText = "正在同步最新消息…"
+        case .failed: bodyText = "回答失败"
+        }
+    }
+    let userMessage = snapshot.promptText.isEmpty ? nil : ConversationMessage(id: "local-live-user-\(snapshot.generation)", role: .user, text: snapshot.promptText, responseTimeline: [], reasoningDurationSeconds: nil, createTime: nil)
+    let assistantMessage = ConversationMessage(id: "local-live-response-\(snapshot.generation)", role: .assistant, text: bodyText, responseTimeline: snapshot.timeline, reasoningDurationSeconds: snapshot.reasoningDurationSeconds, createTime: nil)
+    synchronizeLiveReasoningDisclosure(snapshot: snapshot, messageID: assistantMessage.id, conversationID: id)
+    livePresentationMessages = userMessage.map { [$0, assistantMessage] } ?? [assistantMessage]
+    liveMessagePresentation = ConversationMessagePresentationProjection.derive(from: livePresentationMessages)
+    livePresentationRowMetrics.removeAll(keepingCapacity: true)
+    livePresentationRowMetrics.reserveCapacity(liveMessagePresentation.rows.count)
+    var height: CGFloat = 0
+    for row in liveMessagePresentation.rows {
+        guard livePresentationMessages.indices.contains(row.messageIndex) else { continue }
+        let message = livePresentationMessages[row.messageIndex]
+        let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+        let showsCopy = message.role == .assistant && !snapshot.phase.isActive && !message.text.isEmpty && row.isLastChunk
+        let reasoningExpanded = isReasoningExpanded(messageID: message.id, conversationID: id)
+        let metrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: resolvedWidth, showsTimestamp: false, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty)
+        livePresentationRowMetrics.append(metrics)
+        height += metrics.rowHeight
+    }
+    livePresentationContentHeight = height
+}
+
+    func liveResponseDidChange(id: String) {
+        guard displayedConversationID == id, repository.selectedConversationID == id else { return }
+        guard !liveResponsePresentationUpdateScheduled else { return }
+        liveResponsePresentationUpdateScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.liveResponsePresentationUpdateScheduled = false
+            guard self.displayedConversationID == id, self.repository.selectedConversationID == id else { return }
+            self.applyLiveResponsePresentationChange(id: id)
+        }
+    }
+
+    private func applyLiveResponsePresentationChange(id: String) {
+        if repository.liveResponse(for: id) == nil, let detail = repository.selectedConversation, detail.id == id, detail.currentNodeID != displayedCurrentNodeID || hasVisibleMessageChanges(from: messages, to: detail.messages) {
+            apply(detail)
+            return
+        }
+        let boundsBefore = answerJumpScrollBounds()
+        let wasAtPhysicalBottom = tableView.contentOffset.y >= boundsBefore.maximumY - 0.5
+        rebuildLiveResponsePresentation(width: effectivePresentationWidth())
+        tableView.reloadData()
+        tableView.layoutIfNeeded()
+        if wasAtPhysicalBottom { setScrollOffsetY(answerJumpScrollBounds().maximumY) }
+        updateAnswerJumpButton()
+        var fields = repository.diagnosticsFields(for: id)
+        fields["livePresentationRowCount"] = String(liveMessagePresentation.rows.count)
+        fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)
+        fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
+        diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
+        updateConversationMenu()
+    }
+
+    private func synchronizeLiveReasoningDisclosure(snapshot: ConversationLiveResponseSnapshot, messageID: String, conversationID: String) {
+        guard !snapshot.timeline.isEmpty else { return }
+        var autoOpened = autoOpenedLiveReasoningMessageIDsByConversationID[conversationID] ?? []
+        var autoCollapsed = autoCollapsedLiveReasoningMessageIDsByConversationID[conversationID] ?? []
+        var expanded = expandedReasoningMessageIDsByConversationID[conversationID] ?? []
+        var expansionChanged = false
+        if snapshot.phase.isActive, !snapshot.reasoningEnded, !autoOpened.contains(messageID) {
+            autoOpened.insert(messageID)
+            expanded.insert(messageID)
+            expansionChanged = true
+        }
+        if (snapshot.reasoningEnded || snapshot.isExternalStoppedWithoutFinal), !autoCollapsed.contains(messageID) {
+            autoCollapsed.insert(messageID)
+            expanded.remove(messageID)
+            expansionChanged = true
+        }
+        autoOpenedLiveReasoningMessageIDsByConversationID[conversationID] = autoOpened
+        autoCollapsedLiveReasoningMessageIDsByConversationID[conversationID] = autoCollapsed
+        if expansionChanged { expandedReasoningMessageIDsByConversationID[conversationID] = expanded }
+    }
+
+    private func isReasoningExpanded(messageID: String, conversationID: String) -> Bool {
+        expandedReasoningMessageIDsByConversationID[conversationID]?.contains(messageID) == true
+    }
+
+    private func toggleReasoningDisclosure(message: ConversationMessage, indexPath: IndexPath, live: Bool) {
+        guard let conversationID = displayedConversationID, !message.responseTimeline.isEmpty else { return }
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        var expandedIDs = expandedReasoningMessageIDsByConversationID[conversationID] ?? []
+        let expanded: Bool
+        if expandedIDs.remove(message.id) != nil { expanded = false } else { expandedIDs.insert(message.id); expanded = true }
+        expandedReasoningMessageIDsByConversationID[conversationID] = expandedIDs
+        var heightDelta: CGFloat = 0
+        if live {
+            let liveRow = indexPath.row - messagePresentation.rows.count
+            guard liveMessagePresentation.rows.indices.contains(liveRow), livePresentationRowMetrics.indices.contains(liveRow), let snapshot = repository.liveResponse(for: conversationID) else { return }
+            let row = liveMessagePresentation.rows[liveRow]
+            let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+            let showsCopy = message.role == .assistant && !snapshot.phase.isActive && !message.text.isEmpty && row.isLastChunk
+            let oldMetrics = livePresentationRowMetrics[liveRow]
+            let newMetrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: effectivePresentationWidth(), showsTimestamp: false, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: expanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty)
+            heightDelta = newMetrics.rowHeight - oldMetrics.rowHeight
+            livePresentationRowMetrics[liveRow] = newMetrics
+            livePresentationContentHeight += heightDelta
+        } else {
+            let rowIndex = indexPath.row
+            guard messagePresentation.rows.indices.contains(rowIndex), presentationRowMetrics.indices.contains(rowIndex) else { return }
+            let row = messagePresentation.rows[rowIndex]
+            let showsTimestamp = row.isFirstChunk && preferences.showsMessageTimestamps && (message.createTime ?? 0) > 0
+            let showsCopy = message.role == .assistant && row.isLastChunk
+            let responseTimeline = row.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+            let oldMetrics = presentationRowMetrics[rowIndex]
+            let newMetrics = ConversationMessageCell.metrics(for: row.text, role: message.role, tableWidth: effectivePresentationWidth(), showsTimestamp: showsTimestamp, showsCopy: showsCopy, isFirstChunk: row.isFirstChunk, isLastChunk: row.isLastChunk, isChunked: row.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: expanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !row.text.isEmpty)
+            heightDelta = newMetrics.rowHeight - oldMetrics.rowHeight
+            presentationRowMetrics[rowIndex] = newMetrics
+            if rowIndex + 1 < presentationRowOffsets.count {
+                for offsetIndex in (rowIndex + 1)..<presentationRowOffsets.count { presentationRowOffsets[offsetIndex] += heightDelta }
+            }
+            presentationContentHeight += heightDelta
+            storeHistoricalPresentationGeometryIfPossible()
+        }
+        UIView.performWithoutAnimation {
+            tableView.reloadRows(at: [indexPath], with: .none)
+            tableView.layoutIfNeeded()
+        }
+        diagnostics.info(category: "interaction", name: "reasoningDisclosure.toggled", fields: ["state": expanded ? "expanded" : "collapsed", "surface": live ? "live" : "historical", "heightDeltaPoints": String(format: "%.2f", heightDelta), "durationMs": String(format: "%.2f", (ProcessInfo.processInfo.systemUptime - startedAt) * 1000)])
+    }
+
+    private func presentToolList(message: ConversationMessage) {
+        let tools = ConversationReasoningPresentation.toolListItems(message.responseTimeline)
+        guard !tools.isEmpty else { return }
+        let controller = ConversationReasoningDetailViewController(timeline: tools, durationSeconds: message.reasoningDurationSeconds)
+        controller.modalPresentationStyle = .pageSheet
+        if #available(iOS 15.0, *), let sheet = controller.sheetPresentationController {
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 28
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            if #available(iOS 16.0, *) {
+                let identifier = UISheetPresentationController.Detent.Identifier("tool-list")
+                sheet.detents = [.custom(identifier: identifier) { context in min(context.maximumDetentValue, max(360, context.maximumDetentValue * 0.62)) }, .large()]
+                sheet.selectedDetentIdentifier = identifier
+            } else {
+                sheet.detents = [.medium(), .large()]
+                sheet.selectedDetentIdentifier = .medium
+            }
+        }
+        present(controller, animated: true)
+        diagnostics.info(category: "interaction", name: "toolList.presented", fields: ["toolCount": String(tools.count), "durationKnown": message.reasoningDurationSeconds == nil ? "false" : "true"])
     }
 
     private func reloadMessageTable(reason: String, restoreConversationID: String?) {
@@ -1757,7 +2428,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         tableView.reloadData()
         tableView.layoutIfNeeded()
         let layoutDurationMs = (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
-        diagnostics.info(category: "ui", name: "messagePresentation.applied", fields: ["reason": reason, "presentationRowCount": String(messagePresentation.rows.count), "layoutDurationMs": String(format: "%.2f", layoutDurationMs), "derivedContentHeightPoints": String(format: "%.2f", presentationContentHeight), "tableContentHeightPoints": String(format: "%.2f", tableView.contentSize.height)])
+        diagnostics.info(category: "ui", name: "messagePresentation.applied", fields: ["reason": reason, "presentationRowCount": String(messagePresentation.rows.count), "livePresentationRowCount": String(liveMessagePresentation.rows.count), "layoutDurationMs": String(format: "%.2f", layoutDurationMs), "derivedContentHeightPoints": String(format: "%.2f", presentationContentHeight), "liveContentHeightPoints": String(format: "%.2f", livePresentationContentHeight), "tableContentHeightPoints": String(format: "%.2f", tableView.contentSize.height)])
         if let restoreConversationID { restoreScrollAnchor(for: restoreConversationID) }
     }
 
@@ -1778,8 +2449,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         updateHeaderMetadata()
         let id = displayedConversationID
         if let id { captureScrollAnchor(for: id) }
-        if !messagePresentation.rows.isEmpty {
+        if !messagePresentation.rows.isEmpty || !liveMessagePresentation.rows.isEmpty {
             let durationMs = rebuildPresentationGeometry(width: effectivePresentationWidth())
+            rebuildLiveResponsePresentation(width: effectivePresentationWidth())
             reloadMessageTable(reason: "preferences", restoreConversationID: id)
             diagnostics.info(category: "ui", name: "messagePresentation.geometryRebuilt", fields: ["reason": "preferences", "durationMs": String(format: "%.2f", durationMs), "presentationRowCount": String(messagePresentation.rows.count), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
         } else {
@@ -1868,17 +2540,25 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let selectedID = repository.selectedConversationID
         let operationKind = selectedID.flatMap { repository.detailOperationSnapshot(for: $0)?.kind }
         let recoveryInProgress = operationKind == .sync || operationKind == .reload
-        let canRecover = selectedID != nil && !recoveryInProgress
-        let recoveryAttributes: UIMenuElement.Attributes = canRecover ? [] : [.disabled]
-        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: recoveryAttributes) { [weak self] _ in self?.syncLatestMessages() }
-        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: recoveryAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
+        let liveSnapshot = selectedID.flatMap { repository.liveResponse(for: $0) }
+        let responseActive = liveSnapshot?.phase.isActive == true
+        let localResponseActive = responseActive && !(liveSnapshot?.promptText.isEmpty ?? true)
+        let canSync = selectedID != nil && !recoveryInProgress && !localResponseActive
+        let canReload = selectedID != nil
+        let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
+        let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
+        let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
+        let reloadAction = UIAction(title: "重载当前会话", image: UIImage(systemName: "arrow.clockwise"), attributes: reloadAttributes) { [weak self] _ in self?.reloadCurrentConversation() }
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: nil, image: UIImage(systemName: "ellipsis.circle"), primaryAction: nil, menu: UIMenu(children: [syncAction, reloadAction]))
     }
 
     private func syncLatestMessages() {
         guard let id = repository.selectedConversationID else { return }
+        if let snapshot = repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
         if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         let previousMessages = messages
+        let previousLatestUserID = previousMessages.last(where: { $0.role == .user })?.id
+        let previousTrailingTimeline = repository.selectedConversation?.trailingResponseTimeline ?? []
         let hadLoadedDetail = repository.selectedConversation?.id == id
         presentationGeneration += 1
         let currentPresentationGeneration = presentationGeneration
@@ -1890,9 +2570,15 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             self.activityIndicator.stopAnimating()
             switch result {
             case .success(let detail):
-                let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
-                self.apply(detail)
-                self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0)
+                let changed = self.hasVisibleMessageChanges(from: previousMessages, to: detail.messages) || previousTrailingTimeline != detail.trailingResponseTimeline
+                let latestUserChanged = detail.messages.last(where: { $0.role == .user })?.id != previousLatestUserID
+                _ = self.repository.clearTerminalExternalLiveResponseAfterAuthoritativeRefresh(conversationID: id)
+                _ = self.repository.adoptExternalAuthoritativeDetailTimeline(conversationID: id, timeline: detail.trailingResponseTimeline, reasoningDurationSeconds: detail.trailingReasoningDurationSeconds, authoritativeVisibleMessageCount: detail.messages.count, latestVisibleRole: detail.messages.last?.role)
+                self.apply(detail) { [weak self] in
+                    guard let self else { return }
+                    self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0)
+                    self.onManualLatestSyncApplied?(id, latestUserChanged)
+                }
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.hideSyncToast()
@@ -1914,8 +2600,11 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         switch result {
         case .success(let detail):
             let changed = hasVisibleMessageChanges(from: previousMessages, to: detail.messages)
-            apply(detail)
-            if kind == .sync { showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0) }
+            if kind == .sync || kind == .reload { _ = repository.clearTerminalExternalLiveResponseAfterAuthoritativeRefresh(conversationID: id) }
+            apply(detail) { [weak self] in
+                guard let self else { return }
+                if kind == .sync { self.showSyncToast(changed ? "已同步最新消息" : "已是最新", autoHideAfter: 2.0) }
+            }
         case .failure(let error):
             guard !ConversationRepository.isLifecycleTermination(error) else { return }
             if kind == .sync, repository.selectedConversation != nil {
@@ -1936,7 +2625,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     private func hasVisibleMessageChanges(from previous: [ConversationMessage], to current: [ConversationMessage]) -> Bool {
         guard previous.count == current.count else { return true }
-        return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.createTime != new.createTime }
+        return zip(previous, current).contains { old, new in old.id != new.id || old.role != new.role || old.text != new.text || old.responseTimeline != new.responseTimeline || old.createTime != new.createTime }
     }
 
     private func logResidentFirstVisible(id: String, startedAt: TimeInterval, operationKind: ConversationDetailOperationKind?) {
@@ -2037,7 +2726,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     private func answerJumpScrollBounds() -> (minimumY: CGFloat, maximumY: CGFloat) {
         let minimumY = -tableView.adjustedContentInset.top
-        let contentHeight = presentationContentHeight > 0 ? presentationContentHeight : tableView.contentSize.height
+        let derivedContentHeight = presentationContentHeight + livePresentationContentHeight
+        let contentHeight = derivedContentHeight > 0 ? derivedContentHeight : tableView.contentSize.height
         let maximumY = max(minimumY, contentHeight - tableView.bounds.height + tableView.adjustedContentInset.bottom)
         return (minimumY, maximumY)
     }
@@ -2126,8 +2816,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID else { return }
-        if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         captureScrollAnchor(for: id)
+        onManualReloadRequested?(id)
         presentationGeneration += 1
         let currentPresentationGeneration = presentationGeneration
         hideSyncToast()
@@ -2144,7 +2834,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
             self.loadingConversationID = nil
             self.activityIndicator.stopAnimating()
             switch result {
-            case .success(let detail): self.apply(detail, captureCurrentAnchor: false)
+            case .success(let detail):
+                _ = self.repository.adoptExternalAuthoritativeDetailTimeline(conversationID: id, timeline: detail.trailingResponseTimeline, reasoningDurationSeconds: detail.trailingReasoningDurationSeconds, authoritativeVisibleMessageCount: detail.messages.count, latestVisibleRole: detail.messages.last?.role)
+                self.apply(detail, captureCurrentAnchor: false) { [weak self] in self?.onManualReloadApplied?(id) }
             case .failure(let error):
                 guard !ConversationRepository.isLifecycleTermination(error) else { return }
                 self.stateLabel.text = "读取失败\n\(error.localizedDescription)"
@@ -2188,53 +2880,420 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { updateAnswerJumpButton() }
 
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messagePresentation.rows.count }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { messagePresentation.rows.count + liveMessagePresentation.rows.count }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    if indexPath.row < messagePresentation.rows.count {
         guard presentationRowMetrics.indices.contains(indexPath.row) else { return 44 }
         return presentationRowMetrics[indexPath.row].rowHeight
     }
+    let liveRow = indexPath.row - messagePresentation.rows.count
+    guard livePresentationRowMetrics.indices.contains(liveRow) else { return 44 }
+    return livePresentationRowMetrics[liveRow].rowHeight
+}
 
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        guard presentationRowMetrics.indices.contains(indexPath.row) else { return 44 }
-        return presentationRowMetrics[indexPath.row].rowHeight
-    }
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat { self.tableView(tableView, heightForRowAt: indexPath) }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationMessageCell.reuseIdentifier, for: indexPath) as! ConversationMessageCell
+    let cellRole: ConversationMessage.Role
+    if indexPath.row < messagePresentation.rows.count, messagePresentation.rows.indices.contains(indexPath.row) {
+        let presentationRow = messagePresentation.rows[indexPath.row]
+        cellRole = messages.indices.contains(presentationRow.messageIndex) ? messages[presentationRow.messageIndex].role : .assistant
+    } else {
+        let liveRow = indexPath.row - messagePresentation.rows.count
+        if liveMessagePresentation.rows.indices.contains(liveRow) {
+            let presentationRow = liveMessagePresentation.rows[liveRow]
+            cellRole = livePresentationMessages.indices.contains(presentationRow.messageIndex) ? livePresentationMessages[presentationRow.messageIndex].role : .assistant
+        } else {
+            cellRole = .assistant
+        }
+    }
+    let cell = tableView.dequeueReusableCell(withIdentifier: ConversationMessageCell.reuseIdentifier(for: cellRole), for: indexPath) as! ConversationMessageCell
+    if indexPath.row < messagePresentation.rows.count {
         guard messagePresentation.rows.indices.contains(indexPath.row), presentationRowMetrics.indices.contains(indexPath.row) else { return cell }
         let presentationRow = messagePresentation.rows[indexPath.row]
         guard messages.indices.contains(presentationRow.messageIndex) else { return cell }
         let message = messages[presentationRow.messageIndex]
         let showsTimestamp = presentationRow.isFirstChunk && preferences.showsMessageTimestamps
         let showsCopy = message.role == .assistant && presentationRow.isLastChunk
-        cell.configure(with: message, text: presentationRow.text, showTimestamp: showsTimestamp, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, metrics: presentationRowMetrics[indexPath.row], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil)
+        let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+        let reasoningExpanded = displayedConversationID.map { isReasoningExpanded(messageID: message.id, conversationID: $0) } ?? false
+        let hasTools = !ConversationReasoningPresentation.inlineToolItems(responseTimeline).isEmpty
+        cell.configure(with: message, text: presentationRow.text, showTimestamp: showsTimestamp, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !presentationRow.text.isEmpty, metrics: presentationRowMetrics[indexPath.row], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: false) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
         return cell
+    }
+    let liveRow = indexPath.row - messagePresentation.rows.count
+    guard liveMessagePresentation.rows.indices.contains(liveRow), livePresentationRowMetrics.indices.contains(liveRow), let id = displayedConversationID, let snapshot = repository.liveResponse(for: id) else { return cell }
+    let presentationRow = liveMessagePresentation.rows[liveRow]
+    guard livePresentationMessages.indices.contains(presentationRow.messageIndex) else { return cell }
+    let message = livePresentationMessages[presentationRow.messageIndex]
+    let showsCopy = message.role == .assistant && !snapshot.phase.isActive && !message.text.isEmpty && presentationRow.isLastChunk
+    let responseTimeline = presentationRow.isFirstChunk && message.role == .assistant ? message.responseTimeline : []
+    let reasoningExpanded = isReasoningExpanded(messageID: message.id, conversationID: id)
+    let hasTools = !ConversationReasoningPresentation.inlineToolItems(responseTimeline).isEmpty
+    cell.configure(with: message, text: presentationRow.text, showTimestamp: false, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty, reasoningTitle: snapshot.isExternalStoppedWithoutFinal ? "已停止思考" : nil, metrics: livePresentationRowMetrics[liveRow], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: true) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
+    return cell
+}
+
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let messageCell = cell as? ConversationMessageCell else { return }
+        if indexPath.row < messagePresentation.rows.count {
+            guard messagePresentation.rows.indices.contains(indexPath.row) else { return }
+            let row = messagePresentation.rows[indexPath.row]
+            guard messages.indices.contains(row.messageIndex), messages[row.messageIndex].role == .assistant, row.chunkCount > 1 else { return }
+            var fields = messageCell.bodyColorDiagnostics()
+            fields["surface"] = "authoritative"
+            fields["rowIndex"] = String(indexPath.row)
+            fields["chunkIndex"] = String(row.chunkIndex)
+            fields["chunkCount"] = String(row.chunkCount)
+            diagnostics.info(category: "ui", name: "assistantChunkColor.willDisplay", fields: fields)
+            scheduleAssistantChunkRenderDiagnostics(messageCell, tableView: tableView, indexPath: indexPath, surface: "authoritative", chunkIndex: row.chunkIndex, chunkCount: row.chunkCount)
+            return
+        }
+        let liveRow = indexPath.row - messagePresentation.rows.count
+        guard liveMessagePresentation.rows.indices.contains(liveRow) else { return }
+        let row = liveMessagePresentation.rows[liveRow]
+        guard livePresentationMessages.indices.contains(row.messageIndex), livePresentationMessages[row.messageIndex].role == .assistant, row.chunkCount > 1 else { return }
+        var fields = messageCell.bodyColorDiagnostics()
+        fields["surface"] = "live"
+        fields["rowIndex"] = String(indexPath.row)
+        fields["chunkIndex"] = String(row.chunkIndex)
+        fields["chunkCount"] = String(row.chunkCount)
+        diagnostics.info(category: "ui", name: "assistantChunkColor.willDisplay", fields: fields)
+        scheduleAssistantChunkRenderDiagnostics(messageCell, tableView: tableView, indexPath: indexPath, surface: "live", chunkIndex: row.chunkIndex, chunkCount: row.chunkCount)
+    }
+
+    private func scheduleAssistantChunkRenderDiagnostics(_ messageCell: ConversationMessageCell, tableView: UITableView, indexPath: IndexPath, surface: String, chunkIndex: Int, chunkCount: Int) {
+        DispatchQueue.main.async { [weak self, weak tableView, weak messageCell] in
+            guard let self = self, let tableView = tableView, let messageCell = messageCell, tableView.indexPath(for: messageCell) == indexPath else { return }
+            var fields = messageCell.bodyRenderedColorDiagnostics()
+            fields["surface"] = surface
+            fields["rowIndex"] = String(indexPath.row)
+            fields["chunkIndex"] = String(chunkIndex)
+            fields["chunkCount"] = String(chunkCount)
+            self.diagnostics.info(category: "ui", name: "assistantChunkRender.afterDisplay", fields: fields)
+        }
     }
 
     func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard messagePresentation.rows.indices.contains(indexPath.row) else { return nil }
-        let presentationRow = messagePresentation.rows[indexPath.row]
-        guard messages.indices.contains(presentationRow.messageIndex) else { return nil }
-        let message = messages[presentationRow.messageIndex]
-        guard message.role == .user else { return nil }
-        return UIContextMenuConfiguration(identifier: message.id as NSString, previewProvider: nil) { [weak self] _ in
-            let copy = UIAction(title: "复制", image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in self?.copyVisibleMessage(message) }
-            return UIMenu(children: [copy])
+    guard indexPath.row < messagePresentation.rows.count, messagePresentation.rows.indices.contains(indexPath.row) else { return nil }
+    let presentationRow = messagePresentation.rows[indexPath.row]
+    guard messages.indices.contains(presentationRow.messageIndex) else { return nil }
+    let message = messages[presentationRow.messageIndex]
+    guard message.role == .user else { return nil }
+    return UIContextMenuConfiguration(identifier: message.id as NSString, previewProvider: nil) { [weak self] _ in
+        let copy = UIAction(title: "复制", image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in self?.copyVisibleMessage(message) }
+        return UIMenu(children: [copy])
+    }
+}
+}
+
+private enum ConversationReasoningPresentation {
+    static let summaryFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+    static let toolFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+    static let toolActiveFont = UIFont.systemFont(ofSize: 13, weight: .regular)
+
+    static func durationText(seconds: Int?) -> String? {
+        guard let seconds, seconds >= 0 else { return nil }
+        if seconds < 60 { return "\(seconds)s" }
+        let minutes = seconds / 60
+        let remainder = seconds % 60
+        return remainder == 0 ? "\(minutes)m" : "\(minutes)m \(remainder)s"
+    }
+
+    static func summaryTitle(durationSeconds: Int?) -> String { durationText(seconds: durationSeconds).map { "思考了 \($0)" } ?? "思考过程" }
+
+    static func toolListItems(_ timeline: [ConversationResponseTimelineItem]) -> [ConversationResponseTimelineItem] {
+        timeline.filter { item in
+            guard item.kind == .tool else { return false }
+            return !item.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
+    }
+
+    static func inlineToolItems(_ timeline: [ConversationResponseTimelineItem]) -> [ConversationResponseTimelineItem] {
+        toolListItems(timeline).filter { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) != "工具调用" }
+    }
+
+    static func compactAttributedText(_ timeline: [ConversationResponseTimelineItem]) -> NSAttributedString {
+        let output = NSMutableAttributedString()
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = 1
+        paragraph.paragraphSpacing = 5
+        for item in inlineToolItems(timeline) {
+            if output.length > 0 { output.append(NSAttributedString(string: "\n")) }
+            if let image = toolIconImage(item.toolIconKind) {
+                let attachment = NSTextAttachment()
+                attachment.image = image
+                attachment.bounds = CGRect(x: 0, y: -3, width: 16, height: 16)
+                output.append(NSAttributedString(attachment: attachment))
+                output.append(NSAttributedString(string: "  "))
+            }
+            let title = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            output.append(NSAttributedString(string: title, attributes: [.font: toolFont, .foregroundColor: UIColor.secondaryLabel, .paragraphStyle: paragraph]))
+            if !item.completed { output.append(NSAttributedString(string: "  调用中", attributes: [.font: toolActiveFont, .foregroundColor: UIColor.tertiaryLabel, .paragraphStyle: paragraph])) }
+        }
+        return output
+    }
+
+    static func measuredCompactSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat) -> CGSize {
+        let attributed = compactAttributedText(timeline)
+        guard attributed.length > 0 else { return .zero }
+        let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(toolFont.lineHeight), ceil(rect.height) + 2))
+    }
+
+    static func toolIconImage(_ kind: ConversationToolIconKind) -> UIImage? {
+        switch kind {
+        case .github:
+            let renderer = UIGraphicsImageRenderer(size: CGSize(width: 16, height: 16))
+            return renderer.image { _ in
+                UIColor.label.setFill()
+                UIColor.label.setStroke()
+                let head = UIBezierPath(ovalIn: CGRect(x: 2.2, y: 2.4, width: 11.6, height: 10.2))
+                head.fill()
+                let leftEar = UIBezierPath()
+                leftEar.move(to: CGPoint(x: 3.2, y: 4.5)); leftEar.addLine(to: CGPoint(x: 3.0, y: 0.9)); leftEar.addLine(to: CGPoint(x: 6.2, y: 2.8)); leftEar.close(); leftEar.fill()
+                let rightEar = UIBezierPath()
+                rightEar.move(to: CGPoint(x: 12.8, y: 4.5)); rightEar.addLine(to: CGPoint(x: 13.0, y: 0.9)); rightEar.addLine(to: CGPoint(x: 9.8, y: 2.8)); rightEar.close(); rightEar.fill()
+                let body = UIBezierPath(roundedRect: CGRect(x: 5.1, y: 9.2, width: 5.8, height: 6.3), cornerRadius: 2.7)
+                body.fill()
+                let tail = UIBezierPath()
+                tail.move(to: CGPoint(x: 5.4, y: 12.2)); tail.addCurve(to: CGPoint(x: 1.5, y: 10.7), controlPoint1: CGPoint(x: 3.8, y: 12.4), controlPoint2: CGPoint(x: 3.4, y: 10.5)); tail.lineWidth = 1.8; tail.lineCapStyle = .round; tail.stroke()
+            }
+        case .connector:
+            return UIImage(systemName: "puzzlepiece.extension", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .medium))?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal)
+        case .code:
+            return UIImage(systemName: "chevron.left.slash.chevron.right", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .medium))?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal)
+        case .generic:
+            return UIImage(systemName: "wrench", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .medium))?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal)
+        }
+    }
+
+    static func prettyJSONString(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data), JSONSerialization.isValidJSONObject(object), let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]), let text = String(data: pretty, encoding: .utf8) else { return raw }
+        return text
+    }
+
+    static func formattedToolOutput(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data) else { return raw }
+        return formatToolValue(object, indent: 0)
+    }
+
+    private static func formatToolValue(_ value: Any, indent: Int) -> String {
+        let prefix = String(repeating: "  ", count: indent)
+        if let dictionary = value as? [String: Any] {
+            if dictionary.isEmpty { return prefix + "{}" }
+            return orderedToolKeys(dictionary).compactMap { key -> String? in
+                guard let child = dictionary[key] else { return nil }
+                if let string = child as? String, let nested = decodedJSONContainer(string) { return prefix + key + ":\n" + formatToolValue(nested, indent: indent + 1) }
+                if child is [String: Any] || child is [Any] { return prefix + key + ":\n" + formatToolValue(child, indent: indent + 1) }
+                return prefix + key + ": " + formatToolScalar(child)
+            }.joined(separator: "\n")
+        }
+        if let array = value as? [Any] {
+            if array.isEmpty { return prefix + "[]" }
+            return array.enumerated().map { index, child in
+                if child is [String: Any] || child is [Any] { return prefix + "[\(index)]\n" + formatToolValue(child, indent: indent + 1) }
+                return prefix + "[\(index)] " + formatToolScalar(child)
+            }.joined(separator: "\n")
+        }
+        if let string = value as? String { return prefix + string }
+        return prefix + formatToolScalar(value)
+    }
+
+    private static func orderedToolKeys(_ dictionary: [String: Any]) -> [String] {
+        let preferred = ["content_type", "language", "response_format_name", "text", "parts"]
+        let first = preferred.filter { dictionary[$0] != nil }
+        let remaining = dictionary.keys.filter { !preferred.contains($0) }.sorted()
+        return first + remaining
+    }
+
+    private static func decodedJSONContainer(_ string: String) -> Any? {
+        guard let data = string.data(using: .utf8), let value = try? JSONSerialization.jsonObject(with: data), value is [String: Any] || value is [Any] else { return nil }
+        return value
+    }
+
+    private static func formatToolScalar(_ value: Any) -> String {
+        if value is NSNull { return "null" }
+        if let boolean = value as? Bool { return boolean ? "true" : "false" }
+        if let number = value as? NSNumber { return number.stringValue }
+        return String(describing: value)
     }
 }
 
-final class ConversationMessageCell: UITableViewCell {
+private final class ConversationReasoningDisclosureView: UIView {
+    private let stack = UIStackView()
+    private let button = UIButton(type: .system)
+    private let bodyContainer = UIView()
+    private let bodyLabel = UILabel()
+    private let title: String
+    private var expanded: Bool
+
+    init(title: String, body: String, expanded: Bool) {
+        self.title = title
+        self.expanded = expanded
+        super.init(frame: .zero)
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stack)
+        button.contentHorizontalAlignment = .left
+        button.tintColor = .secondaryLabel
+        button.setTitleColor(.label, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        button.addTarget(self, action: #selector(toggle), for: .touchUpInside)
+        stack.addArrangedSubview(button)
+        bodyContainer.backgroundColor = .secondarySystemBackground
+        bodyContainer.layer.cornerRadius = 12
+        bodyLabel.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
+        bodyLabel.textColor = .secondaryLabel
+        bodyLabel.numberOfLines = 0
+        bodyLabel.lineBreakMode = .byCharWrapping
+        bodyLabel.text = body
+        bodyLabel.translatesAutoresizingMaskIntoConstraints = false
+        bodyContainer.addSubview(bodyLabel)
+        stack.addArrangedSubview(bodyContainer)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor), stack.trailingAnchor.constraint(equalTo: trailingAnchor), stack.topAnchor.constraint(equalTo: topAnchor), stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            bodyLabel.leadingAnchor.constraint(equalTo: bodyContainer.leadingAnchor, constant: 12), bodyLabel.trailingAnchor.constraint(equalTo: bodyContainer.trailingAnchor, constant: -12), bodyLabel.topAnchor.constraint(equalTo: bodyContainer.topAnchor, constant: 12), bodyLabel.bottomAnchor.constraint(equalTo: bodyContainer.bottomAnchor, constant: -12)
+        ])
+        applyState()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    @objc private func toggle() { expanded.toggle(); applyState() }
+
+    private func applyState() {
+        let symbol = expanded ? "chevron.down" : "chevron.right"
+        button.setImage(UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold)), for: .normal)
+        button.setTitle("  " + title, for: .normal)
+        bodyContainer.isHidden = !expanded
+    }
+}
+
+private final class ConversationReasoningToolView: UIView {
+    init(item: ConversationResponseTimelineItem) {
+        super.init(frame: .zero)
+        let rail = UIView()
+        let iconView = UIImageView(image: ConversationReasoningPresentation.toolIconImage(item.toolIconKind))
+        let line = UIView()
+        let completion = UIImageView(image: UIImage(systemName: item.completed ? "checkmark.circle" : "circle", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .medium)))
+        let content = UIStackView()
+        let titleLabel = UILabel()
+        rail.translatesAutoresizingMaskIntoConstraints = false
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        line.translatesAutoresizingMaskIntoConstraints = false
+        completion.translatesAutoresizingMaskIntoConstraints = false
+        content.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(rail); addSubview(content); rail.addSubview(iconView); rail.addSubview(line); rail.addSubview(completion)
+        iconView.contentMode = .scaleAspectFit
+        completion.tintColor = .secondaryLabel
+        line.backgroundColor = .separator
+        content.axis = .vertical
+        content.spacing = 10
+        titleLabel.font = .systemFont(ofSize: 17, weight: .regular)
+        titleLabel.textColor = .label
+        titleLabel.numberOfLines = 0
+        titleLabel.text = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        content.addArrangedSubview(titleLabel)
+        if !item.toolInputJSON.isEmpty {
+            let inputContainer = UIView()
+            inputContainer.backgroundColor = .secondarySystemBackground
+            inputContainer.layer.cornerRadius = 12
+            let inputLabel = UILabel()
+            inputLabel.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
+            inputLabel.textColor = .secondaryLabel
+            inputLabel.numberOfLines = 0
+            inputLabel.lineBreakMode = .byCharWrapping
+            inputLabel.text = ConversationReasoningPresentation.prettyJSONString(item.toolInputJSON)
+            inputLabel.translatesAutoresizingMaskIntoConstraints = false
+            inputContainer.addSubview(inputLabel)
+            content.addArrangedSubview(inputContainer)
+            NSLayoutConstraint.activate([
+                inputLabel.leadingAnchor.constraint(equalTo: inputContainer.leadingAnchor, constant: 12), inputLabel.trailingAnchor.constraint(equalTo: inputContainer.trailingAnchor, constant: -12), inputLabel.topAnchor.constraint(equalTo: inputContainer.topAnchor, constant: 12), inputLabel.bottomAnchor.constraint(equalTo: inputContainer.bottomAnchor, constant: -12)
+            ])
+        }
+        NSLayoutConstraint.activate([
+            rail.leadingAnchor.constraint(equalTo: leadingAnchor), rail.topAnchor.constraint(equalTo: topAnchor), rail.bottomAnchor.constraint(equalTo: bottomAnchor), rail.widthAnchor.constraint(equalToConstant: 20),
+            content.leadingAnchor.constraint(equalTo: rail.trailingAnchor, constant: 10), content.trailingAnchor.constraint(equalTo: trailingAnchor), content.topAnchor.constraint(equalTo: topAnchor), content.bottomAnchor.constraint(equalTo: bottomAnchor),
+            iconView.topAnchor.constraint(equalTo: rail.topAnchor, constant: 1), iconView.centerXAnchor.constraint(equalTo: rail.centerXAnchor), iconView.widthAnchor.constraint(equalToConstant: 18), iconView.heightAnchor.constraint(equalToConstant: 18),
+            completion.centerXAnchor.constraint(equalTo: rail.centerXAnchor), completion.bottomAnchor.constraint(equalTo: rail.bottomAnchor, constant: -1), completion.widthAnchor.constraint(equalToConstant: 16), completion.heightAnchor.constraint(equalToConstant: 16),
+            line.centerXAnchor.constraint(equalTo: rail.centerXAnchor), line.widthAnchor.constraint(equalToConstant: 1), line.topAnchor.constraint(equalTo: iconView.bottomAnchor, constant: 6), line.bottomAnchor.constraint(equalTo: completion.topAnchor, constant: -6)
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+}
+
+private final class ConversationReasoningDetailViewController: UIViewController {
+    private let timeline: [ConversationResponseTimelineItem]
+    private let durationSeconds: Int?
+    private let scrollView = UIScrollView()
+    private let contentStack = UIStackView()
+
+    init(timeline: [ConversationResponseTimelineItem], durationSeconds: Int?) {
+        self.timeline = timeline
+        self.durationSeconds = durationSeconds
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        scrollView.alwaysBounceVertical = true
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.axis = .vertical
+        contentStack.spacing = 18
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentStack)
+        NSLayoutConstraint.activate([
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor), scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor), scrollView.topAnchor.constraint(equalTo: view.topAnchor), scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            contentStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 24), contentStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -24), contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 24), contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -32), contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -48)
+        ])
+        let title = UILabel()
+        title.font = .systemFont(ofSize: 22, weight: .semibold)
+        title.textColor = .label
+        title.text = "正在思考"
+        contentStack.addArrangedSubview(title)
+        for item in ConversationReasoningPresentation.toolListItems(timeline) { contentStack.addArrangedSubview(ConversationReasoningToolView(item: item)) }
+        let status = UIStackView()
+        status.axis = .vertical
+        status.spacing = 20
+        status.layoutMargins = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 0)
+        status.isLayoutMarginsRelativeArrangement = true
+        let duration = UILabel()
+        duration.font = .systemFont(ofSize: 16, weight: .regular)
+        duration.textColor = .secondaryLabel
+        duration.text = ConversationReasoningPresentation.durationText(seconds: durationSeconds).map { "思考了 \($0)" } ?? "思考过程"
+        let done = UILabel()
+        done.font = .systemFont(ofSize: 16, weight: .regular)
+        done.textColor = .secondaryLabel
+        done.text = "完成"
+        status.addArrangedSubview(duration); status.addArrangedSubview(done)
+        contentStack.addArrangedSubview(status)
+    }
+}
+
+final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     struct Metrics {
         let rowHeight: CGFloat
         let timestampFrame: CGRect
         let bubbleFrame: CGRect
+        let reasoningButtonFrame: CGRect
+        let reasoningBodyFrame: CGRect
+        let reasoningDividerFrame: CGRect
         let messageFrame: CGRect
         let copyFrame: CGRect
     }
 
-    static let reuseIdentifier = "ConversationMessageCell"
+    static let userReuseIdentifier = "ConversationMessageCell.user"
+    static let assistantReuseIdentifier = "ConversationMessageCell.assistant"
+    static func reuseIdentifier(for role: ConversationMessage.Role) -> String { switch role { case .user: return userReuseIdentifier; case .assistant: return assistantReuseIdentifier } }
+    private static var diagnosticCellOrdinalSeed = 0
 
     private static let horizontalMargin: CGFloat = 16
     private static let userLeadingGap: CGFloat = 44
@@ -2243,9 +3302,19 @@ final class ConversationMessageCell: UITableViewCell {
     private static let bubbleVerticalPadding: CGFloat = 9
     private static let outerVerticalPadding: CGFloat = 7
     private static let timestampGap: CGFloat = 3
+    private static let reasoningButtonHeight: CGFloat = 28
+    private static let reasoningBodyGap: CGFloat = 2
+    private static let reasoningMessageGap: CGFloat = 5
+    private static let reasoningDividerGap: CGFloat = 7
+    private static let toolDetailMaximumBodyHeight: CGFloat = 260
     private static let copyGap: CGFloat = 4
     private static let copySize: CGFloat = 28
     private static let bodyFont = UIFont.preferredFont(forTextStyle: .body)
+    private static let reasoningFont = bodyFont
+    private static let toolFont = UIFont.systemFont(ofSize: bodyFont.pointSize, weight: .medium)
+    private static let toolLineHeight: CGFloat = 36
+    private static let compactAssistantLineHeight: CGFloat = toolLineHeight * 0.70
+    private static let detailFont = UIFont.monospacedSystemFont(ofSize: max(11, reasoningFont.pointSize - 1), weight: .regular)
     private static let timestampFont = UIFont.preferredFont(forTextStyle: .caption2)
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -2266,26 +3335,53 @@ final class ConversationMessageCell: UITableViewCell {
 
     private let bubbleView = UIView()
     private let messageLabel = UILabel()
+    private let reasoningButton = UIButton(type: .system)
+    private let reasoningTextView = UITextView()
+    private let reasoningDividerView = UIView()
     private let timestampLabel = UILabel()
     private let copyButton = UIButton(type: .system)
     private var onCopy: (() -> Void)?
-    private var layoutMetrics = Metrics(rowHeight: 44, timestampFrame: .zero, bubbleFrame: .zero, messageFrame: .zero, copyFrame: .zero)
+    private var onToggleReasoning: (() -> Void)?
+    private var onToggleToolDetail: ((Int, ConversationToolDetailSection) -> Void)?
+    private var layoutMetrics = Metrics(rowHeight: 44, timestampFrame: .zero, bubbleFrame: .zero, reasoningButtonFrame: .zero, reasoningBodyFrame: .zero, reasoningDividerFrame: .zero, messageFrame: .zero, copyFrame: .zero)
+    private var diagnosticCellOrdinal = 0
+    private var lastConfiguredRoleForDiagnostics = "none"
+    private var reusedFromRoleForDiagnostics = "none"
+    private var reusedFromLinkRunCountForDiagnostics = 0
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        Self.diagnosticCellOrdinalSeed += 1
+        diagnosticCellOrdinal = Self.diagnosticCellOrdinalSeed
         selectionStyle = .none
         backgroundColor = .systemBackground
         contentView.backgroundColor = .systemBackground
-
         timestampLabel.font = Self.timestampFont
         timestampLabel.textColor = .tertiaryLabel
         contentView.addSubview(timestampLabel)
-
         contentView.addSubview(bubbleView)
+        reasoningButton.tintColor = .secondaryLabel
+        reasoningButton.setTitleColor(.secondaryLabel, for: .normal)
+        reasoningButton.titleLabel?.font = ConversationReasoningPresentation.summaryFont
+        reasoningButton.contentHorizontalAlignment = .left
+        reasoningButton.contentEdgeInsets = .zero
+        reasoningButton.addTarget(self, action: #selector(reasoningTapped), for: .touchUpInside)
+        reasoningButton.semanticContentAttribute = .forceRightToLeft
+        bubbleView.addSubview(reasoningButton)
+        reasoningTextView.delegate = self
+        reasoningTextView.isEditable = false
+        reasoningTextView.isSelectable = true
+        reasoningTextView.isScrollEnabled = false
+        reasoningTextView.backgroundColor = .clear
+        reasoningTextView.textContainerInset = .zero
+        reasoningTextView.textContainer.lineFragmentPadding = 0
+        reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.secondaryLabel]
+        bubbleView.addSubview(reasoningTextView)
+        reasoningDividerView.backgroundColor = .separator
+        bubbleView.addSubview(reasoningDividerView)
         messageLabel.font = Self.bodyFont
         messageLabel.numberOfLines = 0
         bubbleView.addSubview(messageLabel)
-
         let copyImage = UIImage(systemName: "square.on.square", withConfiguration: UIImage.SymbolConfiguration(pointSize: 10, weight: .regular))
         copyButton.setImage(copyImage, for: .normal)
         copyButton.tintColor = .secondaryLabel
@@ -2301,104 +3397,538 @@ final class ConversationMessageCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        reusedFromRoleForDiagnostics = lastConfiguredRoleForDiagnostics
+        reusedFromLinkRunCountForDiagnostics = attributedLinkRunCount(messageLabel.attributedText)
         onCopy = nil
+        onToggleReasoning = nil
+        onToggleToolDetail = nil
         messageLabel.text = nil
+        messageLabel.attributedText = nil
+        messageLabel.isHighlighted = false
+        messageLabel.textColor = .label
+        messageLabel.highlightedTextColor = .label
+        messageLabel.tintColor = .label
+        reasoningTextView.attributedText = nil
+        reasoningButton.setTitle(nil, for: .normal)
+        reasoningButton.setImage(nil, for: .normal)
         timestampLabel.text = nil
+        reasoningButton.isHidden = true
+        reasoningTextView.isHidden = true
+        reasoningDividerView.isHidden = true
         copyButton.isHidden = true
+    }
+
+    func bodyColorDiagnostics() -> [String: String] {
+        var fields: [String: String] = [
+            "labelTextColor": diagnosticsColor(messageLabel.textColor),
+            "labelHighlightedTextColor": diagnosticsColor(messageLabel.highlightedTextColor),
+            "labelTintColor": diagnosticsColor(messageLabel.tintColor),
+            "labelIsHighlighted": String(messageLabel.isHighlighted),
+            "cellIsHighlighted": String(isHighlighted),
+            "cellIsSelected": String(isSelected),
+            "interfaceStyle": traitCollection.userInterfaceStyle == .dark ? "dark" : (traitCollection.userInterfaceStyle == .light ? "light" : "unspecified")
+        ]
+        if let attributedText = messageLabel.attributedText, attributedText.length > 0 {
+            fields["attributedForegroundColor"] = diagnosticsColor(attributedText.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? UIColor)
+        } else {
+            fields["attributedForegroundColor"] = "none"
+        }
+        return fields
+    }
+
+    private func diagnosticsColor(_ color: UIColor?) -> String {
+        guard let color else { return "none" }
+        let resolved = color.resolvedColor(with: traitCollection)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        if resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return String(format: "rgba:%.3f,%.3f,%.3f,%.3f", red, green, blue, alpha)
+        }
+        var white: CGFloat = 0
+        if resolved.getWhite(&white, alpha: &alpha) { return String(format: "white:%.3f,%.3f", white, alpha) }
+        return resolved.description
+    }
+
+    func bodyRenderedColorDiagnostics() -> [String: String] {
+        var fields: [String: String] = [
+            "labelAlpha": String(format: "%.3f", messageLabel.alpha),
+            "bubbleAlpha": String(format: "%.3f", bubbleView.alpha),
+            "contentAlpha": String(format: "%.3f", contentView.alpha),
+            "labelLayerOpacity": String(format: "%.3f", messageLabel.layer.opacity),
+            "labelPresentationOpacity": messageLabel.layer.presentation().map { String(format: "%.3f", $0.opacity) } ?? "none",
+            "cellOrdinal": String(diagnosticCellOrdinal),
+            "reusedFromRole": reusedFromRoleForDiagnostics,
+            "reusedFromLinkRunCount": String(reusedFromLinkRunCountForDiagnostics)
+        ]
+        attributedStructureDiagnostics().forEach { fields[$0.key] = $0.value }
+        let hierarchyImage = renderedLabelImage()
+        renderedInkDiagnostics(image: hierarchyImage, prefix: "labelRender").forEach { fields[$0.key] = $0.value }
+        transparentInkDiagnostics(image: hierarchyImage, prefix: "labelHierarchyTransparent").forEach { fields[$0.key] = $0.value }
+        transparentInkDiagnostics(image: renderedLabelLayerImage(), prefix: "labelLayerTransparent").forEach { fields[$0.key] = $0.value }
+        transparentInkDiagnostics(image: directAttributedImage(), prefix: "directAttributedTransparent").forEach { fields[$0.key] = $0.value }
+        renderedInkDiagnostics(image: renderedHierarchyCropImage(), prefix: "hierarchyCrop").forEach { fields[$0.key] = $0.value }
+        return fields
+    }
+
+    private func attributedStructureDiagnostics() -> [String: String] {
+        guard let attributedText = messageLabel.attributedText, attributedText.length > 0 else {
+            return ["attributedLength": "0", "attributeRunCount": "0", "foregroundRunCount": "0", "foregroundDistinctColors": "none", "linkRunCount": "0", "attachmentRunCount": "0"]
+        }
+        let range = NSRange(location: 0, length: attributedText.length)
+        var attributeRunCount = 0
+        var foregroundRunCount = 0
+        var foregroundColors = Set<String>()
+        var linkRunCount = 0
+        var attachmentRunCount = 0
+        attributedText.enumerateAttributes(in: range, options: []) { attributes, _, _ in
+            attributeRunCount += 1
+            if let color = attributes[.foregroundColor] as? UIColor {
+                foregroundRunCount += 1
+                foregroundColors.insert(diagnosticsColor(color))
+            }
+            if attributes[.link] != nil { linkRunCount += 1 }
+            if attributes[.attachment] != nil { attachmentRunCount += 1 }
+        }
+        return [
+            "attributedLength": String(attributedText.length),
+            "attributeRunCount": String(attributeRunCount),
+            "foregroundRunCount": String(foregroundRunCount),
+            "foregroundDistinctColors": (foregroundColors.isEmpty ? "none" : foregroundColors.sorted().joined(separator: "|")),
+            "linkRunCount": String(linkRunCount),
+            "attachmentRunCount": String(attachmentRunCount)
+        ]
+    }
+
+    private func attributedLinkRunCount(_ attributedText: NSAttributedString?) -> Int {
+        guard let attributedText = attributedText, attributedText.length > 0 else { return 0 }
+        var count = 0
+        attributedText.enumerateAttribute(.link, in: NSRange(location: 0, length: attributedText.length), options: []) { value, _, _ in
+            if value != nil { count += 1 }
+        }
+        return count
+    }
+
+    private func renderedLabelImage() -> UIImage? {
+        let size = messageLabel.bounds.size
+        guard size.width >= 1, size.height >= 1 else { return nil }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = false
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            messageLabel.drawHierarchy(in: messageLabel.bounds, afterScreenUpdates: true)
+        }
+    }
+
+    private func renderedLabelLayerImage() -> UIImage? {
+        let size = messageLabel.bounds.size
+        guard size.width >= 1, size.height >= 1 else { return nil }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = false
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
+            messageLabel.layer.render(in: context.cgContext)
+        }
+    }
+
+    private func directAttributedImage() -> UIImage? {
+        guard let attributedText = messageLabel.attributedText, attributedText.length > 0 else { return nil }
+        let size = messageLabel.bounds.size
+        guard size.width >= 1, size.height >= 1 else { return nil }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = false
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            attributedText.draw(with: messageLabel.bounds, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        }
+    }
+
+    private func renderedHierarchyCropImage() -> UIImage? {
+        let frame = messageLabel.convert(messageLabel.bounds, to: contentView)
+        guard frame.width >= 1, frame.height >= 1 else { return nil }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = false
+        return UIGraphicsImageRenderer(size: frame.size, format: format).image { context in
+            context.cgContext.translateBy(x: -frame.minX, y: -frame.minY)
+            contentView.drawHierarchy(in: contentView.bounds, afterScreenUpdates: true)
+        }
+    }
+
+    private func transparentInkDiagnostics(image: UIImage?, prefix: String) -> [String: String] {
+        guard let cgImage = image?.cgImage else { return ["\(prefix)Status": "image_unavailable"] }
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 0, height > 0 else { return ["\(prefix)Status": "empty"] }
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: colorSpace, bitmapInfo: bitmapInfo) else { return ["\(prefix)Status": "context_unavailable"] }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var redSum = 0.0
+        var greenSum = 0.0
+        var blueSum = 0.0
+        var sampleCount = 0
+        var blueDominantCount = 0
+        for offset in stride(from: 0, to: pixels.count, by: 4) {
+            let alpha = Double(pixels[offset + 3]) / 255.0
+            guard alpha > 0.06 else { continue }
+            let red = min(1, (Double(pixels[offset]) / 255.0) / alpha)
+            let green = min(1, (Double(pixels[offset + 1]) / 255.0) / alpha)
+            let blue = min(1, (Double(pixels[offset + 2]) / 255.0) / alpha)
+            sampleCount += 1
+            redSum += red
+            greenSum += green
+            blueSum += blue
+            if blue - red > 0.12 && blue - green > 0.08 { blueDominantCount += 1 }
+        }
+        guard sampleCount > 0 else { return ["\(prefix)Status": "no_ink_pixels", "\(prefix)PixelCount": "0"] }
+        let count = Double(sampleCount)
+        return [
+            "\(prefix)Status": "ok",
+            "\(prefix)PixelCount": String(sampleCount),
+            "\(prefix)InkRGB": String(format: "%.3f,%.3f,%.3f", redSum / count, greenSum / count, blueSum / count),
+            "\(prefix)BlueDominantFraction": String(format: "%.3f", Double(blueDominantCount) / count)
+        ]
+    }
+
+    private func renderedInkDiagnostics(image: UIImage?, prefix: String) -> [String: String] {
+        guard let cgImage = image?.cgImage else { return ["\(prefix)Status": "image_unavailable"] }
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 0, height > 0 else { return ["\(prefix)Status": "empty"] }
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bitmapInfo = CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: colorSpace, bitmapInfo: bitmapInfo) else { return ["\(prefix)Status": "context_unavailable"] }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var redSum = 0.0
+        var greenSum = 0.0
+        var blueSum = 0.0
+        var sampleCount = 0
+        var nearWhiteCount = 0
+        var blueDominantCount = 0
+        for offset in stride(from: 0, to: pixels.count, by: 4) {
+            let alpha = Double(pixels[offset + 3]) / 255.0
+            guard alpha > 0.06 else { continue }
+            let red = min(1, (Double(pixels[offset]) / 255.0) / alpha)
+            let green = min(1, (Double(pixels[offset + 1]) / 255.0) / alpha)
+            let blue = min(1, (Double(pixels[offset + 2]) / 255.0) / alpha)
+            guard max(red, green, blue) > 0.18 else { continue }
+            sampleCount += 1
+            redSum += red
+            greenSum += green
+            blueSum += blue
+            if min(red, green, blue) > 0.75 && max(red, green, blue) - min(red, green, blue) < 0.08 { nearWhiteCount += 1 }
+            if blue - red > 0.12 && blue - green > 0.08 { blueDominantCount += 1 }
+        }
+        guard sampleCount > 0 else { return ["\(prefix)Status": "no_ink_pixels", "\(prefix)PixelCount": "0"] }
+        let count = Double(sampleCount)
+        return [
+            "\(prefix)Status": "ok",
+            "\(prefix)PixelCount": String(sampleCount),
+            "\(prefix)InkRGB": String(format: "%.3f,%.3f,%.3f", redSum / count, greenSum / count, blueSum / count),
+            "\(prefix)NearWhiteFraction": String(format: "%.3f", Double(nearWhiteCount) / count),
+            "\(prefix)BlueDominantFraction": String(format: "%.3f", Double(blueDominantCount) / count)
+        ]
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
         timestampLabel.frame = layoutMetrics.timestampFrame
         bubbleView.frame = layoutMetrics.bubbleFrame
+        reasoningButton.frame = layoutMetrics.reasoningButtonFrame
+        reasoningTextView.frame = layoutMetrics.reasoningBodyFrame
+        reasoningDividerView.frame = layoutMetrics.reasoningDividerFrame
         messageLabel.frame = layoutMetrics.messageFrame
         copyButton.frame = layoutMetrics.copyFrame
     }
 
-    func configure(with message: ConversationMessage, text: String, showTimestamp: Bool, showCopy: Bool, isFirstChunk: Bool, isLastChunk: Bool, isChunked: Bool, metrics: Metrics, onCopy: (() -> Void)?) {
-        self.onCopy = onCopy
-        layoutMetrics = metrics
-        messageLabel.text = text
-        timestampLabel.text = showTimestamp ? Self.timestampText(for: message.createTime) : nil
-        timestampLabel.isHidden = timestampLabel.text == nil
-        copyButton.isHidden = !showCopy
-        switch message.role {
-        case .user:
-            bubbleView.backgroundColor = .secondarySystemBackground
-            bubbleView.layer.cornerRadius = 18
-            if isFirstChunk && isLastChunk {
-                bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-            } else if isFirstChunk {
-                bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-            } else if isLastChunk {
-                bubbleView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-            } else {
-                bubbleView.layer.maskedCorners = []
+    func configure(with message: ConversationMessage, text: String, showTimestamp: Bool, showCopy: Bool, isFirstChunk: Bool, isLastChunk: Bool, isChunked: Bool, responseTimeline: [ConversationResponseTimelineItem], reasoningExpanded: Bool, toolDisclosureState: ConversationToolDisclosureState, showsReasoningDivider: Bool, reasoningTitle: String? = nil, metrics: Metrics, onCopy: (() -> Void)?, onToggleReasoning: (() -> Void)?, onToggleToolDetail: ((Int, ConversationToolDetailSection) -> Void)?) {
+    self.onCopy = onCopy
+    self.onToggleReasoning = onToggleReasoning
+    self.onToggleToolDetail = onToggleToolDetail
+    layoutMetrics = metrics
+    lastConfiguredRoleForDiagnostics = message.role.rawValue
+    messageLabel.isHighlighted = false
+    messageLabel.textColor = .label
+    messageLabel.highlightedTextColor = .label
+    messageLabel.tintColor = .label
+    switch message.role {
+    case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label
+    case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)
+    }
+    let showsReasoning = message.role == .assistant && isFirstChunk && !responseTimeline.isEmpty
+    reasoningButton.isHidden = !showsReasoning
+    reasoningButton.isUserInteractionEnabled = showsReasoning && onToggleReasoning != nil
+    reasoningButton.setTitle(showsReasoning ? (reasoningTitle ?? ConversationReasoningPresentation.summaryTitle(durationSeconds: message.reasoningDurationSeconds)) : nil, for: .normal)
+    let chevron = UIImage(systemName: reasoningExpanded ? "chevron.up" : "chevron.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 9, weight: .semibold))
+    reasoningButton.setImage(showsReasoning ? chevron : nil, for: .normal)
+    reasoningButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 6, bottom: 0, right: -6)
+    let timelineText = showsReasoning && reasoningExpanded ? Self.responseTimelineAttributedText(responseTimeline, disclosureState: toolDisclosureState, trailingSeparator: showsReasoningDivider) : NSAttributedString()
+    reasoningTextView.attributedText = timelineText.length > 0 ? timelineText : nil
+    reasoningTextView.isHidden = timelineText.length == 0
+    reasoningTextView.isScrollEnabled = false
+    reasoningTextView.isUserInteractionEnabled = timelineText.length > 0 && onToggleToolDetail != nil
+    reasoningDividerView.isHidden = !(showsReasoning && showsReasoningDivider && !metrics.reasoningDividerFrame.isEmpty)
+    timestampLabel.text = showTimestamp ? Self.timestampText(for: message.createTime) : nil
+    timestampLabel.isHidden = timestampLabel.text == nil
+    copyButton.isHidden = !showCopy
+    switch message.role {
+    case .user:
+        bubbleView.backgroundColor = .secondarySystemBackground
+        bubbleView.layer.cornerRadius = 18
+        if isFirstChunk && isLastChunk { bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner] }
+        else if isFirstChunk { bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner] }
+        else if isLastChunk { bubbleView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner] }
+        else { bubbleView.layer.maskedCorners = [] }
+        timestampLabel.textAlignment = .right
+    case .assistant:
+        bubbleView.backgroundColor = .clear
+        bubbleView.layer.cornerRadius = 0
+        bubbleView.layer.maskedCorners = []
+        timestampLabel.textAlignment = .left
+    }
+    setNeedsLayout()
+}
+
+    static func metrics(for text: String, role: ConversationMessage.Role, tableWidth: CGFloat, showsTimestamp: Bool, showsCopy: Bool, isFirstChunk: Bool, isLastChunk: Bool, isChunked: Bool, responseTimeline: [ConversationResponseTimelineItem], reasoningExpanded: Bool, toolDisclosureState: ConversationToolDisclosureState, showsReasoningDivider: Bool) -> Metrics {
+    let width = max(1, tableWidth)
+    var y = isFirstChunk ? outerVerticalPadding : 0
+    var timestampFrame = CGRect.zero
+    if showsTimestamp {
+        let timestampHeight = ceil(timestampFont.lineHeight)
+        timestampFrame = CGRect(x: horizontalMargin, y: y, width: max(1, width - horizontalMargin * 2), height: timestampHeight)
+        y += timestampHeight + timestampGap
+    }
+    let maxBubbleWidth: CGFloat
+    let maxTextWidth: CGFloat
+    let contentInset: CGFloat
+    switch role {
+    case .user:
+        maxBubbleWidth = max(36, min(width * userMaxWidthRatio, width - horizontalMargin * 2 - userLeadingGap))
+        contentInset = bubbleHorizontalPadding
+        maxTextWidth = max(1, maxBubbleWidth - contentInset * 2)
+    case .assistant:
+        maxBubbleWidth = max(1, width - horizontalMargin * 2)
+        contentInset = 0
+        maxTextWidth = maxBubbleWidth
+    }
+    let textSize = measuredTextSize(text, role: role, maxWidth: maxTextWidth)
+    let bubbleWidth: CGFloat
+    switch role {
+    case .user: bubbleWidth = isChunked ? maxBubbleWidth : min(maxBubbleWidth, max(36, ceil(textSize.width) + contentInset * 2))
+    case .assistant: bubbleWidth = maxBubbleWidth
+    }
+    let bubbleX = role == .user ? width - horizontalMargin - bubbleWidth : horizontalMargin
+    var bubbleY: CGFloat = isFirstChunk ? bubbleVerticalPadding : 0
+    var reasoningButtonFrame = CGRect.zero
+    var reasoningBodyFrame = CGRect.zero
+    var reasoningDividerFrame = CGRect.zero
+    if role == .assistant, isFirstChunk, !responseTimeline.isEmpty {
+        reasoningButtonFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 24)
+        bubbleY = reasoningButtonFrame.maxY
+        let timelineSize = reasoningExpanded ? measuredTimelineSize(responseTimeline, maxWidth: maxTextWidth, disclosureState: toolDisclosureState, trailingSeparator: showsReasoningDivider) : .zero
+        if timelineSize.height > 0 {
+            bubbleY += 6
+            reasoningBodyFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: timelineSize.height)
+            bubbleY = reasoningBodyFrame.maxY
+        }
+        if showsReasoningDivider {
+            reasoningDividerFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: 1 / UIScreen.main.scale)
+            bubbleY = reasoningDividerFrame.maxY + 12
+        } else {
+            bubbleY += 8
+        }
+    }
+    let messageFrame = CGRect(x: contentInset, y: bubbleY, width: maxTextWidth, height: textSize.height)
+    let bubbleHeight = messageFrame.maxY + (isLastChunk ? bubbleVerticalPadding : 0)
+    let bubbleFrame = CGRect(x: bubbleX, y: y, width: bubbleWidth, height: bubbleHeight)
+    y = bubbleFrame.maxY
+    var copyFrame = CGRect.zero
+    if showsCopy {
+        y += copyGap
+        copyFrame = CGRect(x: role == .user ? bubbleFrame.maxX - copySize : bubbleFrame.minX, y: y, width: copySize, height: copySize)
+        y = copyFrame.maxY
+    }
+    if isLastChunk { y += outerVerticalPadding }
+    return Metrics(rowHeight: max(1, ceil(y)), timestampFrame: timestampFrame, bubbleFrame: bubbleFrame, reasoningButtonFrame: reasoningButtonFrame, reasoningBodyFrame: reasoningBodyFrame, reasoningDividerFrame: reasoningDividerFrame, messageFrame: messageFrame, copyFrame: copyFrame)
+}
+
+    private static func responseTimelineAttributedText(_ timeline: [ConversationResponseTimelineItem], disclosureState: ConversationToolDisclosureState, trailingSeparator: Bool) -> NSAttributedString {
+        let output = NSMutableAttributedString()
+        let reasoningParagraph = NSMutableParagraphStyle()
+        reasoningParagraph.minimumLineHeight = compactAssistantLineHeight
+        reasoningParagraph.maximumLineHeight = compactAssistantLineHeight
+        reasoningParagraph.paragraphSpacing = 0
+        let toolParagraph = NSMutableParagraphStyle()
+        toolParagraph.minimumLineHeight = toolLineHeight
+        toolParagraph.maximumLineHeight = toolLineHeight
+        toolParagraph.paragraphSpacingBefore = 0
+        toolParagraph.paragraphSpacing = 0
+        let separatorParagraph = NSMutableParagraphStyle()
+        separatorParagraph.minimumLineHeight = 12
+        separatorParagraph.maximumLineHeight = 12
+        let reasoningAttributes: [NSAttributedString.Key: Any] = [.font: reasoningFont, .foregroundColor: UIColor.label, .paragraphStyle: reasoningParagraph]
+        let toolAttributes: [NSAttributedString.Key: Any] = [.font: toolFont, .foregroundColor: UIColor.label, .paragraphStyle: toolParagraph]
+        let separatorAttributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 1), .foregroundColor: UIColor.clear, .paragraphStyle: separatorParagraph]
+        for item in timeline {
+            let normalized = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalized.isEmpty else { continue }
+            if item.kind == .tool, ConversationReasoningPresentation.inlineToolItems([item]).isEmpty { continue }
+            if output.length > 0 { output.append(NSAttributedString(string: "\n\u{200B}\n", attributes: separatorAttributes)) }
+            switch item.kind {
+            case .reasoning:
+                output.append(NSAttributedString(string: normalized, attributes: reasoningAttributes))
+            case .tool:
+                let start = output.length
+                appendToolIcon(item.toolIconKind, to: output)
+                if output.length > start {
+                    output.addAttributes(toolAttributes, range: NSRange(location: start, length: output.length - start))
+                    output.append(NSAttributedString(string: "  ", attributes: toolAttributes))
+                }
+                output.append(NSAttributedString(string: normalized, attributes: toolAttributes))
+                if !item.completed { output.append(NSAttributedString(string: "  调用中", attributes: [.font: UIFont.systemFont(ofSize: reasoningFont.pointSize - 2, weight: .regular), .foregroundColor: UIColor.tertiaryLabel, .paragraphStyle: toolParagraph])) }
+                if let slot = item.toolSlot, let url = URL(string: "chatgpt-tool-list://slot/\(slot)") { output.addAttribute(.link, value: url, range: NSRange(location: start, length: output.length - start)) }
             }
-            timestampLabel.textAlignment = .right
-        case .assistant:
-            bubbleView.backgroundColor = .clear
-            bubbleView.layer.cornerRadius = 0
-            bubbleView.layer.maskedCorners = []
-            timestampLabel.textAlignment = .left
         }
-        setNeedsLayout()
+        if trailingSeparator, output.length > 0 { output.append(NSAttributedString(string: "\n\u{200B}\n", attributes: separatorAttributes)) }
+        return output
     }
 
-    static func metrics(for text: String, role: ConversationMessage.Role, tableWidth: CGFloat, showsTimestamp: Bool, showsCopy: Bool, isFirstChunk: Bool, isLastChunk: Bool, isChunked: Bool) -> Metrics {
-        let width = max(1, tableWidth)
-        var y = isFirstChunk ? outerVerticalPadding : 0
-        var timestampFrame = CGRect.zero
-        if showsTimestamp {
-            let timestampHeight = ceil(timestampFont.lineHeight)
-            timestampFrame = CGRect(x: horizontalMargin, y: y, width: max(1, width - horizontalMargin * 2), height: timestampHeight)
-            y += timestampHeight + timestampGap
+    private static func appendToolIcon(_ kind: ConversationToolIconKind, to output: NSMutableAttributedString) {
+        guard let image = ConversationReasoningPresentation.toolIconImage(kind) else {
+            output.append(NSAttributedString(string: "•", attributes: [.font: toolFont, .foregroundColor: UIColor.secondaryLabel]))
+            return
         }
-
-        let maxBubbleWidth: CGFloat
-        let maxTextWidth: CGFloat
-        switch role {
-        case .user:
-            maxBubbleWidth = max(36, min(width * userMaxWidthRatio, width - horizontalMargin * 2 - userLeadingGap))
-            maxTextWidth = max(1, maxBubbleWidth - bubbleHorizontalPadding * 2)
-        case .assistant:
-            maxBubbleWidth = max(1, width - horizontalMargin * 2)
-            maxTextWidth = max(1, maxBubbleWidth - bubbleHorizontalPadding * 2)
-        }
-
-        let textSize = measuredTextSize(text, maxWidth: maxTextWidth)
-        let bubbleWidth: CGFloat
-        switch role {
-        case .user:
-            bubbleWidth = isChunked ? maxBubbleWidth : min(maxBubbleWidth, max(36, ceil(textSize.width) + bubbleHorizontalPadding * 2))
-        case .assistant:
-            bubbleWidth = maxBubbleWidth
-        }
-        let bubbleX = role == .user ? width - horizontalMargin - bubbleWidth : horizontalMargin
-        let messageTop = isFirstChunk ? bubbleVerticalPadding : 0
-        let messageBottom = isLastChunk ? bubbleVerticalPadding : 0
-        let bubbleHeight = messageTop + textSize.height + messageBottom
-        let bubbleFrame = CGRect(x: bubbleX, y: y, width: bubbleWidth, height: bubbleHeight)
-        let messageFrame = CGRect(x: bubbleHorizontalPadding, y: messageTop, width: max(1, bubbleWidth - bubbleHorizontalPadding * 2), height: textSize.height)
-        y = bubbleFrame.maxY
-
-        var copyFrame = CGRect.zero
-        if showsCopy {
-            y += copyGap
-            copyFrame = CGRect(x: horizontalMargin, y: y, width: copySize, height: copySize)
-            y = copyFrame.maxY
-        }
-        if isLastChunk { y += outerVerticalPadding }
-        return Metrics(rowHeight: max(1, ceil(y)), timestampFrame: timestampFrame, bubbleFrame: bubbleFrame, messageFrame: messageFrame, copyFrame: copyFrame)
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        attachment.bounds = CGRect(x: 0, y: -2, width: 16, height: 16)
+        output.append(NSAttributedString(attachment: attachment))
     }
 
-    private static func measuredTextSize(_ text: String, maxWidth: CGFloat) -> CGSize {
-        guard !text.isEmpty else { return CGSize(width: 0, height: ceil(bodyFont.lineHeight)) }
-        let rect = (text as NSString).boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: bodyFont], context: nil)
-        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(bodyFont.lineHeight), ceil(rect.height) + 1))
+    private static func assistantBodyAttributedText(_ text: String) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.minimumLineHeight = compactAssistantLineHeight
+        paragraph.maximumLineHeight = compactAssistantLineHeight
+        return NSAttributedString(string: text, attributes: [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph])
+    }
+
+    private static func userBodyAttributedText(_ text: String) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byCharWrapping
+        let attributes: [NSAttributedString.Key: Any] = [.font: bodyFont, .foregroundColor: UIColor.label, .paragraphStyle: paragraph]
+        if #available(iOS 15.0, *), let markdown = try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
+            let output = NSMutableAttributedString(attributedString: NSAttributedString(markdown))
+            let range = NSRange(location: 0, length: output.length)
+            output.addAttributes(attributes, range: range)
+            output.enumerateAttribute(.link, in: range) { value, linkRange, _ in
+                if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }
+            }
+            return output
+        }
+        return NSAttributedString(string: text, attributes: attributes)
+    }
+
+    private static func measuredTextSize(_ text: String, role: ConversationMessage.Role, maxWidth: CGFloat) -> CGSize {
+        if text.isEmpty { return CGSize(width: 0, height: ceil(role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight)) }
+        let attributed = role == .assistant ? assistantBodyAttributedText(text) : userBodyAttributedText(text)
+        let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        let minimumHeight = role == .assistant ? compactAssistantLineHeight : bodyFont.lineHeight
+        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(minimumHeight), ceil(rect.height) + 1))
+    }
+
+    private static func measuredTimelineSize(_ timeline: [ConversationResponseTimelineItem], maxWidth: CGFloat, disclosureState: ConversationToolDisclosureState, trailingSeparator: Bool) -> CGSize {
+        let attributed = responseTimelineAttributedText(timeline, disclosureState: disclosureState, trailingSeparator: trailingSeparator)
+        guard attributed.length > 0 else { return .zero }
+        let rect = attributed.boundingRect(with: CGSize(width: maxWidth, height: .greatestFiniteMagnitude), options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+        return CGSize(width: min(maxWidth, ceil(rect.width)), height: max(ceil(reasoningFont.lineHeight), ceil(rect.height) + 2))
+    }
+
+    private static func prettyJSONString(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data), JSONSerialization.isValidJSONObject(object), let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted]), let text = String(data: pretty, encoding: .utf8) else { return raw }
+        return text
+    }
+
+    private static func formattedToolOutput(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data) else { return raw }
+        return formatToolValue(object, indent: 0)
+    }
+
+    private static func formatToolValue(_ value: Any, indent: Int) -> String {
+        let prefix = String(repeating: "  ", count: indent)
+        if let dictionary = value as? [String: Any] {
+            if dictionary.isEmpty { return prefix + "{}" }
+            return orderedToolKeys(dictionary).compactMap { key -> String? in
+                guard let child = dictionary[key] else { return nil }
+                if let string = child as? String {
+                    if let nested = decodedJSONContainer(string) { return prefix + key + ":\n" + formatToolValue(nested, indent: indent + 1) }
+                    if string.contains("\n") { return prefix + key + ":\n" + indentToolString(string, indent: indent + 1) }
+                    return prefix + key + ": " + string
+                }
+                if child is [String: Any] || child is [Any] { return prefix + key + ":\n" + formatToolValue(child, indent: indent + 1) }
+                return prefix + key + ": " + formatToolScalar(child)
+            }.joined(separator: "\n")
+        }
+        if let array = value as? [Any] {
+            if array.isEmpty { return prefix + "Array(0)" }
+            var lines = [prefix + "Array(\(array.count))"]
+            for (index, child) in array.enumerated() {
+                let itemPrefix = prefix + "  \(index):"
+                if let string = child as? String {
+                    if let nested = decodedJSONContainer(string) { lines.append(itemPrefix + "\n" + formatToolValue(nested, indent: indent + 2)) }
+                    else if string.contains("\n") { lines.append(itemPrefix + "\n" + indentToolString(string, indent: indent + 2)) }
+                    else { lines.append(itemPrefix + " " + string) }
+                } else if child is [String: Any] || child is [Any] {
+                    lines.append(itemPrefix + "\n" + formatToolValue(child, indent: indent + 2))
+                } else {
+                    lines.append(itemPrefix + " " + formatToolScalar(child))
+                }
+            }
+            return lines.joined(separator: "\n")
+        }
+        if let string = value as? String { return prefix + string }
+        return prefix + formatToolScalar(value)
+    }
+
+    private static func orderedToolKeys(_ dictionary: [String: Any]) -> [String] {
+        let preferred = ["content_type", "language", "response_format_name", "text", "parts"]
+        let first = preferred.filter { dictionary[$0] != nil }
+        let remaining = dictionary.keys.filter { !preferred.contains($0) }.sorted()
+        return first + remaining
+    }
+
+    private static func decodedJSONContainer(_ string: String) -> Any? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let first = trimmed.first, first == "{" || first == "[", let data = trimmed.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data), object is [String: Any] || object is [Any] else { return nil }
+        return object
+    }
+
+    private static func indentToolString(_ string: String, indent: Int) -> String {
+        let prefix = String(repeating: "  ", count: indent)
+        return string.components(separatedBy: "\n").map { prefix + $0 }.joined(separator: "\n")
+    }
+
+    private static func formatToolScalar(_ value: Any) -> String {
+        if value is NSNull { return "null" }
+        if let boolean = value as? Bool { return boolean ? "true" : "false" }
+        if let number = value as? NSNumber { return number.stringValue }
+        return String(describing: value)
+    }
+
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+        guard let slot = Int(URL.lastPathComponent) else { return true }
+        switch URL.scheme {
+        case "chatgpt-tool-list": onToggleToolDetail?(slot, .input); return false
+        case "chatgpt-tool-input": onToggleToolDetail?(slot, .input); return false
+        case "chatgpt-tool-output": onToggleToolDetail?(slot, .output); return false
+        default: return true
+        }
     }
 
     @objc private func copyTapped() { onCopy?() }
+    @objc private func reasoningTapped() { onToggleReasoning?() }
 
     private static func timestampText(for createTime: TimeInterval?) -> String? {
         guard let createTime, createTime > 0 else { return nil }

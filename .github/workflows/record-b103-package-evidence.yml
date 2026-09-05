@@ -1,0 +1,71 @@
+name: Record b103 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b103-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b103 package ancestry and recovery-only drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor e1cca160e9c466ab98a2aeffc038e94f58335cab HEAD
+          changed="$(git diff --name-only e1cca160e9c466ab98a2aeffc038e94f58335cab..HEAD | sort)"
+          expected=$'.github/workflows/record-b103-package-evidence.yml\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md\nscripts/staging/b103_record_package_evidence.py'
+          test "$changed" = "$expected"
+          grep -q 'CURRENT_PROJECT_VERSION = 103;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b103";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'private static let candidate = "DEV-send-stream-0.1.0-b103"' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
+          test -f scripts/staging/b103_record_package_evidence.py
+
+      - name: Ensure batch recovery point exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b103_record_package_evidence.py checkpoint
+          git diff --check
+          if ! git diff --quiet; then
+            test "$(git diff --name-only)" = "docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+            git commit -m "docs: checkpoint b103 package evidence chain"
+            git push origin HEAD:dev/send-stream-20260829
+          else
+            grep -q '## b103 package-evidence batch recovery point — 2026-09-05' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          fi
+
+      - name: Record durable b102 Runtime and b103 package evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b103_record_package_evidence.py final
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_PROFILE.md\ndocs/project/PROJECT_STATE.md\ndocs/project/TECHNICAL_DECISIONS.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q 'Canonical Push Artifact `9952548424`' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'f41c81a89552027fb4c42152eb3864c1732494465230ffd4787c6bba56d746c3' docs/project/BUILD_TEST_INDEX.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b103 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

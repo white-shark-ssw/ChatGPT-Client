@@ -1,3 +1,35 @@
+## b110 rendered-color diagnostic package ready — 2026-09-06
+
+Canonical identity:
+
+- Candidate `DEV-send-stream-0.1.0-b110` / `0.1.0 (110)` is permanently reserved.
+- Exact product commit `55184f057d3303a266146ab6a76be019bf3f1c00` changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift` relative to the b109 product baseline.
+- Exact package source `26ea3354998c89420212315977dcf94cc3a91197` changes only `.github/workflows/ios-foundation.yml` after the product commit.
+- Guarded staging `33985483452/101358091966` passed exact scope, `git diff --check`, and Debug Simulator compile.
+- Push CI `33985567667/101358319343` and PR CI `33985569950/101358325339` both passed on exact package source `26ea3354998c89420212315977dcf94cc3a91197`.
+- Canonical Push Artifact `9975056986`; Artifact ZIP SHA-256 `2c5d963f915b2b12588416cfbd71668dbb0a5b22e49b53f9a7657732ae24cb20`; IPA `ChatGPTClient-0.1.0-b110-dev-send-stream.ipa` SHA-256 `7ecb92d4e364e70e6ae9091af7a80386c06cc1aea96993227a54d76b9470fcd4`.
+- Independent package inspection: bundle `com.whitesharkssw.chatgptclient`, `0.1.0 (110)`, Candidate b110, source marker `26ea3354998c`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS, Mach-O arm64.
+
+Diagnostic behavior:
+
+- b110 keeps b109 `assistantChunkColor.willDisplay` model-state logs unchanged.
+- On the next main-queue turn after `willDisplay`, only while the same cell remains at the same index path, it emits `assistantChunkRender.afterDisplay` with aggregate rendered ink statistics for the UILabel alone and the same label rectangle from the cell hierarchy, plus alpha/layer-opacity fields.
+- The renderer stores no screenshot, pixel buffer, message text, message ID, URL, or content hash. It exports only aggregate counts/fractions/colors.
+- Visible body rendering, attributed content, fonts, row geometry, reasoning, user-link behavior, Send/SSE/Repository/recovery, timers/retries and response authority are unchanged.
+
+Human Runtime gate:
+
+1. Install only canonical b110 Artifact `9975056986` / IPA SHA `7ecb92d4e364e70e6ae9091af7a80386c06cc1aea96993227a54d76b9470fcd4`.
+2. Reopen the same completed 5-chunk answer used for b109; no new Send is required.
+3. Scroll through all five assistant chunks once and observe which regions are blue vs normal.
+4. Export Diagnostics.
+5. Compare each `assistantChunkRender.afterDisplay` by `chunkIndex`: `labelRenderInkRGB` / `labelRenderNearWhiteFraction` / `labelRenderBlueDominantFraction` against `hierarchyCropInkRGB` / `hierarchyCropNearWhiteFraction` / `hierarchyCropBlueDominantFraction`.
+6. If label-only differs with screen color, investigate inside/below UILabel drawing. If label-only stays white but hierarchy crop differs, investigate sibling/cell composition. If both remain white while physical screen differs, investigate below hierarchy/window compositing. Do not allocate a rendering fix before this evidence.
+
+**Evidence ladder:** b109 model-state diagnostic Runtime Positive for probe / visible color defect persists / b110 Code written / exact scope + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / diagnostic Human Runtime pending / Stable-Frozen No.
+
+**Next exact action:** run the b110 Human Runtime gate above and export Diagnostics; do not judge b110 by whether the color is fixed because it intentionally does not change rendering.
+
 ## b109 Human Runtime model-state result / b110 rendered-pixel probe allocation — 2026-09-06
 
 Exact b109 Human Runtime evidence:

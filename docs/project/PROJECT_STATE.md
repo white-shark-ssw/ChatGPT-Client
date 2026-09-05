@@ -1,3 +1,10 @@
+## DEV-send-stream b110 rendered-color diagnostic package ready — 2026-09-06
+
+- Canonical b110 product `55184f057d3303a266146ab6a76be019bf3f1c00` / package `26ea3354998c89420212315977dcf94cc3a91197`; staging `33985483452/101358091966`, Push `33985567667/101358319343`, PR `33985569950/101358325339` all passed.
+- Artifact `9975056986` / ZIP `sha256:2c5d963f915b2b12588416cfbd71668dbb0a5b22e49b53f9a7657732ae24cb20` / IPA `sha256:7ecb92d4e364e70e6ae9091af7a80386c06cc1aea96993227a54d76b9470fcd4` independently verify Build110/Candidate/source/Release/iOS14+/`[1,2]`/arm64.
+- b110 is diagnostic-only and compares after-display rendered ink for UILabel-only versus the same cell-hierarchy crop; Human Runtime remains pending and no color fix is claimed.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b109 model-state Runtime result / b110 render probe — 2026-09-06
 
 - Canonical b109 diagnostics `sha256:37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf` contain 16 chunk `willDisplay` samples. The target completed authoritative answer remains 2 messages / 6 rows / 0 live rows / one 5-chunk assistant message.

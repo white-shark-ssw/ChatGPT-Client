@@ -1,3 +1,10 @@
+## DEV-send-stream b110 rendered-output probe package — 2026-09-06
+
+- UI probe package is canonical at product `55184f057d3303a266146ab6a76be019bf3f1c00`, package `26ea3354998c89420212315977dcf94cc3a91197`, Artifact `9975056986`, IPA `sha256:7ecb92d4e364e70e6ae9091af7a80386c06cc1aea96993227a54d76b9470fcd4`; Simulator and both formal CI lanes passed.
+- Scope remains diagnostic only: preserve b109 model-state logging and compare rendered UILabel-only versus cell-hierarchy-crop aggregate ink colors after display. No screenshot/content persistence and no visible rendering mutation.
+- Send/SSE/Repository/recovery owners are unchanged; accepted clean-EOF recovery remains Unexercised by this color investigation.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b109 model-state owner rejected / b110 render probe — 2026-09-06
 
 - b109 exact Runtime `sha256:37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf` proves chunked assistant UILabel model-state fields are uniform white across the target 5 chunks and across 16 total samples, despite visible blue/normal alternation.

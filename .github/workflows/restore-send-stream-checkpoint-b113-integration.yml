@@ -67,3 +67,5 @@ jobs:
           git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
           git commit -m "docs: restore b113 integration checkpoint"
           git push origin HEAD:dev/send-stream-20260829
+
+# rerun after docs-only truncation recovery

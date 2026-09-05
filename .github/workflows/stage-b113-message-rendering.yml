@@ -1,0 +1,99 @@
+name: Stage b113 Message Rendering
+
+"on":
+  push:
+    branches:
+      - dev/message-rendering-20260906
+    paths:
+      - ".github/workflows/stage-b113-message-rendering.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/message-rendering-20260906
+          fetch-depth: 0
+
+      - name: Guard b112 stacked baseline and b113 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 50432b8743f3391a8174a3b7aae745298082d433 HEAD
+          git diff --quiet 3957b806f32f0995ceb9cf8f9487aba939f3b306 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b112\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-message-rendering-0.1.0-b113' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'DEV-message-rendering-0.1.0-b113' docs/project/current/dev/DEV-message-rendering.md
+          test -f scripts/staging/b113_allocate_message_rendering.py
+          test -f scripts/staging/b113_message_rendering.py
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Batch A durably allocate b113
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b113_allocate_message_rendering.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/current/dev/DEV-message-rendering.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'DEV-message-rendering-0.1.0-b113' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'Batch A — completed' docs/project/current/dev/DEV-message-rendering.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/current/dev/DEV-message-rendering.md
+          git commit -m "docs: allocate message rendering b113"
+          git push origin HEAD:dev/message-rendering-20260906
+
+      - name: Batch B apply b113 presentation delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b113_message_rendering.py
+
+      - name: Validate exact b113 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 113;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-message-rendering-0.1.0-b113\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'enum ConversationMessageRichTextRenderer' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let attributedText: NSAttributedString' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'renderAssistantMarkdown: !snapshot.phase.isActive' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'bareURLCharacters' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'return location.map { "〔文件引用 \($0)〕" } ?? "〔文件引用〕"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'output.append(NSAttributedString(string: "  │  "' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'assistantBodyAttributedText' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'userBodyAttributedText' ChatGPTClient/Conversation/ConversationFeature.swift
+          git diff --quiet 50432b8743f3391a8174a3b7aae745298082d433 HEAD -- ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b113 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "feat: render native message markdown"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/message-rendering-20260906

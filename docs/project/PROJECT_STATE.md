@@ -1,3 +1,10 @@
+## DEV-message-rendering b113 package-qualified Runtime gate — 2026-09-06
+
+- New stacked Phase 11 task `DEV-message-rendering` is Active on `dev/message-rendering-20260906`, PR #36 targeting the Runtime-positive b112 `DEV-send-stream` branch because both modify `ConversationFeature.swift`.
+- Canonical b113 product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9` / package `75ccad15208610c2b0420033846f9bb15bbdb494`; staging `33991155027/101373512529`, Push `33991287459/101373866191` and PR `33991302325/101373908835` passed. Artifact `9976713893`; ZIP `sha256:51d5bcd5e804c2877faafa67f4bb263d6d849b83a24c4c28982c6880aecc7ebf`; IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`; package independently verifies Build113/Candidate/source/Release/iOS14+/`[1,2]`/arm64.
+- Product presentation behavior: conservative ASCII bare-URL spans only are blue in user UILabel text; assistant authoritative/terminal content renders headings/emphasis/lists/code/tables and readable non-interactive citation labels; rendering occurs before bounded attributed chunking; raw message remains Repository/Copy authority. Active growing assistant Markdown is intentionally plain until terminal/authoritative projection to avoid full reparse on every token.
+- Human Runtime pending. b112 assistant-color Runtime remains accepted and role-isolated reuse is inherited. `DEV-message-rendering` Stable-Frozen No.
+
 ## DEV-send-stream b112 assistant-color Runtime Positive — 2026-09-06
 
 - Canonical b112 diagnostics `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` and screenshot `sha256:7a689bca421c01af25aeb19dc9e3a19d1e9a7f47fe431533be760d3eaa1db243` close the tested assistant blue/normal alternation gate as Runtime Positive on iPhone/iOS17 light appearance.

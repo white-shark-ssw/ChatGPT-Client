@@ -1,12 +1,12 @@
-# Candidate: DEV-send-stream-0.1.0-b112
-# Product source: 3957b806f32f0995ceb9cf8f9487aba939f3b306
-# b112 isolates UITableView cell reuse by message role using the b111 Runtime-selected shared-reuse contamination boundary; all Send/Repository behavior remains unchanged.
-name: iOS Role-Isolated Message Reuse b112
+# Candidate: DEV-message-rendering-0.1.0-b113
+# Product source: 7d1ddc8eaa164c9b307f525b00bb0e1404f395e9
+# Stacked on DEV-send-stream b112 Runtime-positive role-isolated reuse; this workflow packages presentation-only message rendering.
+name: iOS Native Message Rendering b113
 
 on:
   push:
     branches:
-      - dev/send-stream-20260829
+      - dev/message-rendering-20260906
     paths:
       - "ChatGPTClient/**"
       - "ChatGPTClient.xcodeproj/**"
@@ -34,64 +34,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Guard b112 role-isolated reuse and inherited behavior
+      - name: Guard b113 native rendering and b112 inheritance
+        shell: bash
         run: |
-          git merge-base --is-ancestor 3957b806f32f0995ceb9cf8f9487aba939f3b306 HEAD
-          git diff --quiet 3957b806f32f0995ceb9cf8f9487aba939f3b306 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b112\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
-          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+          set -euo pipefail
+          git merge-base --is-ancestor 7d1ddc8eaa164c9b307f525b00bb0e1404f395e9 HEAD
+          git diff --quiet 7d1ddc8eaa164c9b307f525b00bb0e1404f395e9 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 113;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-message-rendering-0.1.0-b113\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'enum ConversationMessageRichTextRenderer' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantLineHeight: CGFloat = 36 * 0.70' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let attributedText: NSAttributedString' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let rendered = ConversationMessageRichTextRenderer.render(message.text, role: message.role, renderAssistantMarkdown: renderAssistantMarkdown)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'attributedText.attributedSubstring' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'renderAssistantMarkdown: !snapshot.phase.isActive' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'bareURLCharacters' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'scalar.value < 128' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'color: .systemBlue' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'return location.map { "〔文件引用 \($0)〕" } ?? "〔文件引用〕"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'if kind == "cite" { return "〔引用〕" }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'isTableSeparator' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'appendCodeBlock' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -Fq 'static func reuseIdentifier(for role: ConversationMessage.Role)' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -Fq 'tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.userReuseIdentifier)' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -Fq 'tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.assistantReuseIdentifier)' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'reuseIdentifier(for: cellRole)' ChatGPTClient/Conversation/ConversationFeature.swift
-          ! grep -Fq 'static let reuseIdentifier = "ConversationMessageCell"' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -Fq 'case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -Fq 'if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'assistantBodyAttributedText' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'userBodyAttributedText' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.secondaryLabel]' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'func bodyColorDiagnostics() -> \[String: String\]' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'assistantChunkColor.willDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'func bodyRenderedColorDiagnostics() -> \[String: String\]' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'attributeRunCount' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'foregroundDistinctColors' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'linkRunCount' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'attachmentRunCount' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'reusedFromRole' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'reusedFromLinkRunCount' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'directAttributedTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'labelLayerTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'labelHierarchyTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'messageLabel.layer.render' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'attributedText.draw' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'transparentInkDiagnostics' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'tableView.indexPath(for: messageCell) == indexPath' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'labelPresentationOpacity' ChatGPTClient/Conversation/ConversationFeature.swift
-          ! grep -q 'UIImageWriteToSavedPhotosAlbum' ChatGPTClient/Conversation/ConversationFeature.swift
-          ! grep -q 'pngData()' ChatGPTClient/Conversation/ConversationFeature.swift
-          ! grep -q 'jpegData' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
-          grep -q 'protected_send_sse_conversation_id' ChatGPTClient/RootViewController.swift
-          grep -q 'pendingNewConversationEvents' ChatGPTClient/RootViewController.swift
-          grep -q 'new_conversation_identity_missing_at_terminal' ChatGPTClient/RootViewController.swift
-          grep -q 'new_conversation_identity_conflict' ChatGPTClient/RootViewController.swift
-          grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
+          test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+          git diff --quiet 50432b8743f3391a8174a3b7aae745298082d433 HEAD -- ChatGPTClient/RootViewController.swift
           grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
-          grep -q 'coveredExecutor.acceptedClientStreamEndRecovery' ChatGPTClient/RootViewController.swift
-          grep -q 'state == "stream_ended_without_done", clientSendAccepted, responseActive' ChatGPTClient/RootViewController.swift
-          grep -q 'trigger: "stream_ended_without_done"' ChatGPTClient/RootViewController.swift
           grep -q 'manualSync.clientLiveReconciled' ChatGPTClient/RootViewController.swift
-          grep -q 'clearLiveResponseAfterAuthoritativeReconcile' ChatGPTClient/RootViewController.swift
-          grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
-          grep -q 'preservedClientGeneration' ChatGPTClient/RootViewController.swift
           grep -q 'policy.*no_resend_same_generation' ChatGPTClient/RootViewController.swift
-          grep -q 'network_connection_lost_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
-          grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
 
       - name: Toolchain
         run: xcodebuild -version
@@ -107,7 +85,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b112
+          name: ChatGPTClient-DEV-message-rendering-0.1.0-b113
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

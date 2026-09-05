@@ -37,6 +37,13 @@
 
 # Project Profile
 
+## Current DEV-send-stream test identity — b107 2026-09-05
+
+- Current package-qualified Human Runtime candidate: `DEV-send-stream-0.1.0-b107` / Build107.
+- Canonical product `113fa19d7264b953949770d2e44cb500ded2da6b`; package source `4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f`; Artifact `9967821935`; IPA SHA-256 `7195d89cb9837efc3386c5dd7e030e7f11f10233689416e59c86d1ae4cf055cd`.
+- This is test-candidate evidence only; project Stable/Frozen state is unchanged.
+
+
 ## Latest DEV-send-stream candidate override — b98 2026-09-04
 
 - Latest test candidate: `DEV-send-stream-0.1.0-b98` / `0.1.0 (98)`; exact product `2edd55febe2005071722ddcb9989151b427165d8`; package source `17c65a390f2724a55cd29d466e01eaab988dcbfe`; canonical Artifact `9942092070`; IPA `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67`; Human Runtime pending; Stable/Frozen No.

@@ -528,6 +528,29 @@ Evidence ladder: **b98 Runtime Partial / stability rejected; b99 Code written / 
 
 # DEV-send-stream round 7 Runtime addendum
 
+## b107 accepted-SSE EOF convergence — package ready 2026-09-05
+
+Canonical identity / validation:
+
+- Candidate `DEV-send-stream-0.1.0-b107` / `0.1.0 (107)`, permanently reserved.
+- Exact product commit `113fa19d7264b953949770d2e44cb500ded2da6b`; canonical package source `4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f`.
+- Guarded staging `33960451799/101291316464` passed Batch A Runtime/allocation recording, exact two-product-path scope validation, `git diff --check`, Debug Simulator compile and exact product commit.
+- Formal Push `33960627676/101291785599` and PR `33960629168/101291789461` both passed on exact package source `4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f`.
+- Canonical Push Artifact `9967821935`; GitHub digest and independent ZIP SHA-256 both `d2036ed0372b16c7690c9d3b324d680db6a522fd5ace26d27afa8733a95a9585`.
+- Canonical IPA `ChatGPTClient-0.1.0-b107-dev-send-stream.ipa`; independent SHA-256 `7195d89cb9837efc3386c5dd7e030e7f11f10233689416e59c86d1ae4cf055cd`, matching sidecar. Package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (107)`, Candidate b107, source marker `4bd3501a3092`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS, Mach-O arm64.
+
+Behavior / Runtime gate:
+
+- b106 SSE `conversation_id` New Chat handoff remains unchanged and Runtime Positive.
+- For an already HTTP200-SSE-accepted client Send, exact `stream_ended_without_done` no longer mutates the same Repository generation to failed. Root logs `acceptedClientStreamEndedWithoutDone`, releases only the ended executor transport, and reuses the already Runtime-positive accepted-client recovery primitive to attach one fresh covered observer to the **same generation** with `no_resend_same_generation` semantics.
+- Successful manual Sync additionally calls the existing `clearLiveResponseAfterAuthoritativeReconcile` primitive when a client-owned live snapshot is already non-active, preventing authoritative rows plus a stale failed/terminal live tail after server state has advanced.
+- b107 adds no retry loop, timer/watchdog, polling, duplicate Send, regenerate, challenge replay, guessed Native resume/status, new response authority, completion heuristic or color workaround.
+- The b106 assistant blue-text defect remains separately open. b107 intentionally does not modify `ConversationMessageCell` because the b106 reset was Runtime-insufficient and the exact owner is still unproven.
+- Human Runtime remains Pending; Stable/Frozen remains No.
+
+**Next exact action:** install only canonical b107 and reproduce one New Chat first Send. If exact accepted `stream_ended_without_done` occurs, require no `phase=failed`/`回答失败`, no second protected Send, same-generation covered recovery and eventual authoritative convergence. After any manual Sync, authoritative content must not be followed by a stale prompt/reasoning/failure tail. Blue-text behavior is observed but not a b107 pass/fail claim except as an unchanged known defect.
+
+
 ## b98 Human Runtime — foreground backlog freeze/crash 2026-09-04
 
 Exact tested identity:

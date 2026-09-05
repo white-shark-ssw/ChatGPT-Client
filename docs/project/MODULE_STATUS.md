@@ -64,6 +64,13 @@
 
 # Module Status
 
+## Send / Stream — b107 package-ready update 2026-09-05
+
+- `DEV-send-stream` remains Active / Stable-Frozen No.
+- b106 proved New Chat protected-Send SSE authoritative identity but exposed accepted clean-EOF false failure and stale-live double presentation.
+- b107 is package-qualified for the narrow same-generation no-resend EOF recovery + authoritative stale-live cleanup gate. Blue assistant text remains a separate unresolved presentation defect and is not changed by b107.
+
+
 ## DEV-send-stream b98 hard WebContent recovery package-ready override — 2026-09-04
 
 - `ConversationRepository` remains sole Native conversation/content/response-lifecycle authority. b98 does not create another response owner or Native continuation protocol.

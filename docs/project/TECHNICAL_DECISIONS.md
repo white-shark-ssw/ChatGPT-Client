@@ -42,6 +42,11 @@
 
 # Technical Decisions
 
+## TD-accepted-client-clean-EOF-convergence — b107 Runtime gate 2026-09-05
+
+Decision: after explicit protected-Send HTTP200 SSE acceptance, exact `stream_ended_without_done` does not by itself own terminal failure. Preserve the same `ConversationRepository` generation, release the ended covered executor transport, and reuse the previously Runtime-positive same-generation accepted-client observation recovery. Authoritative Detail remains final Native content authority; a later successful Sync can clear a non-active stale live projection through the existing reconcile primitive. This decision adds no resend/retry/polling/completion heuristic and does not address the independent blue-text defect.
+
+
 ## DEV-send-stream b98 explicit WebContent-death recovery decision — 2026-09-04
 
 - Treat `WKNavigationDelegate.webViewWebContentProcessDidTerminate` as authoritative evidence that the covered Web transport process died. For an already-established external/cross-platform observation, this is a transport interruption and is not evidence that the server-side response failed.

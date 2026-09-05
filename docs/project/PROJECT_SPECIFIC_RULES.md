@@ -56,6 +56,15 @@
 
 # Project-Specific Rules
 
+## Accepted client SSE clean-EOF recovery — b107 2026-09-05
+
+- Exact b106 Runtime proves an HTTP200 `text/event-stream` protected Send may finish server-side even when the covered filtered response ends without observing exact `[DONE]`; therefore exact `stream_ended_without_done` after explicit acceptance is a receive-transport interruption, not sufficient evidence to mark the Repository response failed.
+- For that exact condition only, preserve the same prompt-owned Repository generation and reuse the existing accepted-client covered-observer recovery path. Never replay/resend/regenerate the prompt.
+- A successful authoritative manual Sync may clear an already non-active client live projection only through the existing `clearLiveResponseAfterAuthoritativeReconcile` count/baseline guard. This prevents authoritative + stale-live duplication without creating another content authority.
+- Do not generalize this rule to pre-acceptance failure, arbitrary navigation failure, silence, timeouts or unknown stream errors. No polling, retry loop, timer/watchdog, guessed resume/status or second response store is authorized.
+- Assistant blue-text corruption remains separately evidence-gated; do not add speculative color fixes under this recovery rule.
+
+
 ## Hard covered-Web process recovery for external observation — b98 2026-09-04
 
 - `webViewWebContentProcessDidTerminate` is the only new automatic recovery trigger authorized by b98. Do not use silence duration, lack of snapshots, focus state, route state or generic navigation failure as a substitute disconnect detector.

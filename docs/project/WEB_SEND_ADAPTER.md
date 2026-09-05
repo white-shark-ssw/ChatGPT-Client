@@ -1,5 +1,13 @@
 # Web Send Adapter / Rule Update Playbook
 
+## DEV-send-stream b107 accepted protected-Send SSE clean EOF — package-ready override 2026-09-05
+
+- Exact b106 Runtime retained the correct first top-level protected-Send SSE `conversation_id` handoff but showed that a successfully accepted HTTP200 SSE can end without the bridge observing exact `[DONE]` while the authoritative server conversation is already complete.
+- b107 keeps the Web adapter grammar and New Chat identity logic unchanged. Native Root handles the exact post-acceptance `stream_ended_without_done` transport result by preserving the same Repository generation and reattaching one covered observer; it never performs a second protected Send.
+- Product `113fa19d7264b953949770d2e44cb500ded2da6b` / package `4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f`; staging `33960451799/101291316464`, Push `33960627676/101291785599`, PR `33960629168/101291789461` passed; canonical Artifact `9967821935`, ZIP `d2036ed0372b16c7690c9d3b324d680db6a522fd5ace26d27afa8733a95a9585`, IPA `7195d89cb9837efc3386c5dd7e030e7f11f10233689416e59c86d1ae4cf055cd` verified.
+- Human Runtime pending. No new Stop behavior is authorized; exact Stop route/target/ack evidence remains required.
+
+
 ## DEV-send-stream b105 authoritative new-chat first Send — package-ready override 2026-09-05
 
 - Historical b62 Runtime is the identity evidence: an official root/new-chat page transitioned to an existing-conversation route before the first protected `/backend-api/f/conversation` fetch and then returned HTTP200 `text/event-stream`. b105 consumes that official route identity; Native does not invent one.

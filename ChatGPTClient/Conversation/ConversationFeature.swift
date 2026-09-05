@@ -3374,7 +3374,7 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     messageLabel.highlightedTextColor = .label
     messageLabel.tintColor = .label
     switch message.role {
-    case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text)
+    case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label
     case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)
     }
     let showsReasoning = message.role == .assistant && isFirstChunk && !responseTimeline.isEmpty

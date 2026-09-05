@@ -542,7 +542,7 @@ Canonical identity / validation:
 Behavior / Runtime gate:
 
 - b106 SSE `conversation_id` New Chat handoff remains unchanged and Runtime Positive.
-- For an already HTTP200-SSE-accepted client Send, exact `stream_ended_without_done` no longer mutates the same Repository generation to failed. Root logs `acceptedClientStreamEndedWithoutDone`, releases only the ended executor transport, and reuses the already Runtime-positive accepted-client recovery primitive to attach one fresh covered observer to the **same generation** with `no_resend_same_generation` semantics.
+- For an already HTTP200-SSE-accepted client Send, exact `stream_ended_without_done` no longer mutates the same Repository generation to failed. Covered executor emits `.acceptedClientStreamEndedWithoutTerminal`; Root releases only the ended executor transport and reuses the already Runtime-positive accepted-client recovery primitive to attach one fresh covered observer to the **same generation** with `no_resend_same_generation` semantics.
 - Successful manual Sync additionally calls the existing `clearLiveResponseAfterAuthoritativeReconcile` primitive when a client-owned live snapshot is already non-active, preventing authoritative rows plus a stale failed/terminal live tail after server state has advanced.
 - b107 adds no retry loop, timer/watchdog, polling, duplicate Send, regenerate, challenge replay, guessed Native resume/status, new response authority, completion heuristic or color workaround.
 - The b106 assistant blue-text defect remains separately open. b107 intentionally does not modify `ConversationMessageCell` because the b106 reset was Runtime-insufficient and the exact owner is still unproven.

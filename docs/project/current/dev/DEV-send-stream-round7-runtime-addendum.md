@@ -1,3 +1,35 @@
+## b110 Human Runtime rendered-output result / b111 label-pipeline probe allocation — 2026-09-06
+
+Exact b110 Human Runtime evidence:
+
+- Export metadata is canonical Release Build110 / Candidate `DEV-send-stream-0.1.0-b110` / source `26ea3354998c` on iPhone iOS17.0. Exact diagnostics SHA-256 `d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81`.
+- Target authoritative Detail remains exactly 2 visible messages / 6 presentation rows / 0 live rows with one 5-chunk assistant message (`chunkCharacterLimit=1200`, max chunk 1193). This remains a completed authoritative rendering reproduction rather than live+authoritative duplication.
+- All 12 `assistantChunkColor.willDisplay` samples in this export resolve `labelTextColor`, attributed foreground at index 0, `labelHighlightedTextColor`, and `labelTintColor` to black `rgba:0,0,0,1`; label/cell highlighted and selected states are false; interface style is light. Model state still does not explain a blue chunk.
+- Eleven `assistantChunkRender.afterDisplay` samples were captured. Chunk 2 was sampled twice, at separate scroll passes, and both UILabel-only `drawHierarchy` renders report `labelRenderInkRGB=0.000,0.479,1.000`, `labelRenderBlueDominantFraction=1.000`, `labelRenderNearWhiteFraction=0.000`, with 73,612 sampled pixels. The same crop through the cell hierarchy is also repeatably blue-bearing (`hierarchyCropInkRGB=0.960,0.979,1.000`, blue-dominant fraction 0.063). Therefore a compositor/sibling outside UILabel is not required to produce the captured blue pixels: the blue is already present at the UILabel `drawHierarchy` surface for this chunk.
+- b110 cannot yet compare that blue chunk cleanly against the normal light-mode chunks. Its `renderedInkDiagnostics` implementation discards any pixel whose unpremultiplied `max(red, green, blue) <= 0.18`. Normal light-mode `.label` is black, so chunks 0/1/3/4 reporting `labelRenderStatus=no_ink_pixels` is an expected sampler blind spot, not proof of missing or white text. Do not interpret those `no_ink_pixels` values as a rendering result.
+- Current source still constructs assistant body attributed text with one `.foregroundColor=UIColor.label`; the explicit `UIColor.systemBlue` body path is only the separate user-message Markdown-link renderer. The b110 evidence therefore narrows the next fork to (a) unexpected runtime attributed/link runs appearing after `willDisplay`, (b) UILabel layer/internal draw state, or (c) shared cell/label reuse state. It does not justify another blind color reset.
+
+b111 allocation / evidence-backed scope:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b111` / `0.1.0 (111)`. `BUILD_TEST_INDEX.md` contains no b111 before this allocation; parallel PR #35 owns no product Candidate or `ChatGPTClient/**` path.
+- b111 remains diagnostic-only and must preserve b110/b109/b108 visible rendering plus all inherited Send/SSE/Repository/recovery behavior.
+- Product scope is exactly `ChatGPTClient.xcodeproj/project.pbxproj` plus `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- For each chunked assistant after-display sample, log privacy-safe structural attributed state only: total attribute-run count, foreground-color run/distinct-color summary, link-run count, attachment-run count, current cell ordinal, and reuse provenance (`reusedFromRole` plus whether the prior attributed value had a link run). Never log text, message ID, URL, range contents, or content hash.
+- Add three transparent-background render comparisons using an alpha-only ink selector so black text is retained: direct current `NSAttributedString` drawing, `messageLabel.layer.render(in:)`, and current `messageLabel.drawHierarchy`. Keep the existing b110 metrics for continuity. These images remain in-memory only and only aggregate pixel counts/RGB/blue fraction are exported.
+- Interpretation: direct attributed draw blue or link/blue run present -> runtime attributed content owns the color; direct draw black but layer render blue -> UILabel internal layer/cache owns it; layer black but drawHierarchy blue -> UIView hierarchy rendering path owns it. Cell-ordinal/reuse provenance decides whether any blue surface tracks shared user/assistant reuse. No visible fix should be selected before this distinction.
+
+Resume/conflict guard / batch recovery point:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable; verified pre-b111 branch head `a6c38e431aff51cd11a736b6aae4922c6ca418bf`; canonical b110 product `55184f057d3303a266146ab6a76be019bf3f1c00`, package `26ea3354998c89420212315977dcf94cc3a91197`, Artifact `9975056986`.
+- `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`. Parallel PR #35 remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`; its seven changed paths are research/workflow/checkpoint only and have zero product-path overlap.
+- Tooling-preparation commits may add only b111 staging scripts/workflow and do not create a product/Candidate Artifact.
+- Batch A: durably record this b110 Runtime classification and b111 reservation in checkpoint/index/state/module/profile/technical decisions before product changes.
+- Batch B: apply only the exact two-product-path b111 diagnostic delta, run `git diff --check` + Debug Simulator compile, then commit exact product.
+- Batch C: bind formal package CI to exact b111 product commit, require same-source Push + PR CI, canonical Artifact and independent IPA identity/hash verification, then record package evidence and update PR #29 before Human Runtime.
+- Recovery must not rewrite b110/b109/b108 canonical identities, PR #35, Send/SSE/Repository/recovery logic, user-link styling, or previously reserved Candidates.
+
+**Next exact action:** complete Batch B only after Batch A is durably committed. b111 Human Runtime reopens the same completed 5-chunk answer, scrolls all chunks, exports Diagnostics, and compares direct-attributed / layer / hierarchy rendered color plus attributed-run/reuse provenance. No new Send is required.
+
 ## b110 rendered-color diagnostic package ready — 2026-09-06
 
 Canonical identity:

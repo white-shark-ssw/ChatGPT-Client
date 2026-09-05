@@ -1,3 +1,10 @@
+## DEV-send-stream b110 rendered-output interpretation / b111 diagnostic decision — 2026-09-06
+
+- Exact b110 Runtime `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81` proves at least one authoritative assistant chunk reaches UILabel `drawHierarchy` with system-blue-like output while all exposed UILabel model-state fields still resolve to light-mode black `.label`. Do not attribute that captured blue sample solely to an outer cell/window compositor and do not add another blind text/tint/highlight reset.
+- b110's existing `renderedInkDiagnostics` is not a valid normal-black comparator in light appearance because it excludes unpremultiplied pixels with `max RGB <= 0.18`. Treat `no_ink_pixels` from normal black chunks as probe insufficiency, not product absence/whiteness.
+- Authorize one diagnostic-only b111 split of the label pipeline: summarize current attributed color/link runs without content, render the current attributed string directly, render the UILabel layer, and render the UILabel hierarchy using transparent alpha-based ink selection that retains black. Add process-local cell reuse provenance solely to test whether exact systemBlue follows shared user/assistant cell state.
+- b111 changes no visible rendering, role styling, user-link behavior, Send/SSE/Repository/recovery state, retry/timer policy or response authority. A rendering fix remains unauthorized until this probe selects the internal owner.
+
 ## Assistant body color ownership after attributed text — b108
 
 - Exact b107 Runtime isolated the blue-text defect to assistant body presentation: `UILabel messageLabel` rendered placeholder/final blue while the separate reasoning `UITextView` remained normal. The prior pre-assignment highlight/text/tint reset was therefore insufficient.

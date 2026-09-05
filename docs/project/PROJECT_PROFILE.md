@@ -1,3 +1,10 @@
+## Current DEV-send-stream diagnostic candidate — b111 2026-09-06
+
+- `DEV-send-stream-0.1.0-b111` / `0.1.0 (111)` is permanently reserved as a label-pipeline diagnostic probe; product/package source pending staging.
+- Trigger evidence is canonical b110 diagnostics `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81`: UILabel public model state remains black `.label`, but chunk 2's UILabel `drawHierarchy` aggregate is repeatably system-blue-like. b110's dark-pixel filter makes the normal light-mode comparator incomplete.
+- b111 must not change visible rendering. It adds only privacy-safe structural attributed-run/reuse diagnostics and corrected transparent direct-attributed/layer/hierarchy rendered-color aggregates.
+- Stable/Frozen No.
+
 ## Current DEV-send-stream package-qualified diagnostic candidate — b110 2026-09-06
 
 - `DEV-send-stream-0.1.0-b110` / `0.1.0 (110)` is the current package-qualified diagnostic candidate.

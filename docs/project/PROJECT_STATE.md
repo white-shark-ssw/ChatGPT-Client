@@ -1,3 +1,11 @@
+## DEV-send-stream b110 rendered-output Runtime / b111 label-pipeline probe — 2026-09-06
+
+- Canonical b110 diagnostics `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81` keep the target completed answer at 2 authoritative messages / 6 rows / 0 live rows / one 5-chunk assistant message.
+- All exposed model-state colors are black `.label` in light appearance. Nevertheless chunk 2's UILabel-only `drawHierarchy` output was independently sampled twice as exact system-blue-like `0.000,0.479,1.000`, so blue is already present by the UILabel drawing surface rather than requiring outer cell/window composition.
+- b110's comparator is incomplete for normal light-mode chunks because its ink filter intentionally drops dark pixels (`max RGB <= 0.18`), producing `no_ink_pixels` for black text. Those samples are not a valid black-vs-blue comparison.
+- b111 Build111 is reserved as a diagnostic-only label-pipeline probe: full attributed-run summary plus direct attributed draw / CALayer render / UILabel hierarchy render with dark-pixel-inclusive transparent sampling and cell reuse provenance. No color fix is claimed.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b110 rendered-color diagnostic package ready — 2026-09-06
 
 - Canonical b110 product `55184f057d3303a266146ab6a76be019bf3f1c00` / package `26ea3354998c89420212315977dcf94cc3a91197`; staging `33985483452/101358091966`, Push `33985567667/101358319343`, PR `33985569950/101358325339` all passed.

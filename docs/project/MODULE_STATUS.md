@@ -1,3 +1,10 @@
+## DEV-send-stream b110 UILabel draw-stage blue / b111 pipeline probe — 2026-09-06
+
+- b110 exact Runtime `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81` captured chunk 2 twice with UILabel-only rendered RGB `0.000,0.479,1.000` while the same row's public UILabel/attributed/highlight/tint state remained black `.label`. Outer cell/window composition is therefore not required for the captured blue pixels.
+- The b110 light-mode sampler cannot classify normal black chunks because it filters `max RGB <= 0.18`; `no_ink_pixels` on chunks 0/1/3/4 is a diagnostic blind spot, not a product rendering conclusion.
+- b111 will preserve rendering and distinguish runtime attributed data vs UILabel layer/internal draw vs UIView hierarchy draw, with cell reuse provenance. Send/SSE/Repository/recovery owners are unchanged.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b110 rendered-output probe package — 2026-09-06
 
 - UI probe package is canonical at product `55184f057d3303a266146ab6a76be019bf3f1c00`, package `26ea3354998c89420212315977dcf94cc3a91197`, Artifact `9975056986`, IPA `sha256:7ecb92d4e364e70e6ae9091af7a80386c06cc1aea96993227a54d76b9470fcd4`; Simulator and both formal CI lanes passed.

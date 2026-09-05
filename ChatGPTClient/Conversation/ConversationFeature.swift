@@ -2771,6 +2771,18 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     }
 
     private func captureScrollAnchor(for id: String) {
+        if displayedConversationID == id, repository.liveResponse(for: id)?.phase.isActive == true {
+            let bounds = answerJumpScrollBounds()
+            if tableView.contentOffset.y >= bounds.maximumY - 0.5 {
+                scrollAnchorsByConversationID.removeValue(forKey: id)
+                var fields = repository.diagnosticsFields(for: id)
+                fields["contentOffsetY"] = String(format: "%.2f", tableView.contentOffset.y)
+                fields["maximumY"] = String(format: "%.2f", bounds.maximumY)
+                fields["policy"] = "active_at_physical_bottom"
+                diagnostics.info(category: "conversation", name: "scrollAnchor.followTailPreserved", fields: fields)
+                return
+            }
+        }
         guard !messagePresentation.rows.isEmpty, let indexPath = tableView.indexPathsForVisibleRows?.min(by: { $0.row < $1.row }), messagePresentation.rows.indices.contains(indexPath.row), presentationRowOffsets.indices.contains(indexPath.row) else { return }
         let presentationRow = messagePresentation.rows[indexPath.row]
         guard messages.indices.contains(presentationRow.messageIndex) else { return }
@@ -2849,7 +2861,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let responseActive = liveSnapshot?.phase.isActive == true
         let localResponseActive = responseActive && !(liveSnapshot?.promptText.isEmpty ?? true)
         let canSync = selectedID != nil && !recoveryInProgress && !localResponseActive
-        let canReload = selectedID != nil
+        let canReload = selectedID != nil && !recoveryInProgress && !responseActive
         let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
         let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
         let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
@@ -3121,6 +3133,13 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID else { return }
+        guard repository.liveResponse(for: id)?.phase.isActive != true else {
+            var fields = repository.diagnosticsFields(for: id)
+            fields["reason"] = "active_response"
+            diagnostics.info(category: "navigation", name: "conversation.detailReload.blocked", fields: fields)
+            updateConversationMenu()
+            return
+        }
         captureScrollAnchor(for: id)
         onManualReloadRequested?(id)
         presentationGeneration += 1
@@ -3239,46 +3258,6 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     cell.configure(with: message, attributedText: presentationRow.attributedText, showTimestamp: false, showCopy: showsCopy, isFirstChunk: presentationRow.isFirstChunk, isLastChunk: presentationRow.isLastChunk, isChunked: presentationRow.chunkCount > 1, responseTimeline: responseTimeline, reasoningExpanded: reasoningExpanded, toolDisclosureState: .empty, showsReasoningDivider: !responseTimeline.isEmpty && !snapshot.finalText.isEmpty, reasoningTitle: snapshot.isExternalStoppedWithoutFinal ? "已停止思考" : nil, metrics: livePresentationRowMetrics[liveRow], onCopy: showsCopy ? { [weak self] in self?.copyVisibleMessage(message) } : nil, onToggleReasoning: responseTimeline.isEmpty ? nil : { [weak self] in self?.toggleReasoningDisclosure(message: message, indexPath: indexPath, live: true) }, onToggleToolDetail: reasoningExpanded && hasTools ? { [weak self] _, _ in self?.presentToolList(message: message) } : nil)
     return cell
 }
-
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard let messageCell = cell as? ConversationMessageCell else { return }
-        if indexPath.row < messagePresentation.rows.count {
-            guard messagePresentation.rows.indices.contains(indexPath.row) else { return }
-            let row = messagePresentation.rows[indexPath.row]
-            guard messages.indices.contains(row.messageIndex), messages[row.messageIndex].role == .assistant, row.chunkCount > 1 else { return }
-            var fields = messageCell.bodyColorDiagnostics()
-            fields["surface"] = "authoritative"
-            fields["rowIndex"] = String(indexPath.row)
-            fields["chunkIndex"] = String(row.chunkIndex)
-            fields["chunkCount"] = String(row.chunkCount)
-            diagnostics.info(category: "ui", name: "assistantChunkColor.willDisplay", fields: fields)
-            scheduleAssistantChunkRenderDiagnostics(messageCell, tableView: tableView, indexPath: indexPath, surface: "authoritative", chunkIndex: row.chunkIndex, chunkCount: row.chunkCount)
-            return
-        }
-        let liveRow = indexPath.row - messagePresentation.rows.count
-        guard liveMessagePresentation.rows.indices.contains(liveRow) else { return }
-        let row = liveMessagePresentation.rows[liveRow]
-        guard livePresentationMessages.indices.contains(row.messageIndex), livePresentationMessages[row.messageIndex].role == .assistant, row.chunkCount > 1 else { return }
-        var fields = messageCell.bodyColorDiagnostics()
-        fields["surface"] = "live"
-        fields["rowIndex"] = String(indexPath.row)
-        fields["chunkIndex"] = String(row.chunkIndex)
-        fields["chunkCount"] = String(row.chunkCount)
-        diagnostics.info(category: "ui", name: "assistantChunkColor.willDisplay", fields: fields)
-        scheduleAssistantChunkRenderDiagnostics(messageCell, tableView: tableView, indexPath: indexPath, surface: "live", chunkIndex: row.chunkIndex, chunkCount: row.chunkCount)
-    }
-
-    private func scheduleAssistantChunkRenderDiagnostics(_ messageCell: ConversationMessageCell, tableView: UITableView, indexPath: IndexPath, surface: String, chunkIndex: Int, chunkCount: Int) {
-        DispatchQueue.main.async { [weak self, weak tableView, weak messageCell] in
-            guard let self = self, let tableView = tableView, let messageCell = messageCell, tableView.indexPath(for: messageCell) == indexPath else { return }
-            var fields = messageCell.bodyRenderedColorDiagnostics()
-            fields["surface"] = surface
-            fields["rowIndex"] = String(indexPath.row)
-            fields["chunkIndex"] = String(chunkIndex)
-            fields["chunkCount"] = String(chunkCount)
-            self.diagnostics.info(category: "ui", name: "assistantChunkRender.afterDisplay", fields: fields)
-        }
-    }
 
     func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
     guard indexPath.row < messagePresentation.rows.count, messagePresentation.rows.indices.contains(indexPath.row) else { return nil }
@@ -3598,7 +3577,6 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     static let userReuseIdentifier = "ConversationMessageCell.user"
     static let assistantReuseIdentifier = "ConversationMessageCell.assistant"
     static func reuseIdentifier(for role: ConversationMessage.Role) -> String { switch role { case .user: return userReuseIdentifier; case .assistant: return assistantReuseIdentifier } }
-    private static var diagnosticCellOrdinalSeed = 0
 
     private static let horizontalMargin: CGFloat = 16
     private static let userLeadingGap: CGFloat = 44
@@ -3649,15 +3627,9 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     private var onToggleReasoning: (() -> Void)?
     private var onToggleToolDetail: ((Int, ConversationToolDetailSection) -> Void)?
     private var layoutMetrics = Metrics(rowHeight: 44, timestampFrame: .zero, bubbleFrame: .zero, reasoningButtonFrame: .zero, reasoningBodyFrame: .zero, reasoningDividerFrame: .zero, messageFrame: .zero, copyFrame: .zero)
-    private var diagnosticCellOrdinal = 0
-    private var lastConfiguredRoleForDiagnostics = "none"
-    private var reusedFromRoleForDiagnostics = "none"
-    private var reusedFromLinkRunCountForDiagnostics = 0
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        Self.diagnosticCellOrdinalSeed += 1
-        diagnosticCellOrdinal = Self.diagnosticCellOrdinalSeed
         selectionStyle = .none
         backgroundColor = .systemBackground
         contentView.backgroundColor = .systemBackground
@@ -3702,8 +3674,6 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        reusedFromRoleForDiagnostics = lastConfiguredRoleForDiagnostics
-        reusedFromLinkRunCountForDiagnostics = attributedLinkRunCount(messageLabel.attributedText)
         onCopy = nil
         onToggleReasoning = nil
         onToggleToolDetail = nil
@@ -3723,222 +3693,6 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         copyButton.isHidden = true
     }
 
-    func bodyColorDiagnostics() -> [String: String] {
-        var fields: [String: String] = [
-            "labelTextColor": diagnosticsColor(messageLabel.textColor),
-            "labelHighlightedTextColor": diagnosticsColor(messageLabel.highlightedTextColor),
-            "labelTintColor": diagnosticsColor(messageLabel.tintColor),
-            "labelIsHighlighted": String(messageLabel.isHighlighted),
-            "cellIsHighlighted": String(isHighlighted),
-            "cellIsSelected": String(isSelected),
-            "interfaceStyle": traitCollection.userInterfaceStyle == .dark ? "dark" : (traitCollection.userInterfaceStyle == .light ? "light" : "unspecified")
-        ]
-        if let attributedText = messageLabel.attributedText, attributedText.length > 0 {
-            fields["attributedForegroundColor"] = diagnosticsColor(attributedText.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? UIColor)
-        } else {
-            fields["attributedForegroundColor"] = "none"
-        }
-        return fields
-    }
-
-    private func diagnosticsColor(_ color: UIColor?) -> String {
-        guard let color else { return "none" }
-        let resolved = color.resolvedColor(with: traitCollection)
-        var red: CGFloat = 0
-        var green: CGFloat = 0
-        var blue: CGFloat = 0
-        var alpha: CGFloat = 0
-        if resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-            return String(format: "rgba:%.3f,%.3f,%.3f,%.3f", red, green, blue, alpha)
-        }
-        var white: CGFloat = 0
-        if resolved.getWhite(&white, alpha: &alpha) { return String(format: "white:%.3f,%.3f", white, alpha) }
-        return resolved.description
-    }
-
-    func bodyRenderedColorDiagnostics() -> [String: String] {
-        var fields: [String: String] = [
-            "labelAlpha": String(format: "%.3f", messageLabel.alpha),
-            "bubbleAlpha": String(format: "%.3f", bubbleView.alpha),
-            "contentAlpha": String(format: "%.3f", contentView.alpha),
-            "labelLayerOpacity": String(format: "%.3f", messageLabel.layer.opacity),
-            "labelPresentationOpacity": messageLabel.layer.presentation().map { String(format: "%.3f", $0.opacity) } ?? "none",
-            "cellOrdinal": String(diagnosticCellOrdinal),
-            "reusedFromRole": reusedFromRoleForDiagnostics,
-            "reusedFromLinkRunCount": String(reusedFromLinkRunCountForDiagnostics)
-        ]
-        attributedStructureDiagnostics().forEach { fields[$0.key] = $0.value }
-        let hierarchyImage = renderedLabelImage()
-        renderedInkDiagnostics(image: hierarchyImage, prefix: "labelRender").forEach { fields[$0.key] = $0.value }
-        transparentInkDiagnostics(image: hierarchyImage, prefix: "labelHierarchyTransparent").forEach { fields[$0.key] = $0.value }
-        transparentInkDiagnostics(image: renderedLabelLayerImage(), prefix: "labelLayerTransparent").forEach { fields[$0.key] = $0.value }
-        transparentInkDiagnostics(image: directAttributedImage(), prefix: "directAttributedTransparent").forEach { fields[$0.key] = $0.value }
-        renderedInkDiagnostics(image: renderedHierarchyCropImage(), prefix: "hierarchyCrop").forEach { fields[$0.key] = $0.value }
-        return fields
-    }
-
-    private func attributedStructureDiagnostics() -> [String: String] {
-        guard let attributedText = messageLabel.attributedText, attributedText.length > 0 else {
-            return ["attributedLength": "0", "attributeRunCount": "0", "foregroundRunCount": "0", "foregroundDistinctColors": "none", "linkRunCount": "0", "attachmentRunCount": "0"]
-        }
-        let range = NSRange(location: 0, length: attributedText.length)
-        var attributeRunCount = 0
-        var foregroundRunCount = 0
-        var foregroundColors = Set<String>()
-        var linkRunCount = 0
-        var attachmentRunCount = 0
-        attributedText.enumerateAttributes(in: range, options: []) { attributes, _, _ in
-            attributeRunCount += 1
-            if let color = attributes[.foregroundColor] as? UIColor {
-                foregroundRunCount += 1
-                foregroundColors.insert(diagnosticsColor(color))
-            }
-            if attributes[.link] != nil { linkRunCount += 1 }
-            if attributes[.attachment] != nil { attachmentRunCount += 1 }
-        }
-        return [
-            "attributedLength": String(attributedText.length),
-            "attributeRunCount": String(attributeRunCount),
-            "foregroundRunCount": String(foregroundRunCount),
-            "foregroundDistinctColors": (foregroundColors.isEmpty ? "none" : foregroundColors.sorted().joined(separator: "|")),
-            "linkRunCount": String(linkRunCount),
-            "attachmentRunCount": String(attachmentRunCount)
-        ]
-    }
-
-    private func attributedLinkRunCount(_ attributedText: NSAttributedString?) -> Int {
-        guard let attributedText = attributedText, attributedText.length > 0 else { return 0 }
-        var count = 0
-        attributedText.enumerateAttribute(.link, in: NSRange(location: 0, length: attributedText.length), options: []) { value, _, _ in
-            if value != nil { count += 1 }
-        }
-        return count
-    }
-
-    private func renderedLabelImage() -> UIImage? {
-        let size = messageLabel.bounds.size
-        guard size.width >= 1, size.height >= 1 else { return nil }
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = false
-        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
-            messageLabel.drawHierarchy(in: messageLabel.bounds, afterScreenUpdates: true)
-        }
-    }
-
-    private func renderedLabelLayerImage() -> UIImage? {
-        let size = messageLabel.bounds.size
-        guard size.width >= 1, size.height >= 1 else { return nil }
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = false
-        return UIGraphicsImageRenderer(size: size, format: format).image { context in
-            messageLabel.layer.render(in: context.cgContext)
-        }
-    }
-
-    private func directAttributedImage() -> UIImage? {
-        guard let attributedText = messageLabel.attributedText, attributedText.length > 0 else { return nil }
-        let size = messageLabel.bounds.size
-        guard size.width >= 1, size.height >= 1 else { return nil }
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = false
-        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
-            attributedText.draw(with: messageLabel.bounds, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
-        }
-    }
-
-    private func renderedHierarchyCropImage() -> UIImage? {
-        let frame = messageLabel.convert(messageLabel.bounds, to: contentView)
-        guard frame.width >= 1, frame.height >= 1 else { return nil }
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = false
-        return UIGraphicsImageRenderer(size: frame.size, format: format).image { context in
-            context.cgContext.translateBy(x: -frame.minX, y: -frame.minY)
-            contentView.drawHierarchy(in: contentView.bounds, afterScreenUpdates: true)
-        }
-    }
-
-    private func transparentInkDiagnostics(image: UIImage?, prefix: String) -> [String: String] {
-        guard let cgImage = image?.cgImage else { return ["\(prefix)Status": "image_unavailable"] }
-        let width = cgImage.width
-        let height = cgImage.height
-        guard width > 0, height > 0 else { return ["\(prefix)Status": "empty"] }
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo = CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
-        guard let context = CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: colorSpace, bitmapInfo: bitmapInfo) else { return ["\(prefix)Status": "context_unavailable"] }
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        var redSum = 0.0
-        var greenSum = 0.0
-        var blueSum = 0.0
-        var sampleCount = 0
-        var blueDominantCount = 0
-        for offset in stride(from: 0, to: pixels.count, by: 4) {
-            let alpha = Double(pixels[offset + 3]) / 255.0
-            guard alpha > 0.06 else { continue }
-            let red = min(1, (Double(pixels[offset]) / 255.0) / alpha)
-            let green = min(1, (Double(pixels[offset + 1]) / 255.0) / alpha)
-            let blue = min(1, (Double(pixels[offset + 2]) / 255.0) / alpha)
-            sampleCount += 1
-            redSum += red
-            greenSum += green
-            blueSum += blue
-            if blue - red > 0.12 && blue - green > 0.08 { blueDominantCount += 1 }
-        }
-        guard sampleCount > 0 else { return ["\(prefix)Status": "no_ink_pixels", "\(prefix)PixelCount": "0"] }
-        let count = Double(sampleCount)
-        return [
-            "\(prefix)Status": "ok",
-            "\(prefix)PixelCount": String(sampleCount),
-            "\(prefix)InkRGB": String(format: "%.3f,%.3f,%.3f", redSum / count, greenSum / count, blueSum / count),
-            "\(prefix)BlueDominantFraction": String(format: "%.3f", Double(blueDominantCount) / count)
-        ]
-    }
-
-    private func renderedInkDiagnostics(image: UIImage?, prefix: String) -> [String: String] {
-        guard let cgImage = image?.cgImage else { return ["\(prefix)Status": "image_unavailable"] }
-        let width = cgImage.width
-        let height = cgImage.height
-        guard width > 0, height > 0 else { return ["\(prefix)Status": "empty"] }
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo = CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
-        guard let context = CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: colorSpace, bitmapInfo: bitmapInfo) else { return ["\(prefix)Status": "context_unavailable"] }
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        var redSum = 0.0
-        var greenSum = 0.0
-        var blueSum = 0.0
-        var sampleCount = 0
-        var nearWhiteCount = 0
-        var blueDominantCount = 0
-        for offset in stride(from: 0, to: pixels.count, by: 4) {
-            let alpha = Double(pixels[offset + 3]) / 255.0
-            guard alpha > 0.06 else { continue }
-            let red = min(1, (Double(pixels[offset]) / 255.0) / alpha)
-            let green = min(1, (Double(pixels[offset + 1]) / 255.0) / alpha)
-            let blue = min(1, (Double(pixels[offset + 2]) / 255.0) / alpha)
-            guard max(red, green, blue) > 0.18 else { continue }
-            sampleCount += 1
-            redSum += red
-            greenSum += green
-            blueSum += blue
-            if min(red, green, blue) > 0.75 && max(red, green, blue) - min(red, green, blue) < 0.08 { nearWhiteCount += 1 }
-            if blue - red > 0.12 && blue - green > 0.08 { blueDominantCount += 1 }
-        }
-        guard sampleCount > 0 else { return ["\(prefix)Status": "no_ink_pixels", "\(prefix)PixelCount": "0"] }
-        let count = Double(sampleCount)
-        return [
-            "\(prefix)Status": "ok",
-            "\(prefix)PixelCount": String(sampleCount),
-            "\(prefix)InkRGB": String(format: "%.3f,%.3f,%.3f", redSum / count, greenSum / count, blueSum / count),
-            "\(prefix)NearWhiteFraction": String(format: "%.3f", Double(nearWhiteCount) / count),
-            "\(prefix)BlueDominantFraction": String(format: "%.3f", Double(blueDominantCount) / count)
-        ]
-    }
-
     override func layoutSubviews() {
         super.layoutSubviews()
         timestampLabel.frame = layoutMetrics.timestampFrame
@@ -3955,7 +3709,6 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     self.onToggleReasoning = onToggleReasoning
     self.onToggleToolDetail = onToggleToolDetail
     layoutMetrics = metrics
-    lastConfiguredRoleForDiagnostics = message.role.rawValue
     messageLabel.isHighlighted = false
     messageLabel.textColor = .label
     messageLabel.highlightedTextColor = .label

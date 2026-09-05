@@ -1,3 +1,19 @@
+## Native message rich-text presentation — Runtime accepted b113 2026-09-06
+
+- The tested Runtime contract is now accepted for b113: ordinary user prose remains normal `.label`; only the actual HTTP(S) URL display span is system blue, including when Chinese/non-ASCII prose follows immediately with no whitespace.
+- Preserve b112 user/assistant role-isolated reuse. Exact b113 Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` covers all five assistant chunks with zero cross-role user reuse, zero prior-link reuse and zero captured blue-dominant assistant output.
+- Render authoritative/terminal assistant rich text before bounded attributed chunking; preserve raw Repository text as content/Copy authority. Do not introduce a second message store or reparsing timer/state machine.
+- `filecite`/`cite` may remain readable non-interactive labels. Do not invent source navigation from opaque IDs until authoritative resource annotations are retained and evidenced.
+- This rule is presentation-only. It does not alter protected Send/SSE/recovery ownership or prove unrelated Runtime gates.
+
+## Native message rich-text presentation — b113 2026-09-06
+
+- User body color semantics: ordinary text uses normal `.label`; only actual HTTP(S) URL/link display spans are system blue. A bare URL immediately followed by Chinese/non-ASCII prose must stop before that prose. Do not color the whole remainder of the user bubble blue.
+- Preserve the b112 message-role reuse invariant: user and assistant cells remain in separate reuse pools. Visual link coloring must not be used as a reason to re-merge those pools.
+- Assistant authoritative/terminal visible text may render native headings, emphasis, lists, inline/fenced code and pipe tables. Render the full message first, then bounded attributed chunks; raw Repository content and full-message Copy remain unchanged.
+- Exact `filecite`/`cite` controls may be presented as readable citation labels. Until authoritative annotation/resource data is retained and evidenced, citation labels are non-interactive and opaque token IDs must not be guessed into URLs or file navigation.
+- Do not expose hidden reasoning/tool/system content through the renderer. Do not add recurring parsing timers, streaming retry/state machinery or a second message-content authority for rich text.
+
 ## Message-cell role reuse isolation — Runtime accepted b112 2026-09-06
 
 - User and assistant rows may share the `ConversationMessageCell` implementation class, but they must not share the same UITableView reuse identifier while user rows can render system-blue Markdown links. b111 proved user-link rendering can persist as UILabel layer/cache color across cross-role reuse; b112 Runtime `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` proves role-isolated pools remove that contamination on the tested path.

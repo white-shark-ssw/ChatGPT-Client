@@ -1,3 +1,20 @@
+## DEV-message-rendering b113 Runtime acceptance — 2026-09-06
+
+- Human Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` accepts the b113 presentation ownership design on the tested iPhone/iOS17 path.
+- Keep conservative HTTP(S) URL display-range coloring for user UILabels: the tested bare GitHub URL stops before immediately adjacent Chinese prose, which remains normal `.label`.
+- Keep full-message rich rendering before bounded attributed chunking for terminal/authoritative assistant content. The tested five-chunk answer remains readable while repeated reuse preserves b112 role isolation and produces no blue-dominant assistant output.
+- Keep raw `ConversationMessage.text` as authoritative content/Copy source. Presentation projection is not a second content store.
+- Keep `filecite`/`cite` as readable non-interactive labels until authoritative citation resource/annotation objects are retained; this Runtime acceptance does not authorize guessed URLs/file openers.
+- Do not generalize this presentation result into Send/SSE/recovery stability or allocate a new candidate without new evidence.
+
+## DEV-message-rendering b113 presentation ownership decision — 2026-09-06
+
+- Keep authoritative message content and Copy semantics in raw `ConversationMessage.text` / `ConversationRepository`; rich text is a one-way presentation projection and never a second content store.
+- Render the full authoritative/terminal message before applying the existing bounded ~1200-character presentation chunking, then split the attributed output. Do not parse independent raw Markdown fragments after chunk boundaries.
+- For user message UILabels, color only conservatively detected actual HTTP(S) URL spans system blue. Do not rely on Foundation's over-broad bare-URL Markdown range when adjacent non-ASCII text can be absorbed, and do not add UILabel `.link` attributes merely for color.
+- Preserve b112 role-isolated reuse pools. Active growing assistant responses remain plain until terminal/authoritative projection so b113 does not introduce full Markdown reparsing on every streamed token.
+- Raw `filecite`/`cite` control tokens may become readable non-interactive citation labels, but current content parsing does not retain authoritative citation resource objects. Do not invent a destination URL/file opener from opaque token IDs.
+
 ## DEV-send-stream b112 role-isolated message-cell reuse accepted — 2026-09-06
 
 - Exact b111 Runtime selected cross-role reuse as the source of persistent UILabel layer system-blue contamination. Exact b112 Runtime `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` removes that path: assistant samples never reuse from `user`, all prior-link counts are zero, and every valid assistant CALayer aggregate is black with blue fraction `0.000`.

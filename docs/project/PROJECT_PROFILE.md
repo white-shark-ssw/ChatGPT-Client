@@ -1,3 +1,16 @@
+## Current DEV-message-rendering Runtime result — b113 2026-09-06
+
+- Canonical `DEV-message-rendering-0.1.0-b113` / `0.1.0 (113)` remains product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`.
+- Human Runtime diagnostics `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` on exact iPhone/iOS17.0 accept the tested native message-presentation scope, including URL color boundary, rich assistant presentation and b112 color-regression safety.
+- Runtime status: Positive for tested presentation scope / stacked integration pending / Stable-Frozen No. Citation source opening remains outside b113 because authoritative annotation/resource objects are not retained.
+
+## Current DEV-message-rendering candidate — b113 2026-09-06
+
+- Stacked package-qualified Human Runtime candidate: `DEV-message-rendering-0.1.0-b113` / `0.1.0 (113)` on branch `dev/message-rendering-20260906`, PR #36 base `dev/send-stream-20260829`.
+- Product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`; package `75ccad15208610c2b0420033846f9bb15bbdb494`; Artifact `9976713893`; ZIP `sha256:51d5bcd5e804c2877faafa67f4bb263d6d849b83a24c4c28982c6880aecc7ebf`; IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`.
+- Independent package identity: `com.whitesharkssw.chatgptclient`, source `75ccad152086`, Release iPhoneOS, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, arm64.
+- Human Runtime pending; Stable-Frozen No. The underlying b112 role-isolated assistant-color fix remains Runtime Positive.
+
 ## Current DEV-send-stream Runtime candidate — b112 2026-09-06
 
 - `DEV-send-stream-0.1.0-b112` / `0.1.0 (112)` remains the package-qualified candidate; product `3957b806f32f0995ceb9cf8f9487aba939f3b306`, package `b5e3164721e01ceb1fe320ebd290bda79a921fc2`, Artifact `9975978222`, IPA `sha256:f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9`.

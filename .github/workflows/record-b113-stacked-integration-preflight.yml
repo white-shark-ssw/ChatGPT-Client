@@ -1,0 +1,86 @@
+name: Record b113 Stacked Integration Preflight
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b113-stacked-integration-preflight.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded DEV-send-stream branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard b112 owner baseline and tooling-only preparation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 50432b8743f3391a8174a3b7aae745298082d433 HEAD
+          git diff --quiet 50432b8743f3391a8174a3b7aae745298082d433 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b112\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+
+      - name: Record integration recovery point
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md")
+          marker = "## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06"
+          text = path.read_text()
+          if marker not in text:
+              section = """## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06
+
+Selected owner / verified pre-integration state:
+
+- Work ID `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable at exact pre-integration head `50432b8743f3391a8174a3b7aae745298082d433`; target `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Canonical DEV-send-stream-owned candidate remains permanently reserved b112: product `3957b806f32f0995ceb9cf8f9487aba939f3b306`, package `b5e3164721e01ceb1fe320ebd290bda79a921fc2`, Artifact `9975978222`, Human Runtime Positive for the role-isolated assistant-color fix. Overall Send/Stream remains Runtime Partial / Stable-Frozen No because accepted clean-EOF recovery is still Unexercised.
+- Stacked dependency PR #36 `DEV-message-rendering` is open/mergeable with base exactly `dev/send-stream-20260829@50432b8743f3391a8174a3b7aae745298082d433` and head `d5d761bfad26bc90953488ccd5a96452bf356b3a`.
+- PR #36 canonical b113 identity remains owned by `DEV-message-rendering`: Candidate `DEV-message-rendering-0.1.0-b113` / Build113, product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`, Human Runtime Positive for the tested native message-presentation scope.
+- Compare `75ccad15208610c2b0420033846f9bb15bbdb494..d5d761bfad26bc90953488ccd5a96452bf356b3a` proves all post-package commits are docs/tooling only; no `ChatGPTClient/**` or Xcode product path changed after the canonical b113 package source.
+- Parallel PR #35 remains draft research-only at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142` and owns no product `ChatGPTClient/**`, product Xcode Candidate, or Build113 identity.
+
+Integration batches:
+
+- **Batch I0 — this record**: write only this `DEV-send-stream` checkpoint recovery point. No product, Candidate, Artifact, PR #36, PR #29 metadata, or other task checkpoint changes.
+- **Batch I1 — pending**: re-read actual branch/PR state after I0 because the recorder commit advances the base by docs/tooling only. Require PR #36 head still `d5d761bf...`, mergeable, and product-equivalent to canonical package source `75ccad...`.
+- **Batch I2 — pending**: merge PR #36 into `dev/send-stream-20260829` using expected head `d5d761bfad26bc90953488ccd5a96452bf356b3a`. This is integration of already-tested b113; it does not allocate a new `DEV-send-stream` candidate and does not create new Runtime evidence.
+- **Batch I3 — pending**: verify PR #36 merged and the real `DEV-send-stream` head/product identity. Confirm the integrated branch carries Build113 / `DEV-message-rendering` b113 as the imported product baseline while b112 remains the last DEV-send-stream-owned canonical candidate. Check post-merge PR #29 CI/status; old b113 package/Runtime evidence remains valid only because product paths are unchanged.
+- **Batch I4 — pending**: update this checkpoint plus shared durable project docs and PR #29 to record stacked integration truth. Preserve the b107 accepted clean-EOF recovery as Unexercised and overall DEV-send-stream as Runtime Partial / Stable-Frozen No.
+
+Recovery / ownership constraints:
+
+- Never replay a completed merge. On resume, first inspect PR #36 merged state and `dev/send-stream-20260829` actual head.
+- Do not allocate b114 merely for integration. Build113 stays permanently owned/reserved by `DEV-message-rendering`; any future DEV-send-stream product candidate requires a fresh uniqueness/evidence guard.
+- Do not modify or delete `DEV-message-rendering`'s checkpoint from this selected task session. Its completion bookkeeping belongs to that Work ID.
+- Preserve b112 role-isolated reuse, b113 presentation behavior, Send/SSE/Repository authority, one-Send/no-resend invariants, canonical b112/b113 package identities, PR #35, and all earlier reserved Candidates.
+
+**Next exact action:** after verifying this recovery-point commit, re-check PR #36 against the docs-only-advanced base and merge it with expected head `d5d761bfad26bc90953488ccd5a96452bf356b3a`; then perform only missing I3/I4 work.
+"""
+              path.write_text(section.rstrip() + "\n\n" + text)
+          PY
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = "docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"
+          grep -q '## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit recovery point
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b113 stacked integration preflight"
+          git push origin HEAD:dev/send-stream-20260829

@@ -1,3 +1,10 @@
+## DEV-send-stream stacked candidate ownership after b113 integration — 2026-09-06
+
+- Accept PR #36's tested b113 product into the owning `DEV-send-stream` branch by ordinary merge at `4a22086f7ccab39427c46a163854e8f68530c65f` because the dependency was explicitly stacked and the current base advanced only through docs/tooling.
+- Preserve Candidate ownership across integration: Build113 / `DEV-message-rendering-0.1.0-b113` remains owned/reserved by `DEV-message-rendering`; importing those exact product bits does not silently create or rename a `DEV-send-stream` Candidate. b112 remains the last Send-owned canonical Candidate.
+- Existing b113 package/Runtime evidence may be carried into the integrated branch only because compare proves zero product-path change after canonical package source `75ccad15208610c2b0420033846f9bb15bbdb494`. Integration CI is compile/package evidence, not new Human Runtime proof.
+- No b114, retry, fallback, timer/watchdog, polling, duplicate Send, second response/content authority or new completion heuristic is authorized by the merge. The b107 accepted clean-EOF Runtime gate remains separately open.
+
 ## DEV-message-rendering b113 Runtime acceptance — 2026-09-06
 
 - Human Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` accepts the b113 presentation ownership design on the tested iPhone/iOS17 path.

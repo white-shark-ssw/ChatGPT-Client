@@ -1,5 +1,12 @@
 # Build / Test / Release Index
 
+## Stacked integration record — b113 into DEV-send-stream 2026-09-06
+
+- `DEV-message-rendering-0.1.0-b113` remains permanently owned by `DEV-message-rendering`; its canonical package identity remains product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`, Human Runtime Positive for the tested presentation scope.
+- PR #36 merged into `dev/send-stream-20260829` at `4a22086f7ccab39427c46a163854e8f68530c65f`. Compare from canonical b113 package source to this merge head contains no product/Xcode path changes, so this is an integration of the same tested product bits, not a new Candidate or Artifact identity.
+- PR #29 post-merge CI run `33993974639` passed on merge head. Treat it as integration CI only; it does not replace the canonical b113 Artifact or create new Runtime evidence.
+- b112 remains the last `DEV-send-stream`-owned canonical Candidate. No b114 is allocated by this integration. Overall Send/Stream remains Runtime Partial because the b107 accepted clean-EOF recovery is still Unexercised.
+
 This file is the durable index for testable identities and evidence.
 
 ## Current identity scheme

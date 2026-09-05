@@ -1,3 +1,10 @@
+## Stacked tested-Candidate integration ownership — b113 2026-09-06
+
+- When an already-tested stacked task is integrated into its owning dependency branch, keep the original Candidate/Build ownership. For the current integration, Build113 / `DEV-message-rendering-0.1.0-b113` remains a `DEV-message-rendering` identity even though `dev/send-stream-20260829` now carries those product bits.
+- Do not allocate or rename a new `DEV-send-stream` Candidate solely to represent an ownership-preserving merge. The last Send-owned Candidate remains b112 until new Send/Stream product evidence justifies a fresh unique Candidate.
+- Existing Runtime evidence may be inherited across the merge only when source comparison proves the tested product paths are unchanged. CI on an integration commit is not a substitute for Human Runtime evidence.
+- This rule does not change Send/SSE/Repository ownership: one protected Send remains one Send, `ConversationRepository` remains Native response/content authority, and the inherited b107 accepted clean-EOF gate stays separate until exercised.
+
 ## Native message rich-text presentation — Runtime accepted b113 2026-09-06
 
 - The tested Runtime contract is now accepted for b113: ordinary user prose remains normal `.label`; only the actual HTTP(S) URL display span is system blue, including when Chinese/non-ASCII prose follows immediately with no whitespace.

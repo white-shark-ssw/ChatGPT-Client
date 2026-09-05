@@ -1,3 +1,11 @@
+## DEV-send-stream stacked b113 integration complete — 2026-09-06
+
+- PR #36 `DEV-message-rendering` merged exactly once into `dev/send-stream-20260829` at `4a22086f7ccab39427c46a163854e8f68530c65f`; PR #29 remains the owning Send/Stream PR against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Integrated Xcode product identity is Build113 / Candidate `DEV-message-rendering-0.1.0-b113`. Candidate ownership stays with `DEV-message-rendering`; b112 remains the last `DEV-send-stream`-owned canonical Candidate.
+- No product path changed after canonical b113 package source `75ccad15208610c2b0420033846f9bb15bbdb494`; the merge only combines already-tested b113 product bits with later docs/tooling. PR #29 post-merge CI `33993974639` passed on merge head `4a22086f...`.
+- b113 Human Runtime remains Positive only for its tested native presentation scope; integration is not a new Runtime test. b112 assistant-color evidence remains accepted.
+- The b107 exact accepted `stream_ended_without_done` clean-EOF recovery is still Unexercised / Unverified. `DEV-send-stream` remains Active / Runtime Partial / Stable-Frozen No. No b114 is justified by integration alone.
+
 ## DEV-message-rendering b113 Human Runtime Positive — 2026-09-06
 
 - Canonical b113 Human Runtime diagnostics `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` are exact Release Build113 / Candidate b113 / source `75ccad152086` on iPhone iOS17.0; the user explicitly reports the tested result has no problem.

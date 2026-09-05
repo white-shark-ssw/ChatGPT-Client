@@ -1,3 +1,11 @@
+## Current DEV-send-stream integrated product baseline — imported b113 2026-09-06
+
+- `dev/send-stream-20260829` now carries merged PR #36 at integration commit `4a22086f7ccab39427c46a163854e8f68530c65f`; product settings are `0.1.0 (113)` / Candidate `DEV-message-rendering-0.1.0-b113`.
+- Build113/Candidate b113 remains owned by `DEV-message-rendering`; integration does not reassign it to `DEV-send-stream`. The last `DEV-send-stream`-owned canonical candidate remains b112 (`3957b806...` / package `b5e31647...` / Artifact `9975978222`).
+- Canonical imported b113 package remains source `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`; its tested presentation scope is Human Runtime Positive.
+- `75ccad... -> 4a22086...` changes only docs/tooling, so integration has no new product delta relative to the tested b113 package bits. Post-merge PR #29 CI `33993974639` passed.
+- No b114 is allocated. Overall `DEV-send-stream` remains Runtime Partial / Stable-Frozen No because accepted clean-EOF recovery remains Unexercised.
+
 ## Current DEV-message-rendering Runtime result — b113 2026-09-06
 
 - Canonical `DEV-message-rendering-0.1.0-b113` / `0.1.0 (113)` remains product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`.

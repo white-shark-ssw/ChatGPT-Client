@@ -1,3 +1,31 @@
+## b113 stacked integration completed — DEV-send-stream owner 2026-09-06
+
+Exact integration result:
+
+- Work ID remains `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains open against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Batch I2 completed exactly once: PR #36 `DEV-message-rendering` head `d5d761bfad26bc90953488ccd5a96452bf356b3a` merged normally into the owning branch at merge commit `4a22086f7ccab39427c46a163854e8f68530c65f`. PR #36 is closed/merged.
+- Batch I3 passed: current integrated product is Build113 with `DIAGNOSTICS_CANDIDATE = "DEV-message-rendering-0.1.0-b113"` in both Debug and Release. Candidate b113 remains permanently owned/reserved by `DEV-message-rendering`; b112 remains the last `DEV-send-stream`-owned canonical candidate.
+- Canonical b113 product/package/Runtime identity remains product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package source `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`, Human Runtime Positive for the tested native message-presentation scope.
+- Compare `75ccad15208610c2b0420033846f9bb15bbdb494..4a22086f7ccab39427c46a163854e8f68530c65f` contains only docs/tooling changes after the canonical package source; there are zero `ChatGPTClient/**` or `ChatGPTClient.xcodeproj/project.pbxproj` product-path changes. Existing b113 package/Runtime evidence therefore remains applicable to the integrated product bits; integration itself creates no new Runtime evidence.
+- PR #29 post-merge PR CI `33993974639` (`ios-foundation.yml`, head `4a22086f7ccab39427c46a163854e8f68530c65f`) completed successfully.
+- Parallel PR #35 remains draft research-only at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142` and owns no product `ChatGPTClient/**`, product Xcode Candidate, or Build113 identity.
+
+Integration classification:
+
+- I0 recovery point: completed.
+- I1 merge/conflict guard: completed.
+- I2 PR #36 merge: completed.
+- I3 post-merge identity/product-equivalence/PR-CI verification: completed.
+- I4 durable state recording: completed by the guarded integration recorder that added this section and the corresponding shared durable records; PR #29 metadata is updated separately in the same work cycle.
+- No b114 was allocated. No new Send/Stream product behavior was written by integration.
+- b112 assistant-color correction remains Human Runtime Positive. b113 native message presentation remains Human Runtime Positive for its tested scope. The inherited b107 accepted `stream_ended_without_done` clean-EOF same-generation recovery remains Unexercised / Unverified, so overall `DEV-send-stream` remains Active / Runtime Partial / Stable-Frozen No.
+
+The older `b113 stacked integration recovery point` below is historical recovery state and must not be replayed. On resume, first read this completed section and current GitHub state.
+
+**Evidence ladder:** b112 Send-owned candidate Runtime Positive for assistant color / b113 imported product Code written + exact scope + Debug Simulator passed + Push CI passed + PR CI passed + Artifact produced + package identity independently verified + Human Runtime Positive for tested presentation scope / stacked integration merge completed + post-merge PR #29 CI passed / accepted clean-EOF recovery Unexercised / overall `DEV-send-stream` Runtime Partial / Stable-Frozen No.
+
+**Next exact action:** do not allocate a new Send/Stream Candidate merely because b113 is now integrated. Continue `DEV-send-stream` only from new evidence for an actually open Send/Stream gate; notably, if exact post-acceptance `stream_ended_without_done` occurs, capture canonical diagnostics and classify the inherited b107 clean-EOF recovery. Otherwise preserve the integrated b113 baseline and existing one-Send/Repository authority invariants.
+
 ## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06
 
 Selected owner / verified pre-integration state:

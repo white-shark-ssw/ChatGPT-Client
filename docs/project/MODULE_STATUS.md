@@ -1,3 +1,10 @@
+## DEV-send-stream imported b113 presentation baseline integrated — 2026-09-06
+
+- PR #36 is merged into the Send/Stream branch at `4a22086f7ccab39427c46a163854e8f68530c65f`. The branch now carries Build113 / `DEV-message-rendering-0.1.0-b113` as an imported product baseline, not as a new `DEV-send-stream` Candidate.
+- Product equivalence to canonical b113 package source `75ccad15208610c2b0420033846f9bb15bbdb494` is preserved: subsequent/integration changes are docs/tooling only. Post-merge PR #29 CI `33993974639` passed.
+- b112 role-isolated assistant-color behavior remains Runtime accepted; b113 rich Markdown/link/citation presentation remains Runtime Positive for the tested scope.
+- Send/Stream module remains Active / Runtime Partial / Stable-Frozen No because accepted clean-EOF recovery remains Unexercised. Integration adds no resend/retry/polling/second authority and allocates no b114.
+
 ## DEV-message-rendering b113 presentation Runtime accepted — 2026-09-06
 
 - Exact b113 Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` accepts the tested message-presentation behavior: URL-only blue user text with adjacent normal Chinese, readable assistant rich text/table/file-reference presentation, and no reappearance of the assistant blue/normal reuse defect.

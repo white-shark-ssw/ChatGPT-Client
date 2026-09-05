@@ -1,3 +1,9 @@
+## DEV-message-rendering b113 native presentation package — 2026-09-06
+
+- Message presentation is now an explicit Active stacked module/task, not part of the closed b112 color sub-gate. Canonical b113 package is product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`; exact scope + Debug Simulator and both formal CI lanes passed.
+- `ConversationRepository` / raw `ConversationMessage.text` remain content authority; rendering is attributed presentation only. b112 user/assistant reuse pools remain isolated.
+- Human Runtime must verify URL-only blue user text, native assistant Markdown/code/table/filecite presentation, long-row geometry, Copy semantics and no assistant blue-text regression. Stable-Frozen No.
+
 ## DEV-send-stream b112 role-isolated reuse Runtime accepted — 2026-09-06
 
 - Exact b112 Runtime `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` has zero assistant `reusedFromRole=user`, zero prior-link reuse counts, and zero blue-dominant CALayer output across 9 rendered assistant samples. The supplied screenshot `sha256:7a689bca421c01af25aeb19dc9e3a19d1e9a7f47fe431533be760d3eaa1db243` visually confirms the assistant body remains normal/black while user link styling stays blue.

@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b107
-# Product source: 113fa19d7264b953949770d2e44cb500ded2da6b
-# b107 treats accepted SSE EOF without exact DONE as same-generation receive interruption and clears stale non-active client live state after authoritative manual Sync.
-name: iOS Accepted SSE EOF Recovery b107
+# Candidate: DEV-send-stream-0.1.0-b108
+# Product source: eb0de74460b0bd06a6d977bf915b5e06a5c946db
+# b108 makes UILabel textColor the final assistant body color owner after attributedText assignment while preserving b107 Send/SSE/recovery behavior.
+name: iOS Assistant Body Color b108
 
 on:
   push:
@@ -32,12 +32,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b107 accepted SSE EOF same-generation recovery
+      - name: Guard b108 assistant body color ownership and inherited send recovery
         run: |
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 107;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b107\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 108;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b108\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
           ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+          grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.secondaryLabel]' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
           grep -q 'protected_send_sse_conversation_id' ChatGPTClient/RootViewController.swift
           grep -q 'pendingNewConversationEvents' ChatGPTClient/RootViewController.swift
@@ -71,7 +75,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b107
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b108
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

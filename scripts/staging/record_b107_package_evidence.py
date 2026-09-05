@@ -23,6 +23,16 @@ def insert_after_title(path: str, marker: str, section: str) -> None:
     p.write_text("".join(lines))
 
 
+def replace_exact(path: str, old: str, new: str) -> None:
+    p = Path(path)
+    text = p.read_text()
+    if old not in text:
+        return
+    if text.count(old) != 1:
+        raise SystemExit(f"ambiguous replacement in {path}: {old}")
+    p.write_text(text.replace(old, new))
+
+
 checkpoint_section = f'''## b107 accepted-SSE EOF convergence — package ready 2026-09-05
 
 Canonical identity / validation:
@@ -37,14 +47,16 @@ Canonical identity / validation:
 Behavior / Runtime gate:
 
 - b106 SSE `conversation_id` New Chat handoff remains unchanged and Runtime Positive.
-- For an already HTTP200-SSE-accepted client Send, exact `stream_ended_without_done` no longer mutates the same Repository generation to failed. Root logs `acceptedClientStreamEndedWithoutDone`, releases only the ended executor transport, and reuses the already Runtime-positive accepted-client recovery primitive to attach one fresh covered observer to the **same generation** with `no_resend_same_generation` semantics.
+- For an already HTTP200-SSE-accepted client Send, exact `stream_ended_without_done` no longer mutates the same Repository generation to failed. Covered executor emits `.acceptedClientStreamEndedWithoutTerminal`; Root releases only the ended executor transport and reuses the already Runtime-positive accepted-client recovery primitive to attach one fresh covered observer to the **same generation** with `no_resend_same_generation` semantics.
 - Successful manual Sync additionally calls the existing `clearLiveResponseAfterAuthoritativeReconcile` primitive when a client-owned live snapshot is already non-active, preventing authoritative rows plus a stale failed/terminal live tail after server state has advanced.
 - b107 adds no retry loop, timer/watchdog, polling, duplicate Send, regenerate, challenge replay, guessed Native resume/status, new response authority, completion heuristic or color workaround.
 - The b106 assistant blue-text defect remains separately open. b107 intentionally does not modify `ConversationMessageCell` because the b106 reset was Runtime-insufficient and the exact owner is still unproven.
 - Human Runtime remains Pending; Stable/Frozen remains No.
 
 **Next exact action:** install only canonical b107 and reproduce one New Chat first Send. If exact accepted `stream_ended_without_done` occurs, require no `phase=failed`/`回答失败`, no second protected Send, same-generation covered recovery and eventual authoritative convergence. After any manual Sync, authoritative content must not be followed by a stale prompt/reasoning/failure tail. Blue-text behavior is observed but not a b107 pass/fail claim except as an unchanged known defect.'''
-insert_after_title("docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md", "## b107 accepted-SSE EOF convergence — package ready", checkpoint_section)
+checkpoint_path = "docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"
+insert_after_title(checkpoint_path, "## b107 accepted-SSE EOF convergence — package ready", checkpoint_section)
+replace_exact(checkpoint_path, "Root logs `acceptedClientStreamEndedWithoutDone`, releases only the ended executor transport, and reuses", "Covered executor emits `.acceptedClientStreamEndedWithoutTerminal`; Root releases only the ended executor transport and reuses")
 
 index = Path("docs/project/BUILD_TEST_INDEX.md")
 text = index.read_text()

@@ -1,3 +1,10 @@
+## DEV-send-stream b111 shared-cell contamination selected / b112 reuse isolation — 2026-09-06
+
+- b111 exact Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` rejects current attributed content as the assistant blue owner: all direct attributed renders are black with zero current link runs. Blue first appears in the UILabel layer.
+- Reuse provenance is causal in the captured sample: cell 3 transitions from black to blue only after user/link reuse; cell 1 enters blue after user/link reuse and remains blue on later assistant reuse; assistant-only cells remain black.
+- b112 isolates UITableView reuse pools by message role without changing the cell implementation, user link styling, geometry, reasoning, or Send/SSE/Repository/recovery ownership.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b111 label-pipeline probe package — 2026-09-06
 
 - Canonical b111 product `64351b96bd61a44e8566e2264c5593fae868268e`, package `4297846dd6889905cbc765c23f83b33ee54437f5`, Artifact `9975489792`, IPA `sha256:071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a`; exact scope + Debug Simulator and both formal CI lanes passed.

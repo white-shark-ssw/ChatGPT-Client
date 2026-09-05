@@ -1,3 +1,10 @@
+## DEV-send-stream b111 layer/reuse diagnosis / b112 role-isolated reuse decision — 2026-09-06
+
+- Exact b111 Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` resolves the b109-b111 color investigation. Current assistant attributed state is one black foreground run with zero links, and direct attributed rendering is black; therefore another text/tint/highlight reset or attributed-color rewrite is not authorized.
+- The first divergent surface is `messageLabel.layer.render`: system-blue appears only on contaminated cell ordinals. One cell is black before cross-role reuse and blue after reuse from a user row with one link run; another first appears blue after user-link reuse and remains blue on subsequent assistant reuse. Assistant-only reuse cells remain black.
+- Fix the invariant at the reuse owner: keep the same `ConversationMessageCell` implementation but maintain separate UITableView reuse identifiers/pools for user and assistant roles. User cells may continue rendering Markdown links with `UIColor.systemBlue`; assistant cells must never inherit a UILabel that previously rendered that user-link state.
+- Preserve b111 diagnostics through the b112 Runtime gate so the fix is observable. Do not add a replacement color reset, separate message store, timer/retry/watchdog, or Send/Repository change.
+
 ## DEV-send-stream b110 rendered-output interpretation / b111 diagnostic decision — 2026-09-06
 
 - Exact b110 Runtime `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81` proves at least one authoritative assistant chunk reaches UILabel `drawHierarchy` with system-blue-like output while all exposed UILabel model-state fields still resolve to light-mode black `.label`. Do not attribute that captured blue sample solely to an outer cell/window compositor and do not add another blind text/tint/highlight reset.

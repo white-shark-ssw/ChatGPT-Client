@@ -1,3 +1,10 @@
+## Current DEV-send-stream rendering-fix candidate — b112 2026-09-06
+
+- `DEV-send-stream-0.1.0-b112` / `0.1.0 (112)` is permanently reserved as the evidence-backed cross-role cell-reuse isolation candidate; product/package source pending staging.
+- Trigger evidence is canonical b111 diagnostics `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811`: assistant attributed/direct rendering stays black and link-free, while UILabel layer output becomes system-blue only on cells contaminated by prior user-link reuse and persists on the contaminated cell.
+- b112 changes only Build/Candidate plus role-specific UITableView reuse identifiers in `ConversationFeature.swift`; user link styling and Send/SSE/Repository owners remain unchanged.
+- Stable/Frozen No.
+
 ## Current DEV-send-stream package-qualified diagnostic candidate — b111 2026-09-06
 
 - `DEV-send-stream-0.1.0-b111` / `0.1.0 (111)` is the current package-qualified diagnostic candidate.

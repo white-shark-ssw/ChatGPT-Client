@@ -1,3 +1,10 @@
+## DEV-send-stream b111 Runtime root-cause boundary / b112 role reuse fix — 2026-09-06
+
+- Canonical b111 diagnostics `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` select the color owner: current assistant attributed content is uniformly black/link-free, but UILabel CALayer output turns pure system-blue after the same cell/label is reused from a user row with a Markdown link and can remain blue on later assistant->assistant reuse.
+- One cell ordinal is observed black before cross-role reuse and blue immediately after `user + prior link` reuse; assistant-only reuse cells remain black. This is direct Runtime evidence for shared cross-role cell reuse contamination, not a tint/model-state hypothesis.
+- b112 Build112 is reserved for the minimum owner fix: separate user and assistant UITableView reuse identifiers while keeping the same cell class/renderers and all Send/SSE/Repository behavior unchanged.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b111 label-pipeline diagnostic package ready — 2026-09-06
 
 - Canonical b111 product `64351b96bd61a44e8566e2264c5593fae868268e` / package `4297846dd6889905cbc765c23f83b33ee54437f5`; staging `33986923145/101362120447`, Push `33987037286/101362430240`, and PR `33987039485/101362436599` all passed.

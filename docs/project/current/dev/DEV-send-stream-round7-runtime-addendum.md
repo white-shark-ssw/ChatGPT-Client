@@ -1,3 +1,34 @@
+## b111 Human Runtime selects cross-role reuse contamination / b112 role-isolated reuse allocation — 2026-09-06
+
+Exact b111 Human Runtime evidence:
+
+- Export metadata is canonical Release Build111 / Candidate `DEV-send-stream-0.1.0-b111` / source `4297846dd688` on iPhone iOS17.0. Exact diagnostics SHA-256 `8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811`; 52 total events, including 12 `assistantChunkColor.willDisplay` and 12 `assistantChunkRender.afterDisplay` samples.
+- The target remains the same completed authoritative answer: 2 visible messages / 6 presentation rows / 0 live rows / one 5-chunk assistant message (`chunkCharacterLimit=1200`, max chunk 1193). No new Send is involved.
+- Every sampled assistant attributed string is structurally clean at capture time: `attributeRunCount=1`, `foregroundRunCount=1`, `foregroundDistinctColors=rgba:0,0,0,1`, `linkRunCount=0`, `attachmentRunCount=0`. Every direct-attributed transparent render is black `0.000,0.000,0.000` with blue-dominant fraction `0.000`. Runtime attributed content/link styling is therefore rejected as the current blue owner.
+- The UILabel CALayer is the first surface that diverges. Four samples resolve exactly system-blue-like `labelLayerTransparentInkRGB=0.000,0.476,1.000`, blue-dominant fraction `1.000`: chunk 2 twice and chunk 3 twice. Normal samples from assistant-only cells resolve black with blue fraction `0.000`.
+- Reuse provenance makes the causal boundary concrete. Cell ordinal 3 renders chunk 3 black on its initial `reusedFromRole=none` sample; after that same cell is reused from a `.user` row whose previous attributed value contained one link run, the next chunk-3 layer render turns pure blue and remains blue on the repeat sample. Cell ordinal 1 is first captured blue immediately after `reusedFromRole=user` / `reusedFromLinkRunCount=1`, then remains blue on a later assistant->assistant reuse even though the current assistant attributed string is black and link-free. By contrast, cell ordinals 2 and 4, which are reused only from assistant/no-link state in this export, remain black.
+- Current source explains the initiating state: user and assistant rows share the single reuse identifier `ConversationMessageCell`, while user Markdown links explicitly apply `UIColor.systemBlue`. Existing `prepareForReuse` already clears text/attributedText and resets highlight/text/tint, yet the layer stays contaminated; another reset is therefore not the evidence-backed owner fix.
+
+b112 allocation / minimum fix:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b112` / `0.1.0 (112)`. `BUILD_TEST_INDEX.md` contains no b112 before this allocation; parallel PR #35 owns no `ChatGPTClient/**`, product Xcode candidate, or Build112 identity.
+- Keep `ConversationMessageCell` as the single implementation class and preserve user Markdown/link rendering, assistant attributed rendering, b111 diagnostics, geometry, reasoning, Copy, Send/SSE/Repository/recovery behavior unchanged.
+- Change only reuse ownership: register distinct `.user` and `.assistant` reuse identifiers and select the identifier from the existing presentation message role before dequeue. A cell/UILabel that has rendered a user link must never be reused for an assistant row. This fixes the proven invariant at the reuse owner rather than adding another color/tint/highlight reset.
+- Product scope is exactly `ChatGPTClient.xcodeproj/project.pbxproj` plus `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- Human Runtime b112: reopen this same completed 5-chunk answer, scroll through all chunks, and export Diagnostics. Require all assistant direct/layer/hierarchy transparent renders to stay normal `.label`, zero assistant reuse provenance from `user`, and no blue/normal alternation. Existing user link system-blue rendering must remain intact. No new Send is required.
+
+Resume/conflict guard / batch recovery point:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable; verified pre-b112 branch head `5d2ee88331e21b7a3e186c3930717c524c2137ab`; canonical b111 product `64351b96bd61a44e8566e2264c5593fae868268e`, package `4297846dd6889905cbc765c23f83b33ee54437f5`, Artifact `9975489792`.
+- `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`. Parallel PR #35 remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, research-only with zero product/candidate overlap.
+- Tooling-preparation commits may add only b112 staging scripts/workflow and do not create a b112 product or Artifact.
+- Batch A: durably record this b111 Runtime classification and b112 reservation in checkpoint/index/state/module/profile/technical decisions before product changes.
+- Batch B: apply only the exact two-product-path b112 reuse-isolation delta, run `git diff --check` + Debug Simulator compile, then commit exact product.
+- Batch C: bind formal package CI to the exact b112 product commit, require same-source Push + PR CI, canonical Artifact and independent IPA identity/hash verification, then record package evidence and update PR #29 before Human Runtime.
+- Recovery must not rewrite b111/b110/b109 identities, PR #35, user-link `systemBlue`, Send/SSE/Repository/recovery behavior, or previously reserved Candidates.
+
+**Next exact action:** complete Batch B only after Batch A is durably committed; then package one canonical b112 for the role-isolated reuse Human Runtime gate.
+
 ## b111 label-pipeline diagnostic package ready — 2026-09-06
 
 Canonical identity:

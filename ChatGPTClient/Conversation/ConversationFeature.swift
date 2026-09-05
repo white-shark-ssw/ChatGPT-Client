@@ -2921,6 +2921,32 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     return cell
 }
 
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let messageCell = cell as? ConversationMessageCell else { return }
+        if indexPath.row < messagePresentation.rows.count {
+            guard messagePresentation.rows.indices.contains(indexPath.row) else { return }
+            let row = messagePresentation.rows[indexPath.row]
+            guard messages.indices.contains(row.messageIndex), messages[row.messageIndex].role == .assistant, row.chunkCount > 1 else { return }
+            var fields = messageCell.bodyColorDiagnostics()
+            fields["surface"] = "authoritative"
+            fields["rowIndex"] = String(indexPath.row)
+            fields["chunkIndex"] = String(row.chunkIndex)
+            fields["chunkCount"] = String(row.chunkCount)
+            diagnostics.info(category: "ui", name: "assistantChunkColor.willDisplay", fields: fields)
+            return
+        }
+        let liveRow = indexPath.row - messagePresentation.rows.count
+        guard liveMessagePresentation.rows.indices.contains(liveRow) else { return }
+        let row = liveMessagePresentation.rows[liveRow]
+        guard livePresentationMessages.indices.contains(row.messageIndex), livePresentationMessages[row.messageIndex].role == .assistant, row.chunkCount > 1 else { return }
+        var fields = messageCell.bodyColorDiagnostics()
+        fields["surface"] = "live"
+        fields["rowIndex"] = String(indexPath.row)
+        fields["chunkIndex"] = String(row.chunkIndex)
+        fields["chunkCount"] = String(row.chunkCount)
+        diagnostics.info(category: "ui", name: "assistantChunkColor.willDisplay", fields: fields)
+    }
+
     func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
     guard indexPath.row < messagePresentation.rows.count, messagePresentation.rows.indices.contains(indexPath.row) else { return nil }
     let presentationRow = messagePresentation.rows[indexPath.row]
@@ -3351,6 +3377,39 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         reasoningTextView.isHidden = true
         reasoningDividerView.isHidden = true
         copyButton.isHidden = true
+    }
+
+    func bodyColorDiagnostics() -> [String: String] {
+        var fields: [String: String] = [
+            "labelTextColor": diagnosticsColor(messageLabel.textColor),
+            "labelHighlightedTextColor": diagnosticsColor(messageLabel.highlightedTextColor),
+            "labelTintColor": diagnosticsColor(messageLabel.tintColor),
+            "labelIsHighlighted": String(messageLabel.isHighlighted),
+            "cellIsHighlighted": String(isHighlighted),
+            "cellIsSelected": String(isSelected),
+            "interfaceStyle": traitCollection.userInterfaceStyle == .dark ? "dark" : (traitCollection.userInterfaceStyle == .light ? "light" : "unspecified")
+        ]
+        if let attributedText = messageLabel.attributedText, attributedText.length > 0 {
+            fields["attributedForegroundColor"] = diagnosticsColor(attributedText.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? UIColor)
+        } else {
+            fields["attributedForegroundColor"] = "none"
+        }
+        return fields
+    }
+
+    private func diagnosticsColor(_ color: UIColor?) -> String {
+        guard let color else { return "none" }
+        let resolved = color.resolvedColor(with: traitCollection)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        if resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            return String(format: "rgba:%.3f,%.3f,%.3f,%.3f", red, green, blue, alpha)
+        }
+        var white: CGFloat = 0
+        if resolved.getWhite(&white, alpha: &alpha) { return String(format: "white:%.3f,%.3f", white, alpha) }
+        return resolved.description
     }
 
     override func layoutSubviews() {

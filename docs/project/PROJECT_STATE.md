@@ -1,3 +1,9 @@
+## DEV-send-stream b114 package-qualified closeout gate — 2026-09-06
+
+- Canonical b114 product `673f2905ddc7a5aba23317e81e75677b2e81edb3` / package `ef98a038a165bdcef90b0abea67c25b7ef96e57f` passed guarded staging `33995851115/101386150523`, same-source Push `33995968361/101386467170` and PR `33995970064/101386471305` CI.
+- Artifact `9978074978` / ZIP `sha256:f36fb5ebe3dc8db6b41ab891e66d337fa9ebcd17b6936440490f113f0c412aa9` / IPA `sha256:f2c793f8eeff3f83d30fa9fec69ee7953ff7f3e431c07a49b7b9b20931a6b192` independently verify Build114 / Candidate b114 / source `ef98a038a165` / Release / iOS14+ / `[1,2]` / arm64.
+- b114 closes only source-proven follow-tail intent and active-Reload safety gaps and removes fulfilled color probes; Human Runtime is pending. Server Stop and exact accepted clean EOF remain separately evidence-gated.
+
 ## DEV-send-stream Phase 9 closeout audit / b114 — 2026-09-06
 
 - Later Runtime evidence closes the old local-Send, tested A/B simultaneous ownership, New Chat handoff, assistant-color and native-presentation gates. The integrated b113 product remains the b114 baseline.

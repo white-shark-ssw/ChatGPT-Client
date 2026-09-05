@@ -1,3 +1,43 @@
+## b114 Phase 9 closeout — package ready 2026-09-06
+
+Canonical identity / validation:
+
+- Candidate `DEV-send-stream-0.1.0-b114` / `0.1.0 (114)` is permanently reserved.
+- Exact product commit `673f2905ddc7a5aba23317e81e75677b2e81edb3` changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift` after the b114 allocation checkpoint.
+- Exact package source `ef98a038a165bdcef90b0abea67c25b7ef96e57f` changes only `.github/workflows/ios-foundation.yml` after the product commit.
+- Guarded staging `33995851115/101386150523` passed b113-baseline/b114-uniqueness guards, durable b114 allocation, exact two-product-path scope, `git diff --check`, Debug Simulator compile and exact product commit.
+- Formal Push `33995968361/101386467170` and PR `33995970064/101386471305` both passed on exact package source `ef98a038a165bdcef90b0abea67c25b7ef96e57f`.
+- Canonical Push Artifact `9978074978`; GitHub Artifact digest and independently recomputed ZIP SHA-256 both `f36fb5ebe3dc8db6b41ab891e66d337fa9ebcd17b6936440490f113f0c412aa9`.
+- Canonical IPA `ChatGPTClient-0.1.0-b114-dev-send-stream.ipa`; independently recomputed SHA-256 `f2c793f8eeff3f83d30fa9fec69ee7953ff7f3e431c07a49b7b9b20931a6b192`, matching the packaged sidecar.
+- Independent package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (114)`, Candidate b114, source marker `ef98a038a165`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS and Mach-O arm64.
+
+Exact product behavior / negative scope:
+
+- Active displayed conversation left at the already-existing exact physical-bottom threshold no longer persists a historical scroll anchor. Existing anchor absence continues to mean `scrollToLatestMessage`, so hidden active growth may return at current tail without a second follow-tail state store. Deliberate upward reading still records the existing message/chunk-relative semantic anchor.
+- Conversation menu Reload is disabled while any live response is active; the reload handler independently rejects a direct active invocation. This prevents manual Reload from releasing covered execution and clearing live projection while server Stop remains unproven. Existing client-owned active Sync block is preserved; external-active manual Sync remains available as the already-evidenced authoritative recovery action.
+- b109-b111 per-chunk UILabel/pixel diagnostics are removed after b112/b113 Runtime acceptance. b112 user/assistant reuse isolation and b113 rich presentation remain intact.
+- `RootViewController.swift`, covered protected Send, SSE parsing, b107 clean-EOF same-generation recovery, one-Send/no-resend policy, Repository response/content ownership, auth/read transport and server Stop behavior are unchanged.
+- No retry, fallback, timer/watchdog, polling, duplicate Send, regenerate, guessed resume/status, new response store or fake Stop is added.
+
+Human Runtime gate:
+
+1. Install only canonical b114 Artifact `9978074978` / IPA `f2c793f8eeff3f83d30fa9fec69ee7953ff7f3e431c07a49b7b9b20931a6b192` and fresh-launch.
+2. In conversation A start one deliberately long local/client-owned response while at the physical bottom. While it is active, open the conversation menu: both Sync and Reload must be unavailable.
+3. While still at bottom, switch A -> B -> A after A has grown or completed. A must return to the current latest tail rather than the old departure position.
+4. Repeat with A active but intentionally scroll upward before A -> B -> A. Return must restore the historical message/chunk-relative reading position rather than snap to bottom.
+5. Let one ordinary protected Send reach natural terminal + authoritative Detail convergence; require no duplicate protected Send and no `回答失败`. After the response is no longer active, Reload must become available again.
+6. Regression-check b113 Markdown/link/file-reference rendering, normal assistant color, and Copy interaction; export Diagnostics.
+7. If exact accepted post-HTTP200-SSE `stream_ended_without_done` naturally appears, additionally classify b107 same-generation/no-resend clean-EOF recovery. If it does not occur, keep that branch Unexercised.
+
+Remaining evidence gates after b114 package:
+
+- Exact b107 accepted clean EOF remains Unexercised until the event occurs; b114 does not alter that code.
+- Server Stop remains unimplemented. Official-app static strings expose `StopConversationRequest`, `/stop_conversation`, `stopConversation(id:requestTrackingData:)` and failure text, but method/body/target/ack/terminal semantics remain Runtime-unverified and must not be guessed.
+
+**Evidence ladder:** Code written / exact scope + `git diff --check` + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / overall `DEV-send-stream` Runtime Partial / Stable-Frozen No.
+
+**Next exact action:** install only canonical b114 and execute the Human Runtime matrix above. Do not allocate b115 before b114 Runtime unless a new independent blocker makes b114 untestable.
+
 ## Phase 9 closeout audit / b114 allocation — 2026-09-06
 
 Current owner / identity guard:

@@ -1,3 +1,10 @@
+## DEV-send-stream b108 chunk-row color Runtime Negative / b109 probe — 2026-09-06
+
+- Repository/Send/recovery owners remain unchanged. b108 normal New Chat transport, terminal, and authoritative reconcile are Runtime Positive in `sha256:c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c`; accepted clean-EOF recovery remains Unexercised.
+- UI evidence is now chunk-row-specific: completed authoritative state has 6 presentation rows / 0 live rows, and video `sha256:6cecee7a5f249529c72c53ee08620740e9d8480b080d8914476f697ad0efdc73` shows one assistant message alternating blue/normal between long-message chunks. b108's final UILabel `textColor=.label` assignment is insufficient.
+- b109 is diagnostic-only and will audit each chunk cell's resolved UILabel/attributed/highlight/tint state from `willDisplay`; rendering behavior itself must remain unchanged.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b108 package qualification — 2026-09-06
 
 - UI delta is confined to `ConversationMessageCell.messageLabel`: assistant body attributed text is assigned first, then UILabel `textColor=.label` becomes the final uniform body-color owner. Separate `reasoningTextView`, user links and response timeline styles are unchanged.

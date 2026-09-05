@@ -1,3 +1,10 @@
+## Current DEV-send-stream diagnostic candidate — b109 2026-09-06
+
+- `DEV-send-stream-0.1.0-b109` / `0.1.0 (109)` is permanently reserved as an authoritative long-message chunk-color diagnostic probe; product/package source pending staging.
+- Trigger evidence: b108 diagnostics `sha256:c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c` + video `sha256:6cecee7a5f249529c72c53ee08620740e9d8480b080d8914476f697ad0efdc73`. b108 ordinary Send/terminal/reconcile remains Positive, accepted clean-EOF recovery remains Unexercised, and completed authoritative chunk-row color consistency is Runtime Negative.
+- b109 must not claim a rendering fix. Its sole product purpose is privacy-safe per-chunk UILabel/attributed/highlight/tint state capture for the existing completed long-answer reproduction.
+- Stable/Frozen No.
+
 ## Current DEV-send-stream test candidate — b108 2026-09-06
 
 - Package-qualified Human Runtime candidate: `DEV-send-stream-0.1.0-b108` / `0.1.0 (108)`.

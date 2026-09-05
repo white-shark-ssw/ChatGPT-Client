@@ -1,3 +1,10 @@
+## DEV-send-stream b108 Runtime Negative / b109 diagnostic gate — 2026-09-06
+
+- Exact b108 diagnostics `sha256:c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c` keep ordinary New Chat one-Send/terminal/authoritative reconcile Positive and keep b107 accepted clean-EOF recovery Unexercised because `stream_ended_without_done` did not occur.
+- Exact video `sha256:6cecee7a5f249529c72c53ee08620740e9d8480b080d8914476f697ad0efdc73` proves the completed authoritative assistant answer alternates blue/normal across long-message presentation chunks even after `liveSnapshotCleared=true`; post-reconcile state is 6 authoritative rows / 0 live rows with one 1200-character-chunked assistant message.
+- b108 color ownership correction is Runtime-insufficient. b109 Build109 is reserved as a diagnostic-only per-chunk UILabel final-state probe; no new color fix is claimed yet.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b108 package-qualified Human Runtime gate — 2026-09-06
 
 - Candidate `DEV-send-stream-0.1.0-b108` / product `eb0de74460b0bd06a6d977bf915b5e06a5c946db` / package `d34ff4534ca76ee03e2c8a3eeddb29eca011319f` is package-qualified after staging `33981732350/101348043849`, Push `33981838027/101348321052` and PR `33981839719/101348326124` success.

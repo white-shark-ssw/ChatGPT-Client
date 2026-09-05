@@ -1,3 +1,28 @@
+## b108 Human Runtime Negative / b109 authoritative chunk-color probe allocation — 2026-09-06
+
+Exact b108 Human Runtime evidence:
+
+- Canonical b108 metadata is Release Build108 / Candidate `DEV-send-stream-0.1.0-b108` / source `d34ff4534ca7` on iPhone iOS17.0. Exact diagnostics SHA-256 `c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c`; exact 7.53s screen recording SHA-256 `6cecee7a5f249529c72c53ee08620740e9d8480b080d8914476f697ad0efdc73`.
+- New Chat transport/regression remains Positive: one protected Send was observed, HTTP200 `text/event-stream` was accepted, the first SSE conversation ID became authoritative, generation 1 streamed 107 reasoning characters / 8 tools / 5292 final characters, reached normal `terminal` / `phase=completed`, then authoritative Detail reconciled with `liveSnapshotCleared=true`.
+- There is zero exact `stream_ended_without_done`, zero `coveredExecutor.acceptedClientStreamEndRecovery`, and zero `acceptedClientRecovery.interrupted`. Therefore the inherited b107 accepted-clean-EOF recovery branch remains Unexercised, not passed or failed by this sample.
+- The color defect is Runtime Negative again with a stronger boundary. After reconcile there are `presentationRowCount=6`, `livePresentationRowCount=0`, `authoritativeMessageCount=2`, one chunked message, `chunkCharacterLimit=1200`, and max chunk length 1193. This rules out live+authoritative duplication as the color owner.
+- The exact video shows the completed authoritative assistant answer alternating blue and normal label-colored text at long-message row boundaries while the reasoning area is already collapsed. Current source derives those rows from one assistant message and configures every chunk as `.assistant`, so b108's post-attributedText `messageLabel.textColor=.label` is insufficient. Do not add more blind tint/text/highlight resets.
+
+b109 allocation / evidence-backed scope:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b109` / `0.1.0 (109)`. No current Build/Test entry or parallel PR #35 candidate uses b109.
+- b109 is diagnostic-only. Preserve b108 rendering behavior and all Send/SSE/Repository/recovery behavior unchanged.
+- Product scope is exactly `ChatGPTClient.xcodeproj/project.pbxproj` plus `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- Add a privacy-safe `ConversationMessageCell` color snapshot and log it from the detail table's `willDisplay` path for chunked assistant rows. Required fields: surface (`authoritative`/`live`), row index, chunk index/count, resolved UILabel `textColor`, attributed foreground at index 0, highlighted text color, tint color, label/cell highlighted and selected states, and interface style. Do not log message text or IDs.
+- This probe must not change any final rendering color, font, attributed content, geometry, Markdown behavior, link color, reasoning view, Send behavior, Repository state, timers, retries, recovery, or response authority.
+
+Resume/conflict guard:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable; b108 package/runtime baseline head is `810cdb6e5572b5df8584494f28db1ed335e5b97a`. `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Parallel PR #35 remains draft research-only at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142`, explicitly owning no `ChatGPTClient/**`, product Xcode Candidate, or exact product-path overlap.
+
+**Next exact action:** after this Runtime/allocation checkpoint is durably committed, stage only the two-path b109 diagnostic probe, pass `git diff --check` + Debug Simulator compile, package one canonical b109 IPA, then on real iPhone open the same completed b108 long-answer conversation, scroll across all chunk rows once, export diagnostics, and compare `assistantChunkColor.willDisplay` fields with the visible blue/normal rows. Do not claim a color fix in b109.
+
 ## b108 assistant-body color ownership — package ready 2026-09-06
 
 Canonical identity / validation:

@@ -1,3 +1,34 @@
+## b109 Human Runtime model-state result / b110 rendered-pixel probe allocation — 2026-09-06
+
+Exact b109 Human Runtime evidence:
+
+- Export metadata is canonical Release Build109 / Candidate `DEV-send-stream-0.1.0-b109` / source `8c6ea43677f2` on iPhone iOS17.0. Exact diagnostics SHA-256 `37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf`.
+- The export contains 16 `assistantChunkColor.willDisplay` samples across two authoritative conversations. The target completed answer is still exactly 2 authoritative messages / 6 presentation rows / 0 live rows with one 5-chunk assistant message (`chunkCharacterLimit=1200`, max chunk 1193).
+- The target produced samples for every `chunkIndex` 0 through 4, with repeated rows as the user scrolled. Every target sample and every other b109 chunk sample reports the same resolved state: `labelTextColor=rgba:1,1,1,1`, attributed foreground at index 0 `rgba:1,1,1,1`, highlighted text color `rgba:1,1,1,1`, tint `rgba:1,1,1,1`, label/cell highlighted=false, selected=false, interfaceStyle=dark, surface=authoritative.
+- The user still observes the answer alternating blue/normal while scrolling. Therefore b109 has successfully rejected all exposed UILabel model-state properties as the differentiating owner. Current assistant source also builds assistant body attributed text with one `.foregroundColor = UIColor.label` attribute; the only `UIColor.systemBlue` body path is the separate user-message Markdown-link renderer, not assistant body rendering.
+- Do not add another blind `textColor`, tint, highlight, or attributed-foreground reset. This evidence specifically requires observing the actual rendered output after display.
+
+b110 allocation / evidence-backed scope:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b110` / `0.1.0 (110)`. No current Build/Test entry or parallel PR #35 candidate uses Build110; PR #35 remains draft research-only with no `ChatGPTClient/**` or product Xcode candidate ownership.
+- b110 is diagnostic-only. Preserve b109/b108 rendering, b109 model-state diagnostics, and all b107 Send/SSE/Repository/recovery behavior unchanged.
+- Product scope is exactly `ChatGPTClient.xcodeproj/project.pbxproj` plus `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- On the next main-queue turn after a chunked assistant cell reaches `willDisplay`, and only if that exact cell is still at the same index path, compute privacy-safe rendered-pixel aggregates for two surfaces: the UILabel alone and the same UILabel rectangle cropped from the cell content hierarchy. Record aggregate ink RGB, near-white fraction, blue-dominant fraction, sampled-pixel count, plus alpha/layer-opacity fields. Never persist or export screenshots, message text, message IDs, pixel buffers, URLs, or content hashes.
+- This probe must not change visible rendering, font, attributed content, geometry, Markdown/link behavior, reasoning view, Send behavior, Repository state, timers, retries, recovery, or response authority.
+
+Interpretation gate:
+
+- Label-only rendered aggregate differs blue vs white across visible chunks -> owner is inside/below the UILabel draw/presentation path despite uniform model properties.
+- Label-only stays white but hierarchy-crop differs -> owner is outside the label itself, in sibling/cell hierarchy composition.
+- Both rendered aggregates remain white while the physical screen still alternates -> move the next investigation below view-hierarchy drawing, toward window/compositor/display presentation; do not guess a color fix.
+
+Resume/conflict guard:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable; pre-b110 branch head `69d9ab56e284e3a32fd3702462c4206b58372520`; canonical b109 product `11e7ec536b986c45811dc449cd2c4f6e442c28df`, package `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267`, Artifact `9974791883`.
+- `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`. Parallel PR #35 remains draft at `5ab7af84fab78bd1ffa5e13342fb2af9d4395142` with zero product ownership overlap.
+
+**Next exact action:** after this Runtime/allocation checkpoint is durably committed, stage only the two-path b110 rendered-pixel diagnostic, pass `git diff --check` + Debug Simulator compile, package one canonical b110 IPA, then reopen the same completed 5-chunk answer, scroll all chunks once, and export Diagnostics. b110 is not a rendering fix.
+
 ## b109 authoritative chunk-color diagnostic probe — package ready 2026-09-06
 
 Canonical identity / validation:

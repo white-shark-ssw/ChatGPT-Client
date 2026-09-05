@@ -1,3 +1,10 @@
+## DEV-send-stream b109 model-state owner rejected / b110 render probe — 2026-09-06
+
+- b109 exact Runtime `sha256:37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf` proves chunked assistant UILabel model-state fields are uniform white across the target 5 chunks and across 16 total samples, despite visible blue/normal alternation.
+- UI investigation moves one layer down: b110 will compare after-display rendered ink aggregates for the UILabel itself versus its rectangle as composited in the cell hierarchy. It must not alter visible rendering.
+- Send/SSE/Repository/recovery owners are unchanged; accepted clean-EOF recovery is still Unexercised by these color-only samples.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b109 chunk-color diagnostic package qualification — 2026-09-06
 
 - UI behavior is unchanged from b108; b109 only exposes privacy-safe final color state for each chunked assistant cell at `willDisplay` so blue/normal authoritative chunks can be compared with their actual UILabel/attributed/highlight/tint/selection state.

@@ -1,3 +1,10 @@
+## DEV-send-stream b109 model-state Runtime result / b110 render probe — 2026-09-06
+
+- Canonical b109 diagnostics `sha256:37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf` contain 16 chunk `willDisplay` samples. The target completed authoritative answer remains 2 messages / 6 rows / 0 live rows / one 5-chunk assistant message.
+- Every sampled assistant chunk resolves all exposed UILabel text/attributed/highlight/tint colors to white with no highlight/selection state, while the user still observes blue/normal alternation. Exposed UILabel model state is therefore rejected as the differentiating color owner.
+- b110 Build110 is reserved as a diagnostic-only after-display rendered-pixel aggregate probe for UILabel-only versus the same rectangle in the cell hierarchy. No color fix is claimed.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b109 package-qualified diagnostic Runtime gate — 2026-09-06
 
 - Candidate `DEV-send-stream-0.1.0-b109` / product `11e7ec536b986c45811dc449cd2c4f6e442c28df` / package `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267` is package-qualified after corrected staging `33984605217/101355720829`, Push `33984671709/101355898061` and PR `33984673860/101355903471` success.

@@ -1,3 +1,10 @@
+## Current DEV-send-stream diagnostic candidate — b110 2026-09-06
+
+- `DEV-send-stream-0.1.0-b110` / `0.1.0 (110)` is permanently reserved as a rendered-output diagnostic probe; product/package source pending staging.
+- Trigger evidence is canonical b109 diagnostics `sha256:37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf`: all exposed UILabel model-state color/highlight/tint values are identical white across the visually divergent long-answer chunks.
+- b110 must preserve rendering and log only privacy-safe after-display aggregate pixel/color statistics for label-only and cell-hierarchy crop surfaces. No screenshot/pixel buffer/message content is persisted.
+- Stable/Frozen No.
+
 ## Current DEV-send-stream diagnostic candidate — b109 package ready 2026-09-06
 
 - Package-qualified diagnostic Human Runtime candidate: `DEV-send-stream-0.1.0-b109` / `0.1.0 (109)`.

@@ -30,9 +30,12 @@ jobs:
           grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b107";' ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'acceptedClientStreamEndedWithoutDone' ChatGPTClient/RootViewController.swift
           grep -q 'manualSync.clientLiveReconciled' ChatGPTClient/RootViewController.swift
-          changed="$(git diff --name-only 4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f...HEAD | sort)"
-          expected=$'.github/workflows/record-b107-package-evidence.yml\nscripts/staging/record_b107_package_evidence.py'
-          test "$changed" = "$expected"
+          git diff --quiet 4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f...HEAD -- ChatGPTClient ChatGPTClient.xcodeproj .github/workflows/ios-foundation.yml scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets
+          allowed=$'.github/workflows/record-b107-package-evidence.yml\nscripts/staging/record_b107_package_evidence.py'
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            printf '%s\n' "$allowed" | grep -Fxq "$path"
+          done < <(git diff --name-only 4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f...HEAD)
 
       - name: Record exact b107 evidence
         run: python3 scripts/staging/record_b107_package_evidence.py

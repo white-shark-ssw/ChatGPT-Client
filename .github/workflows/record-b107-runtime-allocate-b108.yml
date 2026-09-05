@@ -1,0 +1,60 @@
+name: Record b107 Runtime and Allocate b108
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b107-runtime-allocate-b108.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard b107 Runtime recorder baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor be286f2f8c98305d9e702252af9c73f27d6431bf HEAD
+          grep -q 'CURRENT_PROJECT_VERSION = 107;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b107";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          grep -q 'messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          test -f scripts/staging/b108_record_b107_runtime_allocate.py
+          git diff --quiet 4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f...HEAD -- ChatGPTClient ChatGPTClient.xcodeproj .github/workflows/ios-foundation.yml scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets
+
+      - name: Record exact b107 Human Runtime and allocate b108
+        run: python3 scripts/staging/b108_record_b107_runtime_allocate.py
+
+      - name: Validate docs-only Runtime checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_STATE.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q '8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'DEV-send-stream-0.1.0-b108' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'assistant body color Negative' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b108 body-color gate' docs/project/PROJECT_STATE.md
+
+      - name: Commit Runtime allocation checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b107 runtime and allocate b108"
+          git push origin HEAD:dev/send-stream-20260829

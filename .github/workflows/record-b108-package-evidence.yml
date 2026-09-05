@@ -1,0 +1,66 @@
+name: Record b108 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b108-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b108 package and post-package scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor d34ff4534ca76ee03e2c8a3eeddb29eca011319f HEAD
+          git merge-base --is-ancestor eb0de74460b0bd06a6d977bf915b5e06a5c946db HEAD
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 108;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b108\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q '# Product source: eb0de74460b0bd06a6d977bf915b5e06a5c946db' .github/workflows/ios-foundation.yml
+          git diff --quiet d34ff4534ca76ee03e2c8a3eeddb29eca011319f...HEAD -- ChatGPTClient ChatGPTClient.xcodeproj .github/workflows/ios-foundation.yml scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets
+          allowed=$'.github/workflows/record-b108-package-evidence.yml\nscripts/staging/record_b108_package_evidence.py'
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            printf '%s\n' "$allowed" | grep -Fxq "$path"
+          done < <(git diff --name-only d34ff4534ca76ee03e2c8a3eeddb29eca011319f...HEAD)
+
+      - name: Record exact b108 package evidence
+        run: python3 scripts/staging/record_b108_package_evidence.py
+
+      - name: Validate durable evidence scope and markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_PROFILE.md\ndocs/project/PROJECT_STATE.md\ndocs/project/TECHNICAL_DECISIONS.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q '9973988017' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'a2639b5793316077c0f203bfd4dffdecd8cef74c361a4995bc8bfba05f657dbd' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b108 assistant-body color ownership — package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b108 package-qualified Human Runtime gate' docs/project/PROJECT_STATE.md
+          grep -q 'Current DEV-send-stream test candidate — b108' docs/project/PROJECT_PROFILE.md
+
+      - name: Commit durable b108 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b108 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

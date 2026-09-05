@@ -1,3 +1,10 @@
+## DEV-send-stream b112 role-isolated message-cell reuse package — 2026-09-06
+
+- Canonical b112 product `3957b806f32f0995ceb9cf8f9487aba939f3b306`, package `b5e3164721e01ceb1fe320ebd290bda79a921fc2`, Artifact `9975978222`, IPA `sha256:f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9`; exact scope + Debug Simulator and both formal CI lanes passed.
+- UI fix is limited to separate user/assistant reuse identifiers for the same `ConversationMessageCell` class, preventing a UILabel that rendered a user Markdown link from entering the assistant pool. b111 diagnostics remain for Runtime verification.
+- User link system-blue behavior and Send/SSE/Repository/recovery owners are unchanged; accepted clean-EOF recovery remains separately Unexercised.
+- Module remains Active / Runtime Partial / Human Runtime pending / Stable-Frozen No.
+
 ## DEV-send-stream b111 shared-cell contamination selected / b112 reuse isolation — 2026-09-06
 
 - b111 exact Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` rejects current attributed content as the assistant blue owner: all direct attributed renders are black with zero current link runs. Blue first appears in the UILabel layer.

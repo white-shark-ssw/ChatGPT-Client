@@ -1,3 +1,10 @@
+## DEV-send-stream b112 role-isolated reuse package ready — 2026-09-06
+
+- b111 Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` selects shared cross-role cell reuse as the assistant blue-text contamination boundary: direct attributed content is black/link-free, while UILabel layer output becomes system blue after prior user-link reuse.
+- Canonical b112 product `3957b806f32f0995ceb9cf8f9487aba939f3b306` / package `b5e3164721e01ceb1fe320ebd290bda79a921fc2`; staging `33988677640/101366840574`, Push `33988756874/101367061209`, PR `33988758566/101367065891` all passed.
+- Artifact `9975978222` / ZIP `sha256:c2ec86afe0b4f8cd4112c437b538b4612ecdaeb8205ce57f3f63241ffa9e6922` / IPA `sha256:f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9` independently verify Build112/Candidate/source/Release/iOS14+/`[1,2]`/arm64.
+- b112 isolates user and assistant UITableView reuse pools without changing rendering semantics or Send/SSE/Repository ownership. Human Runtime remains pending; Stable-Frozen No.
+
 ## DEV-send-stream b111 Runtime root-cause boundary / b112 role reuse fix — 2026-09-06
 
 - Canonical b111 diagnostics `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` select the color owner: current assistant attributed content is uniformly black/link-free, but UILabel CALayer output turns pure system-blue after the same cell/label is reused from a user row with a Markdown link and can remain blue on later assistant->assistant reuse.

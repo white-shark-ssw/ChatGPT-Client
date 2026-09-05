@@ -1,3 +1,10 @@
+## Current DEV-send-stream package-qualified rendering-fix candidate — b112 2026-09-06
+
+- `DEV-send-stream-0.1.0-b112` / `0.1.0 (112)` is the current package-qualified rendering-fix candidate.
+- Product `3957b806f32f0995ceb9cf8f9487aba939f3b306`; package `b5e3164721e01ceb1fe320ebd290bda79a921fc2`; Artifact `9975978222`; ZIP `sha256:c2ec86afe0b4f8cd4112c437b538b4612ecdaeb8205ce57f3f63241ffa9e6922`; IPA `sha256:f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9`.
+- Package independently verified `com.whitesharkssw.chatgptclient`, source `b5e3164721e0`, Release, iOS14+, iPhone/iPad families `[1,2]`, arm64.
+- Human Runtime must verify role-isolated reuse removes assistant blue/normal alternation while preserving user link blue. Stable/Frozen No.
+
 ## Current DEV-send-stream rendering-fix candidate — b112 2026-09-06
 
 - `DEV-send-stream-0.1.0-b112` / `0.1.0 (112)` is permanently reserved as the evidence-backed cross-role cell-reuse isolation candidate; product/package source pending staging.

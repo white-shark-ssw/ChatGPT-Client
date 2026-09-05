@@ -1,3 +1,36 @@
+## b112 role-isolated cell reuse fix — package ready 2026-09-06
+
+Canonical identity / validation:
+
+- Candidate `DEV-send-stream-0.1.0-b112` / `0.1.0 (112)` is permanently reserved.
+- Exact product commit `3957b806f32f0995ceb9cf8f9487aba939f3b306` changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift` after the b111 Runtime/allocation checkpoint.
+- Exact package source `b5e3164721e01ceb1fe320ebd290bda79a921fc2` changes only `.github/workflows/ios-foundation.yml` after the product commit.
+- Guarded staging `33988677640/101366840574` passed exact two-product-path scope, `git diff --check`, Debug Simulator compile and exact product commit.
+- Push CI `33988756874/101367061209` and PR CI `33988758566/101367065891` both passed on exact package source `b5e3164721e01ceb1fe320ebd290bda79a921fc2`.
+- Canonical Push Artifact `9975978222`; GitHub Artifact digest and independently recomputed ZIP SHA-256 both `c2ec86afe0b4f8cd4112c437b538b4612ecdaeb8205ce57f3f63241ffa9e6922`.
+- Canonical IPA `ChatGPTClient-0.1.0-b112-dev-send-stream.ipa`; independent SHA-256 `f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9`, matching the packaged sidecar.
+- Independent package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (112)`, Candidate b112, source marker `b5e3164721e0`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS and Mach-O arm64.
+
+Evidence-backed product behavior:
+
+- Trigger evidence is canonical b111 Human Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811`. Current assistant attributed strings/direct renders are uniformly black and link-free, while system-blue first appears at `messageLabel.layer.render` and tracks cells that have previously rendered a user Markdown link. One cell was black before cross-role reuse and blue after user/link reuse; contaminated cells can remain blue on later assistant reuse; assistant-only cells remain black.
+- b112 fixes only that proven reuse invariant. `ConversationMessageCell` remains one implementation class, but UITableView registration/dequeue now uses distinct user and assistant reuse identifiers. A UILabel that rendered a user link can no longer enter the assistant reuse pool.
+- Existing user Markdown/link `UIColor.systemBlue`, assistant attributed body construction, b111 diagnostics, reasoning, geometry, Copy, Send/SSE parsing, `ConversationRepository`, accepted-client recovery and response authority are unchanged.
+- No replacement color reset, retry, timer/watchdog, polling, duplicate Send, compatibility shim, second state store or unrelated refactor is added.
+
+Human Runtime gate:
+
+1. Install only canonical b112 Artifact `9975978222` / IPA SHA `f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9`.
+2. Reopen the same completed 5-chunk answer used for b109-b111; no new Send is required.
+3. Scroll through all five assistant chunks repeatedly enough to exercise reuse, especially the regions previously blue in chunks 2/3.
+4. Visually require one consistent normal label color with no blue/normal alternation.
+5. Export Diagnostics. Assistant samples must never report `reusedFromRole=user`; their direct/layer/hierarchy transparent output must remain normal label color. Existing user Markdown links should remain system blue as a regression check.
+6. Do not mark the color defect solved or the module Stable/Frozen until this real-device gate passes.
+
+**Evidence ladder:** b111 diagnostic Runtime Positive / shared cross-role reuse contamination selected / b112 Code written / exact scope + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.
+
+**Next exact action:** run the b112 Human Runtime gate above and export Diagnostics. The inherited b107 accepted clean-EOF recovery remains separately Unexercised by this color-only test.
+
 ## b111 Human Runtime selects cross-role reuse contamination / b112 role-isolated reuse allocation — 2026-09-06
 
 Exact b111 Human Runtime evidence:

@@ -44,6 +44,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
     private var composerReadyConversationID: String?
     private var rootComposerReady = false
     private var sendingNewConversation = false
+    private var pendingNewConversationEvents: [CoveredWebSendEvent] = []
     private var pendingSend: PendingSend?
     private var observationEvents: ((CoveredWebSendEvent) -> Void)?
     private var activeEvents: ((CoveredWebSendEvent) -> Void)?
@@ -162,6 +163,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         observingExternalResponse = false
         clientSendAccepted = false
         sendingNewConversation = false
+        pendingNewConversationEvents.removeAll(keepingCapacity: true)
         rootComposerReady = false
         pendingSend = PendingSend(conversationID: conversationID, text: trimmed, events: events)
         activeEvents = events
@@ -194,6 +196,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         observingExternalResponse = false
         clientSendAccepted = false
         sendingNewConversation = true
+        pendingNewConversationEvents.removeAll(keepingCapacity: true)
         pendingSend = PendingSend(conversationID: nil, text: trimmed, events: events)
         activeEvents = events
         diagnostics.info(category: "webSend", name: "coveredExecutor.requested", fields: ["promptCharacters": String(trimmed.count), "target": "new_conversation"])
@@ -218,6 +221,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         observingExternalResponse = false
         manualSyncFocusProbePending = false
         sendingNewConversation = false
+        pendingNewConversationEvents.removeAll(keepingCapacity: true)
         currentConversationID = nil
         composerReadyConversationID = nil
         rootComposerReady = false
@@ -258,7 +262,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             }
             return
         }
-        if clientSendAccepted, responseActive, let interruptedEvents = activeEvents {
+        if clientSendAccepted, responseActive, currentConversationID != nil, let interruptedEvents = activeEvents {
             pendingSend = nil
             responseActive = false
             clientSendAccepted = false
@@ -381,22 +385,29 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let state = body["state"] as? String ?? "unknown"
             diagnostics.info(category: "webSend", name: "coveredExecutor.submitResult", fields: ["state": Self.safeToken(state)])
             if state != "submitted" { failCurrent(state) }
-        case "send_observed":
-            let wasNewConversation = sendingNewConversation
-            if wasNewConversation {
-                guard let createdConversationID = body["conversationID"] as? String, !createdConversationID.isEmpty else {
-                    failCurrent("new_conversation_identity_missing")
+        case "conversation_created":
+            guard sendingNewConversation, let createdConversationID = body["conversationID"] as? String, !createdConversationID.isEmpty else { return }
+            if let existingConversationID = currentConversationID {
+                guard existingConversationID == createdConversationID else {
+                    failCurrent("new_conversation_identity_conflict")
                     return
                 }
-                currentConversationID = createdConversationID
-                composerReadyConversationID = nil
-                rootComposerReady = false
-                sendingNewConversation = false
-                activeEvents?(.conversationCreated(createdConversationID))
+                return
             }
+            currentConversationID = createdConversationID
+            composerReadyConversationID = nil
+            rootComposerReady = false
+            let stagedEvents = pendingNewConversationEvents
+            pendingNewConversationEvents.removeAll(keepingCapacity: true)
+            sendingNewConversation = false
+            activeEvents?(.conversationCreated(createdConversationID))
+            for stagedEvent in stagedEvents { activeEvents?(stagedEvent) }
+            diagnostics.info(category: "webSend", name: "coveredExecutor.newConversationIdentity", fields: ["source": "protected_send_sse_conversation_id", "stagedEventCount": String(stagedEvents.count)])
+        case "send_observed":
+            let wasNewConversation = sendingNewConversation
             responseActive = true
             pendingSend = nil
-            activeEvents?(.sendObserved)
+            emitClientEvent(.sendObserved)
             diagnostics.info(category: "webSend", name: "coveredExecutor.sendObserved", fields: ["target": wasNewConversation ? "new_conversation" : "existing_conversation"])
         case "send_response":
             let status = (body["status"] as? NSNumber)?.intValue ?? 0
@@ -404,19 +415,19 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             diagnostics.info(category: "webSend", name: "coveredExecutor.sendResponse", fields: ["httpStatus": String(status), "contentType": Self.safeToken(contentType)])
             if status == 200 && contentType == "text/event-stream" {
                 clientSendAccepted = true
-                activeEvents?(.responseAccepted)
+                emitClientEvent(.responseAccepted)
             } else { failCurrent("send_not_sse") }
-        case "thinking_active": activeEvents?(.thinkingActive)
+        case "thinking_active": emitClientEvent(.thinkingActive)
         case "reasoning_preamble":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
-            activeEvents?(.reasoningPreamble(text, segmentStart: (body["segmentStart"] as? NSNumber)?.boolValue ?? false))
+            emitClientEvent(.reasoningPreamble(text, segmentStart: (body["segmentStart"] as? NSNumber)?.boolValue ?? false))
         case "reasoning_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
-            activeEvents?(.reasoningDelta(text))
-        case "reasoning_ended": activeEvents?(.reasoningEnded((body["durationSec"] as? NSNumber)?.intValue))
+            emitClientEvent(.reasoningDelta(text))
+        case "reasoning_ended": emitClientEvent(.reasoningEnded((body["durationSec"] as? NSNumber)?.intValue))
         case "final_delta":
             guard let text = body["text"] as? String, !text.isEmpty else { return }
-            activeEvents?(.finalDelta(text))
+            emitClientEvent(.finalDelta(text))
         case "tool_activity":
             let slot = (body["slot"] as? NSNumber)?.intValue ?? -1
             guard slot >= 0 else { return }
@@ -424,8 +435,12 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             let inputJSON = body["detailInput"] as? String ?? ""
             let outputJSON = body["detailOutput"] as? String ?? ""
             let iconKind = ConversationToolIconKind(rawValue: body["iconKind"] as? String ?? "") ?? .generic
-            activeEvents?(.toolActivity(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: (body["completed"] as? NSNumber)?.boolValue ?? false, inputJSON: inputJSON, outputJSON: outputJSON, iconKind: iconKind))
+            emitClientEvent(.toolActivity(slot: slot, title: title.isEmpty ? "工具调用" : title, completed: (body["completed"] as? NSNumber)?.boolValue ?? false, inputJSON: inputJSON, outputJSON: outputJSON, iconKind: iconKind))
         case "terminal":
+            if sendingNewConversation, currentConversationID == nil {
+                failCurrent("new_conversation_identity_missing_at_terminal")
+                return
+            }
             let terminalEvents = activeEvents
             responseActive = false
             clientSendAccepted = false
@@ -438,6 +453,14 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         case "stream_error": failCurrent(body["state"] as? String ?? "stream_error")
         default: break
         }
+    }
+
+    private func emitClientEvent(_ event: CoveredWebSendEvent) {
+        if sendingNewConversation, currentConversationID == nil {
+            pendingNewConversationEvents.append(event)
+            return
+        }
+        activeEvents?(event)
     }
 
     private func submitPendingSendIfReady() {
@@ -471,6 +494,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         clientSendAccepted = false
         observingExternalResponse = false
         sendingNewConversation = false
+        pendingNewConversationEvents.removeAll(keepingCapacity: true)
         activeEvents = nil
         composerReadyConversationID = nil
         rootComposerReady = false
@@ -795,6 +819,19 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         let payload;
         try { payload = JSON.parse(data); }
         catch (_) { state.textContinuationActive = false; return frame + '\n\n'; }
+        if (newConversationSend && payload && typeof payload === 'object' && !Array.isArray(payload) && typeof payload.conversation_id === 'string' && payload.conversation_id.trim()) {
+          const streamConversationID = payload.conversation_id.trim();
+          if (state.authoritativeConversationID && state.authoritativeConversationID !== streamConversationID) {
+            activeSend = false;
+            newConversationSend = false;
+            post({ kind: 'stream_error', state: 'new_conversation_identity_conflict' });
+            return frame + '\n\n';
+          }
+          if (!state.authoritativeConversationID) {
+            state.authoritativeConversationID = streamConversationID;
+            post({ kind: 'conversation_created', conversationID: streamConversationID });
+          }
+        }
         observeReasoningActive(payload, state);
         observeReasoningPreamble(payload, state);
         observeToolActivity(payload, state);
@@ -828,7 +865,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
         try { cloned = response.clone(); } catch (_) { return; }
         if (!cloned.body || typeof cloned.body.getReader !== 'function') return;
         const reader = cloned.body.getReader();
-        const state = { reasoningEnded: false, textContinuationActive: false, reasoningPreambleSeen: new Set(), reasoningPreambleCount: 0, reasoningActiveSeen: new Set(), invocations: new Map(), toolSeen: new Set(), nextToolSlot: 0, terminal: false };
+        const state = { reasoningEnded: false, textContinuationActive: false, reasoningPreambleSeen: new Set(), reasoningPreambleCount: 0, reasoningActiveSeen: new Set(), invocations: new Map(), toolSeen: new Set(), nextToolSlot: 0, terminal: false, authoritativeConversationID: null };
         let buffer = '';
         (async () => {
           try {
@@ -856,7 +893,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
       const filteredResponse = response => {
         if (!response.body || typeof response.body.getReader !== 'function' || typeof ReadableStream !== 'function') return response;
         const reader = response.body.getReader();
-        const state = { reasoningEnded: false, textContinuationActive: false, reasoningPreambleSeen: new Set(), reasoningPreambleCount: 0, reasoningActiveSeen: new Set(), invocations: new Map(), toolSeen: new Set(), nextToolSlot: 0, terminal: false };
+        const state = { reasoningEnded: false, textContinuationActive: false, reasoningPreambleSeen: new Set(), reasoningPreambleCount: 0, reasoningActiveSeen: new Set(), invocations: new Map(), toolSeen: new Set(), nextToolSlot: 0, terminal: false, authoritativeConversationID: null };
         let buffer = '';
         const body = new ReadableStream({
           async pull(controller) {
@@ -1000,14 +1037,7 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
           return response;
         }
         if (!isSend || !activeSend) return originalFetch(input, init);
-        if (newConversationSend && !pageConversationID) {
-          activeSend = false;
-          newConversationSend = false;
-          probeComposer(true);
-          post({ kind: 'stream_error', state: 'new_conversation_identity_missing' });
-          throw new Error('new_conversation_identity_missing');
-        }
-        post({ kind: 'send_observed', conversationID: pageConversationID, newConversation: newConversationSend });
+        post({ kind: 'send_observed', newConversation: newConversationSend, pageRoute: pageRouteShape() });
         probeComposer(true);
         try {
           const response = await originalFetch(input, init);
@@ -1878,7 +1908,7 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 var fields = self.repository.diagnosticsFields(for: conversationID)
                 fields["responseGeneration"] = generation.map(String.init) ?? "none"
                 fields["presented"] = shouldPresent ? "true" : "false"
-                fields["source"] = "official_page_route_before_protected_send"
+                fields["source"] = "protected_send_sse_conversation_id"
                 self.diagnostics.info(category: "conversation", name: "newConversation.authoritativeHandoff", fields: fields)
                 self.updateLivePresentation()
             case .acceptedClientWebProcessInterrupted:

@@ -3339,6 +3339,10 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         onToggleToolDetail = nil
         messageLabel.text = nil
         messageLabel.attributedText = nil
+        messageLabel.isHighlighted = false
+        messageLabel.textColor = .label
+        messageLabel.highlightedTextColor = .label
+        messageLabel.tintColor = .label
         reasoningTextView.attributedText = nil
         reasoningButton.setTitle(nil, for: .normal)
         reasoningButton.setImage(nil, for: .normal)
@@ -3365,6 +3369,10 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
     self.onToggleReasoning = onToggleReasoning
     self.onToggleToolDetail = onToggleToolDetail
     layoutMetrics = metrics
+    messageLabel.isHighlighted = false
+    messageLabel.textColor = .label
+    messageLabel.highlightedTextColor = .label
+    messageLabel.tintColor = .label
     switch message.role {
     case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text)
     case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)

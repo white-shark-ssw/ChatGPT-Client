@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b106
-# Product source: 028100bb79d82e99b62a610e9f30b9f9b3bd7f5c
-# b106 replaces rejected pre-fetch route identity with protected-Send SSE conversation_id adoption and resets assistant cell color state.
-name: iOS New Chat SSE Identity b106
+# Candidate: DEV-send-stream-0.1.0-b107
+# Product source: 113fa19d7264b953949770d2e44cb500ded2da6b
+# b107 treats accepted SSE EOF without exact DONE as same-generation receive interruption and clears stale non-active client live state after authoritative manual Sync.
+name: iOS Accepted SSE EOF Recovery b107
 
 on:
   push:
@@ -32,10 +32,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b106 SSE identity and assistant cell reset
+      - name: Guard b107 accepted SSE EOF same-generation recovery
         run: |
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 106;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b106\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 107;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b107\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
           ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
           grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
@@ -43,11 +43,13 @@ jobs:
           grep -q 'pendingNewConversationEvents' ChatGPTClient/RootViewController.swift
           grep -q 'new_conversation_identity_missing_at_terminal' ChatGPTClient/RootViewController.swift
           grep -q 'new_conversation_identity_conflict' ChatGPTClient/RootViewController.swift
-          grep -q 'authoritativeConversationID: null' ChatGPTClient/RootViewController.swift
-          ! grep -q 'newConversationSend && !pageConversationID' ChatGPTClient/RootViewController.swift
-          grep -q 'messageLabel.highlightedTextColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'messageLabel.tintColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          grep -q 'coveredExecutor.acceptedClientStreamEndRecovery' ChatGPTClient/RootViewController.swift
+          grep -q 'state == "stream_ended_without_done", clientSendAccepted, responseActive' ChatGPTClient/RootViewController.swift
+          grep -q 'trigger: "stream_ended_without_done"' ChatGPTClient/RootViewController.swift
+          grep -q 'manualSync.clientLiveReconciled' ChatGPTClient/RootViewController.swift
+          grep -q 'clearLiveResponseAfterAuthoritativeReconcile' ChatGPTClient/RootViewController.swift
           grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
           grep -q 'preservedClientGeneration' ChatGPTClient/RootViewController.swift
           grep -q 'policy.*no_resend_same_generation' ChatGPTClient/RootViewController.swift
@@ -69,7 +71,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b106
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b107
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

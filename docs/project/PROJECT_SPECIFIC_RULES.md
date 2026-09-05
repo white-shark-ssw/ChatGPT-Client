@@ -1,3 +1,10 @@
+## Message-cell role reuse isolation — Runtime accepted b112 2026-09-06
+
+- User and assistant rows may share the `ConversationMessageCell` implementation class, but they must not share the same UITableView reuse identifier while user rows can render system-blue Markdown links. b111 proved user-link rendering can persist as UILabel layer/cache color across cross-role reuse; b112 Runtime `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` proves role-isolated pools remove that contamination on the tested path.
+- Assistant cells must therefore be dequeued from the assistant reuse pool and user cells from the user reuse pool. Preserve normal same-role reuse.
+- Do not substitute repeated `textColor`/`tintColor`/highlight resets for this ownership invariant without new contrary Runtime evidence.
+- This rule governs message presentation only. It does not create response/content authority and does not change user-link color semantics.
+
 ## New-chat first Send authoritative identity — b105 package rule 2026-09-05
 
 - A Native New Chat draft has no server conversation identity and must not synthesize, persist or route on a fake ID.

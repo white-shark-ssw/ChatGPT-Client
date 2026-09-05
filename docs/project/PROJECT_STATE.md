@@ -1,3 +1,10 @@
+## DEV-send-stream b112 assistant-color Runtime Positive — 2026-09-06
+
+- Canonical b112 diagnostics `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` and screenshot `sha256:7a689bca421c01af25aeb19dc9e3a19d1e9a7f47fe431533be760d3eaa1db243` close the tested assistant blue/normal alternation gate as Runtime Positive on iPhone/iOS17 light appearance.
+- Nine rendered assistant samples keep current attributed content and UILabel CALayer output black with blue fraction `0.000`; assistant reuse provenance never crosses from `user`, matching the b112 role-isolated reuse invariant. The screenshot visually shows consistent black assistant body text and preserved system-blue user-link styling.
+- Raw Markdown syntax and an unrendered `filecite` token are separately visible in the screenshot; they are presentation/rich-text gaps, not a b112 color regression.
+- Overall `DEV-send-stream` remains Active / Runtime Partial / Stable-Frozen No because accepted clean-EOF recovery remains Unexercised.
+
 ## DEV-send-stream b112 role-isolated reuse package ready — 2026-09-06
 
 - b111 Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` selects shared cross-role cell reuse as the assistant blue-text contamination boundary: direct attributed content is black/link-free, while UILabel layer output becomes system blue after prior user-link reuse.

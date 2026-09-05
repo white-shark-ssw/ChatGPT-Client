@@ -1,3 +1,10 @@
+## DEV-send-stream b112 role-isolated reuse Runtime accepted — 2026-09-06
+
+- Exact b112 Runtime `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` has zero assistant `reusedFromRole=user`, zero prior-link reuse counts, and zero blue-dominant CALayer output across 9 rendered assistant samples. The supplied screenshot `sha256:7a689bca421c01af25aeb19dc9e3a19d1e9a7f47fe431533be760d3eaa1db243` visually confirms the assistant body remains normal/black while user link styling stays blue.
+- The assistant blue-text defect is Runtime Positive for the tested path. Keep user/assistant message-cell reuse ownership isolated; do not replace this with another blind color reset.
+- Separate raw Markdown/file-citation rendering remains outside this color sub-gate.
+- Module remains Active / Runtime Partial overall / Stable-Frozen No because other Send/Stream gates remain open, including accepted clean-EOF recovery.
+
 ## DEV-send-stream b112 role-isolated message-cell reuse package — 2026-09-06
 
 - Canonical b112 product `3957b806f32f0995ceb9cf8f9487aba939f3b306`, package `b5e3164721e01ceb1fe320ebd290bda79a921fc2`, Artifact `9975978222`, IPA `sha256:f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9`; exact scope + Debug Simulator and both formal CI lanes passed.

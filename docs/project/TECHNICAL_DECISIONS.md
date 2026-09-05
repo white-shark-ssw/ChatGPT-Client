@@ -1,3 +1,10 @@
+## DEV-send-stream b112 role-isolated message-cell reuse accepted — 2026-09-06
+
+- Exact b111 Runtime selected cross-role reuse as the source of persistent UILabel layer system-blue contamination. Exact b112 Runtime `sha256:36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2` removes that path: assistant samples never reuse from `user`, all prior-link counts are zero, and every valid assistant CALayer aggregate is black with blue fraction `0.000`.
+- Accept separate user and assistant UITableView reuse identifiers as the Runtime-backed fix for this defect while retaining one `ConversationMessageCell` implementation class. Preserve user-link system-blue styling and assistant `.label` rendering.
+- Do not regress to one shared cross-role reuse pool or replace the owner fix with repeated text/tint/highlight resets without new Runtime evidence.
+- This decision is presentation-only and changes no Send/SSE/Repository/recovery authority. Raw Markdown/file-citation rendering visible in the screenshot is a separate scope.
+
 ## DEV-send-stream b111 layer/reuse diagnosis / b112 role-isolated reuse decision — 2026-09-06
 
 - Exact b111 Runtime `sha256:8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811` resolves the b109-b111 color investigation. Current assistant attributed state is one black foreground run with zero links, and direct attributed rendering is black; therefore another text/tint/highlight reset or attributed-color rewrite is not authorized.

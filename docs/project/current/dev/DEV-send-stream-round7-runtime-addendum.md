@@ -1,3 +1,30 @@
+## b112 Human Runtime Positive — role-isolated reuse color fix 2026-09-06
+
+Exact Human Runtime evidence:
+
+- Canonical export metadata is Release Build112 / Candidate `DEV-send-stream-0.1.0-b112` / source marker `b5e3164721e0` / bundle `com.whitesharkssw.chatgptclient` on iPhone iOS17.0. Exact diagnostics SHA-256 `36fd01529ee522fd0646f7bdf6e6f409dca3f55a4b17ff21c88e4e19d16e23b2`; exact screenshot SHA-256 `7a689bca421c01af25aeb19dc9e3a19d1e9a7f47fe431533be760d3eaa1db243`.
+- The same completed authoritative target remains 2 visible messages / 6 presentation rows / 0 live rows with one 5-chunk assistant answer (`chunkCharacterLimit=1200`, max chunk 1193). No new Send was required for this gate.
+- The export contains 10 `assistantChunkColor.willDisplay` and 9 `assistantChunkRender.afterDisplay` samples. Every visible assistant model-state sample resolves text/attributed/highlight/tint to light-mode black `.label` with no selected/highlighted state.
+- Every rendered assistant sample has exactly one black foreground run, zero link runs and zero attachment runs. Every direct-attributed transparent render is `0.000,0.000,0.000` with blue-dominant fraction `0.000`. Every UILabel CALayer transparent render is also `0.000,0.000,0.000` with blue-dominant fraction `0.000`. Where UILabel hierarchy transparent pixels are available, they are likewise black with blue fraction `0.000`; two chunk-3 hierarchy captures report `no_ink_pixels`, but their direct and CALayer captures are valid black and contain no system-blue signal.
+- Reuse provenance now matches the intended invariant: all assistant rendered samples report `reusedFromRole=none` or `assistant`; there is zero `reusedFromRole=user`, and every `reusedFromLinkRunCount` is `0`. The b111 contamination path is therefore absent under the role-isolated pools.
+- The supplied screenshot visually matches the telemetry: the long assistant body is consistently normal/black across the visible chunked answer, with no blue/normal alternation. The user GitHub URL remains system blue, so the user-link styling regression check also passes in this sample.
+
+Classification:
+
+- b112 is **Human Runtime Positive for the assistant blue-text defect** on the tested iPhone/iOS17 light-appearance path. The b111 root-cause boundary and b112 role-isolated reuse correction are accepted for this scope.
+- Do not allocate b113 for the color defect from this evidence. No further color reset or reuse workaround is justified.
+- Overall `DEV-send-stream` remains **Active / Runtime Partial / Stable-Frozen No** because the inherited b107 accepted `stream_ended_without_done` same-generation recovery branch is still Unexercised / Unverified by these color-only samples.
+- Separate screenshot observation: Native assistant presentation still displays raw Markdown control syntax (`**`, `###`, pipe-table markup) and a raw/unrendered `filecite` control token. This is not a recurrence of the blue-color defect and is not evidence against b112; treat rich-text/citation rendering as a separate presentation scope rather than folding it into the color fix.
+
+Resume/conflict state:
+
+- Branch before this docs-only Runtime record: `dev/send-stream-20260829` head `abaf3cd4cd902f42d2f8ad2836a4e17115a78389`; PR #29 open/unmerged/mergeable; canonical product/package/Artifact identities remain `3957b806...` / `b5e31647...` / `9975978222`.
+- `main` remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`. No product/Candidate identity changes are made by this Runtime record.
+
+**Evidence ladder:** b111 diagnostic Runtime Positive / root-cause boundary selected / b112 Code written / exact scope + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / **Human Runtime Positive for assistant color consistency + user-link regression** / overall `DEV-send-stream` Runtime Partial / Stable-Frozen No.
+
+**Next exact action:** close the blue-text sub-gate at b112. Do not create another color candidate. Continue only from a separately evidenced remaining `DEV-send-stream` gate (notably accepted clean-EOF recovery if it occurs) or a separately selected presentation task for Markdown/citation rendering.
+
 ## b112 role-isolated cell reuse fix — package ready 2026-09-06
 
 Canonical identity / validation:

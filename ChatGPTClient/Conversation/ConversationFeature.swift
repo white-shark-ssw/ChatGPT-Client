@@ -1869,7 +1869,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         tableView.keyboardDismissMode = .interactive
         tableView.rowHeight = 44
         tableView.estimatedRowHeight = 44
-        tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.reuseIdentifier)
+        tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.userReuseIdentifier)
+        tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.assistantReuseIdentifier)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
 
@@ -2894,7 +2895,20 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat { self.tableView(tableView, heightForRowAt: indexPath) }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell = tableView.dequeueReusableCell(withIdentifier: ConversationMessageCell.reuseIdentifier, for: indexPath) as! ConversationMessageCell
+    let cellRole: ConversationMessage.Role
+    if indexPath.row < messagePresentation.rows.count, messagePresentation.rows.indices.contains(indexPath.row) {
+        let presentationRow = messagePresentation.rows[indexPath.row]
+        cellRole = messages.indices.contains(presentationRow.messageIndex) ? messages[presentationRow.messageIndex].role : .assistant
+    } else {
+        let liveRow = indexPath.row - messagePresentation.rows.count
+        if liveMessagePresentation.rows.indices.contains(liveRow) {
+            let presentationRow = liveMessagePresentation.rows[liveRow]
+            cellRole = livePresentationMessages.indices.contains(presentationRow.messageIndex) ? livePresentationMessages[presentationRow.messageIndex].role : .assistant
+        } else {
+            cellRole = .assistant
+        }
+    }
+    let cell = tableView.dequeueReusableCell(withIdentifier: ConversationMessageCell.reuseIdentifier(for: cellRole), for: indexPath) as! ConversationMessageCell
     if indexPath.row < messagePresentation.rows.count {
         guard messagePresentation.rows.indices.contains(indexPath.row), presentationRowMetrics.indices.contains(indexPath.row) else { return cell }
         let presentationRow = messagePresentation.rows[indexPath.row]
@@ -3276,7 +3290,9 @@ final class ConversationMessageCell: UITableViewCell, UITextViewDelegate {
         let copyFrame: CGRect
     }
 
-    static let reuseIdentifier = "ConversationMessageCell"
+    static let userReuseIdentifier = "ConversationMessageCell.user"
+    static let assistantReuseIdentifier = "ConversationMessageCell.assistant"
+    static func reuseIdentifier(for role: ConversationMessage.Role) -> String { switch role { case .user: return userReuseIdentifier; case .assistant: return assistantReuseIdentifier } }
     private static var diagnosticCellOrdinalSeed = 0
 
     private static let horizontalMargin: CGFloat = 16

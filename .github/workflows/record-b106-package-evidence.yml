@@ -1,0 +1,58 @@
+name: Record b106 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b106-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b106 package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor a02042608911b891a4e9730a2bb3974168c4308a HEAD
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 106;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b106\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'DEV-send-stream-0.1.0-b106' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/record_b106_package_evidence.py
+
+      - name: Prepare durable package evidence
+        run: python3 scripts/staging/record_b106_package_evidence.py
+
+      - name: Validate docs-only exact scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_PROFILE.md\ndocs/project/PROJECT_SPECIFIC_RULES.md\ndocs/project/PROJECT_STATE.md\ndocs/project/TECHNICAL_DECISIONS.md\ndocs/project/WEB_SEND_ADAPTER.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q '9965747978' docs/project/BUILD_TEST_INDEX.md
+          grep -q '65acacb62506449bb65356a561603062a0f2b5bae4dc266a811480868b052288' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'protected_send_sse_conversation_id' docs/project/WEB_SEND_ADAPTER.md
+          grep -q 'b105 Human Runtime Partial' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit durable b106 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/WEB_SEND_ADAPTER.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b106 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

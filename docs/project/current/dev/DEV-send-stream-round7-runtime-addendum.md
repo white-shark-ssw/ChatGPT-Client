@@ -1,3 +1,33 @@
+## b109 authoritative chunk-color diagnostic probe — package ready 2026-09-06
+
+Canonical identity / validation:
+
+- Candidate `DEV-send-stream-0.1.0-b109` / `0.1.0 (109)`, permanently reserved. This is a diagnostic probe, not a rendering fix.
+- Exact product commit `11e7ec536b986c45811dc449cd2c4f6e442c28df`; canonical package source `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267`.
+- Corrected guarded staging `33984605217/101355720829` passed Batch A durable b108 Runtime/b109 allocation, exact two-product-path diagnostic scope, `git diff --check`, Debug Simulator compile and exact product commit. Earlier attempts `33984476631` and `33984523733` failed only the docs-only allocation path-order assertion before product Batch B; they produced no b109 product commit or Artifact and are not product failures.
+- Formal Push `33984671709/101355898061` and PR `33984673860/101355903471` both passed on exact package source `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267`.
+- Canonical Push Artifact `9974791883`; GitHub Artifact digest and independently recomputed ZIP SHA-256 both `743e61fc4f20670d8a6cc5d5afd42f8942e40f2943abe1f9b23e4ca621b43956`.
+- Canonical IPA `ChatGPTClient-0.1.0-b109-dev-send-stream.ipa`; independent SHA-256 `6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a`, matching the packaged sidecar.
+- Independent package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (109)`, Candidate b109, source marker `8c6ea43677f2`, `DiagnosticsBuildConfiguration=Release`, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS and required arm64.
+
+Exact diagnostic behavior:
+
+- Product scope is exactly Xcode Build/Candidate 108 -> 109 plus `ConversationFeature.swift` privacy-safe chunk color telemetry.
+- b108 rendering behavior is preserved. `ConversationMessageCell.bodyColorDiagnostics()` reads only resolved UILabel `textColor`, attributed foreground at index 0, `highlightedTextColor`, tint, label/cell highlighted and selected state, and interface style; it logs no message text or IDs.
+- Detail-table `willDisplay` emits `assistantChunkColor.willDisplay` only for chunked assistant rows, with `surface`, row/chunk index/count and the cell color snapshot. Both authoritative and live surfaces are distinguishable.
+- No final rendering color/font/attributed content, geometry, Markdown, link styling, reasoning view, Send/SSE parsing, Repository state, timer, retry, recovery or response authority changed in b109.
+
+Inherited Runtime truth:
+
+- b108 diagnostics `sha256:c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c` / video `sha256:6cecee7a5f249529c72c53ee08620740e9d8480b080d8914476f697ad0efdc73` remain the trigger evidence: ordinary one-Send/normal terminal/authoritative reconcile is Positive; accepted `stream_ended_without_done` remains Unexercised; completed authoritative chunk-row color consistency is Runtime Negative.
+- b109 does not claim a color fix. Its Human Runtime gate is diagnostic: install only canonical b109, open the same completed long answer if available (otherwise another completed assistant answer spanning multiple 1200-character chunks), scroll across all chunks once, visually note which chunks are blue/normal, then export diagnostics. Compare `assistantChunkColor.willDisplay` fields by chunk index. A new Send is unnecessary for this gate.
+
+Evidence ladder:
+
+- **b108 normal Send/terminal/reconcile Runtime Positive / b107 accepted-clean-EOF recovery Unexercised / b108 authoritative chunk-row color Runtime Negative / b109 Code written / exact scope + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / diagnostic Human Runtime pending / Stable-Frozen No.**
+
+**Next exact action:** install canonical b109 IPA `6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a`, open the existing completed long-answer reproduction, scroll all assistant chunks once, export diagnostics, and use `assistantChunkColor.willDisplay` to select the actual final color owner before any b110 rendering change. Do not allocate a rendering-fix candidate from guesswork.
+
 ## b108 Human Runtime Negative / b109 authoritative chunk-color probe allocation — 2026-09-06
 
 Exact b108 Human Runtime evidence:

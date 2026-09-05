@@ -1,3 +1,11 @@
+## Current DEV-send-stream diagnostic candidate — b109 package ready 2026-09-06
+
+- Package-qualified diagnostic Human Runtime candidate: `DEV-send-stream-0.1.0-b109` / `0.1.0 (109)`.
+- Exact product `11e7ec536b986c45811dc449cd2c4f6e442c28df`; canonical package source `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267`; canonical Artifact `9974791883`; ZIP `sha256:743e61fc4f20670d8a6cc5d5afd42f8942e40f2943abe1f9b23e4ca621b43956`; IPA `sha256:6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a`.
+- Package identity independently verified: `com.whitesharkssw.chatgptclient`, Release iPhoneOS, iOS14+, UIDeviceFamily `[1,2]`, arm64, diagnostics source marker `8c6ea43677f2`.
+- b109 is diagnostics-only and must not be reported as a color fix. Human Runtime must correlate chunk-indexed `assistantChunkColor.willDisplay` state with visible blue/normal authoritative chunks before any rendering correction is selected.
+- Stable/Frozen No; inherited accepted-clean-EOF recovery remains Unexercised.
+
 ## Current DEV-send-stream diagnostic candidate — b109 2026-09-06
 
 - `DEV-send-stream-0.1.0-b109` / `0.1.0 (109)` is permanently reserved as an authoritative long-message chunk-color diagnostic probe; product/package source pending staging.

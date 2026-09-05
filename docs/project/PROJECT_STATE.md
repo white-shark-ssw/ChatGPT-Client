@@ -1,3 +1,11 @@
+## DEV-send-stream b109 package-qualified diagnostic Runtime gate — 2026-09-06
+
+- Candidate `DEV-send-stream-0.1.0-b109` / product `11e7ec536b986c45811dc449cd2c4f6e442c28df` / package `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267` is package-qualified after corrected staging `33984605217/101355720829`, Push `33984671709/101355898061` and PR `33984673860/101355903471` success.
+- Canonical Artifact `9974791883` / ZIP `743e61fc4f20670d8a6cc5d5afd42f8942e40f2943abe1f9b23e4ca621b43956` / IPA `6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a` independently verifies Build109, Candidate b109, source `8c6ea43677f2`, Release, iOS14+, iPhone/iPad and arm64.
+- b109 is diagnostic-only: per-chunk assistant `willDisplay` logs final UILabel/attributed/highlight/tint/selection state without message text/IDs and without changing rendering or Send/SSE/Repository/recovery behavior.
+- Human Runtime diagnostic pending. b108 chunk-row color remains Runtime Negative; b107 accepted clean-EOF recovery remains Unexercised.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b108 Runtime Negative / b109 diagnostic gate — 2026-09-06
 
 - Exact b108 diagnostics `sha256:c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c` keep ordinary New Chat one-Send/terminal/authoritative reconcile Positive and keep b107 accepted clean-EOF recovery Unexercised because `stream_ended_without_done` did not occur.

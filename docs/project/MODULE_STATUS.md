@@ -1,3 +1,10 @@
+## DEV-send-stream b109 chunk-color diagnostic package qualification — 2026-09-06
+
+- UI behavior is unchanged from b108; b109 only exposes privacy-safe final color state for each chunked assistant cell at `willDisplay` so blue/normal authoritative chunks can be compared with their actual UILabel/attributed/highlight/tint/selection state.
+- `ConversationRepository`, covered Send executor, New Chat authoritative handoff, b107 accepted-client recovery, row geometry and message content authority are unchanged.
+- Exact product `11e7ec536b986c45811dc449cd2c4f6e442c28df` / package `8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267` passed corrected staging and same-source Push + PR packaging; canonical Artifact `9974791883` / IPA `6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a` is verified.
+- Diagnostic Human Runtime remains Pending; module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b108 chunk-row color Runtime Negative / b109 probe — 2026-09-06
 
 - Repository/Send/recovery owners remain unchanged. b108 normal New Chat transport, terminal, and authoritative reconcile are Runtime Positive in `sha256:c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c`; accepted clean-EOF recovery remains Unexercised.

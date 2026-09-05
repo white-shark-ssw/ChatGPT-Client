@@ -1,3 +1,28 @@
+## b113 Human Runtime Positive — native message presentation 2026-09-06
+
+Exact Human Runtime evidence:
+
+- Diagnostics `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` and screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` are from the exact canonical package identity: Release `0.1.0 (113)`, Candidate `DEV-message-rendering-0.1.0-b113`, source marker `75ccad152086`, bundle `com.whitesharkssw.chatgptclient`, iPhone, iOS17.0.
+- All 78 exported events are `info`. The export contains 18 `assistantChunkColor.willDisplay` and 18 `assistantChunkRender.afterDisplay` samples covering chunk indexes `0...4` / rows `1...5` of the five-chunk authoritative assistant answer.
+- Every captured direct-attributed, UILabel CALayer, UILabel hierarchy and hierarchy-crop blue-dominant fraction is `0.000`. Assistant reuse provenance is only `none` or `assistant`, never `user`; all 18 prior-link reuse counts are `0`; current assistant body link-run counts are also `0`. The b112 role-isolated reuse fix therefore remains intact under repeated b113 scrolling/reuse.
+- Screenshot directly verifies the user-color acceptance case: `https://github.com/white-shark-ssw/ChatGPT-Client.git` is blue while the immediately following Chinese prose is normal `.label`, so the previous over-broad bare-URL range is not reproduced.
+- Screenshot also shows native/readable assistant presentation: emphasis is visually bold, `ChatGPT-Client` inline code uses a code treatment, `2 分钟筛选结果` is rendered as a heading, the pipe-table delimiter control row is no longer exposed, table content remains readable, and the raw private-use `filecite` token is replaced with a readable `[文件引用 L2-L2]` label. No guessed citation click-through is claimed.
+- The export contains one `message.copy` for `user` and one for `assistant`. Diagnostics prove the full-message Copy actions were invoked but do not expose clipboard payload bytes. The user explicitly reports this b113 result has no problem, so the tested interaction scenario is accepted without inventing telemetry that was not captured.
+
+Classification:
+
+- b113 is **Human Runtime Positive for the tested native message-presentation scope**: link-only blue user text, readable assistant rich-text/citation presentation, long-message reuse/geometry behavior in the supplied scenario, and preservation of the b112 assistant-color invariant.
+- This result does not make `DEV-send-stream` Stable/Frozen and does not exercise the separate b107 accepted clean-EOF recovery gate.
+- Citation destination navigation remains intentionally out of scope until authoritative annotation/resource objects are retained. Do not infer clickable source resolution from this result.
+- No b114 product candidate is justified by this evidence.
+
+Integration boundary:
+
+- `DEV-message-rendering` remains **Active — Human Runtime Positive / stacked integration pending / Stable-Frozen No** because PR #36 is stacked onto the separate Active `DEV-send-stream` branch. This task session must not merge PR #36 and silently advance another task's branch/checkpoint from b112 to b113.
+- Product/package/Artifact identities remain unchanged. The next action is PR #36 Runtime-status update and later integration coordination by the owning dependency path.
+
+**Evidence ladder:** Code written / exact scope + static diff check + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / **Human Runtime Positive for tested b113 presentation scope** / Stable-Frozen No.
+
 # DEV-message-rendering
 
 ## Runtime evidence settlement recovery point — 2026-09-06
@@ -6,7 +31,7 @@
 - **Canonical identity revalidated**: `DEV-message-rendering-0.1.0-b113` / Build113 / package source `75ccad15208610c2b0420033846f9bb15bbdb494` / Artifact `9976713893` / IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`.
 - **New Human Runtime evidence**: diagnostics file `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55`; screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184`; user explicitly reports the result has no problem and authorizes continued progress.
 - **Evidence summary before durable settlement**: Diagnostics metadata is Release / Build113 / Candidate b113 / source `75ccad152086` / iPhone / iOS17.0. All 78 events are `info`. Eighteen `assistantChunkColor.willDisplay` and 18 `assistantChunkRender.afterDisplay` samples cover chunk indexes `0...4`; every direct-attributed, UILabel-layer, UILabel-hierarchy and hierarchy-crop blue-dominant fraction captured is `0.000`; `reusedFromRole` is only `none` or `assistant`, never `user`; all prior-link reuse counts are `0`. User and assistant Copy actions are both present. Screenshot directly shows the GitHub URL blue with immediately following Chinese text normal, readable heading/emphasis/inline-code/table presentation, readable `[文件引用 ...]` replacement, and no assistant blue/normal regression in the visible answer.
-- **Batch D — pending**: durably classify b113 **Human Runtime Positive for the tested message-presentation scope** in `BUILD_TEST_INDEX.md`, `PROJECT_STATE.md`, `MODULE_STATUS.md`, `PROJECT_PROFILE.md`, `TECHNICAL_DECISIONS.md`, `PROJECT_SPECIFIC_RULES.md`, and this checkpoint. Preserve the exact evidence boundary: screenshot + user's explicit acceptance prove visual behavior; diagnostics prove candidate/device/reuse/color telemetry and that both Copy actions were invoked, but telemetry alone does not expose clipboard payload bytes.
+- **Batch D — completed**: b113 Human Runtime Positive is durably recorded in the Build/Test Index, project state/module/profile, technical decisions, project-specific rules, and this checkpoint with the exact screenshot/diagnostics evidence boundary preserved.
 - **Batch E — pending after Batch D verification**: update PR #36 body from Human Runtime pending to Human Runtime Positive and set next action to stacked integration coordination. Do **not** merge PR #36 into `dev/send-stream-20260829` from this task session because that branch/checkpoint is owned by the separate Active `DEV-send-stream` task; merging would advance another task's branch and invalidate its recorded b112 head without that task owning the update.
 - **Do not touch during settlement**: product code, Build/Candidate identity, Artifact identity, PR #29 body/branch, `DEV-send-stream` checkpoints, Send/SSE/Repository authority, or b112 role-isolated reuse.
 
@@ -29,7 +54,7 @@
 - **Completed**: Governance/preflight; isolated stacked branch/checkpoint; b113 durable allocation; product implementation; exact staging run `33991155027 / 101373512529` passed baseline guard, exact two-product-path scope, `git diff --check`, Debug Simulator compile, and committed product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`; Push+PR package CI passed; canonical Artifact/package independently verified; Human Runtime evidence received and analyzed.
 - **Validation state**: **Code written / exact scope + static diff check + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime Positive for tested b113 presentation scope / Stable-Frozen No.**
 - **Pending**: durable Runtime settlement + PR #36 status update; then stacked integration coordination only. No b114 product candidate is justified by this evidence.
-- **Next exact action**: complete Batch D durable Runtime settlement, verify the resulting docs-only commit, then update PR #36 body. Do not merge into the `DEV-send-stream` branch from this task session.
+- **Next exact action**: verify the Batch D docs-only Runtime commit, then complete Batch E by updating PR #36 to Human Runtime Positive. Do not merge into the `DEV-send-stream` branch from this task session.
 - **Rejected / do-not-repeat**: Do not treat b112 color fix as unresolved; do not use Foundation's over-broad bare-URL Markdown range for user color; do not add UILabel `.link` attributes merely to make text blue; do not simply hide all citation evidence; do not implement guessed click-through citation resolution; do not parse raw Markdown separately after 1200-character chunking; do not fully reparse active growing assistant Markdown on every token.
 - **Open questions / risks**: Current authoritative model retains only visible text and does not retain server citation annotation/resource objects, so b113 can present `filecite` cleanly but cannot claim authoritative source opening. Stacked integration remains intentionally separate because the base branch belongs to another Active task.
 

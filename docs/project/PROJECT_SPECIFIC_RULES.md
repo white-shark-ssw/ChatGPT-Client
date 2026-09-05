@@ -1,3 +1,11 @@
+## Native message rich-text presentation — Runtime accepted b113 2026-09-06
+
+- The tested Runtime contract is now accepted for b113: ordinary user prose remains normal `.label`; only the actual HTTP(S) URL display span is system blue, including when Chinese/non-ASCII prose follows immediately with no whitespace.
+- Preserve b112 user/assistant role-isolated reuse. Exact b113 Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` covers all five assistant chunks with zero cross-role user reuse, zero prior-link reuse and zero captured blue-dominant assistant output.
+- Render authoritative/terminal assistant rich text before bounded attributed chunking; preserve raw Repository text as content/Copy authority. Do not introduce a second message store or reparsing timer/state machine.
+- `filecite`/`cite` may remain readable non-interactive labels. Do not invent source navigation from opaque IDs until authoritative resource annotations are retained and evidenced.
+- This rule is presentation-only. It does not alter protected Send/SSE/recovery ownership or prove unrelated Runtime gates.
+
 ## Native message rich-text presentation — b113 2026-09-06
 
 - User body color semantics: ordinary text uses normal `.label`; only actual HTTP(S) URL/link display spans are system blue. A bare URL immediately followed by Chinese/non-ASCII prose must stop before that prose. Do not color the whole remainder of the user bubble blue.

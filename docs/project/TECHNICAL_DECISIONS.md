@@ -1,3 +1,12 @@
+## DEV-message-rendering b113 Runtime acceptance — 2026-09-06
+
+- Human Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` accepts the b113 presentation ownership design on the tested iPhone/iOS17 path.
+- Keep conservative HTTP(S) URL display-range coloring for user UILabels: the tested bare GitHub URL stops before immediately adjacent Chinese prose, which remains normal `.label`.
+- Keep full-message rich rendering before bounded attributed chunking for terminal/authoritative assistant content. The tested five-chunk answer remains readable while repeated reuse preserves b112 role isolation and produces no blue-dominant assistant output.
+- Keep raw `ConversationMessage.text` as authoritative content/Copy source. Presentation projection is not a second content store.
+- Keep `filecite`/`cite` as readable non-interactive labels until authoritative citation resource/annotation objects are retained; this Runtime acceptance does not authorize guessed URLs/file openers.
+- Do not generalize this presentation result into Send/SSE/recovery stability or allocate a new candidate without new evidence.
+
 ## DEV-message-rendering b113 presentation ownership decision — 2026-09-06
 
 - Keep authoritative message content and Copy semantics in raw `ConversationMessage.text` / `ConversationRepository`; rich text is a one-way presentation projection and never a second content store.

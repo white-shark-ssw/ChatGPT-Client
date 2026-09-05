@@ -1,3 +1,11 @@
+## DEV-message-rendering b113 Human Runtime Positive — 2026-09-06
+
+- Canonical b113 Human Runtime diagnostics `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` are exact Release Build113 / Candidate b113 / source `75ccad152086` on iPhone iOS17.0; the user explicitly reports the tested result has no problem.
+- Screenshot closes the visual presentation gate in the tested conversation: only the GitHub URL is blue while adjacent Chinese prose is normal; assistant emphasis/heading/inline-code/table content is readable; raw `filecite` control syntax is replaced by a readable non-interactive file-reference label.
+- Diagnostics provide 18 color + 18 rendered assistant samples across all five long-message chunks with zero captured blue-dominant fraction on direct/layer/hierarchy/crop surfaces, zero cross-role user reuse and zero prior-link reuse. b112 role isolation therefore remains Runtime-positive under the b113 renderer.
+- Both user and assistant Copy actions were invoked. Clipboard payload bytes are not present in telemetry; the user accepts the overall tested result, so do not overstate independent payload inspection.
+- `DEV-message-rendering` is Runtime Positive for its tested presentation scope but remains Active / stacked integration pending / Stable-Frozen No. This does not change the separate `DEV-send-stream` accepted-clean-EOF evidence status.
+
 ## DEV-message-rendering b113 package-qualified Runtime gate — 2026-09-06
 
 - New stacked Phase 11 task `DEV-message-rendering` is Active on `dev/message-rendering-20260906`, PR #36 targeting the Runtime-positive b112 `DEV-send-stream` branch because both modify `ConversationFeature.swift`.

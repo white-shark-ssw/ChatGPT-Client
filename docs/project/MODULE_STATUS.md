@@ -1,3 +1,10 @@
+## DEV-message-rendering b113 presentation Runtime accepted — 2026-09-06
+
+- Exact b113 Runtime `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` accepts the tested message-presentation behavior: URL-only blue user text with adjacent normal Chinese, readable assistant rich text/table/file-reference presentation, and no reappearance of the assistant blue/normal reuse defect.
+- Eighteen assistant render samples cover all five chunks and report zero blue-dominant fraction on every captured direct/layer/hierarchy/crop surface; reuse is only `none`/`assistant`, never `user`, with zero prior-link reuse.
+- Raw `ConversationMessage.text` remains content/Copy authority. Citation labels remain non-interactive until authoritative resource objects are available.
+- Presentation scope is Human Runtime Positive; module/task remains Active only for stacked integration coordination and is not Stable/Frozen yet. `DEV-send-stream` remains independently Runtime Partial.
+
 ## DEV-message-rendering b113 native presentation package — 2026-09-06
 
 - Message presentation is now an explicit Active stacked module/task, not part of the closed b112 color sub-gate. Canonical b113 package is product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`; exact scope + Debug Simulator and both formal CI lanes passed.

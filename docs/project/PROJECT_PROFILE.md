@@ -1,3 +1,9 @@
+## Current DEV-message-rendering Runtime result — b113 2026-09-06
+
+- Canonical `DEV-message-rendering-0.1.0-b113` / `0.1.0 (113)` remains product `7d1ddc8eaa164c9b307f525b00bb0e1404f395e9`, package `75ccad15208610c2b0420033846f9bb15bbdb494`, Artifact `9976713893`, IPA `sha256:2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f`.
+- Human Runtime diagnostics `sha256:334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55` + screenshot `sha256:be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184` on exact iPhone/iOS17.0 accept the tested native message-presentation scope, including URL color boundary, rich assistant presentation and b112 color-regression safety.
+- Runtime status: Positive for tested presentation scope / stacked integration pending / Stable-Frozen No. Citation source opening remains outside b113 because authoritative annotation/resource objects are not retained.
+
 ## Current DEV-message-rendering candidate — b113 2026-09-06
 
 - Stacked package-qualified Human Runtime candidate: `DEV-message-rendering-0.1.0-b113` / `0.1.0 (113)` on branch `dev/message-rendering-20260906`, PR #36 base `dev/send-stream-20260829`.

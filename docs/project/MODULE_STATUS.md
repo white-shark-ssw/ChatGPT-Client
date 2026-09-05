@@ -1,3 +1,10 @@
+## DEV-send-stream b111 label-pipeline probe package — 2026-09-06
+
+- Canonical b111 product `64351b96bd61a44e8566e2264c5593fae868268e`, package `4297846dd6889905cbc765c23f83b33ee54437f5`, Artifact `9975489792`, IPA `sha256:071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a`; exact scope + Debug Simulator and both formal CI lanes passed.
+- UI scope is diagnostic-only: full attributed run/link summary, process-local cell reuse provenance, and corrected alpha-based direct-attributed/layer/hierarchy aggregate color capture. Visible rendering and user-link behavior remain unchanged.
+- Send/SSE/Repository/recovery owners are unchanged; accepted clean-EOF recovery remains Unexercised by these color-only samples.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b110 UILabel draw-stage blue / b111 pipeline probe — 2026-09-06
 
 - b110 exact Runtime `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81` captured chunk 2 twice with UILabel-only rendered RGB `0.000,0.479,1.000` while the same row's public UILabel/attributed/highlight/tint state remained black `.label`. Outer cell/window composition is therefore not required for the captured blue pixels.

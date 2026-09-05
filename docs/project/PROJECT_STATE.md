@@ -1,3 +1,10 @@
+## DEV-send-stream b111 label-pipeline diagnostic package ready — 2026-09-06
+
+- Canonical b111 product `64351b96bd61a44e8566e2264c5593fae868268e` / package `4297846dd6889905cbc765c23f83b33ee54437f5`; staging `33986923145/101362120447`, Push `33987037286/101362430240`, and PR `33987039485/101362436599` all passed.
+- Artifact `9975489792` / ZIP `sha256:82c512fd4d82ce5a3fcb73f9b6d9cf2314382874fa9544ae5bbbde47fcd209a6` / IPA `sha256:071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a` independently verify Build111/Candidate/source/Release/iOS14+/`[1,2]`/arm64.
+- b111 remains diagnostic-only. It preserves visible rendering and compares attributed-runtime structure plus direct attributed draw, UILabel layer render, UILabel hierarchy render, and shared-cell reuse provenance after the b110 draw-stage blue finding.
+- Human Runtime diagnostic pending. Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b110 rendered-output Runtime / b111 label-pipeline probe — 2026-09-06
 
 - Canonical b110 diagnostics `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81` keep the target completed answer at 2 authoritative messages / 6 rows / 0 live rows / one 5-chunk assistant message.

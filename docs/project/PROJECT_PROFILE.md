@@ -1,3 +1,10 @@
+## Current DEV-send-stream package-qualified diagnostic candidate — b111 2026-09-06
+
+- `DEV-send-stream-0.1.0-b111` / `0.1.0 (111)` is the current package-qualified diagnostic candidate.
+- Product `64351b96bd61a44e8566e2264c5593fae868268e`; package `4297846dd6889905cbc765c23f83b33ee54437f5`; Artifact `9975489792`; ZIP `sha256:82c512fd4d82ce5a3fcb73f9b6d9cf2314382874fa9544ae5bbbde47fcd209a6`; IPA `sha256:071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a`.
+- Package independently verified `com.whitesharkssw.chatgptclient`, source `4297846dd688`, Release, iOS14+, iPhone/iPad families `[1,2]`, arm64.
+- Human Runtime label-pipeline diagnostic gate pending; b111 makes no color-fix claim. Stable/Frozen No.
+
 ## Current DEV-send-stream diagnostic candidate — b111 2026-09-06
 
 - `DEV-send-stream-0.1.0-b111` / `0.1.0 (111)` is permanently reserved as a label-pipeline diagnostic probe; product/package source pending staging.

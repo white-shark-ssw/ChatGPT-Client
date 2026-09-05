@@ -1,3 +1,35 @@
+## b111 label-pipeline diagnostic package ready — 2026-09-06
+
+Canonical identity:
+
+- Candidate `DEV-send-stream-0.1.0-b111` / `0.1.0 (111)` is permanently reserved.
+- Exact product commit `64351b96bd61a44e8566e2264c5593fae868268e` changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift` relative to the Batch-A b111 allocation checkpoint.
+- Exact package source `4297846dd6889905cbc765c23f83b33ee54437f5` changes only `.github/workflows/ios-foundation.yml` after the product commit.
+- Guarded staging `33986923145/101362120447` passed exact two-product-path scope, `git diff --check`, and Debug Simulator compile.
+- Push CI `33987037286/101362430240` and PR CI `33987039485/101362436599` both passed on exact package source `4297846dd6889905cbc765c23f83b33ee54437f5`.
+- Canonical Push Artifact `9975489792`; Artifact ZIP SHA-256 `82c512fd4d82ce5a3fcb73f9b6d9cf2314382874fa9544ae5bbbde47fcd209a6`; IPA `ChatGPTClient-0.1.0-b111-dev-send-stream.ipa` SHA-256 `071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a`.
+- Independent package inspection verifies bundle `com.whitesharkssw.chatgptclient`, `0.1.0 (111)`, Candidate b111, source marker `4297846dd688`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS, Mach-O arm64. The packaged SHA sidecar matches `071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a`.
+
+Diagnostic behavior / inherited Runtime truth:
+
+- Trigger evidence remains canonical b110 Runtime `sha256:d0a72e850469cd2bb10075c40e01cce3d5e44f20f2eac95f29474d9a2ef5ba81`: all public UILabel/attributed/highlight/tint state is light-mode black `.label`, while chunk 2's UILabel-only `drawHierarchy` aggregate was repeatably system-blue-like. b110's brightness-gated sampler discarded normal black text and therefore could not select the exact label-internal owner.
+- b111 preserves b110 visible rendering, b110/b109 existing probes, user-link `systemBlue`, reasoning presentation and all Send/SSE/Repository/recovery behavior.
+- b111 adds privacy-safe structural attributed diagnostics (`attributeRunCount`, foreground color summary, link/attachment counts), per-cell reuse provenance, and three dark-pixel-inclusive transparent rendered aggregates: direct current attributed-string draw, `messageLabel.layer.render(in:)`, and `messageLabel.drawHierarchy`.
+- No screenshot/pixel buffer/message text/message ID/URL/content hash is persisted or exported. No retry/timer/watchdog/polling/duplicate Send/response authority is added.
+
+Human Runtime gate:
+
+1. Install only canonical b111 Artifact `9975489792` / IPA SHA `071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a`.
+2. Reopen the same completed 5-chunk answer used for b109/b110; no new Send is required.
+3. Scroll through all five assistant chunks once, including the visually blue region, then export Diagnostics.
+4. Compare each `assistantChunkRender.afterDisplay` by chunk index: `foregroundDistinctColors`, `linkRunCount`, `cellOrdinal`, `reusedFromRole`, `reusedFromLinkRunCount`, `directAttributedTransparentInkRGB`, `labelLayerTransparentInkRGB`, and `labelHierarchyTransparentInkRGB` plus blue-dominant fractions.
+5. Direct attributed draw blue or an actual blue/link run -> attributed runtime content owner. Direct black but layer blue -> UILabel layer/internal draw/cache owner. Layer black but hierarchy blue -> UIView hierarchy draw owner. Blue tracking `reusedFromRole=user` / prior link runs strengthens shared-cell reuse as the causal boundary.
+6. Do not select or claim a rendering fix until this diagnostic evidence distinguishes the owner.
+
+**Evidence ladder:** b110 UILabel draw-stage blue Runtime captured / b110 normal-black comparator incomplete / b111 Code written / exact scope + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / diagnostic Human Runtime pending / Stable-Frozen No.
+
+**Next exact action:** run only the b111 Human Runtime diagnostic gate above and export Diagnostics. b111 intentionally does not change the visible color defect.
+
 ## b110 Human Runtime rendered-output result / b111 label-pipeline probe allocation — 2026-09-06
 
 Exact b110 Human Runtime evidence:

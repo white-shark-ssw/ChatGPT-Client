@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b105
-# Product source: 6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59
-# b105 adds only the authoritative official-page new-chat first-Send handoff on top of b104 Runtime-positive recovery.
-name: iOS New Chat First Send b105
+# Candidate: DEV-send-stream-0.1.0-b106
+# Product source: 028100bb79d82e99b62a610e9f30b9f9b3bd7f5c
+# b106 replaces rejected pre-fetch route identity with protected-Send SSE conversation_id adoption and resets assistant cell color state.
+name: iOS New Chat SSE Identity b106
 
 on:
   push:
@@ -32,18 +32,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard b105 authoritative new-chat boundary
+      - name: Guard b106 SSE identity and assistant cell reset
         run: |
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 105;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b105\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 106;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b106\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
-          ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient/AppDelegate.swift
-          ! grep -q 'CoveredWebProcessKillProbe' ChatGPTClient.xcodeproj/project.pbxproj
+          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
           grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
-          grep -q 'newConversation.authoritativeHandoff' ChatGPTClient/RootViewController.swift
-          grep -q 'new_conversation_identity_missing' ChatGPTClient/RootViewController.swift
-          grep -q 'func clearConversationSelection' ChatGPTClient/Conversation/ConversationFeature.swift
-          grep -q 'func showNewConversationDraft' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'protected_send_sse_conversation_id' ChatGPTClient/RootViewController.swift
+          grep -q 'pendingNewConversationEvents' ChatGPTClient/RootViewController.swift
+          grep -q 'new_conversation_identity_missing_at_terminal' ChatGPTClient/RootViewController.swift
+          grep -q 'new_conversation_identity_conflict' ChatGPTClient/RootViewController.swift
+          grep -q 'authoritativeConversationID: null' ChatGPTClient/RootViewController.swift
+          ! grep -q 'newConversationSend && !pageConversationID' ChatGPTClient/RootViewController.swift
+          grep -q 'messageLabel.highlightedTextColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'messageLabel.tintColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'acceptedClientWebProcessInterrupted' ChatGPTClient/RootViewController.swift
           grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
           grep -q 'preservedClientGeneration' ChatGPTClient/RootViewController.swift
@@ -51,7 +54,6 @@ jobs:
           grep -q 'network_connection_lost_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
           grep -q 'coveredExecutor.externalWebProcessRecovery' ChatGPTClient/RootViewController.swift
-          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
 
       - name: Toolchain
         run: xcodebuild -version
@@ -67,7 +69,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b105
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b106
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

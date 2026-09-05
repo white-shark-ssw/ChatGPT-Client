@@ -17,6 +17,7 @@ enum CoveredWebSendEvent {
     case sendObserved
     case responseAccepted
     case acceptedClientWebProcessInterrupted
+    case acceptedClientStreamEndedWithoutTerminal
     case thinkingActive
     case reasoningPreamble(String, segmentStart: Bool)
     case reasoningDelta(String)
@@ -450,7 +451,19 @@ final class CoveredWebSendExecutor: NSObject, WKNavigationDelegate, WKScriptMess
             terminalEvents?(.terminal)
             diagnostics.info(category: "webSend", name: "coveredExecutor.terminal", fields: ["terminal": "true"])
             webView.evaluateJavaScript("window.__coveredWebSendExecutor && window.__coveredWebSendExecutor.probeComposer(true);", completionHandler: nil)
-        case "stream_error": failCurrent(body["state"] as? String ?? "stream_error")
+        case "stream_error":
+            let state = body["state"] as? String ?? "stream_error"
+            if state == "stream_ended_without_done", clientSendAccepted, responseActive, currentConversationID != nil, let interruptedEvents = activeEvents {
+                pendingSend = nil
+                responseActive = false
+                clientSendAccepted = false
+                activeEvents = nil
+                composerReadyConversationID = nil
+                diagnostics.warning(category: "webSend", name: "coveredExecutor.acceptedClientStreamEndRecovery", fields: ["state": UIApplication.shared.applicationState == .active ? "handoff_requested" : "deferred_to_foreground", "policy": "no_resend_same_generation"])
+                interruptedEvents(.acceptedClientStreamEndedWithoutTerminal)
+                return
+            }
+            failCurrent(state)
         default: break
         }
     }
@@ -1388,6 +1401,7 @@ extension ConversationRepository {
         snapshot.phase = .thinking
         eventName = "response_accepted"
     case .acceptedClientWebProcessInterrupted: eventName = "accepted_client_web_process_interrupted"
+    case .acceptedClientStreamEndedWithoutTerminal: eventName = "accepted_client_stream_ended_without_terminal"
     case .thinkingActive:
         if snapshot.phase != .final { snapshot.phase = .thinking }
         eventName = "thinking_active"
@@ -1558,6 +1572,16 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
         }
         detailViewController.onManualLatestSyncApplied = { [weak self] id, _ in
             guard let self, self.repository.selectedConversationID == id else { return }
+            if let snapshot = self.repository.liveResponse(for: id), !snapshot.phase.isActive, !snapshot.promptText.isEmpty {
+                let authoritativeVisibleMessageCount = self.repository.selectedConversation?.messages.count ?? 0
+                let cleared = self.repository.clearLiveResponseAfterAuthoritativeReconcile(conversationID: id, generation: snapshot.generation, authoritativeVisibleMessageCount: authoritativeVisibleMessageCount)
+                var fields = self.repository.diagnosticsFields(for: id)
+                fields["responseGeneration"] = String(snapshot.generation)
+                fields["authoritativeVisibleMessageCount"] = String(authoritativeVisibleMessageCount)
+                fields["liveSnapshotCleared"] = cleared ? "true" : "false"
+                self.diagnostics.info(category: "conversation", name: "manualSync.clientLiveReconciled", fields: fields)
+                if cleared { self.updateLivePresentation() }
+            }
             if let snapshot = self.repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
             self.observeExternalResponseIfNeeded(conversationID: id, forcePageReload: true)
         }
@@ -1919,6 +1943,15 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 fields["applicationState"] = UIApplication.shared.applicationState == .active ? "active" : "inactive_or_background"
                 self.diagnostics.warning(category: "webSend", name: "acceptedClientRecovery.interrupted", fields: fields)
                 if UIApplication.shared.applicationState == .active { self.recoverAcceptedClientResponse(conversationID: conversationID, generation: generation, trigger: "web_process_terminated") }
+            case .acceptedClientStreamEndedWithoutTerminal:
+                guard let conversationID = authoritativeConversationID, let generation else { return }
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                var fields = self.repository.diagnosticsFields(for: conversationID)
+                fields["responseGeneration"] = String(generation)
+                fields["applicationState"] = UIApplication.shared.applicationState == .active ? "active" : "inactive_or_background"
+                fields["trigger"] = "stream_ended_without_done"
+                self.diagnostics.warning(category: "webSend", name: "acceptedClientRecovery.interrupted", fields: fields)
+                if UIApplication.shared.applicationState == .active { self.recoverAcceptedClientResponse(conversationID: conversationID, generation: generation, trigger: "stream_ended_without_done") }
             case .failed(let reason):
                 if let conversationID = authoritativeConversationID, let generation {
                     self.repository.consumeLiveResponseEvent(.failed(reason), conversationID: conversationID, generation: generation)
@@ -1961,6 +1994,16 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
                 fields["applicationState"] = UIApplication.shared.applicationState == .active ? "active" : "inactive_or_background"
                 self.diagnostics.warning(category: "webSend", name: "acceptedClientRecovery.interrupted", fields: fields)
                 if UIApplication.shared.applicationState == .active { self.recoverAcceptedClientResponse(conversationID: conversationID, generation: generation, trigger: "web_process_terminated") }
+                return
+            }
+            if case .acceptedClientStreamEndedWithoutTerminal = event {
+                self.releaseExecutor(for: conversationID, expected: sendExecutor)
+                var fields = self.repository.diagnosticsFields(for: conversationID)
+                fields["responseGeneration"] = String(generation)
+                fields["applicationState"] = UIApplication.shared.applicationState == .active ? "active" : "inactive_or_background"
+                fields["trigger"] = "stream_ended_without_done"
+                self.diagnostics.warning(category: "webSend", name: "acceptedClientRecovery.interrupted", fields: fields)
+                if UIApplication.shared.applicationState == .active { self.recoverAcceptedClientResponse(conversationID: conversationID, generation: generation, trigger: "stream_ended_without_done") }
                 return
             }
             self.repository.consumeLiveResponseEvent(event, conversationID: conversationID, generation: generation)

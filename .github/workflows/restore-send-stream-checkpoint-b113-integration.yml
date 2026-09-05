@@ -1,71 +1,13 @@
 name: Restore DEV-send-stream b113 Integration Checkpoint
 
 "on":
-  push:
-    branches:
-      - dev/send-stream-20260829
-    paths:
-      - ".github/workflows/restore-send-stream-checkpoint-b113-integration.yml"
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  restore:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout guarded branch
-        uses: actions/checkout@v4
-        with:
-          ref: dev/send-stream-20260829
-          fetch-depth: 0
-
-      - name: Guard product unchanged during docs recovery
-        shell: bash
-        run: |
-          set -euo pipefail
-          git merge-base --is-ancestor d265d265a7e5382834363e1e73ca7c91a5489cc4 HEAD
-          git diff --quiet d265d265a7e5382834363e1e73ca7c91a5489cc4 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b112\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-
-      - name: Restore exact full checkpoint and advance integration state
-        shell: bash
-        run: |
-          set -euo pipefail
-          path='docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
-          git show d265d265a7e5382834363e1e73ca7c91a5489cc4:"$path" > "$path"
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path("docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md")
-          text = path.read_text()
-          text = text.replace("- **Batch I0 — this record**: write only this `DEV-send-stream` checkpoint recovery point. No product, Candidate, Artifact, PR #36, PR #29 metadata, or other task checkpoint changes.", "- **Batch I0 — completed**: recovery point recorded; recorder run `33992571002` succeeded and bot committed `494ee22d0e9861d373207c91e6b539c8f9b26410`. Recorder was then made idempotent at tooling-only commit `d265d265a7e5382834363e1e73ca7c91a5489cc4`; run `33992707723` succeeded without product changes.")
-          text = text.replace("- **Batch I1 — pending**: re-read actual branch/PR state after I0 because the recorder commit advances the base by docs/tooling only. Require PR #36 head still `d5d761bf...`, mergeable, and product-equivalent to canonical package source `75ccad...`.", "- **Batch I1 — completed**: after base advancement GitHub REST recomputed PR #36 as `mergeable=true / mergeable_state=clean / rebaseable=true`; head remains exact `d5d761bfad26bc90953488ccd5a96452bf356b3a`. No product conflict exists.")
-          text = text.replace("- **Batch I2 — pending**: merge PR #36 into `dev/send-stream-20260829` using expected head `d5d761bfad26bc90953488ccd5a96452bf356b3a`. This is integration of already-tested b113; it does not allocate a new `DEV-send-stream` candidate and does not create new Runtime evidence.", "- **Batch I2 — next**: merge PR #36 into `dev/send-stream-20260829` using expected head `d5d761bfad26bc90953488ccd5a96452bf356b3a`. This integrates already-tested b113; it does not allocate a new `DEV-send-stream` candidate and does not create new Runtime evidence.")
-          old = "**Next exact action:** after verifying this recovery-point commit, re-check PR #36 against the docs-only-advanced base and merge it with expected head `d5d761bfad26bc90953488ccd5a96452bf356b3a`; then perform only missing I3/I4 work."
-          new = "**Next exact action:** execute Batch I2 once with expected PR #36 head `d5d761bfad26bc90953488ccd5a96452bf356b3a`; then perform I3/I4 only."
-          if old not in text:
-              raise SystemExit("expected recovery next-action marker missing")
-          text = text.replace(old, new, 1)
-          path.write_text(text)
-          PY
-          git diff --check
-          test "$(git diff --name-only)" = "$path"
-          test "$(wc -c < "$path")" -gt 130000
-          grep -q '## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06' "$path"
-          grep -q '## b112 Human Runtime Positive — role-isolated reuse color fix 2026-09-06' "$path"
-          grep -q '# DEV-send-stream round 7 Runtime addendum' "$path"
-          grep -q '## b98 Human Runtime — foreground backlog freeze/crash 2026-09-04' "$path"
-
-      - name: Commit restored checkpoint
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          git commit -m "docs: restore b113 integration checkpoint"
-          git push origin HEAD:dev/send-stream-20260829
-
-# rerun after docs-only truncation recovery
+      - run: echo "Checkpoint restore helper retired after successful recovery; no automatic mutation."

@@ -1,3 +1,10 @@
+## Current DEV-send-stream test candidate — b108 2026-09-06
+
+- Package-qualified Human Runtime candidate: `DEV-send-stream-0.1.0-b108` / `0.1.0 (108)`.
+- Exact product `eb0de74460b0bd06a6d977bf915b5e06a5c946db`; canonical package source `d34ff4534ca76ee03e2c8a3eeddb29eca011319f`; canonical Artifact `9973988017`; IPA `sha256:a2639b5793316077c0f203bfd4dffdecd8cef74c361a4995bc8bfba05f657dbd`.
+- Package identity independently verified: `com.whitesharkssw.chatgptclient`, Release iPhoneOS, iOS14+, UIDeviceFamily `[1,2]`, arm64, diagnostics source marker `d34ff4534ca7`.
+- Human Runtime pending; Stable/Frozen No. b107 remains permanently reserved and its exact accepted-clean-EOF recovery is still Runtime-unexercised.
+
 ## Latest DEV-send-stream candidate override — b104 2026-09-05
 
 - Latest Human Runtime candidate is `DEV-send-stream-0.1.0-b104` / `0.1.0 (104)`, permanently reserved. Exact product `4aebb546f3be6b71de0a67f466e6557a357dbfdc`; package source `08fab73ab9a6fb83f6aa97702d2d4cd358b6ec43`. b104 preserves b103 accepted-client hard-Web same-generation recovery unchanged and removes only deterministic kill instrumentation.

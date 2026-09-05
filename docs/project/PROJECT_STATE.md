@@ -1,3 +1,11 @@
+## DEV-send-stream b108 package-qualified Human Runtime gate — 2026-09-06
+
+- Candidate `DEV-send-stream-0.1.0-b108` / product `eb0de74460b0bd06a6d977bf915b5e06a5c946db` / package `d34ff4534ca76ee03e2c8a3eeddb29eca011319f` is package-qualified after staging `33981732350/101348043849`, Push `33981838027/101348321052` and PR `33981839719/101348326124` success.
+- Canonical Artifact `9973988017` / ZIP `8e445a65346b9a32d8811645f2e21a2f1340942c9e7333beb4ddfc4c6a8a7c14` / IPA `a2639b5793316077c0f203bfd4dffdecd8cef74c361a4995bc8bfba05f657dbd` independently verifies Build108, Candidate b108, source `d34ff4534ca7`, Release, iOS14+, iPhone/iPad and arm64.
+- Product scope is only Xcode Build/Candidate plus `ConversationMessageCell` assistant-body post-attributedText `messageLabel.textColor = .label`. Send/SSE/Repository/recovery and reasoning/user-link rendering are unchanged.
+- b108 Human Runtime is Pending. Exact gate is normal assistant placeholder/final body color with reasoning SSE unchanged, plus ordinary New Chat Send regression. Inherited b107 accepted clean-EOF recovery remains Unexercised until exact `stream_ended_without_done` occurs.
+- Overall `DEV-send-stream`: Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b107 Runtime Partial / b108 body-color gate — 2026-09-06
 
 - Exact canonical b107 diagnostics `sha256:8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da` / 411 events / Release / iPhone / iOS17.0 / source `4bd3501a3092` shows one New Chat protected HTTP200 SSE Send, authoritative SSE conversation-ID handoff, normal reasoning/final stream, `terminal` / generation `phase=completed`, then automatic HTTP200 authoritative Detail reconcile with `liveSnapshotCleared=true`.

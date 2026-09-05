@@ -1,3 +1,10 @@
+## DEV-send-stream b108 package qualification — 2026-09-06
+
+- UI delta is confined to `ConversationMessageCell.messageLabel`: assistant body attributed text is assigned first, then UILabel `textColor=.label` becomes the final uniform body-color owner. Separate `reasoningTextView`, user links and response timeline styles are unchanged.
+- `ConversationRepository`, covered Send executor, New Chat authoritative handoff and b107 accepted-client recovery owners are unchanged.
+- Exact product `eb0de74460b0bd06a6d977bf915b5e06a5c946db` / package `d34ff4534ca76ee03e2c8a3eeddb29eca011319f` passed guarded Simulator staging and same-source Push + PR packaging; canonical Artifact `9973988017` / IPA `a2639b5793316077c0f203bfd4dffdecd8cef74c361a4995bc8bfba05f657dbd` is verified. Runtime color correction remains Pending.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b107 UI-owner Runtime update / b108 allocation — 2026-09-06
 
 - `ConversationRepository` / covered Send transport remain unchanged by the new defect evidence. b107 normal New Chat Send/terminal/authoritative convergence is Runtime Positive in `sha256:8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da`, but its exact accepted `stream_ended_without_done` recovery branch remains Unexercised.

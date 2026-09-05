@@ -1,3 +1,9 @@
+## Assistant body color ownership after attributed text — b108
+
+- Exact b107 Runtime isolated the blue-text defect to assistant body presentation: `UILabel messageLabel` rendered placeholder/final blue while the separate reasoning `UITextView` remained normal. The prior pre-assignment highlight/text/tint reset was therefore insufficient.
+- For the b108 test candidate, assistant body color ownership stays inside the existing `ConversationMessageCell`: assign the existing assistant attributed text first, then set the UILabel `textColor` to `.label` as the final uniform body-color property. Do not move color ownership into SSE/Repository state and do not alter the separate reasoning view or user-link tint behavior.
+- This is a package-qualified implementation decision, not a Runtime-proven stable contract until b108 real-device evidence passes.
+
 ## DEV-send-stream b103 Runtime acceptance / b104 probe-retirement decision — 2026-09-05
 
 - Exact b103 Runtime `sha256:99049f500c129571d33aa628720f7d23ce5cf6d183e887938cd7fa621a3bbc51` validates the decision made from b102: once one protected Send has explicit HTTP200 `text/event-stream` acceptance, hard `webViewWebContentProcessDidTerminate` may be treated as receive-transport interruption for the tested foreground path. Preserve the same prompt-owned Repository generation, release the dead executor, attach one fresh covered observer, and never resend the prompt.

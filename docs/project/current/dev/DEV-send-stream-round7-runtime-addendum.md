@@ -1,3 +1,30 @@
+## b108 assistant-body color ownership — package ready 2026-09-06
+
+Canonical identity / validation:
+
+- Candidate `DEV-send-stream-0.1.0-b108` / `0.1.0 (108)`, permanently reserved.
+- Exact product commit `eb0de74460b0bd06a6d977bf915b5e06a5c946db`; canonical package source `d34ff4534ca76ee03e2c8a3eeddb29eca011319f`.
+- Guarded staging `33981732350/101348043849` passed exact two-product-path validation, `git diff --check`, Debug Simulator compile and exact product commit.
+- Formal Push `33981838027/101348321052` and PR `33981839719/101348326124` both passed on exact package source `d34ff4534ca76ee03e2c8a3eeddb29eca011319f`.
+- Canonical Push Artifact `9973988017`; GitHub Artifact digest and independently recomputed ZIP SHA-256 both `8e445a65346b9a32d8811645f2e21a2f1340942c9e7333beb4ddfc4c6a8a7c14`.
+- Canonical IPA `ChatGPTClient-0.1.0-b108-dev-send-stream.ipa`; independent SHA-256 `a2639b5793316077c0f203bfd4dffdecd8cef74c361a4995bc8bfba05f657dbd`, matching sidecar.
+- Independent package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (108)`, Candidate b108, source marker `d34ff4534ca7`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS and Mach-O arm64.
+
+Exact product behavior:
+
+- Product change remains exactly two paths: Build/Candidate 107 -> 108 in the Xcode project, plus one assistant-body rendering statement in `ConversationFeature.swift`.
+- In `ConversationMessageCell.configure`, `.assistant` assigns the existing assistant attributed body first and then sets `messageLabel.textColor = .label`, making UILabel's final body color property authoritative after attributed-text style adoption.
+- `.user` attributed text and link `systemBlue` handling are unchanged. `reasoningTextView`, response timeline styling, Markdown semantics, row geometry, Send/SSE parsing, Repository state and all b107 recovery logic are unchanged.
+- This delta is justified by exact b107 Runtime `sha256:8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da` + screenshots: assistant placeholder/final body were blue while reasoning SSE text was normal, which maps to `messageLabel` versus the independent `reasoningTextView`. b106's pre-attributedText label reset was Runtime-insufficient.
+
+Evidence ladder / Runtime gate:
+
+- **Code written / exact scope + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen No.**
+- Human Runtime b108 must verify the assistant `正在思考…` placeholder and final assistant body use normal label color, while reasoning SSE remains unchanged and user-link coloring does not regress.
+- Also re-run one ordinary Native New Chat Send to ensure b107 one-Send authoritative identity/normal terminal convergence has no regression. If exact accepted `stream_ended_without_done` naturally occurs, the inherited b107 same-generation/no-resend recovery gate may be evaluated; absence of that event does not qualify it.
+
+**Next exact action:** install only canonical b108 IPA `a2639b5793316077c0f203bfd4dffdecd8cef74c361a4995bc8bfba05f657dbd` on the real iPhone, fresh-launch, run one New Chat first Send, observe placeholder/reasoning/final colors and export diagnostics. Do not allocate b109 before b108 Human Runtime evidence unless the user explicitly chooses to skip Runtime.
+
 ## b107 Human Runtime Partial / b108 assistant-body color allocation — 2026-09-06
 
 Exact b107 Human Runtime evidence:

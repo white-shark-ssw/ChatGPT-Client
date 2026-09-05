@@ -1,3 +1,10 @@
+## Phase 9 active-response navigation/reload closeout — b114 test candidate 2026-09-06
+
+- While a conversation has an active Repository live response, leaving it at the current physical bottom preserves follow-tail by keeping no historical anchor; returning uses the existing latest-message path. Deliberate upward reading continues to save/restore the existing semantic message/chunk anchor. No parallel follow-tail dictionary or global streaming flag is allowed.
+- Manual Reload is unavailable while any response is active because current Reload releases covered execution and clears live state, while server Stop is not yet proven. Local client-owned active Sync remains blocked; external-active manual Sync remains permitted as the already-evidenced authoritative recovery action.
+- Completed color diagnostics are test instrumentation, not a permanent rendering dependency. Once b112/b113 Runtime is accepted, remove the b109-b111 per-chunk rendered-pixel probes without weakening the separate user/assistant reuse-pool invariant.
+- Static official-app strings identifying `/stop_conversation` are not sufficient authorization to issue that request. Stop still requires current method/body/target/ack/terminal Runtime evidence.
+
 ## Stacked tested-Candidate integration ownership — b113 2026-09-06
 
 - When an already-tested stacked task is integrated into its owning dependency branch, keep the original Candidate/Build ownership. For the current integration, Build113 / `DEV-message-rendering-0.1.0-b113` remains a `DEV-message-rendering` identity even though `dev/send-stream-20260829` now carries those product bits.

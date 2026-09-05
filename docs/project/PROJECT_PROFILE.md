@@ -1,3 +1,9 @@
+## Current DEV-send-stream closeout candidate — b114 2026-09-06
+
+- `DEV-send-stream-0.1.0-b114` / `0.1.0 (114)` is permanently reserved before product staging.
+- Baseline is the integrated, Runtime-positive b113 product. Intended exact scope is Xcode identity + `ConversationFeature.swift` only: hidden active follow-tail intent, active-response Reload safety, and retirement of fulfilled color-render probes.
+- No b114 package/Artifact exists until guarded staging and formal CI complete. Stable/Frozen No.
+
 ## Current DEV-send-stream integrated product baseline — imported b113 2026-09-06
 
 - `dev/send-stream-20260829` now carries merged PR #36 at integration commit `4a22086f7ccab39427c46a163854e8f68530c65f`; product settings are `0.1.0 (113)` / Candidate `DEV-message-rendering-0.1.0-b113`.

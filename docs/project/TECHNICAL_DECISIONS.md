@@ -1,3 +1,10 @@
+## DEV-send-stream Phase 9 follow-tail / active Reload closeout decision — b114 2026-09-06
+
+- Do not add a second follow-tail state store. The existing semantic scroll-anchor owner already represents historical intent; absence of an anchor already means return to latest. Therefore an active displayed conversation left at the existing physical-bottom threshold must not persist a historical anchor, while any deliberate upward position continues to persist message ID + chunk + relative offset.
+- Until server Stop is proven, manual Reload must not discard an active response/executor. Disable Reload whenever the selected conversation owns any active live response and enforce the same rule inside the reload handler. Keep the existing client-owned active Sync block; keep external-active manual Sync available because Runtime uses authoritative Sync for recovery/reconciliation.
+- Retire b109-b111 assistant chunk color/render instrumentation after b112/b113 Runtime acceptance. Do not remove the b112 role-specific reuse pools or b113 presentation code with the probes.
+- This decision changes no protected Send count, SSE parser, accepted-client clean-EOF recovery, response authority, polling/retry policy or server Stop transport.
+
 ## DEV-send-stream stacked candidate ownership after b113 integration — 2026-09-06
 
 - Accept PR #36's tested b113 product into the owning `DEV-send-stream` branch by ordinary merge at `4a22086f7ccab39427c46a163854e8f68530c65f` because the dependency was explicitly stacked and the current base advanced only through docs/tooling.

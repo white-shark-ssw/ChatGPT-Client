@@ -1,3 +1,10 @@
+## DEV-send-stream Phase 9 closeout audit / b114 — 2026-09-06
+
+- Later Runtime evidence closes the old local-Send, tested A/B simultaneous ownership, New Chat handoff, assistant-color and native-presentation gates. The integrated b113 product remains the b114 baseline.
+- Current source still has two product-level closeout gaps: active A left at physical bottom is saved as an ordinary historical anchor before B selection, and manual Reload can release executor/live state while a response is active despite server Stop remaining unproven.
+- b114 is reserved for the minimum owner fixes plus retirement of the b109-b111 expensive color-render diagnostics after b112/b113 Runtime acceptance. No Send/SSE/Repository/Stop transport change is included.
+- Exact accepted clean-EOF recovery remains Unexercised; server Stop method/body/ack remains Runtime-unverified. Overall task stays Active / Runtime Partial / Stable-Frozen No until the remaining closeout gates are classified.
+
 ## DEV-send-stream stacked b113 integration complete — 2026-09-06
 
 - PR #36 `DEV-message-rendering` merged exactly once into `dev/send-stream-20260829` at `4a22086f7ccab39427c46a163854e8f68530c65f`; PR #29 remains the owning Send/Stream PR against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`.

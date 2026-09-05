@@ -1,3 +1,44 @@
+## Phase 9 closeout audit / b114 allocation — 2026-09-06
+
+Current owner / identity guard:
+
+- Selected Work remains `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains open against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`. Audit baseline before tooling is `cce8a7b5d9208e45e9f83cd169ed91f68acca3ad`.
+- Current integrated product is exact Build113 / Candidate `DEV-message-rendering-0.1.0-b113`, imported from Runtime-positive PR #36. Candidate b113 remains owned by `DEV-message-rendering`; b112 remains the last Send-owned canonical Candidate before this allocation. Canonical b113 package `75ccad15208610c2b0420033846f9bb15bbdb494` / Artifact `9976713893` remains the tested product baseline.
+- Parallel PR #35 remains research-only and owns no product `ChatGPTClient/**`, product Xcode Candidate, or Build114 identity. `BUILD_TEST_INDEX.md` contains no b114 before this allocation.
+
+Phase 9 audit — later evidence closes old historical gates:
+
+- Existing-conversation protected Send is already Runtime accepted from b67: one Native Send -> one page-owned protected Send -> HTTP200 SSE -> Repository reasoning/tool/final -> terminal/reconcile. b72 Runtime accepts the tested simultaneous A-generating + B-send ownership matrix.
+- New Chat identity/handoff and ordinary terminal convergence are Runtime Positive again in b107/b108: one protected Send, first protected-SSE conversation ID adopted once, no fake server ID, normal terminal then authoritative Detail reconcile.
+- b112 is Human Runtime Positive for role-isolated assistant color. Imported b113 is Human Runtime Positive for the tested native Markdown/link/table/file-reference/Copy presentation scope and preserves b112 reuse isolation.
+- b97/b100/b101 evidence already covers foreground authoritative convergence and dormant remote discovery for their tested paths. Exact b101 `-1005` renewal and natural b98 external WebContent-death branches remain conditional evidence debts only; do not manufacture failures or block ordinary Phase 9 closeout solely to force those rare branches.
+
+Current-source gaps selected for one coherent b114 closeout candidate:
+
+1. **Hidden active follow-tail intent is structurally incomplete.** `captureScrollAnchor(for:)` currently always persists a normal historical anchor when an authoritative row is visible. Root switches Repository selection before Detail captures the old displayed conversation, so an active A left at physical bottom is saved as history; hidden growth then returns to that stale anchor. Reuse the existing semantic owner instead of adding state: while the displayed conversation has an active Repository live response and is at the already-used exact physical-bottom threshold, remove/do not save its anchor. Existing `restoreScrollAnchor` already interprets no anchor as `scrollToLatestMessage`, while a user who scrolls upward still gets the ordinary message/chunk-relative anchor.
+2. **Manual Reload is unsafe while a response is active.** Sync is already disabled/guarded for client-owned active responses, but Reload is currently enabled for every selected conversation. Root's current manual-reload callback releases the executor and removes the live snapshot. Because exact server Stop is not yet authorized, b114 must disable Reload for any active response and defensively reject a direct reload invocation while active. External-active manual Sync remains allowed because later Runtime uses it as authoritative recovery; local-active Sync remains blocked.
+3. **b109-b111 color probes have fulfilled their purpose.** b112/b113 Human Runtime closed the cross-role color defect, yet current long assistant chunks still execute `assistantChunkColor.willDisplay` plus main-thread drawHierarchy/CALayer/direct-attributed pixel aggregation. Retire only that diagnostic plumbing. Preserve separate user/assistant reuse identifiers, visible rendering, b113 rich-text projection and ordinary Diagnostics.
+
+b114 allocation / exact negative scope:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b114` / `0.1.0 (114)` before product writes.
+- Product scope is exactly `ChatGPTClient.xcodeproj/project.pbxproj` + `ChatGPTClient/Conversation/ConversationFeature.swift`. `RootViewController.swift`, covered Web bridge/SSE grammar, b107 clean-EOF recovery, Repository response ownership, b112 reuse pools, b113 rich rendering, Copy content authority and auth/network owners remain unchanged.
+- No retry, fallback, timer/watchdog, polling, duplicate Send, regenerate, guessed Native resume/status, second response store, fake Stop or new follow-tail state dictionary is authorized.
+
+Still evidence-gated after b114:
+
+- b107 exact post-acceptance `stream_ended_without_done` same-generation/no-resend recovery remains Unexercised unless the exact event occurs. b114 does not change it.
+- Server Stop is still not implemented. Static inspection of the exact supplied/decrypted official iOS app independently exposes `StopConversationRequest`, `/stop_conversation`, `stopConversation(id:requestTrackingData:)` and `Failed to stop conversation`, which narrows the official owner/path but does not prove HTTP method, request body/target token, acknowledgement or terminal semantics. Do not synthesize a Stop request from strings alone; obtain current Runtime request/ack evidence before product implementation.
+
+Batch recovery point:
+
+- Batch A: this script records the audit and reserves b114 in checkpoint/index/state/module/profile/decisions/rules. No product write occurs before that commit.
+- Batch B: apply only the exact two-product-path b114 delta, pass `git diff --check` + Debug Simulator compile, commit/push one exact product source.
+- Batch C: bind formal package workflow to the exact b114 product source, require same-source Push + PR CI, canonical Artifact and independent IPA identity/hash verification, then record package truth and hand one IPA to Human Runtime.
+- Never replay completed b113 integration, reassign b113 Candidate ownership, modify PR #35, or alter the b107 recovery/Stop transport from this closeout patch.
+
+**Next exact action:** after Batch A is durably committed, execute Batch B only; then package one canonical b114 for the combined follow-tail / active-Reload-safety / diagnostics-retirement Human Runtime gate.
+
 ## b113 stacked integration completed — DEV-send-stream owner 2026-09-06
 
 Exact integration result:

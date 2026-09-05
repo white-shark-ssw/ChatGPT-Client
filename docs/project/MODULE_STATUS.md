@@ -1,3 +1,10 @@
+## DEV-send-stream b114 closeout candidate — 2026-09-06
+
+- Preserve `ConversationRepository` as sole Native response/content owner, b112 role-isolated message-cell reuse and b113 native rich presentation.
+- b114 closes only source-proven presentation/action safety gaps: active-at-bottom hidden follow-tail via existing semantic anchor absence, active-response Reload disable/guard, and removal of fulfilled b109-b111 per-chunk pixel diagnostics.
+- Server Stop and exact accepted clean-EOF Runtime qualification remain evidence-gated; b114 adds no transport behavior for either.
+- Module remains Active / Runtime Partial / Stable-Frozen No pending b114 Human Runtime and final evidence settlement.
+
 ## DEV-send-stream imported b113 presentation baseline integrated — 2026-09-06
 
 - PR #36 is merged into the Send/Stream branch at `4a22086f7ccab39427c46a163854e8f68530c65f`. The branch now carries Build113 / `DEV-message-rendering-0.1.0-b113` as an imported product baseline, not as a new `DEV-send-stream` Candidate.

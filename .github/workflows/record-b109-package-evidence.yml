@@ -1,0 +1,65 @@
+name: Record b109 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b109-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b109 package and post-package scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 11e7ec536b986c45811dc449cd2c4f6e442c28df HEAD
+          git merge-base --is-ancestor 8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267 HEAD
+          git diff --quiet 8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets .github/workflows/ios-foundation.yml
+          changed="$(git diff --name-only 8c6ea43677f2a0f39c08d6b9ca695c9c2e4a5267 HEAD | sort)"
+          expected=$'.github/workflows/record-b109-package-evidence.yml\nscripts/staging/b109_record_package_evidence.py'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 109;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'assistantChunkColor.willDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'DEV-send-stream-0.1.0-b109' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record durable package evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b109_record_package_evidence.py
+          git diff --check
+
+      - name: Validate docs-only scope and exact markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_PROFILE.md\ndocs/project/PROJECT_STATE.md'
+          test "$changed" = "$expected"
+          grep -q '9974791883' docs/project/BUILD_TEST_INDEX.md
+          grep -q '743e61fc4f20670d8a6cc5d5afd42f8942e40f2943abe1f9b23e4ca621b43956' docs/project/BUILD_TEST_INDEX.md
+          grep -q '6c37dfb8496c533ce2d5e4878f22a5b265f7c55e87e9cbfbb9189155fa30096a' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b109 is diagnostic-only' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit durable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b109 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

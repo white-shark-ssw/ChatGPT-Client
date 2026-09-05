@@ -1,7 +1,7 @@
-# Candidate: DEV-send-stream-0.1.0-b111
-# Product source: 64351b96bd61a44e8566e2264c5593fae868268e
-# b111 is diagnostic-only: it preserves visible rendering and distinguishes attributed-string, UILabel layer, and UILabel hierarchy color output with privacy-safe aggregate telemetry.
-name: iOS Label Pipeline Diagnostics b111
+# Candidate: DEV-send-stream-0.1.0-b112
+# Product source: 3957b806f32f0995ceb9cf8f9487aba939f3b306
+# b112 isolates UITableView cell reuse by message role using the b111 Runtime-selected shared-reuse contamination boundary; all Send/Repository behavior remains unchanged.
+name: iOS Role-Isolated Message Reuse b112
 
 on:
   push:
@@ -34,14 +34,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Guard b111 label-pipeline diagnostics and inherited behavior
+      - name: Guard b112 role-isolated reuse and inherited behavior
         run: |
-          git merge-base --is-ancestor 64351b96bd61a44e8566e2264c5593fae868268e HEAD
-          git diff --quiet 64351b96bd61a44e8566e2264c5593fae868268e HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
-          test "$(grep -c 'CURRENT_PROJECT_VERSION = 111;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b111\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          git merge-base --is-ancestor 3957b806f32f0995ceb9cf8f9487aba939f3b306 HEAD
+          git diff --quiet 3957b806f32f0995ceb9cf8f9487aba939f3b306 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b112\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test ! -e ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
           ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static func reuseIdentifier(for role: ConversationMessage.Role)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.userReuseIdentifier)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.assistantReuseIdentifier)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'reuseIdentifier(for: cellRole)' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'static let reuseIdentifier = "ConversationMessageCell"' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)' ChatGPTClient/Conversation/ConversationFeature.swift
           grep -Fq 'if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }' ChatGPTClient/Conversation/ConversationFeature.swift
@@ -100,7 +107,7 @@ jobs:
       - name: Upload IPA candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ChatGPTClient-DEV-send-stream-0.1.0-b111
+          name: ChatGPTClient-DEV-send-stream-0.1.0-b112
           path: |
             build/artifacts/*.ipa
             build/artifacts/*.sha256

@@ -1,3 +1,10 @@
+## DEV-send-stream b107 UI-owner Runtime update / b108 allocation — 2026-09-06
+
+- `ConversationRepository` / covered Send transport remain unchanged by the new defect evidence. b107 normal New Chat Send/terminal/authoritative convergence is Runtime Positive in `sha256:8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da`, but its exact accepted `stream_ended_without_done` recovery branch remains Unexercised.
+- UI ownership is now narrower: assistant placeholder/final body uses `ConversationMessageCell.messageLabel` (`UILabel`), while reasoning SSE text uses `reasoningTextView` (`UITextView`). User Runtime reports body blue / reasoning normal and supplied screenshots reproduce final body blue. b106's pre-assignment `messageLabel` reset did not fix it.
+- b108 is reserved for the smallest body-rendering correction: reassert assistant `messageLabel.textColor = .label` after its attributed body assignment; do not change reasoning, user-link coloring, row geometry, Repository, SSE, or recovery ownership.
+- Module remains Active / Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b105 new-chat authoritative identity handoff — 2026-09-05
 
 - `ConversationRepository` remains sole Native conversation/response/content authority; `CoveredWebSendExecutor` remains official-page protected-Send transport. b105 adds no second store and no fake persisted conversation identity.

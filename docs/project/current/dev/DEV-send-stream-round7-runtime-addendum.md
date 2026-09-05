@@ -1,3 +1,40 @@
+## b107 Human Runtime Partial / b108 assistant-body color allocation — 2026-09-06
+
+Exact b107 Human Runtime evidence:
+
+- Canonical candidate `DEV-send-stream-0.1.0-b107` / Release / iPhone / iOS17.0 / source marker `4bd3501a3092`; diagnostics `ChatGPTClient-Diagnostics-20260905-171244.json`, `sha256:8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da`, 411 events. Screenshots `sha256:5b8d52c002a468ba6d5a79bacc1b922081c0fdc30d71880d0de0fadf9096a0b7` and `sha256:037b207c15012633a569087c2024abdd249a8646e3ad030d5726591135c20798` are the exact visual evidence supplied with this run.
+- New Chat first protected Send remained Runtime Positive: exactly one `coveredExecutor.requested(target=new_conversation)`, one `sendObserved`, HTTP200 `text/event-stream`, and one `newConversation.authoritativeHandoff(source=protected_send_sse_conversation_id)` started Repository response generation 1 on the adopted authoritative conversation.
+- This run did **not** exercise b107 accepted clean-EOF recovery. There is zero exact `stream_ended_without_done`, zero `coveredExecutor.acceptedClientStreamEndRecovery`, zero `acceptedClientRecovery.interrupted`, and zero local `phase=failed`. Instead generation 1 followed normal reasoning/final SSE, reached `event=terminal` / `phase=completed`, and the covered executor emitted normal terminal.
+- Normal terminal authoritative convergence is Runtime Positive. Automatic authoritative Detail Sync returned HTTP200 with two visible messages; `liveResponse.reconciled` then `authoritativeReconcile.completed(liveSnapshotCleared=true)` cleared the live projection. This is not proof of the b107 manual-Sync stale-non-active cleanup branch because the tested live generation completed normally rather than entering the b106 accepted-EOF false-failure state.
+- Blue body text is Runtime Negative again, now with stronger owner evidence. User reports the assistant body placeholder shown while thinking is blue, SSE reasoning text is normal, and final SSE answer text is blue. The supplied screenshots show the final answer body in the same system-blue family as normal app tint while reasoning/header controls remain independently styled.
+- Current source maps that exact visual split to `ConversationMessageCell`: live placeholder and final answer both render through `UILabel messageLabel`; reasoning SSE renders through the separate `UITextView reasoningTextView`. b106 already reset `messageLabel.isHighlighted`, `textColor`, `highlightedTextColor`, and `tintColor` before assigning body `attributedText`, yet b107 reproduces the defect. Therefore residual cell highlight/tint state is rejected as the sufficient owner hypothesis.
+- UIKit `UILabel` contract is relevant to the next minimum delta: assigning `attributedText` can update style properties including `textColor`, while assigning `textColor` to a label displaying styled text applies that color to the entire attributed string. Current source establishes `.label` before `attributedText`; b108 will establish the assistant body's final color owner after `attributedText` assignment. User-link styling remains outside this change.
+
+b107 Runtime classification:
+
+- New Chat SSE authoritative identity: **Runtime Positive again**;
+- normal reasoning/final/terminal SSE + authoritative post-terminal reconcile: **Runtime Positive**;
+- b107 accepted `stream_ended_without_done` same-generation recovery: **Unexercised / Unverified** in this sample;
+- b107 manual-Sync stale non-active live cleanup: **Unexercised as the target failure state** in this sample;
+- assistant body color consistency: **Runtime Negative**;
+- overall `DEV-send-stream`: **Runtime Partial / Stable-Frozen No**.
+
+b108 allocation / minimum scope:
+
+- Allocate and permanently reserve `DEV-send-stream-0.1.0-b108` / `0.1.0 (108)`. No current Build/Test entry uses b108 and parallel PR #35 owns no product build/Candidate identity.
+- Preserve all b107 Send/SSE/Repository/recovery behavior unchanged.
+- Product scope is exactly `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift`.
+- In `ConversationMessageCell.configure`, after assigning `.assistant` body `attributedText`, re-establish `messageLabel.textColor = .label` so the UILabel property is the final uniform body-color owner. Do not alter `reasoningTextView`, response timeline colors, user-link `systemBlue`, markdown semantics, row geometry, SSE parsing, Repository state, retry/recovery, timers, or transport.
+- b108 Human Runtime must verify `正在思考…` / assistant final body are normal label color while expanded/live reasoning stays unchanged. The inherited b107 accepted-EOF recovery gate remains open and should be observed if that exact condition naturally occurs; no forced resend or synthetic EOF is added.
+
+Resume/conflict guard:
+
+- Work `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 open/unmerged/mergeable; verified pre-record branch head `be286f2f8c98305d9e702252af9c73f27d6431bf`; main remains `94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Canonical b107 product/package remain `113fa19d7264b953949770d2e44cb500ded2da6b` / `4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f`; Artifact `9967821935`; IPA `sha256:7195d89cb9837efc3386c5dd7e030e7f11f10233689416e59c86d1ae4cf055cd`.
+- Parallel PR #35 remains research-only and has no `ChatGPTClient/**`, product Xcode Candidate, or exact product-path overlap with this b108 scope.
+
+**Next exact action:** after this Runtime/allocation checkpoint is durably committed, apply only the two-path b108 delta, pass `git diff --check` + Debug Simulator compile, bind package CI to exact b108 product source, then produce one canonical b108 IPA for Human Runtime. Do not claim the inherited b107 accepted-EOF branch Runtime-positive unless exact `stream_ended_without_done` evidence occurs.
+
 ## b106 Human Runtime Partial / b107 accepted-SSE EOF handoff allocation — 2026-09-05
 
 Exact b106 package identity restored from repository/package evidence:

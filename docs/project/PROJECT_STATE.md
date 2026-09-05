@@ -1,3 +1,10 @@
+## DEV-send-stream b107 Runtime Partial / b108 body-color gate — 2026-09-06
+
+- Exact canonical b107 diagnostics `sha256:8e3e10b44e8e627f60e7a831d48f11c7fa9fff4bc4b0446b71588fbc38ade7da` / 411 events / Release / iPhone / iOS17.0 / source `4bd3501a3092` shows one New Chat protected HTTP200 SSE Send, authoritative SSE conversation-ID handoff, normal reasoning/final stream, `terminal` / generation `phase=completed`, then automatic HTTP200 authoritative Detail reconcile with `liveSnapshotCleared=true`.
+- Zero `stream_ended_without_done` / accepted-client EOF recovery diagnostics occurred, so the b107 accepted clean-EOF same-generation branch remains Unexercised. The b107 manual-Sync stale-live target state also did not occur because the generation terminated normally.
+- Exact screenshots `sha256:5b8d52c002a468ba6d5a79bacc1b922081c0fdc30d71880d0de0fadf9096a0b7` / `sha256:037b207c15012633a569087c2024abdd249a8646e3ad030d5726591135c20798` plus user observation reproduce the assistant body blue-text defect: placeholder/final body blue while reasoning SSE text is normal. Current source maps the split to `ConversationMessageCell.messageLabel` versus `reasoningTextView`; b106 pre-attributedText color/tint reset is Runtime-insufficient.
+- b108 is allocated as `0.1.0 (108)` for one narrow `UILabel` body-color ownership correction only. Overall Send/Stream remains Runtime Partial / Stable-Frozen No.
+
 ## DEV-send-stream b105 authoritative new-chat first Send package ready — 2026-09-05
 
 - b105 fills the missing new-conversation first-Send path without changing TD-029 ownership: official Web still owns protected Send/challenge; `ConversationRepository` remains sole Native response/content authority. Native creates no fake server conversation ID.

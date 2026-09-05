@@ -73,13 +73,22 @@ jobs:
           PY
           git diff --check
           changed="$(git diff --name-only)"
+          if [ -z "$changed" ]; then
+            grep -q '## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+            echo "Recovery point already present; no docs write required."
+            exit 0
+          fi
           test "$changed" = "docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"
           grep -q '## b113 stacked integration recovery point — DEV-send-stream owner 2026-09-06' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
 
-      - name: Commit recovery point
+      - name: Commit recovery point if changed
         shell: bash
         run: |
           set -euo pipefail
+          if git diff --quiet; then
+            echo "No recovery-point change to commit."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md

@@ -1,4 +1,5 @@
 name: Stage b115 Runtime Regression Correction
+# Trigger revision 2: contents-API push for guarded staging.
 
 "on":
   push:

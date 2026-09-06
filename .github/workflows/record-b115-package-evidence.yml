@@ -1,0 +1,53 @@
+name: Record b115 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b115-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b115 package and product quietness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD
+          git diff --quiet 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj/project.pbxproj
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'DEV-send-stream-0.1.0-b115' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b114 Human Runtime result / b115 allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          test -f scripts/staging/record_b115_package_evidence.py
+
+      - name: Record package truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/record_b115_package_evidence.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q '## b115 Runtime-regression correction — package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q '9992196070' docs/project/BUILD_TEST_INDEX.md
+          grep -q '073b202ba26e400e7da0777fffa362f55f864be78a394a19258bfd027744dd41' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'Human Runtime pending' docs/project/BUILD_TEST_INDEX.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b115 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

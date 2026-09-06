@@ -1,0 +1,97 @@
+name: Stage b107 Accepted SSE EOF Handoff
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b107-accepted-eof-handoff.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b106 product baseline and b107 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 9541bcb22cab87254c881272b7226bef670d2e35 HEAD
+          git merge-base --is-ancestor a02042608911b891a4e9730a2bb3974168c4308a HEAD
+          git diff --quiet 028100bb79d82e99b62a610e9f30b9f9b3bd7f5c HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/RootViewController.swift ChatGPTClient/Conversation/ConversationFeature.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 106;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b106\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b107' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/b107_allocate_runtime.py
+          test -f scripts/staging/b107_accepted_eof_handoff.py
+          test "$(git diff 9541bcb22cab87254c881272b7226bef670d2e35 HEAD --name-only -- ChatGPTClient ChatGPTClient.xcodeproj | wc -l | tr -d ' ')" = "0"
+
+      - name: Batch A record b106 Runtime and allocate b107
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b107_allocate_runtime.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b107' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b106 Human Runtime Partial / b107 accepted-SSE EOF handoff allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q '9965747978' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b52e6177b2d3d44c124419c18ec88a356860f8a169a12f1a4cc6e46bb8e6faec' docs/project/BUILD_TEST_INDEX.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b106 runtime and allocate b107"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b107 product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b107_accepted_eof_handoff.py
+
+      - name: Validate exact b107 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/RootViewController.swift'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 107;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b107\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          grep -q 'coveredExecutor.acceptedClientStreamEndRecovery' ChatGPTClient/RootViewController.swift
+          grep -q 'state == "stream_ended_without_done", clientSendAccepted, responseActive' ChatGPTClient/RootViewController.swift
+          grep -q 'trigger: "stream_ended_without_done"' ChatGPTClient/RootViewController.swift
+          grep -q 'manualSync.clientLiveReconciled' ChatGPTClient/RootViewController.swift
+          grep -q 'clearLiveResponseAfterAuthoritativeReconcile' ChatGPTClient/RootViewController.swift
+          grep -q 'protected_send_sse_conversation_id' ChatGPTClient/RootViewController.swift
+          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b107 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/RootViewController.swift
+          git commit -m "fix: recover accepted SSE EOF without false failure"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/RootViewController.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

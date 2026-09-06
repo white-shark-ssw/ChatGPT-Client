@@ -1,0 +1,65 @@
+name: Record b110 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b110-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b110 package and post-package scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 55184f057d3303a266146ab6a76be019bf3f1c00 HEAD
+          git merge-base --is-ancestor 26ea3354998c89420212315977dcf94cc3a91197 HEAD
+          git diff --quiet 26ea3354998c89420212315977dcf94cc3a91197 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets .github/workflows/ios-foundation.yml
+          changed="$(git diff --name-only 26ea3354998c89420212315977dcf94cc3a91197 HEAD | sort)"
+          expected="$(printf '%s\n' .github/workflows/record-b110-package-evidence.yml scripts/staging/b110_record_package_evidence.py | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 110;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'DEV-send-stream-0.1.0-b110' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record durable package evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b110_record_package_evidence.py
+          git diff --check
+
+      - name: Validate docs-only scope and exact markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q '9975056986' docs/project/BUILD_TEST_INDEX.md
+          grep -q '2c5d963f915b2b12588416cfbd71668dbb0a5b22e49b53f9a7657732ae24cb20' docs/project/BUILD_TEST_INDEX.md
+          grep -q '7ecb92d4e364e70e6ae9091af7a80386c06cc1aea96993227a54d76b9470fcd4' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b110 rendered-color diagnostic package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit durable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b110 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

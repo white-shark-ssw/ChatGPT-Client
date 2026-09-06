@@ -1,0 +1,93 @@
+name: Stage b109 Chunk Color Probe
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b109-chunk-color-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b108 product baseline and b109 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor eb0de74460b0bd06a6d977bf915b5e06a5c946db HEAD
+          git merge-base --is-ancestor d34ff4534ca76ee03e2c8a3eeddb29eca011319f HEAD
+          git diff --quiet eb0de74460b0bd06a6d977bf915b5e06a5c946db HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 108;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b108\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b109' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/b109_allocate_chunk_color_probe.py
+          test -f scripts/staging/b109_chunk_color_probe.py
+
+      - name: Batch A record b108 Runtime and allocate b109
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b109_allocate_chunk_color_probe.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_PROFILE.md\ndocs/project/PROJECT_STATE.md'
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b109' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'c26f5ed8712ca63c8dae037e58330d5fa4b2f7cb47b8b0dafc078e920b4c813c' docs/project/BUILD_TEST_INDEX.md
+          grep -q '6cecee7a5f249529c72c53ee08620740e9d8480b080d8914476f697ad0efdc73' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b108 runtime and allocate b109"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b109 diagnostic delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b109_chunk_color_probe.py
+
+      - name: Validate exact b109 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 109;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b109\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'func bodyColorDiagnostics() -> \[String: String\]' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'assistantChunkColor.willDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'fields\["surface"\] = "authoritative"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'fields\["surface"\] = "live"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'attributedForegroundColor' ChatGPTClient/Conversation/ConversationFeature.swift
+          git diff --quiet eb0de74460b0bd06a6d977bf915b5e06a5c946db HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b109 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "diagnostics: audit assistant chunk color state"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

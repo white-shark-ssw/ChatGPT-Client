@@ -1,3 +1,26 @@
+## b115 Human Runtime partial + deferred open-menu dismissal — 2026-09-07
+
+Latest user Runtime / diagnostics:
+
+- User reports that while reasoning messages are actively streaming, an already-expanded top-right conversation menu can automatically close. The user explicitly requests that this be fixed together with a later justified version and **not** receive a standalone Candidate/build.
+- Supplied diagnostics SHA-256 `59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` contain 1752 events and identify exact canonical `0.1.0 (115)` / `DEV-send-stream-0.1.0-b115` / source `2dc0a4155f35` / Release / iPhone / iOS17.0.
+- The tested protected user action still has exactly one `coveredExecutor.requested`, one `coveredExecutor.sendObserved` and one HTTP200 SSE response; there is no second protected Send.
+- b115 optimistic-user ownership is exercised: live presentation begins with `liveUserPresentationCount=1`; after authoritative Detail materializes the user turn, it transitions to `liveUserPresentationCount=0` while the live assistant/reasoning presentation continues. This is Runtime-positive telemetry for the b115 ownership correction; no screenshot was supplied in this sample, so do not overstate independent visual proof beyond the user's report and telemetry.
+- Active manual Reload is exercised during reasoning: `manualReload.hardReset` releases the local executor/live projection, `conversation.detailReload.requested` executes, authoritative Detail returns HTTP200, and external observation/reasoning is reacquired without another protected Send. This remains a local reset/reacquire action, not server Stop.
+- This sample contains no `stream_ended_without_done` / accepted clean-EOF recovery event. The inherited b107 branch remains Unexercised.
+- Active manual Sync is not separately proven by this sample: the observed `latestSync` operations are foreground/authoritative reconciliation paths, not sufficient evidence that the user successfully invoked the menu Sync action while the response was active.
+
+Deferred menu issue source boundary:
+
+- `applyLiveResponse` / live presentation completion calls `updateConversationMenu()` on every reasoning/final presentation refresh.
+- `updateConversationMenu()` constructs fresh `UIAction` objects, a fresh `UIMenu`, and a fresh `UIBarButtonItem`, then replaces `navigationItem.rightBarButtonItem` every time.
+- Replacing the menu host on every SSE-driven presentation update is a source-supported likely owner for the observed dismissal. Runtime does not instrument UIKit's actual menu-dismiss callback, so record this as **likely/source-supported**, not as a fully instrumented causal proof.
+- Deferred correction intent for a later justified product version: keep the menu host stable across ordinary live-response presentation refreshes and only change action/menu state when materially necessary. Do not add timers, debouncing, retries, duplicate state stores or a standalone build solely for this issue.
+
+**Evidence ladder now:** b115 Code/Simulator/Push CI/PR CI/Artifact/package verified; Human Runtime Partial with optimistic-user ownership and active Reload exercised; open-menu persistence Runtime Negative/deferred; active manual Sync still not separately proven; accepted clean EOF Unexercised; Stable-Frozen No.
+
+**Next exact action:** do not allocate b116 for the menu dismissal alone. Keep this defect queued for the next independently justified product Candidate, where it should be included in that Candidate's exact scope and Human Runtime matrix. Until then, no product change is authorized solely by this defect.
+
 ## b115 Runtime-regression correction — package ready 2026-09-06
 
 Canonical identity / validation:

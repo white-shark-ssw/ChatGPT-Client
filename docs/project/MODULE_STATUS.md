@@ -1,3 +1,9 @@
+## DEV-send-stream b115 Runtime follow-up — menu persistence deferred 2026-09-07
+
+- Diagnostics `sha256:59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` are exact Release Build115 / Candidate b115 / source `2dc0a4155f35` on iPhone iOS17.0.
+- b115 optimistic-user presentation ownership and active Reload are exercised; protected Send remains single-submit. Human Runtime remains Partial because active manual Sync is not separately proven and the user found a new menu-persistence UI defect.
+- Menu dismissal is queued for a later justified Candidate, not a standalone version. Current source-supported likely owner is per-live-update replacement of the top-right `UIBarButtonItem`/`UIMenu` in `updateConversationMenu()`.
+
 ## DEV-send-stream b115 package-qualified Runtime correction — 2026-09-06
 
 - Product `2346c2d4ab26d40ef720b7850ae34316acb3cc62` / package `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692` / Artifact `9992196070` is the current Send-owned Human Runtime candidate.

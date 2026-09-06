@@ -1,3 +1,8 @@
+## Current DEV-send-stream Runtime note — b115 2026-09-07
+
+- Canonical b115 remains the current tested package identity. Diagnostics `sha256:59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` confirm Build115 / Candidate b115 / source `2dc0a4155f35` / Release iPhone iOS17.0.
+- Human Runtime is Partial: optimistic-user ownership and active Reload are exercised; open-menu persistence has a user-observed deferred defect; active manual Sync and accepted clean EOF are not yet separately proven. Stable/Frozen No.
+
 ## Current DEV-send-stream package-qualified candidate — b115 2026-09-06
 
 - `DEV-send-stream-0.1.0-b115` / `0.1.0 (115)` is canonical at product `2346c2d4ab26d40ef720b7850ae34316acb3cc62`, package `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692`, Artifact `9992196070`, ZIP `sha256:19df7bac1354735cab404d81433b5818380da3e28b73dadaf29cb12f351fbd31`, IPA `sha256:073b202ba26e400e7da0777fffa362f55f864be78a394a19258bfd027744dd41`.

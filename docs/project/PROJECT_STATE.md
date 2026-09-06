@@ -1,3 +1,9 @@
+## DEV-send-stream b115 Human Runtime partial / deferred menu persistence — 2026-09-07
+
+- Exact canonical b115 diagnostics `sha256:59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` exercise one protected Send only, authoritative/live optimistic-user handoff (`liveUserPresentationCount` 1 -> 0) and active manual Reload hard-reset/reacquire without a second Send.
+- New user-observed UI defect: an already-expanded top-right menu may close as reasoning SSE presentation updates arrive. Source repeatedly rebuilds/replaces the bar-button/menu from `updateConversationMenu()` after every live presentation refresh, which is the current likely owner.
+- User explicitly defers this menu-persistence fix to a later independently justified version; no b116 allocation or standalone product build is authorized by this issue alone. Active manual Sync and exact accepted clean EOF remain separately unproven.
+
 ## DEV-send-stream b115 package-qualified Runtime correction — 2026-09-06
 
 - Canonical b115 product `2346c2d4ab26d40ef720b7850ae34316acb3cc62` / package `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692` passed corrected staging `34042595946/101511928494`, same-source Push `34042793058/101512446124` and PR `34042795253/101512452040` CI.

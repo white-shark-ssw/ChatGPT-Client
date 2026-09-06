@@ -1,3 +1,26 @@
+## Current Stop evidence gate — Web route/method/ack proven 2026-09-07
+
+Runtime evidence from official ChatGPT Web now proves:
+
+- route `/backend-api/stop_conversation`;
+- method `POST`;
+- HTTP200 `application/json` server acknowledgement.
+
+Still required before product implementation:
+
+- exact request JSON keys/value classes and response/conversation target relationship;
+- response JSON structure/ack meaning;
+- authoritative post-Stop Detail/terminal behavior, including whether partial assistant content is retained and whether an explicit later Detail reconciliation is needed.
+
+The older assumed Web route `/backend-api/conversation/<opaque>/stop_conversation` is superseded. A research IPA is no longer prerequisite; Web Rule Lab is the preferred evidence path. Local transport cancellation remains non-proof of Server Stop.
+
+## Current Stop evidence gate — Probe v0.8 package ready 2026-09-07
+
+- Static official-app symbols prove only existence of `StopConversationRequest`, `/stop_conversation`, `stopConversation(id:requestTrackingData:)`; they do not prove the production contract.
+- Exact research-only Probe v0.8 source `644a31c012f4d832ab581aa7766c3ec365ce155b` / CI `34052999350/101539827776` / Artifact `9995116883` is now package-qualified to observe exact official Stop structure without initiating traffic.
+- Human Runtime must capture one official Stop while a response is active and provide: request method/path, request key/value structure and hashed target relationship; HTTP acknowledgement/response structure; official post-Stop authoritative Detail/async-status/terminal behavior and partial-content authority.
+- Until that evidence exists, server Stop remains unimplemented. Product stays b115 and b116 remains unallocated.
+
 # DEV-send-stream — Production Send / Response Ownership Preflight
 
 _Last revalidated: 2026-08-31 after b65 Runtime and the user's explicit Option B production decision._

@@ -1,3 +1,69 @@
+## Web Rule Lab Stop route/method/ack Runtime evidence — 2026-09-07
+
+Latest user-run broad Web Rule Lab network probe supersedes the earlier assumed Web Stop route.
+
+Proven on official ChatGPT Web in one active-response Stop action:
+
+- Protected Send for the test turn used the already-evidenced `POST /backend-api/f/conversation` and returned HTTP200 `text/event-stream` before Stop.
+- At probe-relative `t=40085`, clicking the official Web Stop control emitted **`POST /backend-api/stop_conversation`**, same origin `https://chatgpt.com`, with no query items.
+- At `t=41690`, the same Stop request returned **HTTP200 `application/json`**. `PerformanceResourceTiming` independently observed the request as `fetch`, duration about 1599 ms, transfer size 356 bytes.
+- The current broad probe could not yet inspect Stop request body: it recorded `request-body-pending`. Therefore request keys, target identity and any tracking field remain **Unverified**. Do not infer them from static symbol names.
+- Immediately after Stop, Web emitted `POST /backend-api/f/conversation/<opaque>` returning HTTP200 JSON. Its purpose/body were not captured, so it is structural post-Stop traffic only; do not classify it as regeneration, acknowledgement or reconciliation without more evidence.
+
+Evidence correction:
+
+- The earlier assumed Web route `/backend-api/conversation/<opaque>/stop_conversation` is **rejected for the tested official Web Stop path**. Current Runtime authority is `/backend-api/stop_conversation`.
+- Official-iOS Probe v0.8 remains research-only fallback/cross-validation, but its exact path classifier was based on the older static/iOS hypothesis and is not Web protocol authority. Do not require that IPA before continuing Web Stop research.
+
+Current Stop gate classification:
+
+- route: **Runtime Positive** (`/backend-api/stop_conversation`)
+- method: **Runtime Positive** (`POST`)
+- immediate server acknowledgement: **Runtime Positive** (HTTP200 JSON)
+- request body / target identity: **Unverified**
+- response JSON structure/body: **Unverified**
+- authoritative post-Stop terminal/partial-answer state and whether an explicit Detail reconciliation is needed: **Unverified**
+
+Product remains canonical b115 and b116 remains unallocated. The deferred top-right live-menu persistence defect remains queued for the next independently justified product Candidate.
+
+**Next exact action:** use a targeted Web Rule Lab wrapper for the now-proven `/backend-api/stop_conversation` endpoint that reads a cloned Request body *before* forwarding the fetch and reads a cloned response body before returning it. Record only JSON key/value classes plus irreversible hashes/match flags for identifier-like strings. Then perform one official Web Stop and inspect the post-Stop authoritative conversation Detail. Do not implement product Stop until body target + terminal semantics are evidenced.
+
+## Official iOS Probe v0.8 Stop structural observer — package ready 2026-09-07
+
+R1 research-only evidence is complete; ChatGPTClient product remains exact b115 and **b116 remains unallocated**.
+
+Canonical v0.8 research identity:
+
+- Recovery/preflight recorded before research source modification; v0.8 changes only `scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m` + its README. No `ChatGPTClient/**`, product Xcode identity, `ios-foundation.yml`, Send/SSE/recovery or PR #35 file is changed by the v0.8 source delta.
+- Exact v0.8 source commit `644a31c012f4d832ab581aa7766c3ec365ce155b` (`research: observe official stop structure`).
+- macOS staging/build `34052999350 / 101539827776` passed b115/no-b116 guards, exact research scope, `git diff --check`, privacy markers, iPhoneOS arm64 dylib compile, Mach-O/otool/codesign validation, exact research source commit/push and Artifact upload.
+- Canonical research Artifact `9995116883`, name `ChatGPTRealtimeProbe-v08-644a31c012f4d832ab581aa7766c3ec365ce155b`; GitHub digest and independently recomputed Artifact ZIP SHA-256 both `04e3b4b84e48bf709f66ae046125082df71a26b185bd290ec086d3a8a3d397cc`.
+- `ChatGPTRealtimeProbe.dylib` SHA-256 `51eb111a1ff8bfcc674eb5946f141918d74f7b4eb661b49c7892e8d5b2e221c1`, matching the Artifact sidecar; Mach-O arm64 dynamic library.
+- Exact user-supplied decrypted official package baseline remains SHA-256 `bb11734434bee912355b1435930ee2a2e3b1078d42049a59649fd8d500938a80`.
+- Repacked TrollStore research IPA `ChatGPT-Official-RealtimeProbe-v08-TrollStore-20260907.ipa` SHA-256 `0d4da358c7b14eff52374627b9bb5ee3313cbb4e0fca48e8039a6493ced8d9f5`; ZIP integrity passes; bundle identity remains `com.openai.chat / 1.2026.202 / 30140022279`, MinimumOSVersion 17.0.
+- Package diff against the exact baseline is exactly: **two added paths** (`ChatGPTEnhancer-0.1.0-alpha60-runtime-image-map.original.dylib` and `ChatGPTRealtimeProbe-v08.json`), **zero removed paths**, **one modified path** (`ChatGPTEnhancer-0.1.0-alpha60-runtime-image-map.dylib`, replaced by exact Probe dylib). Both enhancer dylib entries are mode 0755. Original enhancer backup SHA-256 `aae66c63a7122d301be5025305b92ec63b8da020fdceef22df9bec7cc1acc7b3`.
+
+Exact v0.8 observation behavior:
+
+- Separately classifies `/backend-api/conversation/<opaque>/stop_conversation` as `conversation_stop` rather than generic Detail.
+- Existing Runtime-evidenced `NSURLSessionTask.resume` observation emits Stop-only request structure: method/path shape, request JSON keys, top-level value classes and irreversible 12-hex SHA-256 prefixes only for identifier-like top-level string fields. It never logs raw identifiers or body bytes as content.
+- Existing Runtime-evidenced dispatch-data callback plus ordinary response/completion surfaces emit Stop-only status/MIME/body-byte count and top-level response JSON key/value-class structure when available. Raw response content is never persisted.
+- v0.8 initiates no request, Stop, Detail, polling, timer, retry, resume or watchdog. It only observes traffic produced by the official iOS app.
+
+R2 Human Runtime gate:
+
+1. Install only the exact v0.8 official research IPA. Do not install/use PR #35's official Sync/Reload inspector at the same time because both preserve the same official bundle ID.
+2. Fully terminate/relaunch official ChatGPT, press Probe `清空`, open one ordinary existing conversation, and start one deliberately long response from official iOS.
+3. While visibly generating/reasoning, invoke the official **Stop** control exactly once. Do not manually refresh, issue another Stop, or trigger unrelated navigation until the UI settles.
+4. Wait briefly for the official app's own post-Stop Detail/async-status/terminal traffic, then export only `ChatGPTRealtimeProbe.jsonl`.
+5. Required acceptance evidence before product Stop implementation: exact Stop method/path/request key+value structure and target identity relationship; server HTTP acknowledgement/response structure; post-Stop authoritative Detail/async-status/terminal behavior; whether partial response remains authoritative. No product Stop is authorized from static strings alone.
+
+Deferred b115 menu persistence issue remains bundled for the next independently justified product Candidate. If R2 provides sufficient Stop semantics, that later Stop Candidate may include the stable-menu-host correction in the same exact product scope.
+
+**Evidence ladder:** v0.8 research Code written / exact research scope + dedicated macOS build passed / Artifact produced / dylib + official research IPA independently verified / Stop Human Runtime pending; ChatGPTClient remains b115 Human Runtime Partial / b116 unallocated / Stable-Frozen No.
+
+**Next exact action:** Human Runtime exact v0.8 official Stop once, export JSONL. Do not allocate product b116 until the Stop protocol evidence is sufficient.
+
 ## Official iOS Probe v0.8 Stop evidence preflight — 2026-09-07
 
 Purpose: close the remaining Phase 9 server-Stop evidence gate without changing ChatGPTClient product bits or allocating a product Candidate.

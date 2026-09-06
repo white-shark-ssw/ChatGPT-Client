@@ -1,3 +1,9 @@
+## Current DEV-send-stream Stop research identity — 2026-09-07
+
+- Product remains `DEV-send-stream-0.1.0-b115` / Build115; b116 is unallocated.
+- Current research-only official probe is v0.8 source `644a31c012f4d832ab581aa7766c3ec365ce155b`, Artifact `9995116883`, dylib SHA `51eb111a1ff8bfcc674eb5946f141918d74f7b4eb661b49c7892e8d5b2e221c1`, TrollStore research IPA SHA `0d4da358c7b14eff52374627b9bb5ee3313cbb4e0fca48e8039a6493ced8d9f5`.
+- Purpose is exact official server-Stop protocol observation only; Human Runtime pending. Stable/Frozen No.
+
 ## Current DEV-send-stream Runtime note — b115 2026-09-07
 
 - Canonical b115 remains the current tested package identity. Diagnostics `sha256:59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` confirm Build115 / Candidate b115 / source `2dc0a4155f35` / Release iPhone iOS17.0.

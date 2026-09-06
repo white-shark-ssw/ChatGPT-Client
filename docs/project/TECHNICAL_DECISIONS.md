@@ -1,3 +1,11 @@
+## 2026-09-07 — Prefer Web Rule Lab for proven Stop endpoint before product implementation
+
+Decision: official Web Runtime has established `POST /backend-api/stop_conversation` with HTTP200 JSON acknowledgement. This outranks the earlier static/iOS-derived path assumption. Continue with targeted Web Rule Lab body/response/Detail structural evidence; keep official-iOS Probe v0.8 only as optional cross-validation. Do not allocate the next product Candidate until the Stop target and terminal semantics are proven. When a product Stop Candidate is justified, include the already-deferred stable top-right-menu-host correction in the same exact scope rather than creating a standalone menu build.
+
+## 2026-09-07 — Server Stop must be Runtime-evidenced; Probe v0.8 is observer-only
+
+Decision: keep ChatGPTClient product at b115 while a research-only official-iOS Probe observes the exact `/stop_conversation` request/response structure. Static symbols (`StopConversationRequest`, `/stop_conversation`, `stopConversation(id:requestTrackingData:)`) authorize observation but not a guessed product implementation. Probe v0.8 may record only method/path shape, JSON key/value classes, hashed identifier relationships, status/MIME and response key/value structure. It may not initiate Stop or any request. Product Stop can be implemented only after one exact official Stop Runtime captures enough target/ack/terminal semantics. The deferred b115 menu-host persistence fix may be bundled with that future justified product Candidate; it does not independently justify a build.
+
 ## DEV-send-stream b114 Runtime correction / b115 ownership decision — 2026-09-06
 
 - b114 Runtime proves the visible duplicate user bubble is not a duplicate protected Send. Preserve the one-Send transport owner and correct the projection boundary instead: once current authoritative messages advance beyond the client live snapshot baseline and the new authoritative suffix includes the user turn, the temporary live optimistic user row has fulfilled its purpose and must no longer be presented.

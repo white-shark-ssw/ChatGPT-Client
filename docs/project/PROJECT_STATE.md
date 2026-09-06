@@ -1,3 +1,16 @@
+## DEV-send-stream Web Stop protocol partially proven — 2026-09-07
+
+- Official Web Runtime now proves `POST /backend-api/stop_conversation` -> HTTP200 `application/json` for the user's real Stop action. This supersedes the earlier assumed Web path containing the conversation ID.
+- Stop request body/target and response JSON structure are not yet captured; post-Stop authoritative terminal/partial-answer semantics remain unverified.
+- Product stays b115; no b116 allocation. Next evidence action is targeted body/response capture in Web Rule Lab, followed by authoritative Detail inspection. Official-iOS Probe v0.8 is fallback/cross-validation rather than a prerequisite.
+
+## DEV-send-stream Stop evidence gate — Probe v0.8 package ready 2026-09-07
+
+- Phase 9 remaining true product gap is response-scoped server Stop; conditional b107 clean-EOF / b101 -1005 / b98 WebContent-death events remain evidence debts and are not manufactured as closeout blockers.
+- Research-only Probe v0.8 exact source `644a31c012f4d832ab581aa7766c3ec365ce155b`, CI `34052999350/101539827776`, Artifact `9995116883`, dylib SHA `51eb111a1ff8bfcc674eb5946f141918d74f7b4eb661b49c7892e8d5b2e221c1` is package-qualified for exact official `/stop_conversation` structural observation.
+- Official research IPA SHA `0d4da358c7b14eff52374627b9bb5ee3313cbb4e0fca48e8039a6493ced8d9f5` preserves official identity and differs from the supplied baseline only by Probe substitution, original-enhancer backup and marker.
+- Product remains canonical b115; no b116 allocation. Deferred top-right menu persistence defect remains queued to bundle with the next independently justified product Candidate, preferably Stop if Runtime evidence authorizes it.
+
 ## DEV-send-stream b115 Human Runtime partial / deferred menu persistence — 2026-09-07
 
 - Exact canonical b115 diagnostics `sha256:59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` exercise one protected Send only, authoritative/live optimistic-user handoff (`liveUserPresentationCount` 1 -> 0) and active manual Reload hard-reset/reacquire without a second Send.

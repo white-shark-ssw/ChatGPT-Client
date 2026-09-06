@@ -1,3 +1,15 @@
+## Send / Stream — Web Stop route/method/ack Runtime Positive 2026-09-07
+
+- Official Web Stop has now been observed as `POST /backend-api/stop_conversation` with HTTP200 JSON acknowledgement while a response is active.
+- Body target identity, response payload structure and post-Stop authoritative terminal state are still unverified, so product Server Stop is not yet implemented.
+- Earlier `/backend-api/conversation/<opaque>/stop_conversation` Web assumption is superseded by Runtime evidence. Keep b115 as product baseline and do not allocate b116 yet.
+
+## Send / Stream — Probe v0.8 Stop evidence gate 2026-09-07
+
+- Production response ownership remains b115. Server Stop is not implemented yet because exact method/body/target/ack/partial-content semantics were previously unproven.
+- Probe v0.8 now provides a research-only, privacy-safe observer for exact official `/stop_conversation` request/response structure without initiating any traffic. Source `644a31c012f4...`, research Artifact `9995116883`, dylib SHA `51eb111a...`, official research IPA SHA `0d4da358...`.
+- Next gate is one official-iOS real Stop Runtime capture. Do not synthesize Stop or allocate a product build before that result.
+
 ## DEV-send-stream b115 Runtime follow-up — menu persistence deferred 2026-09-07
 
 - Diagnostics `sha256:59f70c74feb099024ce9be7e9d1650df21f98bd9d02f6bc05051877d16b45bf5` are exact Release Build115 / Candidate b115 / source `2dc0a4155f35` on iPhone iOS17.0.

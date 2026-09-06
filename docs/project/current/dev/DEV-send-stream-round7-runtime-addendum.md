@@ -1,3 +1,45 @@
+## b115 Runtime-regression correction — package ready 2026-09-06
+
+Canonical identity / validation:
+
+- Candidate `DEV-send-stream-0.1.0-b115` / `0.1.0 (115)` is permanently reserved from the b114 Runtime result.
+- Exact product commit `2346c2d4ab26d40ef720b7850ae34316acb3cc62` changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift` after the b115 allocation checkpoint. `RootViewController.swift` is unchanged.
+- Exact package source `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692` changes only `.github/workflows/ios-foundation.yml` after the product commit.
+- Corrected guarded staging `34042595946/101511928494` passed exact b114-product equivalence/b115-uniqueness, durable b114 Runtime recording + b115 allocation, exact two-product-path delta, `git diff --check`, behavior guards, Debug Simulator compile and exact product commit. Earlier staging attempts stopped in pre-product guards and produced neither b115 allocation nor product bits.
+- Formal Push `34042793058/101512446124` and PR `34042795253/101512452040` both passed on exact package source `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692`.
+- Canonical Push Artifact `9992196070`; GitHub Artifact digest and independently recomputed ZIP SHA-256 both `19df7bac1354735cab404d81433b5818380da3e28b73dadaf29cb12f351fbd31`.
+- Canonical IPA `ChatGPTClient-0.1.0-b115-dev-send-stream.ipa`; independently recomputed SHA-256 `073b202ba26e400e7da0777fffa362f55f864be78a394a19258bfd027744dd41`, matching the packaged sidecar.
+- Independent package inspection verifies `com.whitesharkssw.chatgptclient`, `0.1.0 (115)`, Candidate b115, source marker `2dc0a4155f35`, Release, MinimumOSVersion 14.0, UIDeviceFamily `[1,2]`, iPhoneOS and Mach-O arm64.
+
+Exact product behavior / negative scope:
+
+- Manual `同步最新消息` is available during a local active response. Response activity is not a disable condition; only an already-running Detail sync/reload operation temporarily disables Sync. The Sync path remains one authoritative Detail read and never resends/regenerates the user prompt.
+- Manual `重载当前会话` is available while a response is active. b114's active-response menu/handler block is removed. Existing Root hard-reload semantics remain authoritative: release the local covered executor when present, clear the local live projection, perform authoritative Detail reload and then re-arm external observation as needed. This is a local client reset/reacquire action and does not claim or synthesize server Stop.
+- The live optimistic user row is presentation-only until the authoritative Detail suffix beyond `baselineVisibleMessageCount` contains a user turn. Once that authoritative user materializes, the same live generation stops rendering `local-live-user-*` while keeping its assistant reasoning/final presentation. This fixes the b114 duplicate user bubble without text matching, second message authority or any additional Send.
+- b114 active-at-bottom follow-tail behavior remains intact. b112 user/assistant reuse isolation, b113 rich message presentation/Copy and b109-b111 diagnostic retirement remain intact.
+- `RootViewController.swift`, protected Send count, covered official-Web/SSE parsing, b107 accepted clean-EOF same-generation recovery, Repository content/response ownership, auth/read transport and server Stop transport are unchanged.
+- No retry, fallback, timer/watchdog, polling, duplicate Send, regenerate, guessed resume/status, second response store, compatibility shim or fake Stop is added.
+
+Human Runtime gate:
+
+1. Install only canonical b115 Artifact `9992196070` / IPA `073b202ba26e400e7da0777fffa362f55f864be78a394a19258bfd027744dd41` and fresh-launch.
+2. In an existing conversation start one deliberately long local protected response. While reasoning/generation is active, open the menu: both `同步最新消息` and `重载当前会话` must be enabled.
+3. During that active response tap `同步最新消息` once after the server-side user turn has had time to materialize. The UI must continue to show exactly one user bubble for that turn; diagnostics should show the authoritative message count advance while `liveUserPresentationCount` becomes/remains `0` for the overlapping live generation. There must still be exactly one protected Send / one `sendObserved` for the user action and no local `phase=failed` merely because Sync was used.
+4. Regression-check b114 hidden follow-tail: active A left at bottom -> B -> A returns to current latest tail; deliberate upward reading -> B -> A restores the historical anchor.
+5. In a separate long active response tap `重载当前会话`. The action must execute rather than be disabled. It may release the local executor/live projection and reacquire authoritative Detail/external observation, but must not issue a second protected Send and must not be described as server Stop. The visible user turn must still not duplicate after authoritative reload.
+6. Let at least one ordinary protected Send reach natural terminal + authoritative Detail convergence without duplicate user bubbles or `回答失败`. Regression-check b113 link/Markdown/file-reference rendering, normal assistant color and Copy.
+7. Export Diagnostics. If exact accepted post-HTTP200-SSE `stream_ended_without_done` naturally appears, additionally classify inherited b107 same-generation/no-resend clean-EOF recovery; otherwise keep that branch Unexercised.
+
+Remaining evidence boundaries:
+
+- Exact b107 accepted clean EOF remains Unexercised until the event naturally occurs; b115 does not alter that code.
+- Server Stop remains unimplemented. Existing Reload is explicitly a local hard reset/reacquire and must not be used as evidence that `/stop_conversation` semantics are known.
+- b101 exact `-1005` renewal and natural b98 external WebContent-death remain conditional evidence debts only and are not manufactured as closeout blockers.
+
+**Evidence ladder:** Code written / exact scope + `git diff --check` + Debug Simulator passed / Push CI passed / PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / overall `DEV-send-stream` Runtime Partial / Stable-Frozen No.
+
+**Next exact action:** install only canonical b115 and execute the Human Runtime gate above. Do not allocate b116 before b115 Runtime unless a new independent blocker makes b115 untestable.
+
 ## b114 Human Runtime result / b115 allocation — 2026-09-06
 
 Latest explicit user Runtime outranks the earlier b114 test plan:

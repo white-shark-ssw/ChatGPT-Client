@@ -1,3 +1,9 @@
+## DEV-send-stream b115 package-qualified Runtime correction — 2026-09-06
+
+- Product `2346c2d4ab26d40ef720b7850ae34316acb3cc62` / package `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692` / Artifact `9992196070` is the current Send-owned Human Runtime candidate.
+- Exact scope: restore active Sync/Reload availability and suppress only the optimistic live-user presentation after authoritative user materialization beyond `baselineVisibleMessageCount`; preserve b114 follow-tail, b112 reuse isolation, b113 rich presentation and all protected Send/SSE/recovery owners.
+- Simulator + Push + PR CI + Artifact/package verification are complete. Human Runtime pending; clean EOF and server Stop remain unverified; Stable-Frozen No.
+
 ## DEV-send-stream b115 Runtime-regression correction allocated — 2026-09-06
 
 - Module remains Active / Runtime Partial overall / Stable-Frozen No.

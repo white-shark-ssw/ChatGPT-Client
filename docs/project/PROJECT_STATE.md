@@ -1,3 +1,10 @@
+## DEV-send-stream b115 package-qualified Runtime correction — 2026-09-06
+
+- Canonical b115 product `2346c2d4ab26d40ef720b7850ae34316acb3cc62` / package `2dc0a4155f3549f32b1b08a9e4d8e6fb87495692` passed corrected staging `34042595946/101511928494`, same-source Push `34042793058/101512446124` and PR `34042795253/101512452040` CI.
+- Artifact `9992196070` / ZIP `sha256:19df7bac1354735cab404d81433b5818380da3e28b73dadaf29cb12f351fbd31` / IPA `sha256:073b202ba26e400e7da0777fffa362f55f864be78a394a19258bfd027744dd41` independently verify Build115 / Candidate b115 / source `2dc0a4155f35` / Release / iOS14+ / `[1,2]` / arm64.
+- b115 corrects two b114 Runtime regressions only: optimistic user presentation yields to the authoritative user turn beyond the live baseline, and active reasoning/generation no longer disables manual Sync/Reload. b114 follow-tail and all Send/SSE/Repository/recovery owners remain unchanged.
+- Human Runtime is pending. Exact accepted clean EOF and server Stop remain separately evidence-gated; Stable-Frozen No.
+
 ## DEV-send-stream b114 Runtime Partial/Negative -> b115 allocated — 2026-09-06
 
 - b114 protected Send count remains correct in the supplied Runtime: one live generation / one protected Send submit / one `sendObserved` / one HTTP200 SSE. The visible duplicated user bubble is a Native authoritative+optimistic presentation overlap.

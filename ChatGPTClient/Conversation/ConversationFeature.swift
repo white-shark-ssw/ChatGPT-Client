@@ -2560,7 +2560,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         updateHeaderMetadata()
         updateAnswerJumpButton()
         let totalDurationMs = (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
-        diagnostics.info(category: "ui", name: "messagePresentation.rebuilt", fields: ["authoritativeMessageCount": String(messages.count), "presentationRowCount": String(messagePresentation.rows.count), "chunkedMessageCount": String(messagePresentation.chunkedMessageCount), "chunkCharacterLimit": String(ConversationMessagePresentationProjection.chunkCharacterLimit), "maxChunkCharacterCount": String(messagePresentation.maxChunkCharacterCount), "geometryReused": geometryReused ? "true" : "false", "geometryMode": geometryReused ? "resident_cache" : "cooperative_main_queue", "geometryDurationMs": String(format: "%.2f", geometryDurationMs), "durationMs": String(format: "%.2f", totalDurationMs), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
+        diagnostics.info(category: "ui", name: "messagePresentation.rebuilt", fields: ["authoritativeMessageCount": String(messages.count), "presentationRowCount": String(messagePresentation.rows.count), "livePresentationRowCount": String(liveMessagePresentation.rows.count), "liveUserPresentationCount": String(livePresentationMessages.filter { $0.role == .user }.count), "chunkedMessageCount": String(messagePresentation.chunkedMessageCount), "chunkCharacterLimit": String(ConversationMessagePresentationProjection.chunkCharacterLimit), "maxChunkCharacterCount": String(messagePresentation.maxChunkCharacterCount), "geometryReused": geometryReused ? "true" : "false", "geometryMode": geometryReused ? "resident_cache" : "cooperative_main_queue", "geometryDurationMs": String(format: "%.2f", geometryDurationMs), "durationMs": String(format: "%.2f", totalDurationMs), "layoutWidthPoints": String(format: "%.2f", presentationLayoutWidth), "contentHeightPoints": String(format: "%.2f", presentationContentHeight)])
         completion?()
     }
 
@@ -2585,7 +2585,9 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         case .failed: bodyText = "回答失败"
         }
     }
-    let userMessage = snapshot.promptText.isEmpty ? nil : ConversationMessage(id: "local-live-user-\(snapshot.generation)", role: .user, text: snapshot.promptText, responseTimeline: [], reasoningDurationSeconds: nil, createTime: nil)
+    let authoritativeSuffixStart = min(snapshot.baselineVisibleMessageCount, messages.count)
+    let authoritativeUserMaterialized = !snapshot.promptText.isEmpty && messages.dropFirst(authoritativeSuffixStart).contains { $0.role == .user }
+    let userMessage = snapshot.promptText.isEmpty || authoritativeUserMaterialized ? nil : ConversationMessage(id: "local-live-user-\(snapshot.generation)", role: .user, text: snapshot.promptText, responseTimeline: [], reasoningDurationSeconds: nil, createTime: nil)
     let assistantMessage = ConversationMessage(id: "local-live-response-\(snapshot.generation)", role: .assistant, text: bodyText, responseTimeline: snapshot.timeline, reasoningDurationSeconds: snapshot.reasoningDurationSeconds, createTime: nil)
     synchronizeLiveReasoningDisclosure(snapshot: snapshot, messageID: assistantMessage.id, conversationID: id)
     livePresentationMessages = userMessage.map { [$0, assistantMessage] } ?? [assistantMessage]
@@ -2632,6 +2634,7 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         updateAnswerJumpButton()
         var fields = repository.diagnosticsFields(for: id)
         fields["livePresentationRowCount"] = String(liveMessagePresentation.rows.count)
+        fields["liveUserPresentationCount"] = String(livePresentationMessages.filter { $0.role == .user }.count)
         fields["liveContentHeightPoints"] = String(format: "%.2f", livePresentationContentHeight)
         fields["followedPhysicalBottom"] = wasAtPhysicalBottom ? "true" : "false"
         diagnostics.info(category: "ui", name: "liveResponse.presentationApplied", fields: fields)
@@ -2857,11 +2860,8 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
         let selectedID = repository.selectedConversationID
         let operationKind = selectedID.flatMap { repository.detailOperationSnapshot(for: $0)?.kind }
         let recoveryInProgress = operationKind == .sync || operationKind == .reload
-        let liveSnapshot = selectedID.flatMap { repository.liveResponse(for: $0) }
-        let responseActive = liveSnapshot?.phase.isActive == true
-        let localResponseActive = responseActive && !(liveSnapshot?.promptText.isEmpty ?? true)
-        let canSync = selectedID != nil && !recoveryInProgress && !localResponseActive
-        let canReload = selectedID != nil && !recoveryInProgress && !responseActive
+        let canSync = selectedID != nil && !recoveryInProgress
+        let canReload = selectedID != nil
         let syncAttributes: UIMenuElement.Attributes = canSync ? [] : [.disabled]
         let reloadAttributes: UIMenuElement.Attributes = canReload ? [] : [.disabled]
         let syncAction = UIAction(title: "同步最新消息", image: UIImage(systemName: "arrow.triangle.2.circlepath"), attributes: syncAttributes) { [weak self] _ in self?.syncLatestMessages() }
@@ -2871,7 +2871,6 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     private func syncLatestMessages() {
         guard let id = repository.selectedConversationID else { return }
-        if let snapshot = repository.liveResponse(for: id), snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }
         if let kind = repository.detailOperationSnapshot(for: id)?.kind, kind == .sync || kind == .reload { return }
         let previousMessages = messages
         let previousLatestUserID = previousMessages.last(where: { $0.role == .user })?.id
@@ -3133,13 +3132,6 @@ final class ConversationDetailViewController: UIViewController, UITableViewDataS
 
     @objc private func reloadCurrentConversation() {
         guard let id = repository.selectedConversationID else { return }
-        guard repository.liveResponse(for: id)?.phase.isActive != true else {
-            var fields = repository.diagnosticsFields(for: id)
-            fields["reason"] = "active_response"
-            diagnostics.info(category: "navigation", name: "conversation.detailReload.blocked", fields: fields)
-            updateConversationMenu()
-            return
-        }
         captureScrollAnchor(for: id)
         onManualReloadRequested?(id)
         presentationGeneration += 1

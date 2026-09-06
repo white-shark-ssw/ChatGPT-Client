@@ -1,3 +1,10 @@
+## DEV-send-stream b114 Runtime Partial/Negative -> b115 allocated — 2026-09-06
+
+- b114 protected Send count remains correct in the supplied Runtime: one live generation / one protected Send submit / one `sendObserved` / one HTTP200 SSE. The visible duplicated user bubble is a Native authoritative+optimistic presentation overlap.
+- b114 follow-tail behavior is retained; user reports the rest of this test has no problem.
+- b114 active Sync/Reload disable is rejected by explicit product requirement. Active response alone must not disable either manual action.
+- `DEV-send-stream-0.1.0-b115` / Build115 is permanently reserved for the minimum presentation/menu correction. Product/CI/Artifact/Runtime pending; Stable-Frozen No.
+
 ## DEV-send-stream b114 package-qualified closeout gate — 2026-09-06
 
 - Canonical b114 product `673f2905ddc7a5aba23317e81e75677b2e81edb3` / package `ef98a038a165bdcef90b0abea67c25b7ef96e57f` passed guarded staging `33995851115/101386150523`, same-source Push `33995968361/101386467170` and PR `33995970064/101386471305` CI.

@@ -1,3 +1,35 @@
+## b114 Human Runtime result / b115 allocation — 2026-09-06
+
+Latest explicit user Runtime outranks the earlier b114 test plan:
+
+- Canonical b114 remains `DEV-send-stream-0.1.0-b114` / product `673f2905ddc7a5aba23317e81e75677b2e81edb3` / package `ef98a038a165bdcef90b0abea67c25b7ef96e57f` / Artifact `9978074978` / IPA `sha256:f2c793f8eeff3f83d30fa9fec69ee7953ff7f3e431c07a49b7b9b20931a6b192`.
+- User Runtime reports the tested b114 run is otherwise acceptable, but the sent user message is visibly duplicated and active reasoning/generation disables Sync/Reload contrary to the product rule established from the start.
+- Diagnostics classify the duplicate as **presentation duplication, not duplicate Send**: the tested run has one client live generation, one covered protected-Send request/submit/`sendObserved`, and one HTTP200 SSE. During the active run authoritative Detail advances past the live snapshot baseline and materializes the user turn while the same live snapshot still renders its local optimistic user row.
+- b114 active-at-bottom follow-tail instrumentation is exercised (`scrollAnchor.followTailPreserved`) and the user reports no other problem in this test. Preserve that owner change.
+- b114's active-response Sync/Reload disable is rejected. The older Hard Reload invariant plus the user's latest explicit requirement are authoritative: response activity alone must never disable manual Sync or Reload. Sync remains one authoritative Detail reconciliation and never resends. Reload remains a local hard reset/reload action and never claims server Stop.
+- Exact b107 post-acceptance `stream_ended_without_done` did not occur in this run and remains Unexercised.
+
+b115 is now permanently reserved before product writes:
+
+- Candidate / Build: `DEV-send-stream-0.1.0-b115` / `0.1.0 (115)`.
+- Intended exact product scope: `ChatGPTClient.xcodeproj/project.pbxproj` + `ChatGPTClient/Conversation/ConversationFeature.swift` only.
+- Duplicate-user correction uses the existing `ConversationLiveResponseSnapshot.baselineVisibleMessageCount`: once the installed authoritative message suffix beyond that baseline contains the user turn, stop rendering only the live optimistic user row. Keep the same live generation/timeline/final owner; do not text-match, mutate authoritative messages or create another store.
+- Active-response menu correction: Sync remains available when response activity is the only blocker; existing detail-operation exclusion may still prevent overlapping Sync. Reload remains available whenever a conversation is selected, including during an active response and an in-flight Detail operation, matching the existing hard-reset replacement semantics.
+- `RootViewController.swift`, protected Send/SSE grammar, b107 recovery, Repository response authority, b112 role isolation, b113 rich rendering and server Stop remain unchanged.
+- No retry, resend, regenerate, timer/watchdog, polling, guessed resume/status, second response store or fake Stop is authorized.
+
+Batch recovery point:
+
+- Known baseline before Batch A: `dev/send-stream-20260829@b26ed7bdcbd05680ca12130daad253c263c2b3a1`; PR #29 open against `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`; b115 absent.
+- Batch A: record this b114 Runtime result, correct durable Sync/Reload rules and reserve b115 in checkpoint/index/state/module/profile/rules/decisions/preflight; commit before any b115 product write.
+- Batch B: apply exactly Build/Candidate + `ConversationFeature.swift` presentation/menu correction, run `git diff --check` and Debug Simulator compile, commit/push one exact product source.
+- Batch C: bind formal package workflow only after the exact b115 product commit is known; require same-source Push + PR CI, canonical Artifact and independent package identity/hash verification; then record package evidence and hand one IPA to Human Runtime.
+- Recovery must not replay b114, modify PR #35, alter `RootViewController.swift`, or touch protected Send/SSE/recovery/Stop transport.
+
+**Evidence ladder now:** b114 Code/CI/Artifact/package verified; b114 Human Runtime Partial/Negative for the combined closeout scope; b115 allocated only / product pending / Runtime pending / Stable-Frozen No.
+
+**Next exact action:** execute Batch B after this allocation commit succeeds. Do not allocate b116 before b115 Human Runtime unless a new independent blocker makes b115 untestable.
+
 ## b114 Phase 9 closeout — package ready 2026-09-06
 
 Canonical identity / validation:

@@ -1,3 +1,11 @@
+## Active-response Sync/Reload and optimistic-user authority — b115 override 2026-09-06
+
+- Latest explicit user requirement supersedes b114's active-response disable wording: an active local or external response by itself must **not** disable `同步最新消息` or `重载当前会话`.
+- Manual Sync remains exactly one authoritative Conversation Detail reconciliation and never resends/regenerates the prompt. Existing same-target Detail-operation ownership may reject/serialize overlapping Detail work; response activity itself is not a Sync blocker.
+- Manual Reload remains enabled whenever a current conversation is selected, including while a response or another Detail operation is active. It keeps the existing hard-reset semantics: release/invalidate current covered observation/executor, clear current Native live projection, replace the current Detail operation and load one authoritative Detail. It never claims that the remote server generation was stopped.
+- For a client-owned live response, `baselineVisibleMessageCount` is the authority boundary for the optimistic user row. If installed authoritative messages beyond that baseline already contain the user turn, suppress only the local live-user presentation row. Keep the live assistant/reasoning/final projection on the same Repository generation until normal terminal/authoritative reconciliation clears it.
+- Never text-match prompts for deduplication, delete authoritative messages, resend, retry, poll, add a timer/watchdog, synthesize Stop, or introduce another response/message store to solve this presentation overlap.
+
 ## Phase 9 active-response navigation/reload closeout — b114 test candidate 2026-09-06
 
 - While a conversation has an active Repository live response, leaving it at the current physical bottom preserves follow-tail by keeping no historical anchor; returning uses the existing latest-message path. Deliberate upward reading continues to save/restore the existing semantic message/chunk anchor. No parallel follow-tail dictionary or global streaming flag is allowed.

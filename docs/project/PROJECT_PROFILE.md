@@ -1,3 +1,9 @@
+## Current DEV-send-stream candidate override — b115 allocated 2026-09-06
+
+- Current next Human Runtime candidate identity is reserved as `DEV-send-stream-0.1.0-b115` / `0.1.0 (115)`; product/package source pending guarded staging.
+- Trigger is b114 Human Runtime: one protected Send remains correct, but Native duplicates the user row after authoritative Detail materializes it and b114 incorrectly disables Sync/Reload during active reasoning/generation.
+- b115 exact product scope is Xcode Build/Candidate + `ConversationFeature.swift`; no Root/Send/SSE/recovery/Stop transport change. Stable-Frozen No.
+
 ## Current DEV-send-stream package-qualified closeout candidate — b114 2026-09-06
 
 - `DEV-send-stream-0.1.0-b114` / `0.1.0 (114)` is canonical at product `673f2905ddc7a5aba23317e81e75677b2e81edb3`, package `ef98a038a165bdcef90b0abea67c25b7ef96e57f`, Artifact `9978074978`, ZIP `sha256:f36fb5ebe3dc8db6b41ab891e66d337fa9ebcd17b6936440490f113f0c412aa9`, IPA `sha256:f2c793f8eeff3f83d30fa9fec69ee7953ff7f3e431c07a49b7b9b20931a6b192`.

@@ -1,3 +1,9 @@
+## DEV-send-stream b115 Runtime-regression correction allocated — 2026-09-06
+
+- Module remains Active / Runtime Partial overall / Stable-Frozen No.
+- b114 Runtime: one protected Send preserved; follow-tail accepted on the tested path; duplicate user presentation and active Sync/Reload disabling rejected.
+- b115 Build115 is reserved for authoritative-vs-optimistic user-row ownership plus restoration of active-response Sync/Reload availability. Exact clean EOF remains separately Unexercised.
+
 ## DEV-send-stream b114 package-qualified Phase 9 closeout — 2026-09-06
 
 - Product `673f2905ddc7a5aba23317e81e75677b2e81edb3` / package `ef98a038a165bdcef90b0abea67c25b7ef96e57f` / Artifact `9978074978` is the current Send-owned Human Runtime candidate.

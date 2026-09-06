@@ -1,3 +1,11 @@
+## DEV-send-stream b114 Runtime correction / b115 ownership decision — 2026-09-06
+
+- b114 Runtime proves the visible duplicate user bubble is not a duplicate protected Send. Preserve the one-Send transport owner and correct the projection boundary instead: once current authoritative messages advance beyond the client live snapshot baseline and the new authoritative suffix includes the user turn, the temporary live optimistic user row has fulfilled its purpose and must no longer be presented.
+- Do not deduplicate by prompt text. `baselineVisibleMessageCount` plus the already-installed authoritative message sequence is the existing identity/ownership evidence and requires no new state dictionary.
+- Reject b114's active-response control disable. Response activity alone never disables manual Sync or Reload. Sync remains an authoritative read/reconcile action; Reload remains the pre-existing local hard reset + replacement Detail action and is not server Stop.
+- Preserve b114 follow-tail behavior, b112 role-isolated cell reuse, b113 rich presentation, TD-029 one protected Send, b107 same-generation accepted-client recovery and `ConversationRepository` response/content authority.
+- b115 may change only Xcode Build/Candidate plus `ConversationFeature.swift` for these two Runtime-selected corrections. No `RootViewController.swift`, retry, resend, timer/watchdog, polling, Stop synthesis or second store change is authorized.
+
 ## DEV-send-stream Phase 9 follow-tail / active Reload closeout decision — b114 2026-09-06
 
 - Do not add a second follow-tail state store. The existing semantic scroll-anchor owner already represents historical intent; absence of an anchor already means return to latest. Therefore an active displayed conversation left at the existing physical-bottom threshold must not persist a historical anchor, while any deliberate upward position continues to persist message ID + chunk + relative offset.

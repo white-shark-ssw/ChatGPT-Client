@@ -193,9 +193,13 @@ Exact near-bottom threshold is a Runtime tuning value, not a preflight guess.
 
 Existing contract remains: Sync one conversation and never sends; Reload one conversation and never sends/regenerates; navigation invokes neither.
 
-Do not prechoose automatic Stop-before-Sync/Reload, duplicate stream recovery or timer-deferred retry.
+Latest explicit product requirement is authoritative: response activity alone must not disable either manual control. Manual Sync may issue one authoritative Conversation Detail reconciliation while a local/external response is active; it never resends the prompt. Existing same-target Detail-operation ownership may still prevent overlapping Sync work.
 
-For the first safe production Candidate, if the exact active-response reconciliation semantics are not yet proven, it is acceptable to disable an unsafe Sync/Reload action while that conversation owns an active response, provided this is explicit UI behavior and not a hidden retry/fallback.
+Manual Reload remains available whenever a current conversation is selected, including while a response or another Detail operation is active. It is a Native hard reset: release/invalidate the current covered executor/observation, clear the current live projection, replace the target Detail operation and load one authoritative Detail. This local action never claims the server response was stopped.
+
+When active Sync/Detail materializes the client-owned user turn before the live response terminal, the authoritative message suffix beyond the live snapshot baseline owns that user presentation. Suppress only the redundant optimistic live-user row; keep the same Repository response generation for reasoning/final until normal reconciliation.
+
+Do not prechoose automatic Stop-before-Sync/Reload, duplicate stream recovery, text-based prompt dedupe, resend, polling or timer-deferred retry.
 
 ## Stop evidence gate
 

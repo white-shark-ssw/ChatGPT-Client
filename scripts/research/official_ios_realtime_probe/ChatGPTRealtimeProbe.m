@@ -3,7 +3,7 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString * const RPTProbeVersion = @"0.7";
+static NSString * const RPTProbeVersion = @"0.8";
 static NSString * const RPTLogName = @"ChatGPTRealtimeProbe.jsonl";
 static const NSUInteger RPTMaxInspectableJSONBytes = 64 * 1024;
 
@@ -74,6 +74,23 @@ static NSArray<NSString *> *RPTSortedKeys(NSDictionary *dictionary) {
     return keys;
 }
 
+static NSDictionary<NSString *, NSString *> *RPTValueClassesForDictionary(NSDictionary *dictionary) {
+    NSMutableDictionary<NSString *, NSString *> *classes = [NSMutableDictionary dictionary];
+    for (NSString *key in RPTSortedKeys(dictionary)) classes[key] = RPTValueClass(dictionary[key]);
+    return classes;
+}
+
+static NSDictionary<NSString *, NSString *> *RPTIdentifierHashesForDictionary(NSDictionary *dictionary) {
+    NSMutableDictionary<NSString *, NSString *> *hashes = [NSMutableDictionary dictionary];
+    for (NSString *key in RPTSortedKeys(dictionary)) {
+        NSString *lower = key.lowercaseString;
+        BOOL identifierKey = [lower hasSuffix:@"id"] || [lower containsString:@"_id"] || [lower containsString:@"node"];
+        id value = dictionary[key];
+        if (identifierKey && [value isKindOfClass:[NSString class]] && [(NSString *)value length]) hashes[key] = RPTHashString(value);
+    }
+    return hashes;
+}
+
 static void RPTWriteEvent(NSString *name, NSDictionary *fields) {
     if (!name.length) return;
     NSMutableDictionary *event = [NSMutableDictionary dictionaryWithDictionary:fields ?: @{}];
@@ -135,6 +152,7 @@ static NSString *RPTPathKind(NSString *path) {
     if (parts.count >= 2 && [parts[0] isEqualToString:@"backend-api"]) {
         if ([parts[1] isEqualToString:@"conversation"] && parts.count >= 3) {
             if (parts.count >= 4 && [parts[3] isEqualToString:@"stream_status"]) return @"conversation_stream_status";
+            if (parts.count >= 4 && [parts[3] isEqualToString:@"stop_conversation"]) return @"conversation_stop";
             return @"conversation_detail";
         }
         if ([parts[1] isEqualToString:@"conversations"]) return @"conversations";
@@ -221,6 +239,35 @@ static NSMutableDictionary *RPTResponseFields(NSURLRequest *request, NSURLRespon
     if ([json isKindOfClass:[NSDictionary class]]) fields[@"responseKeys"] = RPTSortedKeys(json);
     fields[@"responseClass"] = RPTValueClass(json);
     if (error) { fields[@"errorDomain"] = error.domain ?: @""; fields[@"errorCode"] = @(error.code); }
+    return fields;
+}
+
+static BOOL RPTIsConversationStopRequest(NSURLRequest *request) {
+    return [[RPTPathKind(request.URL.path ?: @"") lowercaseString] isEqualToString:@"conversation_stop"];
+}
+
+static NSMutableDictionary *RPTConversationStopRequestFields(NSURLRequest *request) {
+    NSMutableDictionary *fields = RPTRequestFields(request);
+    if (request.HTTPBody) fields[@"requestBodyBytes"] = @(request.HTTPBody.length);
+    id json = RPTJSONObjectFromData(request.HTTPBody);
+    if ([json isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dictionary = json;
+        fields[@"requestValueClasses"] = RPTValueClassesForDictionary(dictionary);
+        NSDictionary *hashes = RPTIdentifierHashesForDictionary(dictionary);
+        if (hashes.count) fields[@"requestIdentifierHashes"] = hashes;
+    }
+    return fields;
+}
+
+static NSMutableDictionary *RPTConversationStopResponseFields(NSURLRequest *request, NSURLResponse *response, NSData *data, NSError *error) {
+    NSMutableDictionary *fields = RPTResponseFields(request, response, data, error);
+    id json = RPTJSONObjectFromData(data);
+    if ([json isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dictionary = json;
+        fields[@"responseValueClasses"] = RPTValueClassesForDictionary(dictionary);
+        NSDictionary *hashes = RPTIdentifierHashesForDictionary(dictionary);
+        if (hashes.count) fields[@"responseIdentifierHashes"] = hashes;
+    }
     return fields;
 }
 
@@ -458,7 +505,9 @@ static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, 
     if (!original) return nil;
     NSURLSessionDataTask *(*function)(id, SEL, NSURLRequest *, void (^)(NSData *, NSURLResponse *, NSError *)) = (void *)original;
     BOOL candidate = RPTShouldObserveURL(request.URL);
+    BOOL stopCandidate = RPTIsConversationStopRequest(request);
     if (candidate) RPTWriteEvent(@"http.observed.request", RPTRequestFields(request));
+    if (stopCandidate) RPTWriteEvent(@"http.conversation_stop.request", RPTConversationStopRequestFields(request));
     return function(self, _cmd, request, ^(NSData *data, NSURLResponse *response, NSError *error) {
         id json = RPTJSONObjectFromData(data);
         NSArray *keys = [json isKindOfClass:[NSDictionary class]] ? RPTSortedKeys(json) : @[];
@@ -468,6 +517,7 @@ static NSURLSessionDataTask *RPTSessionDataRequestCompletion(id self, SEL _cmd, 
             if ([lower containsString:@"websocket"] || [lower isEqualToString:@"ws_url"] || [lower isEqualToString:@"wsurl"]) { websocketResponse = YES; break; }
         }
         if (candidate || websocketResponse) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, data, error));
+        if (stopCandidate) RPTWriteEvent(@"http.conversation_stop.response", RPTConversationStopResponseFields(request, response, data, error));
         if (completionHandler) completionHandler(data, response, error);
     });
 }
@@ -562,6 +612,7 @@ static void RPTDelegateDidReceiveData(id self, SEL _cmd, NSURLSession *session, 
 static void RPTDelegateDidReceiveResponse(id self, SEL _cmd, NSURLSession *session, NSURLSessionDataTask *dataTask, NSURLResponse *response, void (^completionHandler)(NSURLSessionResponseDisposition)) {
     NSURLRequest *request = dataTask.currentRequest ?: dataTask.originalRequest;
     if (RPTShouldObserveURL(request.URL ?: response.URL)) RPTWriteEvent(@"http.observed.response", RPTResponseFields(request, response, nil, nil));
+    if (RPTIsConversationStopRequest(request)) RPTWriteEvent(@"http.conversation_stop.response", RPTConversationStopResponseFields(request, response, nil, nil));
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return;
     void (*function)(id, SEL, NSURLSession *, NSURLSessionDataTask *, NSURLResponse *, void (^)(NSURLSessionResponseDisposition)) = (void *)original;
@@ -571,6 +622,7 @@ static void RPTDelegateDidReceiveResponse(id self, SEL _cmd, NSURLSession *sessi
 static void RPTDelegateDidComplete(id self, SEL _cmd, NSURLSession *session, NSURLSessionTask *task, NSError *error) {
     NSURLRequest *request = task.currentRequest ?: task.originalRequest;
     if (RPTShouldObserveURL(request.URL)) RPTWriteEvent(@"http.observed.complete", RPTResponseFields(request, task.response, nil, error));
+    if (RPTIsConversationStopRequest(request)) RPTWriteEvent(@"http.conversation_stop.complete", RPTConversationStopResponseFields(request, task.response, nil, error));
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return;
     void (*function)(id, SEL, NSURLSession *, NSURLSessionTask *, NSError *) = (void *)original;
@@ -630,8 +682,35 @@ static void RPTObserveConversationDetailDispatchData(NSURLSessionDataTask *task,
     });
 }
 
+static void RPTObserveConversationStopDispatchData(NSURLSessionDataTask *task, dispatch_data_t dispatchData) {
+    if (!task || !dispatchData) return;
+    NSURLRequest *request = task.currentRequest ?: task.originalRequest;
+    if (!RPTIsConversationStopRequest(request)) return;
+    __block BOOL emittedStructured = NO;
+    dispatch_data_apply(dispatchData, ^bool(__unused dispatch_data_t region, __unused size_t offset, const void *buffer, size_t size) {
+        if (!buffer || size == 0) return true;
+        NSData *chunk = [NSData dataWithBytesNoCopy:(void *)buffer length:size freeWhenDone:NO];
+        id json = RPTJSONObjectFromData(chunk);
+        if ([json isKindOfClass:[NSDictionary class]]) {
+            NSMutableDictionary *fields = RPTConversationStopResponseFields(request, task.response, chunk, nil);
+            fields[@"taskClass"] = NSStringFromClass(object_getClass(task)) ?: @"";
+            RPTWriteEvent(@"http.conversation_stop.response_data", fields);
+            emittedStructured = YES;
+            return false;
+        }
+        return true;
+    });
+    if (!emittedStructured) {
+        NSMutableDictionary *fields = RPTConversationStopResponseFields(request, task.response, nil, nil);
+        fields[@"taskClass"] = NSStringFromClass(object_getClass(task)) ?: @"";
+        fields[@"dispatchDataPresent"] = @YES;
+        RPTWriteEvent(@"http.conversation_stop.response_data", fields);
+    }
+}
+
 static void RPTTaskDidReceiveDispatchData(id self, SEL _cmd, dispatch_data_t dispatchData, id completionHandler) {
     RPTObserveConversationDetailDispatchData((NSURLSessionDataTask *)self, dispatchData);
+    RPTObserveConversationStopDispatchData((NSURLSessionDataTask *)self, dispatchData);
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return;
     void (*function)(id, SEL, dispatch_data_t, id) = (void *)original;
@@ -735,6 +814,11 @@ static void RPTTaskResume(id self, SEL _cmd) {
         NSMutableDictionary *fields = RPTRequestFields(request);
         fields[@"taskClass"] = NSStringFromClass(object_getClass(self)) ?: @"";
         RPTWriteEvent(@"http.task.resume", fields);
+        if (RPTIsConversationStopRequest(request)) {
+            NSMutableDictionary *stopFields = RPTConversationStopRequestFields(request);
+            stopFields[@"taskClass"] = NSStringFromClass(object_getClass(self)) ?: @"";
+            RPTWriteEvent(@"http.conversation_stop.request", stopFields);
+        }
     }
     IMP original = RPTOriginalIMP(self, _cmd);
     if (!original) return;

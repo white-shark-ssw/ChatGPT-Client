@@ -1,8 +1,10 @@
 # Official iOS Realtime Probe
 
-Current research revision: **Probe v0.7**.
+Current research revision: **Probe v0.8**.
 
 Research-only observer for the user-supplied TrollStore ChatGPT package. It is not linked into ChatGPTClient and is not a product Candidate.
+
+Probe v0.8 adds one exact **official Stop structural gate** on top of the already-evidenced v0.7 transport observers. It recognizes only `/backend-api/conversation/<opaque>/stop_conversation`. For that route it records the request method/path shape, top-level JSON keys and value classes, irreversible short hashes for top-level identifier-like string fields, response status/MIME and response JSON key/value structure where available. It never records raw IDs or request/response content, and it never initiates Stop or any other request.
 
 v0.7 hooks only the Runtime-evidenced private selector `_task_onqueue_didReceiveDispatchData:completionHandler:` on NSURLSession task subclasses. It scans dispatch-data bytes only for authoritative Conversation Detail and emits only the safe `conversation_async_status` enum through the existing observer. It does not initiate requests, polling, timers, retries, resume calls, or content logging.
 
@@ -38,13 +40,13 @@ Inject the built dylib into the supplied official ChatGPT TrollStore app with th
 
 After injection, fully terminate and relaunch ChatGPT. The probe writes `ChatGPTRealtimeProbe.jsonl` into the app Documents directory and mirrors only event names to unified logs. The in-app `清空` control deletes prior JSONL content and writes a fresh `probe.log_cleared` marker before the next test.
 
-## Decisive test
+## Decisive Stop test
 
-1. Launch the injected official app and open/keep conversation A available.
-2. Confirm `probe.loaded` and WebSocket setup events exist in `ChatGPTRealtimeProbe.jsonl`.
-3. From another platform, send one deliberately long text turn to A.
-4. Let the response complete without manually refreshing A on the official iOS app.
-5. Export/copy only `ChatGPTRealtimeProbe.jsonl` for analysis.
+1. Install only the exact v0.8 research package, fully terminate/relaunch the official app, press `清空`, and open one normal existing conversation.
+2. Start one deliberately long response from the official iOS app itself.
+3. While the response is visibly active, invoke the official Stop control exactly once.
+4. Wait for the official UI to settle and for any official post-Stop Detail/async-status traffic to occur naturally. Do not manually refresh or issue a second Stop.
+5. Export/copy only `ChatGPTRealtimeProbe.jsonl` for analysis. Required evidence is `http.conversation_stop.*` request/response structure plus the app's naturally observed post-Stop terminal/Detail behavior.
 
 Probe v0.5 Runtime reconfirmed Native Conversation Detail polling but emitted no `http.conversation_detail.async_status`, proving the public delegate-data hook did not cover the Swift-async Detail response path. The decisive v0.6 output is one `probe.detail_task_callback_surface` event identifying the actual `__NSCFLocalDataTask` callback surface structurally. Do not infer field absence from the v0.5 observer miss.
 

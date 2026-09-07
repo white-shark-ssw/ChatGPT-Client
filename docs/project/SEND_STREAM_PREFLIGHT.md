@@ -1,3 +1,9 @@
+## Current Stop evidence gate — official Detail observation required 2026-09-08
+
+- Synthetic post-Stop Detail replay is rejected as an evidence method after HTTP401 despite reusing an officially observed plural Detail URL. Cookies/`credentials: include` alone do not reproduce the official page's complete request context.
+- Observe the official page's own `GET /backend-api/conversations/<id>` and clone its response instead. Do not guess authorization/challenge headers.
+- Stop request/ack contract remains proven; authoritative terminal/partial-answer semantics remain the only Stop evidence gate before product implementation.
+
 ## Current Stop evidence gate — Web request/ack contract proven 2026-09-08
 
 Runtime authority for the tested official Web Stop is now:

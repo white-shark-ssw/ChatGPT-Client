@@ -1,3 +1,21 @@
+## Web Rule Lab post-Stop Detail synthetic-read auth boundary — 2026-09-08
+
+Latest user-run post-Stop Detail inspection using a manually reconstructed request to the previously observed official plural Detail URL returned HTTP401 JSON with only top-level `detail`. This result is **Inconclusive for Stop semantics** and must not be treated as a stopped-response failure.
+
+What it proves:
+
+- the prior 404 was a probe endpoint mistake and is superseded;
+- reusing the official plural Detail URL with only a synthetic `fetch(..., {credentials:"include"})` is insufficient to reproduce the official Web request authorization/context;
+- earlier official Web traffic already proved that the page itself can request `/backend-api/conversations/<opaque>` successfully with HTTP200, so the correct next evidence path is to observe the official page's own next Detail fetch rather than synthesize headers/challenge context.
+
+What remains unchanged:
+
+- Stop contract is still Runtime Positive: `POST /backend-api/stop_conversation`, body `conversation_id` matching current route + empty `exclude_async_types`, HTTP200 JSON `status="ok"`, observed `last_message_id=null`;
+- authoritative post-Stop terminal/partial-content semantics remain Unverified;
+- product remains b115, b116 remains unallocated.
+
+**Next exact action:** install a read-only fetch observer that matches the official page's own `GET /backend-api/conversations/<current-id>` request and summarizes only the cloned HTTP200 response structure. Trigger that official read by normal Web navigation away from and back to the stopped conversation. Do not replay a synthetic Detail request and do not guess authorization headers.
+
 ## Web Rule Lab Stop request/ack contract Runtime Positive — 2026-09-08
 
 Latest user-run targeted Web Rule Lab probe captures the exact official-Web Stop request and immediate acknowledgement. This supersedes the prior request-body/response-structure Unverified state.

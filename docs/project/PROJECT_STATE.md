@@ -1,3 +1,8 @@
+## DEV-send-stream post-Stop Detail synthetic-read auth boundary — 2026-09-08
+
+- Manual replay of the observed official plural Detail URL with only browser credentials returned HTTP401; classify this as probe authorization/context insufficiency, not Stop failure.
+- Next evidence must come from observing the official page's own successful Detail request/response after ordinary navigation, preserving official request construction. Stop request/ack contract remains Runtime Positive; terminal/partial semantics remain Unverified. Product stays b115; b116 unallocated.
+
 ## DEV-send-stream Web Stop contract Runtime Positive — 2026-09-08
 
 - Official Web Runtime now proves `POST /backend-api/stop_conversation` with JSON keys `conversation_id` + `exclude_async_types`; `conversation_id` equals the currently routed conversation and `exclude_async_types` is empty in the observed request.

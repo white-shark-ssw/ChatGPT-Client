@@ -1,59 +1,24 @@
 name: Record Web Stop Contract Evidence
 
 on:
-  push:
-    branches:
-      - dev/send-stream-20260829
-    paths:
-      - ".github/workflows/record-web-stop-contract-evidence.yml"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  record:
+  verify-recorded:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout owning branch
         uses: actions/checkout@v4
         with:
           ref: dev/send-stream-20260829
-          fetch-depth: 0
-
-      - name: Guard canonical b115 product and unallocated b116
+      - name: Verify durable record exists
         shell: bash
         run: |
           set -euo pipefail
-          git merge-base --is-ancestor 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD
-          git diff --quiet 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          grep -q 'Web Rule Lab Stop request/ack contract Runtime Positive' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Current Stop evidence gate — Web request/ack contract proven' docs/project/SEND_STREAM_PREFLIGHT.md
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          ! grep -R -q 'DEV-send-stream-0.1.0-b116' docs/project ChatGPTClient.xcodeproj/project.pbxproj
-          test -f scripts/staging/record_web_stop_contract_evidence.py
-
-      - name: Record Stop contract Runtime evidence
-        run: python3 scripts/staging/record_web_stop_contract_evidence.py
-
-      - name: Validate docs-only scope and checkpoint integrity
-        shell: bash
-        run: |
-          set -euo pipefail
-          git diff --check
-          changed="$(git diff --name-only | sort)"
-          expected="$(printf '%s\n' docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
-          test "$changed" = "$expected"
-          test "$(wc -c < docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md)" -gt 130000
-          grep -q 'Web Rule Lab Stop request/ack contract Runtime Positive' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          grep -q 'b115 Human Runtime partial + deferred open-menu dismissal' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          grep -q 'Current Stop evidence gate — Web request/ack contract proven' docs/project/SEND_STREAM_PREFLIGHT.md
-
-      - name: Commit durable Stop contract record
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          git commit -m "docs: record Web Stop contract evidence"
-          git push origin HEAD:dev/send-stream-20260829

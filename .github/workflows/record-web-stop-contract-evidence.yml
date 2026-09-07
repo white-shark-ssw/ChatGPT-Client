@@ -46,7 +46,7 @@ jobs:
           test "$(wc -c < docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md)" -gt 130000
           grep -q 'Web Rule Lab Stop request/ack contract Runtime Positive' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
           grep -q 'b115 Human Runtime partial + deferred open-menu dismissal' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
-          grep -q 'Web Stop request/ack contract proven' docs/project/SEND_STREAM_PREFLIGHT.md
+          grep -q 'Current Stop evidence gate — Web request/ack contract proven' docs/project/SEND_STREAM_PREFLIGHT.md
 
       - name: Commit durable Stop contract record
         shell: bash

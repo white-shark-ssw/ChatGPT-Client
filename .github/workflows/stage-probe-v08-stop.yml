@@ -1,0 +1,91 @@
+name: Stage Probe v0.8 Stop Observer
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-probe-v08-stop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard b115 product and v0.8 preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD
+          git diff --quiet 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj/project.pbxproj
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -R -q 'DEV-send-stream-0.1.0-b116' docs/project ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'Official iOS Probe v0.8 Stop evidence preflight' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'RPTProbeVersion = @"0.7"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          test -f scripts/staging/stage_probe_v08_stop.py
+
+      - name: Apply exact research-only delta
+        run: python3 scripts/staging/stage_probe_v08_stop.py
+
+      - name: Validate research scope and privacy guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m scripts/research/official_ios_realtime_probe/README.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'RPTProbeVersion = @"0.8"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'return @"conversation_stop"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'http.conversation_stop.request' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'http.conversation_stop.response_data' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'requestValueClasses' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'requestIdentifierHashes' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          ! grep -q 'Authorization' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          ! grep -q 'Cookie' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          git diff --quiet -- ChatGPTClient ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Build research dylib
+        run: bash scripts/research/official_ios_realtime_probe/build_probe.sh build/research-probe-v08
+
+      - name: Validate research artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f build/research-probe-v08/ChatGPTRealtimeProbe.dylib
+          file build/research-probe-v08/ChatGPTRealtimeProbe.dylib
+          otool -L build/research-probe-v08/ChatGPTRealtimeProbe.dylib
+          codesign -dv --verbose=2 build/research-probe-v08/ChatGPTRealtimeProbe.dylib 2>&1 | head -n 30
+          cat build/research-probe-v08/ChatGPTRealtimeProbe.dylib.sha256
+
+      - name: Commit exact v0.8 research source
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m scripts/research/official_ios_realtime_probe/README.md
+          git commit -m "research: observe official stop structure"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Upload v0.8 research probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPTRealtimeProbe-v08-${{ steps.commit.outputs.sha }}
+          path: |
+            build/research-probe-v08/ChatGPTRealtimeProbe.dylib
+            build/research-probe-v08/ChatGPTRealtimeProbe.dylib.sha256
+          if-no-files-found: error
+          retention-days: 7

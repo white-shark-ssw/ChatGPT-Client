@@ -1,0 +1,13 @@
+name: Restore DEV-send-stream b113 Integration Checkpoint
+
+"on":
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Checkpoint restore helper retired after successful recovery; no automatic mutation."

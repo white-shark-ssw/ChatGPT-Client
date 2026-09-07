@@ -1,0 +1,67 @@
+name: Stage b101 Native Transport Recovery
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b101-native-transport-recovery.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b101 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "2afad9d24897f82adcc8bd1f8fc94d8e2a22387c"
+          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'private var transientSession: AuthTransientSession?' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'unauthorized_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
+          test -f scripts/staging/b101_native_transport_recovery.py
+          ! grep -q 'DEV-send-stream-0.1.0-b101' ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Apply exact b101 product delta
+        run: python3 scripts/staging/b101_native_transport_recovery.py
+
+      - name: Validate exact product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift'
+          test "$changed" = "$expected"
+          grep -q 'CURRENT_PROJECT_VERSION = 101;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b101";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'network_connection_lost_current_transient' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'transportRecoveryAttempted' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit b101 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "fix: renew native read transport after connection loss"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

@@ -1,0 +1,101 @@
+name: Stage b115 Runtime Regression Correction
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b115-runtime-regression.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b114 Runtime baseline and b115 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor b26ed7bdcbd05680ca12130daad253c263c2b3a1 HEAD
+          git diff --quiet 673f2905ddc7a5aba23317e81e75677b2e81edb3 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 114;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b114\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b115' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/b115_record_b114_runtime_allocate.py
+          test -f scripts/staging/b115_runtime_regression.py
+
+      - name: Batch A record b114 Runtime and allocate b115
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b115_record_b114_runtime_allocate.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b115' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b114 Human Runtime result / b115 allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Active-response Sync/Reload and optimistic-user authority' docs/project/PROJECT_SPECIFIC_RULES.md
+          grep -q 'response activity alone must not disable either manual control' docs/project/SEND_STREAM_PREFLIGHT.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b114 runtime and allocate b115"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b115 correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b115_runtime_regression.py
+
+      - name: Validate exact b115 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'let canSync = selectedID != nil && !recoveryInProgress' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let canReload = selectedID != nil' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'conversation.detailReload.blocked' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -Fq 'snapshot.phase.isActive, !snapshot.promptText.isEmpty { return }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let authoritativeSuffixStart = min(snapshot.baselineVisibleMessageCount, messages.count)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let authoritativeUserMaterialized = !snapshot.promptText.isEmpty && messages.dropFirst(authoritativeSuffixStart).contains { $0.role == .user }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'fields["liveUserPresentationCount"]' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'scrollAnchor.followTailPreserved' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'enum ConversationMessageRichTextRenderer' ChatGPTClient/Conversation/ConversationFeature.swift
+          git diff --quiet 673f2905ddc7a5aba23317e81e75677b2e81edb3 HEAD -- ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          grep -q 'no_resend_same_generation' ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b115 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "fix: reconcile live user and restore active controls"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

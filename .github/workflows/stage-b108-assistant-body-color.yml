@@ -1,0 +1,74 @@
+name: Stage b108 Assistant Body Color
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b108-assistant-body-color.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard b108 allocation and exact b107 product baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2bbcf097d2cf7031cdbebd45a140f284d6bd3080 HEAD
+          git merge-base --is-ancestor 4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f HEAD
+          git diff --quiet 4bd3501a3092dfe7aad7ea836ba0cb8e42b0d65f...HEAD -- ChatGPTClient ChatGPTClient.xcodeproj
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 107;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b107\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DEV-send-stream-0.1.0-b108' docs/project/BUILD_TEST_INDEX.md)" = "1"
+          grep -q 'b107 Human Runtime Partial / b108 assistant-body color allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          test -f scripts/staging/b108_assistant_body_color_owner.py
+
+      - name: Apply exact b108 product delta
+        run: python3 scripts/staging/b108_assistant_body_color_owner.py
+
+      - name: Validate exact b108 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 108;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b108\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'case .user: messageLabel.attributedText = Self.userBodyAttributedText(text)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'reasoningTextView.linkTextAttributes = [.foregroundColor: UIColor.secondaryLabel]' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          grep -q 'manualSync.clientLiveReconciled' ChatGPTClient/RootViewController.swift
+          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b108 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "fix: own assistant body color after attributed text"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

@@ -1,0 +1,52 @@
+name: Record b114 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b114-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b114 package source and product quietness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor ef98a038a165bdcef90b0abea67c25b7ef96e57f HEAD
+          git diff --quiet ef98a038a165bdcef90b0abea67c25b7ef96e57f HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift .github/workflows/ios-foundation.yml
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 114;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b114\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'DEV-send-stream-0.1.0-b114' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/record_b114_package_evidence.py
+
+      - name: Record package truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/record_b114_package_evidence.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'b114 Phase 9 closeout — package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q '9978074978' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'f36fb5ebe3dc8db6b41ab891e66d337fa9ebcd17b6936440490f113f0c412aa9' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'f2c793f8eeff3f83d30fa9fec69ee7953ff7f3e431c07a49b7b9b20931a6b192' docs/project/BUILD_TEST_INDEX.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b114 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

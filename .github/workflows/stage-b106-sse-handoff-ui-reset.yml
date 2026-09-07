@@ -1,0 +1,95 @@
+name: Stage b106 SSE Identity and Assistant Cell Reset
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b106-sse-handoff-ui-reset.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b105 product baseline and b106 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 623bf5c4c8bc285f3075ae98a7f9a5af6c5679d4 HEAD
+          git diff --quiet 6ef4e874d7c2c5f144ab7e784f7a81755d1b2f59 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 105;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b105\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b106' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/b106_allocate_runtime.py
+          test -f scripts/staging/b106_sse_handoff_ui_reset.py
+
+      - name: Batch A record b105 Runtime and allocate b106
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b106_allocate_runtime.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b106' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b105 Human Runtime Partial / b106 SSE identity + assistant-cell reset allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b105 runtime and allocate b106"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b106 product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b106_sse_handoff_ui_reset.py
+
+      - name: Validate exact b106 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift\nChatGPTClient/RootViewController.swift'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 106;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b106\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'protected_send_sse_conversation_id' ChatGPTClient/RootViewController.swift
+          grep -q 'pendingNewConversationEvents' ChatGPTClient/RootViewController.swift
+          grep -q 'new_conversation_identity_missing_at_terminal' ChatGPTClient/RootViewController.swift
+          grep -q 'new_conversation_identity_conflict' ChatGPTClient/RootViewController.swift
+          grep -q 'authoritativeConversationID: null' ChatGPTClient/RootViewController.swift
+          ! grep -q 'newConversationSend && !pageConversationID' ChatGPTClient/RootViewController.swift
+          grep -q 'messageLabel.highlightedTextColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'messageLabel.tintColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'acceptedClientRecovery.started' ChatGPTClient/RootViewController.swift
+          ! grep -R -q '_killWebContentProcessAndResetState' ChatGPTClient
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b106 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "fix: adopt new chat identity from send SSE"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

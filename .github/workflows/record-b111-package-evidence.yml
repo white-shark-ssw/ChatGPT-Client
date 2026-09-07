@@ -1,0 +1,67 @@
+name: Record b111 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b111-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b111 package and post-package scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 64351b96bd61a44e8566e2264c5593fae868268e HEAD
+          git merge-base --is-ancestor 4297846dd6889905cbc765c23f83b33ee54437f5 HEAD
+          git diff --quiet 4297846dd6889905cbc765c23f83b33ee54437f5 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets .github/workflows/ios-foundation.yml
+          changed="$(git diff --name-only 4297846dd6889905cbc765c23f83b33ee54437f5 HEAD | sort)"
+          expected="$(printf '%s\n' .github/workflows/record-b111-package-evidence.yml scripts/staging/b111_record_package_evidence.py | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 111;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'directAttributedTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'labelLayerTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'labelHierarchyTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'DEV-send-stream-0.1.0-b111' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record durable package evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b111_record_package_evidence.py
+          git diff --check
+
+      - name: Validate docs-only scope and exact markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q '9975489792' docs/project/BUILD_TEST_INDEX.md
+          grep -q '82c512fd4d82ce5a3fcb73f9b6d9cf2314382874fa9544ae5bbbde47fcd209a6' docs/project/BUILD_TEST_INDEX.md
+          grep -q '071cd06933388654e0cd86ca626e1305df08f28f90e1e0626caf0f7dc10e059a' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b111 label-pipeline diagnostic package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit durable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b111 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

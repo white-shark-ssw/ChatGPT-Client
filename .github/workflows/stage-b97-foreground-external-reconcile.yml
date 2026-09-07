@@ -1,0 +1,43 @@
+name: Record b98 Durable Package Evidence
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b97-foreground-external-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 1
+
+      - name: Record exact b98 evidence
+        run: python3 scripts/staging/b98_record_package_ready.py
+
+      - name: Validate docs-only scope
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          grep -q 'DEV-send-stream-0.1.0-b98' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b98 hard WebContent external-observation recovery package ready' docs/project/PROJECT_STATE.md
+          grep -q 'Hard covered-Web process recovery for external observation — b98' docs/project/PROJECT_SPECIFIC_RULES.md
+          grep -q 'b98 hard WebContent termination recovery — package-ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git status --short
+
+      - name: Commit durable b98 evidence
+        run: |
+          git config user.name "white-shark-ssw"
+          git config user.email "houstools@gmail.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b98 hard WebContent recovery package evidence"
+          git push origin HEAD:dev/send-stream-20260829

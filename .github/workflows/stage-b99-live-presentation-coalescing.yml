@@ -1,0 +1,109 @@
+name: Record b98 Runtime and b99 Package Evidence
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - .github/workflows/stage-b99-live-presentation-coalescing.yml
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact package baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "313c4c3bf2ac0dc729d4793198fe462ada5a14eb"
+          grep -q 'CURRENT_PROJECT_VERSION = 99;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b99";' ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Record durable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def prepend(path, marker, lines):
+              p = Path(path)
+              text = p.read_text()
+              if marker in text:
+                  return
+              p.write_text('\n'.join(lines) + '\n\n' + text)
+
+          checkpoint = [
+              '## b99 live-presentation coalescing — package-ready 2026-09-04',
+              '',
+              '- Candidate `DEV-send-stream-0.1.0-b99` / `0.1.0 (99)`, permanently reserved.',
+              '- Exact product `ec05c284010cb0f2de066bd1cfc3968e07730779`; product commit changes only `ChatGPTClient.xcodeproj/project.pbxproj` and `ChatGPTClient/Conversation/ConversationFeature.swift`.',
+              '- Exact canonical package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`.',
+              '- Initial staging workflow run `33890559324` parsed invalidly and created zero jobs/product changes; it is invalid evidence. Corrected guarded staging `33890678564/101081289220` passed baseline guard, exact two-product-file scope, `git diff --check`, and Debug iphonesimulator compile.',
+              '- Formal Push `33890809275/101081720750` and PR `33890812345/101081730258` both passed.',
+              '- Canonical Push Artifact `9943798885`; Artifact ZIP `sha256:303bad6e93b8dfdc48ecd77559ed42d6a03058e5d6db676dcd24c65c537df8b5`.',
+              '- Canonical IPA `ChatGPTClient-0.1.0-b99-dev-send-stream.ipa`, `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`.',
+              '- Independent package inspection confirms `com.whitesharkssw.chatgptclient`, `0.1.0 (99)`, Candidate b99, source `313c4c3bf2ac`, iOS14+, UIDeviceFamily `[1,2]`, `iphoneos`, Mach-O arm64.',
+              '',
+              'b99 changes only the selected-conversation UIKit consumer: Repository still accepts/logs every live event, while `ConversationDetailViewController.liveResponseDidChange` schedules at most one pending main-queue presentation application and rebuilds from the latest Repository snapshot when that block runs. No timer/cadence, retry, watchdog, polling, Send replay, transport mutation or second response store is added. b98 WebContent recovery and b97 foreground Detail reconcile remain unchanged.',
+              '',
+              'Evidence ladder: **b98 Runtime Partial / stability rejected; b99 Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity independently verified / Human Runtime pending / Stable-Frozen Send No.**',
+              '',
+              '**Next exact action:** use only canonical b99 IPA. Start one client-owned response, background for several minutes while it remains active, then foreground. Many `liveResponse.event` records may arrive, but `liveResponse.presentationApplied` must be materially coalesced and the app must remain responsive through terminal/final completion. Verify no second Send and no response-state loss. A separate real `webViewWebContentProcessDidTerminate` sample is still required before accepting b98 hard-process recovery.'
+          ]
+          prepend('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md', '## b99 live-presentation coalescing — package-ready 2026-09-04', checkpoint)
+
+          build = Path('docs/project/BUILD_TEST_INDEX.md')
+          text = build.read_text()
+          b99_row = '| `DEV-send-stream-0.1.0-b99` | `DEV-send-stream` | `0.1.0 (99)` | live-presentation main-queue coalescing product `ec05c284010cb0f2de066bd1cfc3968e07730779`; exact package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; PR #29 | corrected guarded staging `33890678564/101081289220` exact two-product-file scope + Simulator passed; initial no-job workflow parse failure `33890559324` invalid; Push `33890809275/101081720750` passed; PR `33890812345/101081730258` passed; canonical Artifact `9943798885`; ZIP `sha256:303bad6e93b8dfdc48ecd77559ed42d6a03058e5d6db676dcd24c65c537df8b5`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; package verified Candidate b99 / source `313c4c3bf2ac` / iOS14 / `[1,2]` / arm64 | Human Runtime pending: reproduce multi-minute background backlog; Repository may process every event but UIKit presentation applications must be materially coalesced and app must not freeze/crash | **Code written / exact scope+Simulator passed / Push+PR CI passed / Artifact produced / package identity verified / Runtime pending / Stable-Frozen No; permanently reserved** |'
+          lines = text.splitlines()
+          if not any(line.startswith('| `DEV-send-stream-0.1.0-b99`') for line in lines):
+              separator = next(i for i,line in enumerate(lines) if line.startswith('|---|---|---|---|---|---|---|'))
+              lines.insert(separator + 1, b99_row)
+          b98_row = '| `DEV-send-stream-0.1.0-b98` | `DEV-send-stream` | `0.1.0 (98)` | hard WebContent external-observation recovery product `2edd55febe2005071722ddcb9989151b427165d8`; exact package source `17c65a390f2724a55cd29d466e01eaab988dcbfe`; PR #29 | guarded staging `33886277311/101066715850`; Push `33886537405/101067576599`; PR `33886540813/101067587985`; canonical Artifact `9942092070`; ZIP `sha256:f290b8a4d871016ce93a186b15c10e505a2a1d41b4adce4d19859d92fb65b3ae`; IPA `sha256:b1dc76dbe28e77ceac3468e8cfd3ca0ded41601bd02db6b228bd391a1d697b67`; package verified b98/source `17c65a390f27`/iOS14/arm64 | Human Runtime diagnostics `sha256:e0a0bd2c42168d0c3f8a6dd681bbad1bb571d4061b0f2958131cae5f8e059105`: hard WebContent termination branch unexercised; included foreground authoritative reconcile Runtime Positive (`1->2` final materialization without manual Sync); client-owned response survived ~5m background, but foreground replay produced 170 live events / 169 full presentation applications in ~10s and user observed freeze/crash before a fresh `launch.start` 3s after last live event | **Runtime Partial / b97-style foreground final convergence Positive / hard WebContent recovery Unverified / backlog presentation stability Negative / superseded by b99 stability gate / Stable-Frozen No; permanently reserved** |'
+          for i,line in enumerate(lines):
+              if line.startswith('| `DEV-send-stream-0.1.0-b98`'):
+                  lines[i] = b98_row
+                  break
+          build.write_text('\n'.join(lines) + '\n')
+
+          common = [
+              '- b98 Human Runtime exact diagnostics `sha256:e0a0bd2c42168d0c3f8a6dd681bbad1bb571d4061b0f2958131cae5f8e059105`: no hard WebContent termination event occurred, so that new b98 branch remains Unverified. The included foreground authoritative Detail reconcile is Runtime Positive, but a later client-owned response replayed 170 buffered live events after ~5m background and drove 169 synchronous full presentation applications; user observed freeze/crash and a fresh `launch.start` followed 3s after the last live event.',
+              '- b99 is the evidence-scoped stability correction: preserve every Repository event/state transition, but coalesce only the expensive selected Detail UIKit presentation onto one pending main-queue application using the latest Repository snapshot. No timer, retry, watchdog, polling, transport mutation, Send replay or second response authority.',
+              '- b99 exact product `ec05c284010cb0f2de066bd1cfc3968e07730779`; package source `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; staging `33890678564/101081289220`; Push `33890809275/101081720750`; PR `33890812345/101081730258`; Artifact `9943798885`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; Human Runtime pending; Stable/Frozen No.'
+          ]
+          prepend('docs/project/PROJECT_STATE.md', '## 2026-09-04 — b99 live-presentation coalescing package ready', ['## 2026-09-04 — b99 live-presentation coalescing package ready', ''] + common)
+          prepend('docs/project/PROJECT_PROFILE.md', '## Latest DEV-send-stream candidate override — b99 2026-09-04', ['## Latest DEV-send-stream candidate override — b99 2026-09-04', ''] + common)
+          prepend('docs/project/MODULE_STATUS.md', '## DEV-send-stream b99 backlog-presentation stability override — 2026-09-04', ['## DEV-send-stream b99 backlog-presentation stability override — 2026-09-04', ''] + common)
+          prepend('docs/project/TECHNICAL_DECISIONS.md', '## DEV-send-stream b99 live-presentation coalescing decision — 2026-09-04', ['## DEV-send-stream b99 live-presentation coalescing decision — 2026-09-04', '', '- Runtime evidence establishes a foreground backlog consumer problem, not a need for a new transport protocol: after ~5m background the existing covered response delivered 170 live events while the selected Detail synchronously rebuilt/reloaded/la[id] out the table 169 times before freeze/crash.', '- Preserve `ConversationRepository` as exact per-event response authority. Coalesce only UIKit presentation notification in `ConversationDetailViewController`; the scheduled main-queue block renders the latest Repository snapshot and revalidates the selected conversation.', '- This decision authorizes no timer/cadence, retry, watchdog, polling, background keepalive, Send replay, transport mutation or second response store. b98 hard WebContent termination recovery remains separately Unverified because this Runtime sample emitted no termination callback.', '- b99 package/evidence identity: product `ec05c284010cb0f2de066bd1cfc3968e07730779`; package `313c4c3bf2ac0dc729d4793198fe462ada5a14eb`; Artifact `9943798885`; IPA `sha256:68b7f99eac8fd1d3ab14c6085abd4a084f2b4759dc630f94044017c9a4aecf02`; Human Runtime pending.'])
+          prepend('docs/project/PROJECT_SPECIFIC_RULES.md', '## Live-response presentation coalescing — b99 2026-09-04', ['## Live-response presentation coalescing — b99 2026-09-04', '', '- Repository live-response events must remain lossless and ordered. Do not reduce transport/state event granularity to fix UIKit performance.', '- The selected `ConversationDetailViewController` may coalesce multiple pending Repository change notifications into one main-queue presentation rebuild using the latest snapshot. The coalescing state is UI-only and must not become response authority.', '- Do not add a timer, display cadence, retry, watchdog, polling loop, background heartbeat, resend/regenerate path or second response cache for this optimization.', '- On execution, re-check displayed/selected conversation identity and preserve the existing authoritative-Detail replacement path when the live projection has already disappeared.', '- b98 hard WebContent termination recovery and b97 foreground Detail reconcile remain unchanged and separately gated by their own Runtime evidence.'])
+          PY
+
+      - name: Validate docs-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_PROFILE.md\ndocs/project/PROJECT_SPECIFIC_RULES.md\ndocs/project/PROJECT_STATE.md\ndocs/project/TECHNICAL_DECISIONS.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+
+      - name: Commit durable b99 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/PROJECT_STATE.md docs/project/PROJECT_PROFILE.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b98 crash and b99 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

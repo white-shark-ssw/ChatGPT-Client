@@ -1,0 +1,59 @@
+name: Record b113 Runtime Positive
+
+"on":
+  push:
+    branches:
+      - dev/message-rendering-20260906
+    paths:
+      - ".github/workflows/record-b113-runtime-positive.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/message-rendering-20260906
+          fetch-depth: 0
+
+      - name: Guard canonical b113 product and stacked baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 88e46ddd3e0d7033d45de413903617ab70caa4d8 HEAD
+          git diff --quiet 75ccad15208610c2b0420033846f9bb15bbdb494 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 113;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-message-rendering-0.1.0-b113\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          git merge-base --is-ancestor 50432b8743f3391a8174a3b7aae745298082d433 HEAD
+          test -f scripts/staging/record_b113_runtime_positive.py
+          ! grep -q '334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record b113 Human Runtime result
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/record_b113_runtime_positive.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-message-rendering.md | sort)"
+          test "$changed" = "$expected"
+          grep -q '334a2f88d284e04936f0226c3cb6bdbad0710f1af5ead9c8168301fc5581af55' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'be52e664e6f62b49e4432e98379ff7d2280f09693c8f6a66827665c51acbb184' docs/project/PROJECT_STATE.md
+          grep -q 'b113 Human Runtime Positive — native message presentation' docs/project/current/dev/DEV-message-rendering.md
+          grep -q 'Native message rich-text presentation — Runtime accepted b113' docs/project/PROJECT_SPECIFIC_RULES.md
+          grep -q 'DEV-message-rendering b113 Runtime acceptance' docs/project/TECHNICAL_DECISIONS.md
+
+      - name: Commit durable b113 Runtime truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-message-rendering.md
+          git commit -m "docs: record b113 runtime positive"
+          git push origin HEAD:dev/message-rendering-20260906

@@ -1,0 +1,93 @@
+name: Stage b110 Rendered Color Probe
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b110-render-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b109 product baseline and b110 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 11e7ec536b986c45811dc449cd2c4f6e442c28df HEAD
+          git merge-base --is-ancestor 69d9ab56e284e3a32fd3702462c4206b58372520 HEAD
+          git diff --quiet 11e7ec536b986c45811dc449cd2c4f6e442c28df HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 109;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b109\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b110' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/b110_allocate_render_probe.py
+          test -f scripts/staging/b110_render_probe.py
+
+      - name: Batch A record b109 Runtime and allocate b110
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b110_allocate_render_probe.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b110' docs/project/BUILD_TEST_INDEX.md
+          grep -q '37669df4cddc25db7b0d3bb1ae96d54d722aee501fcf3e55888aff636d8edcdf' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b109 Human Runtime model-state result / b110 rendered-pixel probe allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b109 runtime and allocate b110"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b110 diagnostic delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b110_render_probe.py
+
+      - name: Validate exact b110 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 110;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b110\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'func bodyRenderedColorDiagnostics() -> \[String: String\]' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'labelRenderBlueDominantFraction' ChatGPTClient/Conversation/ConversationFeature.swift || grep -q 'prefix)BlueDominantFraction' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'hierarchyCrop' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'tableView.indexPath(for: messageCell) == indexPath' ChatGPTClient/Conversation/ConversationFeature.swift
+          git diff --quiet 11e7ec536b986c45811dc449cd2c4f6e442c28df HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b110 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "diagnostics: sample rendered assistant chunk color"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

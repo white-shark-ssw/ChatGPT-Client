@@ -1,0 +1,24 @@
+name: Record Web Stop Contract Evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-recorded:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+      - name: Verify durable record exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Web Rule Lab Stop request/ack contract Runtime Positive' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Current Stop evidence gate — Web request/ack contract proven' docs/project/SEND_STREAM_PREFLIGHT.md
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"

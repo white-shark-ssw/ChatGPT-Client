@@ -1,0 +1,62 @@
+name: Record b102 Web Kill Probe Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b102-web-kill-probe-package.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b102 package baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "cc19be62786da02154bfee3dbcfd2799cea75423"
+          git merge-base --is-ancestor 78bd3d2f3e45c8e0061865d3133b92a274139110 HEAD
+          grep -q 'CURRENT_PROJECT_VERSION = 102;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b102";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'CoveredWebProcessKillProbe.install()' ChatGPTClient/AppDelegate.swift
+          grep -q 'delaySeconds: TimeInterval = 120' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q '_killWebContentProcessAndResetState' ChatGPTClient/Protocol/CoveredWebProcessKillProbe.swift
+          grep -q 'ChatGPTClient-DEV-send-stream-0.1.0-b102' .github/workflows/ios-foundation.yml
+          test -f scripts/staging/b102_record_package_ready.py
+          ! grep -q 'DEV-send-stream-0.1.0-b102' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Apply durable b102 evidence
+        run: python3 scripts/staging/b102_record_package_ready.py
+
+      - name: Validate docs-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'b102 deterministic client-owned WebContent-death probe — package-ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'DEV-send-stream-0.1.0-b102' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'Deterministic covered-Web kill probe — b102 test-only' docs/project/PROJECT_SPECIFIC_RULES.md
+
+      - name: Commit durable b102 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b102 web kill probe package evidence"
+          git push origin HEAD:dev/send-stream-20260829

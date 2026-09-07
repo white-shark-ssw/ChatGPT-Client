@@ -1,0 +1,131 @@
+name: Record b100 Human Runtime Evidence
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - .github/workflows/stage-b100-foreground-discovery.yml
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b100 runtime baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "8944fe854af3a775e43c34f0c96541293d90ab24"
+          grep -q 'CURRENT_PROJECT_VERSION = 100;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b100";' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'foregroundConversationDiscovery.requested' ChatGPTClient/RootViewController.swift
+          grep -q 'Runtime pending: foreground with no active snapshot' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record b100 runtime evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          checkpoint = '''## b100 Human Runtime — dormant foreground discovery Positive 2026-09-05
+
+          Exact tested evidence:
+
+          - Candidate `DEV-send-stream-0.1.0-b100` / `0.1.0 (100)`; Release / iPhone / iOS17.0; source marker `e88a50ad9c20`; diagnostics `ChatGPTClient-Diagnostics-20260904-171109.json`, `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696`, 72063 bytes / 127 events.
+          - The selected conversation was complete/idle at authoritative visible message count `8`. App entered background at `16:45:36Z` with no active external live response and returned at `17:05:07Z` after 1171s (~19m31s).
+          - On foreground, without any preceding `conversation.latestSync.requested`, b100 emitted `foregroundConversationDiscovery.requested` and exactly one automatic authoritative Detail operation (`operationGeneration=2`). HTTP200 Detail changed visible messages `8 -> 10`; `latestSync.end` recorded `addedVisibleMessageCount=2`.
+          - `foregroundConversationDiscovery.completed` reported `latestUserChanged=true`, `activeExternalAfterSync=false`, `liveResponseActive=false`, `rearmDiscoveredRemoteTurn=false`, `visibleMessageCount=10`. This is the expected completed-remote-turn branch: the assistant was already authoritative, so no covered observer rearm was required.
+          - A second background interval lasted 327s (~5m27s). Foreground again issued exactly one dormant discovery and converged `10 -> 10` with `latestUserChanged=false` / `rearmDiscoveredRemoteTurn=false`. A later explicit manual Sync at `17:10:59Z` also remained `10 -> 10`, so it was not required for convergence.
+          - The user WebSocket produced `error` + `close` code `1006` on the long foreground return, then a new socket was `created/open` within seconds. No `coveredExecutor.webProcess` / `externalWebProcessRecovery` event occurred. This proves dormant authoritative discovery works despite a stale/broken WebSocket, but does not exercise hard WKWebView WebContent-process termination recovery.
+          - One iOS memory warning occurred on the long foreground return; the protected resident was retained and the app continued normally with no crash/relaunch in this diagnostic. This is sample-local stability evidence only.
+          - This run contains zero `liveResponse.event` / `liveResponse.presentationApplied`, so b99 backlog-coalescing stress is still Unexercised here. It also does not exercise `rearmDiscoveredRemoteTurn=true` for an unfinished newly discovered remote turn, nor the exact-b100 known-active `foregroundExternalDetailReconcile` branch.
+
+          Runtime classification:
+
+          - b100 primary dormant cross-platform foreground discovery: **Runtime Positive**, including ~19m31s background and automatic authoritative materialization `8 -> 10` with no manual Sync/Reload;
+          - no-change foreground discovery: **Runtime Positive / one-shot no-op**;
+          - unfinished remote-turn rearm: **Unexercised / Unverified**;
+          - exact-b100 known-active external reconcile regression: **Unexercised in this sample**;
+          - b99 backlog coalescing: **Unexercised / Unverified in this sample**;
+          - b98 hard WebContent termination recovery: **Unexercised / Unverified**;
+          - overall `DEV-send-stream`: **Runtime Partial / Stable-Frozen No**.
+
+          **Next exact action:** no product change or b101 is justified by this sample. Keep canonical b100. If further qualification is desired, return foreground while a newly created remote turn is still unfinished and verify `rearmDiscoveredRemoteTurn=true` + one covered rearm; separately regression-check exact-b100 known-active `foregroundExternalDetailReconcile`. Do not add polling/timers/heartbeat/retries.'''.replace('\n          ', '\n').strip()
+
+          state = '''## DEV-send-stream b100 Human Runtime dormant-discovery Positive — 2026-09-05
+
+          - Exact b100 diagnostics `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696` / 72063 bytes / 127 events / Release / iPhone / iOS17.0 / source `e88a50ad9c20`.
+          - With the selected conversation idle at 8 visible messages, the app stayed backgrounded 1171s (~19m31s). Foreground automatically emitted `foregroundConversationDiscovery.requested`, issued exactly one authoritative Detail, and materialized `8 -> 10` (`addedVisibleMessageCount=2`, `latestUserChanged=true`) without manual Sync/Reload. Completed remote state required no covered rearm (`rearmDiscoveredRemoteTurn=false`).
+          - A second 327s (~5m27s) background return issued one automatic discovery and remained `10 -> 10`; a later manual Sync also remained `10 -> 10`, confirming the automatic path had already converged.
+          - The existing user WebSocket errored/closed with code 1006 on the long return and then reopened; no `webViewWebContentProcessDidTerminate` signal occurred. Dormant authoritative discovery is Runtime Positive even with a broken/stale user WebSocket, but hard WebContent recovery remains Unverified.
+          - No b101/product change is justified. Unfinished remote-turn rearm, exact-b100 known-active reconcile regression, b99 backlog coalescing stress and b98 hard WebContent termination recovery remain separate unverified gates. Stable-Frozen No.'''.replace('\n          ', '\n').strip()
+
+          module = '''## DEV-send-stream b100 dormant foreground discovery Runtime Positive — 2026-09-05
+
+          - `ConversationRepository.syncLatestMessages` remains the sole authoritative foreground discovery primitive. Exact b100 Human Runtime `sha256:f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696` proves the no-active-snapshot lifecycle path after ~19m31s background: one automatic Detail changed visible messages `8 -> 10` with no manual Sync/Reload and no second response authority.
+          - Completed remote state did not rearm Covered Web (`rearmDiscoveredRemoteTurn=false`). A later no-change foreground cycle also issued one Detail and remained `10 -> 10`.
+          - A user WebSocket `error/close(1006)` occurred on foreground and later reopened; the authoritative Detail path still converged first. No hard WebContent-process termination event occurred, so b98 hard-process recovery remains Unverified.
+          - Runtime acceptance is scoped to dormant foreground discovery. Unfinished remote-turn rearm, exact-b100 known-active reconcile regression and b99 backlog-coalescing stress remain Unverified; module is not Stable/Frozen.'''.replace('\n          ', '\n').strip()
+
+          row = '| `DEV-send-stream-0.1.0-b100` | `DEV-send-stream` | `0.1.0 (100)` | foreground dormant discovery product `70c7dc052865ef80ca7bdec083d7621c1a297eab`; package `e88a50ad9c2098449b43fb0fce2c441a50cd20ac`; PR #29 | staging `33895020559/101095508915`; Push `33895244146/101096229135`; PR `33895249810/101096247432`; Artifact `9945483725`; ZIP `babb23c845c4da971b488b4860c043fe8471adf830688920149df254cee70fd6`; IPA `5629deedca665b7a5cfa7e36b4996b7b1e4b7a160ca5cb35a465abfbd97fbc69`; b100/source/iOS14/[1,2]/arm64 verified | Human Runtime `f0f3619ea61f30f9bcbaadbb577f3a99839a032dfcd95503e22b4a7bdb984696`: idle selected conversation survived ~19m31s background; automatic `foregroundConversationDiscovery` issued one Detail and materialized `8->10` (`added=2`, `latestUserChanged=true`) without manual Sync/Reload; second ~5m27s no-change return one-shot converged `10->10`; unfinished-turn rearm and exact-b100 known-active regression unexercised | **Dormant foreground discovery Runtime Positive / overall Runtime Partial / remaining rearm+regression+backlog+hard-WebContent gates Unverified / Stable-Frozen No; permanently reserved** |'
+
+          def prepend(path, marker, block):
+              p = Path(path)
+              text = p.read_text()
+              if marker in text:
+                  raise SystemExit(f'marker already present: {marker}')
+              p.write_text(block + '\n\n' + text)
+
+          prepend('docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md', '## b100 Human Runtime — dormant foreground discovery Positive 2026-09-05', checkpoint)
+          prepend('docs/project/PROJECT_STATE.md', '## DEV-send-stream b100 Human Runtime dormant-discovery Positive — 2026-09-05', state)
+          prepend('docs/project/MODULE_STATUS.md', '## DEV-send-stream b100 dormant foreground discovery Runtime Positive — 2026-09-05', module)
+
+          p = Path('docs/project/BUILD_TEST_INDEX.md')
+          lines = p.read_text().splitlines()
+          found = False
+          out = []
+          for line in lines:
+              if line.startswith('| `DEV-send-stream-0.1.0-b100` |'):
+                  if found:
+                      raise SystemExit('duplicate b100 row')
+                  out.append(row)
+                  found = True
+              else:
+                  out.append(line)
+          if not found:
+              raise SystemExit('b100 row not found')
+          p.write_text('\n'.join(out) + '\n')
+          PY
+
+      - name: Validate docs-only runtime scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          expected={'docs/project/BUILD_TEST_INDEX.md','docs/project/PROJECT_STATE.md','docs/project/MODULE_STATUS.md','docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'}
+          if changed != expected:
+              raise SystemExit(f'unexpected runtime-doc scope: {sorted(changed)}')
+          PY
+
+      - name: Commit durable b100 runtime evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b100 dormant discovery runtime"
+          git push origin HEAD:dev/send-stream-20260829

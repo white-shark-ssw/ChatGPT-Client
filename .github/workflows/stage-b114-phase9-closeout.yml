@@ -1,0 +1,105 @@
+name: Stage b114 Phase 9 Closeout
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b114-phase9-closeout.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard integrated b113 baseline and b114 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor cce8a7b5d9208e45e9f83cd169ed91f68acca3ad HEAD
+          git diff --quiet cce8a7b5d9208e45e9f83cd169ed91f68acca3ad HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 113;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-message-rendering-0.1.0-b113\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b114' docs/project/BUILD_TEST_INDEX.md
+          grep -Fq 'let canReload = selectedID != nil' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'diagnosticCellOrdinalSeed' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          test -f scripts/staging/b114_allocate_phase9_closeout.py
+          test -f scripts/staging/b114_phase9_closeout.py
+
+      - name: Batch A record Phase 9 audit and allocate b114
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b114_allocate_phase9_closeout.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b114' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'Phase 9 closeout audit / b114 allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Phase 9 follow-tail / active Reload closeout decision' docs/project/TECHNICAL_DECISIONS.md
+          grep -q 'Static inspection of the exact supplied/decrypted official iOS app' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: audit phase9 and allocate b114"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b114 closeout delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b114_phase9_closeout.py
+
+      - name: Validate exact b114 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 114;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b114\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'scrollAnchor.followTailPreserved' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'let canReload = selectedID != nil && !recoveryInProgress && !responseActive' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'conversation.detailReload.blocked' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'assistantChunkColor.willDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'diagnosticCellOrdinalSeed' ChatGPTClient/Conversation/ConversationFeature.swift
+          ! grep -q 'bodyRenderedColorDiagnostics' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'enum ConversationMessageRichTextRenderer' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'return location.map { "〔文件引用 \($0)〕" } ?? "〔文件引用〕"' ChatGPTClient/Conversation/ConversationFeature.swift
+          git diff --quiet cce8a7b5d9208e45e9f83cd169ed91f68acca3ad HEAD -- ChatGPTClient/RootViewController.swift
+          grep -q 'acceptedClientStreamEndedWithoutTerminal' ChatGPTClient/RootViewController.swift
+          grep -q 'policy.*no_resend_same_generation' ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b114 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "fix: close phase9 follow-tail and reload safety"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

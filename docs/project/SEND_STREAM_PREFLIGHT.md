@@ -1,3 +1,14 @@
+## Current Stop evidence gate — Web request/ack contract proven 2026-09-08
+
+Runtime authority for the tested official Web Stop is now:
+
+- `POST /backend-api/stop_conversation`
+- request JSON: `conversation_id` equal to current routed conversation + empty `exclude_async_types`
+- HTTP200 `application/json`
+- response JSON: `status = "ok"`, `last_message_id = null` in the observed sample
+
+The remaining required evidence is authoritative post-Stop Detail/terminal behavior and partial-response persistence. Do not infer these semantics from `last_message_id:null`, and do not allocate/implement product Stop until the final read-only Detail inspection is captured.
+
 ## Current Stop evidence gate — Web route/method/ack proven 2026-09-07
 
 Runtime evidence from official ChatGPT Web now proves:

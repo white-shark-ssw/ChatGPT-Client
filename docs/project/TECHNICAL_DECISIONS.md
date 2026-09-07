@@ -1,3 +1,7 @@
+## 2026-09-08 — Web Stop target is conversation-scoped and exact request shape is evidenced
+
+Decision update: official Web Runtime proves server Stop is conversation-scoped through `POST /backend-api/stop_conversation` with body fields `conversation_id` and `exclude_async_types`; the observed conversation ID equals the currently routed conversation and `exclude_async_types` is empty. HTTP200 JSON `status=ok` is the immediate acknowledgement. The observed `last_message_id:null` is not sufficient to decide partial-answer authority. Product implementation remains gated only on one authoritative post-Stop Detail semantic capture; do not reintroduce the rejected path-scoped `/conversation/<id>/stop_conversation` hypothesis.
+
 ## 2026-09-07 — Prefer Web Rule Lab for proven Stop endpoint before product implementation
 
 Decision: official Web Runtime has established `POST /backend-api/stop_conversation` with HTTP200 JSON acknowledgement. This outranks the earlier static/iOS-derived path assumption. Continue with targeted Web Rule Lab body/response/Detail structural evidence; keep official-iOS Probe v0.8 only as optional cross-validation. Do not allocate the next product Candidate until the Stop target and terminal semantics are proven. When a product Stop Candidate is justified, include the already-deferred stable top-right-menu-host correction in the same exact scope rather than creating a standalone menu build.

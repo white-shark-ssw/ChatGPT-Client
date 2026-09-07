@@ -1,3 +1,9 @@
+## Send / Stream — Web Stop request contract proven 2026-09-08
+
+- Runtime-proven Web Stop: `POST /backend-api/stop_conversation`, body `conversation_id` matching current routed conversation plus empty `exclude_async_types`, HTTP200 JSON `status=ok`; observed `last_message_id` is null.
+- Do not infer partial-answer deletion/absence from the null acknowledgement field. Authoritative post-Stop Detail remains the final semantic gate before product Stop implementation.
+- No product Candidate is allocated from protocol research alone; current product remains b115.
+
 ## Send / Stream — Web Stop route/method/ack Runtime Positive 2026-09-07
 
 - Official Web Stop has now been observed as `POST /backend-api/stop_conversation` with HTTP200 JSON acknowledgement while a response is active.

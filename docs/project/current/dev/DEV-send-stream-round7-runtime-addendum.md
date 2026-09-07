@@ -1,3 +1,32 @@
+## Web Rule Lab Stop request/ack contract Runtime Positive — 2026-09-08
+
+Latest user-run targeted Web Rule Lab probe captures the exact official-Web Stop request and immediate acknowledgement. This supersedes the prior request-body/response-structure Unverified state.
+
+Runtime-proven contract on one official Web Stop while a response was active:
+
+- endpoint/method: `POST /backend-api/stop_conversation`, same-origin ChatGPT Web, no query items;
+- request JSON is an object with exactly the observed top-level keys `conversation_id` and `exclude_async_types`;
+- `conversation_id` is a 36-character string and the probe proved it exactly matches the currently routed conversation identity;
+- `exclude_async_types` is an empty array in the observed official Stop request;
+- server acknowledgement is HTTP200 `application/json`;
+- response JSON is an object with top-level keys `last_message_id` and `status`;
+- `status` is exact safe token `ok`;
+- `last_message_id` is `null` in this observed acknowledgement. Do **not** infer from this field alone that partial assistant content is absent, deleted, or non-authoritative.
+
+Evidence classification now:
+
+- route: **Runtime Positive** (`/backend-api/stop_conversation`)
+- method: **Runtime Positive** (`POST`)
+- target identity: **Runtime Positive** (`conversation_id` equals current routed conversation)
+- request structure: **Runtime Positive** (`conversation_id`, empty `exclude_async_types`)
+- immediate server acknowledgement: **Runtime Positive** (HTTP200 JSON, `status=ok`, `last_message_id=null` in this sample)
+- authoritative post-Stop terminal/partial-answer state: **still Unverified**
+- whether product Stop should perform an immediate authoritative Detail reconciliation after the `ok` acknowledgement: **still Unverified**
+
+Product remains exact canonical b115 and **b116 remains unallocated**. The deferred top-right live-menu persistence defect is still queued for the next independently justified product Candidate; it does not independently authorize a build.
+
+**Next exact action:** on the same stopped conversation, perform one read-only authoritative Conversation Detail inspection using the already-installed Web Rule Lab helper. Record `conversation_async_status`, current-node/tail structure, assistant message status/end-turn/content length and whether the stopped partial response remains in Detail. No new Send or Stop is required. If that evidence establishes stopped terminal/partial-content semantics, the Server Stop protocol gate is sufficient to decide the next product Candidate.
+
 ## Web Rule Lab Stop route/method/ack Runtime evidence — 2026-09-07
 
 Latest user-run broad Web Rule Lab network probe supersedes the earlier assumed Web Stop route.

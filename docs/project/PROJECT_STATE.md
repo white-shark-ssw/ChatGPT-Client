@@ -1,3 +1,9 @@
+## DEV-send-stream Web Stop contract Runtime Positive — 2026-09-08
+
+- Official Web Runtime now proves `POST /backend-api/stop_conversation` with JSON keys `conversation_id` + `exclude_async_types`; `conversation_id` equals the currently routed conversation and `exclude_async_types` is empty in the observed request.
+- Server returns HTTP200 JSON `{status: "ok", last_message_id: null}` structurally. `last_message_id:null` is not interpreted as evidence about partial-content persistence.
+- Remaining Stop gate is one read-only authoritative post-Stop Detail inspection to establish terminal/async status and stopped partial-answer authority. Product remains b115; b116 is unallocated.
+
 ## DEV-send-stream Web Stop protocol partially proven — 2026-09-07
 
 - Official Web Runtime now proves `POST /backend-api/stop_conversation` -> HTTP200 `application/json` for the user's real Stop action. This supersedes the earlier assumed Web path containing the conversation ID.

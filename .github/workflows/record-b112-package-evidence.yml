@@ -1,0 +1,66 @@
+name: Record b112 Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b112-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard canonical b112 package and post-package scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 3957b806f32f0995ceb9cf8f9487aba939f3b306 HEAD
+          git merge-base --is-ancestor b5e3164721e01ceb1fe320ebd290bda79a921fc2 HEAD
+          git diff --quiet b5e3164721e01ceb1fe320ebd290bda79a921fc2 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj scripts/build_ipa.sh scripts/reconstruct_app_icon.sh scripts/assets .github/workflows/ios-foundation.yml
+          changed="$(git diff --name-only b5e3164721e01ceb1fe320ebd290bda79a921fc2 HEAD | sort)"
+          expected="$(printf '%s\n' .github/workflows/record-b112-package-evidence.yml scripts/staging/b112_record_package_evidence.py | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'DEV-send-stream-0.1.0-b112' docs/project/BUILD_TEST_INDEX.md
+
+      - name: Record durable package evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b112_record_package_evidence.py
+          git diff --check
+
+      - name: Validate docs-only scope and exact markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q '9975978222' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'c2ec86afe0b4f8cd4112c437b538b4612ecdaeb8205ce57f3f63241ffa9e6922' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'f1c705b72024d7f58f9a574fa885876b0382ff5120dbf9f095177c34207a32e9' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b112 role-isolated cell reuse fix — package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit durable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b112 package evidence"
+          git push origin HEAD:dev/send-stream-20260829

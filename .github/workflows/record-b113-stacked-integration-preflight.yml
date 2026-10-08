@@ -1,0 +1,13 @@
+name: Record b113 Stacked Integration Preflight
+
+"on":
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "b113 integration preflight already recorded; no automatic mutation."

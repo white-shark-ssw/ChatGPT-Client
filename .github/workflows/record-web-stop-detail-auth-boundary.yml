@@ -1,0 +1,56 @@
+name: Record Web Stop Detail Auth Boundary
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-web-stop-detail-auth-boundary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard product identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD
+          git diff --quiet 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -R -q 'DEV-send-stream-0.1.0-b116' docs/project ChatGPTClient.xcodeproj/project.pbxproj
+
+      - name: Record auth-boundary evidence
+        run: python3 scripts/staging/record_web_stop_detail_auth_boundary.py
+
+      - name: Validate docs-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          test "$(wc -c < docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md)" -gt 130000
+          grep -q 'post-Stop Detail synthetic-read auth boundary' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit durable record
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record Web Stop Detail auth boundary"
+          git push origin HEAD:dev/send-stream-20260829

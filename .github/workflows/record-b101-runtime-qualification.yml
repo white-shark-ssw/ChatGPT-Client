@@ -1,0 +1,56 @@
+name: Record b101 Runtime Qualification
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-b101-runtime-qualification.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard runtime recorder baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "2b23e657686ef60235b975fae5b7d362e2678c7d"
+          grep -q 'CURRENT_PROJECT_VERSION = 101;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'DIAGNOSTICS_CANDIDATE = "DEV-send-stream-0.1.0-b101";' ChatGPTClient.xcodeproj/project.pbxproj
+          test -f scripts/staging/b101_record_runtime_qualification.py
+
+      - name: Record exact Human Runtime qualification
+        run: python3 scripts/staging/b101_record_runtime_qualification.py
+
+      - name: Validate docs-only exact scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'docs/project/BUILD_TEST_INDEX.md\ndocs/project/MODULE_STATUS.md\ndocs/project/PROJECT_STATE.md\ndocs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md'
+          test "$changed" = "$expected"
+          grep -q 'f7209546f3f2d1dd8ad08458b0dea8adbef522af100deb2f5de90cbe26180b9d' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b101 `-1005` recovery Unexercised' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'rearmDiscoveredRemoteTurn=true' docs/project/PROJECT_STATE.md
+
+      - name: Commit Runtime evidence docs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_STATE.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b101 runtime qualification"
+          git push origin HEAD:dev/send-stream-20260829

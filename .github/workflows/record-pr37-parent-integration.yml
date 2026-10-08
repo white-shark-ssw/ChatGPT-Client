@@ -1,0 +1,24 @@
+name: Record PR37 Parent Integration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout parent owner
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+      - name: Verify durable integration record
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'PR #37 Simulator baseline integration complete — DEV-send-stream owner' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Simulator baseline parent integration' docs/project/BUILD_TEST_INDEX.md
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"

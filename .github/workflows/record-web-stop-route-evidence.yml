@@ -1,0 +1,63 @@
+name: Record Web Stop Route Evidence
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-web-stop-route-evidence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard product b115 and no b116 allocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD
+          git diff --quiet 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -R -q 'DEV-send-stream-0.1.0-b116' docs/project ChatGPTClient.xcodeproj/project.pbxproj
+          test -f scripts/staging/record_probe_v08_stop_package.py
+          test -f scripts/staging/record_web_stop_route_evidence.py
+
+      - name: Complete pending v0.8 package bookkeeping
+        run: python3 scripts/staging/record_probe_v08_stop_package.py
+
+      - name: Record Web Stop Runtime evidence
+        run: python3 scripts/staging/record_web_stop_route_evidence.py
+
+      - name: Validate docs-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'Web Rule Lab Stop route/method/ack Runtime evidence' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q '/backend-api/stop_conversation' docs/project/SEND_STREAM_PREFLIGHT.md
+          grep -q 'Probe v0.8 Stop structural observer — package ready' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          wc -c docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | awk '$1 > 130000 { ok=1 } END { exit ok ? 0 : 1 }'
+
+      - name: Commit durable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/SEND_STREAM_PREFLIGHT.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record Web Stop route evidence"
+          git push origin HEAD:dev/send-stream-20260829

@@ -1,0 +1,44 @@
+name: Research Official iOS Realtime Probe
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - "scripts/research/official_ios_realtime_probe/**"
+      - ".github/workflows/research-official-ios-realtime-probe.yml"
+  workflow_dispatch:
+
+jobs:
+  build-probe:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Build research dylib
+        run: bash scripts/research/official_ios_realtime_probe/build_probe.sh build/research-probe
+
+      - name: Validate research artifact
+        run: |
+          test -f build/research-probe/ChatGPTRealtimeProbe.dylib
+          file build/research-probe/ChatGPTRealtimeProbe.dylib
+          otool -L build/research-probe/ChatGPTRealtimeProbe.dylib
+          codesign -dv --verbose=2 build/research-probe/ChatGPTRealtimeProbe.dylib 2>&1 | head -n 30
+          cat build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
+
+      - name: Upload research probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPTRealtimeProbe-${{ github.sha }}
+          path: |
+            build/research-probe/ChatGPTRealtimeProbe.dylib
+            build/research-probe/ChatGPTRealtimeProbe.dylib.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+# Probe v0.7 dispatch-data observer build retrigger after compiler fix.

@@ -1,0 +1,55 @@
+name: Record Probe v0.8 Stop Preflight
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-probe-v08-stop-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owning branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard current product and research ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD
+          git diff --quiet 2dc0a4155f3549f32b1b08a9e4d8e6fb87495692 HEAD -- ChatGPTClient ChatGPTClient.xcodeproj/project.pbxproj
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -R -q 'DEV-send-stream-0.1.0-b116' docs/project ChatGPTClient.xcodeproj/project.pbxproj
+          test -f scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+          grep -q 'RPTProbeVersion = @"0.7"' scripts/research/official_ios_realtime_probe/ChatGPTRealtimeProbe.m
+
+      - name: Write recovery point
+        run: python3 scripts/staging/record_probe_v08_stop_preflight.py
+
+      - name: Validate exact docs scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only)" = "docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"
+          grep -q 'Official iOS Probe v0.8 Stop evidence preflight' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+
+      - name: Commit recovery point
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record probe v0.8 stop preflight"
+          git push origin HEAD:dev/send-stream-20260829

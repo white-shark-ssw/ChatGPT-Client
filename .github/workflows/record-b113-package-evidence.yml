@@ -1,0 +1,60 @@
+name: Record b113 Message Rendering Package Evidence
+
+"on":
+  push:
+    branches:
+      - dev/message-rendering-20260906
+    paths:
+      - ".github/workflows/record-b113-package-evidence.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/message-rendering-20260906
+          fetch-depth: 0
+
+      - name: Guard canonical b113 package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 75ccad15208610c2b0420033846f9bb15bbdb494 HEAD
+          git diff --quiet 7d1ddc8eaa164c9b307f525b00bb0e1404f395e9 HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 113;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-message-rendering-0.1.0-b113\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq '# Product source: 7d1ddc8eaa164c9b307f525b00bb0e1404f395e9' .github/workflows/ios-foundation.yml
+          grep -Fq 'ChatGPTClient-DEV-message-rendering-0.1.0-b113' .github/workflows/ios-foundation.yml
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          test -f scripts/staging/b113_record_package_evidence.py
+
+      - name: Record package evidence in task and durable docs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b113_record_package_evidence.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-message-rendering.md | sort)"
+          test "$changed" = "$expected"
+          grep -q '9976713893' docs/project/BUILD_TEST_INDEX.md
+          grep -q '2cf62b87117f9279816de68f2ed3ce83768d203198b555fe4fe0042f8d367c3f' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'Batch C — completed' docs/project/current/dev/DEV-message-rendering.md
+          grep -q 'DEV-message-rendering b113 package-qualified Runtime gate' docs/project/PROJECT_STATE.md
+          grep -q 'Native message rich-text presentation — b113' docs/project/PROJECT_SPECIFIC_RULES.md
+
+      - name: Commit durable b113 package truth
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-message-rendering.md
+          git commit -m "docs: record b113 message rendering package"
+          git push origin HEAD:dev/message-rendering-20260906

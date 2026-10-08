@@ -1,0 +1,74 @@
+name: Stage b105 New Chat First Send
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b105-new-chat-first-send.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact allocated b105 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "46ae1479f9614de493a9f8a0e2509264f7115804"
+          test "$(git rev-parse HEAD^^)" = "d201b9998ab7e3002b1027ac9578e37fc63be073"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 104;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b104\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'DEV-send-stream-0.1.0-b105' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b105 new-chat first-Send authoritative handoff allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          test -f scripts/staging/b105_new_chat_first_send.py
+          test -f scripts/staging/b105_new_chat_first_send_runner.py
+
+      - name: Apply exact b105 product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b105_new_chat_first_send_runner.py
+
+      - name: Validate exact b105 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$'ChatGPTClient.xcodeproj/project.pbxproj\nChatGPTClient/Conversation/ConversationFeature.swift\nChatGPTClient/RootViewController.swift'
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 105;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b105\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -q 'func sendNewConversation' ChatGPTClient/RootViewController.swift
+          grep -q 'newConversation.authoritativeHandoff' ChatGPTClient/RootViewController.swift
+          grep -q 'new_conversation_identity_missing' ChatGPTClient/RootViewController.swift
+          grep -q 'func clearConversationSelection' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'func showNewConversationDraft' ChatGPTClient/Conversation/ConversationFeature.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b105 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          git commit -m "feat: add authoritative new-chat first send"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

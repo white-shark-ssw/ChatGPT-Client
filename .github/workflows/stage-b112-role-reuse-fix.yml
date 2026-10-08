@@ -1,0 +1,98 @@
+name: Stage b112 Role Reuse Fix
+
+"on":
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/stage-b112-role-reuse-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - name: Checkout guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact b111 product baseline and b112 uniqueness
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 64351b96bd61a44e8566e2264c5593fae868268e HEAD
+          git diff --quiet 64351b96bd61a44e8566e2264c5593fae868268e HEAD -- ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 111;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b111\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b112' docs/project/BUILD_TEST_INDEX.md
+          test -f scripts/staging/b112_allocate_role_reuse_fix.py
+          test -f scripts/staging/b112_role_reuse_fix.py
+
+      - name: Batch A record b111 Runtime and allocate b112
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b112_allocate_role_reuse_fix.py
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          grep -q 'DEV-send-stream-0.1.0-b112' docs/project/BUILD_TEST_INDEX.md
+          grep -q '8b3e7e627c4218f1154b3e325ec6a95b643c8f64d01c18c37693bab3aba6e811' docs/project/BUILD_TEST_INDEX.md
+          grep -q 'b111 Human Runtime selects cross-role reuse contamination / b112 role-isolated reuse allocation' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'b111 layer/reuse diagnosis / b112 role-isolated reuse decision' docs/project/TECHNICAL_DECISIONS.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record b111 runtime and allocate b112"
+          git push origin HEAD:dev/send-stream-20260829
+
+      - name: Batch B apply exact b112 role-reuse delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/b112_role_reuse_fix.py
+
+      - name: Validate exact b112 product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          test "$changed" = "$expected"
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 112;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b112\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          grep -Fq 'static let userReuseIdentifier = "ConversationMessageCell.user"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'static let assistantReuseIdentifier = "ConversationMessageCell.assistant"' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'reuseIdentifier(for: cellRole)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.userReuseIdentifier)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'tableView.register(ConversationMessageCell.self, forCellReuseIdentifier: ConversationMessageCell.assistantReuseIdentifier)' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'case .assistant: messageLabel.attributedText = Self.assistantBodyAttributedText(text); messageLabel.textColor = .label' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -Fq 'if value != nil { output.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: linkRange) }' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'assistantChunkRender.afterDisplay' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'reusedFromRole' ChatGPTClient/Conversation/ConversationFeature.swift
+          grep -q 'labelLayerTransparent' ChatGPTClient/Conversation/ConversationFeature.swift
+          git diff --quiet 64351b96bd61a44e8566e2264c5593fae868268e HEAD -- ChatGPTClient/RootViewController.swift
+
+      - name: Compile Debug Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ChatGPTClient.xcodeproj -scheme ChatGPTClient -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      - name: Commit exact b112 product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift
+          git commit -m "fix: isolate message cell reuse by role"
+          test "$(git diff HEAD^ --name-only | sort)" = "$(printf '%s\n' ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Conversation/ConversationFeature.swift | sort)"
+          git push origin HEAD:dev/send-stream-20260829

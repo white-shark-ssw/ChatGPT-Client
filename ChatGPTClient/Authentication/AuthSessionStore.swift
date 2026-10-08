@@ -34,8 +34,7 @@ final class AuthTransientSession {
     private let session: URLSession
     private let accessToken: String
 
-    fileprivate init?(cookies: [HTTPCookie], accessToken: String) {
-        let configuration = URLSessionConfiguration.ephemeral
+    fileprivate init?(cookies: [HTTPCookie], accessToken: String, configuration: URLSessionConfiguration = .ephemeral) {
         configuration.httpShouldSetCookies = true
         guard let storage = configuration.httpCookieStorage else { return nil }
         for cookie in cookies { storage.setCookie(cookie) }
@@ -171,8 +170,25 @@ final class AuthSessionStore {
     }
 
     func probeAccountContext(using cookieStore: WKHTTPCookieStore, createTransientSession: Bool = false, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
-        setAccountState(.probing)
+        if verifiedAccountContext() == nil { setAccountState(.probing) }
         let span = diagnostics.startSpan(category: "auth", name: "accountContextProbe")
+#if DEBUG
+        if let fixtureMode = SimulatorFixtureTransport.mode {
+            if fixtureMode == .offlineCache {
+                finishAccountProbe(.failed, span: span, fields: ["source": "simulator_fixture", "mode": fixtureMode.rawValue], completion: completion)
+                return
+            }
+            let context = AuthAccountContext(userID: "simulator-fixture-user", accountID: "simulator-fixture-account", planType: "fixture", structure: "personal")
+            setVerifiedAccountContext(context)
+            let transientSession = createTransientSession ? AuthTransientSession(cookies: [], accessToken: "simulator-fixture-token", configuration: SimulatorFixtureTransport.makeSessionConfiguration()) : nil
+            guard !createTransientSession || transientSession != nil else {
+                finishAccountProbe(.failed, span: span, fields: ["source": "simulator_fixture", "reason": "transient_session_creation_failed"], completion: completion)
+                return
+            }
+            finishAccountProbe(.verified, span: span, fields: ["source": "simulator_fixture", "mode": fixtureMode.rawValue], transientSession: transientSession, completion: completion)
+            return
+        }
+#endif
         cookieStore.getAllCookies { [weak self] cookies in
             guard let self else { return }
             let matchedCookies = cookies.filter(Self.isAuthCookieDomain)
@@ -196,8 +212,12 @@ final class AuthSessionStore {
                 }
                 guard let response = response as? HTTPURLResponse, let data, (200..<300).contains(response.statusCode) else {
                     session.finishTasksAndInvalidate()
-                    let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "none"
-                    self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "session", "httpStatus": status], completion: completion)
+                    let statusCode = (response as? HTTPURLResponse)?.statusCode
+                    let status = statusCode.map(String.init) ?? "none"
+                    let state: AuthAccountContextState = statusCode == 403 ? .failed : .notAvailable
+                    var fields = ["stage": "session", "httpStatus": status]
+                    if statusCode == 403 { fields["reason"] = "temporary_forbidden" }
+                    self.finishAccountProbe(state, span: span, fields: fields, completion: completion)
                     return
                 }
                 guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let user = payload["user"] as? [String: Any], let userID = user["id"] as? String, !userID.isEmpty, let accessToken = payload["accessToken"] as? String, !accessToken.isEmpty else {
@@ -224,8 +244,12 @@ final class AuthSessionStore {
                         return
                     }
                     guard let response = response as? HTTPURLResponse, let data, (200..<300).contains(response.statusCode) else {
-                        let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "none"
-                        self.finishAccountProbe(.notAvailable, span: span, fields: ["stage": "accounts", "httpStatus": status], completion: completion)
+                        let statusCode = (response as? HTTPURLResponse)?.statusCode
+                        let status = statusCode.map(String.init) ?? "none"
+                        let state: AuthAccountContextState = statusCode == 403 ? .failed : .notAvailable
+                        var fields = ["stage": "accounts", "httpStatus": status]
+                        if statusCode == 403 { fields["reason"] = "temporary_forbidden" }
+                        self.finishAccountProbe(state, span: span, fields: fields, completion: completion)
                         return
                     }
                     guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let accounts = payload["accounts"] as? [String: Any], let accountOrdering = payload["account_ordering"] as? [String], !accountOrdering.isEmpty else {
@@ -270,7 +294,10 @@ final class AuthSessionStore {
     }
 
     private func finishAccountProbe(_ state: AuthAccountContextState, span: DiagnosticsSpan, fields: [String: String] = [:], transientSession: AuthTransientSession? = nil, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
-        if state != .verified { setAccountState(state) }
+        if state != .verified {
+            if state == .failed, verifiedAccountContext() != nil { diagnostics.info(category: "auth", name: "session.accountStatePreserved", fields: ["state": AuthAccountContextState.verified.rawValue, "probeResult": AuthAccountContextState.failed.rawValue]) }
+            else { setAccountState(state) }
+        }
         span.end(status: state == .verified ? "ok" : state == .notAvailable ? "not_available" : "failed", fields: fields)
         completion(state, transientSession)
     }
@@ -298,7 +325,7 @@ final class AuthSessionStore {
         let previousState = accountState
         let hadContext = accountContext != nil
         accountState = state
-        if state == .notAvailable || state == .failed || state == .unknown { accountContext = nil }
+        if state == .notAvailable || state == .unknown { accountContext = nil }
         let contextInvalidated = hadContext && accountContext == nil
         lock.unlock()
         if previousState != state { diagnostics.info(category: "auth", name: "session.accountState", fields: ["state": state.rawValue]) }

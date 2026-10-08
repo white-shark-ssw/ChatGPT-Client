@@ -27,6 +27,11 @@ enum SimulatorFixtureTransport {
 }
 
 private final class SimulatorFixtureURLProtocol: URLProtocol {
+    private enum FixtureResponse {
+        case success([String: Any])
+        case failure(String)
+    }
+
     private static let lock = NSLock()
     private static var requestCounts: [String: Int] = [:]
     private var workItem: DispatchWorkItem?
@@ -108,7 +113,7 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
         return "detail:" + String(url.path.dropFirst("/backend-api/conversation/".count))
     }
 
-    private static func fixtureResponse(for url: URL, requestCount: Int) -> Result<[String: Any], String> {
+    private static func fixtureResponse(for url: URL, requestCount: Int) -> FixtureResponse {
         if url.path == "/backend-api/conversations" {
             return .success([
                 "items": [

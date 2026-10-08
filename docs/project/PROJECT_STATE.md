@@ -1,3 +1,9 @@
+## 2026-10-09 — Simulator baseline integrated / parent CI green
+
+- PR #37 is merged into `dev/send-stream-20260829` at `657f70703d0076bd50ebda761f8dde8ba732e972`; formal XCTest/XCUITest targets, deterministic Debug fixtures and `iOS Simulator Preflight` are now part of the active parent.
+- Integration-current run `37837104595 / 113517526599` passed on product/test/workflow-equivalent parent head `cbbe0fd0c511a5114a47aa4b00c3e3dfc42c2557`; Artifact `11575759936` / `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
+- Build115 / `DEV-send-stream-0.1.0-b115` remains the product identity. No b116/formal IPA Candidate or Human Runtime evidence was created by this integration. Current product gate returns to Server Stop post-Stop authoritative semantics; deferred live-menu persistence remains queued with the next justified product Candidate.
+
 ## 2026-10-09 — DEV-simulator-test-baseline CI Green / stacked integration pending
 
 - Draft PR #37 (`dev/simulator-test-baseline-20261009` -> `dev/send-stream-20260829`) has a green Simulator gate on exact product/test/workflow head `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent PR #29 remained at `0f30580da8006c834b138e031c8e7b112b8ddb7d` during final verification and PR #37 was mergeable.

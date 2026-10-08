@@ -1,3 +1,7 @@
+## 2026-10-09 — Integrated Simulator preflight precedes deliberate IPA Candidate packaging
+
+Decision: PR #37's Simulator baseline is now integrated into the active DEV-send-stream parent. For relevant development changes, use formal XCTest/XCUITest Simulator preflight as deterministic CI evidence before consuming a new physical-device Candidate identity. Keep `ios-foundation.yml` explicit/manual so ordinary pushes do not manufacture formal IPA Candidates. Simulator CI never replaces real account/WebKit/TrollStore/Human Runtime evidence, and production state owners remain unchanged.
+
 ## 2026-10-09 — Deterministic Simulator Preflight precedes formal IPA Candidate allocation
 
 Decision: repeated development/debug validation for relevant iOS changes should first use an account-independent Simulator Preflight. A new formal IPA Candidate/build is not allocated merely to discover compile, repository-state, navigation, cache, cancellation, long-list, or basic UI regressions that the Simulator can exercise. Physical-device packaging remains a later delivery/runtime gate.

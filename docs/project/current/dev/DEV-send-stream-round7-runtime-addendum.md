@@ -1,3 +1,23 @@
+## PR #37 Simulator baseline integration complete — DEV-send-stream owner 2026-10-09
+
+Integration truth:
+
+- Owning Work remains `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains open against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Parent pre-integration head was `0f30580da8006c834b138e031c8e7b112b8ddb7d`; child PR #37 exact head was `14096cb0aa1a012b9021a10940632181c2f9947d`; CI-green product/test/workflow head was `f63c52c364d3d94f548ce11de86f2bb64008773d`.
+- Pre-merge currentness/conflict guards passed: the parent had not advanced since the child green run, and all child commits after `f63c52c...` were durable docs/checkpoint only. PR #35 remained independent research-only with no product/Candidate overlap.
+- PR #37 was promoted from draft and merged exactly once by ordinary merge with expected head `14096cb0...`. Merge commit: **`657f70703d0076bd50ebda761f8dde8ba732e972`**. PR #37 is closed/merged.
+- Product identity remains exact Build115 / `DEV-send-stream-0.1.0-b115`. No b116, formal IPA Candidate or real-device Runtime evidence is created by this infrastructure integration.
+- Integrated Simulator identity is `SIM-DEV-simulator-test-baseline-v1`. Original child green evidence remains run `37830975097 / 113495918971`, 2/2 Repository XCTest + 3/3 XCUITest, Artifact `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`.
+- The first exact merge-head run `37836341433 / 113514203966` was superseded/cancelled when a docs/tooling-only recorder commit advanced the PR head. This cancellation is concurrency behavior, not a test failure.
+- Integration-equivalent parent head `cbbe0fd0c511a5114a47aa4b00c3e3dfc42c2557` differs from merge commit `657f7070...` only by `.github/workflows/record-pr37-parent-integration.yml`; product, Xcode test targets and both Simulator/IPA workflows under test are unchanged.
+- **Integration-current Simulator Preflight `37837104595 / 113517526599` succeeded** on that head: Checkout/toolchain/Simulator boot/XCTest+XCUITest/evidence capture/upload all passed. Evidence Artifact `SimulatorPreflight-37837104595-1`, ID `11575759936`, digest `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
+- Later heads through `4cafb4a71026f7734c33027a4aae2db3be92def0` only changed the parent-integration recorder workflow/tooling; no product, Xcode test target, Simulator workflow or IPA workflow bits changed. Earlier recorder runs failed at workflow tooling/parse/launch level and are not product/test failures.
+- This owner session intentionally does not modify/delete `docs/project/current/dev/DEV-simulator-test-baseline.md`; child checkpoint lifecycle remains its task owner's responsibility.
+
+Evidence classification after integration: **Simulator baseline Code written / macOS build Passed / XCTest Passed / XCUITest Passed / CI Passed / evidence Artifact produced / parent integration Passed / formal IPA Candidate none / real-device Runtime not claimed. DEV-send-stream remains b115 Human Runtime Partial / Stable-Frozen No.**
+
+**Next exact action:** resume the existing Server Stop semantic evidence gate. Stop request/ack contract is already Runtime Positive; synthetic Detail replay 404/401 is rejected. Observe the official Web page's own successful post-Stop `GET /backend-api/conversations/<id>` response via response clone after ordinary navigation. Do not allocate b116 until that terminal/partial-content evidence is captured. If Stop semantics become sufficient, the next justified product Candidate may bundle Server Stop with the already-deferred stable top-right-menu-host correction.
+
 ## Web Rule Lab post-Stop Detail synthetic-read auth boundary — 2026-09-08
 
 Latest user-run post-Stop Detail inspection using a manually reconstructed request to the previously observed official plural Detail URL returned HTTP401 JSON with only top-level `detail`. This result is **Inconclusive for Stop semantics** and must not be treated as a stopped-response failure.

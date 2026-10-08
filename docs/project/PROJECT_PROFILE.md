@@ -1,3 +1,9 @@
+## Current integrated Simulator baseline — parent CI green 2026-10-09
+
+- PR #37 merged at `657f70703d0076bd50ebda761f8dde8ba732e972`. `ChatGPTClientTests`, `ChatGPTClientUITests`, deterministic Debug fixture seams and `.github/workflows/ios-simulator-preflight.yml` are now parent-branch infrastructure.
+- Integration-current `37837104595 / 113517526599` passed and produced Simulator evidence Artifact `11575759936` / `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
+- Simulator identity `SIM-DEV-simulator-test-baseline-v1` remains CI-only. Product remains Build115 / Candidate b115; formal IPA packaging remains explicit `workflow_dispatch` and physical-device Runtime remains separately required.
+
 ## Current Simulator Preflight baseline — 2026-10-09
 
 - `DEV-simulator-test-baseline` is stacked on `DEV-send-stream` PR #29 and is green on exact product/test/workflow head `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent head is `0f30580da8006c834b138e031c8e7b112b8ddb7d`.

@@ -1,3 +1,9 @@
+## Test infrastructure — integrated Simulator baseline green 2026-10-09
+
+- Parent integration commit `657f70703d0076bd50ebda761f8dde8ba732e972`; integration-current Simulator run `37837104595 / 113517526599` passed and Artifact `11575759936` was produced.
+- The formal Simulator baseline now guards deterministic repository/UI regressions before a physical-device Candidate is justified. It does not prove real service/auth/WebKit/TrollStore/performance behavior and allocates no product Build.
+- DEV-send-stream remains Build115 / Human Runtime Partial; Server Stop semantics and the deferred menu-persistence defect remain product-level evidence/work, not closed by Simulator CI.
+
 ## 2026-10-09 — Simulator automated-test / CI preflight module
 
 - **Status**: CI Green / stacked integration pending / Stable-Frozen No.

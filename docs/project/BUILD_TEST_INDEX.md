@@ -1,3 +1,10 @@
+## Simulator baseline parent integration — 2026-10-09
+
+- `SIM-DEV-simulator-test-baseline-v1` integrated from PR #37 at merge commit `657f70703d0076bd50ebda761f8dde8ba732e972` without allocating a formal IPA Candidate.
+- Original stacked green: `37830975097 / 113495918971`, Artifact `11574306347`, digest `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`.
+- Parent integration-current green: `37837104595 / 113517526599` on product/test/workflow-equivalent head `cbbe0fd0c511a5114a47aa4b00c3e3dfc42c2557`; Artifact `11575759936`, digest `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
+- Classification: Simulator CI evidence only / 5-test suite passed / no Build allocation / no real-device Runtime claim. Parent product remains `DEV-send-stream-0.1.0-b115`.
+
 ## Simulator evidence — SIM-DEV-simulator-test-baseline-v1 — 2026-10-09
 
 - Work: `DEV-simulator-test-baseline`; branch `dev/simulator-test-baseline-20261009`; draft PR #37 stacked on `dev/send-stream-20260829` / PR #29.

@@ -33,7 +33,15 @@ jobs:
           test -f scripts/staging/apply_authenticated_protocol_capture.py
 
       - name: Apply capture, sanitizer and replay infrastructure
-        run: python3 scripts/staging/apply_authenticated_protocol_capture.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/apply_authenticated_protocol_capture.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('ChatGPTClient/Protocol/ProtocolReadProbe.swift')
+          path.write_text(path.read_text().rstrip() + '\n')
+          PY
 
       - name: Validate sanitizer and exact scope
         shell: bash

@@ -15,12 +15,19 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window.makeKeyAndVisible()
         self.window = window
 
-        AuthSessionStore.shared.warmDefaultWebDataStore { [weak self] in
+        let finishStartup = { [weak self] in
             guard let self, let window = self.window else { return }
             window.rootViewController = RootViewController()
             self.diagnostics.info(category: "app", name: "ready", fields: ["root": "RootViewController", "candidate": AppBuildInfo.current.candidate])
             launchSpan.end()
         }
+#if DEBUG
+        if SimulatorFixtureTransport.isEnabled {
+            finishStartup()
+            return true
+        }
+#endif
+        AuthSessionStore.shared.warmDefaultWebDataStore(completion: finishStartup)
         return true
     }
 

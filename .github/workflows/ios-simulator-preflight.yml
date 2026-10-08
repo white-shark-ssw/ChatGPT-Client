@@ -1,0 +1,128 @@
+name: iOS Simulator Preflight
+
+on:
+  push:
+    branches:
+      - "dev/**"
+    paths:
+      - "ChatGPTClient/**"
+      - "ChatGPTClientTests/**"
+      - "ChatGPTClientUITests/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/**"
+      - ".github/workflows/ios-simulator-preflight.yml"
+  pull_request:
+    paths:
+      - "ChatGPTClient/**"
+      - "ChatGPTClientTests/**"
+      - "ChatGPTClientUITests/**"
+      - "ChatGPTClient.xcodeproj/**"
+      - "scripts/**"
+      - ".github/workflows/ios-simulator-preflight.yml"
+  workflow_dispatch:
+
+jobs:
+  simulator-preflight:
+    name: Simulator Preflight
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      TEST_IDENTITY: SIM-DEV-simulator-test-baseline-v1
+      RESULT_BUNDLE: build/test-results/SimulatorPreflight.xcresult
+      EVIDENCE_DIR: build/test-evidence
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Select available iPhone Simulator
+        id: simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          xcrun simctl list devices available -j > "$EVIDENCE_DIR/simulators.json"
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+
+          data = json.loads(Path(os.environ["EVIDENCE_DIR"] + "/simulators.json").read_text())
+          candidates = []
+          for runtime, devices in data.get("devices", {}).items():
+              if ".iOS-" not in runtime:
+                  continue
+              match = re.search(r"iOS-(\d+)(?:-(\d+))?(?:-(\d+))?", runtime)
+              version = tuple(int(value or 0) for value in (match.groups() if match else ("0", "0", "0")))
+              for index, device in enumerate(devices):
+                  if device.get("isAvailable") and str(device.get("name", "")).startswith("iPhone"):
+                      candidates.append((version, -index, device["name"], device["udid"], device.get("state", "Unknown"), runtime))
+          if not candidates:
+              raise SystemExit("No available iPhone Simulator found")
+          version, _, name, udid, state, runtime = max(candidates)
+          output = Path(os.environ["GITHUB_OUTPUT"])
+          with output.open("a") as handle:
+              handle.write(f"udid={udid}\nname={name}\nstate={state}\nruntime={runtime}\n")
+          print(f"Selected {name} {udid} {runtime} state={state}")
+          PY
+
+      - name: Boot Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          UDID="${{ steps.simulator.outputs.udid }}"
+          if [[ "${{ steps.simulator.outputs.state }}" != "Booted" ]]; then xcrun simctl boot "$UDID"; fi
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" clear || true
+
+      - name: Run XCTest and XCUITest
+        id: tests
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p "$(dirname "$RESULT_BUNDLE")" "$EVIDENCE_DIR"
+          echo "$TEST_IDENTITY" > "$EVIDENCE_DIR/test-identity.txt"
+          echo "${{ steps.simulator.outputs.name }} | ${{ steps.simulator.outputs.runtime }} | ${{ steps.simulator.outputs.udid }}" > "$EVIDENCE_DIR/simulator-identity.txt"
+          xcodebuild test \
+            -project ChatGPTClient.xcodeproj \
+            -scheme ChatGPTClient \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath "$RESULT_BUNDLE" \
+            | tee "$EVIDENCE_DIR/xcodebuild.log"
+          status=${PIPESTATUS[0]}
+          echo "$status" > "$EVIDENCE_DIR/xcodebuild-status.txt"
+          exit "$status"
+
+      - name: Capture Simulator evidence
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          UDID="${{ steps.simulator.outputs.udid }}"
+          mkdir -p "$EVIDENCE_DIR/crashes"
+          xcrun simctl spawn "$UDID" log show --style compact --last 30m --predicate 'process == "ChatGPTClient" OR process == "ChatGPTClientUITests-Runner"' > "$EVIDENCE_DIR/simulator-system.log" 2>&1 || true
+          status="$(cat "$EVIDENCE_DIR/xcodebuild-status.txt" 2>/dev/null || echo 1)"
+          if [[ "$status" != "0" ]]; then xcrun simctl io "$UDID" screenshot "$EVIDENCE_DIR/failure-final-screen.png" || true; fi
+          if [[ -d "$HOME/Library/Logs/DiagnosticReports" ]]; then
+            find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 1 -type f \( -name 'ChatGPTClient*' -o -name 'ChatGPTClientUITests*' \) -mmin -60 -exec cp {} "$EVIDENCE_DIR/crashes/" \; || true
+          fi
+          find build -maxdepth 3 -type f -o -type d | sort > "$EVIDENCE_DIR/build-tree.txt"
+
+      - name: Upload Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimulatorPreflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/test-results/*.xcresult
+            build/test-evidence
+          if-no-files-found: warn
+          retention-days: 14

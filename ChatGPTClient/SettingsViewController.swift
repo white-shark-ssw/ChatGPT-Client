@@ -102,6 +102,10 @@ final class SettingsViewController: UIViewController {
         protocolSendProbeButton.setTitle("Native 输入 / Web Send（b65诊断）", for: .normal)
         protocolSendProbeButton.addTarget(self, action: #selector(openProtocolSendProbe), for: .touchUpInside)
 
+        let protocolCaptureButton = UIButton(type: .system)
+        protocolCaptureButton.setTitle("Authenticated Protocol Capture", for: .normal)
+        protocolCaptureButton.addTarget(self, action: #selector(openAuthenticatedProtocolCapture), for: .touchUpInside)
+
         let webRuleLabButton = UIButton(type: .system)
         webRuleLabButton.setTitle("Web Rule Lab", for: .normal)
         webRuleLabButton.addTarget(self, action: #selector(openWebRuleLab), for: .touchUpInside)
@@ -126,6 +130,7 @@ final class SettingsViewController: UIViewController {
             diagnosticsTitle,
             diagnosticsDetail,
             protocolSendProbeButton,
+            protocolCaptureButton,
             webRuleLabButton,
             sampleButton,
             exportButton,
@@ -174,6 +179,11 @@ final class SettingsViewController: UIViewController {
     @objc private func openProtocolSendProbe() {
         diagnostics.info(category: "navigation", name: "nativeWebSendEngineProbe.open")
         navigationController?.pushViewController(NativeWebSendEngineProbeViewController(), animated: true)
+    }
+
+    @objc private func openAuthenticatedProtocolCapture() {
+        diagnostics.info(category: "navigation", name: "authenticatedProtocolCapture.open")
+        navigationController?.pushViewController(AuthenticatedProtocolCaptureViewController(), animated: true)
     }
 
     @objc private func openWebRuleLab() {

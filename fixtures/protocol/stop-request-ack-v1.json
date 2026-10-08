@@ -1,0 +1,24 @@
+{
+  "interactions": [
+    {
+      "request": {
+        "body": {
+          "conversation_id": "id-0001",
+          "exclude_async_types": []
+        },
+        "method": "POST",
+        "path": "/backend-api/stop_conversation"
+      },
+      "response": {
+        "body": {
+          "last_message_id": null,
+          "status": "ok"
+        },
+        "contentType": "application/json",
+        "status": 200
+      }
+    }
+  ],
+  "schema": "protocol-replay-fixture-v1",
+  "source": "Runtime-proven official Web Stop request/ack contract; no post-Stop Detail semantics inferred"
+}

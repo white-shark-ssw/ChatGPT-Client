@@ -23,6 +23,10 @@ on:
       - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ios-simulator-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   simulator-preflight:
     name: Simulator Preflight
@@ -97,6 +101,7 @@ jobs:
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath build/DerivedData \
             -resultBundlePath "$RESULT_BUNDLE" \
+            -parallel-testing-enabled NO \
             | tee "$EVIDENCE_DIR/xcodebuild.log"
           status=${PIPESTATUS[0]}
           echo "$status" > "$EVIDENCE_DIR/xcodebuild-status.txt"

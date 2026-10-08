@@ -172,7 +172,8 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
                 "status": "finished_successfully"
             ]
             if entry.0 == "assistant" { message["recipient"] = "all" }
-            mapping[nodeID] = ["id": nodeID, "parent": parentID ?? NSNull(), "children": [], "message": message]
+            let parentValue: Any = parentID.map { $0 as Any } ?? NSNull()
+            mapping[nodeID] = ["id": nodeID, "parent": parentValue, "children": [], "message": message]
             parentID = nodeID
         }
         return [

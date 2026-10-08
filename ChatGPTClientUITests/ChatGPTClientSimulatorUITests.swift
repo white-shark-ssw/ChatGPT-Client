@@ -34,12 +34,12 @@ final class ChatGPTClientSimulatorUITests: XCTestCase {
         let table = app.tables.firstMatch
         XCTAssertTrue(table.exists)
         table.swipeDown()
-        XCTAssertTrue(app.navigationBars.staticTexts["已刷新 · 4 条"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Fixture Alpha Refreshed"].waitForExistence(timeout: 5))
 
         app.terminate()
         app.launchEnvironment[fixtureKey] = "offline-cache"
         app.launch()
-        XCTAssertTrue(app.staticTexts["Fixture Alpha"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Fixture Alpha Refreshed"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Fixture Long 1000+"].exists)
     }
 

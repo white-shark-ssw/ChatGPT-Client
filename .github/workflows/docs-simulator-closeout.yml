@@ -1,0 +1,60 @@
+name: Simulator Baseline Docs Closeout
+
+on:
+  push:
+    branches:
+      - dev/simulator-test-baseline-20261009
+    paths:
+      - .github/workflows/docs-simulator-closeout.yml
+
+permissions:
+  contents: write
+
+jobs:
+  closeout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepend durable Simulator baseline sections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          sections = {
+              "docs/project/PROJECT_PROFILE.md": """## Current Simulator Preflight baseline — 2026-10-09\n\n- `DEV-simulator-test-baseline` is stacked on `DEV-send-stream` PR #29 and is green on exact product/test/workflow head `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent head is `0f30580da8006c834b138e031c8e7b112b8ddb7d`.\n- Formal test roots now exist: `ChatGPTClientTests/` for XCTest and `ChatGPTClientUITests/` for XCUITest; both are included in the shared `ChatGPTClient` scheme. Any older statement below saying no XCTest/UI-test target exists is superseded by this section.\n- `.github/workflows/ios-simulator-preflight.yml` is the ordinary development preflight for relevant `dev/**` / PR changes: macOS 15 ARM64, available-iPhone Simulator selection/boot, serialized `xcodebuild test`, and retained `.xcresult` / logs / crash / screenshot evidence. Same-head push/PR runs dedupe by head branch.\n- `.github/workflows/ios-foundation.yml` is explicit `workflow_dispatch` only. A formal IPA Candidate is allocated only after a delivery gate justifies physical-device validation; Simulator evidence is never an IPA Candidate.\n- Debug fixture mode is explicit and account-independent (`DEBUG` + `CHATGPTCLIENT_SIMULATOR_FIXTURE`): it substitutes auth/transport inputs only, suppresses real Web observation, and does not replace `ConversationRepository`, `AuthSessionStore`, or cache ownership.\n- Green evidence: PR run `37830975097` / job `113495918971`, Xcode 16.4, iPhone 17 Pro / iOS 26.2 Simulator, 2 XCTest + 3 XCUITest passed, Artifact `SimulatorPreflight-37830975097-1` / ID `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`. Real-device/Human Runtime is not claimed.\n\n""",
+              "docs/project/PROJECT_STATE.md": """## 2026-10-09 — DEV-simulator-test-baseline CI Green / stacked integration pending\n\n- Draft PR #37 (`dev/simulator-test-baseline-20261009` -> `dev/send-stream-20260829`) has a green Simulator gate on exact product/test/workflow head `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent PR #29 remained at `0f30580da8006c834b138e031c8e7b112b8ddb7d` during final verification and PR #37 was mergeable.\n- CI run `37830975097` / job `113495918971` passed Checkout, toolchain, iPhone Simulator selection/boot, serialized XCTest+XCUITest, evidence capture, and upload. The tested PR merge ref was `4dc59c6b4cbc77ba0acf631ce7102b5f6ac67b9b`.\n- Tests: repository XCTest 2/2 passed (real Repository list/detail/1004-message fixture path; in-flight load superseded by authoritative Reload) and XCUITest 3/3 passed (navigation/re-entry; 1000+ message round jump/rapid taps; manual Refresh -> terminate -> offline-cache relaunch persistence). Total 5 tests / 0 failures.\n- Same-head push/PR CI duplication is resolved: push run `37830968642` was cancelled while PR run `37830975097` remained and passed.\n- Evidence Artifact `SimulatorPreflight-37830975097-1` / ID `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4` is CI evidence only. No formal IPA Candidate/build is allocated by this Work; parent b115 remains untouched.\n- Status classification: Code written Yes; GitHub macOS build Passed; Simulator XCTest Passed; Simulator XCUITest Passed; CI Passed; evidence Artifact produced Yes; real-device/Human Runtime Not performed; Stable/Frozen No. Parent-owner stacked integration remains the next gate.\n\n""",
+              "docs/project/MODULE_STATUS.md": """## 2026-10-09 — Simulator automated-test / CI preflight module\n\n- **Status**: CI Green / stacked integration pending / Stable-Frozen No.\n- **Owner boundary**: production conversation/list/read/recovery authority remains `ConversationRepository`; auth/account authority remains `AuthSessionStore`; list cache remains storage-only. Test fixtures are input seams only and introduce no second state owner.\n- **Test infrastructure**: `ChatGPTClientTests`, `ChatGPTClientUITests`, shared-scheme testables, Debug-only `SimulatorFixtureTransport`, fixture auth/startup isolation, and fixture-mode suppression of real `CoveredWebSendExecutor` Web observation.\n- **Validated scope**: 2 repository XCTest + 3 XCUITest passed on run `37830975097`, head `f63c52c364d3d94f548ce11de86f2bb64008773d`, iPhone 17 Pro / iOS 26.2 Simulator. Coverage includes 1004 messages, request replacement/cancellation, navigation/re-entry, rapid interaction/round jump, manual refresh, persisted cache, terminate/relaunch, and offline-cache launch.\n- **CI ownership**: `ios-simulator-preflight.yml` owns ordinary deterministic development validation and evidence retention; `ios-foundation.yml` remains explicit-only formal packaging. Simulator artifacts do not own or allocate IPA Candidate identity.\n- **Integration rule**: PR #37 is stacked on PR #29. If the parent head changes before integration, re-check overlap/merge ref and rerun the Simulator gate before promoting the previous green result.\n\n""",
+              "docs/project/TECHNICAL_DECISIONS.md": """## 2026-10-09 — Deterministic Simulator Preflight precedes formal IPA Candidate allocation\n\nDecision: repeated development/debug validation for relevant iOS changes should first use an account-independent Simulator Preflight. A new formal IPA Candidate/build is not allocated merely to discover compile, repository-state, navigation, cache, cancellation, long-list, or basic UI regressions that the Simulator can exercise. Physical-device packaging remains a later delivery/runtime gate.\n\nImplementation boundary: fixture behavior is available only under explicit Debug test environment (`DEBUG` + `CHATGPTCLIENT_SIMULATOR_FIXTURE`). It may replace transient auth/transport inputs and suppress external real-Web observation, but it must not create a fake `ConversationRepository`, a second auth/account authority, a second cache authority, or production compatibility/retry behavior. Production state owners remain unchanged.\n\nCI policy: `ios-simulator-preflight.yml` runs the real app/repository path with XCTest/XCUITest on an available iPhone Simulator, serializes stateful lifecycle/cache tests, and retains `.xcresult`, build log, Simulator log, crash evidence and a failure screenshot. Same-head push/PR runs share a concurrency key so only one macOS execution survives. Formal `ios-foundation.yml` packaging is explicit-only.\n\nEvidence: run `37830975097` on head `f63c52c364d3d94f548ce11de86f2bb64008773d` passed 2 XCTest + 3 XCUITest; Artifact `11574306347` is evidence, not a deliverable. This proves Simulator/CI behavior only and must never be described as real-account, WKWebView-login, TrollStore, 120 Hz, or physical-device Runtime proof.\n\n""",
+              "docs/project/BUILD_TEST_INDEX.md": """## Simulator evidence — SIM-DEV-simulator-test-baseline-v1 — 2026-10-09\n\n- Work: `DEV-simulator-test-baseline`; branch `dev/simulator-test-baseline-20261009`; draft PR #37 stacked on `dev/send-stream-20260829` / PR #29.\n- Product/test/workflow head: `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent head: `0f30580da8006c834b138e031c8e7b112b8ddb7d`; tested PR merge ref: `4dc59c6b4cbc77ba0acf631ce7102b5f6ac67b9b`.\n- GitHub Actions: `iOS Simulator Preflight` run `37830975097`, job `113495918971`, macOS 15 ARM64, Xcode 16.4, iPhone 17 Pro / iOS 26.2 Simulator.\n- Result: 2/2 `ConversationRepositorySimulatorTests` passed; 3/3 `ChatGPTClientSimulatorUITests` passed; total 5 / 0 failures; `xcodebuild test` succeeded.\n- Evidence Artifact: `SimulatorPreflight-37830975097-1`, ID `11574306347`, digest `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`; contains `.xcresult` and CI diagnostic evidence; 14-day retention at creation.\n- Concurrency proof: same-head push run `37830968642` was cancelled; PR run `37830975097` remained and passed.\n- Classification: **Simulator CI evidence only; not an IPA Candidate, not a release Artifact, no Build number allocated, no real-device/Human Runtime claim.** Parent `DEV-send-stream-0.1.0-b115` identity remains unchanged.\n\n""",
+              "docs/project/PROJECT_SPECIFIC_RULES.md": """## Simulator Preflight and Candidate policy — 2026-10-09\n\n- Relevant ordinary development changes must use `iOS Simulator Preflight` before consuming a new formal IPA Candidate when the behavior is Simulator-testable.\n- Simulator fixture mode is permitted only for explicit Debug test execution with `CHATGPTCLIENT_SIMULATOR_FIXTURE`; it must stay absent from production behavior.\n- Fixtures may substitute auth/transport inputs but must not create a fake `ConversationRepository`, duplicate auth/account authority, duplicate cache authority, speculative retry/fallback/timer/watchdog, or compatibility shim solely to satisfy tests.\n- Explicit fixture mode must not start real ChatGPT Web observation through `CoveredWebSendExecutor`; deterministic Simulator tests stay account/service independent.\n- CI must retain actionable failure evidence (`.xcresult`, build log, Simulator log, crash reports and failure screenshot when available). Same-head push/PR runs must dedupe rather than consume duplicate macOS runners.\n- Formal IPA packaging remains explicit. Allocate a unique globally conflict-free Candidate/build only when source has reached a delivery gate that requires package/real-device validation. Simulator evidence Artifacts are never Candidate identities.\n- Always classify separately: Code written; static/local checks; Simulator/CI passed; evidence Artifact produced; formal IPA produced; Human/real-device Runtime; Stable/Frozen. Simulator green must not be promoted to real-device Runtime proof.\n- If the stacked parent head changes after a green child run, re-check branch/PR/head/merge-ref overlap and rerun the Simulator gate before treating the prior result as current integration evidence.\n\n""",
+          }
+
+          marker = "2026-10-09"
+          for filename, section in sections.items():
+              path = Path(filename)
+              original = path.read_text()
+              heading = section.splitlines()[0]
+              if heading in original:
+                  continue
+              path.write_text(section + original)
+
+          helper = Path(".github/workflows/docs-simulator-closeout.yml")
+          if helper.exists():
+              helper.unlink()
+          PY
+
+      - name: Commit docs closeout and self-delete helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/BUILD_TEST_INDEX.md docs/project/PROJECT_SPECIFIC_RULES.md .github/workflows/docs-simulator-closeout.yml
+          git diff --cached --check
+          git commit -m "docs: record green simulator preflight baseline"
+          git push origin HEAD:dev/simulator-test-baseline-20261009

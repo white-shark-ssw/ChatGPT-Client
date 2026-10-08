@@ -28,12 +28,12 @@ final class ChatGPTClientSimulatorUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Fixture Beta"].exists)
     }
 
-    func testPullRefreshPersistsCacheAcrossTerminateAndOfflineRelaunch() throws {
+    func testManualRefreshPersistsCacheAcrossTerminateAndOfflineRelaunch() throws {
         let app = launch(mode: "baseline")
         assertListLoaded(app)
-        let table = app.tables.firstMatch
-        XCTAssertTrue(table.exists)
-        table.swipeDown()
+        let refreshButton = app.buttons["Refresh"]
+        XCTAssertTrue(refreshButton.waitForExistence(timeout: 3))
+        refreshButton.tap()
         XCTAssertTrue(app.staticTexts["Fixture Alpha Refreshed"].waitForExistence(timeout: 5))
 
         app.terminate()

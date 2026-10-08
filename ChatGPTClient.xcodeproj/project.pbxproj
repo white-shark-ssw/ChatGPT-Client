@@ -21,7 +21,27 @@
 		A00000000000000000000012 /* NativeResumeParityProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* NativeResumeParityProbe.swift */; };
 		A00000000000000000000013 /* NativeWebSendEngineProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* NativeWebSendEngineProbe.swift */; };
 		A00000000000000000000014 /* NativeConversationContinuation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* NativeConversationContinuation.swift */; };
+		A00000000000000000000015 /* SimulatorFixtureTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* SimulatorFixtureTransport.swift */; };
+		A10000000000000000000001 /* ConversationRepositorySimulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* ConversationRepositorySimulatorTests.swift */; };
+		A20000000000000000000001 /* ChatGPTClientSimulatorUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* ChatGPTClientSimulatorUITests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		300000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E00000000000000000000001;
+			remoteInfo = ChatGPTClient;
+		};
+		300000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E00000000000000000000001;
+			remoteInfo = ChatGPTClient;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		B00000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -40,10 +60,29 @@
 		B00000000000000000000014 /* NativeResumeParityProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeResumeParityProbe.swift; sourceTree = "<group>"; };
 		B00000000000000000000015 /* NativeWebSendEngineProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWebSendEngineProbe.swift; sourceTree = "<group>"; };
 		B00000000000000000000016 /* NativeConversationContinuation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeConversationContinuation.swift; sourceTree = "<group>"; };
+		B00000000000000000000017 /* SimulatorFixtureTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatorFixtureTransport.swift; sourceTree = "<group>"; };
+		B10000000000000000000001 /* ConversationRepositorySimulatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationRepositorySimulatorTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* ChatGPTClientTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChatGPTClientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B20000000000000000000001 /* ChatGPTClientSimulatorUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTClientSimulatorUITests.swift; sourceTree = "<group>"; };
+		B20000000000000000000002 /* ChatGPTClientUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChatGPTClientUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D00000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D20000000000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -57,6 +96,8 @@
 			isa = PBXGroup;
 			children = (
 				C00000000000000000000002 /* ChatGPTClient */,
+				C10000000000000000000001 /* ChatGPTClientTests */,
+				C20000000000000000000001 /* ChatGPTClientUITests */,
 				C00000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +111,7 @@
 				C00000000000000000000006 /* Authentication */,
 				C00000000000000000000007 /* Protocol */,
 				C00000000000000000000008 /* Conversation */,
+				C00000000000000000000009 /* Testing */,
 				C00000000000000000000003 /* Support */,
 				C00000000000000000000004 /* Diagnostics */,
 				B00000000000000000000009 /* Assets.xcassets */,
@@ -98,6 +140,8 @@
 			isa = PBXGroup;
 			children = (
 				B00000000000000000000007 /* ChatGPTClient.app */,
+				B10000000000000000000002 /* ChatGPTClientTests.xctest */,
+				B20000000000000000000002 /* ChatGPTClientUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -131,6 +175,30 @@
 			path = Conversation;
 			sourceTree = "<group>";
 		};
+		C00000000000000000000009 /* Testing */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000017 /* SimulatorFixtureTransport.swift */,
+			);
+			path = Testing;
+			sourceTree = "<group>";
+		};
+		C10000000000000000000001 /* ChatGPTClientTests */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000001 /* ConversationRepositorySimulatorTests.swift */,
+			);
+			path = ChatGPTClientTests;
+			sourceTree = "<group>";
+		};
+		C20000000000000000000001 /* ChatGPTClientUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B20000000000000000000001 /* ChatGPTClientSimulatorUITests.swift */,
+			);
+			path = ChatGPTClientUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -151,6 +219,42 @@
 			productReference = B00000000000000000000007 /* ChatGPTClient.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E10000000000000000000001 /* ChatGPTClientTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 210000000000000000000001 /* Build configuration list for PBXNativeTarget "ChatGPTClientTests" */;
+			buildPhases = (
+				D10000000000000000000001 /* Sources */,
+				D10000000000000000000002 /* Frameworks */,
+				D10000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				400000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = ChatGPTClientTests;
+			productName = ChatGPTClientTests;
+			productReference = B10000000000000000000002 /* ChatGPTClientTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E20000000000000000000001 /* ChatGPTClientUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 220000000000000000000001 /* Build configuration list for PBXNativeTarget "ChatGPTClientUITests" */;
+			buildPhases = (
+				D20000000000000000000001 /* Sources */,
+				D20000000000000000000002 /* Frameworks */,
+				D20000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				400000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = ChatGPTClientUITests;
+			productName = ChatGPTClientUITests;
+			productReference = B20000000000000000000002 /* ChatGPTClientUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -163,6 +267,14 @@
 				TargetAttributes = {
 					E00000000000000000000001 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					E10000000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = E00000000000000000000001;
+					};
+					E20000000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = E00000000000000000000001;
 					};
 				};
 			};
@@ -180,6 +292,8 @@
 			projectRoot = "";
 			targets = (
 				E00000000000000000000001 /* ChatGPTClient */,
+				E10000000000000000000001 /* ChatGPTClientTests */,
+				E20000000000000000000001 /* ChatGPTClientUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -190,6 +304,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00000000000000000000007 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D20000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -213,10 +341,40 @@
 				A00000000000000000000012 /* NativeResumeParityProbe.swift in Sources */,
 				A00000000000000000000013 /* NativeWebSendEngineProbe.swift in Sources */,
 				A00000000000000000000014 /* NativeConversationContinuation.swift in Sources */,
+				A00000000000000000000015 /* SimulatorFixtureTransport.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* ConversationRepositorySimulatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D20000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20000000000000000000001 /* ChatGPTClientSimulatorUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		400000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E00000000000000000000001 /* ChatGPTClient */;
+			targetProxy = 300000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		400000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E00000000000000000000001 /* ChatGPTClient */;
+			targetProxy = 300000000000000000000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		100000000000000000000001 /* Debug */ = {
@@ -305,6 +463,74 @@
 			};
 			name = Release;
 		};
+		110000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.whitesharkssw.chatgptclient.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChatGPTClient.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ChatGPTClient";
+			};
+			name = Debug;
+		};
+		110000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.whitesharkssw.chatgptclient.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChatGPTClient.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ChatGPTClient";
+			};
+			name = Release;
+		};
+		120000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whitesharkssw.chatgptclient.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ChatGPTClient;
+			};
+			name = Debug;
+		};
+		120000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whitesharkssw.chatgptclient.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ChatGPTClient;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -325,6 +551,24 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		210000000000000000000001 /* Build configuration list for PBXNativeTarget "ChatGPTClientTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				110000000000000000000001 /* Debug */,
+				110000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		220000000000000000000001 /* Build configuration list for PBXNativeTarget "ChatGPTClientUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				120000000000000000000001 /* Debug */,
+				120000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

@@ -49,6 +49,7 @@ jobs:
           set -euo pipefail
           python3 -m py_compile scripts/staging/apply_authenticated_protocol_capture.py scripts/protocol_capture/sanitize_capture.py
           python3 scripts/protocol_capture/sanitize_capture.py --self-test
+          find scripts -type d -name __pycache__ -prune -exec rm -rf {} +
           git diff --check
           changed="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
           expected="$(printf '%s\n' \

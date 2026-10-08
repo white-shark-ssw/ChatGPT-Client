@@ -1,0 +1,133 @@
+name: Record PR37 Parent Integration
+
+on:
+  push:
+    branches:
+      - dev/send-stream-20260829
+    paths:
+      - ".github/workflows/record-pr37-parent-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout parent owner
+        uses: actions/checkout@v4
+        with:
+          ref: dev/send-stream-20260829
+          fetch-depth: 0
+
+      - name: Guard exact integration and product identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 657f70703d0076bd50ebda761f8dde8ba732e972 HEAD
+          git merge-base --is-ancestor 14096cb0aa1a012b9021a10940632181c2f9947d HEAD
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'DEV-send-stream-0.1.0-b116' ChatGPTClient.xcodeproj/project.pbxproj
+          test -f ChatGPTClientTests/ConversationRepositorySimulatorTests.swift
+          test -f ChatGPTClientUITests/ChatGPTClientSimulatorUITests.swift
+
+      - name: Record integration recovery and durable state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = {
+              "checkpoint": Path("docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"),
+              "state": Path("docs/project/PROJECT_STATE.md"),
+              "profile": Path("docs/project/PROJECT_PROFILE.md"),
+              "module": Path("docs/project/MODULE_STATUS.md"),
+              "index": Path("docs/project/BUILD_TEST_INDEX.md"),
+              "decisions": Path("docs/project/TECHNICAL_DECISIONS.md"),
+          }
+
+          def prepend_once(path, marker, section):
+              text = path.read_text()
+              if marker not in text:
+                  path.write_text(section.rstrip() + "\n\n" + text)
+
+          checkpoint = '''## PR #37 Simulator baseline integration — parent-owner recovery point 2026-10-09
+
+- Owning Work remains `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains the owning PR against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`.
+- Parent pre-integration head was exact `0f30580da8006c834b138e031c8e7b112b8ddb7d`. Child PR #37 exact head was `14096cb0aa1a012b9021a10940632181c2f9947d`; its CI-green product/test/workflow head was `f63c52c364d3d94f548ce11de86f2bb64008773d`.
+- Conflict/currentness guard passed before merge: parent had not advanced since the child green run; `f63c52c... -> 14096cb...` and green merge-ref `4dc59c6b... -> current pre-merge ref 0b68f990...` changed only simulator durable docs/checkpoint after the tested code/workflow head.
+- PR #37 was promoted from draft and merged exactly once by ordinary merge with expected head `14096cb0...`. Integration commit is **`657f70703d0076bd50ebda761f8dde8ba732e972`**; PR #37 is closed/merged.
+- Product identity after merge remains exact Build115 / `DEV-send-stream-0.1.0-b115`. This integration allocates **no b116**, no formal IPA Candidate and no new real-device Runtime evidence.
+- Imported Simulator baseline identity remains `SIM-DEV-simulator-test-baseline-v1`. Pre-integration green evidence is run `37830975097` / job `113495918971`, 2/2 Repository XCTest + 3/3 XCUITest, Artifact `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`.
+- Integration-current Simulator Preflight automatically started on exact merge head `657f7070...`: PR run **`37836341433` / job `113514203966`**. At this recovery record it is still **in progress**; the duplicate same-head run `37836330130 / 113514161720` was cancelled by the intended concurrency dedupe.
+- This parent-owner session does **not** modify/delete `docs/project/current/dev/DEV-simulator-test-baseline.md`; that checkpoint remains owned by its task session.
+
+**Recovery / next exact action:** first read run `37836341433`. If it succeeds, record its exact test result + Artifact as integration-current CI evidence, then refresh PR #29 and resume the existing Server Stop evidence gate. If it fails, classify the exact failing test before any code change. Never replay PR #37 merge. Do not allocate b116 solely for Simulator infrastructure.
+'''
+          prepend_once(files["checkpoint"], "## PR #37 Simulator baseline integration — parent-owner recovery point", checkpoint)
+
+          state = '''## 2026-10-09 — Simulator test baseline integrated into DEV-send-stream
+
+- PR #37 merged into `dev/send-stream-20260829` at `657f70703d0076bd50ebda761f8dde8ba732e972` after exact parent/head/currentness guards. PR #29 now carries the formal XCTest/XCUITest targets, Debug fixtures and `iOS Simulator Preflight` workflow.
+- Build115 / `DEV-send-stream-0.1.0-b115` remains the product identity; no b116 or formal IPA Candidate was allocated by this infrastructure integration. Simulator evidence remains CI-only and is not real-device/Human Runtime proof.
+- Integration-current Simulator run `37836341433 / 113514203966` is pending at this record; the same-head duplicate was cancelled by concurrency dedupe. Existing Server Stop and deferred menu-persistence Runtime gates are unchanged.
+'''
+          prepend_once(files["state"], "## 2026-10-09 — Simulator test baseline integrated into DEV-send-stream", state)
+
+          profile = '''## Current integrated Simulator Preflight baseline — 2026-10-09
+
+- PR #37 is merged into the active `DEV-send-stream` parent at `657f70703d0076bd50ebda761f8dde8ba732e972`. Formal `ChatGPTClientTests` + `ChatGPTClientUITests`, deterministic Debug fixture seams and `.github/workflows/ios-simulator-preflight.yml` are now part of the parent branch.
+- Product remains Build115 / `DEV-send-stream-0.1.0-b115`; Simulator identity `SIM-DEV-simulator-test-baseline-v1` is test evidence only, never an IPA Candidate. `ios-foundation.yml` remains explicit `workflow_dispatch` for deliberate formal IPA packaging.
+- Pre-integration green run `37830975097 / 113495918971` passed 5/5 tests. Integration-current run `37836341433 / 113514203966` is pending at this record.
+'''
+          prepend_once(files["profile"], "## Current integrated Simulator Preflight baseline — 2026-10-09", profile)
+
+          module = '''## Test infrastructure — Simulator baseline integrated 2026-10-09
+
+- PR #37 merged at `657f70703d0076bd50ebda761f8dde8ba732e972`; parent now carries the formal XCTest/XCUITest + deterministic Debug fixture baseline and ordinary Simulator preflight.
+- Evidence boundary is unchanged: Simulator CI can qualify deterministic repository/UI regressions but does not prove real ChatGPT account/service behavior, WebKit authentication, TrollStore installation, physical-device performance or Human Runtime.
+- No product Candidate was allocated; b115 remains current. Integration-current Simulator run `37836341433 / 113514203966` is pending at this record.
+'''
+          prepend_once(files["module"], "## Test infrastructure — Simulator baseline integrated 2026-10-09", module)
+
+          index = '''## Simulator baseline integration record — 2026-10-09
+
+- `SIM-DEV-simulator-test-baseline-v1` was integrated from PR #37 into the owning `DEV-send-stream` branch by merge commit `657f70703d0076bd50ebda761f8dde8ba732e972`.
+- Canonical child green evidence remains `37830975097 / 113495918971`, 5 tests / 0 failures, Artifact `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`.
+- This identity is Simulator CI evidence only. It allocates no formal Build/Candidate; parent remains `DEV-send-stream-0.1.0-b115` / Build115.
+- Integration-current parent run `37836341433 / 113514203966` is pending at this record and must be recorded separately at terminal status.
+'''
+          prepend_once(files["index"], "## Simulator baseline integration record — 2026-10-09", index)
+
+          decisions = '''## 2026-10-09 — Simulator baseline is integrated CI preflight, not Runtime authority
+
+Decision: integrate PR #37 at `657f70703d0076bd50ebda761f8dde8ba732e972` without allocating a product Candidate. Relevant development changes now use the formal Simulator XCTest/XCUITest preflight before consuming a new physical-device IPA Candidate; formal `ios-foundation.yml` packaging remains explicit/manual. Simulator success is deterministic CI evidence only and never substitutes for WebKit/service/TrollStore/physical-device Human Runtime. Production state owners remain unchanged.
+'''
+          prepend_once(files["decisions"], "## 2026-10-09 — Simulator baseline is integrated CI preflight, not Runtime authority", decisions)
+          PY
+
+      - name: Validate docs-only integration record
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          test "$changed" = "$expected"
+          test "$(wc -c < docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md)" -gt 180000
+          grep -q 'PR #37 Simulator baseline integration — parent-owner recovery point' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Web Rule Lab post-Stop Detail synthetic-read auth boundary' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          grep -q 'Simulator baseline integration record' docs/project/BUILD_TEST_INDEX.md
+          git diff --quiet -- ChatGPTClient ChatGPTClient.xcodeproj ChatGPTClientTests ChatGPTClientUITests .github/workflows/ios-simulator-preflight.yml .github/workflows/ios-foundation.yml
+
+      - name: Commit parent-owner record
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git commit -m "docs: record PR37 parent integration"
+          git push origin HEAD:dev/send-stream-20260829

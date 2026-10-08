@@ -50,7 +50,7 @@ jobs:
           python3 -m py_compile scripts/staging/apply_authenticated_protocol_capture.py scripts/protocol_capture/sanitize_capture.py
           python3 scripts/protocol_capture/sanitize_capture.py --self-test
           git diff --check
-          changed="$(git diff --name-only | sort)"
+          changed="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
           expected="$(printf '%s\n' \
             .github/workflows/ios-simulator-preflight.yml \
             ChatGPTClient/Protocol/ProtocolReadProbe.swift \
@@ -60,6 +60,7 @@ jobs:
             fixtures/protocol/stop-request-ack-v1.json \
             scripts/protocol_capture/README.md \
             scripts/protocol_capture/sanitize_capture.py | sort)"
+          printf 'changed:\n%s\nexpected:\n%s\n' "$changed" "$expected"
           test "$changed" = "$expected"
           git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'Authenticated Protocol Capture' ChatGPTClient/SettingsViewController.swift

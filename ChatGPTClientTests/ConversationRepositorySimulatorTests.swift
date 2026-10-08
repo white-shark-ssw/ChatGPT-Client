@@ -2,6 +2,11 @@ import XCTest
 @testable import ChatGPTClient
 
 final class ConversationRepositorySimulatorTests: XCTestCase {
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        XCTAssertEqual(SimulatorFixtureTransport.mode?.rawValue, "baseline")
+    }
+
     @MainActor
     func testFixtureLoadsListDetailAndLongConversationThroughRealRepository() async throws {
         SimulatorFixtureTransport.resetRequestState()

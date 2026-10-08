@@ -1,0 +1,82 @@
+name: Stage Authenticated Protocol Capture
+
+on:
+  push:
+    branches:
+      - dev/authenticated-protocol-capture-20261009
+    paths:
+      - ".github/workflows/stage-authenticated-protocol-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated capture branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/authenticated-protocol-capture-20261009
+          fetch-depth: 0
+
+      - name: Guard parent baseline and Candidate identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 79107c64347e05e0dfd4f679a3c970dfa09a18b0 HEAD
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'CURRENT_PROJECT_VERSION = 116;' ChatGPTClient.xcodeproj/project.pbxproj
+          test -f docs/project/current/dev/DEV-authenticated-protocol-capture.md
+          test -f scripts/staging/apply_authenticated_protocol_capture.py
+
+      - name: Apply capture, sanitizer and replay infrastructure
+        run: python3 scripts/staging/apply_authenticated_protocol_capture.py
+
+      - name: Validate sanitizer and exact scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/staging/apply_authenticated_protocol_capture.py scripts/protocol_capture/sanitize_capture.py
+          python3 scripts/protocol_capture/sanitize_capture.py --self-test
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            .github/workflows/ios-simulator-preflight.yml \
+            ChatGPTClient/Protocol/ProtocolReadProbe.swift \
+            ChatGPTClient/SettingsViewController.swift \
+            ChatGPTClient/Testing/SimulatorFixtureTransport.swift \
+            ChatGPTClientTests/ConversationRepositorySimulatorTests.swift \
+            fixtures/protocol/stop-request-ack-v1.json \
+            scripts/protocol_capture/README.md \
+            scripts/protocol_capture/sanitize_capture.py | sort)"
+          test "$changed" = "$expected"
+          git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj
+          grep -q 'Authenticated Protocol Capture' ChatGPTClient/SettingsViewController.swift
+          grep -q 'authenticated-protocol-capture-v1' ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          grep -q 'protocol-replay-fixture-v1' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          grep -q 'testSanitizedProtocolReplayFixtureReplaysStopRequestAndAckWithoutNetwork' ChatGPTClientTests/ConversationRepositorySimulatorTests.swift
+          grep -q 'Validate protocol capture sanitizer' .github/workflows/ios-simulator-preflight.yml
+          ! grep -Eqi 'Bearer |Authorization:|Set-Cookie:|password=|session(token)?=' fixtures/protocol/stop-request-ack-v1.json
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+
+      - name: Commit exact infrastructure source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/ios-simulator-preflight.yml \
+            ChatGPTClient/Protocol/ProtocolReadProbe.swift \
+            ChatGPTClient/SettingsViewController.swift \
+            ChatGPTClient/Testing/SimulatorFixtureTransport.swift \
+            ChatGPTClientTests/ConversationRepositorySimulatorTests.swift \
+            fixtures/protocol/stop-request-ack-v1.json \
+            scripts/protocol_capture/README.md \
+            scripts/protocol_capture/sanitize_capture.py
+          git commit -m "dev: add authenticated protocol capture pipeline"
+          git push origin HEAD:dev/authenticated-protocol-capture-20261009

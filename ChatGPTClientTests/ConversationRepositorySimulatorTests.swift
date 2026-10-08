@@ -35,6 +35,10 @@ final class ConversationRepositorySimulatorTests: XCTestCase {
         _ = try await loadConversations(repository, forceRefresh: true)
         repository.selectConversation(id: "fixture-slow")
 
+        let firstRequestStarted = expectation(description: "first slow fixture request started")
+        SimulatorFixtureTransport.setRequestObserver { key in
+            if key == "detail:fixture-slow" { firstRequestStarted.fulfill() }
+        }
         let firstCompletion = expectation(description: "superseded detail completion")
         let replacementCompletion = expectation(description: "replacement detail completion")
         var firstError: Error?
@@ -45,6 +49,8 @@ final class ConversationRepositorySimulatorTests: XCTestCase {
             if case .failure(let error) = result { firstError = error }
             firstCompletion.fulfill()
         }
+        await fulfillment(of: [firstRequestStarted], timeout: 2)
+        SimulatorFixtureTransport.setRequestObserver(nil)
         repository.reloadConversation(id: "fixture-slow") { result in
             switch result {
             case .success(let detail): replacementDetail = detail

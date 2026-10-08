@@ -61,7 +61,6 @@ jobs:
             fixtures/protocol/stop-request-ack-v1.json \
             scripts/protocol_capture/README.md \
             scripts/protocol_capture/sanitize_capture.py | sort)"
-          printf 'changed:\n%s\nexpected:\n%s\n' "$changed" "$expected"
           test "$changed" = "$expected"
           git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj
           grep -q 'Authenticated Protocol Capture' ChatGPTClient/SettingsViewController.swift
@@ -73,14 +72,27 @@ jobs:
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
 
-      - name: Commit exact infrastructure source
+      - name: Commit seven non-workflow infrastructure files
         shell: bash
         run: |
           set -euo pipefail
+          # GitHub Actions' GITHUB_TOKEN cannot update workflow files in this repository.
+          # The already-validated simulator-workflow delta is applied separately through the connector.
+          git restore .github/workflows/ios-simulator-preflight.yml
+          git diff --check
+          remaining="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
+          expected="$(printf '%s\n' \
+            ChatGPTClient/Protocol/ProtocolReadProbe.swift \
+            ChatGPTClient/SettingsViewController.swift \
+            ChatGPTClient/Testing/SimulatorFixtureTransport.swift \
+            ChatGPTClientTests/ConversationRepositorySimulatorTests.swift \
+            fixtures/protocol/stop-request-ack-v1.json \
+            scripts/protocol_capture/README.md \
+            scripts/protocol_capture/sanitize_capture.py | sort)"
+          test "$remaining" = "$expected"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            .github/workflows/ios-simulator-preflight.yml \
             ChatGPTClient/Protocol/ProtocolReadProbe.swift \
             ChatGPTClient/SettingsViewController.swift \
             ChatGPTClient/Testing/SimulatorFixtureTransport.swift \

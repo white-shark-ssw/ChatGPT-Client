@@ -24,6 +24,7 @@ enum SimulatorFixtureTransport {
 
     static func resetRequestState() { SimulatorFixtureURLProtocol.reset() }
     static func requestCount(for key: String) -> Int { SimulatorFixtureURLProtocol.requestCount(for: key) }
+    static func setRequestObserver(_ observer: ((String) -> Void)?) { SimulatorFixtureURLProtocol.setRequestObserver(observer) }
 }
 
 private final class SimulatorFixtureURLProtocol: URLProtocol {
@@ -34,6 +35,7 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
 
     private static let lock = NSLock()
     private static var requestCounts: [String: Int] = [:]
+    private static var requestObserver: ((String) -> Void)?
     private var workItem: DispatchWorkItem?
 
     override class func canInit(with request: URLRequest) -> Bool {
@@ -49,7 +51,7 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
             return
         }
         let key = Self.requestKey(for: url)
-        let count = Self.incrementRequestCount(for: key)
+        let count = Self.recordRequest(for: key)
         let response = Self.fixtureResponse(for: url, requestCount: count)
         let workItem = DispatchWorkItem { [weak self] in
             guard let self else { return }
@@ -88,6 +90,7 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
     fileprivate static func reset() {
         lock.lock()
         requestCounts.removeAll()
+        requestObserver = nil
         lock.unlock()
     }
 
@@ -97,11 +100,19 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
         return requestCounts[key] ?? 0
     }
 
-    private static func incrementRequestCount(for key: String) -> Int {
+    fileprivate static func setRequestObserver(_ observer: ((String) -> Void)?) {
         lock.lock()
-        defer { lock.unlock() }
+        requestObserver = observer
+        lock.unlock()
+    }
+
+    private static func recordRequest(for key: String) -> Int {
+        lock.lock()
         let next = (requestCounts[key] ?? 0) + 1
         requestCounts[key] = next
+        let observer = requestObserver
+        lock.unlock()
+        observer?(key)
         return next
     }
 

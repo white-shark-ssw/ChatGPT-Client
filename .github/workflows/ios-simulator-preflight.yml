@@ -11,6 +11,7 @@ on:
       - "ChatGPTClient.xcodeproj/**"
       - "scripts/**"
       - ".github/workflows/ios-simulator-preflight.yml"
+      - ".github/workflows/ios-foundation.yml"
   pull_request:
     paths:
       - "ChatGPTClient/**"
@@ -19,6 +20,7 @@ on:
       - "ChatGPTClient.xcodeproj/**"
       - "scripts/**"
       - ".github/workflows/ios-simulator-preflight.yml"
+      - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
 jobs:
@@ -79,7 +81,6 @@ jobs:
           UDID="${{ steps.simulator.outputs.udid }}"
           if [[ "${{ steps.simulator.outputs.state }}" != "Booted" ]]; then xcrun simctl boot "$UDID"; fi
           xcrun simctl bootstatus "$UDID" -b
-          xcrun simctl status_bar "$UDID" clear || true
 
       - name: Run XCTest and XCUITest
         id: tests
@@ -114,7 +115,7 @@ jobs:
           if [[ -d "$HOME/Library/Logs/DiagnosticReports" ]]; then
             find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 1 -type f \( -name 'ChatGPTClient*' -o -name 'ChatGPTClientUITests*' \) -mmin -60 -exec cp {} "$EVIDENCE_DIR/crashes/" \; || true
           fi
-          find build -maxdepth 3 -type f -o -type d | sort > "$EVIDENCE_DIR/build-tree.txt"
+          find build -maxdepth 3 \( -type f -o -type d \) | sort > "$EVIDENCE_DIR/build-tree.txt"
 
       - name: Upload Simulator evidence
         if: always()

@@ -1760,6 +1760,9 @@ final class RootViewController: UISplitViewController, UISplitViewControllerDele
     }
 
     private func observeExternalResponseIfNeeded(conversationID: String, forcePageReload: Bool = false, preservedClientGeneration: Int? = nil) {
+#if DEBUG
+        if SimulatorFixtureTransport.isEnabled { return }
+#endif
         guard repository.selectedConversationID == conversationID else { return }
         let existingSnapshot = repository.liveResponse(for: conversationID)
         if let preservedClientGeneration {

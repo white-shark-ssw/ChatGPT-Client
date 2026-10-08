@@ -1,3 +1,13 @@
+## 2026-10-09 — Deterministic Simulator Preflight precedes formal IPA Candidate allocation
+
+Decision: repeated development/debug validation for relevant iOS changes should first use an account-independent Simulator Preflight. A new formal IPA Candidate/build is not allocated merely to discover compile, repository-state, navigation, cache, cancellation, long-list, or basic UI regressions that the Simulator can exercise. Physical-device packaging remains a later delivery/runtime gate.
+
+Implementation boundary: fixture behavior is available only under explicit Debug test environment (`DEBUG` + `CHATGPTCLIENT_SIMULATOR_FIXTURE`). It may replace transient auth/transport inputs and suppress external real-Web observation, but it must not create a fake `ConversationRepository`, a second auth/account authority, a second cache authority, or production compatibility/retry behavior. Production state owners remain unchanged.
+
+CI policy: `ios-simulator-preflight.yml` runs the real app/repository path with XCTest/XCUITest on an available iPhone Simulator, serializes stateful lifecycle/cache tests, and retains `.xcresult`, build log, Simulator log, crash evidence and a failure screenshot. Same-head push/PR runs share a concurrency key so only one macOS execution survives. Formal `ios-foundation.yml` packaging is explicit-only.
+
+Evidence: run `37830975097` on head `f63c52c364d3d94f548ce11de86f2bb64008773d` passed 2 XCTest + 3 XCUITest; Artifact `11574306347` is evidence, not a deliverable. This proves Simulator/CI behavior only and must never be described as real-account, WKWebView-login, TrollStore, 120 Hz, or physical-device Runtime proof.
+
 ## 2026-09-08 — Web Stop target is conversation-scoped and exact request shape is evidenced
 
 Decision update: official Web Runtime proves server Stop is conversation-scoped through `POST /backend-api/stop_conversation` with body fields `conversation_id` and `exclude_async_types`; the observed conversation ID equals the currently routed conversation and `exclude_async_types` is empty. HTTP200 JSON `status=ok` is the immediate acknowledgement. The observed `last_message_id:null` is not sufficient to decide partial-answer authority. Product implementation remains gated only on one authoritative post-Stop Detail semantic capture; do not reintroduce the rejected path-scoped `/conversation/<id>/stop_conversation` hypothesis.

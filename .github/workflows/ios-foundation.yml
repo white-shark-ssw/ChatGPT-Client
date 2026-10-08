@@ -1,27 +1,10 @@
 # Candidate: DEV-send-stream-0.1.0-b115
 # Product source: 2346c2d4ab26d40ef720b7850ae34316acb3cc62
 # Runtime correction: authoritative/live user ownership + active Sync/Reload availability; preserve b114 follow-tail.
-name: iOS Phase 9 Runtime Correction b115
+# Candidate packaging is explicit-only. Ordinary development validation runs through ios-simulator-preflight.yml first.
+name: iOS Candidate Package b115
 
 on:
-  push:
-    branches:
-      - dev/send-stream-20260829
-    paths:
-      - "ChatGPTClient/**"
-      - "ChatGPTClient.xcodeproj/**"
-      - "scripts/build_ipa.sh"
-      - "scripts/reconstruct_app_icon.sh"
-      - "scripts/assets/**"
-      - ".github/workflows/ios-foundation.yml"
-  pull_request:
-    paths:
-      - "ChatGPTClient/**"
-      - "ChatGPTClient.xcodeproj/**"
-      - "scripts/build_ipa.sh"
-      - "scripts/reconstruct_app_icon.sh"
-      - "scripts/assets/**"
-      - ".github/workflows/ios-foundation.yml"
   workflow_dispatch:
 
 jobs:

@@ -1,3 +1,12 @@
+## Current Simulator Preflight baseline — 2026-10-09
+
+- `DEV-simulator-test-baseline` is stacked on `DEV-send-stream` PR #29 and is green on exact product/test/workflow head `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent head is `0f30580da8006c834b138e031c8e7b112b8ddb7d`.
+- Formal test roots now exist: `ChatGPTClientTests/` for XCTest and `ChatGPTClientUITests/` for XCUITest; both are included in the shared `ChatGPTClient` scheme. Any older statement below saying no XCTest/UI-test target exists is superseded by this section.
+- `.github/workflows/ios-simulator-preflight.yml` is the ordinary development preflight for relevant `dev/**` / PR changes: macOS 15 ARM64, available-iPhone Simulator selection/boot, serialized `xcodebuild test`, and retained `.xcresult` / logs / crash / screenshot evidence. Same-head push/PR runs dedupe by head branch.
+- `.github/workflows/ios-foundation.yml` is explicit `workflow_dispatch` only. A formal IPA Candidate is allocated only after a delivery gate justifies physical-device validation; Simulator evidence is never an IPA Candidate.
+- Debug fixture mode is explicit and account-independent (`DEBUG` + `CHATGPTCLIENT_SIMULATOR_FIXTURE`): it substitutes auth/transport inputs only, suppresses real Web observation, and does not replace `ConversationRepository`, `AuthSessionStore`, or cache ownership.
+- Green evidence: PR run `37830975097` / job `113495918971`, Xcode 16.4, iPhone 17 Pro / iOS 26.2 Simulator, 2 XCTest + 3 XCUITest passed, Artifact `SimulatorPreflight-37830975097-1` / ID `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`. Real-device/Human Runtime is not claimed.
+
 ## Current DEV-send-stream Stop research identity — 2026-09-07
 
 - Product remains `DEV-send-stream-0.1.0-b115` / Build115; b116 is unallocated.

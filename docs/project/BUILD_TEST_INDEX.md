@@ -1,3 +1,13 @@
+## Simulator evidence — SIM-DEV-simulator-test-baseline-v1 — 2026-10-09
+
+- Work: `DEV-simulator-test-baseline`; branch `dev/simulator-test-baseline-20261009`; draft PR #37 stacked on `dev/send-stream-20260829` / PR #29.
+- Product/test/workflow head: `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent head: `0f30580da8006c834b138e031c8e7b112b8ddb7d`; tested PR merge ref: `4dc59c6b4cbc77ba0acf631ce7102b5f6ac67b9b`.
+- GitHub Actions: `iOS Simulator Preflight` run `37830975097`, job `113495918971`, macOS 15 ARM64, Xcode 16.4, iPhone 17 Pro / iOS 26.2 Simulator.
+- Result: 2/2 `ConversationRepositorySimulatorTests` passed; 3/3 `ChatGPTClientSimulatorUITests` passed; total 5 / 0 failures; `xcodebuild test` succeeded.
+- Evidence Artifact: `SimulatorPreflight-37830975097-1`, ID `11574306347`, digest `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`; contains `.xcresult` and CI diagnostic evidence; 14-day retention at creation.
+- Concurrency proof: same-head push run `37830968642` was cancelled; PR run `37830975097` remained and passed.
+- Classification: **Simulator CI evidence only; not an IPA Candidate, not a release Artifact, no Build number allocated, no real-device/Human Runtime claim.** Parent `DEV-send-stream-0.1.0-b115` identity remains unchanged.
+
 # Build / Test / Release Index
 
 ## Stacked integration record — b113 into DEV-send-stream 2026-09-06

@@ -1,78 +1,11 @@
 from pathlib import Path
 
-FILES = {
-    "checkpoint": Path("docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md"),
-    "state": Path("docs/project/PROJECT_STATE.md"),
-    "profile": Path("docs/project/PROJECT_PROFILE.md"),
-    "module": Path("docs/project/MODULE_STATUS.md"),
-    "index": Path("docs/project/BUILD_TEST_INDEX.md"),
-    "decisions": Path("docs/project/TECHNICAL_DECISIONS.md"),
-}
+CHECKPOINT = Path("docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md")
+INDEX = Path("docs/project/BUILD_TEST_INDEX.md")
 
+if "## PR #37 Simulator baseline integration complete — DEV-send-stream owner" not in CHECKPOINT.read_text():
+    raise SystemExit("missing durable DEV-send-stream PR37 integration record")
+if "## Simulator baseline parent integration — 2026-10-09" not in INDEX.read_text():
+    raise SystemExit("missing durable Simulator baseline integration index")
 
-def prepend_once(path: Path, marker: str, section: str) -> None:
-    text = path.read_text()
-    if marker not in text:
-        path.write_text(section.rstrip() + "\n\n" + text)
-
-
-checkpoint = '''## PR #37 Simulator baseline integration complete — DEV-send-stream owner 2026-10-09
-
-Integration truth:
-
-- Owning Work remains `DEV-send-stream`; branch `dev/send-stream-20260829`; PR #29 remains open against unchanged `main@94f0c5777dad262cd1fb22be49082dbd92c962f2`.
-- Parent pre-integration head was `0f30580da8006c834b138e031c8e7b112b8ddb7d`; child PR #37 exact head was `14096cb0aa1a012b9021a10940632181c2f9947d`; CI-green product/test/workflow head was `f63c52c364d3d94f548ce11de86f2bb64008773d`.
-- Pre-merge currentness/conflict guards passed: the parent had not advanced since the child green run, and all child commits after `f63c52c...` were durable docs/checkpoint only. PR #35 remained independent research-only with no product/Candidate overlap.
-- PR #37 was promoted from draft and merged exactly once by ordinary merge with expected head `14096cb0...`. Merge commit: **`657f70703d0076bd50ebda761f8dde8ba732e972`**. PR #37 is closed/merged.
-- Product identity remains exact Build115 / `DEV-send-stream-0.1.0-b115`. No b116, formal IPA Candidate or real-device Runtime evidence is created by this infrastructure integration.
-- Integrated Simulator identity is `SIM-DEV-simulator-test-baseline-v1`. Original child green evidence remains run `37830975097 / 113495918971`, 2/2 Repository XCTest + 3/3 XCUITest, Artifact `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`.
-- The first exact merge-head run `37836341433 / 113514203966` was superseded/cancelled when a docs/tooling-only recorder commit advanced the PR head. This cancellation is concurrency behavior, not a test failure.
-- Integration-equivalent parent head `cbbe0fd0c511a5114a47aa4b00c3e3dfc42c2557` differs from merge commit `657f7070...` only by `.github/workflows/record-pr37-parent-integration.yml`; product, Xcode test targets and both Simulator/IPA workflows under test are unchanged.
-- **Integration-current Simulator Preflight `37837104595 / 113517526599` succeeded** on that head: Checkout/toolchain/Simulator boot/XCTest+XCUITest/evidence capture/upload all passed. Evidence Artifact `SimulatorPreflight-37837104595-1`, ID `11575759936`, digest `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
-- Later heads through `4cafb4a71026f7734c33027a4aae2db3be92def0` only changed the parent-integration recorder workflow/tooling; no product, Xcode test target, Simulator workflow or IPA workflow bits changed. Earlier recorder runs failed at workflow tooling/parse/launch level and are not product/test failures.
-- This owner session intentionally does not modify/delete `docs/project/current/dev/DEV-simulator-test-baseline.md`; child checkpoint lifecycle remains its task owner's responsibility.
-
-Evidence classification after integration: **Simulator baseline Code written / macOS build Passed / XCTest Passed / XCUITest Passed / CI Passed / evidence Artifact produced / parent integration Passed / formal IPA Candidate none / real-device Runtime not claimed. DEV-send-stream remains b115 Human Runtime Partial / Stable-Frozen No.**
-
-**Next exact action:** resume the existing Server Stop semantic evidence gate. Stop request/ack contract is already Runtime Positive; synthetic Detail replay 404/401 is rejected. Observe the official Web page's own successful post-Stop `GET /backend-api/conversations/<id>` response via response clone after ordinary navigation. Do not allocate b116 until that terminal/partial-content evidence is captured. If Stop semantics become sufficient, the next justified product Candidate may bundle Server Stop with the already-deferred stable top-right-menu-host correction.
-'''
-prepend_once(FILES["checkpoint"], "## PR #37 Simulator baseline integration complete — DEV-send-stream owner", checkpoint)
-
-state = '''## 2026-10-09 — Simulator baseline integrated / parent CI green
-
-- PR #37 is merged into `dev/send-stream-20260829` at `657f70703d0076bd50ebda761f8dde8ba732e972`; formal XCTest/XCUITest targets, deterministic Debug fixtures and `iOS Simulator Preflight` are now part of the active parent.
-- Integration-current run `37837104595 / 113517526599` passed on product/test/workflow-equivalent parent head `cbbe0fd0c511a5114a47aa4b00c3e3dfc42c2557`; Artifact `11575759936` / `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
-- Build115 / `DEV-send-stream-0.1.0-b115` remains the product identity. No b116/formal IPA Candidate or Human Runtime evidence was created by this integration. Current product gate returns to Server Stop post-Stop authoritative semantics; deferred live-menu persistence remains queued with the next justified product Candidate.
-'''
-prepend_once(FILES["state"], "## 2026-10-09 — Simulator baseline integrated / parent CI green", state)
-
-profile = '''## Current integrated Simulator baseline — parent CI green 2026-10-09
-
-- PR #37 merged at `657f70703d0076bd50ebda761f8dde8ba732e972`. `ChatGPTClientTests`, `ChatGPTClientUITests`, deterministic Debug fixture seams and `.github/workflows/ios-simulator-preflight.yml` are now parent-branch infrastructure.
-- Integration-current `37837104595 / 113517526599` passed and produced Simulator evidence Artifact `11575759936` / `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
-- Simulator identity `SIM-DEV-simulator-test-baseline-v1` remains CI-only. Product remains Build115 / Candidate b115; formal IPA packaging remains explicit `workflow_dispatch` and physical-device Runtime remains separately required.
-'''
-prepend_once(FILES["profile"], "## Current integrated Simulator baseline — parent CI green 2026-10-09", profile)
-
-module = '''## Test infrastructure — integrated Simulator baseline green 2026-10-09
-
-- Parent integration commit `657f70703d0076bd50ebda761f8dde8ba732e972`; integration-current Simulator run `37837104595 / 113517526599` passed and Artifact `11575759936` was produced.
-- The formal Simulator baseline now guards deterministic repository/UI regressions before a physical-device Candidate is justified. It does not prove real service/auth/WebKit/TrollStore/performance behavior and allocates no product Build.
-- DEV-send-stream remains Build115 / Human Runtime Partial; Server Stop semantics and the deferred menu-persistence defect remain product-level evidence/work, not closed by Simulator CI.
-'''
-prepend_once(FILES["module"], "## Test infrastructure — integrated Simulator baseline green 2026-10-09", module)
-
-index = '''## Simulator baseline parent integration — 2026-10-09
-
-- `SIM-DEV-simulator-test-baseline-v1` integrated from PR #37 at merge commit `657f70703d0076bd50ebda761f8dde8ba732e972` without allocating a formal IPA Candidate.
-- Original stacked green: `37830975097 / 113495918971`, Artifact `11574306347`, digest `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4`.
-- Parent integration-current green: `37837104595 / 113517526599` on product/test/workflow-equivalent head `cbbe0fd0c511a5114a47aa4b00c3e3dfc42c2557`; Artifact `11575759936`, digest `sha256:3f317c1b724b2a88db1fbc5b28e5916efe9e4d518a5abbb801d9473a43f8ba5b`.
-- Classification: Simulator CI evidence only / 5-test suite passed / no Build allocation / no real-device Runtime claim. Parent product remains `DEV-send-stream-0.1.0-b115`.
-'''
-prepend_once(FILES["index"], "## Simulator baseline parent integration — 2026-10-09", index)
-
-decisions = '''## 2026-10-09 — Integrated Simulator preflight precedes deliberate IPA Candidate packaging
-
-Decision: PR #37's Simulator baseline is now integrated into the active DEV-send-stream parent. For relevant development changes, use formal XCTest/XCUITest Simulator preflight as deterministic CI evidence before consuming a new physical-device Candidate identity. Keep `ios-foundation.yml` explicit/manual so ordinary pushes do not manufacture formal IPA Candidates. Simulator CI never replaces real account/WebKit/TrollStore/Human Runtime evidence, and production state owners remain unchanged.
-'''
-prepend_once(FILES["decisions"], "## 2026-10-09 — Integrated Simulator preflight precedes deliberate IPA Candidate packaging", decisions)
+print("PR37 parent integration record already durable; no mutation required")

@@ -63,10 +63,7 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
         else { DispatchQueue.global(qos: .userInitiated).async(execute: workItem) }
     }
 
-    override func stopLoading() {
-        workItem?.cancel()
-        workItem = nil
-    }
+    override func stopLoading() { workItem?.cancel() }
 
     private func finish(payload: [String: Any]) {
         guard !workItemCancelled, let url = request.url else { return }

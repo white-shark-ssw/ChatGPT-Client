@@ -10,8 +10,9 @@ enum SimulatorFixtureTransport {
     static let environmentKey = "CHATGPTCLIENT_SIMULATOR_FIXTURE"
 
     static var mode: Mode? {
-        guard let rawValue = ProcessInfo.processInfo.environment[environmentKey] else { return nil }
-        return Mode(rawValue: rawValue)
+        if let rawValue = ProcessInfo.processInfo.environment[environmentKey] { return Mode(rawValue: rawValue) }
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return .baseline }
+        return nil
     }
 
     static var isEnabled: Bool { mode != nil }
@@ -123,9 +124,10 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
 
     private static func fixtureResponse(for url: URL, requestCount: Int) -> FixtureResponse {
         if url.path == "/backend-api/conversations" {
+            let alphaTitle = requestCount == 1 ? "Fixture Alpha" : "Fixture Alpha Refreshed"
             return .success([
                 "items": [
-                    ["id": "fixture-alpha", "title": "Fixture Alpha", "update_time": 1_700_000_400],
+                    ["id": "fixture-alpha", "title": alphaTitle, "update_time": 1_700_000_400],
                     ["id": "fixture-beta", "title": "Fixture Beta", "update_time": 1_700_000_300],
                     ["id": "fixture-slow", "title": "Fixture Slow", "update_time": 1_700_000_200],
                     ["id": "fixture-long", "title": "Fixture Long 1000+", "update_time": 1_700_000_100]

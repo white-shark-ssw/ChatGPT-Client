@@ -34,8 +34,7 @@ final class AuthTransientSession {
     private let session: URLSession
     private let accessToken: String
 
-    fileprivate init?(cookies: [HTTPCookie], accessToken: String) {
-        let configuration = URLSessionConfiguration.ephemeral
+    fileprivate init?(cookies: [HTTPCookie], accessToken: String, configuration: URLSessionConfiguration = .ephemeral) {
         configuration.httpShouldSetCookies = true
         guard let storage = configuration.httpCookieStorage else { return nil }
         for cookie in cookies { storage.setCookie(cookie) }
@@ -173,6 +172,23 @@ final class AuthSessionStore {
     func probeAccountContext(using cookieStore: WKHTTPCookieStore, createTransientSession: Bool = false, completion: @escaping (AuthAccountContextState, AuthTransientSession?) -> Void) {
         if verifiedAccountContext() == nil { setAccountState(.probing) }
         let span = diagnostics.startSpan(category: "auth", name: "accountContextProbe")
+#if DEBUG
+        if let fixtureMode = SimulatorFixtureTransport.mode {
+            if fixtureMode == .offlineCache {
+                finishAccountProbe(.failed, span: span, fields: ["source": "simulator_fixture", "mode": fixtureMode.rawValue], completion: completion)
+                return
+            }
+            let context = AuthAccountContext(userID: "simulator-fixture-user", accountID: "simulator-fixture-account", planType: "fixture", structure: "personal")
+            setVerifiedAccountContext(context)
+            let transientSession = createTransientSession ? AuthTransientSession(cookies: [], accessToken: "simulator-fixture-token", configuration: SimulatorFixtureTransport.makeSessionConfiguration()) : nil
+            guard !createTransientSession || transientSession != nil else {
+                finishAccountProbe(.failed, span: span, fields: ["source": "simulator_fixture", "reason": "transient_session_creation_failed"], completion: completion)
+                return
+            }
+            finishAccountProbe(.verified, span: span, fields: ["source": "simulator_fixture", "mode": fixtureMode.rawValue], transientSession: transientSession, completion: completion)
+            return
+        }
+#endif
         cookieStore.getAllCookies { [weak self] cookies in
             guard let self else { return }
             let matchedCookies = cookies.filter(Self.isAuthCookieDomain)

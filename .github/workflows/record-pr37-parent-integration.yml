@@ -1,9 +1,9 @@
 name: Record PR37 Parent Integration
 
 on:
-  push:
+  pull_request:
     branches:
-      - dev/send-stream-20260829
+      - main
     paths:
       - ".github/workflows/record-pr37-parent-integration.yml"
   workflow_dispatch:
@@ -115,13 +115,43 @@ Decision: PR #37's Simulator baseline is now integrated into the active DEV-send
           prepend_once(files["decisions"], "## 2026-10-09 — Integrated Simulator preflight precedes deliberate IPA Candidate packaging", decisions)
           PY
 
+      - name: Freeze recorder after this one-shot run
+        shell: bash
+        run: |
+          cat > .github/workflows/record-pr37-parent-integration.yml <<'YAML'
+          name: Record PR37 Parent Integration
+
+          on:
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            verify:
+              runs-on: ubuntu-latest
+              steps:
+                - name: Checkout parent owner
+                  uses: actions/checkout@v4
+                  with:
+                    ref: dev/send-stream-20260829
+                - name: Verify durable integration record
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    grep -q 'PR #37 Simulator baseline integration complete — DEV-send-stream owner' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+                    grep -q 'Simulator baseline parent integration' docs/project/BUILD_TEST_INDEX.md
+                    test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+                    test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          YAML
+
       - name: Validate docs-only integration record
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
           changed="$(git diff --name-only | sort)"
-          expected="$(printf '%s\n' docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
+          expected="$(printf '%s\n' .github/workflows/record-pr37-parent-integration.yml docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md | sort)"
           test "$changed" = "$expected"
           test "$(wc -c < docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md)" -gt 180000
           grep -q 'PR #37 Simulator baseline integration complete — DEV-send-stream owner' docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
@@ -129,12 +159,12 @@ Decision: PR #37's Simulator baseline is now integrated into the active DEV-send
           grep -q 'Simulator baseline parent integration' docs/project/BUILD_TEST_INDEX.md
           git diff --quiet -- ChatGPTClient ChatGPTClient.xcodeproj ChatGPTClientTests ChatGPTClientUITests .github/workflows/ios-simulator-preflight.yml .github/workflows/ios-foundation.yml
 
-      - name: Commit parent-owner integration result
+      - name: Commit parent-owner integration result and freeze recorder
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
+          git add .github/workflows/record-pr37-parent-integration.yml docs/project/BUILD_TEST_INDEX.md docs/project/MODULE_STATUS.md docs/project/PROJECT_PROFILE.md docs/project/PROJECT_STATE.md docs/project/TECHNICAL_DECISIONS.md docs/project/current/dev/DEV-send-stream-round7-runtime-addendum.md
           git commit -m "docs: record PR37 integration green"
           git push origin HEAD:dev/send-stream-20260829

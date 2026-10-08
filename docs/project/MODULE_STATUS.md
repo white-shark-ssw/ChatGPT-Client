@@ -1,3 +1,12 @@
+## 2026-10-09 — Simulator automated-test / CI preflight module
+
+- **Status**: CI Green / stacked integration pending / Stable-Frozen No.
+- **Owner boundary**: production conversation/list/read/recovery authority remains `ConversationRepository`; auth/account authority remains `AuthSessionStore`; list cache remains storage-only. Test fixtures are input seams only and introduce no second state owner.
+- **Test infrastructure**: `ChatGPTClientTests`, `ChatGPTClientUITests`, shared-scheme testables, Debug-only `SimulatorFixtureTransport`, fixture auth/startup isolation, and fixture-mode suppression of real `CoveredWebSendExecutor` Web observation.
+- **Validated scope**: 2 repository XCTest + 3 XCUITest passed on run `37830975097`, head `f63c52c364d3d94f548ce11de86f2bb64008773d`, iPhone 17 Pro / iOS 26.2 Simulator. Coverage includes 1004 messages, request replacement/cancellation, navigation/re-entry, rapid interaction/round jump, manual refresh, persisted cache, terminate/relaunch, and offline-cache launch.
+- **CI ownership**: `ios-simulator-preflight.yml` owns ordinary deterministic development validation and evidence retention; `ios-foundation.yml` remains explicit-only formal packaging. Simulator artifacts do not own or allocate IPA Candidate identity.
+- **Integration rule**: PR #37 is stacked on PR #29. If the parent head changes before integration, re-check overlap/merge ref and rerun the Simulator gate before promoting the previous green result.
+
 ## Send / Stream — Web Stop request contract proven 2026-09-08
 
 - Runtime-proven Web Stop: `POST /backend-api/stop_conversation`, body `conversation_id` matching current routed conversation plus empty `exclude_async_types`, HTTP200 JSON `status=ok`; observed `last_message_id` is null.

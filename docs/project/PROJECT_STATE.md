@@ -1,3 +1,12 @@
+## 2026-10-09 — DEV-simulator-test-baseline CI Green / stacked integration pending
+
+- Draft PR #37 (`dev/simulator-test-baseline-20261009` -> `dev/send-stream-20260829`) has a green Simulator gate on exact product/test/workflow head `f63c52c364d3d94f548ce11de86f2bb64008773d`; parent PR #29 remained at `0f30580da8006c834b138e031c8e7b112b8ddb7d` during final verification and PR #37 was mergeable.
+- CI run `37830975097` / job `113495918971` passed Checkout, toolchain, iPhone Simulator selection/boot, serialized XCTest+XCUITest, evidence capture, and upload. The tested PR merge ref was `4dc59c6b4cbc77ba0acf631ce7102b5f6ac67b9b`.
+- Tests: repository XCTest 2/2 passed (real Repository list/detail/1004-message fixture path; in-flight load superseded by authoritative Reload) and XCUITest 3/3 passed (navigation/re-entry; 1000+ message round jump/rapid taps; manual Refresh -> terminate -> offline-cache relaunch persistence). Total 5 tests / 0 failures.
+- Same-head push/PR CI duplication is resolved: push run `37830968642` was cancelled while PR run `37830975097` remained and passed.
+- Evidence Artifact `SimulatorPreflight-37830975097-1` / ID `11574306347` / `sha256:c08b1f8082eba130151a3eb4242e288c5fcc7f43a1b9783c554e13bbd98163f4` is CI evidence only. No formal IPA Candidate/build is allocated by this Work; parent b115 remains untouched.
+- Status classification: Code written Yes; GitHub macOS build Passed; Simulator XCTest Passed; Simulator XCUITest Passed; CI Passed; evidence Artifact produced Yes; real-device/Human Runtime Not performed; Stable/Frozen No. Parent-owner stacked integration remains the next gate.
+
 ## DEV-send-stream post-Stop Detail synthetic-read auth boundary — 2026-09-08
 
 - Manual replay of the observed official plural Detail URL with only browser credentials returned HTTP401; classify this as probe authorization/context insufficiency, not Stop failure.

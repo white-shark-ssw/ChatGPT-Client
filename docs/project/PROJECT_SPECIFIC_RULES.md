@@ -1,3 +1,14 @@
+## Simulator Preflight and Candidate policy — 2026-10-09
+
+- Relevant ordinary development changes must use `iOS Simulator Preflight` before consuming a new formal IPA Candidate when the behavior is Simulator-testable.
+- Simulator fixture mode is permitted only for explicit Debug test execution with `CHATGPTCLIENT_SIMULATOR_FIXTURE`; it must stay absent from production behavior.
+- Fixtures may substitute auth/transport inputs but must not create a fake `ConversationRepository`, duplicate auth/account authority, duplicate cache authority, speculative retry/fallback/timer/watchdog, or compatibility shim solely to satisfy tests.
+- Explicit fixture mode must not start real ChatGPT Web observation through `CoveredWebSendExecutor`; deterministic Simulator tests stay account/service independent.
+- CI must retain actionable failure evidence (`.xcresult`, build log, Simulator log, crash reports and failure screenshot when available). Same-head push/PR runs must dedupe rather than consume duplicate macOS runners.
+- Formal IPA packaging remains explicit. Allocate a unique globally conflict-free Candidate/build only when source has reached a delivery gate that requires package/real-device validation. Simulator evidence Artifacts are never Candidate identities.
+- Always classify separately: Code written; static/local checks; Simulator/CI passed; evidence Artifact produced; formal IPA produced; Human/real-device Runtime; Stable/Frozen. Simulator green must not be promoted to real-device Runtime proof.
+- If the stacked parent head changes after a green child run, re-check branch/PR/head/merge-ref overlap and rerun the Simulator gate before treating the prior result as current integration evidence.
+
 ## Active-response Sync/Reload and optimistic-user authority — b115 override 2026-09-06
 
 - Latest explicit user requirement supersedes b114's active-response disable wording: an active local or external response by itself must **not** disable `同步最新消息` or `重载当前会话`.

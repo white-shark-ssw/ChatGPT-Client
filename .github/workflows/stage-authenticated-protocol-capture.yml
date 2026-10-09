@@ -1,4 +1,4 @@
-name: Stage Authenticated Protocol Capture Replay Correction
+name: Stage Authenticated Protocol Capture Path Privacy Hardening
 
 on:
   push:
@@ -29,72 +29,46 @@ jobs:
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           ! grep -q 'CURRENT_PROJECT_VERSION = 116;' ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'protocol_replay_request_body_mismatch' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
-          grep -q 'request.httpBody' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          grep -Fq "if (/^[A-Za-z0-9_.:{}+-]{1,36}$/.test(s)) return s;" ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          grep -Fq "pathTemplate = '/backend-api/conversations/{conversation_id}';" ChatGPTClient/Protocol/ProtocolReadProbe.swift
 
-      - name: Apply strict body representation correction
+      - name: Apply generic backend path privacy hardening
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          path = Path('ChatGPTClient/Testing/SimulatorFixtureTransport.swift')
+          path = Path('ChatGPTClient/Protocol/ProtocolReadProbe.swift')
           text = path.read_text()
-          old_guard = '            guard let body = request.httpBody, let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }'
-          new_guard = '            guard let body = requestBodyData(for: request), let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }'
-          marker = '    private static func jsonObjectsEqual(_ lhs: [String: Any], _ rhs: [String: Any]) -> Bool {'
-          helper_lines = [
-              '    private static func requestBodyData(for request: URLRequest) -> Data? {',
-              '        if let body = request.httpBody { return body }',
-              '        guard let stream = request.httpBodyStream else { return nil }',
-              '        let shouldOpen = stream.streamStatus == .notOpen',
-              '        if shouldOpen { stream.open() }',
-              '        defer { if shouldOpen { stream.close() } }',
-              '        let bufferSize = 4096',
-              '        var buffer = [UInt8](repeating: 0, count: bufferSize)',
-              '        var data = Data()',
-              '        while true {',
-              '            let readCount = buffer.withUnsafeMutableBytes { rawBuffer -> Int in',
-              '                guard let baseAddress = rawBuffer.bindMemory(to: UInt8.self).baseAddress else { return 0 }',
-              '                return stream.read(baseAddress, maxLength: bufferSize)',
-              '            }',
-              '            if readCount < 0 { return nil }',
-              '            if readCount == 0 { break }',
-              '            data.append(contentsOf: buffer.prefix(readCount))',
-              '        }',
-              '        return data',
-              '    }',
-              ''
-          ]
-          if text.count(old_guard) != 1:
-              raise SystemExit(f'expected one replay body guard, found {text.count(old_guard)}')
-          if text.count(marker) != 1:
-              raise SystemExit(f'expected one json equality marker, found {text.count(marker)}')
-          text = text.replace(old_guard, new_guard, 1)
-          text = text.replace(marker, '\n'.join(helper_lines) + marker, 1)
-          path.write_text(text)
+          old = "      const safePathSegment = value => {\n        const s = String(value || '');\n        if (/^[A-Za-z0-9_.:{}+-]{1,36}$/.test(s)) return s;\n        return '{opaque}';\n      };"
+          new = "      const safePathSegment = value => {\n        const s = String(value || '');\n        if (!s) return '';\n        if (/^[A-Za-z][A-Za-z_-]{0,39}$/.test(s)) return s;\n        return '{opaque}';\n      };"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one generic safePathSegment block, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
           PY
 
-      - name: Validate exact correction scope
+      - name: Validate privacy hardening exact scope
         shell: bash
         run: |
           set -euo pipefail
           python3 scripts/protocol_capture/sanitize_capture.py --self-test
           git diff --check
-          test "$(git diff --name-only)" = "ChatGPTClient/Testing/SimulatorFixtureTransport.swift"
-          grep -q 'requestBodyData(for: request)' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
-          grep -q 'request.httpBodyStream' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
-          grep -q 'jsonObjectsEqual(expectedBody, actualBody)' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          test "$(git diff --name-only)" = "ChatGPTClient/Protocol/ProtocolReadProbe.swift"
+          grep -Fq "if (!s) return '';" ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          grep -Fq "if (/^[A-Za-z][A-Za-z_-]{0,39}$/.test(s)) return s;" ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          ! grep -Fq "if (/^[A-Za-z0-9_.:{}+-]{1,36}$/.test(s)) return s;" ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          grep -Fq "pathTemplate = '/backend-api/conversations/{conversation_id}';" ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          grep -Fq "pathParameters = { conversation_id: idRef(decodeURIComponent(pluralDetail[1])) };" ChatGPTClient/Protocol/ProtocolReadProbe.swift
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
-          git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj
+          git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj ChatGPTClient/Testing/SimulatorFixtureTransport.swift
 
-      - name: Commit replay correction only
+      - name: Commit path privacy hardening only
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ChatGPTClient/Testing/SimulatorFixtureTransport.swift
-          git commit -m "test: read replay request body stream strictly"
+          git add ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          git commit -m "dev: harden captured backend path privacy"
           git push origin HEAD:dev/authenticated-protocol-capture-20261009

@@ -789,7 +789,8 @@ final class ProtocolSendProbeViewController: UIViewController, WKNavigationDeleg
       };
       const safePathSegment = value => {
         const s = String(value || '');
-        if (/^[A-Za-z0-9_.:{}+-]{1,36}$/.test(s)) return s;
+        if (!s) return '';
+        if (/^[A-Za-z][A-Za-z_-]{0,39}$/.test(s)) return s;
         return '{opaque}';
       };
       const requestInfo = raw => {

@@ -8,7 +8,8 @@ Security boundary:
 - the compiler drops secret-like keys and values and fails closed if reusable auth-shaped material survives output validation;
 - repository fixtures may contain only endpoint/method/query structure, capture-local aliases, safe protocol enums/scalars, reduced authoritative state projections and placeholder message text lengths;
 - Cookie, Authorization, access/session tokens, passwords, challenge/proof values and raw user/assistant text must never enter committed fixtures;
-- aliases such as `id-0001` are capture-local correlation identities, not reversible service identifiers.
+- aliases such as `id-0001` are capture-local correlation identities, not reversible service identifiers;
+- generic unclassified `/backend-api/...` path segments preserve only structural alphabetic endpoint names (plus `_` / `-`); digit-bearing, high-entropy or otherwise identifier-like segments are exported as `{opaque}`. Explicitly classified Conversation Detail IDs use the capture-local alias mapping instead of the raw service identifier.
 
 Replay validation remains strict: when a fixture declares a JSON request body, `SimulatorFixtureTransport` compares canonical JSON equality against the request body. The Debug-only seam accepts Foundation's equivalent `URLRequest.httpBody` or `httpBodyStream` representation; it does not loosen fixture matching or add production fallback behavior.
 

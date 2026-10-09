@@ -1,4 +1,4 @@
-name: Stage Authenticated Protocol Capture
+name: Stage Authenticated Protocol Capture Replay Correction
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
           ref: dev/authenticated-protocol-capture-20261009
           fetch-depth: 0
 
-      - name: Guard parent baseline and Candidate identity
+      - name: Guard parent and inherited Candidate identity
         shell: bash
         run: |
           set -euo pipefail
@@ -29,76 +29,78 @@ jobs:
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           ! grep -q 'CURRENT_PROJECT_VERSION = 116;' ChatGPTClient.xcodeproj/project.pbxproj
-          test -f docs/project/current/dev/DEV-authenticated-protocol-capture.md
-          test -f scripts/staging/apply_authenticated_protocol_capture.py
+          grep -q 'protocol_replay_request_body_mismatch' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          grep -q 'request.httpBody' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
 
-      - name: Apply capture, sanitizer and replay infrastructure
+      - name: Apply strict body representation correction
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/staging/apply_authenticated_protocol_capture.py
           python3 - <<'PY'
           from pathlib import Path
-          path = Path('ChatGPTClient/Protocol/ProtocolReadProbe.swift')
-          path.write_text(path.read_text().rstrip() + '\n')
+
+          path = Path('ChatGPTClient/Testing/SimulatorFixtureTransport.swift')
+          text = path.read_text()
+          old = '''        if let expectedBody = fixtureRequest["body"] as? [String: Any] {
+              guard let body = request.httpBody, let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }
+          }
+          return .replay(statusCode: statusCode, contentType: contentType, payload: payload)
+      }
+
+      private static func jsonObjectsEqual(_ lhs: [String: Any], _ rhs: [String: Any]) -> Bool {'''
+          new = '''        if let expectedBody = fixtureRequest["body"] as? [String: Any] {
+              guard let body = requestBodyData(for: request), let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }
+          }
+          return .replay(statusCode: statusCode, contentType: contentType, payload: payload)
+      }
+
+      private static func requestBodyData(for request: URLRequest) -> Data? {
+          if let body = request.httpBody { return body }
+          guard let stream = request.httpBodyStream else { return nil }
+          let shouldOpen = stream.streamStatus == .notOpen
+          if shouldOpen { stream.open() }
+          defer { if shouldOpen { stream.close() } }
+          let bufferSize = 4096
+          var buffer = [UInt8](repeating: 0, count: bufferSize)
+          var data = Data()
+          while true {
+              let readCount = buffer.withUnsafeMutableBytes { rawBuffer -> Int in
+                  guard let baseAddress = rawBuffer.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                  return stream.read(baseAddress, maxLength: bufferSize)
+              }
+              if readCount < 0 { return nil }
+              if readCount == 0 { break }
+              data.append(contentsOf: buffer.prefix(readCount))
+          }
+          return data
+      }
+
+      private static func jsonObjectsEqual(_ lhs: [String: Any], _ rhs: [String: Any]) -> Bool {'''
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one replay-body match block, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
           PY
 
-      - name: Validate sanitizer and exact scope
+      - name: Validate exact correction scope
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/staging/apply_authenticated_protocol_capture.py scripts/protocol_capture/sanitize_capture.py
           python3 scripts/protocol_capture/sanitize_capture.py --self-test
-          find scripts -type d -name __pycache__ -prune -exec rm -rf {} +
           git diff --check
-          changed="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
-          expected="$(printf '%s\n' \
-            .github/workflows/ios-simulator-preflight.yml \
-            ChatGPTClient/Protocol/ProtocolReadProbe.swift \
-            ChatGPTClient/SettingsViewController.swift \
-            ChatGPTClient/Testing/SimulatorFixtureTransport.swift \
-            ChatGPTClientTests/ConversationRepositorySimulatorTests.swift \
-            fixtures/protocol/stop-request-ack-v1.json \
-            scripts/protocol_capture/README.md \
-            scripts/protocol_capture/sanitize_capture.py | sort)"
-          test "$changed" = "$expected"
-          git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj
-          grep -q 'Authenticated Protocol Capture' ChatGPTClient/SettingsViewController.swift
-          grep -q 'authenticated-protocol-capture-v1' ChatGPTClient/Protocol/ProtocolReadProbe.swift
-          grep -q 'protocol-replay-fixture-v1' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
-          grep -q 'testSanitizedProtocolReplayFixtureReplaysStopRequestAndAckWithoutNetwork' ChatGPTClientTests/ConversationRepositorySimulatorTests.swift
-          grep -q 'Validate protocol capture sanitizer' .github/workflows/ios-simulator-preflight.yml
-          ! grep -Eqi 'Bearer |Authorization:|Set-Cookie:|password=|session(token)?=' fixtures/protocol/stop-request-ack-v1.json
+          test "$(git diff --name-only)" = "ChatGPTClient/Testing/SimulatorFixtureTransport.swift"
+          grep -q 'requestBodyData(for: request)' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          grep -q 'request.httpBodyStream' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          grep -q 'jsonObjectsEqual(expectedBody, actualBody)' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
           test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
           test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          git diff --quiet -- ChatGPTClient/Conversation/ConversationFeature.swift ChatGPTClient/RootViewController.swift ChatGPTClient/Authentication ChatGPTClient.xcodeproj/project.pbxproj
 
-      - name: Commit seven non-workflow infrastructure files
+      - name: Commit replay correction only
         shell: bash
         run: |
           set -euo pipefail
-          # GitHub Actions' GITHUB_TOKEN cannot update workflow files in this repository.
-          # The already-validated simulator-workflow delta is applied separately through the connector.
-          git restore .github/workflows/ios-simulator-preflight.yml
-          git diff --check
-          remaining="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
-          expected="$(printf '%s\n' \
-            ChatGPTClient/Protocol/ProtocolReadProbe.swift \
-            ChatGPTClient/SettingsViewController.swift \
-            ChatGPTClient/Testing/SimulatorFixtureTransport.swift \
-            ChatGPTClientTests/ConversationRepositorySimulatorTests.swift \
-            fixtures/protocol/stop-request-ack-v1.json \
-            scripts/protocol_capture/README.md \
-            scripts/protocol_capture/sanitize_capture.py | sort)"
-          test "$remaining" = "$expected"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            ChatGPTClient/Protocol/ProtocolReadProbe.swift \
-            ChatGPTClient/SettingsViewController.swift \
-            ChatGPTClient/Testing/SimulatorFixtureTransport.swift \
-            ChatGPTClientTests/ConversationRepositorySimulatorTests.swift \
-            fixtures/protocol/stop-request-ack-v1.json \
-            scripts/protocol_capture/README.md \
-            scripts/protocol_capture/sanitize_capture.py
-          git commit -m "dev: add authenticated protocol capture pipeline"
+          git add ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          git commit -m "test: read replay request body stream strictly"
           git push origin HEAD:dev/authenticated-protocol-capture-20261009

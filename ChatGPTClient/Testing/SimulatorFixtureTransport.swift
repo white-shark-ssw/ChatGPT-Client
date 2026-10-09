@@ -160,11 +160,31 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
         let interaction = matches[min(max(requestCount - 1, 0), matches.count - 1)]
         guard let fixtureRequest = interaction["request"] as? [String: Any], let fixtureResponse = interaction["response"] as? [String: Any], let statusCode = (fixtureResponse["status"] as? NSNumber)?.intValue, let contentType = fixtureResponse["contentType"] as? String, let payload = fixtureResponse["body"] as? [String: Any] else { return .failure("invalid_protocol_replay_interaction") }
         if let expectedBody = fixtureRequest["body"] as? [String: Any] {
-            guard let body = request.httpBody, let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }
+            guard let body = requestBodyData(for: request), let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }
         }
         return .replay(statusCode: statusCode, contentType: contentType, payload: payload)
     }
 
+    private static func requestBodyData(for request: URLRequest) -> Data? {
+        if let body = request.httpBody { return body }
+        guard let stream = request.httpBodyStream else { return nil }
+        let shouldOpen = stream.streamStatus == .notOpen
+        if shouldOpen { stream.open() }
+        defer { if shouldOpen { stream.close() } }
+        let bufferSize = 4096
+        var buffer = [UInt8](repeating: 0, count: bufferSize)
+        var data = Data()
+        while true {
+            let readCount = buffer.withUnsafeMutableBytes { rawBuffer -> Int in
+                guard let baseAddress = rawBuffer.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                return stream.read(baseAddress, maxLength: bufferSize)
+            }
+            if readCount < 0 { return nil }
+            if readCount == 0 { break }
+            data.append(contentsOf: buffer.prefix(readCount))
+        }
+        return data
+    }
     private static func jsonObjectsEqual(_ lhs: [String: Any], _ rhs: [String: Any]) -> Bool {
         guard let leftData = try? JSONSerialization.data(withJSONObject: lhs, options: [.sortedKeys]), let rightData = try? JSONSerialization.data(withJSONObject: rhs, options: [.sortedKeys]) else { return false }
         return leftData == rightData

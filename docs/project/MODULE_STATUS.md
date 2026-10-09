@@ -1,3 +1,10 @@
+## Authenticated protocol capture / sanitized replay — 2026-10-10
+
+- **Status**: Active / cleaned Simulator CI Green / stacked PR pending / real-device Runtime Not Tested / Stable-Frozen No.
+- **Owner boundary**: capture is diagnostic observation only. `ConversationRepository` remains conversation/content/response authority; `AuthSessionStore` remains auth/account authority; replay fixture transport is Debug-only input substitution. No production retry/fallback/timer/watchdog/polling or duplicate response/cache authority is added.
+- **Privacy boundary**: raw authenticated exports are local/user-controlled and never automatic repo/CI input. Header values, reusable credentials and raw user/assistant text are excluded; required identifiers become capture-local aliases; generic unknown backend path identifier-like segments become `{opaque}`.
+- **Validation**: cleaned head `3abb06889902cd96b8fca45d7d50fec6bdcf237d` passed Simulator run `37978621723 / 113983154439`; Artifact `11639784911`, digest `sha256:0b2833a65a3da54189107468c81b18df13737bd1bbebc10a3577abe0ae02b2c0`. This is CI evidence only, not authenticated iPhone Runtime.
+
 ## Test infrastructure — integrated Simulator baseline green 2026-10-09
 
 - Parent integration commit `657f70703d0076bd50ebda761f8dde8ba732e972`; integration-current Simulator run `37837104595 / 113517526599` passed and Artifact `11575759936` was produced.

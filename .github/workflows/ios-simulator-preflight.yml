@@ -34,6 +34,7 @@ jobs:
     timeout-minutes: 30
     env:
       TEST_IDENTITY: SIM-DEV-simulator-test-baseline-v1
+      PROTOCOL_CAPTURE_TEST_IDENTITY: SIM-DEV-authenticated-protocol-capture-v1
       RESULT_BUNDLE: build/test-results/SimulatorPreflight.xcresult
       EVIDENCE_DIR: build/test-evidence
     steps:
@@ -85,6 +86,14 @@ jobs:
           UDID="${{ steps.simulator.outputs.udid }}"
           if [[ "${{ steps.simulator.outputs.state }}" != "Booted" ]]; then xcrun simctl boot "$UDID"; fi
           xcrun simctl bootstatus "$UDID" -b
+
+      - name: Validate protocol capture sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          echo "$PROTOCOL_CAPTURE_TEST_IDENTITY" > "$EVIDENCE_DIR/protocol-capture-test-identity.txt"
+          python3 scripts/protocol_capture/sanitize_capture.py --self-test
 
       - name: Run XCTest and XCUITest
         id: tests

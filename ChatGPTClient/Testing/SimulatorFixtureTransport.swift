@@ -24,6 +24,7 @@ enum SimulatorFixtureTransport {
     }
 
     static func resetRequestState() { SimulatorFixtureURLProtocol.reset() }
+    static func installProtocolReplayFixture(data: Data) throws { try SimulatorFixtureURLProtocol.installProtocolReplayFixture(data: data) }
     static func requestCount(for key: String) -> Int { SimulatorFixtureURLProtocol.requestCount(for: key) }
     static func setRequestObserver(_ observer: ((String) -> Void)?) { SimulatorFixtureURLProtocol.setRequestObserver(observer) }
 }
@@ -31,16 +32,19 @@ enum SimulatorFixtureTransport {
 private final class SimulatorFixtureURLProtocol: URLProtocol {
     private enum FixtureResponse {
         case success([String: Any])
+        case replay(statusCode: Int, contentType: String, payload: [String: Any])
         case failure(String)
     }
 
     private static let lock = NSLock()
     private static var requestCounts: [String: Int] = [:]
     private static var requestObserver: ((String) -> Void)?
+    private static var replayInteractions: [[String: Any]] = []
     private var workItem: DispatchWorkItem?
 
     override class func canInit(with request: URLRequest) -> Bool {
         guard let url = request.url, url.host?.lowercased() == "chatgpt.com" else { return false }
+        if replayCanHandle(request) { return true }
         return url.path == "/backend-api/conversations" || url.path.hasPrefix("/backend-api/conversation/")
     }
 
@@ -51,13 +55,14 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
             finishWithError("missing_url")
             return
         }
-        let key = Self.requestKey(for: url)
+        let key = Self.requestKey(for: request)
         let count = Self.recordRequest(for: key)
-        let response = Self.fixtureResponse(for: url, requestCount: count)
+        let response = Self.replayResponse(for: request, requestCount: count) ?? Self.fixtureResponse(for: url, requestCount: count)
         let workItem = DispatchWorkItem { [weak self] in
             guard let self else { return }
             switch response {
             case .success(let payload): self.finish(payload: payload)
+            case .replay(let statusCode, let contentType, let payload): self.finish(statusCode: statusCode, contentType: contentType, payload: payload)
             case .failure(let reason): self.finishWithError(reason)
             }
         }
@@ -68,11 +73,13 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
 
     override func stopLoading() { workItem?.cancel() }
 
-    private func finish(payload: [String: Any]) {
+    private func finish(payload: [String: Any]) { finish(statusCode: 200, contentType: "application/json", payload: payload) }
+
+    private func finish(statusCode: Int, contentType: String, payload: [String: Any]) {
         guard !workItemCancelled, let url = request.url else { return }
         do {
             let data = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
-            let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/json", "Content-Length": String(data.count)])!
+            let response = HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": contentType, "Content-Length": String(data.count)])!
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocol(self, didLoad: data)
             client?.urlProtocolDidFinishLoading(self)
@@ -92,6 +99,7 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
         lock.lock()
         requestCounts.removeAll()
         requestObserver = nil
+        replayInteractions.removeAll()
         lock.unlock()
     }
 
@@ -117,7 +125,74 @@ private final class SimulatorFixtureURLProtocol: URLProtocol {
         return next
     }
 
-    private static func requestKey(for url: URL) -> String {
+    fileprivate static func installProtocolReplayFixture(data: Data) throws {
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any], root["schema"] as? String == "protocol-replay-fixture-v1", let interactions = root["interactions"] as? [[String: Any]], !interactions.isEmpty else {
+            throw NSError(domain: "SimulatorFixtureTransport", code: 2, userInfo: [NSLocalizedDescriptionKey: "invalid protocol replay fixture"])
+        }
+        lock.lock()
+        replayInteractions = interactions
+        requestCounts.removeAll()
+        lock.unlock()
+    }
+
+    private static func replayCanHandle(_ request: URLRequest) -> Bool {
+        guard let url = request.url else { return false }
+        let method = (request.httpMethod ?? "GET").uppercased()
+        lock.lock()
+        let result = replayInteractions.contains { interaction in
+            guard let fixtureRequest = interaction["request"] as? [String: Any] else { return false }
+            return (fixtureRequest["method"] as? String)?.uppercased() == method && fixtureRequest["path"] as? String == url.path
+        }
+        lock.unlock()
+        return result
+    }
+
+    private static func replayResponse(for request: URLRequest, requestCount: Int) -> FixtureResponse? {
+        guard let url = request.url else { return nil }
+        let method = (request.httpMethod ?? "GET").uppercased()
+        lock.lock()
+        let matches = replayInteractions.filter { interaction in
+            guard let fixtureRequest = interaction["request"] as? [String: Any] else { return false }
+            return (fixtureRequest["method"] as? String)?.uppercased() == method && fixtureRequest["path"] as? String == url.path
+        }
+        lock.unlock()
+        guard !matches.isEmpty else { return nil }
+        let interaction = matches[min(max(requestCount - 1, 0), matches.count - 1)]
+        guard let fixtureRequest = interaction["request"] as? [String: Any], let fixtureResponse = interaction["response"] as? [String: Any], let statusCode = (fixtureResponse["status"] as? NSNumber)?.intValue, let contentType = fixtureResponse["contentType"] as? String, let payload = fixtureResponse["body"] as? [String: Any] else { return .failure("invalid_protocol_replay_interaction") }
+        if let expectedBody = fixtureRequest["body"] as? [String: Any] {
+            guard let body = requestBodyData(for: request), let actualBody = try? JSONSerialization.jsonObject(with: body) as? [String: Any], jsonObjectsEqual(expectedBody, actualBody) else { return .failure("protocol_replay_request_body_mismatch") }
+        }
+        return .replay(statusCode: statusCode, contentType: contentType, payload: payload)
+    }
+
+    private static func requestBodyData(for request: URLRequest) -> Data? {
+        if let body = request.httpBody { return body }
+        guard let stream = request.httpBodyStream else { return nil }
+        let shouldOpen = stream.streamStatus == .notOpen
+        if shouldOpen { stream.open() }
+        defer { if shouldOpen { stream.close() } }
+        let bufferSize = 4096
+        var buffer = [UInt8](repeating: 0, count: bufferSize)
+        var data = Data()
+        while true {
+            let readCount = buffer.withUnsafeMutableBytes { rawBuffer -> Int in
+                guard let baseAddress = rawBuffer.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                return stream.read(baseAddress, maxLength: bufferSize)
+            }
+            if readCount < 0 { return nil }
+            if readCount == 0 { break }
+            data.append(contentsOf: buffer.prefix(readCount))
+        }
+        return data
+    }
+    private static func jsonObjectsEqual(_ lhs: [String: Any], _ rhs: [String: Any]) -> Bool {
+        guard let leftData = try? JSONSerialization.data(withJSONObject: lhs, options: [.sortedKeys]), let rightData = try? JSONSerialization.data(withJSONObject: rhs, options: [.sortedKeys]) else { return false }
+        return leftData == rightData
+    }
+
+    private static func requestKey(for request: URLRequest) -> String {
+        guard let url = request.url else { return "missing-url" }
+        if replayCanHandle(request) { return "replay:\((request.httpMethod ?? "GET").uppercased()):\(url.path)" }
         if url.path == "/backend-api/conversations" { return "list" }
         return "detail:" + String(url.path.dropFirst("/backend-api/conversation/".count))
     }

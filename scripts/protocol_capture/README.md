@@ -10,6 +10,8 @@ Security boundary:
 - Cookie, Authorization, access/session tokens, passwords, challenge/proof values and raw user/assistant text must never enter committed fixtures;
 - aliases such as `id-0001` are capture-local correlation identities, not reversible service identifiers.
 
+Replay validation remains strict: when a fixture declares a JSON request body, `SimulatorFixtureTransport` compares canonical JSON equality against the request body. The Debug-only seam accepts Foundation's equivalent `URLRequest.httpBody` or `httpBodyStream` representation; it does not loosen fixture matching or add production fallback behavior.
+
 Typical developer flow:
 
 1. On a logged-in user-controlled iPhone, open Settings -> Authenticated Protocol Capture.

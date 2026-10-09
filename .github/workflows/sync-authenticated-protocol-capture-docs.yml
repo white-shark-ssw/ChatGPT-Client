@@ -1,0 +1,94 @@
+name: Sync Authenticated Protocol Capture Durable Docs
+
+on:
+  push:
+    branches:
+      - dev/authenticated-protocol-capture-20261009
+    paths:
+      - ".github/workflows/sync-authenticated-protocol-capture-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated capture branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev/authenticated-protocol-capture-20261009
+          fetch-depth: 0
+
+      - name: Guard cleaned evidence baseline and Candidate identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 79107c64347e05e0dfd4f679a3c970dfa09a18b0 HEAD
+          git merge-base --is-ancestor 3abb06889902cd96b8fca45d7d50fec6bdcf237d HEAD
+          test ! -e .github/workflows/stage-authenticated-protocol-capture.yml
+          test ! -e scripts/staging/apply_authenticated_protocol_capture.py
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          test "$(grep -c 'DIAGNOSTICS_CANDIDATE = \"DEV-send-stream-0.1.0-b115\";' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'CURRENT_PROJECT_VERSION = 116;' ChatGPTClient.xcodeproj/project.pbxproj
+          grep -Fq 'Authenticated Protocol Capture' ChatGPTClient/SettingsViewController.swift
+          grep -Fq 'requestBodyData(for: request)' ChatGPTClient/Testing/SimulatorFixtureTransport.swift
+          grep -Fq "if (/^[A-Za-z][A-Za-z_-]{0,39}$/.test(s)) return s;" ChatGPTClient/Protocol/ProtocolReadProbe.swift
+          python3 scripts/protocol_capture/sanitize_capture.py --self-test
+
+      - name: Prepend durable capture evidence and contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          sections = {
+              'docs/project/PROJECT_STATE.md': '''## 2026-10-10 — Authenticated Protocol Capture cleaned Simulator gate green\n\n- `DEV-authenticated-protocol-capture` is an Active stacked infrastructure task on `DEV-send-stream` / PR #29. Cleaned branch head `3abb06889902cd96b8fca45d7d50fec6bdcf237d` passed `iOS Simulator Preflight` run `37978621723 / 113983154439`; evidence Artifact `11639784911` / `sha256:0b2833a65a3da54189107468c81b18df13737bd1bbebc10a3577abe0ae02b2c0`.\n- Scope provides user-controlled authenticated capture UI, automatic document-start Web instrumentation, deterministic sanitizer/fixture compilation and Debug-only Simulator replay. Raw authenticated exports stay local; committed fixtures retain only sanitized protocol structure/capture-local aliases and never reusable credentials or raw user/assistant text.\n- Replay request-body validation remains strict canonical JSON equality while accepting Foundation's equivalent `httpBody` / `httpBodyStream` representations. Generic unclassified backend path identifiers are replaced with `{opaque}`; explicit Conversation Detail correlation uses capture-local aliases.\n- Parent product remains Build115 / `DEV-send-stream-0.1.0-b115`; no formal IPA Candidate was allocated. Simulator CI/Artifact are not real-device Runtime proof. First intended real scenario remains authoritative post-Stop Detail semantic capture.\n\n''',
+              'docs/project/MODULE_STATUS.md': '''## Authenticated protocol capture / sanitized replay — 2026-10-10\n\n- **Status**: Active / cleaned Simulator CI Green / stacked PR pending / real-device Runtime Not Tested / Stable-Frozen No.\n- **Owner boundary**: capture is diagnostic observation only. `ConversationRepository` remains conversation/content/response authority; `AuthSessionStore` remains auth/account authority; replay fixture transport is Debug-only input substitution. No production retry/fallback/timer/watchdog/polling or duplicate response/cache authority is added.\n- **Privacy boundary**: raw authenticated exports are local/user-controlled and never automatic repo/CI input. Header values, reusable credentials and raw user/assistant text are excluded; required identifiers become capture-local aliases; generic unknown backend path identifier-like segments become `{opaque}`.\n- **Validation**: cleaned head `3abb06889902cd96b8fca45d7d50fec6bdcf237d` passed Simulator run `37978621723 / 113983154439`; Artifact `11639784911`, digest `sha256:0b2833a65a3da54189107468c81b18df13737bd1bbebc10a3577abe0ae02b2c0`. This is CI evidence only, not authenticated iPhone Runtime.\n\n''',
+              'docs/project/TECHNICAL_DECISIONS.md': '''## 2026-10-10 — Authenticated protocol evidence uses local-sensitive capture -> sanitized deterministic fixture\n\nDecision: protocol questions that require logged-in official-Web context may use the user-controlled `Authenticated Protocol Capture` surface to observe existing requests/responses/SSE structurally, but raw authenticated exports remain local sensitive evidence. Repository/CI may consume only deterministic sanitized fixtures; never persist reusable auth material or raw user/assistant content.\n\nKeep production ownership unchanged: capture is observer-only, `ConversationRepository` remains response/content authority, `AuthSessionStore` remains auth/account authority, and replay is available only through the existing explicit Debug Simulator fixture seam. Replay must stay strict: declared JSON bodies compare by canonical JSON equality; handling `URLRequest.httpBodyStream` only recognizes Foundation's equivalent body representation and is not a loose matcher/fallback.\n\nFor endpoint privacy, preserve only structural alphabetic `_`/`-` path segments on generic backend routes and replace identifier/high-entropy segments with `{opaque}`. Special Conversation Detail identity may use capture-local stable aliases solely for correlation. Simulator green does not prove real-device login/WebKit/TrollStore behavior and does not justify a formal Candidate by itself.\n\n''',
+              'docs/project/PROJECT_SPECIFIC_RULES.md': '''## Authenticated protocol capture and sanitized fixture safety — 2026-10-10\n\n- Raw authenticated protocol captures are local sensitive evidence. Never auto-upload, auto-commit or treat them as ordinary CI fixtures.\n- Repository/CI fixtures may contain only sanitized endpoint/method/query structure, safe protocol enums/scalars, capture-local aliases and reduced authoritative-state projections. Do not persist password, Cookie, Authorization, access/session token, reusable auth header/challenge/proof material, or raw user/assistant text.\n- Generic unclassified `/backend-api/` path segments may preserve only structural alphabetic endpoint names plus `_`/`-`; identifier-like, digit-bearing or high-entropy segments must become `{opaque}`. Explicit Conversation Detail IDs may survive only as capture-local correlation aliases.\n- `SimulatorFixtureTransport` replay is Debug-only and account/service independent. If a fixture declares JSON request body, compare strict canonical JSON equality. `httpBody` and `httpBodyStream` are equivalent Foundation representations of the same body; supporting both must not relax fixture values or add production fallback behavior.\n- Capture/replay is not conversation, response, auth or cache authority and must not introduce production retry/resend/fallback/timer/watchdog/polling/compatibility machinery.\n- Simulator capture/replay CI evidence is not real-device authenticated Runtime evidence and does not independently justify allocating a formal IPA Candidate.\n\n''',
+              'docs/project/BUILD_TEST_INDEX.md': '''## Simulator evidence — SIM-DEV-authenticated-protocol-capture-v1 — 2026-10-10\n\n- Work: `DEV-authenticated-protocol-capture`; branch `dev/authenticated-protocol-capture-20261009`; stacked on `dev/send-stream-20260829` / PR #29. No formal IPA Candidate/build allocated; inherited product remains `DEV-send-stream-0.1.0-b115`.\n- First source/workflow run `37843389537 / 113538957651` failed only the new strict Stop replay XCTest with `protocol_replay_request_body_mismatch`; inherited 2 XCTest + 3 XCUITest remained green. Failure Artifact `11578822569`, digest `sha256:fe4263ae8de40fc82416cc775c9d6b120612c6128eeac56eafe74b88510933c9`.\n- Correction `ace92921b0195fbd60dd28a8e55c5c643fd1c6ca` added strict body extraction across Foundation `httpBody` / `httpBodyStream` representation without loosening canonical JSON matching. Run `37976040038 / 113974470892` then passed sanitizer + 3 XCTest + 3 XCUITest; Artifact `11638483189`, digest `sha256:45a4b0a9c9db1526d4429a796d7631ce1d0404bfee3352a7439ec5babb5036d1`.\n- Privacy hardening source `f13b663e4b32468ae3c4873a2b3d52f1249714bf` replaces generic unknown backend identifier-like path segments with `{opaque}`. After removing both one-off staging artifacts, cleaned head `3abb06889902cd96b8fca45d7d50fec6bdcf237d` passed `iOS Simulator Preflight` run `37978621723 / 113983154439`, including sanitizer validation, full XCTest/XCUITest execution, evidence capture and upload.\n- Cleaned evidence Artifact: `SimulatorPreflight-37978621723-1`, ID `11639784911`, size `2668006`, digest `sha256:0b2833a65a3da54189107468c81b18df13737bd1bbebc10a3577abe0ae02b2c0`.\n- Classification: **Code written / static checks passed / Simulator CI passed / Simulator evidence Artifact produced / formal IPA none / authenticated real-device Runtime not performed / Stable-Frozen No.**\n\n'''
+          }
+
+          marker = 'SIM-DEV-authenticated-protocol-capture-v1'
+          for filename, section in sections.items():
+              path = Path(filename)
+              text = path.read_text()
+              if marker in text:
+                  raise SystemExit(f'{filename}: durable capture section already present')
+              path.write_text(section + text)
+          PY
+
+      - name: Validate exact documentation scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          expected=$(printf '%s\n' \
+            docs/project/BUILD_TEST_INDEX.md \
+            docs/project/MODULE_STATUS.md \
+            docs/project/PROJECT_SPECIFIC_RULES.md \
+            docs/project/PROJECT_STATE.md \
+            docs/project/TECHNICAL_DECISIONS.md)
+          actual=$(git diff --name-only | sort)
+          test "$actual" = "$expected"
+          grep -Fq 'SIM-DEV-authenticated-protocol-capture-v1' docs/project/BUILD_TEST_INDEX.md
+          grep -Fq 'Authenticated protocol capture / sanitized replay' docs/project/MODULE_STATUS.md
+          grep -Fq 'Authenticated Protocol Capture cleaned Simulator gate green' docs/project/PROJECT_STATE.md
+          grep -Fq 'Authenticated protocol evidence uses local-sensitive capture' docs/project/TECHNICAL_DECISIONS.md
+          grep -Fq 'Authenticated protocol capture and sanitized fixture safety' docs/project/PROJECT_SPECIFIC_RULES.md
+          test "$(grep -c 'CURRENT_PROJECT_VERSION = 115;' ChatGPTClient.xcodeproj/project.pbxproj)" = "2"
+          ! grep -q 'CURRENT_PROJECT_VERSION = 116;' ChatGPTClient.xcodeproj/project.pbxproj
+          git diff --quiet -- ChatGPTClient ChatGPTClient.xcodeproj fixtures scripts .github/workflows/ios-simulator-preflight.yml
+
+      - name: Commit durable documentation only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/project/PROJECT_STATE.md docs/project/MODULE_STATUS.md docs/project/TECHNICAL_DECISIONS.md docs/project/PROJECT_SPECIFIC_RULES.md docs/project/BUILD_TEST_INDEX.md
+          git commit -m "docs: record authenticated capture simulator evidence"
+          git push origin HEAD:dev/authenticated-protocol-capture-20261009

@@ -1,3 +1,12 @@
+## Simulator evidence — SIM-DEV-authenticated-protocol-capture-v1 — 2026-10-10
+
+- Work: `DEV-authenticated-protocol-capture`; branch `dev/authenticated-protocol-capture-20261009`; stacked on `dev/send-stream-20260829` / PR #29. No formal IPA Candidate/build allocated; inherited product remains `DEV-send-stream-0.1.0-b115`.
+- First source/workflow run `37843389537 / 113538957651` failed only the new strict Stop replay XCTest with `protocol_replay_request_body_mismatch`; inherited 2 XCTest + 3 XCUITest remained green. Failure Artifact `11578822569`, digest `sha256:fe4263ae8de40fc82416cc775c9d6b120612c6128eeac56eafe74b88510933c9`.
+- Correction `ace92921b0195fbd60dd28a8e55c5c643fd1c6ca` added strict body extraction across Foundation `httpBody` / `httpBodyStream` representation without loosening canonical JSON matching. Run `37976040038 / 113974470892` then passed sanitizer + 3 XCTest + 3 XCUITest; Artifact `11638483189`, digest `sha256:45a4b0a9c9db1526d4429a796d7631ce1d0404bfee3352a7439ec5babb5036d1`.
+- Privacy hardening source `f13b663e4b32468ae3c4873a2b3d52f1249714bf` replaces generic unknown backend identifier-like path segments with `{opaque}`. After removing both one-off staging artifacts, cleaned head `3abb06889902cd96b8fca45d7d50fec6bdcf237d` passed `iOS Simulator Preflight` run `37978621723 / 113983154439`, including sanitizer validation, full XCTest/XCUITest execution, evidence capture and upload.
+- Cleaned evidence Artifact: `SimulatorPreflight-37978621723-1`, ID `11639784911`, size `2668006`, digest `sha256:0b2833a65a3da54189107468c81b18df13737bd1bbebc10a3577abe0ae02b2c0`.
+- Classification: **Code written / static checks passed / Simulator CI passed / Simulator evidence Artifact produced / formal IPA none / authenticated real-device Runtime not performed / Stable-Frozen No.**
+
 ## Simulator baseline parent integration — 2026-10-09
 
 - `SIM-DEV-simulator-test-baseline-v1` integrated from PR #37 at merge commit `657f70703d0076bd50ebda761f8dde8ba732e972` without allocating a formal IPA Candidate.

@@ -1,3 +1,12 @@
+## Authenticated protocol capture and sanitized fixture safety — 2026-10-10
+
+- Raw authenticated protocol captures are local sensitive evidence. Never auto-upload, auto-commit or treat them as ordinary CI fixtures.
+- Repository/CI fixtures may contain only sanitized endpoint/method/query structure, safe protocol enums/scalars, capture-local aliases and reduced authoritative-state projections. Do not persist password, Cookie, Authorization, access/session token, reusable auth header/challenge/proof material, or raw user/assistant text.
+- Generic unclassified `/backend-api/` path segments may preserve only structural alphabetic endpoint names plus `_`/`-`; identifier-like, digit-bearing or high-entropy segments must become `{opaque}`. Explicit Conversation Detail IDs may survive only as capture-local correlation aliases.
+- `SimulatorFixtureTransport` replay is Debug-only and account/service independent. If a fixture declares JSON request body, compare strict canonical JSON equality. `httpBody` and `httpBodyStream` are equivalent Foundation representations of the same body; supporting both must not relax fixture values or add production fallback behavior.
+- Capture/replay is not conversation, response, auth or cache authority and must not introduce production retry/resend/fallback/timer/watchdog/polling/compatibility machinery.
+- Simulator capture/replay CI evidence is not real-device authenticated Runtime evidence and does not independently justify allocating a formal IPA Candidate.
+
 ## Simulator Preflight and Candidate policy — 2026-10-09
 
 - Relevant ordinary development changes must use `iOS Simulator Preflight` before consuming a new formal IPA Candidate when the behavior is Simulator-testable.

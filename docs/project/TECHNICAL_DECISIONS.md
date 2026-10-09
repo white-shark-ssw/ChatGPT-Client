@@ -1,3 +1,11 @@
+## 2026-10-10 — Authenticated protocol evidence uses local-sensitive capture -> sanitized deterministic fixture
+
+Decision: protocol questions that require logged-in official-Web context may use the user-controlled `Authenticated Protocol Capture` surface to observe existing requests/responses/SSE structurally, but raw authenticated exports remain local sensitive evidence. Repository/CI may consume only deterministic sanitized fixtures; never persist reusable auth material or raw user/assistant content.
+
+Keep production ownership unchanged: capture is observer-only, `ConversationRepository` remains response/content authority, `AuthSessionStore` remains auth/account authority, and replay is available only through the existing explicit Debug Simulator fixture seam. Replay must stay strict: declared JSON bodies compare by canonical JSON equality; handling `URLRequest.httpBodyStream` only recognizes Foundation's equivalent body representation and is not a loose matcher/fallback.
+
+For endpoint privacy, preserve only structural alphabetic `_`/`-` path segments on generic backend routes and replace identifier/high-entropy segments with `{opaque}`. Special Conversation Detail identity may use capture-local stable aliases solely for correlation. Simulator green does not prove real-device login/WebKit/TrollStore behavior and does not justify a formal Candidate by itself.
+
 ## 2026-10-09 — Integrated Simulator preflight precedes deliberate IPA Candidate packaging
 
 Decision: PR #37's Simulator baseline is now integrated into the active DEV-send-stream parent. For relevant development changes, use formal XCTest/XCUITest Simulator preflight as deterministic CI evidence before consuming a new physical-device Candidate identity. Keep `ios-foundation.yml` explicit/manual so ordinary pushes do not manufacture formal IPA Candidates. Simulator CI never replaces real account/WebKit/TrollStore/Human Runtime evidence, and production state owners remain unchanged.

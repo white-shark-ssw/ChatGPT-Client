@@ -1,3 +1,10 @@
+## 2026-10-10 — Authenticated Protocol Capture cleaned Simulator gate green
+
+- `DEV-authenticated-protocol-capture` is an Active stacked infrastructure task on `DEV-send-stream` / PR #29. Cleaned branch head `3abb06889902cd96b8fca45d7d50fec6bdcf237d` passed `iOS Simulator Preflight` run `37978621723 / 113983154439`; evidence Artifact `11639784911` / `sha256:0b2833a65a3da54189107468c81b18df13737bd1bbebc10a3577abe0ae02b2c0`.
+- Scope provides user-controlled authenticated capture UI, automatic document-start Web instrumentation, deterministic sanitizer/fixture compilation and Debug-only Simulator replay. Raw authenticated exports stay local; committed fixtures retain only sanitized protocol structure/capture-local aliases and never reusable credentials or raw user/assistant text.
+- Replay request-body validation remains strict canonical JSON equality while accepting Foundation's equivalent `httpBody` / `httpBodyStream` representations. Generic unclassified backend path identifiers are replaced with `{opaque}`; explicit Conversation Detail correlation uses capture-local aliases.
+- Parent product remains Build115 / `DEV-send-stream-0.1.0-b115`; no formal IPA Candidate was allocated. Simulator CI/Artifact are not real-device Runtime proof. First intended real scenario remains authoritative post-Stop Detail semantic capture.
+
 ## 2026-10-09 — Simulator baseline integrated / parent CI green
 
 - PR #37 is merged into `dev/send-stream-20260829` at `657f70703d0076bd50ebda761f8dde8ba732e972`; formal XCTest/XCUITest targets, deterministic Debug fixtures and `iOS Simulator Preflight` are now part of the active parent.
